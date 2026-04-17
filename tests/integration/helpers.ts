@@ -126,6 +126,7 @@ interface TestUserResult {
   user: {
     id: string;
     email: string;
+    username: string;
     firstName: string;
     lastName: string;
     displayName: string;
@@ -140,6 +141,7 @@ interface TestUserResult {
  */
 export async function createTestUser(overrides: {
   email?: string;
+  username?: string;
   firstName?: string;
   lastName?: string;
   displayName?: string;
@@ -148,6 +150,7 @@ export async function createTestUser(overrides: {
 } = {}): Promise<TestUserResult> {
   const id = randomUUID();
   const email = overrides.email ?? `test-${id.slice(0, 8)}@integration.test`;
+  const username = overrides.username ?? email;
   const fallbackName = overrides.displayName ?? `Test User ${id.slice(0, 8)}`;
   const [fallbackFirstName, ...fallbackLastParts] = fallbackName.split(/\s+/);
   const firstName = overrides.firstName ?? fallbackFirstName ?? 'Test';
@@ -158,6 +161,7 @@ export async function createTestUser(overrides: {
     data: {
       id,
       email,
+      username,
       firstName,
       lastName,
       passwordHash,
@@ -175,6 +179,7 @@ export async function createTestUser(overrides: {
     user: {
       id: user.id,
       email: user.email,
+      username: user.username,
       firstName: user.firstName,
       lastName: user.lastName,
       displayName: `${user.firstName} ${user.lastName}`,

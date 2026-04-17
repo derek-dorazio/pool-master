@@ -72,7 +72,7 @@ describe('SDK Functional: Account Lifecycle', () => {
     const loginWithOldPassword = await loginUser({
       client: getSdkClient(),
       body: {
-        email: user.email,
+        identifier: user.username,
         password: user.password,
       },
     });
@@ -85,7 +85,7 @@ describe('SDK Functional: Account Lifecycle', () => {
     const loginWithNewPassword = await loginUser({
       client: getSdkClient(),
       body: {
-        email: user.email,
+        identifier: user.email,
         password: 'UpdatedPassword123!',
       },
     });
@@ -116,7 +116,7 @@ describe('SDK Functional: Account Lifecycle', () => {
     const loginResponse = await loginUser({
       client: getSdkClient(),
       body: {
-        email: user.email,
+        identifier: user.username,
         password: user.password,
       },
     });
@@ -168,7 +168,7 @@ describe('SDK Functional: Account Lifecycle', () => {
     const loginAfterDelete = await loginUser({
       client: getSdkClient(),
       body: {
-        email: user.email,
+        identifier: user.email,
         password: user.password,
       },
     });

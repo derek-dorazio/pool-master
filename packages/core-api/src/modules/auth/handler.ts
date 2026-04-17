@@ -23,13 +23,13 @@ export function createAuthHandlers(authService: AuthService) {
 
   async function handleRegister(
     request: FastifyRequest<{
-      Body: { email: string; password: string; firstName: string; lastName: string };
+      Body: { username: string; email: string; password: string; firstName: string; lastName: string };
     }>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const { email, password, firstName, lastName } = request.body;
-      const result = await authService.register(email, password, firstName, lastName);
+      const { username, email, password, firstName, lastName } = request.body;
+      const result = await authService.register(username, email, password, firstName, lastName);
       reply.header('Set-Cookie', createSessionCookieHeaders(result.tokens));
       return reply.status(201).send(result);
     } catch (err) {
@@ -42,13 +42,13 @@ export function createAuthHandlers(authService: AuthService) {
 
   async function handleLogin(
     request: FastifyRequest<{
-      Body: { email: string; password: string };
+      Body: { identifier: string; password: string };
     }>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const { email, password } = request.body;
-      const result = await authService.login(email, password);
+      const { identifier, password } = request.body;
+      const result = await authService.login(identifier, password);
       reply.header('Set-Cookie', createSessionCookieHeaders(result.tokens));
       return reply.send(result);
     } catch (err) {

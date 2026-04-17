@@ -19,6 +19,7 @@ export interface RegisteredUserContext {
   lastName: string;
   displayName: string;
   email: string;
+  username: string;
   login: {
     tokens: {
       accessToken: string;
@@ -29,6 +30,7 @@ export interface RegisteredUserContext {
     user: {
       id: string;
       email: string;
+      username: string;
       firstName: string;
       lastName: string;
     };
@@ -44,6 +46,7 @@ export interface RegisteredUserContext {
     user: {
       id: string;
       email: string;
+      username: string;
       firstName: string;
       lastName: string;
     };
@@ -57,9 +60,11 @@ export async function buildRegisteredUser(overrides?: {
   lastName?: string;
   displayName?: string;
   email?: string;
+  username?: string;
   password?: string;
 }): Promise<RegisteredUserContext> {
   const email = overrides?.email ?? createFunctionalEmail('auth');
+  const username = overrides?.username ?? email;
   const password = overrides?.password ?? 'FuncTest123!';
   const fallbackName = overrides?.displayName ?? 'Functional Pilot User';
   const [fallbackFirstName, ...fallbackLastParts] = fallbackName.split(/\s+/);
@@ -70,6 +75,7 @@ export async function buildRegisteredUser(overrides?: {
   const registration = await registerUser({
     client: getSdkClient(),
     body: {
+      username,
       email,
       password,
       firstName,
@@ -84,7 +90,7 @@ export async function buildRegisteredUser(overrides?: {
   const login = await loginUser({
     client: getSdkClient(),
     body: {
-      email,
+      identifier: username,
       password,
     },
   });
@@ -102,6 +108,7 @@ export async function buildRegisteredUser(overrides?: {
     lastName,
     displayName,
     email,
+    username,
     login: login.data,
     password,
     registration: registration.data,
@@ -115,6 +122,7 @@ export async function buildLeagueWithCommissioner(overrides?: {
   lastName?: string;
   displayName?: string;
   email?: string;
+  username?: string;
   leagueName?: string;
   password?: string;
 }): Promise<{
@@ -137,6 +145,7 @@ export async function buildLeagueWithCommissioner(overrides?: {
     lastName: overrides?.lastName,
     displayName: overrides?.displayName,
     email: overrides?.email,
+    username: overrides?.username,
     password: overrides?.password,
   });
 

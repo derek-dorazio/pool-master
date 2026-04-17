@@ -265,6 +265,10 @@ export function MyAccountPage() {
                 <dd className="mt-1 text-base font-medium text-foreground">{user.email}</dd>
               </div>
               <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Username</dt>
+                <dd className="mt-1 text-base font-medium text-foreground">{user.username}</dd>
+              </div>
+              <div>
                 <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Status</dt>
                 <dd className="mt-1 text-base font-medium text-foreground">
                   {isInactive ? 'Inactive' : 'Active'}

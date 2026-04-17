@@ -38,6 +38,7 @@ export function buildUser(overrides: Partial<User> = {}): User {
   return {
     id,
     email: `user-${id}@example.com`,
+    username: `user-${id}`.toLowerCase(),
     firstName: 'User',
     lastName: id,
     isActive: true,

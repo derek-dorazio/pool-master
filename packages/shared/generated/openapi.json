@@ -36,7 +36,7 @@
         "tags": [
           "Auth"
         ],
-        "description": "Creates a new email/password account, issues the initial auth tokens, and returns the authenticated user profile used to enter the PoolMaster app.",
+        "description": "Creates a new username/email/password account, issues the initial auth tokens, and returns the authenticated user profile used to enter the PoolMaster app.",
         "requestBody": {
           "required": true,
           "content": {
@@ -44,10 +44,17 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 100,
+                    "pattern": "^\\S+$",
+                    "description": "Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field."
+                  },
                   "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address used as the account sign-in identifier."
+                    "description": "Primary contact email address for the user account."
                   },
                   "password": {
                     "type": "string",
@@ -69,17 +76,18 @@
                   }
                 },
                 "required": [
+                  "username",
                   "email",
                   "password",
                   "firstName",
                   "lastName"
                 ],
                 "additionalProperties": false,
-                "description": "Create-account payload for a new email/password user."
+                "description": "Create-account payload for a new username/email/password user."
               }
             }
           },
-          "description": "Create-account payload for a new email/password user."
+          "description": "Create-account payload for a new username/email/password user."
         },
         "responses": {
           "201": {
@@ -99,6 +107,10 @@
                         "email": {
                           "type": "string",
                           "description": "Primary email address for the user account."
+                        },
+                        "username": {
+                          "type": "string",
+                          "description": "Unique login identifier for the account."
                         },
                         "firstName": {
                           "type": "string",
@@ -159,6 +171,7 @@
                       "required": [
                         "id",
                         "email",
+                        "username",
                         "firstName",
                         "lastName",
                         "isActive",
@@ -291,11 +304,11 @@
     "/api/v1/auth/login": {
       "post": {
         "operationId": "loginUser",
-        "summary": "Authenticate with email and password",
+        "summary": "Authenticate with username or email and password",
         "tags": [
           "Auth"
         ],
-        "description": "Authenticates an existing email/password account and returns the authenticated user profile plus fresh access, refresh, and CSRF tokens.",
+        "description": "Authenticates an existing account using username or email plus password, then returns the authenticated user profile plus fresh access, refresh, and CSRF tokens.",
         "requestBody": {
           "required": true,
           "content": {
@@ -303,10 +316,11 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": {
+                  "identifier": {
                     "type": "string",
-                    "format": "email",
-                    "description": "Email address previously used to register the account."
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Username or email used to sign in to an existing account."
                   },
                   "password": {
                     "type": "string",
@@ -314,15 +328,15 @@
                   }
                 },
                 "required": [
-                  "email",
+                  "identifier",
                   "password"
                 ],
                 "additionalProperties": false,
-                "description": "Login payload for an existing email/password account."
+                "description": "Login payload for an existing username-or-email/password account."
               }
             }
           },
-          "description": "Login payload for an existing email/password account."
+          "description": "Login payload for an existing username-or-email/password account."
         },
         "responses": {
           "200": {
@@ -342,6 +356,10 @@
                         "email": {
                           "type": "string",
                           "description": "Primary email address for the user account."
+                        },
+                        "username": {
+                          "type": "string",
+                          "description": "Unique login identifier for the account."
                         },
                         "firstName": {
                           "type": "string",
@@ -402,6 +420,7 @@
                       "required": [
                         "id",
                         "email",
+                        "username",
                         "firstName",
                         "lastName",
                         "isActive",
@@ -451,6 +470,45 @@
             }
           },
           "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "403": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -681,6 +739,10 @@
                           "type": "string",
                           "description": "Primary email address for the user account."
                         },
+                        "username": {
+                          "type": "string",
+                          "description": "Unique login identifier for the account."
+                        },
                         "firstName": {
                           "type": "string",
                           "description": "First name shown in account and member-management surfaces."
@@ -740,6 +802,7 @@
                       "required": [
                         "id",
                         "email",
+                        "username",
                         "firstName",
                         "lastName",
                         "isActive",
@@ -17966,6 +18029,10 @@
                           "type": "string",
                           "description": "Primary email address for the user account."
                         },
+                        "username": {
+                          "type": "string",
+                          "description": "Unique login identifier for the account."
+                        },
                         "firstName": {
                           "type": "string",
                           "description": "First name shown in account and member-management surfaces."
@@ -18025,6 +18092,7 @@
                       "required": [
                         "id",
                         "email",
+                        "username",
                         "firstName",
                         "lastName",
                         "isActive",
@@ -18221,6 +18289,10 @@
                           "type": "string",
                           "description": "Primary email address for the user account."
                         },
+                        "username": {
+                          "type": "string",
+                          "description": "Unique login identifier for the account."
+                        },
                         "firstName": {
                           "type": "string",
                           "description": "First name shown in account and member-management surfaces."
@@ -18280,6 +18352,7 @@
                       "required": [
                         "id",
                         "email",
+                        "username",
                         "firstName",
                         "lastName",
                         "isActive",
@@ -18493,6 +18566,10 @@
                           "type": "string",
                           "description": "Primary email address for the user account."
                         },
+                        "username": {
+                          "type": "string",
+                          "description": "Unique login identifier for the account."
+                        },
                         "firstName": {
                           "type": "string",
                           "description": "First name shown in account and member-management surfaces."
@@ -18552,6 +18629,7 @@
                       "required": [
                         "id",
                         "email",
+                        "username",
                         "firstName",
                         "lastName",
                         "isActive",
@@ -18947,6 +19025,10 @@
                           "type": "string",
                           "description": "Primary email address for the user account."
                         },
+                        "username": {
+                          "type": "string",
+                          "description": "Unique login identifier for the account."
+                        },
                         "firstName": {
                           "type": "string",
                           "description": "First name shown in account and member-management surfaces."
@@ -19006,6 +19088,7 @@
                       "required": [
                         "id",
                         "email",
+                        "username",
                         "firstName",
                         "lastName",
                         "isActive",
@@ -19648,6 +19731,10 @@
                             "type": "string",
                             "description": "Primary email address for the user account."
                           },
+                          "username": {
+                            "type": "string",
+                            "description": "Unique login identifier for the account."
+                          },
                           "firstName": {
                             "type": "string",
                             "description": "First name shown in account and member-management surfaces."
@@ -19707,6 +19794,7 @@
                         "required": [
                           "id",
                           "email",
+                          "username",
                           "firstName",
                           "lastName",
                           "isActive",
@@ -19823,6 +19911,10 @@
                       "type": "string",
                       "description": "Primary email address for the user account."
                     },
+                    "username": {
+                      "type": "string",
+                      "description": "Unique login identifier for the account."
+                    },
                     "firstName": {
                       "type": "string",
                       "description": "First name shown in account and member-management surfaces."
@@ -19882,6 +19974,7 @@
                   "required": [
                     "id",
                     "email",
+                    "username",
                     "firstName",
                     "lastName",
                     "isActive",

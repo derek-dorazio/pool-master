@@ -2,8 +2,8 @@
  * Auth module — registers authentication routes under /api/v1/auth.
  *
  * Routes:
- *   POST /register        — Create account with email/password
- *   POST /login           — Authenticate and receive tokens
+ *   POST /register        — Create account with username/email/password
+ *   POST /login           — Authenticate with username or email and receive tokens
  *   POST /refresh         — Exchange refresh token for new access token
  *   POST /logout          — Revoke refresh token
  *   GET  /me              — Current user profile from JWT
@@ -35,7 +35,7 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Auth'],
       summary: 'Register a new user account',
       description:
-        'Creates a new email/password account, issues the initial auth tokens, and returns the authenticated user profile used to enter the PoolMaster app.',
+        'Creates a new username/email/password account, issues the initial auth tokens, and returns the authenticated user profile used to enter the PoolMaster app.',
       operationId: 'registerUser',
       body: zodToJsonSchema(RegisterRequestSchema),
       response: {
@@ -51,14 +51,15 @@ export async function authModule(fastify: FastifyInstance): Promise<void> {
   fastify.post('/login', {
     schema: {
       tags: ['Auth'],
-      summary: 'Authenticate with email and password',
+      summary: 'Authenticate with username or email and password',
       description:
-        'Authenticates an existing email/password account and returns the authenticated user profile plus fresh access, refresh, and CSRF tokens.',
+        'Authenticates an existing account using username or email plus password, then returns the authenticated user profile plus fresh access, refresh, and CSRF tokens.',
       operationId: 'loginUser',
       body: zodToJsonSchema(LoginRequestSchema),
       response: {
         200: zodToJsonSchema(AuthResponseSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: handlers.login,

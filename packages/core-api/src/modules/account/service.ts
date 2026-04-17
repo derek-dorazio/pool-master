@@ -12,6 +12,7 @@ const BCRYPT_ROUNDS = 12;
 type AccountUserRow = {
   id: string;
   email: string;
+  username: string;
   firstName: string;
   lastName: string;
   isActive: boolean;

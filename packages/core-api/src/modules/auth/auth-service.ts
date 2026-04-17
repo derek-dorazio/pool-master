@@ -34,6 +34,7 @@ export interface JwtPayload {
 export interface UserProfile {
   id: string;
   email: string;
+  username: string;
   firstName: string;
   lastName: string;
   isActive: boolean;
@@ -81,24 +82,26 @@ export class AuthService {
   }
 
   /**
-   * Registers a new user with email/password and returns a token pair.
+   * Registers a new user with username/email/password and returns a token pair.
    */
   async register(
+    username: string,
     email: string,
     password: string,
     firstName: string,
     lastName: string,
   ): Promise<{ user: UserProfile; tokens: TokenPair }> {
-    const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      throw new AuthError('Email already registered', 'EMAIL_EXISTS', 409);
-    }
+    const normalizedUsername = normalizeUsername(username);
+    const normalizedEmail = normalizeEmail(email);
+
+    await this.assertIdentifierAvailability(normalizedUsername, normalizedEmail);
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     const user = await this.prisma.user.create({
       data: {
-        email,
+        email: normalizedEmail,
+        username: normalizedUsername,
         passwordHash,
         firstName,
         lastName,
@@ -115,12 +118,20 @@ export class AuthService {
   }
 
   /**
-   * Authenticates a user with email/password and returns a token pair.
+   * Authenticates a user with username-or-email/password and returns a token pair.
    */
-  async login(email: string, password: string): Promise<{ user: UserProfile; tokens: TokenPair }> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+  async login(identifier: string, password: string): Promise<{ user: UserProfile; tokens: TokenPair }> {
+    const normalizedIdentifier = normalizeIdentifier(identifier);
+    const user = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: normalizedIdentifier },
+          { username: normalizedIdentifier },
+        ],
+      },
+    });
     if (!user || !user.passwordHash) {
-      throw new AuthError('Invalid email or password', 'INVALID_CREDENTIALS');
+      throw new AuthError('Invalid username, email, or password', 'INVALID_CREDENTIALS');
     }
     if (!user.isActive) {
       throw new AuthError(
@@ -132,7 +143,7 @@ export class AuthService {
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
-      throw new AuthError('Invalid email or password', 'INVALID_CREDENTIALS');
+      throw new AuthError('Invalid username, email, or password', 'INVALID_CREDENTIALS');
     }
 
     const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin);
@@ -250,6 +261,41 @@ export class AuthService {
       expiresIn: ACCESS_TOKEN_EXPIRY,
     };
   }
+
+  private async assertIdentifierAvailability(
+    normalizedUsername: string,
+    normalizedEmail: string,
+  ): Promise<void> {
+    const emailCollision = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: normalizedEmail },
+          { username: normalizedEmail },
+        ],
+      },
+    });
+
+    if (emailCollision) {
+      throw new AuthError('Email is already in use', 'EMAIL_EXISTS', 409);
+    }
+
+    if (normalizedUsername === normalizedEmail) {
+      return;
+    }
+
+    const usernameCollision = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { username: normalizedUsername },
+          { email: normalizedUsername },
+        ],
+      },
+    });
+
+    if (usernameCollision) {
+      throw new AuthError('Username is already in use', 'USERNAME_EXISTS', 409);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -259,6 +305,7 @@ export class AuthService {
 function mapUserProfile(user: {
   id: string;
   email: string;
+  username: string;
   firstName: string;
   lastName: string;
   isActive: boolean;
@@ -273,6 +320,7 @@ function mapUserProfile(user: {
   return {
     id: user.id,
     email: user.email,
+    username: user.username,
     firstName: user.firstName,
     lastName: user.lastName,
     isActive: user.isActive,
@@ -284,6 +332,18 @@ function mapUserProfile(user: {
     dateFormat: mapDateFormat(user.dateFormat),
     createdAt: user.createdAt,
   };
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function normalizeUsername(username: string): string {
+  return username.trim().toLowerCase();
+}
+
+function normalizeIdentifier(identifier: string): string {
+  return identifier.trim().toLowerCase();
 }
 
 function mapAuthProvider(provider: PrismaUserAuthProvider | null): UserProfile['authProvider'] {

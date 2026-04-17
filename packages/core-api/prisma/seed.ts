@@ -15,6 +15,7 @@ const BCRYPT_ROUNDS = 12;
 
 async function main(): Promise<void> {
   const email = process.env.ROOT_ADMIN_EMAIL?.trim().toLowerCase();
+  const username = process.env.ROOT_ADMIN_USERNAME?.trim().toLowerCase() || email;
   const password = process.env.ROOT_ADMIN_PASSWORD;
   const legacyDisplayName = process.env.ROOT_ADMIN_DISPLAY_NAME?.trim();
   const firstName =
@@ -26,7 +27,7 @@ async function main(): Promise<void> {
     legacyDisplayName?.split(/\s+/).slice(1).join(' ').trim() ||
     'Admin';
 
-  if (!email || !password) {
+  if (!email || !username || !password) {
     console.log('Seed step: no bootstrap root-admin configured.');
     console.log('No seed data inserted.');
     return;
@@ -37,6 +38,7 @@ async function main(): Promise<void> {
   const user = await prisma.user.upsert({
     where: { email },
     update: {
+      username,
       firstName,
       lastName,
       passwordHash,
@@ -44,6 +46,7 @@ async function main(): Promise<void> {
     },
     create: {
       email,
+      username,
       firstName,
       lastName,
       passwordHash,

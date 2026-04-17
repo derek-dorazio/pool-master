@@ -28,6 +28,7 @@ describe('SDK Functional: Auth', () => {
     });
 
     expect(user.registration.user.email).toBe(user.email);
+    expect(user.registration.user.username).toBe(user.username);
     expect(user.login.user.id).toBe(user.userId);
     expect(user.registration.tokens.accessToken).toBeTruthy();
     expect(user.login.tokens.refreshToken).toBeTruthy();
@@ -39,6 +40,7 @@ describe('SDK Functional: Auth', () => {
     expect(currentUser).toBeDefined();
     expect(currentUser?.user.id).toBe(user.userId);
     expect(currentUser?.user.email).toBe(user.email);
+    expect(currentUser?.user.username).toBe(user.username);
     expect(currentUser?.user.firstName).toBe(user.firstName);
     expect(currentUser?.user.lastName).toBe(user.lastName);
   });
@@ -56,6 +58,7 @@ describe('SDK Functional: Auth', () => {
 
     expect(currentUser.data?.user.id).toBe(user.userId);
     expect(currentUser.data?.user.email).toBe(user.email);
+    expect(currentUser.data?.user.username).toBe(user.username);
 
     const refreshResponse = await refreshToken({
       client: cookieClient,

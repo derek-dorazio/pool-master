@@ -27,7 +27,7 @@ export const getHealth = <ThrowOnError extends boolean = false>(options?: Option
 /**
  * Register a new user account
  *
- * Creates a new email/password account, issues the initial auth tokens, and returns the authenticated user profile used to enter the PoolMaster app.
+ * Creates a new username/email/password account, issues the initial auth tokens, and returns the authenticated user profile used to enter the PoolMaster app.
  */
 export const registerUser = <ThrowOnError extends boolean = false>(options: Options<RegisterUserData, ThrowOnError>) => (options.client ?? client).post<RegisterUserResponses, RegisterUserErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -40,9 +40,9 @@ export const registerUser = <ThrowOnError extends boolean = false>(options: Opti
 });
 
 /**
- * Authenticate with email and password
+ * Authenticate with username or email and password
  *
- * Authenticates an existing email/password account and returns the authenticated user profile plus fresh access, refresh, and CSRF tokens.
+ * Authenticates an existing account using username or email plus password, then returns the authenticated user profile plus fresh access, refresh, and CSRF tokens.
  */
 export const loginUser = <ThrowOnError extends boolean = false>(options: Options<LoginUserData, ThrowOnError>) => (options.client ?? client).post<LoginUserResponses, LoginUserErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

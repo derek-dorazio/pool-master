@@ -38,6 +38,7 @@ Implement the next self-service `My Account` features beyond lifecycle:
   - `timeFormat`
   - `dateFormat`
 - Email change is deferred to a later account-security slice.
+- Username now exists as a first-class auth identifier, but username-change UX remains deferred.
 - Avatar/profile-image work is deferred.
 - Password change requires:
   - current password
@@ -64,13 +65,14 @@ The data-modeler must explicitly review:
 - adding `firstName` and `lastName` to `User`
 - whether `displayName` should be retired from the active `User` model once
   first/last name are available
-- whether email-change and username concepts remain deferred
+- whether email-change and username-change concepts remain deferred
 
 Current direction:
 
 - `firstName` and `lastName` are likely approved additions
 - `displayName` is approved for removal from the active `User` model
-- username remains deferred
+- username is now implemented as a first-class auth identifier
+- username-change remains deferred
 - avatar remains deferred
 
 ## Data-Modeler Review Notes
@@ -96,7 +98,7 @@ Current direction:
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 93-001 | 1 | Product review of first-pass `My Account` scope | Done | Locked first slice to profile, password, and formatting preferences on a single `Profile` page. Email change, username, and avatar remain deferred. |
+| 93-001 | 1 | Product review of first-pass `My Account` scope | Done | Locked first slice to profile, password, and formatting preferences on a single `Profile` page. Email change, username-change UX, and avatar remain deferred. |
 | 93-002 | 1 | Data-modeler review of account profile/password/preferences surface | Done | Approved direction: add required first-class `firstName` and `lastName`, keep existing preference fields, and remove `displayName` from the active `User` model while the data footprint is still minimal. |
 | 93-002a | 1 | Backend/model prerequisite: align active identity model to first/last-name contract | Done | Added required `User.firstName` and `User.lastName`, removed `displayName`, updated seed/auth/profile/squad consumers, refreshed generated artifacts, and passed the full backend verification gate. |
 | 93-003 | 1 | Backend developer: add truthful self-service profile update API(s) | Done | Added `PUT /api/v1/account/profile` for first-name/last-name updates and refreshed DTO/OpenAPI/SDK output. |

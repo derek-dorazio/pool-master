@@ -9,6 +9,7 @@ import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain'
 interface UserRow {
   id: string;
   email: string;
+  username: string;
   firstName: string;
   lastName: string;
   isActive: boolean;
@@ -45,6 +46,7 @@ export function mapAccountUserToDto(user: UserRow): UserProfileDto {
   return {
     id: user.id,
     email: user.email,
+    username: user.username,
     firstName: user.firstName,
     lastName: user.lastName,
     isActive: user.isActive,

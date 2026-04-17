@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,6 +25,7 @@ const loginFormSchema = LoginRequestSchema.extend({
 const registerFormSchema = z.object({
   firstName: z.string().trim().min(1, 'First name is required').max(50, 'First name is too long'),
   lastName: z.string().trim().min(1, 'Last name is required').max(50, 'Last name is too long'),
+  username: RegisterRequestSchema.shape.username,
   email: RegisterRequestSchema.shape.email,
   password: RegisterRequestSchema.shape.password,
   confirmPassword: z.string().min(8, 'Please confirm your password'),
@@ -105,7 +106,7 @@ export function AuthHomePage() {
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
-      email: '',
+      identifier: '',
       password: '',
     },
   });
@@ -114,6 +115,7 @@ export function AuthHomePage() {
     resolver: zodResolver(registerFormSchema),
     defaultValues: {
       email: '',
+      username: '',
       password: '',
       firstName: '',
       lastName: '',
@@ -121,6 +123,19 @@ export function AuthHomePage() {
     },
   });
   const isSubmitting = loginForm.formState.isSubmitting || registerForm.formState.isSubmitting;
+  const [hasEditedUsername, setHasEditedUsername] = useState(false);
+  const watchedEmail = registerForm.watch('email');
+
+  useEffect(() => {
+    if (hasEditedUsername) {
+      return;
+    }
+
+    registerForm.setValue('username', watchedEmail.trim().toLowerCase(), {
+      shouldDirty: false,
+      shouldValidate: false,
+    });
+  }, [hasEditedUsername, registerForm, watchedEmail]);
 
   async function handleLogin(values: LoginFormValues) {
     setServerError(null);
@@ -147,6 +162,7 @@ export function AuthHomePage() {
     try {
       const response = await registerUser({
         body: {
+          username: values.username.trim().toLowerCase(),
           email: values.email,
           password: values.password,
           firstName: values.firstName.trim(),
@@ -265,17 +281,17 @@ export function AuthHomePage() {
           {mode === 'login' ? (
             <form className="mt-6 space-y-4" onSubmit={loginForm.handleSubmit(handleLogin)}>
               <label className="block space-y-2">
-                <span className="text-sm font-medium">Email</span>
+                <span className="text-sm font-medium">Username or email</span>
                 <input
                   className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
-                  {...loginForm.register('email')}
-                  data-testid="auth-login-email"
-                  placeholder="you@example.com"
-                  type="email"
+                  {...loginForm.register('identifier')}
+                  data-testid="auth-login-identifier"
+                  placeholder="yourname or you@example.com"
+                  type="text"
                 />
-                {loginForm.formState.errors.email ? (
+                {loginForm.formState.errors.identifier ? (
                   <span className="text-sm text-destructive">
-                    {loginForm.formState.errors.email.message}
+                    {loginForm.formState.errors.identifier.message}
                   </span>
                 ) : null}
               </label>
@@ -353,6 +369,24 @@ export function AuthHomePage() {
                 {registerForm.formState.errors.email ? (
                   <span className="text-sm text-destructive">
                     {registerForm.formState.errors.email.message}
+                  </span>
+                ) : null}
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Username</span>
+                <input
+                  className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  {...registerForm.register('username', {
+                    onChange: () => setHasEditedUsername(true),
+                  })}
+                  data-testid="auth-register-username"
+                  placeholder="yourname"
+                  type="text"
+                />
+                {registerForm.formState.errors.username ? (
+                  <span className="text-sm text-destructive">
+                    {registerForm.formState.errors.username.message}
                   </span>
                 ) : null}
               </label>

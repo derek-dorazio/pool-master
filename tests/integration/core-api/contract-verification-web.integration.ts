@@ -46,7 +46,7 @@ describe('Contract verification (web)', () => {
       method: 'POST',
       url: API_ROUTES.auth.login,
       payload: {
-        email: 'missing-user@integration.test',
+        identifier: 'missing-user@integration.test',
         password: 'WrongPassword123',
       },
     });

@@ -20,11 +20,15 @@ export type GetHealthResponses = {
 
 export type RegisterUserData = {
     /**
-     * Create-account payload for a new email/password user.
+     * Create-account payload for a new username/email/password user.
      */
     body: {
         /**
-         * Email address used as the account sign-in identifier.
+         * Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field.
+         */
+        username: string;
+        /**
+         * Primary contact email address for the user account.
          */
         email: string;
         /**
@@ -112,6 +116,10 @@ export type RegisterUserResponses = {
              */
             email: string;
             /**
+             * Unique login identifier for the account.
+             */
+            username: string;
+            /**
              * First name shown in account and member-management surfaces.
              */
             firstName: string;
@@ -180,13 +188,13 @@ export type RegisterUserResponse = RegisterUserResponses[keyof RegisterUserRespo
 
 export type LoginUserData = {
     /**
-     * Login payload for an existing email/password account.
+     * Login payload for an existing username-or-email/password account.
      */
     body: {
         /**
-         * Email address previously used to register the account.
+         * Username or email used to sign in to an existing account.
          */
-        email: string;
+        identifier: string;
         /**
          * Existing password for the account.
          */
@@ -202,6 +210,28 @@ export type LoginUserErrors = {
      * Standard API error envelope.
      */
     401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
         /**
          * Error payload object.
          */
@@ -241,6 +271,10 @@ export type LoginUserResponses = {
              * Primary email address for the user account.
              */
             email: string;
+            /**
+             * Unique login identifier for the account.
+             */
+            username: string;
             /**
              * First name shown in account and member-management surfaces.
              */
@@ -467,6 +501,10 @@ export type GetCurrentUserResponses = {
              * Primary email address for the user account.
              */
             email: string;
+            /**
+             * Unique login identifier for the account.
+             */
+            username: string;
             /**
              * First name shown in account and member-management surfaces.
              */
@@ -8682,6 +8720,10 @@ export type ReactivateAccountResponses = {
              */
             email: string;
             /**
+             * Unique login identifier for the account.
+             */
+            username: string;
+            /**
              * First name shown in account and member-management surfaces.
              */
             firstName: string;
@@ -8834,6 +8876,10 @@ export type UpdateAccountProfileResponses = {
              * Primary email address for the user account.
              */
             email: string;
+            /**
+             * Unique login identifier for the account.
+             */
+            username: string;
             /**
              * First name shown in account and member-management surfaces.
              */
@@ -8995,6 +9041,10 @@ export type UpdateAccountPreferencesResponses = {
              * Primary email address for the user account.
              */
             email: string;
+            /**
+             * Unique login identifier for the account.
+             */
+            username: string;
             /**
              * First name shown in account and member-management surfaces.
              */
@@ -9266,6 +9316,10 @@ export type InactivateAccountResponses = {
              * Primary email address for the user account.
              */
             email: string;
+            /**
+             * Unique login identifier for the account.
+             */
+            username: string;
             /**
              * First name shown in account and member-management surfaces.
              */
@@ -9636,6 +9690,10 @@ export type AdminListUsersResponses = {
              */
             email: string;
             /**
+             * Unique login identifier for the account.
+             */
+            username: string;
+            /**
              * First name shown in account and member-management surfaces.
              */
             firstName: string;
@@ -9768,6 +9826,10 @@ export type AdminGetUserDetailResponses = {
          * Primary email address for the user account.
          */
         email: string;
+        /**
+         * Unique login identifier for the account.
+         */
+        username: string;
         /**
          * First name shown in account and member-management surfaces.
          */

@@ -47,6 +47,7 @@ export interface DomainEntity {
 /** Core user-account record used across PoolMaster services. */
 export interface User extends DomainEntity {
   email: string;
+  username: string;
   firstName: string;
   lastName: string;
   isActive: boolean;

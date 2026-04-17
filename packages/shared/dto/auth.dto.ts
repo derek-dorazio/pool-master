@@ -8,7 +8,14 @@ import { SuccessSchema } from './common.dto';
 // --- Requests ---
 
 export const RegisterRequestSchema = z.object({
-  email: z.string().email().describe('Email address used as the account sign-in identifier.'),
+  username: z
+    .string()
+    .trim()
+    .min(3)
+    .max(100)
+    .regex(/^\S+$/, 'Username cannot contain spaces')
+    .describe('Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field.'),
+  email: z.string().email().describe('Primary contact email address for the user account.'),
   password: z
     .string()
     .min(8)
@@ -24,13 +31,18 @@ export const RegisterRequestSchema = z.object({
     .min(1)
     .max(100)
     .describe('Last name captured for the account profile.'),
-}).describe('Create-account payload for a new email/password user.');
+}).describe('Create-account payload for a new username/email/password user.');
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
 
 export const LoginRequestSchema = z.object({
-  email: z.string().email().describe('Email address previously used to register the account.'),
+  identifier: z
+    .string()
+    .trim()
+    .min(1)
+    .max(100)
+    .describe('Username or email used to sign in to an existing account.'),
   password: z.string().describe('Existing password for the account.'),
-}).describe('Login payload for an existing email/password account.');
+}).describe('Login payload for an existing username-or-email/password account.');
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
 export const RefreshRequestSchema = z.object({
@@ -62,6 +74,7 @@ export type AuthTokensDto = z.infer<typeof AuthTokensDtoSchema>;
 export const UserProfileDtoSchema = z.object({
   id: z.string().describe('Stable user identifier.'),
   email: z.string().describe('Primary email address for the user account.'),
+  username: z.string().describe('Unique login identifier for the account.'),
   firstName: z.string().describe('First name shown in account and member-management surfaces.'),
   lastName: z.string().describe('Last name shown in account and member-management surfaces.'),
   isActive: z

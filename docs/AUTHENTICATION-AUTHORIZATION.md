@@ -22,7 +22,7 @@ This is intentionally a **current-state** document. It describes what the code d
 
 ### Web app
 
-- Uses email/password login via `POST /api/v1/auth/login`
+- Uses username-or-email/password login via `POST /api/v1/auth/login`
 - Receives an app-issued JWT access token plus refresh token
 - Stores the access token in `localStorage`
 - Sends the access token as `Authorization: Bearer ...`
@@ -92,7 +92,7 @@ The active login page lives at [auth-home-page.tsx](/Users/DDorazio/Library/Clou
 
 It:
 
-- collects email/password
+- collects username-or-email plus password
 - calls `loginUser({ client, body })`
 - stores `access_token` in `localStorage`
 - stores the user in the Zustand auth store
@@ -121,10 +121,10 @@ sequenceDiagram
     participant Auth as AuthService
     participant DB as PostgreSQL
 
-    User->>Web: Enter email + password
+    User->>Web: Enter username or email + password
     Web->>API: POST /api/v1/auth/login
-    API->>Auth: login(email, password)
-    Auth->>DB: find user by email
+    API->>Auth: login(identifier, password)
+    Auth->>DB: find user by email or username
     Auth->>Auth: bcrypt.compare(password, passwordHash)
     Auth->>DB: create refresh token row
     Auth-->>API: user + token pair
@@ -320,9 +320,9 @@ sequenceDiagram
     participant AdminPlugin as admin-auth plugin
     participant DB as PostgreSQL
 
-    Admin->>UI: Enter email + password
+    Admin->>UI: Enter username or email + password
     UI->>API: POST /api/v1/auth/login
-    API->>Auth: login(email, password)
+    API->>Auth: login(identifier, password)
     Auth-->>UI: JWT access token + user payload
     UI->>API: GET /api/v1/admin/... with Bearer token or access cookie
     API->>AdminPlugin: validate root-admin session
