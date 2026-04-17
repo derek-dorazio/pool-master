@@ -2,6 +2,7 @@
  * MemberService — role management and member lifecycle operations.
  */
 
+import type { PrismaClient } from '@prisma/client';
 import type {
   LeagueMembershipRepository,
   SquadMembershipRepository,
@@ -12,7 +13,7 @@ import type {
   LeagueRole,
 } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
-import { deactivateSquadMembershipForLeagueMember } from '../squads/owner-membership';
+import { inactivateLeagueMemberUnit } from './member-lifecycle';
 
 export interface ChangeRoleInput {
   leagueId: string;
@@ -23,6 +24,7 @@ export interface ChangeRoleInput {
 export class MemberService {
   constructor(
     private readonly membershipRepo: LeagueMembershipRepository,
+    private readonly prisma: PrismaClient,
     private readonly squadRepo?: SquadRepository,
     private readonly squadMembershipRepo?: SquadMembershipRepository,
   ) {}
@@ -57,18 +59,14 @@ export class MemberService {
     if (membership.status !== LeagueMembershipStatus.ACTIVE) {
       throw new MemberOperationError('Member is already inactive', 'LEAGUE_MEMBER_ALREADY_INACTIVE');
     }
-    await this.membershipRepo.update(membership.id, {
-      status: LeagueMembershipStatus.INACTIVE,
+    await inactivateLeagueMemberUnit({
+      leagueId,
+      userId,
+      membershipRepo: this.membershipRepo,
+      prisma: this.prisma,
+      squadRepo: this.squadRepo,
+      squadMembershipRepo: this.squadMembershipRepo,
     });
-
-    if (this.squadRepo && this.squadMembershipRepo) {
-      await deactivateSquadMembershipForLeagueMember({
-        leagueId,
-        userId,
-        squadRepo: this.squadRepo,
-        squadMembershipRepo: this.squadMembershipRepo,
-      });
-    }
   }
 }
 

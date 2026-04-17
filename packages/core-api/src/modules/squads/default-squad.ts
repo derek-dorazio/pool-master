@@ -97,54 +97,6 @@ export async function ensureDefaultSquadForLeagueMember(
   return createdSquad;
 }
 
-export async function provisionFreshDefaultSquadForLeagueMember(
-  input: EnsureDefaultSquadForLeagueMemberInput,
-): Promise<Squad> {
-  const existingMembership = await input.squadMembershipRepo.findByLeagueAndUser(
-    input.leagueId,
-    input.userId,
-  );
-
-  const user = await input.prisma.user.findUnique({
-    where: { id: input.userId },
-    select: { firstName: true, lastName: true },
-  });
-
-  if (!user?.firstName || !user?.lastName) {
-    throw new DefaultSquadProvisioningError(
-      'Unable to resolve the team owner name',
-      'SQUAD_OWNER_RESOLUTION_FAILED',
-    );
-  }
-
-  const createdSquad = await input.squadRepo.create({
-    leagueId: input.leagueId,
-    createdBy: input.userId,
-    name: buildDefaultSquadName(user.firstName, user.lastName),
-    iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-    status: SquadStatus.ACTIVE,
-  });
-
-  if (existingMembership) {
-    await input.squadMembershipRepo.update(existingMembership.id, {
-      squadId: createdSquad.id,
-      status: SquadMembershipStatus.ACTIVE,
-      joinedAt: new Date(),
-    });
-    return createdSquad;
-  }
-
-  await input.squadMembershipRepo.create({
-    squadId: createdSquad.id,
-    leagueId: input.leagueId,
-    userId: input.userId,
-    status: SquadMembershipStatus.ACTIVE,
-    joinedAt: new Date(),
-  });
-
-  return createdSquad;
-}
-
 export class DefaultSquadProvisioningError extends Error {
   code: string;
 

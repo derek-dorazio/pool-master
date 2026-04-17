@@ -297,7 +297,7 @@ export function MyTeamPage() {
     },
     onSuccess: async (team) => {
       setTeamInactivationNotice(
-        `${team.name} is now inactive. Active league members from that team were reprovisioned with fresh default teams.`,
+        `${team.name} is now inactive. Its active owners were removed from the league, and any user with no other active leagues was also inactivated.`,
       );
       setReplaceTargetUserId(null);
       setReplaceEmail('');
@@ -695,7 +695,7 @@ export function MyTeamPage() {
           <div className="rounded-[2rem] border border-border bg-card p-6">
             <h3 className="text-xl font-semibold">Team lifecycle</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Inactivating a team preserves its history and immediately provisions fresh default teams for any still-active league members who were attached to it.
+              Inactivating a team preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any other active leagues.
             </p>
             <button
               className="mt-4 rounded-2xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-60"

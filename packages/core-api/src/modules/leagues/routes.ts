@@ -77,7 +77,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     squadMembershipRepo,
     prisma,
   );
-  const memberService = new MemberService(membershipRepo, squadRepo, squadMembershipRepo);
+  const memberService = new MemberService(membershipRepo, prisma, squadRepo, squadMembershipRepo);
   const memberDirectoryService = new MemberDirectoryService(prisma);
   const dashboardService = new DashboardService(
     leagueRepo,

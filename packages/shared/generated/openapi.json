@@ -6399,7 +6399,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Inactivates the target team, preserves its history, and reprovisions fresh default teams for any still-active league members who were attached to it.",
+        "description": "Inactivates the target team, preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any active leagues.",
         "parameters": [
           {
             "schema": {

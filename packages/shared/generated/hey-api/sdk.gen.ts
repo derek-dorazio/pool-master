@@ -409,7 +409,7 @@ export const updateLeagueSquad = <ThrowOnError extends boolean = false>(options:
 /**
  * Inactivate a team
  *
- * Inactivates the target team, preserves its history, and reprovisions fresh default teams for any still-active league members who were attached to it.
+ * Inactivates the target team, preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any active leagues.
  */
 export const inactivateLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<InactivateLeagueSquadData, ThrowOnError>) => (options.client ?? client).post<InactivateLeagueSquadResponses, InactivateLeagueSquadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

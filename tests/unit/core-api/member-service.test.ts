@@ -83,13 +83,36 @@ function createMockSquadMembershipRepo(
 }
 
 describe('MemberService', () => {
+  const prisma = {
+    user: {
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+    refreshToken: {
+      updateMany: jest.fn(),
+    },
+    $transaction: jest.fn().mockImplementation(async (callback) =>
+      callback({
+        user: {
+          update: prisma.user.update,
+        },
+        refreshToken: {
+          updateMany: prisma.refreshToken.updateMany,
+        },
+      })),
+  } as any;
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   describe('changeRole', () => {
     it('updates the role of an active member', async () => {
       const membership = buildMembership({ role: LeagueRole.MEMBER });
       const repo = createMockMembershipRepo({
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
-      const service = new MemberService(repo);
+      const service = new MemberService(repo, prisma);
       await service.changeRole({
         leagueId: 'league-1',
         targetUserId: 'user-1',
@@ -102,7 +125,7 @@ describe('MemberService', () => {
 
     it('throws MemberNotFoundError when member does not exist', async () => {
       const repo = createMockMembershipRepo();
-      const service = new MemberService(repo);
+      const service = new MemberService(repo, prisma);
       await expect(
         service.changeRole({
           leagueId: 'league-1',
@@ -118,7 +141,7 @@ describe('MemberService', () => {
           .fn()
           .mockResolvedValue(buildMembership({ status: LeagueMembershipStatus.INACTIVE })),
       });
-      const service = new MemberService(repo);
+      const service = new MemberService(repo, prisma);
       await expect(
         service.changeRole({
           leagueId: 'league-1',
@@ -134,18 +157,26 @@ describe('MemberService', () => {
       const membership = buildMembership({ role: LeagueRole.MEMBER });
       const repo = createMockMembershipRepo({
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
+        findByUser: jest.fn().mockResolvedValue([]),
       });
-      const service = new MemberService(repo);
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        isActive: true,
+        isRootAdmin: false,
+      });
+      const service = new MemberService(repo, prisma);
       await service.removeMember('league-1', 'user-1');
       expect(repo.update).toHaveBeenCalledWith(membership.id, {
         status: LeagueMembershipStatus.INACTIVE,
       });
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
 
     it('also inactivates the team when the removed member was the last active owner', async () => {
       const membership = buildMembership({ role: LeagueRole.MEMBER });
       const repo = createMockMembershipRepo({
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
+        findByUser: jest.fn().mockResolvedValue([]),
       });
       const squadRepo = createMockSquadRepo();
       const squadMembershipRepo = createMockSquadMembershipRepo({
@@ -161,7 +192,12 @@ describe('MemberService', () => {
         }),
         findBySquad: jest.fn().mockResolvedValue([]),
       });
-      const service = new MemberService(repo, squadRepo, squadMembershipRepo);
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        isActive: true,
+        isRootAdmin: false,
+      });
+      const service = new MemberService(repo, prisma, squadRepo, squadMembershipRepo);
 
       await service.removeMember('league-1', 'user-1');
 
@@ -175,7 +211,7 @@ describe('MemberService', () => {
 
     it('throws MemberNotFoundError when member does not exist', async () => {
       const repo = createMockMembershipRepo();
-      const service = new MemberService(repo);
+      const service = new MemberService(repo, prisma);
       await expect(service.removeMember('league-1', 'missing')).rejects.toThrow(
         MemberNotFoundError,
       );
@@ -187,7 +223,7 @@ describe('MemberService', () => {
           .fn()
           .mockResolvedValue(buildMembership({ status: LeagueMembershipStatus.INACTIVE })),
       });
-      const service = new MemberService(repo);
+      const service = new MemberService(repo, prisma);
       await expect(service.removeMember('league-1', 'user-1')).rejects.toThrow(
         MemberOperationError,
       );

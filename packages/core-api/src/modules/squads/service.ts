@@ -13,7 +13,7 @@ import {
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
 import { toSquadDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { buildDefaultSquadName } from '../../core/user-name';
-import { provisionFreshDefaultSquadForLeagueMember } from './default-squad';
+import { inactivateLeagueMemberUnit } from '../leagues/member-lifecycle';
 
 interface CreateSquadInput {
   name?: string;
@@ -96,36 +96,23 @@ export class SquadService {
     }
 
     const activeMemberships = await this.squadMembershipRepo.findBySquad(squadId);
+
     await Promise.all(
       activeMemberships.map(async (membership) =>
-        this.squadMembershipRepo.update(membership.id, {
-          status: SquadMembershipStatus.INACTIVE,
+        inactivateLeagueMemberUnit({
+          leagueId,
+          userId: membership.userId,
+          membershipRepo: this.leagueMembershipRepo,
+          prisma: this.prisma,
+          squadRepo: this.squadRepo,
+          squadMembershipRepo: this.squadMembershipRepo,
         })),
     );
 
-    await this.squadRepo.update(squadId, { status: SquadStatus.INACTIVE });
-
-    const activeLeagueMemberships = await Promise.all(
-      activeMemberships.map(async (membership) => ({
-        membership,
-        leagueMembership: await this.leagueMembershipRepo.findByLeagueAndUser(leagueId, membership.userId),
-      })),
-    );
-
-    await Promise.all(
-      activeLeagueMemberships
-        .filter(
-          ({ leagueMembership }) => leagueMembership?.status === LeagueMembershipStatus.ACTIVE,
-        )
-        .map(async ({ membership }) =>
-          provisionFreshDefaultSquadForLeagueMember({
-            leagueId,
-            userId: membership.userId,
-            squadRepo: this.squadRepo,
-            squadMembershipRepo: this.squadMembershipRepo,
-            prisma: this.prisma,
-          })),
-    );
+    const refreshedSquad = await this.squadRepo.findById(squadId);
+    if (refreshedSquad?.status === SquadStatus.ACTIVE) {
+      await this.squadRepo.update(squadId, { status: SquadStatus.INACTIVE });
+    }
 
     return this.loadSquadDto(squadId);
   }

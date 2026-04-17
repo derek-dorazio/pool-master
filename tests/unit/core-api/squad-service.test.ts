@@ -289,33 +289,9 @@ describe('SquadService', () => {
     expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { name: 'Updated Team' });
   });
 
-  it('inactivates a team and reprovisions default teams for active league members who were attached to it', async () => {
+  it('inactivates a team, removes active owners from the league, and inactivates users with no other leagues', async () => {
     let archivedTeamReads = 0;
-    const findByIdMock = jest.fn().mockImplementation(async (id: string) => {
-      if (id === 'user-1-default-squad') {
-        return {
-          id: 'user-1-default-squad',
-          leagueId: 'league-1',
-          createdBy: 'user-1',
-          name: "Derek Dorazio's Team",
-          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-          status: SquadStatus.ACTIVE,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-      }
-      if (id === 'user-2-default-squad') {
-        return {
-          id: 'user-2-default-squad',
-          leagueId: 'league-1',
-          createdBy: 'user-2',
-          name: "Brendan Haley's Team",
-          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-          status: SquadStatus.ACTIVE,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-      }
+    const findByIdMock = jest.fn().mockImplementation(async () => {
       archivedTeamReads += 1;
       return {
         id: 'squad-1',
@@ -340,28 +316,7 @@ describe('SquadService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       })),
-      create: jest
-        .fn()
-        .mockResolvedValueOnce({
-          id: 'user-1-default-squad',
-          leagueId: 'league-1',
-          createdBy: 'user-1',
-          name: "Derek Dorazio's Team",
-          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-          status: SquadStatus.ACTIVE,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .mockResolvedValueOnce({
-          id: 'user-2-default-squad',
-          leagueId: 'league-1',
-          createdBy: 'user-2',
-          name: "Brendan Haley's Team",
-          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-          status: SquadStatus.ACTIVE,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
+      create: jest.fn(),
     });
     const activeTeamMemberships = [
       {
@@ -386,23 +341,19 @@ describe('SquadService', () => {
       },
     ];
     const squadMembershipRepo = createSquadMembershipRepo({
-      findByLeagueAndUser: jest.fn().mockImplementation(async (_leagueId: string, userId: string) => ({
-        id: userId === 'user-1' ? 'membership-1' : 'membership-2',
-        squadId: 'squad-1',
-        leagueId: 'league-1',
-        userId,
-        status: SquadMembershipStatus.INACTIVE,
-        joinedAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })),
-      findBySquad: jest.fn().mockResolvedValue(activeTeamMemberships),
+      findByLeagueAndUser: jest
+        .fn()
+        .mockResolvedValueOnce(activeTeamMemberships[0])
+        .mockResolvedValueOnce(activeTeamMemberships[1]),
+      findBySquad: jest
+        .fn()
+        .mockResolvedValueOnce(activeTeamMemberships)
+        .mockResolvedValueOnce([activeTeamMemberships[1]])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]),
       update: jest.fn().mockImplementation(async (id, updates) => ({
         id,
-        squadId:
-          id === 'membership-1'
-            ? updates.squadId ?? 'squad-1'
-            : updates.squadId ?? 'squad-1',
+        squadId: 'squad-1',
         leagueId: 'league-1',
         userId: id === 'membership-1' ? 'user-1' : 'user-2',
         status: updates.status ?? SquadMembershipStatus.ACTIVE,
@@ -429,11 +380,20 @@ describe('SquadService', () => {
           userId: 'user-2',
           role: 'MEMBER',
         }),
+      findByUser: jest
+        .fn()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]),
     });
     prisma.user.findUnique
-      .mockResolvedValueOnce({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' })
-      .mockResolvedValueOnce({ id: 'user-2', firstName: 'Brendan', lastName: 'Haley' });
+      .mockResolvedValueOnce({ id: 'user-1', isActive: true, isRootAdmin: false })
+      .mockResolvedValueOnce({ id: 'user-2', isActive: true, isRootAdmin: false });
     prisma.user.findMany.mockResolvedValue([]);
+    prisma.$transaction = jest.fn().mockImplementation(async (callback) =>
+      callback({
+        user: { update: jest.fn().mockResolvedValue(undefined) },
+        refreshToken: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+      }));
 
     const service = new SquadService(
       squadRepo,
@@ -447,6 +407,10 @@ describe('SquadService', () => {
     expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { status: SquadStatus.INACTIVE });
     expect(squadMembershipRepo.update).toHaveBeenCalledWith('membership-1', { status: SquadMembershipStatus.INACTIVE });
     expect(squadMembershipRepo.update).toHaveBeenCalledWith('membership-2', { status: SquadMembershipStatus.INACTIVE });
-    expect(squadRepo.create).toHaveBeenCalledTimes(2);
+    expect(leagueMembershipRepo.update).toHaveBeenCalledWith(baseMembership.id, {
+      status: LeagueMembershipStatus.INACTIVE,
+    });
+    expect(squadRepo.create).not.toHaveBeenCalled();
+    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
   });
 });

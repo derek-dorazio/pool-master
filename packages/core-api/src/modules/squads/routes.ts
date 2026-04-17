@@ -117,7 +117,7 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'Inactivate a team',
       description:
-        'Inactivates the target team, preserves its history, and reprovisions fresh default teams for any still-active league members who were attached to it.',
+        'Inactivates the target team, preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any active leagues.',
       operationId: 'inactivateLeagueSquad',
       response: {
         200: zodToJsonSchema(SquadResponseSchema),
