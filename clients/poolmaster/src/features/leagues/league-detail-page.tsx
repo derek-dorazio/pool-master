@@ -1,23 +1,33 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
+  changeMemberRole,
   generateInviteLink,
   getLeagueByCode,
+  leaveLeague,
   listContests,
   listLeagueMembers,
+  removeMember,
   sendLeagueInvitations,
+  type ChangeMemberRoleResponses,
   type GetLeagueResponses,
+  type LeaveLeagueResponses,
   type ListContestsResponses,
   type ListLeagueMembersResponses,
+  type RemoveMemberResponses,
 } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
+import { useAuth } from '@/features/auth/auth-provider';
 import { LeagueIcon } from './league-icon';
 import { buildInvitePath, buildLeagueTeamPath, buildLeagueTeamsPath, setRecentLeagueCode } from './league-routing';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
 type ContestSummary = ListContestsResponses[200]['contests'][number];
+type ChangeRoleResponse = ChangeMemberRoleResponses[200]['membership'];
+type RemoveMemberResponse = RemoveMemberResponses[200];
+type LeaveLeagueResponse = LeaveLeagueResponses[200];
 
 function formatRole(role: string | undefined) {
   if (!role) {
@@ -30,10 +40,57 @@ function formatRole(role: string | undefined) {
     .join(' ');
 }
 
+function formatJoinedAt(value: string | undefined) {
+  if (!value) {
+    return 'Joined recently';
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'Joined recently';
+  }
+
+  return `Joined ${parsed.toLocaleDateString()}`;
+}
+
+function extractErrorMessage(error: unknown, fallback: string) {
+  if (!error || typeof error !== 'object') {
+    return fallback;
+  }
+
+  const candidate = error as {
+    code?: unknown;
+    error?: { code?: unknown; message?: unknown };
+    message?: unknown;
+  };
+
+  if (
+    candidate.code === 'LEAGUE_LAST_COMMISSIONER_REQUIRED' ||
+    candidate.error?.code === 'LEAGUE_LAST_COMMISSIONER_REQUIRED'
+  ) {
+    return 'Appoint another commissioner before the last commissioner leaves or steps down.';
+  }
+
+  if (typeof candidate.error?.message === 'string') {
+    return candidate.error.message;
+  }
+
+  if (typeof candidate.message === 'string') {
+    return candidate.message;
+  }
+
+  return fallback;
+}
+
 export function LeagueDetailPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
+  const auth = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLink, setInviteLink] = useState('');
+  const [memberActionError, setMemberActionError] = useState<string | null>(null);
+  const [leaveActionError, setLeaveActionError] = useState<string | null>(null);
 
   const leagueQuery = useQuery({
     queryKey: ['poolmaster', 'league', leagueCode],
@@ -121,8 +178,91 @@ export function LeagueDetailPage() {
     },
   });
 
+  const changeRoleMutation = useMutation({
+    mutationFn: async ({
+      targetUserId,
+      role,
+    }: {
+      targetUserId: string;
+      role: 'COMMISSIONER' | 'MEMBER';
+    }): Promise<ChangeRoleResponse> => {
+      const response = await changeMemberRole({
+        path: { id: leagueId, uid: targetUserId },
+        body: { role },
+      });
+
+      if (!response.data?.membership) {
+        throw response.error ?? new Error('Role update response is missing data.');
+      }
+
+      return response.data.membership;
+    },
+    onSuccess: async () => {
+      setMemberActionError(null);
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-members', leagueId] });
+    },
+    onError: (error) => {
+      setMemberActionError(
+        extractErrorMessage(error, 'We could not update that league role right now.'),
+      );
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: async (targetUserId: string): Promise<RemoveMemberResponse> => {
+      const response = await removeMember({
+        path: { id: leagueId, uid: targetUserId },
+      });
+
+      if (!response.data) {
+        throw response.error ?? new Error('Member removal response is missing data.');
+      }
+
+      return response.data;
+    },
+    onSuccess: async () => {
+      setMemberActionError(null);
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', leagueCode] });
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-members', leagueId] });
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+    },
+    onError: (error) => {
+      setMemberActionError(
+        extractErrorMessage(error, 'We could not remove that member right now.'),
+      );
+    },
+  });
+
+  const leaveLeagueMutation = useMutation({
+    mutationFn: async (): Promise<LeaveLeagueResponse> => {
+      const response = await leaveLeague({
+        path: { id: leagueId },
+      });
+
+      if (!response.data) {
+        throw response.error ?? new Error('Leave league response is missing data.');
+      }
+
+      return response.data;
+    },
+    onSuccess: async () => {
+      setLeaveActionError(null);
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-members', leagueId] });
+      void navigate('/welcome');
+    },
+    onError: (error) => {
+      setLeaveActionError(
+        extractErrorMessage(error, 'We could not complete that leave request right now.'),
+      );
+    },
+  });
+
   const isCommissioner = leagueQuery.data?.role === 'COMMISSIONER';
   const isInactiveLeague = leagueQuery.data?.isActive === false;
+  const currentUserId = auth.user?.id;
+  const activeCommissionerCount =
+    membersQuery.data?.filter((member) => member.role === 'COMMISSIONER').length ?? 0;
 
   async function handleGenerateInviteLink() {
     if (isInactiveLeague) {
@@ -153,6 +293,48 @@ export function LeagueDetailPage() {
 
     await sendInviteMutation.mutateAsync(email);
     setInviteEmail('');
+  }
+
+  async function handlePromoteMember(member: LeagueMember) {
+    setMemberActionError(null);
+    try {
+      await changeRoleMutation.mutateAsync({
+        targetUserId: member.userId,
+        role: 'COMMISSIONER',
+      });
+    } catch {
+      // Error state is handled by the mutation onError callback.
+    }
+  }
+
+  async function handleDemoteMember(member: LeagueMember) {
+    setMemberActionError(null);
+    try {
+      await changeRoleMutation.mutateAsync({
+        targetUserId: member.userId,
+        role: 'MEMBER',
+      });
+    } catch {
+      // Error state is handled by the mutation onError callback.
+    }
+  }
+
+  async function handleRemoveMember(member: LeagueMember) {
+    setMemberActionError(null);
+    try {
+      await removeMemberMutation.mutateAsync(member.userId);
+    } catch {
+      // Error state is handled by the mutation onError callback.
+    }
+  }
+
+  async function handleLeaveLeague() {
+    setLeaveActionError(null);
+    try {
+      await leaveLeagueMutation.mutateAsync();
+    } catch {
+      // Error state is handled by the mutation onError callback.
+    }
   }
 
   if (leagueQuery.isLoading) {
@@ -288,21 +470,85 @@ export function LeagueDetailPage() {
                 We couldn&apos;t load members for this league.
               </p>
             ) : (
-              membersQuery.data?.map((member) => (
-                <div
-                  className="flex items-center justify-between rounded-2xl border border-border bg-background px-4 py-4"
-                  data-testid={`league-member-${member.id}`}
-                  key={member.id}
-                >
-                  <div>
-                    <div className="font-medium">{formatUserName(member.firstName, member.lastName)}</div>
-                    <div className="text-sm text-muted-foreground">{member.userId}</div>
+              <>
+                {memberActionError ? (
+                  <div
+                    className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+                    data-testid="league-member-action-error"
+                  >
+                    {memberActionError}
                   </div>
-                  <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                    {formatRole(member.role)}
-                  </span>
-                </div>
-              ))
+                ) : null}
+                {membersQuery.data?.map((member) => {
+                  const isCurrentMember = member.userId === currentUserId;
+                  const canManageMember =
+                    isCommissioner && !isCurrentMember && !isInactiveLeague && !changeRoleMutation.isPending && !removeMemberMutation.isPending;
+
+                  return (
+                    <div
+                      className="flex flex-col gap-4 rounded-2xl border border-border bg-background px-4 py-4 lg:flex-row lg:items-center lg:justify-between"
+                      data-testid={`league-member-${member.id}`}
+                      key={member.id}
+                    >
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="font-medium">
+                            {formatUserName(member.firstName, member.lastName)}
+                          </div>
+                          {isCurrentMember ? (
+                            <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                              You
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="mt-1 text-sm text-muted-foreground">{member.email}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {formatJoinedAt(member.joinedAt)}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-start gap-3 lg:items-end">
+                        <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                          {formatRole(member.role)}
+                        </span>
+                        {canManageMember ? (
+                          <div className="flex flex-wrap gap-2">
+                            {member.role === 'MEMBER' ? (
+                              <button
+                                className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
+                                data-testid={`league-member-promote-${member.id}`}
+                                disabled={changeRoleMutation.isPending}
+                                onClick={() => void handlePromoteMember(member)}
+                                type="button"
+                              >
+                                Make commissioner
+                              </button>
+                            ) : (
+                              <button
+                                className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
+                                data-testid={`league-member-demote-${member.id}`}
+                                disabled={changeRoleMutation.isPending}
+                                onClick={() => void handleDemoteMember(member)}
+                                type="button"
+                              >
+                                Change to member
+                              </button>
+                            )}
+                            <button
+                              className="rounded-2xl border border-destructive/30 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/5 disabled:cursor-not-allowed disabled:opacity-60"
+                              data-testid={`league-member-remove-${member.id}`}
+                              disabled={removeMemberMutation.isPending}
+                              onClick={() => void handleRemoveMember(member)}
+                              type="button"
+                            >
+                              Remove member
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
             )}
           </div>
         </div>
@@ -342,6 +588,43 @@ export function LeagueDetailPage() {
               </Link>
             </div>
           </div>
+
+          {!auth.isRootAdmin ? (
+            <div className="rounded-[2rem] border border-border bg-card p-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-semibold">Membership actions</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Leaving the league also removes your team from the active league roster. If you are the last commissioner, appoint another commissioner before leaving.
+                  </p>
+                </div>
+                {isCommissioner ? (
+                  <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                    {activeCommissionerCount} commissioner{activeCommissionerCount === 1 ? '' : 's'}
+                  </span>
+                ) : null}
+              </div>
+              <div className="mt-5 space-y-3">
+                <button
+                  className="rounded-2xl border border-destructive/30 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/5 disabled:cursor-not-allowed disabled:opacity-60"
+                  data-testid="league-leave"
+                  disabled={leaveLeagueMutation.isPending || isInactiveLeague}
+                  onClick={() => void handleLeaveLeague()}
+                  type="button"
+                >
+                  {leaveLeagueMutation.isPending ? 'Leaving...' : 'Leave league'}
+                </button>
+                {leaveActionError ? (
+                  <p
+                    className="text-sm text-destructive"
+                    data-testid="league-leave-error"
+                  >
+                    {leaveActionError}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
 
           <div className="rounded-[2rem] border border-border bg-card p-6">
             <h3 className="text-xl font-semibold">Next build steps</h3>

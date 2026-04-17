@@ -150,6 +150,30 @@ describe('MemberService', () => {
         }),
       ).rejects.toThrow(MemberOperationError);
     });
+
+    it('blocks demoting the last active commissioner', async () => {
+      const repo = createMockMembershipRepo({
+        findByLeagueAndUser: jest
+          .fn()
+          .mockResolvedValue(buildMembership({ role: LeagueRole.COMMISSIONER })),
+        findByLeague: jest
+          .fn()
+          .mockResolvedValue([buildMembership({ role: LeagueRole.COMMISSIONER })]),
+      });
+      const service = new MemberService(repo, prisma);
+
+      await expect(
+        service.changeRole({
+          leagueId: 'league-1',
+          targetUserId: 'user-1',
+          newRole: LeagueRole.MEMBER,
+        }),
+      ).rejects.toMatchObject({
+        code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
+      });
+
+      expect(repo.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('removeMember', () => {
@@ -227,6 +251,21 @@ describe('MemberService', () => {
       await expect(service.removeMember('league-1', 'user-1')).rejects.toThrow(
         MemberOperationError,
       );
+    });
+
+    it('blocks removing the last active commissioner', async () => {
+      const commissionerMembership = buildMembership({ role: LeagueRole.COMMISSIONER });
+      const repo = createMockMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(commissionerMembership),
+        findByLeague: jest.fn().mockResolvedValue([commissionerMembership]),
+      });
+      const service = new MemberService(repo, prisma);
+
+      await expect(service.removeMember('league-1', 'user-1')).rejects.toMatchObject({
+        code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
+      });
+
+      expect(repo.update).not.toHaveBeenCalled();
     });
   });
 

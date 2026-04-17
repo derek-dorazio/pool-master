@@ -1763,6 +1763,10 @@ export type ListLeagueMembersResponses = {
              */
             userId: string;
             /**
+             * Email address for the member account.
+             */
+            email: string;
+            /**
              * First name shown in member-management surfaces.
              */
             firstName: string;

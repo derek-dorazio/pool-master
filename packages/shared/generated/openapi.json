@@ -2988,6 +2988,11 @@
                             "type": "string",
                             "description": "User account identifier for the member."
                           },
+                          "email": {
+                            "type": "string",
+                            "format": "email",
+                            "description": "Email address for the member account."
+                          },
                           "firstName": {
                             "type": "string",
                             "description": "First name shown in member-management surfaces."
@@ -3013,6 +3018,7 @@
                         "required": [
                           "id",
                           "userId",
+                          "email",
                           "firstName",
                           "lastName",
                           "role"

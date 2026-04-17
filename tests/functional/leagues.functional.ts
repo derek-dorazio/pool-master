@@ -568,6 +568,92 @@ describe('SDK Functional: Leagues', () => {
     });
   });
 
+  it('blocks the last commissioner from stepping down or leaving until another commissioner exists', async () => {
+    const commissioner = await buildRegisteredUser({
+      displayName: 'Guarded Commissioner',
+    });
+    const member = await buildRegisteredUser({
+      displayName: 'Future Commissioner',
+    });
+
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: buildCreateLeagueBody('Last Commissioner Guard'),
+    });
+
+    const leagueId = createResponse.data?.league.id;
+    expect(leagueId).toBeTruthy();
+
+    const invitationResponse = await generateInviteLink({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+      },
+      body: {
+        maxUses: 1,
+      },
+    });
+
+    const acceptResponse = await acceptInvitation({
+      client: member.client,
+      body: {
+        inviteCode: invitationResponse.data?.invitation.inviteCode as string,
+      },
+    });
+
+    expect(acceptResponse.data?.membership.role).toBe('MEMBER');
+
+    const demoteSelfResponse = await changeMemberRole({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+        uid: commissioner.userId,
+      },
+      body: {
+        role: 'MEMBER',
+      },
+    });
+
+    expectFunctionalError(demoteSelfResponse, {
+      status: 400,
+      code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
+    });
+
+    const leaveAsLastCommissionerResponse = await leaveLeague({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+      },
+    });
+
+    expectFunctionalError(leaveAsLastCommissionerResponse, {
+      status: 400,
+      code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
+    });
+
+    const promoteResponse = await changeMemberRole({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+        uid: member.userId,
+      },
+      body: {
+        role: 'COMMISSIONER',
+      },
+    });
+
+    expect(promoteResponse.data?.membership.role).toBe('COMMISSIONER');
+
+    const leaveAfterHandoffResponse = await leaveLeague({
+      client: commissioner.client,
+      path: {
+        id: leagueId as string,
+      },
+    });
+
+    expect(leaveAfterHandoffResponse.data).toEqual({ success: true });
+  });
+
   it('rejects non-commissioners from member management routes with stable league permission codes', async () => {
     const commissioner = await buildRegisteredUser({
       displayName: 'Management Commissioner',

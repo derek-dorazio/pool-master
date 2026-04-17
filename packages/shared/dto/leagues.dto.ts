@@ -173,6 +173,7 @@ export type LeagueDetailDto = z.infer<typeof LeagueDetailDtoSchema>;
 export const LeagueMemberDtoSchema = z.object({
   id: z.string().describe('Membership record identifier.'),
   userId: z.string().describe('User account identifier for the member.'),
+  email: z.string().email().describe('Email address for the member account.'),
   firstName: z.string().describe('First name shown in member-management surfaces.'),
   lastName: z.string().describe('Last name shown in member-management surfaces.'),
   role: z

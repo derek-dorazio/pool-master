@@ -8,17 +8,14 @@ import type {
   SquadMembershipRepository,
   SquadRepository,
 } from '@poolmaster/shared/db';
-import type {
-  LeagueMembership,
-  LeagueRole,
-} from '@poolmaster/shared/domain';
-import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
+import type { LeagueMembership, LeagueRole as LeagueRoleType } from '@poolmaster/shared/domain';
+import { LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 import { inactivateLeagueMemberUnit } from './member-lifecycle';
 
 export interface ChangeRoleInput {
   leagueId: string;
   targetUserId: string;
-  newRole: LeagueRole;
+  newRole: LeagueRoleType;
 }
 
 export class MemberService {
@@ -44,6 +41,12 @@ export class MemberService {
         'LEAGUE_MEMBER_INACTIVE',
       );
     }
+    if (
+      membership.role === LeagueRole.COMMISSIONER &&
+      input.newRole !== LeagueRole.COMMISSIONER
+    ) {
+      await this.ensureAnotherActiveCommissioner(input.leagueId, membership.userId);
+    }
     const updates: Partial<LeagueMembership> = {
       role: input.newRole,
     };
@@ -59,6 +62,9 @@ export class MemberService {
     if (membership.status !== LeagueMembershipStatus.ACTIVE) {
       throw new MemberOperationError('Member is already inactive', 'LEAGUE_MEMBER_ALREADY_INACTIVE');
     }
+    if (membership.role === LeagueRole.COMMISSIONER) {
+      await this.ensureAnotherActiveCommissioner(leagueId, membership.userId);
+    }
     await inactivateLeagueMemberUnit({
       leagueId,
       userId,
@@ -67,6 +73,26 @@ export class MemberService {
       squadRepo: this.squadRepo,
       squadMembershipRepo: this.squadMembershipRepo,
     });
+  }
+
+  private async ensureAnotherActiveCommissioner(
+    leagueId: string,
+    targetUserId: string,
+  ): Promise<void> {
+    const memberships = await this.membershipRepo.findByLeague(leagueId);
+    const remainingActiveCommissioners = memberships.filter(
+      (membership) =>
+        membership.status === LeagueMembershipStatus.ACTIVE &&
+        membership.role === LeagueRole.COMMISSIONER &&
+        membership.userId !== targetUserId,
+    );
+
+    if (remainingActiveCommissioners.length === 0) {
+      throw new MemberOperationError(
+        'Appoint another active commissioner before removing or demoting the last commissioner.',
+        'LEAGUE_LAST_COMMISSIONER_REQUIRED',
+      );
+    }
   }
 }
 
