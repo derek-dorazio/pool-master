@@ -261,6 +261,7 @@ Current persona nickname map:
 | Data Modeler | Dom | Model and contract impact classification |
 | Backend Developer | Brad | Service, DTO, OpenAPI, and test implementation |
 | Frontend Developer | Fran | PoolMaster web UI and browser-flow delivery |
+| QA/Test Engineer | Quinn | Verification strategy, regression detection, and test-lane ownership |
 | Product Manager | Pam | Product/use-case clarification and review |
 | Project Manager | Parker | Plan shaping, sequencing, and reconciliation |
 | Architect And Platform | Archie | Cross-cutting architecture and platform work |

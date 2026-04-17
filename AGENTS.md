@@ -57,6 +57,7 @@ The `agents/` directory contains optional role-scoped playbooks for common kinds
 - `agents/data-modeler.md`
 - `agents/frontend-developer.md`
 - `agents/backend-developer.md`
+- `agents/qa-test-engineer.md`
 - `agents/architect-platform.md`
 - `agents/code-reviewer.md`
 
