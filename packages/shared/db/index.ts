@@ -27,6 +27,7 @@ export type {
   SeasonRepository,
   SportRepository,
   SquadMembershipRepository,
+  SquadOwnerInvitationRepository,
   SquadRepository,
   UserRepository,
 } from './ports';

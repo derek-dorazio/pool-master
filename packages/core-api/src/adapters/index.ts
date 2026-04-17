@@ -3,6 +3,7 @@ export { PrismaLeagueMembershipRepository } from './prisma-league-membership-rep
 export { PrismaLeagueInvitationRepository } from './prisma-league-invitation-repository';
 export { PrismaSquadRepository } from './prisma-squad-repository';
 export { PrismaSquadMembershipRepository } from './prisma-squad-membership-repository';
+export { PrismaSquadOwnerInvitationRepository } from './prisma-squad-owner-invitation-repository';
 export { PrismaContestRepository } from './prisma-contest-repository';
 export { PrismaParticipantRepository } from './prisma-participant-repository';
 export { PrismaParticipantSeasonRecordRepository } from './prisma-participant-season-record-repository';

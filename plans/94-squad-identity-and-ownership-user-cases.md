@@ -35,8 +35,15 @@ finished.
   - every team must always retain at least one active owner
   - there is no explicit primary-owner vs co-owner distinction in the first
     slice
+  - all owners are equal in the data model
+  - `co-owner` is a UI/action label for adding another owner, not a distinct
+    ownership tier
   - an owner may not leave or become inactive if that would leave the team with
     zero active owners unless the team itself is also being inactivated
+  - additional owners are added through a team-owner invite flow, not by
+    attaching an existing league member to a second team
+  - validation must reject adding a current league member as an owner of
+    another team
 - Team icon behavior:
   - remove free-form/custom `iconUrl` behavior from the first slice
   - add one shared built-in icon catalog for all teams
@@ -48,6 +55,10 @@ finished.
 - UX entry points:
   - build a dedicated in-league `My Team` page first
   - also expose a convenient shortcut or card on league home
+  - add a read-only `Teams` view for all members that lists every team in the
+    league
+  - commissioners can open/edit any team from the `Teams` view
+  - members can only edit their own team from the `Teams` view
 - Members may leave leagues normally.
 - Commissioner leave rules remain a separate league-membership concern:
   - the current backend does not yet enforce “assign another commissioner
@@ -105,12 +116,71 @@ finished.
 - multi-owner support has been implemented
 
 **Flow**
-1. Owner opens team management
-2. Owner invites or adds additional owners
-3. System updates team ownership/management relationships
+1. Owner or commissioner opens team management
+2. Actor enters the email address of the intended co-owner
+3. System validates that the email does not already belong to another active
+   league member in the same league
+4. If the email belongs to an existing PoolMaster user outside the league:
+   - system immediately creates the league membership and team owner membership
+   - system may also send an informational email
+5. If the email does not belong to an existing PoolMaster user:
+   - system creates a pending invite for co-owner access to the team
+   - user follows the normal register/join flow
+   - once account creation completes, the user lands as a co-owner of the
+     target team
+   - the team name and team icon are shown read-only during that welcome flow
+6. System updates team ownership relationships and pending invite state
 
 **Expected outcomes**
-- Team ownership can expand beyond a single person when the feature is ready
+- Team ownership can expand beyond a single person without merging existing
+  league members across teams
+- Existing PoolMaster users can be added quickly when they are not already in
+  the league
+- New users use the familiar join flow, but do not create or edit a separate
+  personal team when joining as an invited co-owner
+
+### SQ-003A: Existing league member cannot be added as an owner to another team
+
+**Actor:** Team owner or commissioner
+
+**Preconditions**
+- Target email belongs to an active member of the current league
+
+**Flow**
+1. Actor attempts to add the email as a co-owner of a team
+2. System detects that the email already belongs to a current league member
+3. System rejects the request with a clear validation error
+
+**Expected outcomes**
+- Existing league members remain attached to exactly one team
+- Team-sharing does not implicitly merge or move current league members
+
+### SQ-003B: Team owner or commissioner replaces an owner through a guided flow
+
+**Actor:** Team owner or commissioner
+
+**Preconditions**
+- Team exists
+- Target owner to be replaced is currently active
+- Replacement email does not belong to another active league member
+
+**Flow**
+1. Actor chooses `Replace Owner` from the team actions
+2. System asks which current owner is being replaced and which email should
+   replace them
+3. System validates that removing the current owner and adding the replacement
+   will not violate league-member and team-owner rules
+4. System inactivates the current owner relationship
+5. System starts the same co-owner invite/provisioning flow used by `Add
+   Co-Owner`
+6. System completes the replacement when the new owner is provisioned or
+   accepts the invite
+
+**Expected outcomes**
+- Users get a clearer guided action than manually combining remove + add
+- Replacement remains implementation-wise a remove-owner plus invite-owner flow
+- The model still stays flat: owners are equal, and `Replace Owner` is only a
+  higher-level UX action
 
 ### SQ-004: League home exposes a clear path to team identity
 
@@ -130,12 +200,58 @@ finished.
 - Users do not have to hunt through account settings for league-scoped team
   behavior
 
+### SQ-005: All members can browse all teams in the league
+
+**Actor:** Commissioner or member
+
+**Preconditions**
+- User is an active member of the league
+
+**Flow**
+1. User opens the `Teams` view from league home
+2. System shows the current league teams with team name and owner information
+3. Members can inspect all teams read-only
+4. Commissioners can open any team for editing
+5. Members can only open their own team for editing
+
+**Expected outcomes**
+- Team identity is visible across the league
+- Commissioners can manage all teams from one place
+- Members have transparent read-only visibility into the rest of the league
+- Team-level actions can be surfaced cleanly from the list, including:
+  - edit team
+  - add co-owner
+  - remove owner
+  - replace owner
+  - inactivate team
+
+### SQ-006: My Team acts as the team home page
+
+**Actor:** Team owner
+
+**Preconditions**
+- User has an active team in the league
+
+**Flow**
+1. User opens `My Team`
+2. System shows team identity and current owner names and emails
+3. Later slices add active and historical contests associated with the team
+
+**Expected outcomes**
+- `My Team` is the natural home for team-scoped management
+- Team owners can see who manages the team today
+- Team contest surfaces can be layered into the same page later
+
 ## Deferred Questions To Review During Implementation
 
 - Which current user-facing surfaces should switch from user identity to team
   identity first?
 - Should the future owner-transfer flow require an explicit acceptance step?
 - How should future team-avatar uploads coexist with the built-in icon catalog?
+- How should pending team-owner invites be listed, reminded, revoked, and
+  resent in the commissioner/team-owner UI?
+- Under what exact conditions may a team be inactivated while preserving the
+  invariant that active league members still have a valid active team path?
 
 ## Required Model Review Before Implementation
 

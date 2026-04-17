@@ -2,6 +2,7 @@ export * from './common.dto';
 export * from './auth.dto';
 export * from './leagues.dto';
 export * from './squads.dto';
+export * from './team-owner-invitations.dto';
 export * from './contest-management.dto';
 export * from './contests.dto';
 export * from './drafts.dto';

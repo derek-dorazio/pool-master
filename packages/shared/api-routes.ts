@@ -50,6 +50,14 @@ export const API_ROUTES = {
     create: (leagueId: string) => `/api/v1/leagues/${leagueId}/squads`,
     detail: (leagueId: string, squadId: string) =>
       `/api/v1/leagues/${leagueId}/squads/${squadId}`,
+    ownerInvitations: (leagueId: string) =>
+      `/api/v1/leagues/${leagueId}/squads/owner-invitations`,
+    createOwnerInvitation: (leagueId: string, squadId: string) =>
+      `/api/v1/leagues/${leagueId}/squads/${squadId}/owner-invitations`,
+    replaceOwner: (leagueId: string, squadId: string, userId: string) =>
+      `/api/v1/leagues/${leagueId}/squads/${squadId}/owners/${userId}/replace`,
+    revokeOwnerInvitation: (leagueId: string, invitationId: string) =>
+      `/api/v1/leagues/${leagueId}/squads/owner-invitations/${invitationId}`,
     addMember: (leagueId: string, squadId: string) =>
       `/api/v1/leagues/${leagueId}/squads/${squadId}/members`,
     removeMember: (leagueId: string, squadId: string, userId: string) =>
@@ -60,6 +68,11 @@ export const API_ROUTES = {
   invitations: {
     preview: (inviteCode: string) => `/api/v1/invitations/${inviteCode}`,
     accept: '/api/v1/invitations/accept',
+  },
+
+  teamInvitations: {
+    preview: (inviteCode: string) => `/api/v1/team-invitations/${inviteCode}`,
+    accept: '/api/v1/team-invitations/accept',
   },
 
   // Contests

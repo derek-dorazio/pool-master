@@ -6879,6 +6879,1567 @@
         }
       }
     },
+    "/api/v1/leagues/{id}/squads/owner-invitations": {
+      "get": {
+        "operationId": "listSquadOwnerInvitations",
+        "summary": "List team-owner invitations for a league",
+        "tags": [
+          "Squads"
+        ],
+        "description": "Returns pending and historical team-owner invitations visible to the current commissioner or team owner.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "League-scoped list of team-owner invitations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invitations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "leagueId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "squadId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "email": {
+                            "type": "string",
+                            "format": "email"
+                          },
+                          "inviteCode": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "PENDING",
+                              "ACCEPTED",
+                              "EXPIRED",
+                              "REVOKED"
+                            ]
+                          },
+                          "invitedBy": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "acceptedBy": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "acceptedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 datetime string.",
+                            "nullable": true
+                          },
+                          "expiresAt": {
+                            "allOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "ISO 8601 datetime string.",
+                                "nullable": true
+                              }
+                            ],
+                            "nullable": true,
+                            "description": "ISO 8601 datetime string."
+                          },
+                          "replacementForUserId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 datetime string.",
+                            "nullable": true
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 datetime string.",
+                            "nullable": true
+                          },
+                          "team": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "iconKey": {
+                                "type": "string",
+                                "enum": [
+                                  "CAPTAIN_SMILE_SUNSET",
+                                  "CAPTAIN_SMILE_FIELD",
+                                  "CAPTAIN_SMILE_OCEAN",
+                                  "CAPTAIN_SMILE_MIDNIGHT",
+                                  "CAPTAIN_SMILE_CANDY",
+                                  "CAPTAIN_WINK_SUNSET",
+                                  "CAPTAIN_WINK_FIELD",
+                                  "CAPTAIN_WINK_OCEAN",
+                                  "CAPTAIN_WINK_MIDNIGHT",
+                                  "CAPTAIN_WINK_CANDY",
+                                  "CHAMPION_BEARD_SUNSET",
+                                  "CHAMPION_BEARD_FIELD",
+                                  "CHAMPION_BEARD_OCEAN",
+                                  "CHAMPION_BEARD_MIDNIGHT",
+                                  "CHAMPION_BEARD_CANDY",
+                                  "MAVERICK_MASK_SUNSET",
+                                  "MAVERICK_MASK_FIELD",
+                                  "MAVERICK_MASK_OCEAN",
+                                  "MAVERICK_MASK_MIDNIGHT",
+                                  "MAVERICK_MASK_CANDY",
+                                  "STARFACE_SUNSET",
+                                  "STARFACE_FIELD",
+                                  "STARFACE_OCEAN",
+                                  "STARFACE_MIDNIGHT",
+                                  "STARFACE_CANDY",
+                                  "HELMET_STRIPE_SUNSET",
+                                  "HELMET_STRIPE_FIELD",
+                                  "HELMET_STRIPE_OCEAN",
+                                  "HELMET_STRIPE_MIDNIGHT",
+                                  "HELMET_STRIPE_CANDY",
+                                  "HELMET_BOLT_SUNSET",
+                                  "HELMET_BOLT_FIELD",
+                                  "HELMET_BOLT_OCEAN",
+                                  "HELMET_BOLT_MIDNIGHT",
+                                  "HELMET_BOLT_CANDY",
+                                  "HELMET_HORN_SUNSET",
+                                  "HELMET_HORN_FIELD",
+                                  "HELMET_HORN_OCEAN",
+                                  "HELMET_HORN_MIDNIGHT",
+                                  "HELMET_HORN_CANDY",
+                                  "HELMET_WING_SUNSET",
+                                  "HELMET_WING_FIELD",
+                                  "HELMET_WING_OCEAN",
+                                  "HELMET_WING_MIDNIGHT",
+                                  "HELMET_WING_CANDY",
+                                  "HELMET_GRID_SUNSET",
+                                  "HELMET_GRID_FIELD",
+                                  "HELMET_GRID_OCEAN",
+                                  "HELMET_GRID_MIDNIGHT",
+                                  "HELMET_GRID_CANDY",
+                                  "GOLF_BAG_SUNSET",
+                                  "GOLF_BAG_FIELD",
+                                  "GOLF_BAG_OCEAN",
+                                  "GOLF_BAG_MIDNIGHT",
+                                  "GOLF_BAG_CANDY",
+                                  "WHISTLE_BADGE_SUNSET",
+                                  "WHISTLE_BADGE_FIELD",
+                                  "WHISTLE_BADGE_OCEAN",
+                                  "WHISTLE_BADGE_MIDNIGHT",
+                                  "WHISTLE_BADGE_CANDY",
+                                  "STOPWATCH_BADGE_SUNSET",
+                                  "STOPWATCH_BADGE_FIELD",
+                                  "STOPWATCH_BADGE_OCEAN",
+                                  "STOPWATCH_BADGE_MIDNIGHT",
+                                  "STOPWATCH_BADGE_CANDY",
+                                  "MEGAPHONE_SUNSET",
+                                  "MEGAPHONE_FIELD",
+                                  "MEGAPHONE_OCEAN",
+                                  "MEGAPHONE_MIDNIGHT",
+                                  "MEGAPHONE_CANDY",
+                                  "FOAM_FINGER_SUNSET",
+                                  "FOAM_FINGER_FIELD",
+                                  "FOAM_FINGER_OCEAN",
+                                  "FOAM_FINGER_MIDNIGHT",
+                                  "FOAM_FINGER_CANDY",
+                                  "BULL_HEAD_SUNSET",
+                                  "BULL_HEAD_FIELD",
+                                  "BULL_HEAD_OCEAN",
+                                  "BULL_HEAD_MIDNIGHT",
+                                  "BULL_HEAD_CANDY",
+                                  "LUCKY_DUCK_SUNSET",
+                                  "LUCKY_DUCK_FIELD",
+                                  "LUCKY_DUCK_OCEAN",
+                                  "LUCKY_DUCK_MIDNIGHT",
+                                  "LUCKY_DUCK_CANDY",
+                                  "TURBO_TURTLE_SUNSET",
+                                  "TURBO_TURTLE_FIELD",
+                                  "TURBO_TURTLE_OCEAN",
+                                  "TURBO_TURTLE_MIDNIGHT",
+                                  "TURBO_TURTLE_CANDY",
+                                  "FIRE_PIZZA_SUNSET",
+                                  "FIRE_PIZZA_FIELD",
+                                  "FIRE_PIZZA_OCEAN",
+                                  "FIRE_PIZZA_MIDNIGHT",
+                                  "FIRE_PIZZA_CANDY",
+                                  "BANANA_BAT_SUNSET",
+                                  "BANANA_BAT_FIELD",
+                                  "BANANA_BAT_OCEAN",
+                                  "BANANA_BAT_MIDNIGHT",
+                                  "BANANA_BAT_CANDY"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "iconKey"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "leagueId",
+                          "squadId",
+                          "email",
+                          "inviteCode",
+                          "status",
+                          "invitedBy",
+                          "createdAt",
+                          "updatedAt",
+                          "team"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Pending or historical team-owner invitation record."
+                      }
+                    }
+                  },
+                  "required": [
+                    "invitations"
+                  ],
+                  "additionalProperties": false,
+                  "description": "League-scoped list of team-owner invitations."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/squads/{squadId}/owner-invitations": {
+      "post": {
+        "operationId": "createSquadOwnerInvitation",
+        "summary": "Invite a co-owner by email",
+        "tags": [
+          "Squads"
+        ],
+        "description": "Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address for the intended co-owner."
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "additionalProperties": false,
+                "description": "Request payload for inviting an additional co-owner to a team."
+              }
+            }
+          },
+          "description": "Request payload for inviting an additional co-owner to a team."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "squadId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Single team-owner invitation response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invitation": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "leagueId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "squadId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "inviteCode": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "ACCEPTED",
+                            "EXPIRED",
+                            "REVOKED"
+                          ]
+                        },
+                        "invitedBy": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "acceptedBy": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "acceptedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string.",
+                          "nullable": true
+                        },
+                        "expiresAt": {
+                          "allOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "description": "ISO 8601 datetime string.",
+                              "nullable": true
+                            }
+                          ],
+                          "nullable": true,
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "replacementForUserId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string.",
+                          "nullable": true
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string.",
+                          "nullable": true
+                        },
+                        "team": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "iconKey": {
+                              "type": "string",
+                              "enum": [
+                                "CAPTAIN_SMILE_SUNSET",
+                                "CAPTAIN_SMILE_FIELD",
+                                "CAPTAIN_SMILE_OCEAN",
+                                "CAPTAIN_SMILE_MIDNIGHT",
+                                "CAPTAIN_SMILE_CANDY",
+                                "CAPTAIN_WINK_SUNSET",
+                                "CAPTAIN_WINK_FIELD",
+                                "CAPTAIN_WINK_OCEAN",
+                                "CAPTAIN_WINK_MIDNIGHT",
+                                "CAPTAIN_WINK_CANDY",
+                                "CHAMPION_BEARD_SUNSET",
+                                "CHAMPION_BEARD_FIELD",
+                                "CHAMPION_BEARD_OCEAN",
+                                "CHAMPION_BEARD_MIDNIGHT",
+                                "CHAMPION_BEARD_CANDY",
+                                "MAVERICK_MASK_SUNSET",
+                                "MAVERICK_MASK_FIELD",
+                                "MAVERICK_MASK_OCEAN",
+                                "MAVERICK_MASK_MIDNIGHT",
+                                "MAVERICK_MASK_CANDY",
+                                "STARFACE_SUNSET",
+                                "STARFACE_FIELD",
+                                "STARFACE_OCEAN",
+                                "STARFACE_MIDNIGHT",
+                                "STARFACE_CANDY",
+                                "HELMET_STRIPE_SUNSET",
+                                "HELMET_STRIPE_FIELD",
+                                "HELMET_STRIPE_OCEAN",
+                                "HELMET_STRIPE_MIDNIGHT",
+                                "HELMET_STRIPE_CANDY",
+                                "HELMET_BOLT_SUNSET",
+                                "HELMET_BOLT_FIELD",
+                                "HELMET_BOLT_OCEAN",
+                                "HELMET_BOLT_MIDNIGHT",
+                                "HELMET_BOLT_CANDY",
+                                "HELMET_HORN_SUNSET",
+                                "HELMET_HORN_FIELD",
+                                "HELMET_HORN_OCEAN",
+                                "HELMET_HORN_MIDNIGHT",
+                                "HELMET_HORN_CANDY",
+                                "HELMET_WING_SUNSET",
+                                "HELMET_WING_FIELD",
+                                "HELMET_WING_OCEAN",
+                                "HELMET_WING_MIDNIGHT",
+                                "HELMET_WING_CANDY",
+                                "HELMET_GRID_SUNSET",
+                                "HELMET_GRID_FIELD",
+                                "HELMET_GRID_OCEAN",
+                                "HELMET_GRID_MIDNIGHT",
+                                "HELMET_GRID_CANDY",
+                                "GOLF_BAG_SUNSET",
+                                "GOLF_BAG_FIELD",
+                                "GOLF_BAG_OCEAN",
+                                "GOLF_BAG_MIDNIGHT",
+                                "GOLF_BAG_CANDY",
+                                "WHISTLE_BADGE_SUNSET",
+                                "WHISTLE_BADGE_FIELD",
+                                "WHISTLE_BADGE_OCEAN",
+                                "WHISTLE_BADGE_MIDNIGHT",
+                                "WHISTLE_BADGE_CANDY",
+                                "STOPWATCH_BADGE_SUNSET",
+                                "STOPWATCH_BADGE_FIELD",
+                                "STOPWATCH_BADGE_OCEAN",
+                                "STOPWATCH_BADGE_MIDNIGHT",
+                                "STOPWATCH_BADGE_CANDY",
+                                "MEGAPHONE_SUNSET",
+                                "MEGAPHONE_FIELD",
+                                "MEGAPHONE_OCEAN",
+                                "MEGAPHONE_MIDNIGHT",
+                                "MEGAPHONE_CANDY",
+                                "FOAM_FINGER_SUNSET",
+                                "FOAM_FINGER_FIELD",
+                                "FOAM_FINGER_OCEAN",
+                                "FOAM_FINGER_MIDNIGHT",
+                                "FOAM_FINGER_CANDY",
+                                "BULL_HEAD_SUNSET",
+                                "BULL_HEAD_FIELD",
+                                "BULL_HEAD_OCEAN",
+                                "BULL_HEAD_MIDNIGHT",
+                                "BULL_HEAD_CANDY",
+                                "LUCKY_DUCK_SUNSET",
+                                "LUCKY_DUCK_FIELD",
+                                "LUCKY_DUCK_OCEAN",
+                                "LUCKY_DUCK_MIDNIGHT",
+                                "LUCKY_DUCK_CANDY",
+                                "TURBO_TURTLE_SUNSET",
+                                "TURBO_TURTLE_FIELD",
+                                "TURBO_TURTLE_OCEAN",
+                                "TURBO_TURTLE_MIDNIGHT",
+                                "TURBO_TURTLE_CANDY",
+                                "FIRE_PIZZA_SUNSET",
+                                "FIRE_PIZZA_FIELD",
+                                "FIRE_PIZZA_OCEAN",
+                                "FIRE_PIZZA_MIDNIGHT",
+                                "FIRE_PIZZA_CANDY",
+                                "BANANA_BAT_SUNSET",
+                                "BANANA_BAT_FIELD",
+                                "BANANA_BAT_OCEAN",
+                                "BANANA_BAT_MIDNIGHT",
+                                "BANANA_BAT_CANDY"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "iconKey"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueId",
+                        "squadId",
+                        "email",
+                        "inviteCode",
+                        "status",
+                        "invitedBy",
+                        "createdAt",
+                        "updatedAt",
+                        "team"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Pending or historical team-owner invitation record."
+                    }
+                  },
+                  "required": [
+                    "invitation"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Single team-owner invitation response."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/squads/{squadId}/owners/{userId}/replace": {
+      "post": {
+        "operationId": "replaceSquadOwner",
+        "summary": "Replace an active team owner",
+        "tags": [
+          "Squads"
+        ],
+        "description": "Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address for the replacement owner."
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "additionalProperties": false,
+                "description": "Request payload for replacing an existing active owner on a team."
+              }
+            }
+          },
+          "description": "Request payload for replacing an existing active owner on a team."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "squadId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "userId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Single team-owner invitation response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invitation": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "leagueId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "squadId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "inviteCode": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "ACCEPTED",
+                            "EXPIRED",
+                            "REVOKED"
+                          ]
+                        },
+                        "invitedBy": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "acceptedBy": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "acceptedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string.",
+                          "nullable": true
+                        },
+                        "expiresAt": {
+                          "allOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "description": "ISO 8601 datetime string.",
+                              "nullable": true
+                            }
+                          ],
+                          "nullable": true,
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "replacementForUserId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string.",
+                          "nullable": true
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string.",
+                          "nullable": true
+                        },
+                        "team": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "iconKey": {
+                              "type": "string",
+                              "enum": [
+                                "CAPTAIN_SMILE_SUNSET",
+                                "CAPTAIN_SMILE_FIELD",
+                                "CAPTAIN_SMILE_OCEAN",
+                                "CAPTAIN_SMILE_MIDNIGHT",
+                                "CAPTAIN_SMILE_CANDY",
+                                "CAPTAIN_WINK_SUNSET",
+                                "CAPTAIN_WINK_FIELD",
+                                "CAPTAIN_WINK_OCEAN",
+                                "CAPTAIN_WINK_MIDNIGHT",
+                                "CAPTAIN_WINK_CANDY",
+                                "CHAMPION_BEARD_SUNSET",
+                                "CHAMPION_BEARD_FIELD",
+                                "CHAMPION_BEARD_OCEAN",
+                                "CHAMPION_BEARD_MIDNIGHT",
+                                "CHAMPION_BEARD_CANDY",
+                                "MAVERICK_MASK_SUNSET",
+                                "MAVERICK_MASK_FIELD",
+                                "MAVERICK_MASK_OCEAN",
+                                "MAVERICK_MASK_MIDNIGHT",
+                                "MAVERICK_MASK_CANDY",
+                                "STARFACE_SUNSET",
+                                "STARFACE_FIELD",
+                                "STARFACE_OCEAN",
+                                "STARFACE_MIDNIGHT",
+                                "STARFACE_CANDY",
+                                "HELMET_STRIPE_SUNSET",
+                                "HELMET_STRIPE_FIELD",
+                                "HELMET_STRIPE_OCEAN",
+                                "HELMET_STRIPE_MIDNIGHT",
+                                "HELMET_STRIPE_CANDY",
+                                "HELMET_BOLT_SUNSET",
+                                "HELMET_BOLT_FIELD",
+                                "HELMET_BOLT_OCEAN",
+                                "HELMET_BOLT_MIDNIGHT",
+                                "HELMET_BOLT_CANDY",
+                                "HELMET_HORN_SUNSET",
+                                "HELMET_HORN_FIELD",
+                                "HELMET_HORN_OCEAN",
+                                "HELMET_HORN_MIDNIGHT",
+                                "HELMET_HORN_CANDY",
+                                "HELMET_WING_SUNSET",
+                                "HELMET_WING_FIELD",
+                                "HELMET_WING_OCEAN",
+                                "HELMET_WING_MIDNIGHT",
+                                "HELMET_WING_CANDY",
+                                "HELMET_GRID_SUNSET",
+                                "HELMET_GRID_FIELD",
+                                "HELMET_GRID_OCEAN",
+                                "HELMET_GRID_MIDNIGHT",
+                                "HELMET_GRID_CANDY",
+                                "GOLF_BAG_SUNSET",
+                                "GOLF_BAG_FIELD",
+                                "GOLF_BAG_OCEAN",
+                                "GOLF_BAG_MIDNIGHT",
+                                "GOLF_BAG_CANDY",
+                                "WHISTLE_BADGE_SUNSET",
+                                "WHISTLE_BADGE_FIELD",
+                                "WHISTLE_BADGE_OCEAN",
+                                "WHISTLE_BADGE_MIDNIGHT",
+                                "WHISTLE_BADGE_CANDY",
+                                "STOPWATCH_BADGE_SUNSET",
+                                "STOPWATCH_BADGE_FIELD",
+                                "STOPWATCH_BADGE_OCEAN",
+                                "STOPWATCH_BADGE_MIDNIGHT",
+                                "STOPWATCH_BADGE_CANDY",
+                                "MEGAPHONE_SUNSET",
+                                "MEGAPHONE_FIELD",
+                                "MEGAPHONE_OCEAN",
+                                "MEGAPHONE_MIDNIGHT",
+                                "MEGAPHONE_CANDY",
+                                "FOAM_FINGER_SUNSET",
+                                "FOAM_FINGER_FIELD",
+                                "FOAM_FINGER_OCEAN",
+                                "FOAM_FINGER_MIDNIGHT",
+                                "FOAM_FINGER_CANDY",
+                                "BULL_HEAD_SUNSET",
+                                "BULL_HEAD_FIELD",
+                                "BULL_HEAD_OCEAN",
+                                "BULL_HEAD_MIDNIGHT",
+                                "BULL_HEAD_CANDY",
+                                "LUCKY_DUCK_SUNSET",
+                                "LUCKY_DUCK_FIELD",
+                                "LUCKY_DUCK_OCEAN",
+                                "LUCKY_DUCK_MIDNIGHT",
+                                "LUCKY_DUCK_CANDY",
+                                "TURBO_TURTLE_SUNSET",
+                                "TURBO_TURTLE_FIELD",
+                                "TURBO_TURTLE_OCEAN",
+                                "TURBO_TURTLE_MIDNIGHT",
+                                "TURBO_TURTLE_CANDY",
+                                "FIRE_PIZZA_SUNSET",
+                                "FIRE_PIZZA_FIELD",
+                                "FIRE_PIZZA_OCEAN",
+                                "FIRE_PIZZA_MIDNIGHT",
+                                "FIRE_PIZZA_CANDY",
+                                "BANANA_BAT_SUNSET",
+                                "BANANA_BAT_FIELD",
+                                "BANANA_BAT_OCEAN",
+                                "BANANA_BAT_MIDNIGHT",
+                                "BANANA_BAT_CANDY"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "iconKey"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueId",
+                        "squadId",
+                        "email",
+                        "inviteCode",
+                        "status",
+                        "invitedBy",
+                        "createdAt",
+                        "updatedAt",
+                        "team"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Pending or historical team-owner invitation record."
+                    }
+                  },
+                  "required": [
+                    "invitation"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Single team-owner invitation response."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/squads/owner-invitations/{invitationId}": {
+      "delete": {
+        "operationId": "revokeSquadOwnerInvitation",
+        "summary": "Revoke a pending team-owner invitation",
+        "tags": [
+          "Squads"
+        ],
+        "description": "Revokes a pending co-owner invitation so it can no longer be accepted.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "invitationId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single team-owner invitation response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invitation": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "leagueId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "squadId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "inviteCode": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "ACCEPTED",
+                            "EXPIRED",
+                            "REVOKED"
+                          ]
+                        },
+                        "invitedBy": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "acceptedBy": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "acceptedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string.",
+                          "nullable": true
+                        },
+                        "expiresAt": {
+                          "allOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "description": "ISO 8601 datetime string.",
+                              "nullable": true
+                            }
+                          ],
+                          "nullable": true,
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "replacementForUserId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string.",
+                          "nullable": true
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string.",
+                          "nullable": true
+                        },
+                        "team": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "iconKey": {
+                              "type": "string",
+                              "enum": [
+                                "CAPTAIN_SMILE_SUNSET",
+                                "CAPTAIN_SMILE_FIELD",
+                                "CAPTAIN_SMILE_OCEAN",
+                                "CAPTAIN_SMILE_MIDNIGHT",
+                                "CAPTAIN_SMILE_CANDY",
+                                "CAPTAIN_WINK_SUNSET",
+                                "CAPTAIN_WINK_FIELD",
+                                "CAPTAIN_WINK_OCEAN",
+                                "CAPTAIN_WINK_MIDNIGHT",
+                                "CAPTAIN_WINK_CANDY",
+                                "CHAMPION_BEARD_SUNSET",
+                                "CHAMPION_BEARD_FIELD",
+                                "CHAMPION_BEARD_OCEAN",
+                                "CHAMPION_BEARD_MIDNIGHT",
+                                "CHAMPION_BEARD_CANDY",
+                                "MAVERICK_MASK_SUNSET",
+                                "MAVERICK_MASK_FIELD",
+                                "MAVERICK_MASK_OCEAN",
+                                "MAVERICK_MASK_MIDNIGHT",
+                                "MAVERICK_MASK_CANDY",
+                                "STARFACE_SUNSET",
+                                "STARFACE_FIELD",
+                                "STARFACE_OCEAN",
+                                "STARFACE_MIDNIGHT",
+                                "STARFACE_CANDY",
+                                "HELMET_STRIPE_SUNSET",
+                                "HELMET_STRIPE_FIELD",
+                                "HELMET_STRIPE_OCEAN",
+                                "HELMET_STRIPE_MIDNIGHT",
+                                "HELMET_STRIPE_CANDY",
+                                "HELMET_BOLT_SUNSET",
+                                "HELMET_BOLT_FIELD",
+                                "HELMET_BOLT_OCEAN",
+                                "HELMET_BOLT_MIDNIGHT",
+                                "HELMET_BOLT_CANDY",
+                                "HELMET_HORN_SUNSET",
+                                "HELMET_HORN_FIELD",
+                                "HELMET_HORN_OCEAN",
+                                "HELMET_HORN_MIDNIGHT",
+                                "HELMET_HORN_CANDY",
+                                "HELMET_WING_SUNSET",
+                                "HELMET_WING_FIELD",
+                                "HELMET_WING_OCEAN",
+                                "HELMET_WING_MIDNIGHT",
+                                "HELMET_WING_CANDY",
+                                "HELMET_GRID_SUNSET",
+                                "HELMET_GRID_FIELD",
+                                "HELMET_GRID_OCEAN",
+                                "HELMET_GRID_MIDNIGHT",
+                                "HELMET_GRID_CANDY",
+                                "GOLF_BAG_SUNSET",
+                                "GOLF_BAG_FIELD",
+                                "GOLF_BAG_OCEAN",
+                                "GOLF_BAG_MIDNIGHT",
+                                "GOLF_BAG_CANDY",
+                                "WHISTLE_BADGE_SUNSET",
+                                "WHISTLE_BADGE_FIELD",
+                                "WHISTLE_BADGE_OCEAN",
+                                "WHISTLE_BADGE_MIDNIGHT",
+                                "WHISTLE_BADGE_CANDY",
+                                "STOPWATCH_BADGE_SUNSET",
+                                "STOPWATCH_BADGE_FIELD",
+                                "STOPWATCH_BADGE_OCEAN",
+                                "STOPWATCH_BADGE_MIDNIGHT",
+                                "STOPWATCH_BADGE_CANDY",
+                                "MEGAPHONE_SUNSET",
+                                "MEGAPHONE_FIELD",
+                                "MEGAPHONE_OCEAN",
+                                "MEGAPHONE_MIDNIGHT",
+                                "MEGAPHONE_CANDY",
+                                "FOAM_FINGER_SUNSET",
+                                "FOAM_FINGER_FIELD",
+                                "FOAM_FINGER_OCEAN",
+                                "FOAM_FINGER_MIDNIGHT",
+                                "FOAM_FINGER_CANDY",
+                                "BULL_HEAD_SUNSET",
+                                "BULL_HEAD_FIELD",
+                                "BULL_HEAD_OCEAN",
+                                "BULL_HEAD_MIDNIGHT",
+                                "BULL_HEAD_CANDY",
+                                "LUCKY_DUCK_SUNSET",
+                                "LUCKY_DUCK_FIELD",
+                                "LUCKY_DUCK_OCEAN",
+                                "LUCKY_DUCK_MIDNIGHT",
+                                "LUCKY_DUCK_CANDY",
+                                "TURBO_TURTLE_SUNSET",
+                                "TURBO_TURTLE_FIELD",
+                                "TURBO_TURTLE_OCEAN",
+                                "TURBO_TURTLE_MIDNIGHT",
+                                "TURBO_TURTLE_CANDY",
+                                "FIRE_PIZZA_SUNSET",
+                                "FIRE_PIZZA_FIELD",
+                                "FIRE_PIZZA_OCEAN",
+                                "FIRE_PIZZA_MIDNIGHT",
+                                "FIRE_PIZZA_CANDY",
+                                "BANANA_BAT_SUNSET",
+                                "BANANA_BAT_FIELD",
+                                "BANANA_BAT_OCEAN",
+                                "BANANA_BAT_MIDNIGHT",
+                                "BANANA_BAT_CANDY"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "iconKey"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueId",
+                        "squadId",
+                        "email",
+                        "inviteCode",
+                        "status",
+                        "invitedBy",
+                        "createdAt",
+                        "updatedAt",
+                        "team"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Pending or historical team-owner invitation record."
+                    }
+                  },
+                  "required": [
+                    "invitation"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Single team-owner invitation response."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/invitations/{inviteCode}": {
       "get": {
         "operationId": "getInvitationPreview",
@@ -7151,6 +8712,682 @@
                   ],
                   "additionalProperties": false,
                   "description": "Single league-membership response."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/team-invitations/{inviteCode}": {
+      "get": {
+        "operationId": "getTeamOwnerInvitationPreview",
+        "summary": "Preview a team-owner invitation by invite code",
+        "tags": [
+          "Squads"
+        ],
+        "description": "Returns the minimal league and team identity needed to render the public team-owner invitation flow before or after authentication.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "inviteCode",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public preview payload for a team-owner invitation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invitation": {
+                      "type": "object",
+                      "properties": {
+                        "inviteCode": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "ACCEPTED",
+                            "EXPIRED",
+                            "REVOKED"
+                          ]
+                        },
+                        "league": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "leagueCode": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "leagueCode",
+                            "name"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "team": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "iconKey": {
+                              "type": "string",
+                              "enum": [
+                                "CAPTAIN_SMILE_SUNSET",
+                                "CAPTAIN_SMILE_FIELD",
+                                "CAPTAIN_SMILE_OCEAN",
+                                "CAPTAIN_SMILE_MIDNIGHT",
+                                "CAPTAIN_SMILE_CANDY",
+                                "CAPTAIN_WINK_SUNSET",
+                                "CAPTAIN_WINK_FIELD",
+                                "CAPTAIN_WINK_OCEAN",
+                                "CAPTAIN_WINK_MIDNIGHT",
+                                "CAPTAIN_WINK_CANDY",
+                                "CHAMPION_BEARD_SUNSET",
+                                "CHAMPION_BEARD_FIELD",
+                                "CHAMPION_BEARD_OCEAN",
+                                "CHAMPION_BEARD_MIDNIGHT",
+                                "CHAMPION_BEARD_CANDY",
+                                "MAVERICK_MASK_SUNSET",
+                                "MAVERICK_MASK_FIELD",
+                                "MAVERICK_MASK_OCEAN",
+                                "MAVERICK_MASK_MIDNIGHT",
+                                "MAVERICK_MASK_CANDY",
+                                "STARFACE_SUNSET",
+                                "STARFACE_FIELD",
+                                "STARFACE_OCEAN",
+                                "STARFACE_MIDNIGHT",
+                                "STARFACE_CANDY",
+                                "HELMET_STRIPE_SUNSET",
+                                "HELMET_STRIPE_FIELD",
+                                "HELMET_STRIPE_OCEAN",
+                                "HELMET_STRIPE_MIDNIGHT",
+                                "HELMET_STRIPE_CANDY",
+                                "HELMET_BOLT_SUNSET",
+                                "HELMET_BOLT_FIELD",
+                                "HELMET_BOLT_OCEAN",
+                                "HELMET_BOLT_MIDNIGHT",
+                                "HELMET_BOLT_CANDY",
+                                "HELMET_HORN_SUNSET",
+                                "HELMET_HORN_FIELD",
+                                "HELMET_HORN_OCEAN",
+                                "HELMET_HORN_MIDNIGHT",
+                                "HELMET_HORN_CANDY",
+                                "HELMET_WING_SUNSET",
+                                "HELMET_WING_FIELD",
+                                "HELMET_WING_OCEAN",
+                                "HELMET_WING_MIDNIGHT",
+                                "HELMET_WING_CANDY",
+                                "HELMET_GRID_SUNSET",
+                                "HELMET_GRID_FIELD",
+                                "HELMET_GRID_OCEAN",
+                                "HELMET_GRID_MIDNIGHT",
+                                "HELMET_GRID_CANDY",
+                                "GOLF_BAG_SUNSET",
+                                "GOLF_BAG_FIELD",
+                                "GOLF_BAG_OCEAN",
+                                "GOLF_BAG_MIDNIGHT",
+                                "GOLF_BAG_CANDY",
+                                "WHISTLE_BADGE_SUNSET",
+                                "WHISTLE_BADGE_FIELD",
+                                "WHISTLE_BADGE_OCEAN",
+                                "WHISTLE_BADGE_MIDNIGHT",
+                                "WHISTLE_BADGE_CANDY",
+                                "STOPWATCH_BADGE_SUNSET",
+                                "STOPWATCH_BADGE_FIELD",
+                                "STOPWATCH_BADGE_OCEAN",
+                                "STOPWATCH_BADGE_MIDNIGHT",
+                                "STOPWATCH_BADGE_CANDY",
+                                "MEGAPHONE_SUNSET",
+                                "MEGAPHONE_FIELD",
+                                "MEGAPHONE_OCEAN",
+                                "MEGAPHONE_MIDNIGHT",
+                                "MEGAPHONE_CANDY",
+                                "FOAM_FINGER_SUNSET",
+                                "FOAM_FINGER_FIELD",
+                                "FOAM_FINGER_OCEAN",
+                                "FOAM_FINGER_MIDNIGHT",
+                                "FOAM_FINGER_CANDY",
+                                "BULL_HEAD_SUNSET",
+                                "BULL_HEAD_FIELD",
+                                "BULL_HEAD_OCEAN",
+                                "BULL_HEAD_MIDNIGHT",
+                                "BULL_HEAD_CANDY",
+                                "LUCKY_DUCK_SUNSET",
+                                "LUCKY_DUCK_FIELD",
+                                "LUCKY_DUCK_OCEAN",
+                                "LUCKY_DUCK_MIDNIGHT",
+                                "LUCKY_DUCK_CANDY",
+                                "TURBO_TURTLE_SUNSET",
+                                "TURBO_TURTLE_FIELD",
+                                "TURBO_TURTLE_OCEAN",
+                                "TURBO_TURTLE_MIDNIGHT",
+                                "TURBO_TURTLE_CANDY",
+                                "FIRE_PIZZA_SUNSET",
+                                "FIRE_PIZZA_FIELD",
+                                "FIRE_PIZZA_OCEAN",
+                                "FIRE_PIZZA_MIDNIGHT",
+                                "FIRE_PIZZA_CANDY",
+                                "BANANA_BAT_SUNSET",
+                                "BANANA_BAT_FIELD",
+                                "BANANA_BAT_OCEAN",
+                                "BANANA_BAT_MIDNIGHT",
+                                "BANANA_BAT_CANDY"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "iconKey"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "roleAfterAccept": {
+                          "type": "string",
+                          "enum": [
+                            "MEMBER"
+                          ],
+                          "description": "League role applied when the invitation is accepted."
+                        }
+                      },
+                      "required": [
+                        "inviteCode",
+                        "status",
+                        "league",
+                        "team",
+                        "roleAfterAccept"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "invitation"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Public preview payload for a team-owner invitation."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/team-invitations/accept": {
+      "post": {
+        "operationId": "acceptTeamOwnerInvitation",
+        "summary": "Accept a team-owner invitation using an invite code",
+        "tags": [
+          "Squads"
+        ],
+        "description": "Accepts a team-owner invitation for the authenticated user and provisions league membership plus team ownership on the target team.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "inviteCode": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Team-owner invitation code from the invite URL or email."
+                  }
+                },
+                "required": [
+                  "inviteCode"
+                ],
+                "additionalProperties": false,
+                "description": "Authenticated team-owner invitation acceptance payload."
+              }
+            }
+          },
+          "description": "Authenticated team-owner invitation acceptance payload."
+        },
+        "responses": {
+          "201": {
+            "description": "Single team-owner invitation response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invitation": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "leagueId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "squadId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "inviteCode": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "ACCEPTED",
+                            "EXPIRED",
+                            "REVOKED"
+                          ]
+                        },
+                        "invitedBy": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "acceptedBy": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "acceptedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string.",
+                          "nullable": true
+                        },
+                        "expiresAt": {
+                          "allOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "description": "ISO 8601 datetime string.",
+                              "nullable": true
+                            }
+                          ],
+                          "nullable": true,
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "replacementForUserId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string.",
+                          "nullable": true
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string.",
+                          "nullable": true
+                        },
+                        "team": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "iconKey": {
+                              "type": "string",
+                              "enum": [
+                                "CAPTAIN_SMILE_SUNSET",
+                                "CAPTAIN_SMILE_FIELD",
+                                "CAPTAIN_SMILE_OCEAN",
+                                "CAPTAIN_SMILE_MIDNIGHT",
+                                "CAPTAIN_SMILE_CANDY",
+                                "CAPTAIN_WINK_SUNSET",
+                                "CAPTAIN_WINK_FIELD",
+                                "CAPTAIN_WINK_OCEAN",
+                                "CAPTAIN_WINK_MIDNIGHT",
+                                "CAPTAIN_WINK_CANDY",
+                                "CHAMPION_BEARD_SUNSET",
+                                "CHAMPION_BEARD_FIELD",
+                                "CHAMPION_BEARD_OCEAN",
+                                "CHAMPION_BEARD_MIDNIGHT",
+                                "CHAMPION_BEARD_CANDY",
+                                "MAVERICK_MASK_SUNSET",
+                                "MAVERICK_MASK_FIELD",
+                                "MAVERICK_MASK_OCEAN",
+                                "MAVERICK_MASK_MIDNIGHT",
+                                "MAVERICK_MASK_CANDY",
+                                "STARFACE_SUNSET",
+                                "STARFACE_FIELD",
+                                "STARFACE_OCEAN",
+                                "STARFACE_MIDNIGHT",
+                                "STARFACE_CANDY",
+                                "HELMET_STRIPE_SUNSET",
+                                "HELMET_STRIPE_FIELD",
+                                "HELMET_STRIPE_OCEAN",
+                                "HELMET_STRIPE_MIDNIGHT",
+                                "HELMET_STRIPE_CANDY",
+                                "HELMET_BOLT_SUNSET",
+                                "HELMET_BOLT_FIELD",
+                                "HELMET_BOLT_OCEAN",
+                                "HELMET_BOLT_MIDNIGHT",
+                                "HELMET_BOLT_CANDY",
+                                "HELMET_HORN_SUNSET",
+                                "HELMET_HORN_FIELD",
+                                "HELMET_HORN_OCEAN",
+                                "HELMET_HORN_MIDNIGHT",
+                                "HELMET_HORN_CANDY",
+                                "HELMET_WING_SUNSET",
+                                "HELMET_WING_FIELD",
+                                "HELMET_WING_OCEAN",
+                                "HELMET_WING_MIDNIGHT",
+                                "HELMET_WING_CANDY",
+                                "HELMET_GRID_SUNSET",
+                                "HELMET_GRID_FIELD",
+                                "HELMET_GRID_OCEAN",
+                                "HELMET_GRID_MIDNIGHT",
+                                "HELMET_GRID_CANDY",
+                                "GOLF_BAG_SUNSET",
+                                "GOLF_BAG_FIELD",
+                                "GOLF_BAG_OCEAN",
+                                "GOLF_BAG_MIDNIGHT",
+                                "GOLF_BAG_CANDY",
+                                "WHISTLE_BADGE_SUNSET",
+                                "WHISTLE_BADGE_FIELD",
+                                "WHISTLE_BADGE_OCEAN",
+                                "WHISTLE_BADGE_MIDNIGHT",
+                                "WHISTLE_BADGE_CANDY",
+                                "STOPWATCH_BADGE_SUNSET",
+                                "STOPWATCH_BADGE_FIELD",
+                                "STOPWATCH_BADGE_OCEAN",
+                                "STOPWATCH_BADGE_MIDNIGHT",
+                                "STOPWATCH_BADGE_CANDY",
+                                "MEGAPHONE_SUNSET",
+                                "MEGAPHONE_FIELD",
+                                "MEGAPHONE_OCEAN",
+                                "MEGAPHONE_MIDNIGHT",
+                                "MEGAPHONE_CANDY",
+                                "FOAM_FINGER_SUNSET",
+                                "FOAM_FINGER_FIELD",
+                                "FOAM_FINGER_OCEAN",
+                                "FOAM_FINGER_MIDNIGHT",
+                                "FOAM_FINGER_CANDY",
+                                "BULL_HEAD_SUNSET",
+                                "BULL_HEAD_FIELD",
+                                "BULL_HEAD_OCEAN",
+                                "BULL_HEAD_MIDNIGHT",
+                                "BULL_HEAD_CANDY",
+                                "LUCKY_DUCK_SUNSET",
+                                "LUCKY_DUCK_FIELD",
+                                "LUCKY_DUCK_OCEAN",
+                                "LUCKY_DUCK_MIDNIGHT",
+                                "LUCKY_DUCK_CANDY",
+                                "TURBO_TURTLE_SUNSET",
+                                "TURBO_TURTLE_FIELD",
+                                "TURBO_TURTLE_OCEAN",
+                                "TURBO_TURTLE_MIDNIGHT",
+                                "TURBO_TURTLE_CANDY",
+                                "FIRE_PIZZA_SUNSET",
+                                "FIRE_PIZZA_FIELD",
+                                "FIRE_PIZZA_OCEAN",
+                                "FIRE_PIZZA_MIDNIGHT",
+                                "FIRE_PIZZA_CANDY",
+                                "BANANA_BAT_SUNSET",
+                                "BANANA_BAT_FIELD",
+                                "BANANA_BAT_OCEAN",
+                                "BANANA_BAT_MIDNIGHT",
+                                "BANANA_BAT_CANDY"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "iconKey"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueId",
+                        "squadId",
+                        "email",
+                        "inviteCode",
+                        "status",
+                        "invitedBy",
+                        "createdAt",
+                        "updatedAt",
+                        "team"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Pending or historical team-owner invitation record."
+                    }
+                  },
+                  "required": [
+                    "invitation"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Single team-owner invitation response."
                 }
               }
             }

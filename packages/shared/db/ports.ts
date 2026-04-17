@@ -22,6 +22,7 @@ import type {
   SportConfig,
   Squad,
   SquadMembership,
+  SquadOwnerInvitation,
   User,
 } from '../domain';
 
@@ -73,6 +74,21 @@ export interface SquadMembershipRepository {
     membership: Omit<SquadMembership, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<SquadMembership>;
   update(id: string, updates: Partial<SquadMembership>): Promise<SquadMembership>;
+  delete(id: string): Promise<void>;
+}
+
+export interface SquadOwnerInvitationRepository {
+  findById(id: string): Promise<SquadOwnerInvitation | null>;
+  findByLeague(leagueId: string): Promise<SquadOwnerInvitation[]>;
+  findByCode(inviteCode: string): Promise<SquadOwnerInvitation | null>;
+  findPendingByLeagueAndEmail(
+    leagueId: string,
+    email: string,
+  ): Promise<SquadOwnerInvitation | null>;
+  create(
+    invitation: Omit<SquadOwnerInvitation, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<SquadOwnerInvitation>;
+  update(id: string, updates: Partial<SquadOwnerInvitation>): Promise<SquadOwnerInvitation>;
   delete(id: string): Promise<void>;
 }
 

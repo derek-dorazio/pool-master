@@ -1,9 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 import {
+  CreateSquadOwnerInvitationRequestSchema,
   AddSquadMemberRequestSchema,
+  ReplaceSquadOwnerRequestSchema,
   SquadListResponseSchema,
   SquadMembershipResponseSchema,
   SquadResponseSchema,
+  TeamOwnerInvitationListResponseSchema,
+  TeamOwnerInvitationResponseSchema,
   UpdateSquadRequestSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
@@ -12,9 +16,12 @@ import { CreateSquadRequestSchema } from '@poolmaster/shared/dto/squads.dto';
 import {
   PrismaLeagueMembershipRepository,
   PrismaSquadMembershipRepository,
+  PrismaSquadOwnerInvitationRepository,
   PrismaSquadRepository,
 } from '../../adapters';
 import { createSquadHandlers } from './handler';
+import { createSquadOwnerInvitationHandlers } from './owner-invitation-handler';
+import { SquadOwnerInvitationService } from './owner-invitation-service';
 import { SquadService } from './service';
 import { getAppPrisma } from '../../core/prisma-context';
 
@@ -22,9 +29,18 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
+  const squadOwnerInvitationRepo = new PrismaSquadOwnerInvitationRepository(prisma);
   const leagueMembershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, prisma);
   const handler = createSquadHandlers(service);
+  const ownerInvitationService = new SquadOwnerInvitationService(
+    squadOwnerInvitationRepo,
+    leagueMembershipRepo,
+    squadRepo,
+    squadMembershipRepo,
+    prisma,
+  );
+  const ownerInvitationHandler = createSquadOwnerInvitationHandlers(ownerInvitationService);
 
   fastify.get('/', {
     schema: {
@@ -129,5 +145,75 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       },
     },
     handler: handler.removeOwner,
+  });
+
+  fastify.get('/owner-invitations', {
+    schema: {
+      tags: ['Squads'],
+      summary: 'List team-owner invitations for a league',
+      description:
+        'Returns pending and historical team-owner invitations visible to the current commissioner or team owner.',
+      operationId: 'listSquadOwnerInvitations',
+      response: {
+        200: zodToJsonSchema(TeamOwnerInvitationListResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: ownerInvitationHandler.listOwnerInvitations,
+  });
+
+  fastify.post('/:squadId/owner-invitations', {
+    schema: {
+      tags: ['Squads'],
+      summary: 'Invite a co-owner by email',
+      description:
+        'Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected.',
+      operationId: 'createSquadOwnerInvitation',
+      body: zodToJsonSchema(CreateSquadOwnerInvitationRequestSchema),
+      response: {
+        201: zodToJsonSchema(TeamOwnerInvitationResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: ownerInvitationHandler.inviteOwner,
+  });
+
+  fastify.post('/:squadId/owners/:userId/replace', {
+    schema: {
+      tags: ['Squads'],
+      summary: 'Replace an active team owner',
+      description:
+        'Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email.',
+      operationId: 'replaceSquadOwner',
+      body: zodToJsonSchema(ReplaceSquadOwnerRequestSchema),
+      response: {
+        201: zodToJsonSchema(TeamOwnerInvitationResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: ownerInvitationHandler.replaceOwner,
+  });
+
+  fastify.delete('/owner-invitations/:invitationId', {
+    schema: {
+      tags: ['Squads'],
+      summary: 'Revoke a pending team-owner invitation',
+      description:
+        'Revokes a pending co-owner invitation so it can no longer be accepted.',
+      operationId: 'revokeSquadOwnerInvitation',
+      response: {
+        200: zodToJsonSchema(TeamOwnerInvitationResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: ownerInvitationHandler.revokeOwnerInvitation,
   });
 }

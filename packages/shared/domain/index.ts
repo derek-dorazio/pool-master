@@ -88,6 +88,7 @@ export type {
   SportConfig,
   Squad,
   SquadMembership,
+  SquadOwnerInvitation,
   TierAssignmentMode,
   TierSelection,
   TierConfig,

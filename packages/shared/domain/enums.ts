@@ -344,6 +344,15 @@ export const SquadMembershipStatus = {
 export type SquadMembershipStatus =
   (typeof SquadMembershipStatus)[keyof typeof SquadMembershipStatus];
 
+export const SquadOwnerInvitationStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  EXPIRED: 'EXPIRED',
+  REVOKED: 'REVOKED',
+} as const;
+export type SquadOwnerInvitationStatus =
+  (typeof SquadOwnerInvitationStatus)[keyof typeof SquadOwnerInvitationStatus];
+
 // --- Pricing (for Tiered and Budget Pick contests) ---
 
 export const PricingMethod = {

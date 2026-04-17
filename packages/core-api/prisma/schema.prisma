@@ -188,6 +188,13 @@ enum PrismaLeagueInvitationStatus {
   REVOKED
 }
 
+enum PrismaSquadOwnerInvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
 enum PrismaParticipantType {
   INDIVIDUAL
   TEAM
@@ -271,6 +278,8 @@ model User {
   squadMemberships    SquadMembership[]
   invitationsSent     LeagueInvitation[] @relation("InvitedBy")
   invitationsAccepted LeagueInvitation[] @relation("AcceptedBy")
+  squadOwnerInvitationsSent     SquadOwnerInvitation[] @relation("SquadOwnerInvitedBy")
+  squadOwnerInvitationsAccepted SquadOwnerInvitation[] @relation("SquadOwnerAcceptedBy")
   auditActions        CommissionerAuditLog[] @relation("AuditActor")
   rootAdminAuditEntries AdminAuditEntry[]    @relation("RootAdminAuditActor")
   migrationRunsStarted  MigrationRun[]       @relation("MigrationStartedBy")
@@ -316,6 +325,7 @@ model League {
   squadMemberships SquadMembership[]
   contests         Contest[]
   invitations      LeagueInvitation[]
+  squadOwnerInvitations SquadOwnerInvitation[]
   auditLog         CommissionerAuditLog[]
   actionItems      CommissionerActionItem[]
 
@@ -354,6 +364,7 @@ model Squad {
   creator      User              @relation("SquadCreatedBy", fields: [createdBy], references: [id])
   memberships  SquadMembership[]
   entries      ContestEntry[]
+  ownerInvitations SquadOwnerInvitation[]
 
   @@index([leagueId, status])
   @@map("squads")
@@ -401,6 +412,31 @@ model LeagueInvitation {
 
   @@index([leagueId, status])
   @@map("league_invitations")
+}
+
+model SquadOwnerInvitation {
+  id                   String   @id @default(uuid()) @db.Uuid
+  leagueId             String   @map("league_id") @db.Uuid
+  squadId              String   @map("squad_id") @db.Uuid
+  email                String   @db.VarChar(255)
+  inviteCode           String   @unique @map("invite_code") @db.VarChar(100)
+  status               PrismaSquadOwnerInvitationStatus @default(PENDING)
+  invitedBy            String   @map("invited_by") @db.Uuid
+  expiresAt            DateTime? @map("expires_at") @db.Timestamptz
+  acceptedAt           DateTime? @map("accepted_at") @db.Timestamptz
+  acceptedBy           String?  @map("accepted_by") @db.Uuid
+  replacementForUserId String?  @map("replacement_for_user_id") @db.Uuid
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  league   League @relation(fields: [leagueId], references: [id])
+  squad    Squad  @relation(fields: [squadId], references: [id])
+  inviter  User   @relation("SquadOwnerInvitedBy", fields: [invitedBy], references: [id])
+  acceptor User?  @relation("SquadOwnerAcceptedBy", fields: [acceptedBy], references: [id])
+
+  @@index([leagueId, status])
+  @@index([squadId, status])
+  @@map("squad_owner_invitations")
 }
 
 model CommissionerAuditLog {

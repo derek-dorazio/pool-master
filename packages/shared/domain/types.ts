@@ -28,6 +28,7 @@ import type {
   SelectionType,
   Sport,
   SquadMembershipStatus,
+  SquadOwnerInvitationStatus,
   SquadStatus,
   TeamIconKey,
   TimeFormat,
@@ -96,6 +97,20 @@ export interface SquadMembership extends DomainEntity {
   userId: string;
   status: SquadMembershipStatus;
   joinedAt: Date;
+}
+
+/** Email-driven invitation to add or replace a team owner inside a league. */
+export interface SquadOwnerInvitation extends DomainEntity {
+  leagueId: string;
+  squadId: string;
+  email: string;
+  inviteCode: string;
+  status: SquadOwnerInvitationStatus;
+  invitedBy: string;
+  expiresAt?: Date;
+  acceptedAt?: Date;
+  acceptedBy?: string;
+  replacementForUserId?: string;
 }
 
 /** Direct email or link-based invitation into a league. */
