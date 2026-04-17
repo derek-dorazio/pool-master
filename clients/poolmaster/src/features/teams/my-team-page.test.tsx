@@ -8,20 +8,30 @@ import { useSessionStore } from '@/features/auth/session-store';
 import { MyTeamPage } from './my-team-page';
 
 const createLeagueSquadMock = vi.fn();
+const createSquadOwnerInvitationMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
+const listSquadOwnerInvitationsMock = vi.fn();
 const logoutUserMock = vi.fn();
 const refreshTokenMock = vi.fn();
+const removeSquadOwnerMock = vi.fn();
+const replaceSquadOwnerMock = vi.fn();
+const revokeSquadOwnerInvitationMock = vi.fn();
 const updateLeagueSquadMock = vi.fn();
 
 vi.mock('@/lib/api', () => ({
   createLeagueSquad: (...args: unknown[]) => createLeagueSquadMock(...args),
+  createSquadOwnerInvitation: (...args: unknown[]) => createSquadOwnerInvitationMock(...args),
   getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
   getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
   listLeagueSquads: (...args: unknown[]) => listLeagueSquadsMock(...args),
+  listSquadOwnerInvitations: (...args: unknown[]) => listSquadOwnerInvitationsMock(...args),
   logoutUser: (...args: unknown[]) => logoutUserMock(...args),
   refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
+  removeSquadOwner: (...args: unknown[]) => removeSquadOwnerMock(...args),
+  replaceSquadOwner: (...args: unknown[]) => replaceSquadOwnerMock(...args),
+  revokeSquadOwnerInvitation: (...args: unknown[]) => revokeSquadOwnerInvitationMock(...args),
   updateLeagueSquad: (...args: unknown[]) => updateLeagueSquadMock(...args),
 }));
 
@@ -50,11 +60,16 @@ function renderMyTeamPage() {
 describe('MyTeamPage', () => {
   afterEach(() => {
     createLeagueSquadMock.mockReset();
+    createSquadOwnerInvitationMock.mockReset();
     getCurrentUserMock.mockReset();
     getLeagueByCodeMock.mockReset();
     listLeagueSquadsMock.mockReset();
+    listSquadOwnerInvitationsMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
+    removeSquadOwnerMock.mockReset();
+    replaceSquadOwnerMock.mockReset();
+    revokeSquadOwnerInvitationMock.mockReset();
     updateLeagueSquadMock.mockReset();
     useSessionStore.getState().clearSession();
   });
@@ -93,6 +108,11 @@ describe('MyTeamPage', () => {
     listLeagueSquadsMock.mockResolvedValue({
       data: {
         squads: [],
+      },
+    });
+    listSquadOwnerInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [],
       },
     });
     createLeagueSquadMock.mockResolvedValue({
@@ -203,6 +223,11 @@ describe('MyTeamPage', () => {
         ],
       },
     });
+    listSquadOwnerInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [],
+      },
+    });
     updateLeagueSquadMock.mockResolvedValue({
       data: {
         squad: {
@@ -246,6 +271,223 @@ describe('MyTeamPage', () => {
       expect(updateLeagueSquadMock).toHaveBeenCalledWith({
         path: { id: 'league-1', squadId: 'team-1' },
         body: { name: 'Updated Team', iconKey: TeamIconKey.TURBO_TURTLE_MIDNIGHT },
+      }),
+    );
+  });
+
+  it('creates, replaces, removes, and revokes owner invites for an existing team', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        league: {
+          id: 'league-1',
+          leagueCode: 'BIGDAWGS',
+          name: 'Big Dawgs',
+          isActive: true,
+          iconKey: 'TROPHY',
+          memberCount: 2,
+          activeContestCount: 0,
+          role: 'MEMBER',
+          joinPolicy: 'COMMISSIONER_ONLY',
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    listLeagueSquadsMock.mockResolvedValue({
+      data: {
+        squads: [
+          {
+            id: 'team-1',
+            leagueId: 'league-1',
+            createdBy: 'user-1',
+            name: 'Original Team',
+            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+            status: 'ACTIVE',
+            memberCount: 2,
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
+            members: [
+              {
+                id: 'membership-1',
+                squadId: 'team-1',
+                leagueId: 'league-1',
+                userId: 'user-1',
+                firstName: 'Derek',
+                lastName: 'Dorazio',
+                status: 'ACTIVE',
+                joinedAt: '2026-04-15T00:00:00.000Z',
+                createdAt: '2026-04-15T00:00:00.000Z',
+                updatedAt: '2026-04-15T00:00:00.000Z',
+              },
+              {
+                id: 'membership-2',
+                squadId: 'team-1',
+                leagueId: 'league-1',
+                userId: 'user-2',
+                firstName: 'Brendan',
+                lastName: 'Haley',
+                status: 'ACTIVE',
+                joinedAt: '2026-04-15T00:00:00.000Z',
+                createdAt: '2026-04-15T00:00:00.000Z',
+                updatedAt: '2026-04-15T00:00:00.000Z',
+              },
+            ],
+          },
+        ],
+      },
+    });
+    listSquadOwnerInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [
+          {
+            id: 'invite-1',
+            leagueId: 'league-1',
+            squadId: 'team-1',
+            email: 'pending@example.com',
+            inviteCode: 'TEAM123',
+            status: 'PENDING',
+            invitedBy: 'user-1',
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
+            team: {
+              id: 'team-1',
+              name: 'Original Team',
+              iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+            },
+          },
+        ],
+      },
+    });
+    createSquadOwnerInvitationMock.mockResolvedValue({
+      data: {
+        invitation: {
+          id: 'invite-2',
+          leagueId: 'league-1',
+          squadId: 'team-1',
+          email: 'owner@example.com',
+          inviteCode: 'TEAM124',
+          status: 'PENDING',
+          invitedBy: 'user-1',
+          createdAt: '2026-04-15T00:00:00.000Z',
+          updatedAt: '2026-04-15T00:00:00.000Z',
+          team: {
+            id: 'team-1',
+            name: 'Original Team',
+            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+          },
+        },
+      },
+    });
+    replaceSquadOwnerMock.mockResolvedValue({
+      data: {
+        invitation: {
+          id: 'invite-3',
+          leagueId: 'league-1',
+          squadId: 'team-1',
+          email: 'replacement@example.com',
+          inviteCode: 'TEAM125',
+          status: 'PENDING',
+          invitedBy: 'user-1',
+          replacementForUserId: 'user-2',
+          createdAt: '2026-04-15T00:00:00.000Z',
+          updatedAt: '2026-04-15T00:00:00.000Z',
+          team: {
+            id: 'team-1',
+            name: 'Original Team',
+            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+          },
+        },
+      },
+    });
+    removeSquadOwnerMock.mockResolvedValue({
+      data: {
+        membership: {
+          id: 'membership-2',
+          squadId: 'team-1',
+          leagueId: 'league-1',
+          userId: 'user-2',
+          status: 'INACTIVE',
+          createdAt: '2026-04-15T00:00:00.000Z',
+          updatedAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    revokeSquadOwnerInvitationMock.mockResolvedValue({
+      data: {
+        invitation: {
+          id: 'invite-1',
+          leagueId: 'league-1',
+          squadId: 'team-1',
+          email: 'pending@example.com',
+          inviteCode: 'TEAM123',
+          status: 'REVOKED',
+          invitedBy: 'user-1',
+          createdAt: '2026-04-15T00:00:00.000Z',
+          updatedAt: '2026-04-15T00:00:00.000Z',
+          team: {
+            id: 'team-1',
+            name: 'Original Team',
+            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+          },
+        },
+      },
+    });
+
+    renderMyTeamPage();
+
+    await screen.findByDisplayValue('Original Team');
+
+    fireEvent.change(screen.getByTestId('my-team-owner-email'), {
+      target: { value: 'owner@example.com' },
+    });
+    fireEvent.click(screen.getByTestId('my-team-owner-invite'));
+
+    await waitFor(() =>
+      expect(createSquadOwnerInvitationMock).toHaveBeenCalledWith({
+        path: { id: 'league-1', squadId: 'team-1' },
+        body: { email: 'owner@example.com' },
+      }),
+    );
+
+    fireEvent.click(screen.getByTestId('my-team-open-replace-user-2'));
+    fireEvent.change(screen.getByTestId('my-team-replace-email'), {
+      target: { value: 'replacement@example.com' },
+    });
+    fireEvent.click(screen.getByTestId('my-team-replace-submit'));
+
+    await waitFor(() =>
+      expect(replaceSquadOwnerMock).toHaveBeenCalledWith({
+        path: { id: 'league-1', squadId: 'team-1', userId: 'user-2' },
+        body: { email: 'replacement@example.com' },
+      }),
+    );
+
+    fireEvent.click(screen.getByTestId('my-team-remove-owner-user-2'));
+
+    await waitFor(() =>
+      expect(removeSquadOwnerMock).toHaveBeenCalledWith({
+        path: { id: 'league-1', squadId: 'team-1', userId: 'user-2' },
+      }),
+    );
+
+    fireEvent.click(screen.getByTestId('my-team-revoke-owner-invitation-invite-1'));
+
+    await waitFor(() =>
+      expect(revokeSquadOwnerInvitationMock).toHaveBeenCalledWith({
+        path: { id: 'league-1', invitationId: 'invite-1' },
       }),
     );
   });
