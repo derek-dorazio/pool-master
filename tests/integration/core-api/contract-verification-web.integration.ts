@@ -22,6 +22,8 @@ import {
   LeagueResponseSchema,
   ScoringConfigValidationResponseSchema,
   SendLeagueInvitationsResponseSchema,
+  SquadListResponseSchema,
+  SquadResponseSchema,
   SuccessSchema,
 } from '@poolmaster/shared/dto';
 import {
@@ -206,6 +208,38 @@ describe('Contract verification (web)', () => {
 
     expect(updateRes.statusCode).toBe(200);
     expect(LeagueResponseSchema.safeParse(updateRes.json()).success).toBe(true);
+  });
+
+  it('team lifecycle routes match Squad DTOs', async () => {
+    const owner = await createTestUser({ displayName: 'Contract Team Owner' });
+
+    const leagueRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.create,
+      headers: owner.headers,
+      payload: buildCreateLeaguePayload('Contract Team League'),
+    });
+    const leagueId = leagueRes.json().league.id as string;
+
+    const listRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.squads.list(leagueId),
+      headers: owner.headers,
+    });
+
+    expect(listRes.statusCode).toBe(200);
+    expect(SquadListResponseSchema.safeParse(listRes.json()).success).toBe(true);
+
+    const squadId = listRes.json().squads[0].id as string;
+
+    const inactivateRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.squads.inactivate(leagueId, squadId),
+      headers: withoutJsonBodyHeaders(owner.headers),
+    });
+
+    expect(inactivateRes.statusCode).toBe(200);
+    expect(SquadResponseSchema.safeParse(inactivateRes.json()).success).toBe(true);
   });
 
   it('contest management routes match ContestManagementResponseSchema', async () => {

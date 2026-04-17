@@ -78,6 +78,25 @@ export function createSquadHandlers(service: SquadService) {
       }
     },
 
+    inactivateSquad: async (
+      request: FastifyRequest<{
+        Params: { id: string; squadId: string };
+      }>,
+      reply: FastifyReply,
+    ) => {
+      try {
+        const userId = request.authUser!.userId;
+        const squad = await service.inactivateSquad(
+          request.params.id,
+          request.params.squadId,
+          userId,
+        );
+        return reply.send({ squad });
+      } catch (error) {
+        return handleSquadError(reply, error);
+      }
+    },
+
     addOwner: async (
       request: FastifyRequest<{
         Params: { id: string; squadId: string };

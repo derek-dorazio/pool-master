@@ -6,6 +6,7 @@ import {
   createSquadOwnerInvitation,
   createLeagueSquad,
   getLeagueByCode,
+  inactivateLeagueSquad,
   listLeagueSquads,
   listSquadOwnerInvitations,
   removeSquadOwner,
@@ -57,6 +58,7 @@ export function MyTeamPage() {
   const [teamName, setTeamName] = useState('');
   const [selectedIconKey, setSelectedIconKey] = useState<TeamIconKey>(TeamIconKey.CAPTAIN_SMILE_FIELD);
   const [coOwnerEmail, setCoOwnerEmail] = useState('');
+  const [teamInactivationNotice, setTeamInactivationNotice] = useState<string | null>(null);
   const [replaceTargetUserId, setReplaceTargetUserId] = useState<string | null>(null);
   const [replaceEmail, setReplaceEmail] = useState('');
 
@@ -137,11 +139,13 @@ export function MyTeamPage() {
     if (selectedTeam) {
       setTeamName(selectedTeam.name);
       setSelectedIconKey(selectedTeam.iconKey);
+      setTeamInactivationNotice(null);
       return;
     }
 
     setTeamName(buildDefaultTeamName(auth.user?.firstName, auth.user?.lastName));
     setSelectedIconKey(TeamIconKey.CAPTAIN_SMILE_FIELD);
+    setTeamInactivationNotice(null);
   }, [auth.user?.firstName, auth.user?.lastName, selectedTeam]);
 
   const createTeamMutation = useMutation({
@@ -274,6 +278,35 @@ export function MyTeamPage() {
     },
   });
 
+  const inactivateTeamMutation = useMutation({
+    mutationFn: async () => {
+      const squadId = selectedTeam?.id;
+      if (!squadId) {
+        throw new Error('A team must exist before it can be inactivated.');
+      }
+
+      const response = await inactivateLeagueSquad({
+        path: { id: leagueId, squadId },
+      });
+
+      if (!response.data?.squad) {
+        throw response.error ?? new Error('Team inactivation response is missing data.');
+      }
+
+      return response.data.squad;
+    },
+    onSuccess: async (team) => {
+      setTeamInactivationNotice(
+        `${team.name} is now inactive. Active league members from that team were reprovisioned with fresh default teams.`,
+      );
+      setReplaceTargetUserId(null);
+      setReplaceEmail('');
+      setCoOwnerEmail('');
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-team-owner-invitations', leagueId] });
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
+    },
+  });
+
   async function handleSaveTeam() {
     const nextTeamName = teamName.trim();
     if (!nextTeamName || !leagueId || leagueQuery.data?.isActive === false) {
@@ -325,7 +358,8 @@ export function MyTeamPage() {
     || createOwnerInvitationMutation.isPending
     || replaceOwnerMutation.isPending
     || removeOwnerMutation.isPending
-    || revokeOwnerInvitationMutation.isPending;
+    || revokeOwnerInvitationMutation.isPending
+    || inactivateTeamMutation.isPending;
   const activeMembers = (selectedTeam?.members ?? []).filter((member) => member.status === 'ACTIVE');
   const selectedIcon = getTeamIconOption(selectedIconKey);
   const teamOwnerInvitations = ownerInvitationsQuery.data?.filter(
@@ -650,13 +684,30 @@ export function MyTeamPage() {
             {revokeOwnerInvitationMutation.isError ? (
               <p className="mt-4 text-sm text-destructive">{extractErrorMessage(revokeOwnerInvitationMutation.error)}</p>
             ) : null}
+            {teamInactivationNotice ? (
+              <p className="mt-4 text-sm text-emerald-700">{teamInactivationNotice}</p>
+            ) : null}
+            {inactivateTeamMutation.isError ? (
+              <p className="mt-4 text-sm text-destructive">{extractErrorMessage(inactivateTeamMutation.error)}</p>
+            ) : null}
           </div>
 
           <div className="rounded-[2rem] border border-border bg-card p-6">
-            <h3 className="text-xl font-semibold">What&apos;s next</h3>
+            <h3 className="text-xl font-semibold">Team lifecycle</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Inactivating a team preserves its history and immediately provisions fresh default teams for any still-active league members who were attached to it.
+            </p>
+            <button
+              className="mt-4 rounded-2xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-60"
+              data-testid="my-team-inactivate"
+              disabled={!selectedTeam || isInactiveLeague || isBusy}
+              onClick={() => void inactivateTeamMutation.mutateAsync()}
+              type="button"
+            >
+              {inactivateTeamMutation.isPending ? 'Inactivating...' : 'Inactivate team'}
+            </button>
             <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
-              <li>Team inactivation is the next lifecycle action to add on top of these owner-management flows.</li>
-              <li>Commissioner and owner tooling now share the same team page so the surface stays honest and small.</li>
+              <li>Commissioner and owner tooling share the same team page so the surface stays honest and small.</li>
               <li>League home and Teams keep this page easy to reach as team management grows.</li>
             </ul>
           </div>

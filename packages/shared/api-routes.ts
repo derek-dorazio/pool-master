@@ -50,6 +50,8 @@ export const API_ROUTES = {
     create: (leagueId: string) => `/api/v1/leagues/${leagueId}/squads`,
     detail: (leagueId: string, squadId: string) =>
       `/api/v1/leagues/${leagueId}/squads/${squadId}`,
+    inactivate: (leagueId: string, squadId: string) =>
+      `/api/v1/leagues/${leagueId}/squads/${squadId}/inactivate`,
     ownerInvitations: (leagueId: string) =>
       `/api/v1/leagues/${leagueId}/squads/owner-invitations`,
     createOwnerInvitation: (leagueId: string, squadId: string) =>

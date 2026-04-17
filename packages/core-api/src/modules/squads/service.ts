@@ -13,6 +13,7 @@ import {
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
 import { toSquadDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { buildDefaultSquadName } from '../../core/user-name';
+import { provisionFreshDefaultSquadForLeagueMember } from './default-squad';
 
 interface CreateSquadInput {
   name?: string;
@@ -75,11 +76,57 @@ export class SquadService {
     userId: string,
     input: UpdateSquadInput,
   ): Promise<SquadDto> {
-    await this.requireActiveSquadOwner(leagueId, squadId, userId);
+    await this.requireSquadManager(leagueId, squadId, userId);
     await this.squadRepo.update(squadId, {
       ...(input.name !== undefined ? { name: input.name.trim() } : {}),
       ...(input.iconKey !== undefined ? { iconKey: input.iconKey } : {}),
     });
+    return this.loadSquadDto(squadId);
+  }
+
+  async inactivateSquad(
+    leagueId: string,
+    squadId: string,
+    userId: string,
+  ): Promise<SquadDto> {
+    await this.requireSquadManager(leagueId, squadId, userId);
+    const squad = await this.requireLeagueScopedSquad(leagueId, squadId);
+    if (squad.status === SquadStatus.INACTIVE) {
+      return this.loadSquadDto(squadId);
+    }
+
+    const activeMemberships = await this.squadMembershipRepo.findBySquad(squadId);
+    await Promise.all(
+      activeMemberships.map(async (membership) =>
+        this.squadMembershipRepo.update(membership.id, {
+          status: SquadMembershipStatus.INACTIVE,
+        })),
+    );
+
+    await this.squadRepo.update(squadId, { status: SquadStatus.INACTIVE });
+
+    const activeLeagueMemberships = await Promise.all(
+      activeMemberships.map(async (membership) => ({
+        membership,
+        leagueMembership: await this.leagueMembershipRepo.findByLeagueAndUser(leagueId, membership.userId),
+      })),
+    );
+
+    await Promise.all(
+      activeLeagueMemberships
+        .filter(
+          ({ leagueMembership }) => leagueMembership?.status === LeagueMembershipStatus.ACTIVE,
+        )
+        .map(async ({ membership }) =>
+          provisionFreshDefaultSquadForLeagueMember({
+            leagueId,
+            userId: membership.userId,
+            squadRepo: this.squadRepo,
+            squadMembershipRepo: this.squadMembershipRepo,
+            prisma: this.prisma,
+          })),
+    );
+
     return this.loadSquadDto(squadId);
   }
 
@@ -90,7 +137,7 @@ export class SquadService {
     targetUserId: string,
   ): Promise<SquadMembershipDto> {
     const squad = await this.requireLeagueScopedSquad(leagueId, squadId);
-    await this.requireActiveSquadOwner(leagueId, squadId, actorUserId);
+    await this.requireSquadManager(leagueId, squadId, actorUserId);
     await this.requireActiveLeagueMembership(leagueId, targetUserId);
 
     const existingLeagueMembership = await this.squadMembershipRepo.findByLeagueAndUser(leagueId, targetUserId);
@@ -132,7 +179,7 @@ export class SquadService {
     actorUserId: string,
     targetUserId: string,
   ): Promise<SquadMembershipDto> {
-    await this.requireActiveSquadOwner(leagueId, squadId, actorUserId);
+    await this.requireSquadManager(leagueId, squadId, actorUserId);
     const membership = await this.squadMembershipRepo.findBySquadAndUser(squadId, targetUserId);
     if (!membership || membership.status !== SquadMembershipStatus.ACTIVE) {
       throw new SquadNotFoundError(`Active squad membership not found for user ${targetUserId}`);
@@ -226,6 +273,16 @@ export class SquadService {
       );
     }
     return membership;
+  }
+
+  private async requireSquadManager(leagueId: string, squadId: string, userId: string) {
+    const leagueMembership = await this.requireActiveLeagueMembership(leagueId, userId);
+    if (leagueMembership.role === 'COMMISSIONER') {
+      await this.requireLeagueScopedSquad(leagueId, squadId);
+      return leagueMembership;
+    }
+
+    return this.requireActiveSquadOwner(leagueId, squadId, userId);
   }
 
   private async ensureUserCanJoinLeagueSquad(leagueId: string, userId: string): Promise<void> {

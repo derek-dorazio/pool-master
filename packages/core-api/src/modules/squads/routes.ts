@@ -112,6 +112,23 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
     handler: handler.updateSquad,
   });
 
+  fastify.post('/:squadId/inactivate', {
+    schema: {
+      tags: ['Squads'],
+      summary: 'Inactivate a team',
+      description:
+        'Inactivates the target team, preserves its history, and reprovisions fresh default teams for any still-active league members who were attached to it.',
+      operationId: 'inactivateLeagueSquad',
+      response: {
+        200: zodToJsonSchema(SquadResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handler.inactivateSquad,
+  });
+
   fastify.post('/:squadId/members', {
     schema: {
       tags: ['Squads'],

@@ -11,6 +11,7 @@ const createLeagueSquadMock = vi.fn();
 const createSquadOwnerInvitationMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
+const inactivateLeagueSquadMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
 const listSquadOwnerInvitationsMock = vi.fn();
 const logoutUserMock = vi.fn();
@@ -25,6 +26,7 @@ vi.mock('@/lib/api', () => ({
   createSquadOwnerInvitation: (...args: unknown[]) => createSquadOwnerInvitationMock(...args),
   getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
   getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
+  inactivateLeagueSquad: (...args: unknown[]) => inactivateLeagueSquadMock(...args),
   listLeagueSquads: (...args: unknown[]) => listLeagueSquadsMock(...args),
   listSquadOwnerInvitations: (...args: unknown[]) => listSquadOwnerInvitationsMock(...args),
   logoutUser: (...args: unknown[]) => logoutUserMock(...args),
@@ -63,6 +65,7 @@ describe('MyTeamPage', () => {
     createSquadOwnerInvitationMock.mockReset();
     getCurrentUserMock.mockReset();
     getLeagueByCodeMock.mockReset();
+    inactivateLeagueSquadMock.mockReset();
     listLeagueSquadsMock.mockReset();
     listSquadOwnerInvitationsMock.mockReset();
     logoutUserMock.mockReset();
@@ -488,6 +491,102 @@ describe('MyTeamPage', () => {
     await waitFor(() =>
       expect(revokeSquadOwnerInvitationMock).toHaveBeenCalledWith({
         path: { id: 'league-1', invitationId: 'invite-1' },
+      }),
+    );
+  });
+
+  it('inactivates the current team', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        league: {
+          id: 'league-1',
+          leagueCode: 'BIGDAWGS',
+          name: 'Big Dawgs',
+          isActive: true,
+          iconKey: 'TROPHY',
+          memberCount: 2,
+          activeContestCount: 0,
+          role: 'MEMBER',
+          joinPolicy: 'COMMISSIONER_ONLY',
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    listLeagueSquadsMock.mockResolvedValue({
+      data: {
+        squads: [
+          {
+            id: 'team-1',
+            leagueId: 'league-1',
+            createdBy: 'user-1',
+            name: 'Original Team',
+            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+            status: 'ACTIVE',
+            memberCount: 1,
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
+            members: [
+              {
+                id: 'membership-1',
+                squadId: 'team-1',
+                leagueId: 'league-1',
+                userId: 'user-1',
+                firstName: 'Derek',
+                lastName: 'Dorazio',
+                status: 'ACTIVE',
+                joinedAt: '2026-04-15T00:00:00.000Z',
+                createdAt: '2026-04-15T00:00:00.000Z',
+                updatedAt: '2026-04-15T00:00:00.000Z',
+              },
+            ],
+          },
+        ],
+      },
+    });
+    listSquadOwnerInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [],
+      },
+    });
+    inactivateLeagueSquadMock.mockResolvedValue({
+      data: {
+        squad: {
+          id: 'team-1',
+          leagueId: 'league-1',
+          createdBy: 'user-1',
+          name: 'Original Team',
+          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+          status: 'INACTIVE',
+          memberCount: 0,
+          createdAt: '2026-04-15T00:00:00.000Z',
+          updatedAt: '2026-04-15T00:00:00.000Z',
+          members: [],
+        },
+      },
+    });
+
+    renderMyTeamPage();
+
+    await screen.findByDisplayValue('Original Team');
+    fireEvent.click(screen.getByTestId('my-team-inactivate'));
+
+    await waitFor(() =>
+      expect(inactivateLeagueSquadMock).toHaveBeenCalledWith({
+        path: { id: 'league-1', squadId: 'team-1' },
       }),
     );
   });

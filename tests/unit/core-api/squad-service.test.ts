@@ -227,7 +227,9 @@ describe('SquadService', () => {
       }),
       findBySquad: jest.fn().mockResolvedValue([]),
     });
-    const leagueMembershipRepo = createLeagueMembershipRepo();
+    const leagueMembershipRepo = createLeagueMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockResolvedValue(baseMembership),
+    });
     prisma.user.findUnique.mockResolvedValue({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' });
 
     const service = new SquadService(
@@ -240,5 +242,211 @@ describe('SquadService', () => {
     await service.removeOwner('league-1', 'squad-1', 'user-1', 'user-1');
 
     expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { status: SquadStatus.INACTIVE });
+  });
+
+  it('allows a commissioner to update another team in the same league', async () => {
+    const squadRepo = createSquadRepo({
+      findById: jest.fn().mockResolvedValue({
+        id: 'squad-1',
+        leagueId: 'league-1',
+        createdBy: 'user-2',
+        name: 'Original Team',
+        iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+        status: SquadStatus.ACTIVE,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+      update: jest.fn().mockResolvedValue({
+        id: 'squad-1',
+        leagueId: 'league-1',
+        createdBy: 'user-2',
+        name: 'Updated Team',
+        iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+        status: SquadStatus.ACTIVE,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    });
+    const squadMembershipRepo = createSquadMembershipRepo({
+      findBySquad: jest.fn().mockResolvedValue([]),
+    });
+    const leagueMembershipRepo = createLeagueMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockResolvedValue({
+        ...baseMembership,
+        role: 'COMMISSIONER',
+      }),
+    });
+
+    const service = new SquadService(
+      squadRepo,
+      squadMembershipRepo,
+      leagueMembershipRepo,
+      prisma,
+    );
+
+    await service.updateSquad('league-1', 'squad-1', 'user-1', { name: 'Updated Team' });
+
+    expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { name: 'Updated Team' });
+  });
+
+  it('inactivates a team and reprovisions default teams for active league members who were attached to it', async () => {
+    let archivedTeamReads = 0;
+    const findByIdMock = jest.fn().mockImplementation(async (id: string) => {
+      if (id === 'user-1-default-squad') {
+        return {
+          id: 'user-1-default-squad',
+          leagueId: 'league-1',
+          createdBy: 'user-1',
+          name: "Derek Dorazio's Team",
+          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+          status: SquadStatus.ACTIVE,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+      }
+      if (id === 'user-2-default-squad') {
+        return {
+          id: 'user-2-default-squad',
+          leagueId: 'league-1',
+          createdBy: 'user-2',
+          name: "Brendan Haley's Team",
+          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+          status: SquadStatus.ACTIVE,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+      }
+      archivedTeamReads += 1;
+      return {
+        id: 'squad-1',
+        leagueId: 'league-1',
+        createdBy: 'user-1',
+        name: 'Shared Team',
+        iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+        status: archivedTeamReads <= 2 ? SquadStatus.ACTIVE : SquadStatus.INACTIVE,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    });
+    const squadRepo = createSquadRepo({
+      findById: findByIdMock,
+      update: jest.fn().mockImplementation(async (id, updates) => ({
+        id,
+        leagueId: 'league-1',
+        createdBy: 'user-1',
+        name: updates.name ?? 'Shared Team',
+        iconKey: updates.iconKey ?? TeamIconKey.CAPTAIN_SMILE_FIELD,
+        status: updates.status ?? SquadStatus.ACTIVE,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })),
+      create: jest
+        .fn()
+        .mockResolvedValueOnce({
+          id: 'user-1-default-squad',
+          leagueId: 'league-1',
+          createdBy: 'user-1',
+          name: "Derek Dorazio's Team",
+          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+          status: SquadStatus.ACTIVE,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .mockResolvedValueOnce({
+          id: 'user-2-default-squad',
+          leagueId: 'league-1',
+          createdBy: 'user-2',
+          name: "Brendan Haley's Team",
+          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+          status: SquadStatus.ACTIVE,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+    });
+    const activeTeamMemberships = [
+      {
+        id: 'membership-1',
+        squadId: 'squad-1',
+        leagueId: 'league-1',
+        userId: 'user-1',
+        status: SquadMembershipStatus.ACTIVE,
+        joinedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'membership-2',
+        squadId: 'squad-1',
+        leagueId: 'league-1',
+        userId: 'user-2',
+        status: SquadMembershipStatus.ACTIVE,
+        joinedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+    const squadMembershipRepo = createSquadMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockImplementation(async (_leagueId: string, userId: string) => ({
+        id: userId === 'user-1' ? 'membership-1' : 'membership-2',
+        squadId: 'squad-1',
+        leagueId: 'league-1',
+        userId,
+        status: SquadMembershipStatus.INACTIVE,
+        joinedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })),
+      findBySquad: jest.fn().mockResolvedValue(activeTeamMemberships),
+      update: jest.fn().mockImplementation(async (id, updates) => ({
+        id,
+        squadId:
+          id === 'membership-1'
+            ? updates.squadId ?? 'squad-1'
+            : updates.squadId ?? 'squad-1',
+        leagueId: 'league-1',
+        userId: id === 'membership-1' ? 'user-1' : 'user-2',
+        status: updates.status ?? SquadMembershipStatus.ACTIVE,
+        joinedAt: updates.joinedAt ?? new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })),
+      create: jest.fn(),
+    });
+    const leagueMembershipRepo = createLeagueMembershipRepo({
+      findByLeagueAndUser: jest
+        .fn()
+        .mockResolvedValueOnce({
+          ...baseMembership,
+          role: 'COMMISSIONER',
+        })
+        .mockResolvedValueOnce({
+          ...baseMembership,
+          userId: 'user-1',
+          role: 'MEMBER',
+        })
+        .mockResolvedValueOnce({
+          ...baseMembership,
+          userId: 'user-2',
+          role: 'MEMBER',
+        }),
+    });
+    prisma.user.findUnique
+      .mockResolvedValueOnce({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' })
+      .mockResolvedValueOnce({ id: 'user-2', firstName: 'Brendan', lastName: 'Haley' });
+    prisma.user.findMany.mockResolvedValue([]);
+
+    const service = new SquadService(
+      squadRepo,
+      squadMembershipRepo,
+      leagueMembershipRepo,
+      prisma,
+    );
+
+    await service.inactivateSquad('league-1', 'squad-1', 'user-1');
+
+    expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { status: SquadStatus.INACTIVE });
+    expect(squadMembershipRepo.update).toHaveBeenCalledWith('membership-1', { status: SquadMembershipStatus.INACTIVE });
+    expect(squadMembershipRepo.update).toHaveBeenCalledWith('membership-2', { status: SquadMembershipStatus.INACTIVE });
+    expect(squadRepo.create).toHaveBeenCalledTimes(2);
   });
 });
