@@ -8,6 +8,7 @@ import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { MyLeaguesPage, WelcomePage } from '@/features/leagues/leagues-page';
+import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
 import { MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
 
@@ -28,6 +29,10 @@ export const router = createBrowserRouter([
       {
         path: 'invite/:inviteCode',
         element: <JoinLeaguePage />,
+      },
+      {
+        path: 'team-invite/:inviteCode',
+        element: <JoinTeamOwnerPage />,
       },
       {
         path: 'join/:inviteCode',

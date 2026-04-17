@@ -11,6 +11,10 @@ import {
   fetchInvitationPreview,
   getInvitationPreviewQueryKey,
 } from '@/features/leagues/invitation-preview';
+import {
+  fetchTeamOwnerInvitationPreview,
+  getTeamOwnerInvitationPreviewQueryKey,
+} from '@/features/teams/team-owner-invitation-preview';
 import { parseRouteState } from '@/routes/route-state';
 import { useSessionStore } from './session-store';
 
@@ -38,6 +42,15 @@ function parseInviteCode(path: string | undefined) {
   }
 
   const match = path.match(/^\/invite\/([^/?#]+)/);
+  return match?.[1] ?? null;
+}
+
+function parseTeamInviteCode(path: string | undefined) {
+  if (!path) {
+    return null;
+  }
+
+  const match = path.match(/^\/team-invite\/([^/?#]+)/);
   return match?.[1] ?? null;
 }
 
@@ -73,13 +86,21 @@ export function AuthHomePage() {
   const setSession = useSessionStore((state) => state.setSession);
   const destination = routeState.from ?? '/welcome';
   const inviteCode = useMemo(() => parseInviteCode(destination), [destination]);
+  const teamInviteCode = useMemo(() => parseTeamInviteCode(destination), [destination]);
   const invitePreviewQuery = useQuery({
     queryKey: getInvitationPreviewQueryKey(inviteCode ?? ''),
     queryFn: () => fetchInvitationPreview(inviteCode ?? ''),
     enabled: Boolean(inviteCode),
     retry: false,
   });
+  const teamInvitePreviewQuery = useQuery({
+    queryKey: getTeamOwnerInvitationPreviewQueryKey(teamInviteCode ?? ''),
+    queryFn: () => fetchTeamOwnerInvitationPreview(teamInviteCode ?? ''),
+    enabled: Boolean(teamInviteCode),
+    retry: false,
+  });
   const inviteContext = invitePreviewQuery.data ?? null;
+  const teamInviteContext = teamInvitePreviewQuery.data ?? null;
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -159,11 +180,15 @@ export function AuthHomePage() {
             <h2 className="max-w-xl text-4xl font-semibold tracking-tight">
               {inviteContext
                 ? `You're almost inside ${inviteContext.league.name}.`
+                : teamInviteContext
+                  ? `You're almost inside ${teamInviteContext.league.name}.`
                 : 'Run your league, manage your team, and keep every pool night organized.'}
             </h2>
             <p className="max-w-xl text-base text-muted-foreground">
               {inviteContext
                 ? 'Sign in to join with your existing account, or create a new account and continue to the invitation confirmation step.'
+                : teamInviteContext
+                  ? `Sign in to join ${teamInviteContext.team.name} as a co-owner, or create a new account and continue to the invitation confirmation step.`
                 : 'PoolMaster gives commissioners one place to create leagues, invite members, manage teams, and grow into contests as new features come online.'}
             </p>
           </div>
@@ -176,6 +201,13 @@ export function AuthHomePage() {
                 title="League invite"
               />
             </>
+          ) : teamInviteContext ? (
+            <InvitationContextCard
+              inviteCode={teamInviteContext.inviteCode}
+              leagueName={teamInviteContext.league.name}
+              message={`This invitation adds you as a co-owner of ${teamInviteContext.team.name}. After you sign in or create your account, you’ll review the team invitation and explicitly accept it.`}
+              title="Team co-owner invite"
+            />
           ) : (
             <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
               <div className="rounded-2xl border border-border bg-background p-4">
@@ -188,7 +220,7 @@ export function AuthHomePage() {
               </div>
             </div>
           )}
-          {inviteCode && invitePreviewQuery.isError ? (
+          {(inviteCode && invitePreviewQuery.isError) || (teamInviteCode && teamInvitePreviewQuery.isError) ? (
             <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
               We couldn&apos;t load the invitation preview. You can still sign in or create an
               account, then return to the invitation link.
@@ -371,13 +403,15 @@ export function AuthHomePage() {
           <p className="mt-5 text-sm text-muted-foreground">
             {inviteContext
               ? 'Registration signs you in first, then returns you to this league invitation so you can confirm the join explicitly.'
+              : teamInviteContext
+                ? 'Registration signs you in first, then returns you to this team invitation so you can confirm the co-owner join explicitly.'
               : 'Registration signs you in and lands you on your normal app home. If you have no leagues yet, that landing page becomes your first-time commissioner welcome state.'}
           </p>
           <Link
             className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
-            to={inviteCode ? destination : '/welcome'}
+            to={inviteCode || teamInviteCode ? destination : '/welcome'}
           >
-            {inviteCode ? 'Back to invitation' : 'Continue to welcome'}
+            {inviteCode || teamInviteCode ? 'Back to invitation' : 'Continue to welcome'}
           </Link>
         </div>
       </div>

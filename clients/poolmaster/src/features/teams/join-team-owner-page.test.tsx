@@ -1,0 +1,159 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { AuthProvider } from '@/features/auth/auth-provider';
+import { useSessionStore } from '@/features/auth/session-store';
+import { JoinTeamOwnerPage } from './join-team-owner-page';
+
+const acceptTeamOwnerInvitationMock = vi.fn();
+const getCurrentUserMock = vi.fn();
+const getTeamOwnerInvitationPreviewMock = vi.fn();
+const logoutUserMock = vi.fn();
+const refreshTokenMock = vi.fn();
+
+vi.mock('@/lib/api', () => ({
+  acceptTeamOwnerInvitation: (...args: unknown[]) => acceptTeamOwnerInvitationMock(...args),
+  getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
+  getTeamOwnerInvitationPreview: (...args: unknown[]) => getTeamOwnerInvitationPreviewMock(...args),
+  logoutUser: (...args: unknown[]) => logoutUserMock(...args),
+  refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
+}));
+
+function renderJoinTeamOwnerPage(initialEntry = '/team-invite/TEAM123') {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <Routes>
+            <Route element={<JoinTeamOwnerPage />} path="/team-invite/:inviteCode" />
+            <Route element={<div data-testid="team-destination" />} path="/league/:leagueCode/team" />
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>
+    </QueryClientProvider>,
+  );
+}
+
+describe('JoinTeamOwnerPage', () => {
+  afterEach(() => {
+    acceptTeamOwnerInvitationMock.mockReset();
+    getCurrentUserMock.mockReset();
+    getTeamOwnerInvitationPreviewMock.mockReset();
+    logoutUserMock.mockReset();
+    refreshTokenMock.mockReset();
+    useSessionStore.getState().clearSession();
+  });
+
+  it('sends unauthenticated users back through sign-in and registration', async () => {
+    getCurrentUserMock.mockRejectedValue(new Error('Not authenticated'));
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getTeamOwnerInvitationPreviewMock.mockResolvedValue({
+      data: {
+        invitation: {
+          inviteCode: 'TEAM123',
+          status: 'PENDING',
+          league: {
+            id: 'league-1',
+            leagueCode: 'BIGDAWGS',
+            name: 'Big Dawgs',
+          },
+          team: {
+            id: 'team-1',
+            name: 'Beer Bellies',
+            iconKey: 'CAPTAIN_SMILE_FIELD',
+          },
+          roleAfterAccept: 'MEMBER',
+        },
+      },
+    });
+
+    renderJoinTeamOwnerPage();
+
+    expect(await screen.findByTestId('team-invite-sign-in')).toHaveAttribute('href', '/');
+    expect(screen.getByTestId('team-invite-create-account')).toHaveAttribute('href', '/');
+    await waitFor(() =>
+      expect(getTeamOwnerInvitationPreviewMock).toHaveBeenCalledWith({
+        path: { inviteCode: 'TEAM123' },
+      }),
+    );
+  });
+
+  it('accepts a team-owner invitation for an authenticated user', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-16T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getTeamOwnerInvitationPreviewMock.mockResolvedValue({
+      data: {
+        invitation: {
+          inviteCode: 'TEAM123',
+          status: 'PENDING',
+          league: {
+            id: 'league-1',
+            leagueCode: 'BIGDAWGS',
+            name: 'Big Dawgs',
+          },
+          team: {
+            id: 'team-1',
+            name: 'Beer Bellies',
+            iconKey: 'CAPTAIN_SMILE_FIELD',
+          },
+          roleAfterAccept: 'MEMBER',
+        },
+      },
+    });
+    acceptTeamOwnerInvitationMock.mockResolvedValue({
+      data: {
+        invitation: {
+          id: 'invitation-1',
+          leagueId: 'league-1',
+          squadId: 'team-1',
+          email: 'derek@example.com',
+          inviteCode: 'TEAM123',
+          status: 'ACCEPTED',
+          invitedBy: 'user-2',
+          acceptedBy: 'user-1',
+          acceptedAt: '2026-04-16T00:00:00.000Z',
+          createdAt: '2026-04-16T00:00:00.000Z',
+          updatedAt: '2026-04-16T00:00:00.000Z',
+          team: {
+            id: 'team-1',
+            name: 'Beer Bellies',
+            iconKey: 'CAPTAIN_SMILE_FIELD',
+          },
+        },
+      },
+    });
+
+    renderJoinTeamOwnerPage();
+
+    await screen.findByTestId('team-owner-invite-page');
+    fireEvent.click(screen.getByTestId('team-invite-accept'));
+
+    await waitFor(() =>
+      expect(acceptTeamOwnerInvitationMock).toHaveBeenCalledWith({
+        body: { inviteCode: 'TEAM123' },
+      }),
+    );
+    await screen.findByTestId('team-destination');
+  });
+});

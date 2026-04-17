@@ -17,6 +17,10 @@ export function buildInvitePath(inviteCode: string) {
   return `/invite/${inviteCode}`;
 }
 
+export function buildTeamInvitePath(inviteCode: string) {
+  return `/team-invite/${inviteCode}`;
+}
+
 export function getRecentLeagueCode() {
   return readCookie(RECENT_LEAGUE_COOKIE);
 }
