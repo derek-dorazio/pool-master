@@ -41,13 +41,29 @@ describe('Contest scoring recalculation integration', () => {
       },
     });
 
-    const squadA = await prisma.squad.create({
-      data: {
+    const ownerSquadMembership = await prisma.squadMembership.findFirst({
+      where: {
         leagueId,
-        createdBy: owner.user.id,
-        name: 'Squad A',
+        userId: owner.user.id,
+        status: 'ACTIVE',
+      },
+      include: {
+        squad: true,
       },
     });
+
+    expect(ownerSquadMembership?.squad).toBeDefined();
+    const squadA = ownerSquadMembership!.squad;
+
+    await prisma.leagueMembership.create({
+      data: {
+        leagueId,
+        userId: coOwner.user.id,
+        role: 'MEMBER',
+        status: 'ACTIVE',
+      },
+    });
+
     const squadB = await prisma.squad.create({
       data: {
         leagueId,
@@ -58,12 +74,6 @@ describe('Contest scoring recalculation integration', () => {
 
     await prisma.squadMembership.createMany({
       data: [
-        {
-          squadId: squadA.id,
-          leagueId,
-          userId: owner.user.id,
-          status: 'ACTIVE',
-        },
         {
           squadId: squadB.id,
           leagueId,
