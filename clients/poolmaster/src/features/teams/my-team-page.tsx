@@ -14,16 +14,12 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { formatUserName } from '@/features/account/user-name';
 import { buildLeaguePath, setRecentLeagueCode } from '@/features/leagues/league-routing';
 import { getTeamIconOption, TEAM_ICON_OPTIONS } from './team-icon-catalog';
+import { buildDefaultTeamName } from './team-defaults';
 import { TeamIcon } from './team-icon';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 type TeamMember = NonNullable<TeamSummary['members']>[number];
-
-function buildDefaultTeamName(firstName?: string | null, lastName?: string | null) {
-  const fullName = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(' ').trim();
-  return fullName ? `${fullName}'s Team` : 'My Team';
-}
 
 function extractErrorMessage(error: unknown): string {
   if (!error || typeof error !== 'object') {
