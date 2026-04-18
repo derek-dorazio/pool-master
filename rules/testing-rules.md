@@ -33,6 +33,15 @@ All services and clients must follow these testing standards. This document defi
 | iOS | XCTest / XCUITest |
 | Android | JUnit / Compose UI tests / instrumentation where needed |
 
+### Testing Persona Boundary
+
+- `Tess` defines expected scenario/layer coverage in a feature test matrix when
+  that planning artifact exists.
+- `Quinn` executes the relevant lanes, triages failures, and reports release
+  confidence.
+- `Riley` reviews code quality and regression risk, but does not replace Tess
+  as the coverage-matrix owner.
+
 ---
 
 ## 2. Test Layers

@@ -29,6 +29,11 @@ and backend test coverage.
   same feature slice
 - use the contract-documentation checklist in `rules/service-rules.md` before
   considering backend/shared API work complete
+- leave behind a handoff that tells frontend and QA:
+  - which operations changed
+  - which DTOs/enums changed
+  - what generated artifacts were refreshed
+  - which validation lanes were run
 
 ## Required References
 

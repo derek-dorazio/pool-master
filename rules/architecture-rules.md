@@ -3,6 +3,8 @@
 All plan documents and implementation work must conform to these rules. This is the single source of truth for system-level architecture, infrastructure, and cross-cutting decisions.
 
 **For implementation-level rules, see:**
+- **[Product Requirements Rules](product-requirements-rules.md)** — requirement artifacts, use-case structure, and product handoff floor
+- **[Technical Specification Rules](technical-specification-rules.md)** — technical-spec artifacts, domain/API/flow structure, and technical handoff floor
 - **[Service Rules](service-rules.md)** — backend TypeScript, Fastify, Prisma, OpenAPI, DTO, and mapper rules
 - **[PoolMaster Webapp Rules](poolmaster-webapp-rules.md)** — single-webapp product behavior, role-based access expectations, and archived-app policy
 - **[React UI Rules](react-ui-rules.md)** — PoolMaster React app technology, generated API client usage, TanStack Query, and frontend testing patterns

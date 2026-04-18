@@ -28,6 +28,8 @@ frontend tests, and browser-flow delivery.
   engineering backend implementation details
 - stop and route potential shared/backend changes through the data-modeler and
   backend personas instead of authoring those changes directly
+- route unresolved product questions back to Pam rather than silently inventing
+  the missing requirement
 - when a feature needs backend/shared contract changes, wait until the backend
   persona has:
   - completed the contract work
@@ -57,6 +59,8 @@ frontend tests, and browser-flow delivery.
   updated exported SDK/types actually exist
 - answer contract ambiguity by treating backend source code as the frontend
   source of truth
+- keep building while a required backend contract change is still only implied
+  or planned but not yet exported
 - implement unreviewed product flows just because the scaffold makes them easy
 - ignore established UX conventions when a conventional first draft would be
   sufficient

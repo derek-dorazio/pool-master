@@ -152,6 +152,29 @@ Examples that require rule updates:
 - replacing manual-client tests with MSW
 - removing obsolete UI or endpoint patterns
 
+### Feature Delivery Lifecycle
+
+PoolMaster's default feature lifecycle is:
+
+1. Product Requirements — `Pam`
+2. Technical Specification — `Tom` with `Dom`
+3. Test Planning — `Tess`
+4. Design Plans — `Archie`
+5. Execution Planning — `Archie`
+6. Implementation — `Brad`, `Fran`, and supporting personas
+7. QA Verification — `Quinn`
+8. Code Review — `Riley`
+
+Artifact hierarchy:
+
+- `requirements/` = product inputs and handoff artifacts
+- `tech-specs/` = technical inputs and handoff artifacts
+- `plans/` = execution ledger and active status-tracking source of truth
+
+Do not treat `requirements/` or `tech-specs/` as replacements for active plans.
+If implementation is underway, the relevant `plans/` rows still need to be
+updated as work starts and finishes.
+
 ### Webapp Rebuild Direction
 
 The go-forward web frontend is the single role-based PoolMaster app.
@@ -252,19 +275,27 @@ confirmed with the user before implementation expands.
 - If a new persona is added later, assign a unique nickname in the persona file
   and add it to the table below rather than inventing ad hoc shorthand in
   worker prompts.
+- When persona framing is helpful for user clarity, progress updates and final
+  handoffs should identify the primary persona(s) responsible for the current
+  slice using formal persona names or approved nicknames.
+- Persona tags are workflow framing, not proof that separate delegated agents
+  actually ran. Do not imply independent execution that did not happen.
+- Use persona labeling as an aid for substantial work, design reviews, or
+  multi-role slices. It is optional for tiny or purely conversational replies.
 
 Current persona nickname map:
 
 | Formal Persona | Nickname | Notes |
 |---|---|---|
-| Application Specification Builder | Abe | Technology-neutral rebuild specifications and handoff docs |
+| Product Manager | Pam | Product/use-case clarification and review |
+| Technical Specification Creator | Tom | Technical spec baseline and feature handoff |
 | Data Modeler | Dom | Model and contract impact classification |
+| Test Planner | Tess | Coverage planning and test-matrix authorship |
 | Backend Developer | Brad | Service, DTO, OpenAPI, and test implementation |
 | Frontend Developer | Fran | PoolMaster web UI and browser-flow delivery |
 | QA/Test Engineer | Quinn | Verification strategy, regression detection, and test-lane ownership |
-| Product Manager | Pam | Product/use-case clarification and review |
 | Project Manager | Parker | Plan shaping, sequencing, and reconciliation |
-| Architect And Platform | Archie | Cross-cutting architecture and platform work |
+| Architect | Archie | Design plans, execution planning, and platform work |
 | Code Reviewer | Riley | Findings-first review and risk detection |
 - Cross-cutting workflow requirements remain mandatory for all personas,
   including:

@@ -21,8 +21,9 @@ All agents working in this repo should:
 
 - `rules/workflow-rules.md`
 - `rules/architecture-rules.md`
+- `rules/product-requirements-rules.md`
+- `rules/technical-specification-rules.md`
 - `rules/poolmaster-webapp-rules.md`
-- `rules/application-specification-rules.md`
 - `rules/domain-model-conventions-rules.md`
 - `rules/service-rules.md`
 - `rules/react-ui-rules.md`
@@ -36,8 +37,9 @@ All agents working in this repo should:
 
 - `rules/workflow-rules.md`: plan tracking, execution protocol, and how to update plan task status.
 - `rules/architecture-rules.md`: system boundaries, contract-first architecture, generated SDK expectations, and infrastructure assumptions.
+- `rules/product-requirements-rules.md`: product requirement artifacts, use-case structure, confidence labels, and handoff floor for requirement work.
+- `rules/technical-specification-rules.md`: technical-spec artifact structure, domain/API/flow spec expectations, and handoff floor for technical design work.
 - `rules/poolmaster-webapp-rules.md`: single-webapp product rules, role-based behavior, archived-app policy, and functional expectations for the go-forward PoolMaster web app.
-- `rules/application-specification-rules.md`: technology-neutral application-spec output rules, source-of-truth hierarchy, and rebuild-document structure.
 - `rules/domain-model-conventions-rules.md`: lifecycle naming, soft-delete vs hard-delete semantics, `status` vs `isActive`, and domain-model consistency conventions.
 - `rules/service-rules.md`: backend Fastify, Prisma, DTO, mapper, and OpenAPI requirements.
 - `rules/react-ui-rules.md`: PoolMaster React conventions, generated-client usage, and prohibited frontend patterns.
@@ -52,13 +54,14 @@ All agents working in this repo should:
 The `agents/` directory contains optional role-scoped playbooks for common kinds of work:
 
 - `agents/product-manager.md`
-- `agents/application-specification-builder.md`
+- `agents/technical-specification-creator.md`
 - `agents/project-manager.md`
 - `agents/data-modeler.md`
+- `agents/test-planner.md`
 - `agents/frontend-developer.md`
 - `agents/backend-developer.md`
 - `agents/qa-test-engineer.md`
-- `agents/architect-platform.md`
+- `agents/architect.md`
 - `agents/code-reviewer.md`
 
 Use these playbooks to focus the workflow for that role.
@@ -76,6 +79,7 @@ Important:
 - Check whether the work is already tracked in `plans/`, and update the relevant task rows as work starts and finishes.
 - When a refactor changes architecture, testing patterns, or developer workflow, update the matching `rules/*.md` files in the same effort.
 - Do not maintain competing instruction sets across `AGENTS.md`, `CLAUDE.md`, `rules/`, and `agents/`.
+- Treat `requirements/` and `tech-specs/` as design inputs and handoff artifacts; active execution tracking still belongs in `plans/`.
 
 ## Documentation Expectations
 
@@ -101,6 +105,8 @@ CI-only follow-up signals:
 - `packages/`: backend services and shared packages
 - `clients/`: PoolMaster web app and mobile clients
 - `tests/`: unit, integration, and functional coverage
+- `requirements/`: product requirements and feature-level requirement artifacts
+- `tech-specs/`: technical specification artifacts for approved features
 - `plans/`: tracked implementation plans
 - `rules/`: detailed policy and architecture guidance
 - `infrastructure/`: deployment and environment assets
