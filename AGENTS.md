@@ -21,6 +21,7 @@ All agents working in this repo should:
 
 - `rules/workflow-rules.md`
 - `rules/working-style.md`
+- `rules/product-discovery-rules.md`
 - `rules/architecture-rules.md`
 - `rules/product-requirements-rules.md`
 - `rules/technical-specification-rules.md`
@@ -38,6 +39,7 @@ All agents working in this repo should:
 
 - `rules/workflow-rules.md`: plan tracking, execution protocol, and how to update plan task status.
 - `rules/working-style.md`: collaboration defaults, communication preferences, and working-session continuity guidance.
+- `rules/product-discovery-rules.md`: high-level product-discovery artifacts, Piper's discovery scope, and discovery handoff expectations.
 - `rules/architecture-rules.md`: system boundaries, contract-first architecture, generated SDK expectations, and infrastructure assumptions.
 - `rules/product-requirements-rules.md`: product requirement artifacts, use-case structure, confidence labels, and handoff floor for requirement work.
 - `rules/technical-specification-rules.md`: technical-spec artifact structure, domain/API/flow spec expectations, and handoff floor for technical design work.
@@ -56,6 +58,7 @@ All agents working in this repo should:
 The `agents/` directory contains optional role-scoped playbooks for common kinds of work:
 
 - `agents/product-manager.md`
+- `agents/product-discovery.md`
 - `agents/technical-specification-creator.md`
 - `agents/project-manager.md`
 - `agents/data-modeler.md`
@@ -107,7 +110,7 @@ CI-only follow-up signals:
 - `packages/`: backend services and shared packages
 - `clients/`: PoolMaster web app and mobile clients
 - `tests/`: unit, integration, and functional coverage
-- `requirements/`: product requirements and feature-level requirement artifacts
+- `requirements/`: product discovery inputs, overview artifacts, and refined product requirements
 - `tech-specs/`: technical specification artifacts for approved features
 - `plans/`: tracked implementation plans
 - `rules/`: detailed policy and architecture guidance

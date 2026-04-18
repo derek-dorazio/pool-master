@@ -1,7 +1,7 @@
 # PoolMaster — Product Requirements Rules
 
-Use this document when producing product requirements artifacts under
-`requirements/`.
+Use this document when producing refined product-requirement artifacts under
+`requirements/product-requirements/`.
 
 ## 1. Purpose
 
@@ -18,19 +18,25 @@ Pam's normal output bundle is:
 
 ### Shared Product Files
 
-- `requirements/product-requirements.md`
-- `requirements/roles-and-actors.md`
-- `requirements/glossary.md`
-- `requirements/domain-concepts.md`
-- `requirements/navigation-and-entry-points.md`
+- `requirements/product-requirements/product-requirements.md`
+- `requirements/product-requirements/roles-and-actors.md`
+- `requirements/product-requirements/glossary.md`
+- `requirements/product-requirements/domain-concepts.md`
+- `requirements/product-requirements/navigation-and-entry-points.md`
 
 ### Feature Files
 
-- `requirements/features/<feature>/overview.md`
-- `requirements/features/<feature>/use-cases.md`
-- `requirements/features/<feature>/screens.md`
-- `requirements/features/<feature>/business-rules.md`
-- `requirements/features/<feature>/open-questions.md`
+- `requirements/product-requirements/features/<feature>/overview.md`
+- `requirements/product-requirements/features/<feature>/use-cases.md`
+- `requirements/product-requirements/features/<feature>/screens.md`
+- `requirements/product-requirements/features/<feature>/business-rules.md`
+- `requirements/product-requirements/features/<feature>/open-questions.md`
+
+Pam should normally read Piper's discovery output from:
+
+- `requirements/product-overview/`
+
+before deep refinement begins.
 
 ## 3. Confidence Labels
 
@@ -114,6 +120,8 @@ Before product requirements are handed forward, they must make clear:
 ## 9. Interaction With Plans
 
 - `requirements/` artifacts are inputs and handoff materials
+- `requirements/product-overview/` is the discovery layer for Piper
+- `requirements/product-requirements/` is the refined product-requirement layer for Pam
 - active implementation tracking still belongs in `plans/`
 - when a requirement materially changes an active feature lane, update the
   relevant plan notes or task rows in the same effort

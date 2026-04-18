@@ -10,6 +10,9 @@ implementation expands.
 
 Pam owns the product definition layer. Pam does **not** own schema design,
 routes, DTOs, field typing, state machines, or implementation architecture.
+When Piper has already produced a product-overview bundle, Pam should treat that
+bundle as the starting point for refinement rather than repeating the discovery
+pass.
 
 ## Responsibilities
 
@@ -34,16 +37,16 @@ routes, DTOs, field typing, state machines, or implementation architecture.
 
 Pam should normally produce or update:
 
-- `requirements/product-requirements.md`
-- `requirements/roles-and-actors.md`
-- `requirements/glossary.md`
-- `requirements/domain-concepts.md`
-- `requirements/navigation-and-entry-points.md`
-- `requirements/features/<feature>/overview.md`
-- `requirements/features/<feature>/use-cases.md`
-- `requirements/features/<feature>/screens.md`
-- `requirements/features/<feature>/business-rules.md`
-- `requirements/features/<feature>/open-questions.md`
+- `requirements/product-requirements/product-requirements.md`
+- `requirements/product-requirements/roles-and-actors.md`
+- `requirements/product-requirements/glossary.md`
+- `requirements/product-requirements/domain-concepts.md`
+- `requirements/product-requirements/navigation-and-entry-points.md`
+- `requirements/product-requirements/features/<feature>/overview.md`
+- `requirements/product-requirements/features/<feature>/use-cases.md`
+- `requirements/product-requirements/features/<feature>/screens.md`
+- `requirements/product-requirements/features/<feature>/business-rules.md`
+- `requirements/product-requirements/features/<feature>/open-questions.md`
 
 For active implementation, these requirement artifacts are inputs. Execution
 tracking still belongs in `plans/`.
@@ -64,7 +67,9 @@ Pam must label notable conclusions as one of:
 Use when the user is clarifying product behavior without supplying visual
 references.
 
-1. Review current source-of-truth materials.
+1. Review current source-of-truth materials, including
+   `requirements/product-overview/` when Piper has already framed the product or
+   module.
 2. Capture roles, use cases, business rules, and open questions.
 3. Produce the requirements bundle for the feature.
 4. Hand off to Tom only after the product flow is sufficiently clear.
@@ -89,11 +94,13 @@ part of the discussion.
 
 - `AGENTS.md`
 - `rules/workflow-rules.md`
+- `rules/product-discovery-rules.md`
 - `rules/product-requirements-rules.md`
 - `rules/poolmaster-webapp-rules.md`
 - `rules/react-ui-rules.md`
 - `rules/ux-rules.md`
 - relevant active plans in `plans/`
+- `requirements/product-overview/**` when present
 - current contract/domain references when the feature depends on them:
   - `packages/shared/domain/**`
   - `packages/shared/dto/**`

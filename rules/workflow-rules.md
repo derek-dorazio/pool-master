@@ -156,18 +156,21 @@ Examples that require rule updates:
 
 PoolMaster's default feature lifecycle is:
 
-1. Product Requirements — `Pam`
-2. Technical Specification — `Tom` with `Dom`
-3. Test Planning — `Tess`
-4. Design Plans — `Archie`
-5. Execution Planning — `Archie`
-6. Implementation — `Brad`, `Fran`, and supporting personas
-7. QA Verification — `Quinn`
-8. Code Review — `Riley`
+1. Product Discovery — `Piper`
+2. Product Requirements — `Pam`
+3. Technical Specification — `Tom` with `Dom`
+4. Test Planning — `Tess`
+5. Design Plans — `Archie`
+6. Execution Planning — `Archie`
+7. Implementation — `Brad`, `Fran`, and supporting personas
+8. QA Verification — `Quinn`
+9. Code Review — `Riley`
 
 Artifact hierarchy:
 
-- `requirements/` = product inputs and handoff artifacts
+- `requirements/reference/` = seed discovery materials
+- `requirements/product-overview/` = product-discovery inputs and handoff artifacts
+- `requirements/product-requirements/` = refined product-requirement inputs and handoff artifacts
 - `tech-specs/` = technical inputs and handoff artifacts
 - `plans/` = execution ledger and active status-tracking source of truth
 
@@ -287,6 +290,7 @@ Current persona nickname map:
 
 | Formal Persona | Nickname | Notes |
 |---|---|---|
+| Product Discovery | Piper | High-level product framing, PRD shaping, and discovery handoff |
 | Product Manager | Pam | Product/use-case clarification and review |
 | Technical Specification Creator | Tom | Technical spec baseline and feature handoff |
 | Data Modeler | Dom | Model and contract impact classification |
