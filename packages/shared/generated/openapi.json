@@ -10575,281 +10575,310 @@
                     "type": "string",
                     "enum": [
                       "SINGLE_EVENT"
-                    ],
-                    "default": "SINGLE_EVENT"
+                    ]
                   },
                   "configuration": {
-                    "type": "object",
-                    "properties": {
-                      "selectionType": {
-                        "type": "string",
-                        "enum": [
-                          "SNAKE_DRAFT",
-                          "TIERED",
-                          "BUDGET_PICK"
-                        ]
-                      },
-                      "rounds": {
-                        "type": "integer",
-                        "minimum": 1
-                      },
-                      "timePerPickSeconds": {
-                        "type": "integer",
-                        "minimum": 10
-                      },
-                      "autoPickPolicy": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "tierConfig": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "tierId": {
-                              "type": "string",
-                              "minLength": 1,
-                              "description": "Stable tier identifier."
-                            },
-                            "tierName": {
-                              "type": "string",
-                              "minLength": 1,
-                              "description": "Commissioner-facing tier label."
-                            },
-                            "tierNumber": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "description": "Ordered tier number used in draft and selection UX."
-                            },
-                            "picksFromTier": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "description": "How many selections each entry must make from the tier."
-                            },
-                            "participantIds": {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "description": "Participants assigned to the tier."
-                            }
-                          },
-                          "required": [
-                            "tierId",
-                            "tierName",
-                            "tierNumber",
-                            "picksFromTier",
-                            "participantIds"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Tier definition supplied for tiered contests."
-                        }
-                      },
-                      "budget": {
-                        "type": "number",
-                        "minimum": 0
-                      },
-                      "pricingMethod": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "pickCount": {
-                        "type": "integer",
-                        "minimum": 1
-                      },
-                      "isExclusive": {
-                        "type": "boolean"
-                      },
-                      "picksPerPeriod": {
-                        "type": "integer",
-                        "minimum": 1
-                      },
-                      "roundValues": {
-                        "type": "array",
-                        "items": {
-                          "type": "number"
-                        }
-                      },
-                      "startRound": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "locksAt": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                      },
-                      "minimumEntries": {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      "maxEntriesPerSquad": {
-                        "type": "integer",
-                        "minimum": 1
-                      },
-                      "rosterSize": {
-                        "type": "integer",
-                        "minimum": 1
-                      },
-                      "totalPrizePoolAmount": {
-                        "type": "number",
-                        "minimum": 0,
-                        "nullable": true
-                      },
-                      "participantScoringRules": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "participantScoringDefinitionId": {
-                              "type": "string",
-                              "enum": [
-                                "GOLF_RELATIVE_TO_PAR_TOTAL",
-                                "TEAM_WIN_POINTS",
-                                "ROUND_MULTIPLIER",
-                                "SEED_DIFFERENTIAL_BONUS"
-                              ],
-                              "description": "Scoring definition applied to each participant within the contest."
-                            },
-                            "sortOrder": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "description": "Evaluation order for participant scoring rules."
-                            },
-                            "config": {
-                              "type": "object",
-                              "additionalProperties": {},
-                              "default": {},
-                              "description": "Rule-specific configuration payload consumed by the scoring engine."
-                            },
-                            "active": {
-                              "type": "boolean",
-                              "default": true,
-                              "description": "Whether the scoring rule is currently active."
-                            }
-                          },
-                          "required": [
-                            "participantScoringDefinitionId",
-                            "sortOrder"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Participant-level scoring rule supplied when configuring a managed contest."
-                        }
-                      },
-                      "entryAggregationRule": {
+                    "anyOf": [
+                      {
                         "type": "object",
                         "properties": {
-                          "aggregationDefinitionId": {
+                          "mode": {
                             "type": "string",
                             "enum": [
-                              "SUM_ALL_ENTRIES",
-                              "SUM_TOP_N_ENTRIES"
+                              "GOLF_TIERED"
+                            ]
+                          },
+                          "locksAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true,
+                            "description": "Contest entry lock timestamp."
+                          },
+                          "maxEntriesPerSquad": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "nullable": true,
+                            "description": "Maximum entries a Team may create. Null means unlimited."
+                          },
+                          "rosterSize": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "How many golfers each Team entry must pick."
+                          },
+                          "countedScores": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "How many golfer scores count toward the Team total."
+                          },
+                          "tierSource": {
+                            "type": "string",
+                            "enum": [
+                              "ODDS",
+                              "WORLD_RANK"
                             ],
-                            "description": "Aggregation strategy used to convert participant scores into an entry score."
+                            "description": "Single tier source used to generate all tiers."
                           },
-                          "config": {
+                          "tierGeneration": {
                             "type": "object",
-                            "additionalProperties": {},
-                            "default": {},
-                            "description": "Aggregation-rule configuration payload."
+                            "properties": {
+                              "defaultTierSize": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "Basic mode tier size used to seed the tier list."
+                              }
+                            },
+                            "required": [
+                              "defaultTierSize"
+                            ],
+                            "additionalProperties": false
                           },
-                          "active": {
-                            "type": "boolean",
-                            "default": true,
-                            "description": "Whether the aggregation rule is active."
+                          "tiers": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "tierKey": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "description": "Stable tier key such as A, B, or C."
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "description": "Commissioner-facing tier label."
+                                },
+                                "pickCount": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "description": "How many golfers must be picked from the tier."
+                                },
+                                "startPosition": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "description": "Starting resolved rank/odds position for the tier."
+                                },
+                                "endPosition": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "nullable": true,
+                                  "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
+                                }
+                              },
+                              "required": [
+                                "tierKey",
+                                "label",
+                                "pickCount",
+                                "startPosition",
+                                "endPosition"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Tier definition for a golf tiered contest."
+                            },
+                            "minItems": 1,
+                            "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
+                          },
+                          "cutRule": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "FIXED_SCORE"
+                                ]
+                              },
+                              "fixedScore": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Fallback score assigned when a golfer misses the cut."
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "fixedScore"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf cut rule for first-pass contests."
+                          },
+                          "playoffHandling": {
+                            "type": "string",
+                            "enum": [
+                              "EXCLUDE_PLAYOFF_HOLES"
+                            ]
+                          },
+                          "displayScoring": {
+                            "type": "string",
+                            "enum": [
+                              "TO_PAR"
+                            ]
+                          },
+                          "tiebreaker": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "PREDICT_WINNING_SCORE"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
                           }
                         },
                         "required": [
-                          "aggregationDefinitionId"
+                          "mode",
+                          "rosterSize",
+                          "countedScores",
+                          "tierSource",
+                          "tierGeneration",
+                          "tiers",
+                          "cutRule",
+                          "playoffHandling",
+                          "displayScoring",
+                          "tiebreaker"
                         ],
                         "additionalProperties": false,
-                        "description": "Contest-entry aggregation rule for managed-contest configuration."
+                        "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
                       },
-                      "prizeDefinitions": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "prizeDefinitionId": {
-                              "type": "string",
-                              "minLength": 1,
-                              "description": "Stable prize-definition identifier."
-                            },
-                            "displayName": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 100,
-                              "description": "Commissioner-facing display name for the prize."
-                            },
-                            "sortOrder": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "description": "Display and evaluation order for the prize definition."
-                            },
-                            "ruleConfig": {
-                              "type": "object",
-                              "additionalProperties": {},
-                              "default": {},
-                              "description": "Prize-award rule configuration payload."
-                            },
-                            "payoutType": {
-                              "type": "string",
-                              "enum": [
-                                "FIXED_AMOUNT",
-                                "PERCENTAGE"
-                              ],
-                              "description": "How the prize amount should be interpreted when a payout is attached."
-                            },
-                            "amount": {
-                              "type": "number",
-                              "minimum": 0,
-                              "description": "Fixed payout amount when payoutType is FIXED_AMOUNT."
-                            },
-                            "percentage": {
-                              "type": "number",
-                              "minimum": 0,
-                              "maximum": 100,
-                              "description": "Prize-pool percentage when payoutType is PERCENTAGE."
-                            },
-                            "active": {
-                              "type": "boolean",
-                              "default": true,
-                              "description": "Whether the prize definition is currently active."
-                            }
+                      {
+                        "type": "object",
+                        "properties": {
+                          "mode": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF_CATEGORY_PICKS"
+                            ]
                           },
-                          "required": [
-                            "prizeDefinitionId",
-                            "displayName",
-                            "sortOrder"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Prize definition used by contest-management endpoints."
+                          "locksAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true,
+                            "description": "Contest entry lock timestamp."
+                          },
+                          "maxEntriesPerSquad": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "nullable": true,
+                            "description": "Maximum entries a Team may create. Null means unlimited."
+                          },
+                          "categories": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "categoryKey": {
+                                  "type": "string",
+                                  "enum": [
+                                    "SENIOR",
+                                    "ROOKIE",
+                                    "PREVIOUS_WINNER",
+                                    "US_PLAYER",
+                                    "INTERNATIONAL_PLAYER"
+                                  ]
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "description": "Commissioner-facing category label."
+                                },
+                                "pickCount": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "description": "How many golfers must be picked for the category."
+                                }
+                              },
+                              "required": [
+                                "categoryKey",
+                                "label",
+                                "pickCount"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Category slot definition for a golf category-picks contest."
+                            },
+                            "minItems": 1,
+                            "description": "Enabled category slots for the contest."
+                          },
+                          "cutRule": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "FIXED_SCORE"
+                                ]
+                              },
+                              "fixedScore": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Fallback score assigned when a golfer misses the cut."
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "fixedScore"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf cut rule for first-pass contests."
+                          },
+                          "playoffHandling": {
+                            "type": "string",
+                            "enum": [
+                              "EXCLUDE_PLAYOFF_HOLES"
+                            ]
+                          },
+                          "displayScoring": {
+                            "type": "string",
+                            "enum": [
+                              "TO_PAR"
+                            ]
+                          },
+                          "tiebreaker": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "PREDICT_WINNING_SCORE"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
+                          }
                         },
-                        "default": [],
-                        "description": "Prize definitions attached to the contest configuration."
+                        "required": [
+                          "mode",
+                          "categories",
+                          "cutRule",
+                          "playoffHandling",
+                          "displayScoring",
+                          "tiebreaker"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Golf category-picks contest configuration for one-pick-per-category contests."
                       }
-                    },
-                    "required": [
-                      "selectionType",
-                      "participantScoringRules",
-                      "entryAggregationRule"
                     ],
-                    "additionalProperties": false,
-                    "description": "Managed contest-configuration payload."
+                    "description": "Approved commissioner-managed contest configuration payload for golf-first contest creation."
                   }
                 },
                 "required": [
                   "name",
                   "sportEventId",
+                  "contestType",
                   "configuration"
                 ],
                 "additionalProperties": false,
-                "description": "Commissioner request payload for creating a managed contest."
+                "description": "Commissioner request payload for creating a golf-first managed contest."
               }
             }
           },
-          "description": "Commissioner request payload for creating a managed contest."
+          "description": "Commissioner request payload for creating a golf-first managed contest."
         },
         "parameters": [
           {
@@ -10901,287 +10930,312 @@
                           ]
                         },
                         "configuration": {
-                          "type": "object",
-                          "properties": {
-                            "selectionType": {
-                              "type": "string",
-                              "enum": [
-                                "SNAKE_DRAFT",
-                                "TIERED",
-                                "BUDGET_PICK"
-                              ]
-                            },
-                            "rounds": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "timePerPickSeconds": {
-                              "type": "integer",
-                              "minimum": 10
-                            },
-                            "autoPickPolicy": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "tierConfig": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "tierId": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "description": "Stable tier identifier."
-                                  },
-                                  "tierName": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "description": "Commissioner-facing tier label."
-                                  },
-                                  "tierNumber": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "description": "Ordered tier number used in draft and selection UX."
-                                  },
-                                  "picksFromTier": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "description": "How many selections each entry must make from the tier."
-                                  },
-                                  "participantIds": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    },
-                                    "description": "Participants assigned to the tier."
-                                  }
-                                },
-                                "required": [
-                                  "tierId",
-                                  "tierName",
-                                  "tierNumber",
-                                  "picksFromTier",
-                                  "participantIds"
-                                ],
-                                "additionalProperties": false,
-                                "description": "Tier definition supplied for tiered contests."
-                              }
-                            },
-                            "budget": {
-                              "type": "number",
-                              "minimum": 0
-                            },
-                            "pricingMethod": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "pickCount": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "isExclusive": {
-                              "type": "boolean"
-                            },
-                            "picksPerPeriod": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "roundValues": {
-                              "type": "array",
-                              "items": {
-                                "type": "number"
-                              }
-                            },
-                            "startRound": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "locksAt": {
-                              "type": "string",
-                              "format": "date-time",
-                              "nullable": true
-                            },
-                            "minimumEntries": {
-                              "type": "integer",
-                              "minimum": 0
-                            },
-                            "maxEntriesPerSquad": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "rosterSize": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "totalPrizePoolAmount": {
-                              "type": "number",
-                              "minimum": 0,
-                              "nullable": true
-                            },
-                            "participantScoringRules": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "participantScoringDefinitionId": {
-                                    "type": "string",
-                                    "enum": [
-                                      "GOLF_RELATIVE_TO_PAR_TOTAL",
-                                      "TEAM_WIN_POINTS",
-                                      "ROUND_MULTIPLIER",
-                                      "SEED_DIFFERENTIAL_BONUS"
-                                    ],
-                                    "description": "Scoring definition applied to each participant within the contest."
-                                  },
-                                  "sortOrder": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "description": "Evaluation order for participant scoring rules."
-                                  },
-                                  "config": {
-                                    "type": "object",
-                                    "additionalProperties": {},
-                                    "default": {},
-                                    "description": "Rule-specific configuration payload consumed by the scoring engine."
-                                  },
-                                  "active": {
-                                    "type": "boolean",
-                                    "default": true,
-                                    "description": "Whether the scoring rule is currently active."
-                                  },
-                                  "id": {
-                                    "type": "string",
-                                    "description": "Participant scoring-rule identifier."
-                                  }
-                                },
-                                "required": [
-                                  "participantScoringDefinitionId",
-                                  "sortOrder",
-                                  "id"
-                                ],
-                                "additionalProperties": false,
-                                "description": "Persisted participant scoring rule."
-                              }
-                            },
-                            "entryAggregationRule": {
+                          "anyOf": [
+                            {
                               "type": "object",
                               "properties": {
-                                "aggregationDefinitionId": {
+                                "mode": {
                                   "type": "string",
                                   "enum": [
-                                    "SUM_ALL_ENTRIES",
-                                    "SUM_TOP_N_ENTRIES"
+                                    "GOLF_TIERED"
+                                  ]
+                                },
+                                "locksAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true,
+                                  "description": "Contest entry lock timestamp."
+                                },
+                                "maxEntriesPerSquad": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "nullable": true,
+                                  "description": "Maximum entries a Team may create. Null means unlimited."
+                                },
+                                "rosterSize": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "description": "How many golfers each Team entry must pick."
+                                },
+                                "countedScores": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "description": "How many golfer scores count toward the Team total."
+                                },
+                                "tierSource": {
+                                  "type": "string",
+                                  "enum": [
+                                    "ODDS",
+                                    "WORLD_RANK"
                                   ],
-                                  "description": "Aggregation strategy used to convert participant scores into an entry score."
+                                  "description": "Single tier source used to generate all tiers."
                                 },
-                                "config": {
+                                "tierGeneration": {
                                   "type": "object",
-                                  "additionalProperties": {},
-                                  "default": {},
-                                  "description": "Aggregation-rule configuration payload."
+                                  "properties": {
+                                    "defaultTierSize": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "description": "Basic mode tier size used to seed the tier list."
+                                    }
+                                  },
+                                  "required": [
+                                    "defaultTierSize"
+                                  ],
+                                  "additionalProperties": false
                                 },
-                                "active": {
-                                  "type": "boolean",
-                                  "default": true,
-                                  "description": "Whether the aggregation rule is active."
+                                "tiers": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "tierKey": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "description": "Stable tier key such as A, B, or C."
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "description": "Commissioner-facing tier label."
+                                      },
+                                      "pickCount": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "How many golfers must be picked from the tier."
+                                      },
+                                      "startPosition": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "Starting resolved rank/odds position for the tier."
+                                      },
+                                      "endPosition": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "nullable": true,
+                                        "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
+                                      }
+                                    },
+                                    "required": [
+                                      "tierKey",
+                                      "label",
+                                      "pickCount",
+                                      "startPosition",
+                                      "endPosition"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Tier definition for a golf tiered contest."
+                                  },
+                                  "minItems": 1,
+                                  "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
+                                },
+                                "cutRule": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "FIXED_SCORE"
+                                      ]
+                                    },
+                                    "fixedScore": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "description": "Fallback score assigned when a golfer misses the cut."
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "fixedScore"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf cut rule for first-pass contests."
+                                },
+                                "playoffHandling": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EXCLUDE_PLAYOFF_HOLES"
+                                  ]
+                                },
+                                "displayScoring": {
+                                  "type": "string",
+                                  "enum": [
+                                    "TO_PAR"
+                                  ]
+                                },
+                                "tiebreaker": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "PREDICT_WINNING_SCORE"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
                                 },
                                 "id": {
                                   "type": "string",
-                                  "description": "Contest-entry aggregation-rule identifier."
+                                  "description": "Contest-configuration identifier."
+                                },
+                                "contestId": {
+                                  "type": "string",
+                                  "description": "Contest that owns the configuration."
                                 }
                               },
                               "required": [
-                                "aggregationDefinitionId",
-                                "id"
+                                "mode",
+                                "rosterSize",
+                                "countedScores",
+                                "tierSource",
+                                "tierGeneration",
+                                "tiers",
+                                "cutRule",
+                                "playoffHandling",
+                                "displayScoring",
+                                "tiebreaker",
+                                "id",
+                                "contestId"
                               ],
                               "additionalProperties": false,
-                              "description": "Persisted contest-entry aggregation rule."
+                              "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
                             },
-                            "prizeDefinitions": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "prizeDefinitionId": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "description": "Stable prize-definition identifier."
-                                  },
-                                  "displayName": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 100,
-                                    "description": "Commissioner-facing display name for the prize."
-                                  },
-                                  "sortOrder": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "description": "Display and evaluation order for the prize definition."
-                                  },
-                                  "ruleConfig": {
-                                    "type": "object",
-                                    "additionalProperties": {},
-                                    "default": {},
-                                    "description": "Prize-award rule configuration payload."
-                                  },
-                                  "payoutType": {
-                                    "type": "string",
-                                    "enum": [
-                                      "FIXED_AMOUNT",
-                                      "PERCENTAGE"
-                                    ],
-                                    "description": "How the prize amount should be interpreted when a payout is attached."
-                                  },
-                                  "amount": {
-                                    "type": "number",
-                                    "minimum": 0,
-                                    "description": "Fixed payout amount when payoutType is FIXED_AMOUNT."
-                                  },
-                                  "percentage": {
-                                    "type": "number",
-                                    "minimum": 0,
-                                    "maximum": 100,
-                                    "description": "Prize-pool percentage when payoutType is PERCENTAGE."
-                                  },
-                                  "active": {
-                                    "type": "boolean",
-                                    "default": true,
-                                    "description": "Whether the prize definition is currently active."
-                                  },
-                                  "id": {
-                                    "type": "string",
-                                    "description": "Prize-definition record identifier."
-                                  }
+                            {
+                              "type": "object",
+                              "properties": {
+                                "mode": {
+                                  "type": "string",
+                                  "enum": [
+                                    "GOLF_CATEGORY_PICKS"
+                                  ]
                                 },
-                                "required": [
-                                  "prizeDefinitionId",
-                                  "displayName",
-                                  "sortOrder",
-                                  "id"
-                                ],
-                                "additionalProperties": false,
-                                "description": "Persisted contest prize definition."
-                              }
-                            },
-                            "id": {
-                              "type": "string",
-                              "description": "Contest-configuration identifier."
-                            },
-                            "contestId": {
-                              "type": "string",
-                              "description": "Contest that owns the configuration."
+                                "locksAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true,
+                                  "description": "Contest entry lock timestamp."
+                                },
+                                "maxEntriesPerSquad": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "nullable": true,
+                                  "description": "Maximum entries a Team may create. Null means unlimited."
+                                },
+                                "categories": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "categoryKey": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SENIOR",
+                                          "ROOKIE",
+                                          "PREVIOUS_WINNER",
+                                          "US_PLAYER",
+                                          "INTERNATIONAL_PLAYER"
+                                        ]
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "description": "Commissioner-facing category label."
+                                      },
+                                      "pickCount": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "How many golfers must be picked for the category."
+                                      }
+                                    },
+                                    "required": [
+                                      "categoryKey",
+                                      "label",
+                                      "pickCount"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Category slot definition for a golf category-picks contest."
+                                  },
+                                  "minItems": 1,
+                                  "description": "Enabled category slots for the contest."
+                                },
+                                "cutRule": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "FIXED_SCORE"
+                                      ]
+                                    },
+                                    "fixedScore": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "description": "Fallback score assigned when a golfer misses the cut."
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "fixedScore"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf cut rule for first-pass contests."
+                                },
+                                "playoffHandling": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EXCLUDE_PLAYOFF_HOLES"
+                                  ]
+                                },
+                                "displayScoring": {
+                                  "type": "string",
+                                  "enum": [
+                                    "TO_PAR"
+                                  ]
+                                },
+                                "tiebreaker": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "PREDICT_WINNING_SCORE"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
+                                },
+                                "id": {
+                                  "type": "string",
+                                  "description": "Contest-configuration identifier."
+                                },
+                                "contestId": {
+                                  "type": "string",
+                                  "description": "Contest that owns the configuration."
+                                }
+                              },
+                              "required": [
+                                "mode",
+                                "categories",
+                                "cutRule",
+                                "playoffHandling",
+                                "displayScoring",
+                                "tiebreaker",
+                                "id",
+                                "contestId"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Golf category-picks contest configuration for one-pick-per-category contests."
                             }
-                          },
-                          "required": [
-                            "selectionType",
-                            "participantScoringRules",
-                            "entryAggregationRule",
-                            "prizeDefinitions",
-                            "id",
-                            "contestId"
                           ],
-                          "additionalProperties": false,
                           "description": "Current commissioner-managed contest configuration."
                         },
                         "createdAt": {
@@ -11206,7 +11260,7 @@
                         "updatedAt"
                       ],
                       "additionalProperties": false,
-                      "description": "Contest-management detail returned to commissioner tooling."
+                      "description": "Golf-first contest-management detail returned to commissioner tooling."
                     }
                   },
                   "required": [
@@ -11443,287 +11497,312 @@
                           ]
                         },
                         "configuration": {
-                          "type": "object",
-                          "properties": {
-                            "selectionType": {
-                              "type": "string",
-                              "enum": [
-                                "SNAKE_DRAFT",
-                                "TIERED",
-                                "BUDGET_PICK"
-                              ]
-                            },
-                            "rounds": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "timePerPickSeconds": {
-                              "type": "integer",
-                              "minimum": 10
-                            },
-                            "autoPickPolicy": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "tierConfig": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "tierId": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "description": "Stable tier identifier."
-                                  },
-                                  "tierName": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "description": "Commissioner-facing tier label."
-                                  },
-                                  "tierNumber": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "description": "Ordered tier number used in draft and selection UX."
-                                  },
-                                  "picksFromTier": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "description": "How many selections each entry must make from the tier."
-                                  },
-                                  "participantIds": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    },
-                                    "description": "Participants assigned to the tier."
-                                  }
-                                },
-                                "required": [
-                                  "tierId",
-                                  "tierName",
-                                  "tierNumber",
-                                  "picksFromTier",
-                                  "participantIds"
-                                ],
-                                "additionalProperties": false,
-                                "description": "Tier definition supplied for tiered contests."
-                              }
-                            },
-                            "budget": {
-                              "type": "number",
-                              "minimum": 0
-                            },
-                            "pricingMethod": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "pickCount": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "isExclusive": {
-                              "type": "boolean"
-                            },
-                            "picksPerPeriod": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "roundValues": {
-                              "type": "array",
-                              "items": {
-                                "type": "number"
-                              }
-                            },
-                            "startRound": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "locksAt": {
-                              "type": "string",
-                              "format": "date-time",
-                              "nullable": true
-                            },
-                            "minimumEntries": {
-                              "type": "integer",
-                              "minimum": 0
-                            },
-                            "maxEntriesPerSquad": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "rosterSize": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "totalPrizePoolAmount": {
-                              "type": "number",
-                              "minimum": 0,
-                              "nullable": true
-                            },
-                            "participantScoringRules": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "participantScoringDefinitionId": {
-                                    "type": "string",
-                                    "enum": [
-                                      "GOLF_RELATIVE_TO_PAR_TOTAL",
-                                      "TEAM_WIN_POINTS",
-                                      "ROUND_MULTIPLIER",
-                                      "SEED_DIFFERENTIAL_BONUS"
-                                    ],
-                                    "description": "Scoring definition applied to each participant within the contest."
-                                  },
-                                  "sortOrder": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "description": "Evaluation order for participant scoring rules."
-                                  },
-                                  "config": {
-                                    "type": "object",
-                                    "additionalProperties": {},
-                                    "default": {},
-                                    "description": "Rule-specific configuration payload consumed by the scoring engine."
-                                  },
-                                  "active": {
-                                    "type": "boolean",
-                                    "default": true,
-                                    "description": "Whether the scoring rule is currently active."
-                                  },
-                                  "id": {
-                                    "type": "string",
-                                    "description": "Participant scoring-rule identifier."
-                                  }
-                                },
-                                "required": [
-                                  "participantScoringDefinitionId",
-                                  "sortOrder",
-                                  "id"
-                                ],
-                                "additionalProperties": false,
-                                "description": "Persisted participant scoring rule."
-                              }
-                            },
-                            "entryAggregationRule": {
+                          "anyOf": [
+                            {
                               "type": "object",
                               "properties": {
-                                "aggregationDefinitionId": {
+                                "mode": {
                                   "type": "string",
                                   "enum": [
-                                    "SUM_ALL_ENTRIES",
-                                    "SUM_TOP_N_ENTRIES"
+                                    "GOLF_TIERED"
+                                  ]
+                                },
+                                "locksAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true,
+                                  "description": "Contest entry lock timestamp."
+                                },
+                                "maxEntriesPerSquad": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "nullable": true,
+                                  "description": "Maximum entries a Team may create. Null means unlimited."
+                                },
+                                "rosterSize": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "description": "How many golfers each Team entry must pick."
+                                },
+                                "countedScores": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "description": "How many golfer scores count toward the Team total."
+                                },
+                                "tierSource": {
+                                  "type": "string",
+                                  "enum": [
+                                    "ODDS",
+                                    "WORLD_RANK"
                                   ],
-                                  "description": "Aggregation strategy used to convert participant scores into an entry score."
+                                  "description": "Single tier source used to generate all tiers."
                                 },
-                                "config": {
+                                "tierGeneration": {
                                   "type": "object",
-                                  "additionalProperties": {},
-                                  "default": {},
-                                  "description": "Aggregation-rule configuration payload."
+                                  "properties": {
+                                    "defaultTierSize": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "description": "Basic mode tier size used to seed the tier list."
+                                    }
+                                  },
+                                  "required": [
+                                    "defaultTierSize"
+                                  ],
+                                  "additionalProperties": false
                                 },
-                                "active": {
-                                  "type": "boolean",
-                                  "default": true,
-                                  "description": "Whether the aggregation rule is active."
+                                "tiers": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "tierKey": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "description": "Stable tier key such as A, B, or C."
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "description": "Commissioner-facing tier label."
+                                      },
+                                      "pickCount": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "How many golfers must be picked from the tier."
+                                      },
+                                      "startPosition": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "Starting resolved rank/odds position for the tier."
+                                      },
+                                      "endPosition": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "nullable": true,
+                                        "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
+                                      }
+                                    },
+                                    "required": [
+                                      "tierKey",
+                                      "label",
+                                      "pickCount",
+                                      "startPosition",
+                                      "endPosition"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Tier definition for a golf tiered contest."
+                                  },
+                                  "minItems": 1,
+                                  "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
+                                },
+                                "cutRule": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "FIXED_SCORE"
+                                      ]
+                                    },
+                                    "fixedScore": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "description": "Fallback score assigned when a golfer misses the cut."
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "fixedScore"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf cut rule for first-pass contests."
+                                },
+                                "playoffHandling": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EXCLUDE_PLAYOFF_HOLES"
+                                  ]
+                                },
+                                "displayScoring": {
+                                  "type": "string",
+                                  "enum": [
+                                    "TO_PAR"
+                                  ]
+                                },
+                                "tiebreaker": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "PREDICT_WINNING_SCORE"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
                                 },
                                 "id": {
                                   "type": "string",
-                                  "description": "Contest-entry aggregation-rule identifier."
+                                  "description": "Contest-configuration identifier."
+                                },
+                                "contestId": {
+                                  "type": "string",
+                                  "description": "Contest that owns the configuration."
                                 }
                               },
                               "required": [
-                                "aggregationDefinitionId",
-                                "id"
+                                "mode",
+                                "rosterSize",
+                                "countedScores",
+                                "tierSource",
+                                "tierGeneration",
+                                "tiers",
+                                "cutRule",
+                                "playoffHandling",
+                                "displayScoring",
+                                "tiebreaker",
+                                "id",
+                                "contestId"
                               ],
                               "additionalProperties": false,
-                              "description": "Persisted contest-entry aggregation rule."
+                              "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
                             },
-                            "prizeDefinitions": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "prizeDefinitionId": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "description": "Stable prize-definition identifier."
-                                  },
-                                  "displayName": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 100,
-                                    "description": "Commissioner-facing display name for the prize."
-                                  },
-                                  "sortOrder": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "description": "Display and evaluation order for the prize definition."
-                                  },
-                                  "ruleConfig": {
-                                    "type": "object",
-                                    "additionalProperties": {},
-                                    "default": {},
-                                    "description": "Prize-award rule configuration payload."
-                                  },
-                                  "payoutType": {
-                                    "type": "string",
-                                    "enum": [
-                                      "FIXED_AMOUNT",
-                                      "PERCENTAGE"
-                                    ],
-                                    "description": "How the prize amount should be interpreted when a payout is attached."
-                                  },
-                                  "amount": {
-                                    "type": "number",
-                                    "minimum": 0,
-                                    "description": "Fixed payout amount when payoutType is FIXED_AMOUNT."
-                                  },
-                                  "percentage": {
-                                    "type": "number",
-                                    "minimum": 0,
-                                    "maximum": 100,
-                                    "description": "Prize-pool percentage when payoutType is PERCENTAGE."
-                                  },
-                                  "active": {
-                                    "type": "boolean",
-                                    "default": true,
-                                    "description": "Whether the prize definition is currently active."
-                                  },
-                                  "id": {
-                                    "type": "string",
-                                    "description": "Prize-definition record identifier."
-                                  }
+                            {
+                              "type": "object",
+                              "properties": {
+                                "mode": {
+                                  "type": "string",
+                                  "enum": [
+                                    "GOLF_CATEGORY_PICKS"
+                                  ]
                                 },
-                                "required": [
-                                  "prizeDefinitionId",
-                                  "displayName",
-                                  "sortOrder",
-                                  "id"
-                                ],
-                                "additionalProperties": false,
-                                "description": "Persisted contest prize definition."
-                              }
-                            },
-                            "id": {
-                              "type": "string",
-                              "description": "Contest-configuration identifier."
-                            },
-                            "contestId": {
-                              "type": "string",
-                              "description": "Contest that owns the configuration."
+                                "locksAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true,
+                                  "description": "Contest entry lock timestamp."
+                                },
+                                "maxEntriesPerSquad": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "nullable": true,
+                                  "description": "Maximum entries a Team may create. Null means unlimited."
+                                },
+                                "categories": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "categoryKey": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SENIOR",
+                                          "ROOKIE",
+                                          "PREVIOUS_WINNER",
+                                          "US_PLAYER",
+                                          "INTERNATIONAL_PLAYER"
+                                        ]
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "description": "Commissioner-facing category label."
+                                      },
+                                      "pickCount": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "How many golfers must be picked for the category."
+                                      }
+                                    },
+                                    "required": [
+                                      "categoryKey",
+                                      "label",
+                                      "pickCount"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Category slot definition for a golf category-picks contest."
+                                  },
+                                  "minItems": 1,
+                                  "description": "Enabled category slots for the contest."
+                                },
+                                "cutRule": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "FIXED_SCORE"
+                                      ]
+                                    },
+                                    "fixedScore": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "description": "Fallback score assigned when a golfer misses the cut."
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "fixedScore"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf cut rule for first-pass contests."
+                                },
+                                "playoffHandling": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EXCLUDE_PLAYOFF_HOLES"
+                                  ]
+                                },
+                                "displayScoring": {
+                                  "type": "string",
+                                  "enum": [
+                                    "TO_PAR"
+                                  ]
+                                },
+                                "tiebreaker": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "PREDICT_WINNING_SCORE"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
+                                },
+                                "id": {
+                                  "type": "string",
+                                  "description": "Contest-configuration identifier."
+                                },
+                                "contestId": {
+                                  "type": "string",
+                                  "description": "Contest that owns the configuration."
+                                }
+                              },
+                              "required": [
+                                "mode",
+                                "categories",
+                                "cutRule",
+                                "playoffHandling",
+                                "displayScoring",
+                                "tiebreaker",
+                                "id",
+                                "contestId"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Golf category-picks contest configuration for one-pick-per-category contests."
                             }
-                          },
-                          "required": [
-                            "selectionType",
-                            "participantScoringRules",
-                            "entryAggregationRule",
-                            "prizeDefinitions",
-                            "id",
-                            "contestId"
                           ],
-                          "additionalProperties": false,
                           "description": "Current commissioner-managed contest configuration."
                         },
                         "createdAt": {
@@ -11748,7 +11827,7 @@
                         "updatedAt"
                       ],
                       "additionalProperties": false,
-                      "description": "Contest-management detail returned to commissioner tooling."
+                      "description": "Golf-first contest-management detail returned to commissioner tooling."
                     }
                   },
                   "required": [
@@ -11932,268 +12011,297 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "selectionType": {
-                    "type": "string",
-                    "enum": [
-                      "SNAKE_DRAFT",
-                      "TIERED",
-                      "BUDGET_PICK"
-                    ]
-                  },
-                  "rounds": {
-                    "type": "integer",
-                    "minimum": 1
-                  },
-                  "timePerPickSeconds": {
-                    "type": "integer",
-                    "minimum": 10
-                  },
-                  "autoPickPolicy": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "tierConfig": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "tierId": {
-                          "type": "string",
-                          "minLength": 1,
-                          "description": "Stable tier identifier."
-                        },
-                        "tierName": {
-                          "type": "string",
-                          "minLength": 1,
-                          "description": "Commissioner-facing tier label."
-                        },
-                        "tierNumber": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "Ordered tier number used in draft and selection UX."
-                        },
-                        "picksFromTier": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "How many selections each entry must make from the tier."
-                        },
-                        "participantIds": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "description": "Participants assigned to the tier."
-                        }
-                      },
-                      "required": [
-                        "tierId",
-                        "tierName",
-                        "tierNumber",
-                        "picksFromTier",
-                        "participantIds"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Tier definition supplied for tiered contests."
-                    }
-                  },
-                  "budget": {
-                    "type": "number",
-                    "minimum": 0
-                  },
-                  "pricingMethod": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "pickCount": {
-                    "type": "integer",
-                    "minimum": 1
-                  },
-                  "isExclusive": {
-                    "type": "boolean"
-                  },
-                  "picksPerPeriod": {
-                    "type": "integer",
-                    "minimum": 1
-                  },
-                  "roundValues": {
-                    "type": "array",
-                    "items": {
-                      "type": "number"
-                    }
-                  },
-                  "startRound": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "locksAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true
-                  },
-                  "minimumEntries": {
-                    "type": "integer",
-                    "minimum": 0
-                  },
-                  "maxEntriesPerSquad": {
-                    "type": "integer",
-                    "minimum": 1
-                  },
-                  "rosterSize": {
-                    "type": "integer",
-                    "minimum": 1
-                  },
-                  "totalPrizePoolAmount": {
-                    "type": "number",
-                    "minimum": 0,
-                    "nullable": true
-                  },
-                  "participantScoringRules": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "participantScoringDefinitionId": {
-                          "type": "string",
-                          "enum": [
-                            "GOLF_RELATIVE_TO_PAR_TOTAL",
-                            "TEAM_WIN_POINTS",
-                            "ROUND_MULTIPLIER",
-                            "SEED_DIFFERENTIAL_BONUS"
-                          ],
-                          "description": "Scoring definition applied to each participant within the contest."
-                        },
-                        "sortOrder": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "Evaluation order for participant scoring rules."
-                        },
-                        "config": {
-                          "type": "object",
-                          "additionalProperties": {},
-                          "default": {},
-                          "description": "Rule-specific configuration payload consumed by the scoring engine."
-                        },
-                        "active": {
-                          "type": "boolean",
-                          "default": true,
-                          "description": "Whether the scoring rule is currently active."
-                        }
-                      },
-                      "required": [
-                        "participantScoringDefinitionId",
-                        "sortOrder"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Participant-level scoring rule supplied when configuring a managed contest."
-                    }
-                  },
-                  "entryAggregationRule": {
+                "anyOf": [
+                  {
                     "type": "object",
                     "properties": {
-                      "aggregationDefinitionId": {
+                      "mode": {
                         "type": "string",
                         "enum": [
-                          "SUM_ALL_ENTRIES",
-                          "SUM_TOP_N_ENTRIES"
+                          "GOLF_TIERED"
+                        ]
+                      },
+                      "locksAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "Contest entry lock timestamp."
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "nullable": true,
+                        "description": "Maximum entries a Team may create. Null means unlimited."
+                      },
+                      "rosterSize": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many golfers each Team entry must pick."
+                      },
+                      "countedScores": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "How many golfer scores count toward the Team total."
+                      },
+                      "tierSource": {
+                        "type": "string",
+                        "enum": [
+                          "ODDS",
+                          "WORLD_RANK"
                         ],
-                        "description": "Aggregation strategy used to convert participant scores into an entry score."
+                        "description": "Single tier source used to generate all tiers."
                       },
-                      "config": {
+                      "tierGeneration": {
                         "type": "object",
-                        "additionalProperties": {},
-                        "default": {},
-                        "description": "Aggregation-rule configuration payload."
+                        "properties": {
+                          "defaultTierSize": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Basic mode tier size used to seed the tier list."
+                          }
+                        },
+                        "required": [
+                          "defaultTierSize"
+                        ],
+                        "additionalProperties": false
                       },
-                      "active": {
-                        "type": "boolean",
-                        "default": true,
-                        "description": "Whether the aggregation rule is active."
+                      "tiers": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "tierKey": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Stable tier key such as A, B, or C."
+                            },
+                            "label": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Commissioner-facing tier label."
+                            },
+                            "pickCount": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How many golfers must be picked from the tier."
+                            },
+                            "startPosition": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "Starting resolved rank/odds position for the tier."
+                            },
+                            "endPosition": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "nullable": true,
+                              "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
+                            }
+                          },
+                          "required": [
+                            "tierKey",
+                            "label",
+                            "pickCount",
+                            "startPosition",
+                            "endPosition"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Tier definition for a golf tiered contest."
+                        },
+                        "minItems": 1,
+                        "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
+                      },
+                      "cutRule": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "FIXED_SCORE"
+                            ]
+                          },
+                          "fixedScore": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Fallback score assigned when a golfer misses the cut."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "fixedScore"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Golf cut rule for first-pass contests."
+                      },
+                      "playoffHandling": {
+                        "type": "string",
+                        "enum": [
+                          "EXCLUDE_PLAYOFF_HOLES"
+                        ]
+                      },
+                      "displayScoring": {
+                        "type": "string",
+                        "enum": [
+                          "TO_PAR"
+                        ]
+                      },
+                      "tiebreaker": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "PREDICT_WINNING_SCORE"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
                       }
                     },
                     "required": [
-                      "aggregationDefinitionId"
+                      "mode",
+                      "rosterSize",
+                      "countedScores",
+                      "tierSource",
+                      "tierGeneration",
+                      "tiers",
+                      "cutRule",
+                      "playoffHandling",
+                      "displayScoring",
+                      "tiebreaker"
                     ],
                     "additionalProperties": false,
-                    "description": "Contest-entry aggregation rule for managed-contest configuration."
+                    "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
                   },
-                  "prizeDefinitions": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "prizeDefinitionId": {
-                          "type": "string",
-                          "minLength": 1,
-                          "description": "Stable prize-definition identifier."
-                        },
-                        "displayName": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 100,
-                          "description": "Commissioner-facing display name for the prize."
-                        },
-                        "sortOrder": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "Display and evaluation order for the prize definition."
-                        },
-                        "ruleConfig": {
-                          "type": "object",
-                          "additionalProperties": {},
-                          "default": {},
-                          "description": "Prize-award rule configuration payload."
-                        },
-                        "payoutType": {
-                          "type": "string",
-                          "enum": [
-                            "FIXED_AMOUNT",
-                            "PERCENTAGE"
-                          ],
-                          "description": "How the prize amount should be interpreted when a payout is attached."
-                        },
-                        "amount": {
-                          "type": "number",
-                          "minimum": 0,
-                          "description": "Fixed payout amount when payoutType is FIXED_AMOUNT."
-                        },
-                        "percentage": {
-                          "type": "number",
-                          "minimum": 0,
-                          "maximum": 100,
-                          "description": "Prize-pool percentage when payoutType is PERCENTAGE."
-                        },
-                        "active": {
-                          "type": "boolean",
-                          "default": true,
-                          "description": "Whether the prize definition is currently active."
-                        }
+                  {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "GOLF_CATEGORY_PICKS"
+                        ]
                       },
-                      "required": [
-                        "prizeDefinitionId",
-                        "displayName",
-                        "sortOrder"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Prize definition used by contest-management endpoints."
+                      "locksAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "Contest entry lock timestamp."
+                      },
+                      "maxEntriesPerSquad": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "nullable": true,
+                        "description": "Maximum entries a Team may create. Null means unlimited."
+                      },
+                      "categories": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "categoryKey": {
+                              "type": "string",
+                              "enum": [
+                                "SENIOR",
+                                "ROOKIE",
+                                "PREVIOUS_WINNER",
+                                "US_PLAYER",
+                                "INTERNATIONAL_PLAYER"
+                              ]
+                            },
+                            "label": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Commissioner-facing category label."
+                            },
+                            "pickCount": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "How many golfers must be picked for the category."
+                            }
+                          },
+                          "required": [
+                            "categoryKey",
+                            "label",
+                            "pickCount"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Category slot definition for a golf category-picks contest."
+                        },
+                        "minItems": 1,
+                        "description": "Enabled category slots for the contest."
+                      },
+                      "cutRule": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "FIXED_SCORE"
+                            ]
+                          },
+                          "fixedScore": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Fallback score assigned when a golfer misses the cut."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "fixedScore"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Golf cut rule for first-pass contests."
+                      },
+                      "playoffHandling": {
+                        "type": "string",
+                        "enum": [
+                          "EXCLUDE_PLAYOFF_HOLES"
+                        ]
+                      },
+                      "displayScoring": {
+                        "type": "string",
+                        "enum": [
+                          "TO_PAR"
+                        ]
+                      },
+                      "tiebreaker": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "PREDICT_WINNING_SCORE"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
+                      }
                     },
-                    "default": [],
-                    "description": "Prize definitions attached to the contest configuration."
+                    "required": [
+                      "mode",
+                      "categories",
+                      "cutRule",
+                      "playoffHandling",
+                      "displayScoring",
+                      "tiebreaker"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Golf category-picks contest configuration for one-pick-per-category contests."
                   }
-                },
-                "required": [
-                  "selectionType",
-                  "participantScoringRules",
-                  "entryAggregationRule"
                 ],
-                "additionalProperties": false,
-                "description": "Managed contest-configuration payload."
+                "description": "Approved commissioner-managed contest configuration payload for golf-first contest creation."
               }
             }
           },
-          "description": "Managed contest-configuration payload."
+          "description": "Approved commissioner-managed contest configuration payload for golf-first contest creation."
         },
         "parameters": [
           {
@@ -12253,287 +12361,312 @@
                           ]
                         },
                         "configuration": {
-                          "type": "object",
-                          "properties": {
-                            "selectionType": {
-                              "type": "string",
-                              "enum": [
-                                "SNAKE_DRAFT",
-                                "TIERED",
-                                "BUDGET_PICK"
-                              ]
-                            },
-                            "rounds": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "timePerPickSeconds": {
-                              "type": "integer",
-                              "minimum": 10
-                            },
-                            "autoPickPolicy": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "tierConfig": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "tierId": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "description": "Stable tier identifier."
-                                  },
-                                  "tierName": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "description": "Commissioner-facing tier label."
-                                  },
-                                  "tierNumber": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "description": "Ordered tier number used in draft and selection UX."
-                                  },
-                                  "picksFromTier": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "description": "How many selections each entry must make from the tier."
-                                  },
-                                  "participantIds": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    },
-                                    "description": "Participants assigned to the tier."
-                                  }
-                                },
-                                "required": [
-                                  "tierId",
-                                  "tierName",
-                                  "tierNumber",
-                                  "picksFromTier",
-                                  "participantIds"
-                                ],
-                                "additionalProperties": false,
-                                "description": "Tier definition supplied for tiered contests."
-                              }
-                            },
-                            "budget": {
-                              "type": "number",
-                              "minimum": 0
-                            },
-                            "pricingMethod": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "pickCount": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "isExclusive": {
-                              "type": "boolean"
-                            },
-                            "picksPerPeriod": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "roundValues": {
-                              "type": "array",
-                              "items": {
-                                "type": "number"
-                              }
-                            },
-                            "startRound": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "locksAt": {
-                              "type": "string",
-                              "format": "date-time",
-                              "nullable": true
-                            },
-                            "minimumEntries": {
-                              "type": "integer",
-                              "minimum": 0
-                            },
-                            "maxEntriesPerSquad": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "rosterSize": {
-                              "type": "integer",
-                              "minimum": 1
-                            },
-                            "totalPrizePoolAmount": {
-                              "type": "number",
-                              "minimum": 0,
-                              "nullable": true
-                            },
-                            "participantScoringRules": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "participantScoringDefinitionId": {
-                                    "type": "string",
-                                    "enum": [
-                                      "GOLF_RELATIVE_TO_PAR_TOTAL",
-                                      "TEAM_WIN_POINTS",
-                                      "ROUND_MULTIPLIER",
-                                      "SEED_DIFFERENTIAL_BONUS"
-                                    ],
-                                    "description": "Scoring definition applied to each participant within the contest."
-                                  },
-                                  "sortOrder": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "description": "Evaluation order for participant scoring rules."
-                                  },
-                                  "config": {
-                                    "type": "object",
-                                    "additionalProperties": {},
-                                    "default": {},
-                                    "description": "Rule-specific configuration payload consumed by the scoring engine."
-                                  },
-                                  "active": {
-                                    "type": "boolean",
-                                    "default": true,
-                                    "description": "Whether the scoring rule is currently active."
-                                  },
-                                  "id": {
-                                    "type": "string",
-                                    "description": "Participant scoring-rule identifier."
-                                  }
-                                },
-                                "required": [
-                                  "participantScoringDefinitionId",
-                                  "sortOrder",
-                                  "id"
-                                ],
-                                "additionalProperties": false,
-                                "description": "Persisted participant scoring rule."
-                              }
-                            },
-                            "entryAggregationRule": {
+                          "anyOf": [
+                            {
                               "type": "object",
                               "properties": {
-                                "aggregationDefinitionId": {
+                                "mode": {
                                   "type": "string",
                                   "enum": [
-                                    "SUM_ALL_ENTRIES",
-                                    "SUM_TOP_N_ENTRIES"
+                                    "GOLF_TIERED"
+                                  ]
+                                },
+                                "locksAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true,
+                                  "description": "Contest entry lock timestamp."
+                                },
+                                "maxEntriesPerSquad": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "nullable": true,
+                                  "description": "Maximum entries a Team may create. Null means unlimited."
+                                },
+                                "rosterSize": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "description": "How many golfers each Team entry must pick."
+                                },
+                                "countedScores": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "description": "How many golfer scores count toward the Team total."
+                                },
+                                "tierSource": {
+                                  "type": "string",
+                                  "enum": [
+                                    "ODDS",
+                                    "WORLD_RANK"
                                   ],
-                                  "description": "Aggregation strategy used to convert participant scores into an entry score."
+                                  "description": "Single tier source used to generate all tiers."
                                 },
-                                "config": {
+                                "tierGeneration": {
                                   "type": "object",
-                                  "additionalProperties": {},
-                                  "default": {},
-                                  "description": "Aggregation-rule configuration payload."
+                                  "properties": {
+                                    "defaultTierSize": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "description": "Basic mode tier size used to seed the tier list."
+                                    }
+                                  },
+                                  "required": [
+                                    "defaultTierSize"
+                                  ],
+                                  "additionalProperties": false
                                 },
-                                "active": {
-                                  "type": "boolean",
-                                  "default": true,
-                                  "description": "Whether the aggregation rule is active."
+                                "tiers": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "tierKey": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "description": "Stable tier key such as A, B, or C."
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "description": "Commissioner-facing tier label."
+                                      },
+                                      "pickCount": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "How many golfers must be picked from the tier."
+                                      },
+                                      "startPosition": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "Starting resolved rank/odds position for the tier."
+                                      },
+                                      "endPosition": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "nullable": true,
+                                        "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
+                                      }
+                                    },
+                                    "required": [
+                                      "tierKey",
+                                      "label",
+                                      "pickCount",
+                                      "startPosition",
+                                      "endPosition"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Tier definition for a golf tiered contest."
+                                  },
+                                  "minItems": 1,
+                                  "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
+                                },
+                                "cutRule": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "FIXED_SCORE"
+                                      ]
+                                    },
+                                    "fixedScore": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "description": "Fallback score assigned when a golfer misses the cut."
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "fixedScore"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf cut rule for first-pass contests."
+                                },
+                                "playoffHandling": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EXCLUDE_PLAYOFF_HOLES"
+                                  ]
+                                },
+                                "displayScoring": {
+                                  "type": "string",
+                                  "enum": [
+                                    "TO_PAR"
+                                  ]
+                                },
+                                "tiebreaker": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "PREDICT_WINNING_SCORE"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
                                 },
                                 "id": {
                                   "type": "string",
-                                  "description": "Contest-entry aggregation-rule identifier."
+                                  "description": "Contest-configuration identifier."
+                                },
+                                "contestId": {
+                                  "type": "string",
+                                  "description": "Contest that owns the configuration."
                                 }
                               },
                               "required": [
-                                "aggregationDefinitionId",
-                                "id"
+                                "mode",
+                                "rosterSize",
+                                "countedScores",
+                                "tierSource",
+                                "tierGeneration",
+                                "tiers",
+                                "cutRule",
+                                "playoffHandling",
+                                "displayScoring",
+                                "tiebreaker",
+                                "id",
+                                "contestId"
                               ],
                               "additionalProperties": false,
-                              "description": "Persisted contest-entry aggregation rule."
+                              "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
                             },
-                            "prizeDefinitions": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "prizeDefinitionId": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "description": "Stable prize-definition identifier."
-                                  },
-                                  "displayName": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 100,
-                                    "description": "Commissioner-facing display name for the prize."
-                                  },
-                                  "sortOrder": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "description": "Display and evaluation order for the prize definition."
-                                  },
-                                  "ruleConfig": {
-                                    "type": "object",
-                                    "additionalProperties": {},
-                                    "default": {},
-                                    "description": "Prize-award rule configuration payload."
-                                  },
-                                  "payoutType": {
-                                    "type": "string",
-                                    "enum": [
-                                      "FIXED_AMOUNT",
-                                      "PERCENTAGE"
-                                    ],
-                                    "description": "How the prize amount should be interpreted when a payout is attached."
-                                  },
-                                  "amount": {
-                                    "type": "number",
-                                    "minimum": 0,
-                                    "description": "Fixed payout amount when payoutType is FIXED_AMOUNT."
-                                  },
-                                  "percentage": {
-                                    "type": "number",
-                                    "minimum": 0,
-                                    "maximum": 100,
-                                    "description": "Prize-pool percentage when payoutType is PERCENTAGE."
-                                  },
-                                  "active": {
-                                    "type": "boolean",
-                                    "default": true,
-                                    "description": "Whether the prize definition is currently active."
-                                  },
-                                  "id": {
-                                    "type": "string",
-                                    "description": "Prize-definition record identifier."
-                                  }
+                            {
+                              "type": "object",
+                              "properties": {
+                                "mode": {
+                                  "type": "string",
+                                  "enum": [
+                                    "GOLF_CATEGORY_PICKS"
+                                  ]
                                 },
-                                "required": [
-                                  "prizeDefinitionId",
-                                  "displayName",
-                                  "sortOrder",
-                                  "id"
-                                ],
-                                "additionalProperties": false,
-                                "description": "Persisted contest prize definition."
-                              }
-                            },
-                            "id": {
-                              "type": "string",
-                              "description": "Contest-configuration identifier."
-                            },
-                            "contestId": {
-                              "type": "string",
-                              "description": "Contest that owns the configuration."
+                                "locksAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true,
+                                  "description": "Contest entry lock timestamp."
+                                },
+                                "maxEntriesPerSquad": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "nullable": true,
+                                  "description": "Maximum entries a Team may create. Null means unlimited."
+                                },
+                                "categories": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "categoryKey": {
+                                        "type": "string",
+                                        "enum": [
+                                          "SENIOR",
+                                          "ROOKIE",
+                                          "PREVIOUS_WINNER",
+                                          "US_PLAYER",
+                                          "INTERNATIONAL_PLAYER"
+                                        ]
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "description": "Commissioner-facing category label."
+                                      },
+                                      "pickCount": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "description": "How many golfers must be picked for the category."
+                                      }
+                                    },
+                                    "required": [
+                                      "categoryKey",
+                                      "label",
+                                      "pickCount"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Category slot definition for a golf category-picks contest."
+                                  },
+                                  "minItems": 1,
+                                  "description": "Enabled category slots for the contest."
+                                },
+                                "cutRule": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "FIXED_SCORE"
+                                      ]
+                                    },
+                                    "fixedScore": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "description": "Fallback score assigned when a golfer misses the cut."
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "fixedScore"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf cut rule for first-pass contests."
+                                },
+                                "playoffHandling": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EXCLUDE_PLAYOFF_HOLES"
+                                  ]
+                                },
+                                "displayScoring": {
+                                  "type": "string",
+                                  "enum": [
+                                    "TO_PAR"
+                                  ]
+                                },
+                                "tiebreaker": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "PREDICT_WINNING_SCORE"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
+                                },
+                                "id": {
+                                  "type": "string",
+                                  "description": "Contest-configuration identifier."
+                                },
+                                "contestId": {
+                                  "type": "string",
+                                  "description": "Contest that owns the configuration."
+                                }
+                              },
+                              "required": [
+                                "mode",
+                                "categories",
+                                "cutRule",
+                                "playoffHandling",
+                                "displayScoring",
+                                "tiebreaker",
+                                "id",
+                                "contestId"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Golf category-picks contest configuration for one-pick-per-category contests."
                             }
-                          },
-                          "required": [
-                            "selectionType",
-                            "participantScoringRules",
-                            "entryAggregationRule",
-                            "prizeDefinitions",
-                            "id",
-                            "contestId"
                           ],
-                          "additionalProperties": false,
                           "description": "Current commissioner-managed contest configuration."
                         },
                         "createdAt": {
@@ -12558,7 +12691,7 @@
                         "updatedAt"
                       ],
                       "additionalProperties": false,
-                      "description": "Contest-management detail returned to commissioner tooling."
+                      "description": "Golf-first contest-management detail returned to commissioner tooling."
                     }
                   },
                   "required": [

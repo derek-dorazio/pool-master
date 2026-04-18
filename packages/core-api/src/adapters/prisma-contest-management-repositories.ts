@@ -279,6 +279,8 @@ export class PrismaContestConfigurationRepository
       data: {
         contestId: configuration.contestId,
         selectionType: configuration.selectionType,
+        configMode: configuration.configMode,
+        configJson: configuration.configJson as object | undefined,
         rounds: configuration.rounds,
         timePerPickSeconds: configuration.timePerPickSeconds,
         autoPickPolicy: configuration.autoPickPolicy,
@@ -309,6 +311,12 @@ export class PrismaContestConfigurationRepository
       data: {
         ...(updates.selectionType !== undefined && {
           selectionType: updates.selectionType,
+        }),
+        ...(updates.configMode !== undefined && {
+          configMode: updates.configMode,
+        }),
+        ...(updates.configJson !== undefined && {
+          configJson: updates.configJson as object,
         }),
         ...(updates.rounds !== undefined && { rounds: updates.rounds }),
         ...(updates.timePerPickSeconds !== undefined && {
@@ -803,6 +811,8 @@ function mapContestConfiguration(row: {
   id: string;
   contestId: string;
   selectionType: string;
+  configMode: string | null;
+  configJson: unknown;
   rounds: number | null;
   timePerPickSeconds: number | null;
   autoPickPolicy: string | null;
@@ -826,6 +836,8 @@ function mapContestConfiguration(row: {
     id: row.id,
     contestId: row.contestId,
     selectionType: row.selectionType as ContestConfiguration['selectionType'],
+    configMode: row.configMode as ContestConfiguration['configMode'],
+    configJson: row.configJson as ContestConfiguration['configJson'],
     rounds: row.rounds ?? undefined,
     timePerPickSeconds: row.timePerPickSeconds ?? undefined,
     autoPickPolicy: row.autoPickPolicy ?? undefined,

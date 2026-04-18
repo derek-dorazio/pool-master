@@ -273,24 +273,33 @@ describe('Contract verification (web)', () => {
         sportEventId: sportEvent.id,
         contestType: ContestType.SINGLE_EVENT,
         configuration: {
-          selectionType: 'BUDGET_PICK',
-          rosterSize: 6,
-          minimumEntries: 1,
+          mode: 'GOLF_TIERED',
+          locksAt: '2026-04-12T11:30:00.000Z',
           maxEntriesPerSquad: 1,
-          participantScoringRules: [
+          rosterSize: 6,
+          countedScores: 4,
+          tierSource: 'ODDS',
+          tierGeneration: {
+            defaultTierSize: 10,
+          },
+          tiers: [
             {
-              participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-              sortOrder: 1,
-              config: {},
-              active: true,
+              tierKey: 'A',
+              label: 'Tier A',
+              pickCount: 1,
+              startPosition: 1,
+              endPosition: 10,
             },
           ],
-          entryAggregationRule: {
-            aggregationDefinitionId: 'SUM_ALL_ENTRIES',
-            config: {},
-            active: true,
+          cutRule: {
+            type: 'FIXED_SCORE',
+            fixedScore: 80,
           },
-          prizeDefinitions: [],
+          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+          displayScoring: 'TO_PAR',
+          tiebreaker: {
+            type: 'PREDICT_WINNING_SCORE',
+          },
         },
       },
     });

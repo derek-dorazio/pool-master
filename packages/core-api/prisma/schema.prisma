@@ -630,6 +630,8 @@ model ContestConfiguration {
   id                   String    @id @default(uuid()) @db.Uuid
   contestId            String    @unique @map("contest_id") @db.Uuid
   selectionType        String    @map("selection_type") @db.VarChar(50)
+  configMode           String?   @map("config_mode") @db.VarChar(50)
+  configJson           Json?     @map("config_json")
   rounds               Int?
   timePerPickSeconds   Int?      @map("time_per_pick_seconds")
   autoPickPolicy       String?   @map("auto_pick_policy") @db.VarChar(50)

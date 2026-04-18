@@ -1,15 +1,73 @@
-import type { ContestStatus, SelectionType, ScoringEngine } from './enums';
-import type { AggregationDefinitionId, ParticipantScoringDefinitionId } from './contest-scoring';
+import type {
+  ContestStatus,
+  GolfCategoryKey,
+  GolfContestConfigMode,
+  GolfCutRuleType,
+  GolfDisplayScoring,
+  GolfPlayoffHandling,
+  GolfTiebreakerType,
+  GolfTierSource,
+  ScoringEngine,
+  SelectionType,
+} from './enums';
+import type {
+  AggregationDefinitionId,
+  ParticipantScoringDefinitionId,
+} from './contest-scoring';
 import type { DomainEntity } from './types';
 
-/** Tier definition persisted inside a contest configuration for tiered contests. */
-export interface ContestConfigurationTier {
-  tierId: string;
-  tierName: string;
-  tierNumber: number;
-  picksFromTier: number;
-  participantIds: string[];
+export interface GolfFixedCutRule {
+  type: GolfCutRuleType;
+  fixedScore: number;
 }
+
+export interface GolfTiebreakerRule {
+  type: GolfTiebreakerType;
+}
+
+export interface GolfTierGeneration {
+  defaultTierSize: number;
+}
+
+export interface GolfContestTierDefinition {
+  tierKey: string;
+  label: string;
+  pickCount: number;
+  startPosition: number;
+  endPosition: number | null;
+}
+
+export interface GolfCategoryDefinition {
+  categoryKey: GolfCategoryKey;
+  label: string;
+  pickCount: number;
+}
+
+export interface GolfTieredContestConfig {
+  mode: 'GOLF_TIERED';
+  rosterSize: number;
+  countedScores: number;
+  tierSource: GolfTierSource;
+  tierGeneration: GolfTierGeneration;
+  tiers: GolfContestTierDefinition[];
+  cutRule: GolfFixedCutRule;
+  playoffHandling: GolfPlayoffHandling;
+  displayScoring: GolfDisplayScoring;
+  tiebreaker: GolfTiebreakerRule;
+}
+
+export interface GolfCategoryContestConfig {
+  mode: 'GOLF_CATEGORY_PICKS';
+  categories: GolfCategoryDefinition[];
+  cutRule: GolfFixedCutRule;
+  playoffHandling: GolfPlayoffHandling;
+  displayScoring: GolfDisplayScoring;
+  tiebreaker: GolfTiebreakerRule;
+}
+
+export type GolfContestConfig =
+  | GolfTieredContestConfig
+  | GolfCategoryContestConfig;
 
 /** Join record linking a provider event to a normalized participant. */
 export interface SportEventParticipant extends DomainEntity {
@@ -42,22 +100,26 @@ export interface SportEventParticipantValuation extends DomainEntity {
 export interface ContestConfiguration extends DomainEntity {
   contestId: string;
   selectionType: SelectionType;
+  configMode?: GolfContestConfigMode | null;
+  configJson?: GolfContestConfig;
   rounds?: number;
   timePerPickSeconds?: number;
   autoPickPolicy?: string;
-  tierConfig?: ContestConfigurationTier[];
+  locksAt?: Date;
+  minimumEntries?: number;
+  maxEntriesPerSquad?: number | null;
+  totalPrizePoolAmount?: number | null;
+
+  // Legacy support fields retained temporarily for read paths not yet narrowed.
+  roundValues?: number[];
+  startRound?: string;
+  tierConfig?: GolfContestTierDefinition[];
   budget?: number;
   pricingMethod?: string;
   pickCount?: number;
   isExclusive?: boolean;
   picksPerPeriod?: number;
-  roundValues?: number[];
-  startRound?: string;
-  locksAt?: Date;
-  minimumEntries?: number;
-  maxEntriesPerSquad?: number;
   rosterSize?: number;
-  totalPrizePoolAmount?: number;
 }
 
 /** Participant scoring rule attached to a managed contest configuration. */

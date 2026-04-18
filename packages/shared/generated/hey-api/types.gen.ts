@@ -4873,7 +4873,7 @@ export type CreateContestResponse = CreateContestResponses[keyof CreateContestRe
 
 export type CreateManagedContestData = {
     /**
-     * Commissioner request payload for creating a managed contest.
+     * Commissioner request payload for creating a golf-first managed contest.
      */
     body: {
         /**
@@ -4884,127 +4884,123 @@ export type CreateManagedContestData = {
          * Sport-event identifier that anchors the contest.
          */
         sportEventId: string;
-        contestType?: 'SINGLE_EVENT';
+        contestType: 'SINGLE_EVENT';
         /**
-         * Managed contest-configuration payload.
+         * Approved commissioner-managed contest configuration payload for golf-first contest creation.
          */
         configuration: {
-            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
-            rounds?: number;
-            timePerPickSeconds?: number;
-            autoPickPolicy?: string;
-            tierConfig?: Array<{
+            mode: 'GOLF_TIERED';
+            /**
+             * Contest entry lock timestamp.
+             */
+            locksAt?: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number;
+            /**
+             * How many golfers each Team entry must pick.
+             */
+            rosterSize: number;
+            /**
+             * How many golfer scores count toward the Team total.
+             */
+            countedScores: number;
+            /**
+             * Single tier source used to generate all tiers.
+             */
+            tierSource: 'ODDS' | 'WORLD_RANK';
+            tierGeneration: {
                 /**
-                 * Stable tier identifier.
+                 * Basic mode tier size used to seed the tier list.
                  */
-                tierId: string;
+                defaultTierSize: number;
+            };
+            /**
+             * Persisted tier boundaries and pick counts after seeding or advanced editing.
+             */
+            tiers: Array<{
+                /**
+                 * Stable tier key such as A, B, or C.
+                 */
+                tierKey: string;
                 /**
                  * Commissioner-facing tier label.
                  */
-                tierName: string;
+                label: string;
                 /**
-                 * Ordered tier number used in draft and selection UX.
+                 * How many golfers must be picked from the tier.
                  */
-                tierNumber: number;
+                pickCount: number;
                 /**
-                 * How many selections each entry must make from the tier.
+                 * Starting resolved rank/odds position for the tier.
                  */
-                picksFromTier: number;
+                startPosition: number;
                 /**
-                 * Participants assigned to the tier.
+                 * Ending resolved rank/odds position for the tier. Null means remainder of field.
                  */
-                participantIds: Array<string>;
-            }>;
-            budget?: number;
-            pricingMethod?: string;
-            pickCount?: number;
-            isExclusive?: boolean;
-            picksPerPeriod?: number;
-            roundValues?: Array<number>;
-            startRound?: string;
-            locksAt?: string;
-            minimumEntries?: number;
-            maxEntriesPerSquad?: number;
-            rosterSize?: number;
-            totalPrizePoolAmount?: number;
-            participantScoringRules: Array<{
-                /**
-                 * Scoring definition applied to each participant within the contest.
-                 */
-                participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
-                /**
-                 * Evaluation order for participant scoring rules.
-                 */
-                sortOrder: number;
-                /**
-                 * Rule-specific configuration payload consumed by the scoring engine.
-                 */
-                config?: {
-                    [key: string]: unknown;
-                };
-                /**
-                 * Whether the scoring rule is currently active.
-                 */
-                active?: boolean;
+                endPosition: number;
             }>;
             /**
-             * Contest-entry aggregation rule for managed-contest configuration.
+             * Golf cut rule for first-pass contests.
              */
-            entryAggregationRule: {
+            cutRule: {
+                type: 'FIXED_SCORE';
                 /**
-                 * Aggregation strategy used to convert participant scores into an entry score.
+                 * Fallback score assigned when a golfer misses the cut.
                  */
-                aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
-                /**
-                 * Aggregation-rule configuration payload.
-                 */
-                config?: {
-                    [key: string]: unknown;
-                };
-                /**
-                 * Whether the aggregation rule is active.
-                 */
-                active?: boolean;
+                fixedScore: number;
             };
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+            displayScoring: 'TO_PAR';
             /**
-             * Prize definitions attached to the contest configuration.
+             * Golf tiebreaker configuration. Teams predict the winning to-par score.
              */
-            prizeDefinitions?: Array<{
+            tiebreaker: {
+                type: 'PREDICT_WINNING_SCORE';
+            };
+        } | {
+            mode: 'GOLF_CATEGORY_PICKS';
+            /**
+             * Contest entry lock timestamp.
+             */
+            locksAt?: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number;
+            /**
+             * Enabled category slots for the contest.
+             */
+            categories: Array<{
+                categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
                 /**
-                 * Stable prize-definition identifier.
+                 * Commissioner-facing category label.
                  */
-                prizeDefinitionId: string;
+                label: string;
                 /**
-                 * Commissioner-facing display name for the prize.
+                 * How many golfers must be picked for the category.
                  */
-                displayName: string;
-                /**
-                 * Display and evaluation order for the prize definition.
-                 */
-                sortOrder: number;
-                /**
-                 * Prize-award rule configuration payload.
-                 */
-                ruleConfig?: {
-                    [key: string]: unknown;
-                };
-                /**
-                 * How the prize amount should be interpreted when a payout is attached.
-                 */
-                payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
-                /**
-                 * Fixed payout amount when payoutType is FIXED_AMOUNT.
-                 */
-                amount?: number;
-                /**
-                 * Prize-pool percentage when payoutType is PERCENTAGE.
-                 */
-                percentage?: number;
-                /**
-                 * Whether the prize definition is currently active.
-                 */
-                active?: boolean;
+                pickCount: number;
             }>;
+            /**
+             * Golf cut rule for first-pass contests.
+             */
+            cutRule: {
+                type: 'FIXED_SCORE';
+                /**
+                 * Fallback score assigned when a golfer misses the cut.
+                 */
+                fixedScore: number;
+            };
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+            displayScoring: 'TO_PAR';
+            /**
+             * Golf tiebreaker configuration. Teams predict the winning to-par score.
+             */
+            tiebreaker: {
+                type: 'PREDICT_WINNING_SCORE';
+            };
         };
     };
     path: {
@@ -5113,7 +5109,7 @@ export type CreateManagedContestResponses = {
      */
     201: {
         /**
-         * Contest-management detail returned to commissioner tooling.
+         * Golf-first contest-management detail returned to commissioner tooling.
          */
         contest: {
             /**
@@ -5137,131 +5133,126 @@ export type CreateManagedContestResponses = {
              * Current commissioner-managed contest configuration.
              */
             configuration: {
-                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
-                rounds?: number;
-                timePerPickSeconds?: number;
-                autoPickPolicy?: string;
-                tierConfig?: Array<{
+                mode: 'GOLF_TIERED';
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number;
+                /**
+                 * How many golfers each Team entry must pick.
+                 */
+                rosterSize: number;
+                /**
+                 * How many golfer scores count toward the Team total.
+                 */
+                countedScores: number;
+                /**
+                 * Single tier source used to generate all tiers.
+                 */
+                tierSource: 'ODDS' | 'WORLD_RANK';
+                tierGeneration: {
                     /**
-                     * Stable tier identifier.
+                     * Basic mode tier size used to seed the tier list.
                      */
-                    tierId: string;
+                    defaultTierSize: number;
+                };
+                /**
+                 * Persisted tier boundaries and pick counts after seeding or advanced editing.
+                 */
+                tiers: Array<{
+                    /**
+                     * Stable tier key such as A, B, or C.
+                     */
+                    tierKey: string;
                     /**
                      * Commissioner-facing tier label.
                      */
-                    tierName: string;
+                    label: string;
                     /**
-                     * Ordered tier number used in draft and selection UX.
+                     * How many golfers must be picked from the tier.
                      */
-                    tierNumber: number;
+                    pickCount: number;
                     /**
-                     * How many selections each entry must make from the tier.
+                     * Starting resolved rank/odds position for the tier.
                      */
-                    picksFromTier: number;
+                    startPosition: number;
                     /**
-                     * Participants assigned to the tier.
+                     * Ending resolved rank/odds position for the tier. Null means remainder of field.
                      */
-                    participantIds: Array<string>;
-                }>;
-                budget?: number;
-                pricingMethod?: string;
-                pickCount?: number;
-                isExclusive?: boolean;
-                picksPerPeriod?: number;
-                roundValues?: Array<number>;
-                startRound?: string;
-                locksAt?: string;
-                minimumEntries?: number;
-                maxEntriesPerSquad?: number;
-                rosterSize?: number;
-                totalPrizePoolAmount?: number;
-                participantScoringRules: Array<{
-                    /**
-                     * Scoring definition applied to each participant within the contest.
-                     */
-                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
-                    /**
-                     * Evaluation order for participant scoring rules.
-                     */
-                    sortOrder: number;
-                    /**
-                     * Rule-specific configuration payload consumed by the scoring engine.
-                     */
-                    config?: {
-                        [key: string]: unknown;
-                    };
-                    /**
-                     * Whether the scoring rule is currently active.
-                     */
-                    active?: boolean;
-                    /**
-                     * Participant scoring-rule identifier.
-                     */
-                    id: string;
+                    endPosition: number;
                 }>;
                 /**
-                 * Persisted contest-entry aggregation rule.
+                 * Golf cut rule for first-pass contests.
                  */
-                entryAggregationRule: {
+                cutRule: {
+                    type: 'FIXED_SCORE';
                     /**
-                     * Aggregation strategy used to convert participant scores into an entry score.
+                     * Fallback score assigned when a golfer misses the cut.
                      */
-                    aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
-                    /**
-                     * Aggregation-rule configuration payload.
-                     */
-                    config?: {
-                        [key: string]: unknown;
-                    };
-                    /**
-                     * Whether the aggregation rule is active.
-                     */
-                    active?: boolean;
-                    /**
-                     * Contest-entry aggregation-rule identifier.
-                     */
-                    id: string;
+                    fixedScore: number;
                 };
-                prizeDefinitions: Array<{
+                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+                displayScoring: 'TO_PAR';
+                /**
+                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
+                 */
+                tiebreaker: {
+                    type: 'PREDICT_WINNING_SCORE';
+                };
+                /**
+                 * Contest-configuration identifier.
+                 */
+                id: string;
+                /**
+                 * Contest that owns the configuration.
+                 */
+                contestId: string;
+            } | {
+                mode: 'GOLF_CATEGORY_PICKS';
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number;
+                /**
+                 * Enabled category slots for the contest.
+                 */
+                categories: Array<{
+                    categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
                     /**
-                     * Stable prize-definition identifier.
+                     * Commissioner-facing category label.
                      */
-                    prizeDefinitionId: string;
+                    label: string;
                     /**
-                     * Commissioner-facing display name for the prize.
+                     * How many golfers must be picked for the category.
                      */
-                    displayName: string;
-                    /**
-                     * Display and evaluation order for the prize definition.
-                     */
-                    sortOrder: number;
-                    /**
-                     * Prize-award rule configuration payload.
-                     */
-                    ruleConfig?: {
-                        [key: string]: unknown;
-                    };
-                    /**
-                     * How the prize amount should be interpreted when a payout is attached.
-                     */
-                    payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
-                    /**
-                     * Fixed payout amount when payoutType is FIXED_AMOUNT.
-                     */
-                    amount?: number;
-                    /**
-                     * Prize-pool percentage when payoutType is PERCENTAGE.
-                     */
-                    percentage?: number;
-                    /**
-                     * Whether the prize definition is currently active.
-                     */
-                    active?: boolean;
-                    /**
-                     * Prize-definition record identifier.
-                     */
-                    id: string;
+                    pickCount: number;
                 }>;
+                /**
+                 * Golf cut rule for first-pass contests.
+                 */
+                cutRule: {
+                    type: 'FIXED_SCORE';
+                    /**
+                     * Fallback score assigned when a golfer misses the cut.
+                     */
+                    fixedScore: number;
+                };
+                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+                displayScoring: 'TO_PAR';
+                /**
+                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
+                 */
+                tiebreaker: {
+                    type: 'PREDICT_WINNING_SCORE';
+                };
                 /**
                  * Contest-configuration identifier.
                  */
@@ -5394,7 +5385,7 @@ export type GetManagedContestResponses = {
      */
     200: {
         /**
-         * Contest-management detail returned to commissioner tooling.
+         * Golf-first contest-management detail returned to commissioner tooling.
          */
         contest: {
             /**
@@ -5418,131 +5409,126 @@ export type GetManagedContestResponses = {
              * Current commissioner-managed contest configuration.
              */
             configuration: {
-                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
-                rounds?: number;
-                timePerPickSeconds?: number;
-                autoPickPolicy?: string;
-                tierConfig?: Array<{
+                mode: 'GOLF_TIERED';
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number;
+                /**
+                 * How many golfers each Team entry must pick.
+                 */
+                rosterSize: number;
+                /**
+                 * How many golfer scores count toward the Team total.
+                 */
+                countedScores: number;
+                /**
+                 * Single tier source used to generate all tiers.
+                 */
+                tierSource: 'ODDS' | 'WORLD_RANK';
+                tierGeneration: {
                     /**
-                     * Stable tier identifier.
+                     * Basic mode tier size used to seed the tier list.
                      */
-                    tierId: string;
+                    defaultTierSize: number;
+                };
+                /**
+                 * Persisted tier boundaries and pick counts after seeding or advanced editing.
+                 */
+                tiers: Array<{
+                    /**
+                     * Stable tier key such as A, B, or C.
+                     */
+                    tierKey: string;
                     /**
                      * Commissioner-facing tier label.
                      */
-                    tierName: string;
+                    label: string;
                     /**
-                     * Ordered tier number used in draft and selection UX.
+                     * How many golfers must be picked from the tier.
                      */
-                    tierNumber: number;
+                    pickCount: number;
                     /**
-                     * How many selections each entry must make from the tier.
+                     * Starting resolved rank/odds position for the tier.
                      */
-                    picksFromTier: number;
+                    startPosition: number;
                     /**
-                     * Participants assigned to the tier.
+                     * Ending resolved rank/odds position for the tier. Null means remainder of field.
                      */
-                    participantIds: Array<string>;
-                }>;
-                budget?: number;
-                pricingMethod?: string;
-                pickCount?: number;
-                isExclusive?: boolean;
-                picksPerPeriod?: number;
-                roundValues?: Array<number>;
-                startRound?: string;
-                locksAt?: string;
-                minimumEntries?: number;
-                maxEntriesPerSquad?: number;
-                rosterSize?: number;
-                totalPrizePoolAmount?: number;
-                participantScoringRules: Array<{
-                    /**
-                     * Scoring definition applied to each participant within the contest.
-                     */
-                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
-                    /**
-                     * Evaluation order for participant scoring rules.
-                     */
-                    sortOrder: number;
-                    /**
-                     * Rule-specific configuration payload consumed by the scoring engine.
-                     */
-                    config?: {
-                        [key: string]: unknown;
-                    };
-                    /**
-                     * Whether the scoring rule is currently active.
-                     */
-                    active?: boolean;
-                    /**
-                     * Participant scoring-rule identifier.
-                     */
-                    id: string;
+                    endPosition: number;
                 }>;
                 /**
-                 * Persisted contest-entry aggregation rule.
+                 * Golf cut rule for first-pass contests.
                  */
-                entryAggregationRule: {
+                cutRule: {
+                    type: 'FIXED_SCORE';
                     /**
-                     * Aggregation strategy used to convert participant scores into an entry score.
+                     * Fallback score assigned when a golfer misses the cut.
                      */
-                    aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
-                    /**
-                     * Aggregation-rule configuration payload.
-                     */
-                    config?: {
-                        [key: string]: unknown;
-                    };
-                    /**
-                     * Whether the aggregation rule is active.
-                     */
-                    active?: boolean;
-                    /**
-                     * Contest-entry aggregation-rule identifier.
-                     */
-                    id: string;
+                    fixedScore: number;
                 };
-                prizeDefinitions: Array<{
+                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+                displayScoring: 'TO_PAR';
+                /**
+                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
+                 */
+                tiebreaker: {
+                    type: 'PREDICT_WINNING_SCORE';
+                };
+                /**
+                 * Contest-configuration identifier.
+                 */
+                id: string;
+                /**
+                 * Contest that owns the configuration.
+                 */
+                contestId: string;
+            } | {
+                mode: 'GOLF_CATEGORY_PICKS';
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number;
+                /**
+                 * Enabled category slots for the contest.
+                 */
+                categories: Array<{
+                    categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
                     /**
-                     * Stable prize-definition identifier.
+                     * Commissioner-facing category label.
                      */
-                    prizeDefinitionId: string;
+                    label: string;
                     /**
-                     * Commissioner-facing display name for the prize.
+                     * How many golfers must be picked for the category.
                      */
-                    displayName: string;
-                    /**
-                     * Display and evaluation order for the prize definition.
-                     */
-                    sortOrder: number;
-                    /**
-                     * Prize-award rule configuration payload.
-                     */
-                    ruleConfig?: {
-                        [key: string]: unknown;
-                    };
-                    /**
-                     * How the prize amount should be interpreted when a payout is attached.
-                     */
-                    payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
-                    /**
-                     * Fixed payout amount when payoutType is FIXED_AMOUNT.
-                     */
-                    amount?: number;
-                    /**
-                     * Prize-pool percentage when payoutType is PERCENTAGE.
-                     */
-                    percentage?: number;
-                    /**
-                     * Whether the prize definition is currently active.
-                     */
-                    active?: boolean;
-                    /**
-                     * Prize-definition record identifier.
-                     */
-                    id: string;
+                    pickCount: number;
                 }>;
+                /**
+                 * Golf cut rule for first-pass contests.
+                 */
+                cutRule: {
+                    type: 'FIXED_SCORE';
+                    /**
+                     * Fallback score assigned when a golfer misses the cut.
+                     */
+                    fixedScore: number;
+                };
+                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+                displayScoring: 'TO_PAR';
+                /**
+                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
+                 */
+                tiebreaker: {
+                    type: 'PREDICT_WINNING_SCORE';
+                };
                 /**
                  * Contest-configuration identifier.
                  */
@@ -5568,125 +5554,121 @@ export type GetManagedContestResponse = GetManagedContestResponses[keyof GetMana
 
 export type UpdateManagedContestConfigurationData = {
     /**
-     * Managed contest-configuration payload.
+     * Approved commissioner-managed contest configuration payload for golf-first contest creation.
      */
     body: {
-        selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
-        rounds?: number;
-        timePerPickSeconds?: number;
-        autoPickPolicy?: string;
-        tierConfig?: Array<{
+        mode: 'GOLF_TIERED';
+        /**
+         * Contest entry lock timestamp.
+         */
+        locksAt?: string;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number;
+        /**
+         * How many golfers each Team entry must pick.
+         */
+        rosterSize: number;
+        /**
+         * How many golfer scores count toward the Team total.
+         */
+        countedScores: number;
+        /**
+         * Single tier source used to generate all tiers.
+         */
+        tierSource: 'ODDS' | 'WORLD_RANK';
+        tierGeneration: {
             /**
-             * Stable tier identifier.
+             * Basic mode tier size used to seed the tier list.
              */
-            tierId: string;
+            defaultTierSize: number;
+        };
+        /**
+         * Persisted tier boundaries and pick counts after seeding or advanced editing.
+         */
+        tiers: Array<{
+            /**
+             * Stable tier key such as A, B, or C.
+             */
+            tierKey: string;
             /**
              * Commissioner-facing tier label.
              */
-            tierName: string;
+            label: string;
             /**
-             * Ordered tier number used in draft and selection UX.
+             * How many golfers must be picked from the tier.
              */
-            tierNumber: number;
+            pickCount: number;
             /**
-             * How many selections each entry must make from the tier.
+             * Starting resolved rank/odds position for the tier.
              */
-            picksFromTier: number;
+            startPosition: number;
             /**
-             * Participants assigned to the tier.
+             * Ending resolved rank/odds position for the tier. Null means remainder of field.
              */
-            participantIds: Array<string>;
-        }>;
-        budget?: number;
-        pricingMethod?: string;
-        pickCount?: number;
-        isExclusive?: boolean;
-        picksPerPeriod?: number;
-        roundValues?: Array<number>;
-        startRound?: string;
-        locksAt?: string;
-        minimumEntries?: number;
-        maxEntriesPerSquad?: number;
-        rosterSize?: number;
-        totalPrizePoolAmount?: number;
-        participantScoringRules: Array<{
-            /**
-             * Scoring definition applied to each participant within the contest.
-             */
-            participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
-            /**
-             * Evaluation order for participant scoring rules.
-             */
-            sortOrder: number;
-            /**
-             * Rule-specific configuration payload consumed by the scoring engine.
-             */
-            config?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Whether the scoring rule is currently active.
-             */
-            active?: boolean;
+            endPosition: number;
         }>;
         /**
-         * Contest-entry aggregation rule for managed-contest configuration.
+         * Golf cut rule for first-pass contests.
          */
-        entryAggregationRule: {
+        cutRule: {
+            type: 'FIXED_SCORE';
             /**
-             * Aggregation strategy used to convert participant scores into an entry score.
+             * Fallback score assigned when a golfer misses the cut.
              */
-            aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
-            /**
-             * Aggregation-rule configuration payload.
-             */
-            config?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Whether the aggregation rule is active.
-             */
-            active?: boolean;
+            fixedScore: number;
         };
+        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+        displayScoring: 'TO_PAR';
         /**
-         * Prize definitions attached to the contest configuration.
+         * Golf tiebreaker configuration. Teams predict the winning to-par score.
          */
-        prizeDefinitions?: Array<{
+        tiebreaker: {
+            type: 'PREDICT_WINNING_SCORE';
+        };
+    } | {
+        mode: 'GOLF_CATEGORY_PICKS';
+        /**
+         * Contest entry lock timestamp.
+         */
+        locksAt?: string;
+        /**
+         * Maximum entries a Team may create. Null means unlimited.
+         */
+        maxEntriesPerSquad?: number;
+        /**
+         * Enabled category slots for the contest.
+         */
+        categories: Array<{
+            categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
             /**
-             * Stable prize-definition identifier.
+             * Commissioner-facing category label.
              */
-            prizeDefinitionId: string;
+            label: string;
             /**
-             * Commissioner-facing display name for the prize.
+             * How many golfers must be picked for the category.
              */
-            displayName: string;
-            /**
-             * Display and evaluation order for the prize definition.
-             */
-            sortOrder: number;
-            /**
-             * Prize-award rule configuration payload.
-             */
-            ruleConfig?: {
-                [key: string]: unknown;
-            };
-            /**
-             * How the prize amount should be interpreted when a payout is attached.
-             */
-            payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
-            /**
-             * Fixed payout amount when payoutType is FIXED_AMOUNT.
-             */
-            amount?: number;
-            /**
-             * Prize-pool percentage when payoutType is PERCENTAGE.
-             */
-            percentage?: number;
-            /**
-             * Whether the prize definition is currently active.
-             */
-            active?: boolean;
+            pickCount: number;
         }>;
+        /**
+         * Golf cut rule for first-pass contests.
+         */
+        cutRule: {
+            type: 'FIXED_SCORE';
+            /**
+             * Fallback score assigned when a golfer misses the cut.
+             */
+            fixedScore: number;
+        };
+        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+        displayScoring: 'TO_PAR';
+        /**
+         * Golf tiebreaker configuration. Teams predict the winning to-par score.
+         */
+        tiebreaker: {
+            type: 'PREDICT_WINNING_SCORE';
+        };
     };
     path: {
         id: string;
@@ -5817,7 +5799,7 @@ export type UpdateManagedContestConfigurationResponses = {
      */
     200: {
         /**
-         * Contest-management detail returned to commissioner tooling.
+         * Golf-first contest-management detail returned to commissioner tooling.
          */
         contest: {
             /**
@@ -5841,131 +5823,126 @@ export type UpdateManagedContestConfigurationResponses = {
              * Current commissioner-managed contest configuration.
              */
             configuration: {
-                selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
-                rounds?: number;
-                timePerPickSeconds?: number;
-                autoPickPolicy?: string;
-                tierConfig?: Array<{
+                mode: 'GOLF_TIERED';
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number;
+                /**
+                 * How many golfers each Team entry must pick.
+                 */
+                rosterSize: number;
+                /**
+                 * How many golfer scores count toward the Team total.
+                 */
+                countedScores: number;
+                /**
+                 * Single tier source used to generate all tiers.
+                 */
+                tierSource: 'ODDS' | 'WORLD_RANK';
+                tierGeneration: {
                     /**
-                     * Stable tier identifier.
+                     * Basic mode tier size used to seed the tier list.
                      */
-                    tierId: string;
+                    defaultTierSize: number;
+                };
+                /**
+                 * Persisted tier boundaries and pick counts after seeding or advanced editing.
+                 */
+                tiers: Array<{
+                    /**
+                     * Stable tier key such as A, B, or C.
+                     */
+                    tierKey: string;
                     /**
                      * Commissioner-facing tier label.
                      */
-                    tierName: string;
+                    label: string;
                     /**
-                     * Ordered tier number used in draft and selection UX.
+                     * How many golfers must be picked from the tier.
                      */
-                    tierNumber: number;
+                    pickCount: number;
                     /**
-                     * How many selections each entry must make from the tier.
+                     * Starting resolved rank/odds position for the tier.
                      */
-                    picksFromTier: number;
+                    startPosition: number;
                     /**
-                     * Participants assigned to the tier.
+                     * Ending resolved rank/odds position for the tier. Null means remainder of field.
                      */
-                    participantIds: Array<string>;
-                }>;
-                budget?: number;
-                pricingMethod?: string;
-                pickCount?: number;
-                isExclusive?: boolean;
-                picksPerPeriod?: number;
-                roundValues?: Array<number>;
-                startRound?: string;
-                locksAt?: string;
-                minimumEntries?: number;
-                maxEntriesPerSquad?: number;
-                rosterSize?: number;
-                totalPrizePoolAmount?: number;
-                participantScoringRules: Array<{
-                    /**
-                     * Scoring definition applied to each participant within the contest.
-                     */
-                    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'TEAM_WIN_POINTS' | 'ROUND_MULTIPLIER' | 'SEED_DIFFERENTIAL_BONUS';
-                    /**
-                     * Evaluation order for participant scoring rules.
-                     */
-                    sortOrder: number;
-                    /**
-                     * Rule-specific configuration payload consumed by the scoring engine.
-                     */
-                    config?: {
-                        [key: string]: unknown;
-                    };
-                    /**
-                     * Whether the scoring rule is currently active.
-                     */
-                    active?: boolean;
-                    /**
-                     * Participant scoring-rule identifier.
-                     */
-                    id: string;
+                    endPosition: number;
                 }>;
                 /**
-                 * Persisted contest-entry aggregation rule.
+                 * Golf cut rule for first-pass contests.
                  */
-                entryAggregationRule: {
+                cutRule: {
+                    type: 'FIXED_SCORE';
                     /**
-                     * Aggregation strategy used to convert participant scores into an entry score.
+                     * Fallback score assigned when a golfer misses the cut.
                      */
-                    aggregationDefinitionId: 'SUM_ALL_ENTRIES' | 'SUM_TOP_N_ENTRIES';
-                    /**
-                     * Aggregation-rule configuration payload.
-                     */
-                    config?: {
-                        [key: string]: unknown;
-                    };
-                    /**
-                     * Whether the aggregation rule is active.
-                     */
-                    active?: boolean;
-                    /**
-                     * Contest-entry aggregation-rule identifier.
-                     */
-                    id: string;
+                    fixedScore: number;
                 };
-                prizeDefinitions: Array<{
+                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+                displayScoring: 'TO_PAR';
+                /**
+                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
+                 */
+                tiebreaker: {
+                    type: 'PREDICT_WINNING_SCORE';
+                };
+                /**
+                 * Contest-configuration identifier.
+                 */
+                id: string;
+                /**
+                 * Contest that owns the configuration.
+                 */
+                contestId: string;
+            } | {
+                mode: 'GOLF_CATEGORY_PICKS';
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number;
+                /**
+                 * Enabled category slots for the contest.
+                 */
+                categories: Array<{
+                    categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
                     /**
-                     * Stable prize-definition identifier.
+                     * Commissioner-facing category label.
                      */
-                    prizeDefinitionId: string;
+                    label: string;
                     /**
-                     * Commissioner-facing display name for the prize.
+                     * How many golfers must be picked for the category.
                      */
-                    displayName: string;
-                    /**
-                     * Display and evaluation order for the prize definition.
-                     */
-                    sortOrder: number;
-                    /**
-                     * Prize-award rule configuration payload.
-                     */
-                    ruleConfig?: {
-                        [key: string]: unknown;
-                    };
-                    /**
-                     * How the prize amount should be interpreted when a payout is attached.
-                     */
-                    payoutType?: 'FIXED_AMOUNT' | 'PERCENTAGE';
-                    /**
-                     * Fixed payout amount when payoutType is FIXED_AMOUNT.
-                     */
-                    amount?: number;
-                    /**
-                     * Prize-pool percentage when payoutType is PERCENTAGE.
-                     */
-                    percentage?: number;
-                    /**
-                     * Whether the prize definition is currently active.
-                     */
-                    active?: boolean;
-                    /**
-                     * Prize-definition record identifier.
-                     */
-                    id: string;
+                    pickCount: number;
                 }>;
+                /**
+                 * Golf cut rule for first-pass contests.
+                 */
+                cutRule: {
+                    type: 'FIXED_SCORE';
+                    /**
+                     * Fallback score assigned when a golfer misses the cut.
+                     */
+                    fixedScore: number;
+                };
+                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+                displayScoring: 'TO_PAR';
+                /**
+                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
+                 */
+                tiebreaker: {
+                    type: 'PREDICT_WINNING_SCORE';
+                };
                 /**
                  * Contest-configuration identifier.
                  */

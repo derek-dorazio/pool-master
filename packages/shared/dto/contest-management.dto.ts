@@ -1,90 +1,94 @@
 import { z } from 'zod';
 import {
-  AggregationDefinitionIdSchema,
   ContestStatus,
   ContestType,
-  ParticipantScoringDefinitionIdSchema,
-  SelectionType,
+  GolfCategoryKey,
+  GolfContestConfigMode,
+  GolfCutRuleType,
+  GolfDisplayScoring,
+  GolfPlayoffHandling,
+  GolfTierSource,
 } from '@poolmaster/shared/domain';
 
-export const ContestPrizePayoutTypeSchema = z.enum([
-  'FIXED_AMOUNT',
-  'PERCENTAGE',
-]);
-export type ContestPrizePayoutType = z.infer<
-  typeof ContestPrizePayoutTypeSchema
->;
+const nullablePositiveIntSchema = z
+  .number()
+  .int()
+  .min(1)
+  .nullable()
+  .optional()
+  .describe('Maximum entries a Team may create. Null means unlimited.');
 
-export const ParticipantContestScoringRuleRequestSchema = z.object({
-  participantScoringDefinitionId: ParticipantScoringDefinitionIdSchema.describe('Scoring definition applied to each participant within the contest.'),
-  sortOrder: z.number().int().min(0).describe('Evaluation order for participant scoring rules.'),
-  config: z.record(z.unknown()).default({}).describe('Rule-specific configuration payload consumed by the scoring engine.'),
-  active: z.boolean().default(true).describe('Whether the scoring rule is currently active.'),
-}).describe('Participant-level scoring rule supplied when configuring a managed contest.');
-export type ParticipantContestScoringRuleRequest = z.infer<
-  typeof ParticipantContestScoringRuleRequestSchema
->;
+export const GolfFixedCutRuleSchema = z.object({
+  type: z.enum([GolfCutRuleType.FIXED_SCORE]),
+  fixedScore: z.number().int().min(0).describe('Fallback score assigned when a golfer misses the cut.'),
+}).describe('Golf cut rule for first-pass contests.');
+export type GolfFixedCutRuleDto = z.infer<typeof GolfFixedCutRuleSchema>;
 
-export const ContestEntryAggregationRuleRequestSchema = z.object({
-  aggregationDefinitionId: AggregationDefinitionIdSchema.describe('Aggregation strategy used to convert participant scores into an entry score.'),
-  config: z.record(z.unknown()).default({}).describe('Aggregation-rule configuration payload.'),
-  active: z.boolean().default(true).describe('Whether the aggregation rule is active.'),
-}).describe('Contest-entry aggregation rule for managed-contest configuration.');
-export type ContestEntryAggregationRuleRequest = z.infer<
-  typeof ContestEntryAggregationRuleRequestSchema
->;
+export const GolfTiebreakerSchema = z.object({
+  type: z.literal('PREDICT_WINNING_SCORE'),
+}).describe('Golf tiebreaker configuration. Teams predict the winning to-par score.');
+export type GolfTiebreakerDto = z.infer<typeof GolfTiebreakerSchema>;
 
-export const ContestPrizeDefinitionRequestSchema = z.object({
-  prizeDefinitionId: z.string().min(1).describe('Stable prize-definition identifier.'),
-  displayName: z.string().min(1).max(100).describe('Commissioner-facing display name for the prize.'),
-  sortOrder: z.number().int().min(0).describe('Display and evaluation order for the prize definition.'),
-  ruleConfig: z.record(z.unknown()).default({}).describe('Prize-award rule configuration payload.'),
-  payoutType: ContestPrizePayoutTypeSchema.optional().describe('How the prize amount should be interpreted when a payout is attached.'),
-  amount: z.number().min(0).optional().describe('Fixed payout amount when payoutType is FIXED_AMOUNT.'),
-  percentage: z.number().min(0).max(100).optional().describe('Prize-pool percentage when payoutType is PERCENTAGE.'),
-  active: z.boolean().default(true).describe('Whether the prize definition is currently active.'),
-}).describe('Prize definition used by contest-management endpoints.');
-export type ContestPrizeDefinitionRequest = z.infer<
-  typeof ContestPrizeDefinitionRequestSchema
->;
+export const GolfContestTierSchema = z.object({
+  tierKey: z.string().min(1).describe('Stable tier key such as A, B, or C.'),
+  label: z.string().min(1).describe('Commissioner-facing tier label.'),
+  pickCount: z.number().int().min(1).describe('How many golfers must be picked from the tier.'),
+  startPosition: z.number().int().min(1).describe('Starting resolved rank/odds position for the tier.'),
+  endPosition: z.number().int().min(1).nullable().describe('Ending resolved rank/odds position for the tier. Null means remainder of field.'),
+}).describe('Tier definition for a golf tiered contest.');
+export type GolfContestTierDto = z.infer<typeof GolfContestTierSchema>;
 
-export const ContestConfigurationTierRequestSchema = z.object({
-  tierId: z.string().min(1).describe('Stable tier identifier.'),
-  tierName: z.string().min(1).describe('Commissioner-facing tier label.'),
-  tierNumber: z.number().int().min(1).describe('Ordered tier number used in draft and selection UX.'),
-  picksFromTier: z.number().int().min(1).describe('How many selections each entry must make from the tier.'),
-  participantIds: z.array(z.string().min(1)).describe('Participants assigned to the tier.'),
-}).describe('Tier definition supplied for tiered contests.');
-export type ContestConfigurationTierRequest = z.infer<
-  typeof ContestConfigurationTierRequestSchema
->;
-
-export const ContestConfigurationRequestSchema = z.object({
-  selectionType: z.enum([
-    SelectionType.SNAKE_DRAFT,
-    SelectionType.TIERED,
-    SelectionType.BUDGET_PICK,
+export const GolfCategoryDefinitionSchema = z.object({
+  categoryKey: z.enum([
+    GolfCategoryKey.SENIOR,
+    GolfCategoryKey.ROOKIE,
+    GolfCategoryKey.PREVIOUS_WINNER,
+    GolfCategoryKey.US_PLAYER,
+    GolfCategoryKey.INTERNATIONAL_PLAYER,
   ]),
-  rounds: z.number().int().min(1).optional(),
-  timePerPickSeconds: z.number().int().min(10).optional(),
-  autoPickPolicy: z.string().min(1).optional(),
-  tierConfig: z.array(ContestConfigurationTierRequestSchema).optional(),
-  budget: z.number().min(0).optional(),
-  pricingMethod: z.string().min(1).optional(),
-  pickCount: z.number().int().min(1).optional(),
-  isExclusive: z.boolean().optional(),
-  picksPerPeriod: z.number().int().min(1).optional(),
-  roundValues: z.array(z.number()).optional(),
-  startRound: z.string().min(1).optional(),
-  locksAt: z.string().datetime().nullable().optional(),
-  minimumEntries: z.number().int().min(0).optional(),
-  maxEntriesPerSquad: z.number().int().min(1).optional(),
-  rosterSize: z.number().int().min(1).optional(),
-  totalPrizePoolAmount: z.number().min(0).nullable().optional(),
-  participantScoringRules: z.array(ParticipantContestScoringRuleRequestSchema),
-  entryAggregationRule: ContestEntryAggregationRuleRequestSchema,
-  prizeDefinitions: z.array(ContestPrizeDefinitionRequestSchema).default([]).describe('Prize definitions attached to the contest configuration.'),
-}).describe('Managed contest-configuration payload.');
+  label: z.string().min(1).describe('Commissioner-facing category label.'),
+  pickCount: z.number().int().min(1).describe('How many golfers must be picked for the category.'),
+}).describe('Category slot definition for a golf category-picks contest.');
+export type GolfCategoryDefinitionDto = z.infer<typeof GolfCategoryDefinitionSchema>;
+
+export const GolfTieredContestConfigurationSchema = z.object({
+  mode: z.literal(GolfContestConfigMode.GOLF_TIERED),
+  locksAt: z.string().datetime().nullable().optional().describe('Contest entry lock timestamp.'),
+  maxEntriesPerSquad: nullablePositiveIntSchema,
+  rosterSize: z.number().int().min(1).describe('How many golfers each Team entry must pick.'),
+  countedScores: z.number().int().min(1).describe('How many golfer scores count toward the Team total.'),
+  tierSource: z.enum([GolfTierSource.ODDS, GolfTierSource.WORLD_RANK]).describe('Single tier source used to generate all tiers.'),
+  tierGeneration: z.object({
+    defaultTierSize: z.number().int().min(1).describe('Basic mode tier size used to seed the tier list.'),
+  }),
+  tiers: z.array(GolfContestTierSchema).min(1).describe('Persisted tier boundaries and pick counts after seeding or advanced editing.'),
+  cutRule: GolfFixedCutRuleSchema,
+  playoffHandling: z.enum([GolfPlayoffHandling.EXCLUDE_PLAYOFF_HOLES]),
+  displayScoring: z.enum([GolfDisplayScoring.TO_PAR]),
+  tiebreaker: GolfTiebreakerSchema,
+}).describe('Golf tiered contest configuration for pick-X, count-best-Y roster contests.');
+export type GolfTieredContestConfigurationRequest = z.infer<
+  typeof GolfTieredContestConfigurationSchema
+>;
+
+export const GolfCategoryContestConfigurationSchema = z.object({
+  mode: z.literal(GolfContestConfigMode.GOLF_CATEGORY_PICKS),
+  locksAt: z.string().datetime().nullable().optional().describe('Contest entry lock timestamp.'),
+  maxEntriesPerSquad: nullablePositiveIntSchema,
+  categories: z.array(GolfCategoryDefinitionSchema).min(1).describe('Enabled category slots for the contest.'),
+  cutRule: GolfFixedCutRuleSchema,
+  playoffHandling: z.enum([GolfPlayoffHandling.EXCLUDE_PLAYOFF_HOLES]),
+  displayScoring: z.enum([GolfDisplayScoring.TO_PAR]),
+  tiebreaker: GolfTiebreakerSchema,
+}).describe('Golf category-picks contest configuration for one-pick-per-category contests.');
+export type GolfCategoryContestConfigurationRequest = z.infer<
+  typeof GolfCategoryContestConfigurationSchema
+>;
+
+export const ContestConfigurationRequestSchema = z.discriminatedUnion('mode', [
+  GolfTieredContestConfigurationSchema,
+  GolfCategoryContestConfigurationSchema,
+]).describe('Approved commissioner-managed contest configuration payload for golf-first contest creation.');
 export type ContestConfigurationRequest = z.infer<
   typeof ContestConfigurationRequestSchema
 >;
@@ -92,9 +96,9 @@ export type ContestConfigurationRequest = z.infer<
 export const CreateContestManagementRequestSchema = z.object({
   name: z.string().min(1).max(100).describe('Contest name shown to commissioners and members.'),
   sportEventId: z.string().uuid().describe('Sport-event identifier that anchors the contest.'),
-  contestType: z.enum([ContestType.SINGLE_EVENT]).default(ContestType.SINGLE_EVENT),
+  contestType: z.enum([ContestType.SINGLE_EVENT]),
   configuration: ContestConfigurationRequestSchema,
-}).describe('Commissioner request payload for creating a managed contest.');
+}).describe('Commissioner request payload for creating a golf-first managed contest.');
 export type CreateContestManagementRequest = z.infer<
   typeof CreateContestManagementRequestSchema
 >;
@@ -105,41 +109,23 @@ export type UpdateContestConfigurationRequest = z.infer<
   typeof UpdateContestConfigurationRequestSchema
 >;
 
-export const ParticipantContestScoringRuleDtoSchema =
-  ParticipantContestScoringRuleRequestSchema.extend({
-    id: z.string().describe('Participant scoring-rule identifier.'),
-  }).describe('Persisted participant scoring rule.');
-export type ParticipantContestScoringRuleDto = z.infer<
-  typeof ParticipantContestScoringRuleDtoSchema
->;
-
-export const ContestEntryAggregationRuleDtoSchema =
-  ContestEntryAggregationRuleRequestSchema.extend({
-    id: z.string().describe('Contest-entry aggregation-rule identifier.'),
-  }).describe('Persisted contest-entry aggregation rule.');
-export type ContestEntryAggregationRuleDto = z.infer<
-  typeof ContestEntryAggregationRuleDtoSchema
->;
-
-export const ContestPrizeDefinitionDtoSchema =
-  ContestPrizeDefinitionRequestSchema.extend({
-    id: z.string().describe('Prize-definition record identifier.'),
-  }).describe('Persisted contest prize definition.');
-export type ContestPrizeDefinitionDto = z.infer<
-  typeof ContestPrizeDefinitionDtoSchema
->;
-
-export const ContestConfigurationDtoSchema =
-  ContestConfigurationRequestSchema.extend({
+export const GolfTieredContestConfigurationDtoSchema =
+  GolfTieredContestConfigurationSchema.extend({
     id: z.string().describe('Contest-configuration identifier.'),
     contestId: z.string().describe('Contest that owns the configuration.'),
-    participantScoringRules: z.array(ParticipantContestScoringRuleDtoSchema),
-    entryAggregationRule: ContestEntryAggregationRuleDtoSchema,
-    prizeDefinitions: z.array(ContestPrizeDefinitionDtoSchema),
-  }).describe('Persisted managed contest configuration.');
-export type ContestConfigurationDto = z.infer<
-  typeof ContestConfigurationDtoSchema
->;
+  });
+
+export const GolfCategoryContestConfigurationDtoSchema =
+  GolfCategoryContestConfigurationSchema.extend({
+    id: z.string().describe('Contest-configuration identifier.'),
+    contestId: z.string().describe('Contest that owns the configuration.'),
+  });
+
+export const ContestConfigurationDtoSchema = z.discriminatedUnion('mode', [
+  GolfTieredContestConfigurationDtoSchema,
+  GolfCategoryContestConfigurationDtoSchema,
+]).describe('Persisted commissioner-managed golf contest configuration.');
+export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 
 export const ContestManagementDetailDtoSchema = z.object({
   id: z.string().describe('Contest identifier.'),
@@ -158,7 +144,7 @@ export const ContestManagementDetailDtoSchema = z.object({
   configuration: ContestConfigurationDtoSchema.describe('Current commissioner-managed contest configuration.'),
   createdAt: z.string().datetime().describe('When the contest was created.'),
   updatedAt: z.string().datetime().describe('When the contest was last updated.'),
-}).describe('Contest-management detail returned to commissioner tooling.');
+}).describe('Golf-first contest-management detail returned to commissioner tooling.');
 export type ContestManagementDetailDto = z.infer<
   typeof ContestManagementDetailDtoSchema
 >;

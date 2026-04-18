@@ -97,36 +97,33 @@ describe('RosterPick CRUD integration', () => {
         sportEventId: sportEvent.id,
         contestType: 'SINGLE_EVENT',
         configuration: {
-          selectionType: 'BUDGET_PICK',
-          rosterSize: 1,
-          minimumEntries: 1,
+          mode: 'GOLF_TIERED',
+          locksAt: '2026-04-10T11:30:00.000Z',
           maxEntriesPerSquad: 1,
-          budget: 1000,
-          pricingMethod: 'FIXED_PRICE',
-          participantScoringRules: [
-            {
-              participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-              sortOrder: 1,
-              config: {},
-              active: true,
-            },
-          ],
-          entryAggregationRule: {
-            aggregationDefinitionId: 'SUM_ALL_ENTRIES',
-            config: {},
-            active: true,
+          rosterSize: 1,
+          countedScores: 1,
+          tierSource: 'ODDS',
+          tierGeneration: {
+            defaultTierSize: 10,
           },
-          prizeDefinitions: [
+          tiers: [
             {
-              prizeDefinitionId: 'FINAL_PLACE',
-              displayName: 'Winner',
-              sortOrder: 1,
-              ruleConfig: { place: 1 },
-              payoutType: 'FIXED_AMOUNT',
-              amount: 100,
-              active: true,
+              tierKey: 'A',
+              label: 'Tier A',
+              pickCount: 1,
+              startPosition: 1,
+              endPosition: null,
             },
           ],
+          cutRule: {
+            type: 'FIXED_SCORE',
+            fixedScore: 80,
+          },
+          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+          displayScoring: 'TO_PAR',
+          tiebreaker: {
+            type: 'PREDICT_WINNING_SCORE',
+          },
         },
       },
     });

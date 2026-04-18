@@ -395,5 +395,5 @@ Owns:
 | 98-001 | 1 | Product/design review of golf-first contest family | Done | Locked `GolfTieredContestConfig` and `GolfCategoryContestConfig` as the first approved golf contest configs. |
 | 98-002 | 1 | Data-modeler review of contest config typing and resolver responsibilities | Done | Approved typed config per contest mode, event/participant fact ownership, and a frozen resolved-pool snapshot layer. |
 | 98-003 | 1 | Developer handoff for commissioner config UX defaults vs advanced controls | Done | Basic vs advanced controls are explicitly defined for tiered and category golf contests. |
-| 98-004 | 2 | Backend/model narrowing plan for golf-first contest config | Not Started | Replace or narrow the current generic contest-management config surface before feature implementation. |
+| 98-004 | 2 | Backend/model narrowing plan for golf-first contest config | In Progress | Added typed golf contest config enums, DTOs, service narrowing, and persisted `configMode` / `configJson` fields; validating downstream integrations now. |
 | 98-005 | 2 | Frontend execution plan for commissioner create/configure contest flow | Not Started | Build from the approved golf-first contest shell, not the older generic contest-management assumptions. |

@@ -7,13 +7,20 @@ import type {
 } from '@poolmaster/shared/db';
 import type {
   ContestManagementDetailDto,
-  ContestPrizeDefinitionRequest,
+  ContestConfigurationRequest,
   CreateContestManagementRequest,
-  ParticipantContestScoringRuleRequest,
   UpdateContestConfigurationRequest,
 } from '@poolmaster/shared/dto';
-import type { ContestConfigurationTier } from '@poolmaster/shared/domain';
-import { ContestStatus, ScoringEngine } from '@poolmaster/shared/domain';
+import type {
+  ContestConfiguration,
+  GolfContestConfig,
+} from '@poolmaster/shared/domain';
+import {
+  ContestStatus,
+  GolfContestConfigMode,
+  ScoringEngine,
+  SelectionType,
+} from '@poolmaster/shared/domain';
 
 interface CreateContestManagementContext {
   leagueId: string;
@@ -25,75 +32,41 @@ export class ContestManagementService {
     private readonly contestConfigurationRepo: ContestConfigurationRepository,
     private readonly participantContestScoringRuleRepo: ParticipantContestScoringRuleRepository,
     private readonly contestEntryAggregationRuleRepo: ContestEntryAggregationRuleRepository,
-    private readonly contestPrizeDefinitionRepo: ContestPrizeDefinitionRepository,
+    private readonly _contestPrizeDefinitionRepo: ContestPrizeDefinitionRepository,
   ) {}
 
   async createContest(
     context: CreateContestManagementContext,
     input: CreateContestManagementRequest,
   ): Promise<ContestManagementDetailDto> {
-    validateParticipantScoringRules(input.configuration.participantScoringRules);
-    validatePrizeDefinitions(input.configuration.prizeDefinitions);
-
+    const selectionType = mapSelectionType(input.configuration);
     const contest = await this.contestCoreRepo.create({
       leagueId: context.leagueId,
       sportEventId: input.sportEventId,
       name: input.name,
       status: ContestStatus.DRAFT,
-      selectionType: input.configuration.selectionType,
-      scoringEngine: ScoringEngine.CUMULATIVE,
+      selectionType,
+      scoringEngine: ScoringEngine.STROKE_PLAY,
     });
 
     const configuration = await this.contestConfigurationRepo.create({
       contestId: contest.id,
-      selectionType: input.configuration.selectionType,
-      rounds: input.configuration.rounds,
-      timePerPickSeconds: input.configuration.timePerPickSeconds,
-      autoPickPolicy: input.configuration.autoPickPolicy,
-      tierConfig: input.configuration.tierConfig,
-      budget: input.configuration.budget,
-      pricingMethod: input.configuration.pricingMethod,
-      pickCount: input.configuration.pickCount,
-      isExclusive: input.configuration.isExclusive,
-      picksPerPeriod: input.configuration.picksPerPeriod,
-      roundValues: input.configuration.roundValues,
-      startRound: input.configuration.startRound,
+      selectionType,
+      configMode: input.configuration.mode,
+      configJson: input.configuration,
       locksAt: input.configuration.locksAt
         ? new Date(input.configuration.locksAt)
         : undefined,
-      minimumEntries: input.configuration.minimumEntries,
-      maxEntriesPerSquad: input.configuration.maxEntriesPerSquad,
-      rosterSize: input.configuration.rosterSize,
-      totalPrizePoolAmount: input.configuration.totalPrizePoolAmount ?? undefined,
+      maxEntriesPerSquad:
+        input.configuration.maxEntriesPerSquad === null
+          ? null
+          : input.configuration.maxEntriesPerSquad,
+      ...deriveLegacyPersistenceFields(input.configuration),
     });
 
-    const participantScoringRules = await createParticipantScoringRules(
-      configuration.id,
-      input.configuration.participantScoringRules,
-      this.participantContestScoringRuleRepo,
-    );
+    await syncDerivedScoring(configuration, this.participantContestScoringRuleRepo, this.contestEntryAggregationRuleRepo);
 
-    const entryAggregationRule = await this.contestEntryAggregationRuleRepo.create({
-      contestConfigurationId: configuration.id,
-      aggregationDefinitionId:
-        input.configuration.entryAggregationRule.aggregationDefinitionId,
-      config: input.configuration.entryAggregationRule.config,
-      active: input.configuration.entryAggregationRule.active,
-    });
-
-    const prizeDefinitions = await createPrizeDefinitions(
-      configuration.id,
-      input.configuration.prizeDefinitions,
-      this.contestPrizeDefinitionRepo,
-    );
-
-    return buildContestManagementDetail(
-      contest,
-      configuration,
-      participantScoringRules,
-      entryAggregationRule,
-      prizeDefinitions,
-    );
+    return buildContestManagementDetail(contest, configuration);
   }
 
   async getContest(contestId: string): Promise<ContestManagementDetailDto> {
@@ -107,29 +80,7 @@ export class ContestManagementService {
       throw new ContestManagementError('Contest configuration not found');
     }
 
-    const participantScoringRules =
-      await this.participantContestScoringRuleRepo.findByContestConfiguration(
-        configuration.id,
-      );
-    const entryAggregationRule =
-      await this.contestEntryAggregationRuleRepo.findByContestConfiguration(
-        configuration.id,
-      );
-    if (!entryAggregationRule) {
-      throw new ContestManagementError('Contest entry aggregation rule not found');
-    }
-    const prizeDefinitions =
-      await this.contestPrizeDefinitionRepo.findByContestConfiguration(
-        configuration.id,
-      );
-
-    return buildContestManagementDetail(
-      contest,
-      configuration,
-      participantScoringRules,
-      entryAggregationRule,
-      prizeDefinitions,
-    );
+    return buildContestManagementDetail(contest, configuration);
   }
 
   async updateContestConfiguration(
@@ -141,179 +92,138 @@ export class ContestManagementService {
       throw new ContestManagementError('Contest configuration not found');
     }
 
-    validateParticipantScoringRules(input.participantScoringRules);
-    validatePrizeDefinitions(input.prizeDefinitions);
-
+    const selectionType = mapSelectionType(input);
     await this.contestConfigurationRepo.update(configuration.id, {
-      selectionType: input.selectionType,
-      rounds: input.rounds,
-      timePerPickSeconds: input.timePerPickSeconds,
-      autoPickPolicy: input.autoPickPolicy,
-      tierConfig: input.tierConfig,
-      budget: input.budget,
-      pricingMethod: input.pricingMethod,
-      pickCount: input.pickCount,
-      isExclusive: input.isExclusive,
-      picksPerPeriod: input.picksPerPeriod,
-      roundValues: input.roundValues,
-      startRound: input.startRound,
+      selectionType,
+      configMode: input.mode,
+      configJson: input,
       locksAt: input.locksAt ? new Date(input.locksAt) : undefined,
-      minimumEntries: input.minimumEntries,
-      maxEntriesPerSquad: input.maxEntriesPerSquad,
-      rosterSize: input.rosterSize,
-      totalPrizePoolAmount: input.totalPrizePoolAmount ?? undefined,
+      maxEntriesPerSquad:
+        input.maxEntriesPerSquad === null ? null : input.maxEntriesPerSquad,
+      ...deriveLegacyPersistenceFields(input),
     });
 
-    const existingParticipantRules =
-      await this.participantContestScoringRuleRepo.findByContestConfiguration(
-        configuration.id,
-      );
-    await Promise.all(
-      existingParticipantRules.map((rule) =>
-        this.participantContestScoringRuleRepo.delete(rule.id),
-      ),
-    );
-    const participantScoringRules = await createParticipantScoringRules(
-      configuration.id,
-      input.participantScoringRules,
+    const refreshedConfiguration =
+      await this.contestConfigurationRepo.findByContest(contestId);
+    if (!refreshedConfiguration) {
+      throw new ContestManagementError('Contest configuration not found');
+    }
+
+    await syncDerivedScoring(
+      refreshedConfiguration,
       this.participantContestScoringRuleRepo,
-    );
-
-    const existingAggregationRule =
-      await this.contestEntryAggregationRuleRepo.findByContestConfiguration(
-        configuration.id,
-      );
-    const entryAggregationRule = existingAggregationRule
-      ? await this.contestEntryAggregationRuleRepo.update(existingAggregationRule.id, {
-          aggregationDefinitionId:
-            input.entryAggregationRule.aggregationDefinitionId,
-          config: input.entryAggregationRule.config,
-          active: input.entryAggregationRule.active,
-        })
-      : await this.contestEntryAggregationRuleRepo.create({
-          contestConfigurationId: configuration.id,
-          aggregationDefinitionId:
-            input.entryAggregationRule.aggregationDefinitionId,
-          config: input.entryAggregationRule.config,
-          active: input.entryAggregationRule.active,
-        });
-
-    const existingPrizeDefinitions =
-      await this.contestPrizeDefinitionRepo.findByContestConfiguration(
-        configuration.id,
-      );
-    await Promise.all(
-      existingPrizeDefinitions.map((definition) =>
-        this.contestPrizeDefinitionRepo.delete(definition.id),
-      ),
-    );
-    const prizeDefinitions = await createPrizeDefinitions(
-      configuration.id,
-      input.prizeDefinitions,
-      this.contestPrizeDefinitionRepo,
+      this.contestEntryAggregationRuleRepo,
     );
 
     const contest = await this.contestCoreRepo.findById(contestId);
     if (!contest) {
       throw new ContestManagementError('Contest not found');
     }
-    const updatedConfiguration =
-      await this.contestConfigurationRepo.findByContest(contestId);
-    if (!updatedConfiguration) {
-      throw new ContestManagementError('Contest configuration not found');
-    }
 
-    return buildContestManagementDetail(
-      contest,
-      updatedConfiguration,
-      participantScoringRules,
-      entryAggregationRule,
-      prizeDefinitions,
-    );
+    return buildContestManagementDetail(contest, refreshedConfiguration);
   }
 }
 
 export class ContestManagementError extends Error {}
 
-function validateParticipantScoringRules(
-  rules: ParticipantContestScoringRuleRequest[],
-): void {
-  if (rules.length === 0) {
-    throw new ContestManagementError(
-      'At least one participant scoring rule is required',
-    );
-  }
-
-  const sortOrders = new Set<number>();
-  for (const rule of rules) {
-    if (sortOrders.has(rule.sortOrder)) {
-      throw new ContestManagementError(
-        'Participant scoring rules must have unique sortOrder values',
-      );
-    }
-    sortOrders.add(rule.sortOrder);
-  }
+function mapSelectionType(
+  configuration: ContestConfigurationRequest,
+): SelectionType {
+  return configuration.mode === GolfContestConfigMode.GOLF_TIERED
+    ? SelectionType.TIERED
+    : SelectionType.OPEN_SELECTION;
 }
 
-function validatePrizeDefinitions(
-  prizeDefinitions: ContestPrizeDefinitionRequest[],
-): void {
-  for (const definition of prizeDefinitions) {
-    if (definition.payoutType === 'FIXED_AMOUNT' && definition.amount == null) {
-      throw new ContestManagementError(
-        `Prize definition ${definition.displayName} requires amount for FIXED_AMOUNT payouts`,
-      );
-    }
-
-    if (
-      definition.payoutType === 'PERCENTAGE' &&
-      definition.percentage == null
-    ) {
-      throw new ContestManagementError(
-        `Prize definition ${definition.displayName} requires percentage for PERCENTAGE payouts`,
-      );
-    }
+function deriveLegacyPersistenceFields(
+  configuration: ContestConfigurationRequest,
+): Partial<ContestConfiguration> {
+  if (configuration.mode === GolfContestConfigMode.GOLF_TIERED) {
+    return {
+      tierConfig: configuration.tiers,
+      pickCount: configuration.tiers.reduce(
+        (total, tier) => total + tier.pickCount,
+        0,
+      ),
+      rosterSize: configuration.rosterSize,
+      isExclusive: false,
+    };
   }
-}
 
-async function createParticipantScoringRules(
-  contestConfigurationId: string,
-  rules: ParticipantContestScoringRuleRequest[],
-  repository: ParticipantContestScoringRuleRepository,
-) {
-  return Promise.all(
-    rules.map((rule) =>
-      repository.create({
-        contestConfigurationId,
-        participantScoringDefinitionId: rule.participantScoringDefinitionId,
-        sortOrder: rule.sortOrder,
-        config: rule.config,
-        active: rule.active,
-      }),
+  return {
+    pickCount: configuration.categories.reduce(
+      (total, category) => total + category.pickCount,
+      0,
     ),
-  );
+    isExclusive: false,
+  };
 }
 
-async function createPrizeDefinitions(
-  contestConfigurationId: string,
-  prizeDefinitions: ContestPrizeDefinitionRequest[],
-  repository: ContestPrizeDefinitionRepository,
-) {
-  return Promise.all(
-    prizeDefinitions.map((definition) =>
-      repository.create({
-        contestConfigurationId,
-        prizeDefinitionId: definition.prizeDefinitionId,
-        displayName: definition.displayName,
-        sortOrder: definition.sortOrder,
-        ruleConfig: definition.ruleConfig,
-        payoutType: definition.payoutType,
-        amount: definition.amount,
-        percentage: definition.percentage,
-        active: definition.active,
-      }),
-    ),
-  );
+async function syncDerivedScoring(
+  configuration: ContestConfiguration,
+  participantRuleRepo: ParticipantContestScoringRuleRepository,
+  aggregationRuleRepo: ContestEntryAggregationRuleRepository,
+): Promise<void> {
+  const typedConfiguration = ensureTypedConfiguration(configuration);
+  const existingParticipantRules =
+    await participantRuleRepo.findByContestConfiguration(configuration.id);
+  await Promise.all(existingParticipantRules.map((rule) => participantRuleRepo.delete(rule.id)));
+
+  await participantRuleRepo.create({
+    contestConfigurationId: configuration.id,
+    participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+    sortOrder: 1,
+    config: buildParticipantScoringConfig(typedConfiguration),
+    active: true,
+  });
+
+  const existingAggregationRule =
+    await aggregationRuleRepo.findByContestConfiguration(configuration.id);
+  const aggregationPayload = buildAggregationRule(typedConfiguration);
+
+  if (existingAggregationRule) {
+    await aggregationRuleRepo.update(existingAggregationRule.id, aggregationPayload);
+  } else {
+    await aggregationRuleRepo.create({
+      contestConfigurationId: configuration.id,
+      ...aggregationPayload,
+    });
+  }
+}
+
+function buildParticipantScoringConfig(
+  configuration: GolfContestConfig,
+): Record<string, unknown> {
+  return {
+    cutRule: configuration.cutRule,
+    playoffHandling: configuration.playoffHandling,
+    displayScoring: configuration.displayScoring,
+    tiebreaker: configuration.tiebreaker,
+  };
+}
+
+function buildAggregationRule(configuration: GolfContestConfig): {
+  aggregationDefinitionId: 'SUM_TOP_N_ENTRIES' | 'SUM_ALL_ENTRIES';
+  config: Record<string, unknown>;
+  active: boolean;
+} {
+  if (configuration.mode === GolfContestConfigMode.GOLF_TIERED) {
+    return {
+      aggregationDefinitionId: 'SUM_TOP_N_ENTRIES',
+      config: {
+        topN: configuration.countedScores,
+        lowerIsBetter: true,
+      },
+      active: true,
+    };
+  }
+
+  return {
+    aggregationDefinitionId: 'SUM_ALL_ENTRIES',
+    config: {
+      lowerIsBetter: true,
+    },
+    active: true,
+  };
 }
 
 function buildContestManagementDetail(
@@ -329,49 +239,17 @@ function buildContestManagementDetail(
   configuration: {
     id: string;
     contestId: string;
+    configMode?: string | null;
+    configJson?: GolfContestConfig;
+    locksAt?: Date | null;
+    maxEntriesPerSquad?: number | null;
     selectionType: string;
-    rounds?: number;
-    timePerPickSeconds?: number;
-    autoPickPolicy?: string;
-    tierConfig?: ContestConfigurationTier[];
-    budget?: number;
-    pricingMethod?: string;
-    pickCount?: number;
-    isExclusive?: boolean;
-    picksPerPeriod?: number;
-    roundValues?: number[];
-    startRound?: string;
-    locksAt?: Date;
-    minimumEntries?: number;
-    maxEntriesPerSquad?: number;
     rosterSize?: number;
-    totalPrizePoolAmount?: number;
+    pickCount?: number;
+    tierConfig?: unknown;
   },
-  participantScoringRules: Array<{
-    id: string;
-    participantScoringDefinitionId: string;
-    sortOrder: number;
-    config: Record<string, unknown>;
-    active: boolean;
-  }>,
-  entryAggregationRule: {
-    id: string;
-    aggregationDefinitionId: string;
-    config: Record<string, unknown>;
-    active: boolean;
-  },
-  prizeDefinitions: Array<{
-    id: string;
-    prizeDefinitionId: string;
-    displayName: string;
-    sortOrder: number;
-    ruleConfig: Record<string, unknown>;
-    payoutType?: string;
-    amount?: number;
-    percentage?: number;
-    active: boolean;
-  }>,
 ): ContestManagementDetailDto {
+  const configJson = ensureTypedConfiguration(configuration);
   return {
     id: contest.id,
     leagueId: contest.leagueId,
@@ -383,52 +261,78 @@ function buildContestManagementDetail(
     configuration: {
       id: configuration.id,
       contestId: configuration.contestId,
-      selectionType:
-        configuration.selectionType as ContestManagementDetailDto['configuration']['selectionType'],
-      rounds: configuration.rounds,
-      timePerPickSeconds: configuration.timePerPickSeconds,
-      autoPickPolicy: configuration.autoPickPolicy,
-      tierConfig:
-        configuration.tierConfig as ContestManagementDetailDto['configuration']['tierConfig'],
-      budget: configuration.budget,
-      pricingMethod: configuration.pricingMethod,
-      pickCount: configuration.pickCount,
-      isExclusive: configuration.isExclusive,
-      picksPerPeriod: configuration.picksPerPeriod,
-      roundValues: configuration.roundValues,
-      startRound: configuration.startRound,
-      locksAt: configuration.locksAt?.toISOString(),
-      minimumEntries: configuration.minimumEntries,
-      maxEntriesPerSquad: configuration.maxEntriesPerSquad,
-      rosterSize: configuration.rosterSize,
-      totalPrizePoolAmount: configuration.totalPrizePoolAmount,
-      participantScoringRules: participantScoringRules.map((rule) => ({
-        id: rule.id,
-        participantScoringDefinitionId:
-          rule.participantScoringDefinitionId as ContestManagementDetailDto['configuration']['participantScoringRules'][number]['participantScoringDefinitionId'],
-        sortOrder: rule.sortOrder,
-        config: rule.config,
-        active: rule.active,
-      })),
-      entryAggregationRule: {
-        id: entryAggregationRule.id,
-        aggregationDefinitionId:
-          entryAggregationRule.aggregationDefinitionId as ContestManagementDetailDto['configuration']['entryAggregationRule']['aggregationDefinitionId'],
-        config: entryAggregationRule.config,
-        active: entryAggregationRule.active,
-      },
-      prizeDefinitions: prizeDefinitions.map((definition) => ({
-        id: definition.id,
-        prizeDefinitionId: definition.prizeDefinitionId,
-        displayName: definition.displayName,
-        sortOrder: definition.sortOrder,
-        ruleConfig: definition.ruleConfig,
-        payoutType:
-          definition.payoutType as ContestManagementDetailDto['configuration']['prizeDefinitions'][number]['payoutType'],
-        amount: definition.amount,
-        percentage: definition.percentage,
-        active: definition.active,
-      })),
+      ...configJson,
     },
   };
+}
+
+function ensureTypedConfiguration(configuration: {
+  configMode?: string | null;
+  configJson?: GolfContestConfig;
+  locksAt?: Date | null;
+  maxEntriesPerSquad?: number | null;
+  selectionType: string;
+  rosterSize?: number;
+  pickCount?: number;
+  tierConfig?: unknown;
+}): GolfContestConfig & {
+  locksAt?: string | null;
+  maxEntriesPerSquad?: number | null;
+} {
+  if (configuration.configJson) {
+    return {
+      ...configuration.configJson,
+      locksAt: configuration.locksAt?.toISOString() ?? null,
+      maxEntriesPerSquad: configuration.maxEntriesPerSquad ?? null,
+    };
+  }
+
+  if (configuration.selectionType === SelectionType.TIERED) {
+    const tiers = Array.isArray(configuration.tierConfig)
+      ? configuration.tierConfig.map((tier, index) => {
+          const record = tier as Record<string, unknown>;
+          return {
+            tierKey: String(record.tierKey ?? record.tierId ?? `T${index + 1}`),
+            label: String(
+              record.label ?? record.tierName ?? record.tierId ?? `Tier ${index + 1}`,
+            ),
+            pickCount: Number(record.pickCount ?? record.picksFromTier ?? 1),
+            startPosition: Number(record.startPosition ?? index * 10 + 1),
+            endPosition:
+              record.endPosition == null
+                ? null
+                : Number(record.endPosition),
+          };
+        })
+      : [];
+
+    return {
+      mode: GolfContestConfigMode.GOLF_TIERED,
+      locksAt: configuration.locksAt?.toISOString() ?? null,
+      maxEntriesPerSquad: configuration.maxEntriesPerSquad ?? null,
+      rosterSize: configuration.rosterSize ?? configuration.pickCount ?? 6,
+      countedScores: Math.min(
+        configuration.rosterSize ?? configuration.pickCount ?? 4,
+        4,
+      ),
+      tierSource: 'ODDS',
+      tierGeneration: {
+        defaultTierSize: 10,
+      },
+      tiers,
+      cutRule: {
+        type: 'FIXED_SCORE',
+        fixedScore: 80,
+      },
+      playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+      displayScoring: 'TO_PAR',
+      tiebreaker: {
+        type: 'PREDICT_WINNING_SCORE',
+      },
+    };
+  }
+
+  throw new ContestManagementError(
+    'Contest configuration is missing typed golf contest data',
+  );
 }

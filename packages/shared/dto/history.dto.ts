@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DateTimeSchema, JsonObjectSchema } from './common.dto';
+import { JsonObjectSchema } from './common.dto';
 
 export const HistoryObjectSchema = JsonObjectSchema;
 export const HistorySeasonChampionDtoSchema = z.object({

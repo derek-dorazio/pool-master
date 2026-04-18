@@ -233,6 +233,53 @@ export const SquadStatus = {
 } as const;
 export type SquadStatus = (typeof SquadStatus)[keyof typeof SquadStatus];
 
+export const GolfContestConfigMode = {
+  GOLF_TIERED: 'GOLF_TIERED',
+  GOLF_CATEGORY_PICKS: 'GOLF_CATEGORY_PICKS',
+} as const;
+export type GolfContestConfigMode =
+  (typeof GolfContestConfigMode)[keyof typeof GolfContestConfigMode];
+
+export const GolfTierSource = {
+  ODDS: 'ODDS',
+  WORLD_RANK: 'WORLD_RANK',
+} as const;
+export type GolfTierSource = (typeof GolfTierSource)[keyof typeof GolfTierSource];
+
+export const GolfCategoryKey = {
+  SENIOR: 'SENIOR',
+  ROOKIE: 'ROOKIE',
+  PREVIOUS_WINNER: 'PREVIOUS_WINNER',
+  US_PLAYER: 'US_PLAYER',
+  INTERNATIONAL_PLAYER: 'INTERNATIONAL_PLAYER',
+} as const;
+export type GolfCategoryKey =
+  (typeof GolfCategoryKey)[keyof typeof GolfCategoryKey];
+
+export const GolfCutRuleType = {
+  FIXED_SCORE: 'FIXED_SCORE',
+} as const;
+export type GolfCutRuleType =
+  (typeof GolfCutRuleType)[keyof typeof GolfCutRuleType];
+
+export const GolfPlayoffHandling = {
+  EXCLUDE_PLAYOFF_HOLES: 'EXCLUDE_PLAYOFF_HOLES',
+} as const;
+export type GolfPlayoffHandling =
+  (typeof GolfPlayoffHandling)[keyof typeof GolfPlayoffHandling];
+
+export const GolfDisplayScoring = {
+  TO_PAR: 'TO_PAR',
+} as const;
+export type GolfDisplayScoring =
+  (typeof GolfDisplayScoring)[keyof typeof GolfDisplayScoring];
+
+export const GolfTiebreakerType = {
+  PREDICT_WINNING_SCORE: 'PREDICT_WINNING_SCORE',
+} as const;
+export type GolfTiebreakerType =
+  (typeof GolfTiebreakerType)[keyof typeof GolfTiebreakerType];
+
 export const TeamIconKey = {
   CAPTAIN_SMILE_SUNSET: 'CAPTAIN_SMILE_SUNSET',
   CAPTAIN_SMILE_FIELD: 'CAPTAIN_SMILE_FIELD',

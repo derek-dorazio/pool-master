@@ -16,6 +16,8 @@ function createContestCoreRepo(): ContestCoreRepository {
       sportEventId: '11111111-1111-1111-1111-111111111111',
       name: 'Contest 1',
       status: ContestStatus.DRAFT,
+      selectionType: 'TIERED',
+      scoringEngine: 'STROKE_PLAY',
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
     }),
@@ -35,12 +37,43 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
   const state = {
     id: 'config-1',
     contestId: 'contest-1',
-    selectionType: 'BUDGET_PICK',
-    locksAt: undefined as Date | undefined,
-    minimumEntries: 1,
+    selectionType: 'TIERED',
+    configMode: 'GOLF_TIERED',
+    configJson: {
+      mode: 'GOLF_TIERED',
+      locksAt: '2026-04-10T12:00:00.000Z',
+      maxEntriesPerSquad: 1,
+      rosterSize: 6,
+      countedScores: 4,
+      tierSource: 'ODDS',
+      tierGeneration: { defaultTierSize: 10 },
+      tiers: [
+        {
+          tierKey: 'A',
+          label: 'Tier A',
+          pickCount: 1,
+          startPosition: 1,
+          endPosition: 10,
+        },
+      ],
+      cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
+      playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+      displayScoring: 'TO_PAR',
+      tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
+    },
+    locksAt: new Date('2026-04-10T12:00:00.000Z'),
     maxEntriesPerSquad: 1,
     rosterSize: 6,
-    totalPrizePoolAmount: 100,
+    pickCount: 1,
+    tierConfig: [
+      {
+        tierKey: 'A',
+        label: 'Tier A',
+        pickCount: 1,
+        startPosition: 1,
+        endPosition: 10,
+      },
+    ],
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -72,9 +105,9 @@ function createParticipantScoringRuleRepo(): ParticipantContestScoringRuleReposi
       {
         id: 'rule-old',
         contestConfigurationId: 'config-1',
-        participantScoringDefinitionId: 'TEAM_WIN_POINTS',
+        participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         sortOrder: 1,
-        config: { pointsPerWin: 1 },
+        config: {},
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -97,8 +130,8 @@ function createAggregationRuleRepo(): ContestEntryAggregationRuleRepository {
     findByContestConfiguration: jest.fn().mockResolvedValue({
       id: 'agg-existing',
       contestConfigurationId: 'config-1',
-      aggregationDefinitionId: 'SUM_ALL_ENTRIES',
-      config: {},
+      aggregationDefinitionId: 'SUM_TOP_N_ENTRIES',
+      config: { topN: 4, lowerIsBetter: true },
       active: true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -113,7 +146,7 @@ function createAggregationRuleRepo(): ContestEntryAggregationRuleRepository {
       id,
       contestConfigurationId: 'config-1',
       aggregationDefinitionId:
-        updates.aggregationDefinitionId ?? 'SUM_ALL_ENTRIES',
+        updates.aggregationDefinitionId ?? 'SUM_TOP_N_ENTRIES',
       config: updates.config ?? {},
       active: updates.active ?? true,
       createdAt: new Date('2026-04-07T12:00:03.000Z'),
@@ -125,46 +158,26 @@ function createAggregationRuleRepo(): ContestEntryAggregationRuleRepository {
 function createPrizeDefinitionRepo(): ContestPrizeDefinitionRepository {
   return {
     findById: jest.fn(),
-    findByContestConfiguration: jest.fn().mockResolvedValue([
-      {
-        id: 'prize-old',
-        contestConfigurationId: 'config-1',
-        prizeDefinitionId: 'FINAL_PLACE',
-        displayName: 'Old Prize',
-        sortOrder: 1,
-        ruleConfig: { place: 1 },
-        payoutType: 'PERCENTAGE',
-        percentage: 50,
-        active: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ]),
-    create: jest.fn().mockImplementation(async (definition) => ({
-      id: `prize-${definition.sortOrder}`,
-      ...definition,
-      createdAt: new Date('2026-04-07T12:00:04.000Z'),
-      updatedAt: new Date('2026-04-07T12:00:04.000Z'),
-    })),
+    findByContestConfiguration: jest.fn().mockResolvedValue([]),
+    create: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
   };
 }
 
 describe('ContestManagementService', () => {
-  it('creates a contest with configuration, scoring rules, aggregation rule, and prize definitions', async () => {
+  it('creates a golf tiered contest and derives internal scoring rules automatically', async () => {
     const contestCoreRepo = createContestCoreRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
     const contestEntryAggregationRuleRepo = createAggregationRuleRepo();
-    const contestPrizeDefinitionRepo = createPrizeDefinitionRepo();
 
     const service = new ContestManagementService(
       contestCoreRepo,
       contestConfigurationRepo,
       participantContestScoringRuleRepo,
       contestEntryAggregationRuleRepo,
-      contestPrizeDefinitionRepo,
+      createPrizeDefinitionRepo(),
     );
 
     const result = await service.createContest(
@@ -174,36 +187,33 @@ describe('ContestManagementService', () => {
         sportEventId: '11111111-1111-1111-1111-111111111111',
         contestType: 'SINGLE_EVENT',
         configuration: {
-          selectionType: 'BUDGET_PICK',
+          mode: 'GOLF_TIERED',
           locksAt: '2026-04-10T12:00:00.000Z',
-          minimumEntries: 2,
           maxEntriesPerSquad: 3,
           rosterSize: 6,
-          totalPrizePoolAmount: 500,
-          participantScoringRules: [
-            {
-              participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
-              sortOrder: 1,
-              config: { missedCutPenalty: 10 },
-              active: true,
-            },
-          ],
-          entryAggregationRule: {
-            aggregationDefinitionId: 'SUM_TOP_N_ENTRIES',
-            config: { topN: 4, lowerIsBetter: true },
-            active: true,
+          countedScores: 4,
+          tierSource: 'ODDS',
+          tierGeneration: {
+            defaultTierSize: 10,
           },
-          prizeDefinitions: [
+          tiers: [
             {
-              prizeDefinitionId: 'FINAL_PLACE',
-              displayName: 'First Place',
-              sortOrder: 1,
-              ruleConfig: { place: 1 },
-              payoutType: 'PERCENTAGE',
-              percentage: 50,
-              active: true,
+              tierKey: 'A',
+              label: 'Tier A',
+              pickCount: 1,
+              startPosition: 1,
+              endPosition: 10,
             },
           ],
+          cutRule: {
+            type: 'FIXED_SCORE',
+            fixedScore: 80,
+          },
+          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+          displayScoring: 'TO_PAR',
+          tiebreaker: {
+            type: 'PREDICT_WINNING_SCORE',
+          },
         },
       },
     );
@@ -212,171 +222,168 @@ describe('ContestManagementService', () => {
       leagueId: 'league-1',
       sportEventId: '11111111-1111-1111-1111-111111111111',
       name: 'Masters Pick 6',
-      selectionType: 'BUDGET_PICK',
-      scoringEngine: 'CUMULATIVE',
+      selectionType: 'TIERED',
+      scoringEngine: 'STROKE_PLAY',
       status: ContestStatus.DRAFT,
     });
-    expect(result.configuration.participantScoringRules).toHaveLength(1);
-    expect(result.configuration.entryAggregationRule.aggregationDefinitionId).toBe(
-      'SUM_TOP_N_ENTRIES',
-    );
-    expect(result.configuration.prizeDefinitions[0]).toMatchObject({
-      prizeDefinitionId: 'FINAL_PLACE',
-      displayName: 'First Place',
-      percentage: 50,
+    expect(result.configuration.mode).toBe('GOLF_TIERED');
+    if (result.configuration.mode !== 'GOLF_TIERED') {
+      throw new Error('Expected golf tiered configuration');
+    }
+    expect(result.configuration.countedScores).toBe(4);
+    expect(participantContestScoringRuleRepo.create).toHaveBeenCalledWith({
+      contestConfigurationId: 'config-1',
+      participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+      sortOrder: 1,
+      config: {
+        cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
+        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+        displayScoring: 'TO_PAR',
+        tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
+      },
+      active: true,
     });
+    expect(contestEntryAggregationRuleRepo.update).toHaveBeenCalledWith(
+      'agg-existing',
+      {
+        aggregationDefinitionId: 'SUM_TOP_N_ENTRIES',
+        config: { topN: 4, lowerIsBetter: true },
+        active: true,
+      },
+    );
   });
 
-  it('rejects duplicate sortOrder values in participant scoring rules', async () => {
+  it('creates category contests with OPEN_SELECTION and SUM_ALL_ENTRIES aggregation', async () => {
+    const contestCoreRepo = createContestCoreRepo();
+    const contestEntryAggregationRuleRepo = createAggregationRuleRepo();
+
     const service = new ContestManagementService(
-      createContestCoreRepo(),
+      contestCoreRepo,
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
+      contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
     );
 
-    await expect(
-      service.createContest(
-        { leagueId: 'league-1' },
-        {
-          name: 'Contest',
-          sportEventId: '11111111-1111-1111-1111-111111111111',
-          contestType: 'SINGLE_EVENT',
-          configuration: {
-            selectionType: 'BUDGET_PICK',
-            participantScoringRules: [
-              {
-                participantScoringDefinitionId: 'TEAM_WIN_POINTS',
-                sortOrder: 1,
-                config: { pointsPerWin: 1 },
-                active: true,
-              },
-              {
-                participantScoringDefinitionId: 'ROUND_MULTIPLIER',
-                sortOrder: 1,
-                config: { roundMultipliers: { '1': 1 } },
-                active: true,
-              },
-            ],
-            entryAggregationRule: {
-              aggregationDefinitionId: 'SUM_ALL_ENTRIES',
-              config: {},
-              active: true,
+    const result = await service.createContest(
+      { leagueId: 'league-1' },
+      {
+        name: 'Masters Categories',
+        sportEventId: '11111111-1111-1111-1111-111111111111',
+        contestType: 'SINGLE_EVENT',
+        configuration: {
+          mode: 'GOLF_CATEGORY_PICKS',
+          locksAt: '2026-04-10T12:00:00.000Z',
+          maxEntriesPerSquad: null,
+          categories: [
+            {
+              categoryKey: 'ROOKIE',
+              label: 'Rookie',
+              pickCount: 1,
             },
-            prizeDefinitions: [],
+          ],
+          cutRule: {
+            type: 'FIXED_SCORE',
+            fixedScore: 80,
+          },
+          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+          displayScoring: 'TO_PAR',
+          tiebreaker: {
+            type: 'PREDICT_WINNING_SCORE',
           },
         },
-      ),
-    ).rejects.toThrow(
-      'Participant scoring rules must have unique sortOrder values',
+      },
+    );
+
+    expect(result.configuration.mode).toBe('GOLF_CATEGORY_PICKS');
+    expect(contestCoreRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectionType: 'OPEN_SELECTION',
+        scoringEngine: 'STROKE_PLAY',
+      }),
+    );
+    expect(contestEntryAggregationRuleRepo.update).toHaveBeenCalledWith(
+      'agg-existing',
+      {
+        aggregationDefinitionId: 'SUM_ALL_ENTRIES',
+        config: { lowerIsBetter: true },
+        active: true,
+      },
     );
   });
 
-  it('rejects invalid prize payout configuration', async () => {
-    const service = new ContestManagementService(
-      createContestCoreRepo(),
-      createContestConfigurationRepo(),
-      createParticipantScoringRuleRepo(),
-      createAggregationRuleRepo(),
-      createPrizeDefinitionRepo(),
-    );
-
-    await expect(
-      service.createContest(
-        { leagueId: 'league-1' },
-        {
-          name: 'Contest',
-          sportEventId: '11111111-1111-1111-1111-111111111111',
-          contestType: 'SINGLE_EVENT',
-          configuration: {
-            selectionType: 'BUDGET_PICK',
-            participantScoringRules: [
-              {
-                participantScoringDefinitionId: 'TEAM_WIN_POINTS',
-                sortOrder: 1,
-                config: { pointsPerWin: 1 },
-                active: true,
-              },
-            ],
-            entryAggregationRule: {
-              aggregationDefinitionId: 'SUM_ALL_ENTRIES',
-              config: {},
-              active: true,
-            },
-            prizeDefinitions: [
-              {
-                prizeDefinitionId: 'FINAL_PLACE',
-                displayName: 'First Place',
-                sortOrder: 1,
-                ruleConfig: { place: 1 },
-                payoutType: 'FIXED_AMOUNT',
-                active: true,
-              },
-            ],
-          },
-        },
-      ),
-    ).rejects.toThrow(
-      'Prize definition First Place requires amount for FIXED_AMOUNT payouts',
-    );
-  });
-
-  it('updates the persisted contest configuration shape', async () => {
+  it('updates the persisted typed contest configuration shape', async () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
     const contestEntryAggregationRuleRepo = createAggregationRuleRepo();
-    const contestPrizeDefinitionRepo = createPrizeDefinitionRepo();
     const service = new ContestManagementService(
       createContestCoreRepo(),
       contestConfigurationRepo,
       participantContestScoringRuleRepo,
       contestEntryAggregationRuleRepo,
-      contestPrizeDefinitionRepo,
+      createPrizeDefinitionRepo(),
     );
 
     const result = await service.updateContestConfiguration('contest-1', {
-      selectionType: 'TIERED',
+      mode: 'GOLF_TIERED',
       locksAt: '2026-04-11T12:00:00.000Z',
-      minimumEntries: 3,
       maxEntriesPerSquad: 2,
       rosterSize: 8,
-      totalPrizePoolAmount: 1000,
-      participantScoringRules: [
+      countedScores: 5,
+      tierSource: 'WORLD_RANK',
+      tierGeneration: {
+        defaultTierSize: 10,
+      },
+      tiers: [
         {
-          participantScoringDefinitionId: 'TEAM_WIN_POINTS',
-          sortOrder: 1,
-          config: { pointsPerWin: 2 },
-          active: true,
+          tierKey: 'A',
+          label: 'Tier A',
+          pickCount: 2,
+          startPosition: 1,
+          endPosition: 8,
         },
       ],
-      entryAggregationRule: {
-        aggregationDefinitionId: 'SUM_ALL_ENTRIES',
-        config: {},
-        active: true,
+      cutRule: {
+        type: 'FIXED_SCORE',
+        fixedScore: 82,
       },
-      prizeDefinitions: [],
+      playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+      displayScoring: 'TO_PAR',
+      tiebreaker: {
+        type: 'PREDICT_WINNING_SCORE',
+      },
     });
 
     expect(contestConfigurationRepo.update).toHaveBeenCalledWith('config-1', {
       selectionType: 'TIERED',
+      configMode: 'GOLF_TIERED',
+      configJson: expect.objectContaining({
+        mode: 'GOLF_TIERED',
+        countedScores: 5,
+      }),
       locksAt: new Date('2026-04-11T12:00:00.000Z'),
-      minimumEntries: 3,
       maxEntriesPerSquad: 2,
+      tierConfig: [
+        {
+          tierKey: 'A',
+          label: 'Tier A',
+          pickCount: 2,
+          startPosition: 1,
+          endPosition: 8,
+        },
+      ],
+      pickCount: 2,
       rosterSize: 8,
-      totalPrizePoolAmount: 1000,
+      isExclusive: false,
     });
-    expect(participantContestScoringRuleRepo.delete).toHaveBeenCalledWith('rule-old');
-    expect(contestEntryAggregationRuleRepo.update).toHaveBeenCalledWith(
-      'agg-existing',
-      {
-        aggregationDefinitionId: 'SUM_ALL_ENTRIES',
-        config: {},
-        active: true,
-      },
+    expect(participantContestScoringRuleRepo.delete).toHaveBeenCalledWith(
+      'rule-old',
     );
-    expect(contestPrizeDefinitionRepo.delete).toHaveBeenCalledWith('prize-old');
+    if (result.configuration.mode !== 'GOLF_TIERED') {
+      throw new Error('Expected golf tiered configuration');
+    }
     expect(result.configuration.rosterSize).toBe(8);
+    expect(result.configuration.cutRule.fixedScore).toBe(82);
   });
 
   it('returns contest management detail by contest id', async () => {
@@ -392,8 +399,7 @@ describe('ContestManagementService', () => {
 
     expect(result.id).toBe('contest-1');
     expect(result.configuration.id).toBe('config-1');
-    expect(result.configuration.participantScoringRules[0]?.id).toBe('rule-old');
-    expect(result.configuration.entryAggregationRule.id).toBe('agg-existing');
-    expect(result.configuration.prizeDefinitions[0]?.id).toBe('prize-old');
+    expect(result.configuration.mode).toBe('GOLF_TIERED');
+    expect(result.configuration.tiebreaker.type).toBe('PREDICT_WINNING_SCORE');
   });
 });
