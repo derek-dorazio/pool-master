@@ -20,6 +20,7 @@ All agents working in this repo should:
 ## Read These Files Before Implementing
 
 - `rules/workflow-rules.md`
+- `rules/working-style.md`
 - `rules/architecture-rules.md`
 - `rules/product-requirements-rules.md`
 - `rules/technical-specification-rules.md`
@@ -36,6 +37,7 @@ All agents working in this repo should:
 ## Purpose of the Rules Files
 
 - `rules/workflow-rules.md`: plan tracking, execution protocol, and how to update plan task status.
+- `rules/working-style.md`: collaboration defaults, communication preferences, and working-session continuity guidance.
 - `rules/architecture-rules.md`: system boundaries, contract-first architecture, generated SDK expectations, and infrastructure assumptions.
 - `rules/product-requirements-rules.md`: product requirement artifacts, use-case structure, confidence labels, and handoff floor for requirement work.
 - `rules/technical-specification-rules.md`: technical-spec artifact structure, domain/API/flow spec expectations, and handoff floor for technical design work.
