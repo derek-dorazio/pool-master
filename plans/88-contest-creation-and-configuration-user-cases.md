@@ -75,3 +75,17 @@ The review must explicitly inspect:
 - Do not preserve generic engine fields just because they already exist
 - Add model fields only when the product flow clearly needs them
 - Reuse the new domain-model conventions and enum conventions during review
+
+## Current Design Companion
+
+The active golf-first configuration design for this lane is now captured in:
+
+- [plans/98-golf-first-contest-configuration-design.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/98-golf-first-contest-configuration-design.md)
+
+That companion should be treated as the current developer handoff for:
+
+- approved first golf contest config types
+- commissioner defaults versus advanced controls
+- event/participant fact-model expectations
+- resolver snapshot responsibilities
+- future-sport safety guardrails
