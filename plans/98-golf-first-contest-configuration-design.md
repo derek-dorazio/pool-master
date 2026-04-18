@@ -42,9 +42,20 @@ This plan is a design and handoff companion for the next implementation lane.
 - a commissioner can configure `maxEntriesPerTeam`
   - a positive integer, or
   - unlimited
+- lock time is presented in the commissioner UI as an offset relative to event
+  start
+  - default is `5 minutes before start`
+  - common preset is `1 hour before start`
+  - custom hours/minutes before start is also allowed
+  - PoolMaster still persists the derived absolute `lockAt` timestamp
 - ties do not remain ties:
   - entries predict the winning score
   - closest predicted winning score wins the tiebreaker
+- contest lifecycle is primarily automatic:
+  - commissioners manage and delete drafts before the event begins
+  - `LOCKED` follows the derived `lockAt`
+  - in-progress / active follows event start and feed updates
+  - `COMPLETED` follows final event status and final scoring sync
 - unsupported sports should not appear in the commissioner contest-creation UI
 
 ## Approved Golf Contest Config Types
@@ -75,7 +86,7 @@ Basic commissioner inputs:
 - golfer scores counted (`countedScores`)
 - tier source
 - default tier size
-- lock time
+- lock timing relative to event start
 - max entries per team
 
 Advanced commissioner inputs:
@@ -108,7 +119,7 @@ Basic commissioner inputs:
 - contest name
 - tournament / sport event
 - enabled categories
-- lock time
+- lock timing relative to event start
 - max entries per team
 
 Advanced commissioner inputs:
@@ -125,6 +136,7 @@ These rules are shared by both approved golf config types:
 - scoring display is `TO_PAR`
 - playoff holes are excluded
 - commissioner may edit the missed-cut fallback score in advanced setup
+- default lock timing is `5 minutes before event start`
 - tiebreaker is:
   - `winning-score prediction`
   - closest prediction wins
@@ -396,4 +408,4 @@ Owns:
 | 98-002 | 1 | Data-modeler review of contest config typing and resolver responsibilities | Done | Approved typed config per contest mode, event/participant fact ownership, and a frozen resolved-pool snapshot layer. |
 | 98-003 | 1 | Developer handoff for commissioner config UX defaults vs advanced controls | Done | Basic vs advanced controls are explicitly defined for tiered and category golf contests. |
 | 98-004 | 2 | Backend/model narrowing plan for golf-first contest config | In Progress | Added typed golf contest config enums, DTOs, service narrowing, and persisted `configMode` / `configJson` fields; validating downstream integrations now. |
-| 98-005 | 2 | Frontend execution plan for commissioner create/configure contest flow | Not Started | Build from the approved golf-first contest shell, not the older generic contest-management assumptions. |
+| 98-005 | 2 | Frontend execution plan for commissioner create/configure contest flow | Done | Added a shared commissioner create/manage contest page, league/app-shell/detail entry points, relative lock-time controls, draft-only delete/manage behavior, category picks, advanced controls, and edit-mode save wiring aligned to the golf-first typed contract. |

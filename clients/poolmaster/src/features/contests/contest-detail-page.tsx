@@ -7,7 +7,8 @@ import {
   type GetContestLeaderboardResponses,
   type GetContestResponses,
 } from '@/lib/api';
-import { buildLeaguePath } from '@/features/leagues/league-routing';
+import { useAuth } from '@/features/auth/auth-provider';
+import { buildLeagueContestManagePath, buildLeaguePath } from '@/features/leagues/league-routing';
 import { parseRouteState } from '@/routes/route-state';
 
 type ContestDetail = GetContestResponses[200]['contest'];
@@ -16,6 +17,7 @@ type LeaderboardEntry = GetContestLeaderboardResponses[200]['leaderboard'][numbe
 export function ContestDetailPage() {
   const { contestId = '' } = useParams<{ contestId: string }>();
   const location = useLocation();
+  const auth = useAuth();
   const hintedLeagueCode = parseRouteState(location.state).leagueCode ?? null;
 
   const contestQuery = useQuery({
@@ -53,20 +55,30 @@ export function ContestDetailPage() {
     queryFn: async () => {
       const response = await getLeague({ path: { id: contestQuery.data!.leagueId } });
 
-      if (!response.data?.league?.leagueCode) {
-        throw response.error ?? new Error('League response is missing a league code.');
+      if (!response.data?.league) {
+        throw response.error ?? new Error('League response is missing league data.');
       }
 
-      return response.data.league.leagueCode;
+      return response.data.league;
     },
-    enabled: Boolean(contestQuery.data?.leagueId && !hintedLeagueCode),
+    enabled: Boolean(contestQuery.data?.leagueId),
     retry: false,
   });
   const backToLeaguePath = hintedLeagueCode
     ? buildLeaguePath(hintedLeagueCode)
-    : leagueCodeQuery.data
-      ? buildLeaguePath(leagueCodeQuery.data)
+    : leagueCodeQuery.data?.leagueCode
+      ? buildLeaguePath(leagueCodeQuery.data.leagueCode)
       : '/welcome';
+  const manageContestPath =
+    hintedLeagueCode || leagueCodeQuery.data?.leagueCode
+      ? buildLeagueContestManagePath(
+          hintedLeagueCode ?? leagueCodeQuery.data!.leagueCode,
+          contestId,
+        )
+      : null;
+  const canManageContest =
+    (leagueCodeQuery.data?.role === 'COMMISSIONER' || Boolean(auth.user?.isRootAdmin))
+    && contestQuery.data?.status === 'DRAFT';
 
   if (contestQuery.isLoading) {
     return (
@@ -103,13 +115,24 @@ export function ContestDetailPage() {
               </p>
             </div>
           </div>
-          <Link
-            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
-            data-testid="contest-back-to-league"
-            to={backToLeaguePath}
-          >
-            Back to league
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            {canManageContest && manageContestPath ? (
+              <Link
+                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+                data-testid="contest-manage-link"
+                to={manageContestPath}
+              >
+                Manage contest
+              </Link>
+            ) : null}
+            <Link
+              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+              data-testid="contest-back-to-league"
+              to={backToLeaguePath}
+            >
+              Back to league
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -171,6 +194,16 @@ export function ContestDetailPage() {
             )}
           </div>
         </div>
+      </div>
+
+      <div className="rounded-[2rem] border border-border bg-card p-6">
+        <h3 className="text-xl font-semibold">Lifecycle</h3>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Contest status should follow the real golf event and scoring feed automatically. Commissioners
+          can manage draft setup before the event begins, but PoolMaster should handle lock,
+          in-progress, and completed transitions from event timing and feed updates rather than
+          manual status controls.
+        </p>
       </div>
     </section>
   );

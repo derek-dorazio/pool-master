@@ -9,6 +9,7 @@ import {
   CreateLeagueModal,
   buildCreateLeagueDestination,
 } from '@/features/leagues/create-league-modal';
+import { buildLeagueContestCreatePath } from '@/features/leagues/league-routing';
 import { LeagueSelector } from './league-selector';
 
 export function AppShell() {
@@ -112,14 +113,25 @@ export function AppShell() {
             >
               My Leagues
             </Link>
-            <button
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
-              disabled
-              title="Contest creation will be implemented in a later slice."
-              type="button"
-            >
-              Create Contest
-            </button>
+            {activeLeagueCode ? (
+              <Link
+                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
+                data-testid="app-nav-create-contest"
+                to={buildLeagueContestCreatePath(activeLeagueCode)}
+              >
+                Create Contest
+              </Link>
+            ) : (
+              <button
+                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
+                data-testid="app-nav-create-contest-disabled"
+                disabled
+                title="Open a league first to create a contest."
+                type="button"
+              >
+                Create Contest
+              </button>
+            )}
             <button
               className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
               disabled

@@ -17,6 +17,14 @@ export function buildLeagueTeamsPath(leagueCode: string) {
   return `/league/${leagueCode}/teams`;
 }
 
+export function buildLeagueContestCreatePath(leagueCode: string) {
+  return `/league/${leagueCode}/contests/new`;
+}
+
+export function buildLeagueContestManagePath(leagueCode: string, contestId: string) {
+  return `/league/${leagueCode}/contests/${contestId}/manage`;
+}
+
 export function buildInvitePath(inviteCode: string) {
   return `/invite/${inviteCode}`;
 }

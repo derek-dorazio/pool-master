@@ -4,6 +4,7 @@ import { MyAccountPage } from '@/features/account/my-account-page';
 import { AppShell } from '@/features/app-shell/app-shell';
 import { NotFoundPage } from '@/features/app-shell/not-found-page';
 import { PlaceholderPage } from '@/features/app-shell/placeholder-page';
+import { CreateContestPage } from '@/features/contests/create-contest-page';
 import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
@@ -61,6 +62,14 @@ export const router = createBrowserRouter([
           {
             path: 'league/:leagueCode',
             element: <LeagueDetailPage />,
+          },
+          {
+            path: 'league/:leagueCode/contests/new',
+            element: <CreateContestPage />,
+          },
+          {
+            path: 'league/:leagueCode/contests/:contestId/manage',
+            element: <CreateContestPage />,
           },
           {
             path: 'league/:leagueCode/team',

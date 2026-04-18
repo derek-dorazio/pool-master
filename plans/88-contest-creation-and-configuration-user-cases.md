@@ -51,6 +51,43 @@ lane and to require a fresh model review before implementation begins.
 - Contest configuration remains truthful and constrained
 - Editing rules are explicit and lifecycle-aware
 
+### CC-003: Commissioner configures lock timing relative to the golf event
+
+**Actor:** Commissioner
+
+**Preconditions**
+- Contest is still in draft
+- Contest is attached to a real golf event
+
+**Flow**
+1. Commissioner selects a relative lock option such as `5 minutes before start`
+   or `1 hour before start`
+2. Commissioner may switch to a custom hours/minutes offset before the event
+3. System derives the exact `lockAt` timestamp from the event start time
+4. System saves the absolute timestamp while continuing to present it as an
+   event-relative rule in the UI
+
+**Expected outcomes**
+- Lock timing is easy for commissioners to understand
+- PoolMaster persists an exact timestamp without exposing raw datetime entry as
+  the primary UX
+
+### CC-004: Commissioner deletes a contest before the event begins
+
+**Actor:** Commissioner
+
+**Preconditions**
+- Contest is still in draft
+
+**Flow**
+1. Commissioner opens the contest management surface
+2. Commissioner chooses to delete the contest
+3. System removes the draft contest
+
+**Expected outcomes**
+- Commissioners can clean up draft contests before the live event begins
+- Post-start lifecycle does not depend on manual commissioner status changes
+
 ## Required Model Review Before Implementation
 
 Before backend or frontend implementation begins, perform a dedicated
@@ -86,6 +123,7 @@ That companion should be treated as the current developer handoff for:
 
 - approved first golf contest config types
 - commissioner defaults versus advanced controls
+- relative lock-timing UX and automatic lifecycle expectations
 - event/participant fact-model expectations
 - resolver snapshot responsibilities
 - future-sport safety guardrails

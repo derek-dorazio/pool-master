@@ -20,7 +20,13 @@ import {
 import { formatUserName } from '@/features/account/user-name';
 import { useAuth } from '@/features/auth/auth-provider';
 import { LeagueIcon } from './league-icon';
-import { buildInvitePath, buildLeagueTeamPath, buildLeagueTeamsPath, setRecentLeagueCode } from './league-routing';
+import {
+  buildInvitePath,
+  buildLeagueContestCreatePath,
+  buildLeagueTeamPath,
+  buildLeagueTeamsPath,
+  setRecentLeagueCode,
+} from './league-routing';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
@@ -736,6 +742,15 @@ export function LeagueDetailPage() {
                   old frontend stack.
                 </p>
               </div>
+              {isCommissioner && !isInactiveLeague ? (
+                <Link
+                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+                  data-testid="league-create-contest"
+                  to={buildLeagueContestCreatePath(leagueQuery.data.leagueCode)}
+                >
+                  Create contest
+                </Link>
+              ) : null}
             </div>
 
             <div className="mt-5 space-y-3">

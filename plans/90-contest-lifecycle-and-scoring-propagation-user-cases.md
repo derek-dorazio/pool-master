@@ -26,6 +26,8 @@ product actually needs before building deeper contest flows.
 **Expected outcomes**
 - Contest lifecycle is explicit and understandable
 - Allowed edits/actions match the lifecycle phase
+- Normal lifecycle transitions come from event timing and feed updates rather
+  than routine commissioner overrides
 
 ### CL-002: Member sees their entry and standings update as contest data changes
 
@@ -69,3 +71,8 @@ The review must explicitly inspect:
   them
 - Treat event-driven score propagation as a designed system, not incidental
   side effects scattered across routes
+- Treat contest lifecycle as largely automatic for the first golf slice:
+  - commissioners manage drafts and can delete before the event begins
+  - `LOCKED` derives from event-relative `lockAt`
+  - in-progress / active derives from event start and scoring-feed updates
+  - `COMPLETED` derives from final event status and final scoring sync
