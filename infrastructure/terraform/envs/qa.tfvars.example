@@ -12,6 +12,19 @@ db_password          = "CHANGE_ME_qa_password"
 ecs_cpu    = 256
 ecs_memory = 512
 core_api_bootstrap_image_tag = "bootstrap"
+mock_contest_feed_provider_bootstrap_image_tag = "bootstrap"
+
+# Sports data providers
+sport_data_default_provider = "mock-contest-feed"
+sport_data_provider_bindings_json = <<-EOT
+{
+  "providers": {
+    "mock-contest-feed": {
+      "baseUrl": "http://mock-contest-feed-provider.qa.poolmaster.internal:3105"
+    }
+  }
+}
+EOT
 
 # Domain → qa-ultimateofficepoolmanager.com
 domain_name         = "ultimateofficepoolmanager.com"

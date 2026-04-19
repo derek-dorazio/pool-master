@@ -98,6 +98,24 @@ variable "core_api_bootstrap_image_tag" {
   default     = "bootstrap"
 }
 
+variable "mock_contest_feed_provider_bootstrap_image_tag" {
+  description = "Immutable bootstrap image tag for the QA-only mock contest feed provider task definition."
+  type        = string
+  default     = "bootstrap"
+}
+
+variable "sport_data_default_provider" {
+  description = "Default sports data provider id for the environment. Leave empty to defer binding to application configuration."
+  type        = string
+  default     = ""
+}
+
+variable "sport_data_provider_bindings_json" {
+  description = "JSON object describing one or more sports data provider bindings. QA can point to the mock provider now while staging/prod can bind to real providers later."
+  type        = string
+  default     = ""
+}
+
 # --- Networking ---
 
 variable "vpc_cidr" {
@@ -110,4 +128,10 @@ variable "availability_zones" {
   description = "List of availability zones"
   type        = list(string)
   default     = ["us-east-2a", "us-east-2b"]
+}
+
+variable "internal_service_discovery_domain" {
+  description = "Base private DNS domain for internal ECS service discovery."
+  type        = string
+  default     = "poolmaster.internal"
 }

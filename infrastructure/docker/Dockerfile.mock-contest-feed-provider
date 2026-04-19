@@ -1,0 +1,31 @@
+FROM node:20-bookworm-slim AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+COPY packages/mock-contest-feed-provider/package*.json ./packages/mock-contest-feed-provider/
+
+RUN npm ci
+
+COPY packages/mock-contest-feed-provider ./packages/mock-contest-feed-provider
+
+RUN npm run build --workspace @poolmaster/mock-contest-feed-provider
+
+FROM node:20-bookworm-slim AS runner
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/packages/mock-contest-feed-provider/package*.json ./packages/mock-contest-feed-provider/
+
+RUN npm ci --omit=dev --workspace @poolmaster/mock-contest-feed-provider
+
+COPY --from=builder /app/packages/mock-contest-feed-provider/dist ./packages/mock-contest-feed-provider/dist
+COPY --from=builder /app/packages/mock-contest-feed-provider/contest-feed-scenarios ./packages/mock-contest-feed-provider/contest-feed-scenarios
+
+WORKDIR /app/packages/mock-contest-feed-provider
+
+EXPOSE 3105
+
+CMD ["npm", "run", "start"]

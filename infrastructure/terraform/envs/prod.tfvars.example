@@ -13,6 +13,11 @@ ecs_cpu    = 512
 ecs_memory = 1024
 core_api_bootstrap_image_tag = "bootstrap"
 
+# Sports data providers
+# Production must bind only to approved real providers.
+sport_data_default_provider = ""
+sport_data_provider_bindings_json = "{}"
+
 # Domain → ultimateofficepoolmanager.com (no prefix for prod)
 domain_name         = "ultimateofficepoolmanager.com"
 acm_certificate_arn = "arn:aws:acm:us-east-2:614049083306:certificate/4d0fbf35-523d-4e71-bb33-3086aae9e4c8"

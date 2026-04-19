@@ -42,7 +42,22 @@ provider "aws" {
 }
 
 locals {
-  name_prefix = "${var.project_name}-${var.environment}"
+  name_prefix                          = "${var.project_name}-${var.environment}"
+  qa_only_services                     = var.environment == "qa" ? ["mock-contest-feed-provider"] : []
+  services                             = concat(["core-api"], local.qa_only_services)
+  mock_provider_base_url               = "http://mock-contest-feed-provider.${var.environment}.${var.internal_service_discovery_domain}:3105"
+  resolved_sport_data_default_provider = trimspace(var.sport_data_default_provider) != "" ? var.sport_data_default_provider : (var.environment == "qa" ? "mock-contest-feed" : "")
+  resolved_sport_data_provider_bindings_json = trimspace(var.sport_data_provider_bindings_json) != "" ? var.sport_data_provider_bindings_json : (
+    var.environment == "qa"
+    ? jsonencode({
+      providers = {
+        "mock-contest-feed" = {
+          baseUrl = local.mock_provider_base_url
+        }
+      }
+    })
+    : "{}"
+  )
 
   # Domain: qa.domain.com, stage.domain.com, domain.com (prod has no prefix)
   env_subdomain_prefix = {
@@ -52,14 +67,10 @@ locals {
   }
   app_domain = var.domain_name != "" ? "${local.env_subdomain_prefix[var.environment]}${var.domain_name}" : ""
 
-  # After monolith consolidation: 1 backend service (core-api) + 2 frontends (S3/CloudFront)
-  services = [
-    "core-api",
-  ]
-
   # Port mapping for backend services
   service_ports = {
-    "core-api" = 3000
+    "core-api"                   = 3000
+    "mock-contest-feed-provider" = 3105
   }
 }
 
@@ -187,6 +198,13 @@ resource "aws_security_group" "ecs_tasks" {
     to_port         = 65535
     protocol        = "tcp"
     security_groups = [aws_security_group.alb.id]
+  }
+
+  ingress {
+    from_port = 0
+    to_port   = 65535
+    protocol  = "tcp"
+    self      = true
   }
 
   egress {
@@ -457,6 +475,8 @@ locals {
   common_env = [
     { name = "NODE_ENV", value = var.environment },
     { name = "DATABASE_URL", value = local.db_url },
+    { name = "SPORT_DATA_DEFAULT_PROVIDER", value = local.resolved_sport_data_default_provider },
+    { name = "SPORT_DATA_PROVIDER_BINDINGS_JSON", value = local.resolved_sport_data_provider_bindings_json },
   ]
 }
 
@@ -492,6 +512,69 @@ resource "aws_ecs_task_definition" "core_api" {
       logDriver = "awslogs"
       options = {
         "awslogs-group"         = aws_cloudwatch_log_group.services["core-api"].name
+        "awslogs-region"        = var.region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+  }])
+}
+
+resource "aws_service_discovery_private_dns_namespace" "qa_internal" {
+  count = var.environment == "qa" ? 1 : 0
+
+  name = "${var.environment}.${var.internal_service_discovery_domain}"
+  vpc  = aws_vpc.main.id
+
+  tags = { Name = "${local.name_prefix}-internal" }
+}
+
+resource "aws_service_discovery_service" "mock_contest_feed_provider" {
+  count = var.environment == "qa" ? 1 : 0
+
+  name = "mock-contest-feed-provider"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.qa_internal[0].id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+}
+
+resource "aws_ecs_task_definition" "mock_contest_feed_provider" {
+  count = var.environment == "qa" ? 1 : 0
+
+  family                   = "${local.name_prefix}-mock-contest-feed-provider"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
+
+  container_definitions = jsonencode([{
+    name         = "mock-contest-feed-provider"
+    image        = "${aws_ecr_repository.services["mock-contest-feed-provider"].repository_url}:${var.mock_contest_feed_provider_bootstrap_image_tag}"
+    essential    = true
+    portMappings = [{ containerPort = 3105, protocol = "tcp" }]
+    environment = [
+      { name = "NODE_ENV", value = var.environment },
+      { name = "PORT", value = "3105" },
+      { name = "PROVIDER_ID", value = "mock-contest-feed" },
+      { name = "SERVICE_NAME", value = "mock-contest-feed-provider" },
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.services["mock-contest-feed-provider"].name
         "awslogs-region"        = var.region
         "awslogs-stream-prefix" = "ecs"
       }
@@ -556,6 +639,28 @@ resource "aws_ecs_service" "core_api" {
   }
 
   depends_on = [aws_lb_listener.http]
+}
+
+resource "aws_ecs_service" "mock_contest_feed_provider" {
+  count = var.environment == "qa" ? 1 : 0
+
+  name            = "${local.name_prefix}-mock-contest-feed-provider"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.mock_contest_feed_provider[0].arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = aws_subnet.private[*].id
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    assign_public_ip = false
+  }
+
+  service_registries {
+    registry_arn = aws_service_discovery_service.mock_contest_feed_provider[0].arn
+  }
+
+  depends_on = [aws_service_discovery_service.mock_contest_feed_provider]
 }
 
 # Draft, scoring, ingestion, and notification services removed — merged into core-api monolith

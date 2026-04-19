@@ -281,6 +281,21 @@ jobs:
       - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
       - run: npm run build:service
 
+  mock-contest-feed-provider-build:
+    name: mock-contest-feed-provider-build
+    runs-on: ubuntu-latest
+    needs: lint-typecheck
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint --workspace @poolmaster/mock-contest-feed-provider
+      - run: npm run typecheck --workspace @poolmaster/mock-contest-feed-provider
+      - run: npm run build --workspace @poolmaster/mock-contest-feed-provider
+
   poolmaster-build:
     name: poolmaster-build
     runs-on: ubuntu-latest
@@ -299,13 +314,14 @@ jobs:
   # =========================================================================
   publish-images:
     runs-on: ubuntu-latest
-    needs: [service-coverage-report, poolmaster-unit-tests, service-build, poolmaster-build]
+    needs: [service-coverage-report, poolmaster-unit-tests, service-build, mock-contest-feed-provider-build, poolmaster-build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
     outputs:
       qa_core_api_task_definition: ${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}
       qa_migrate_task_definition: ${{ steps.register-qa-task-defs.outputs.qa_migrate_task_definition }}
+      qa_mock_contest_feed_provider_task_definition: ${{ steps.register-qa-task-defs.outputs.qa_mock_contest_feed_provider_task_definition }}
     steps:
       - uses: actions/checkout@v6
 
@@ -335,14 +351,24 @@ jobs:
 
       - name: Check ECR repos exist
         id: ecr-check
-        continue-on-error: true
         run: |
-          aws ecr describe-repositories --repository-names poolmaster-qa/core-api --region ${{ env.AWS_REGION }} > /dev/null 2>&1
-          echo "exists=true" >> $GITHUB_OUTPUT
+          CORE_API_EXISTS=false
+          MOCK_PROVIDER_EXISTS=false
+
+          if aws ecr describe-repositories --repository-names poolmaster-qa/core-api --region ${{ env.AWS_REGION }} > /dev/null 2>&1; then
+            CORE_API_EXISTS=true
+          fi
+
+          if aws ecr describe-repositories --repository-names poolmaster-qa/mock-contest-feed-provider --region ${{ env.AWS_REGION }} > /dev/null 2>&1; then
+            MOCK_PROVIDER_EXISTS=true
+          fi
+
+          echo "core_api_exists=${CORE_API_EXISTS}" >> $GITHUB_OUTPUT
+          echo "mock_provider_exists=${MOCK_PROVIDER_EXISTS}" >> $GITHUB_OUTPUT
 
       - name: Build & push core-api
         id: build-core-api
-        if: steps.ecr-check.outputs.exists == 'true'
+        if: steps.ecr-check.outputs.core_api_exists == 'true'
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -353,84 +379,152 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build & push mock contest feed provider
+        id: build-mock-provider
+        if: steps.ecr-check.outputs.mock_provider_exists == 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: infrastructure/docker/Dockerfile.mock-contest-feed-provider
+          push: true
+          tags: |
+            ${{ steps.tags.outputs.prefix }}/mock-contest-feed-provider:${{ steps.tags.outputs.sha_tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Capture immutable image reference
         id: image-ref
-        if: steps.ecr-check.outputs.exists == 'true'
+        if: steps.ecr-check.outputs.core_api_exists == 'true' || steps.ecr-check.outputs.mock_provider_exists == 'true'
         run: |
-          CORE_API_IMAGE="${{ steps.tags.outputs.prefix }}/core-api@${{ steps.build-core-api.outputs.digest }}"
-          echo "core_api_image=${CORE_API_IMAGE}" >> $GITHUB_OUTPUT
-          echo "Using immutable core-api image: ${CORE_API_IMAGE}"
+          if [ "${{ steps.ecr-check.outputs.core_api_exists }}" = "true" ]; then
+            CORE_API_IMAGE="${{ steps.tags.outputs.prefix }}/core-api@${{ steps.build-core-api.outputs.digest }}"
+            echo "core_api_image=${CORE_API_IMAGE}" >> $GITHUB_OUTPUT
+            echo "Using immutable core-api image: ${CORE_API_IMAGE}"
+          fi
+
+          if [ "${{ steps.ecr-check.outputs.mock_provider_exists }}" = "true" ]; then
+            MOCK_PROVIDER_IMAGE="${{ steps.tags.outputs.prefix }}/mock-contest-feed-provider@${{ steps.build-mock-provider.outputs.digest }}"
+            echo "mock_provider_image=${MOCK_PROVIDER_IMAGE}" >> $GITHUB_OUTPUT
+            echo "Using immutable mock provider image: ${MOCK_PROVIDER_IMAGE}"
+          fi
 
       - name: Register QA ECS task definitions
         id: register-qa-task-defs
-        if: steps.ecr-check.outputs.exists == 'true'
+        if: steps.ecr-check.outputs.core_api_exists == 'true' || steps.ecr-check.outputs.mock_provider_exists == 'true'
         run: |
           CORE_API_IMAGE="${{ steps.image-ref.outputs.core_api_image }}"
+          MOCK_PROVIDER_IMAGE="${{ steps.image-ref.outputs.mock_provider_image }}"
           CLUSTER="poolmaster-qa-cluster"
           CORE_SERVICE="poolmaster-qa-core-api"
+          MOCK_PROVIDER_SERVICE="poolmaster-qa-mock-contest-feed-provider"
           MIGRATE_FAMILY="poolmaster-qa-migrate"
+          QA_CORE_API_TASK_DEF=""
+          QA_MIGRATE_TASK_DEF=""
+          QA_MOCK_PROVIDER_TASK_DEF=""
 
-          CORE_SERVICE_TASK_DEF=$(aws ecs describe-services \
-            --cluster "$CLUSTER" \
-            --services "$CORE_SERVICE" \
-            --query 'services[0].taskDefinition' \
-            --output text)
+          if [ -n "$CORE_API_IMAGE" ] && aws ecs describe-services --cluster "$CLUSTER" --services "$CORE_SERVICE" --query 'services[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
+            CORE_SERVICE_TASK_DEF=$(aws ecs describe-services \
+              --cluster "$CLUSTER" \
+              --services "$CORE_SERVICE" \
+              --query 'services[0].taskDefinition' \
+              --output text)
 
-          aws ecs describe-task-definition \
-            --task-definition "$CORE_SERVICE_TASK_DEF" \
-            --query 'taskDefinition' \
-            --output json \
-            | jq --arg IMAGE "$CORE_API_IMAGE" '
-                del(
-                  .taskDefinitionArn,
-                  .revision,
-                  .status,
-                  .requiresAttributes,
-                  .compatibilities,
-                  .registeredAt,
-                  .registeredBy
-                )
-                | .containerDefinitions |= map(
-                    if .name == "core-api" then .image = $IMAGE else . end
+            aws ecs describe-task-definition \
+              --task-definition "$CORE_SERVICE_TASK_DEF" \
+              --query 'taskDefinition' \
+              --output json \
+              | jq --arg IMAGE "$CORE_API_IMAGE" '
+                  del(
+                    .taskDefinitionArn,
+                    .revision,
+                    .status,
+                    .requiresAttributes,
+                    .compatibilities,
+                    .registeredAt,
+                    .registeredBy
                   )
-              ' > /tmp/qa-core-api-task-def.json
+                  | .containerDefinitions |= map(
+                      if .name == "core-api" then .image = $IMAGE else . end
+                    )
+                ' > /tmp/qa-core-api-task-def.json
 
-          QA_CORE_API_TASK_DEF=$(aws ecs register-task-definition \
-            --cli-input-json file:///tmp/qa-core-api-task-def.json \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
+            QA_CORE_API_TASK_DEF=$(aws ecs register-task-definition \
+              --cli-input-json file:///tmp/qa-core-api-task-def.json \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text)
 
-          aws ecs describe-task-definition \
-            --task-definition "$MIGRATE_FAMILY" \
-            --query 'taskDefinition' \
-            --output json \
-            | jq --arg IMAGE "$CORE_API_IMAGE" '
-                del(
-                  .taskDefinitionArn,
-                  .revision,
-                  .status,
-                  .requiresAttributes,
-                  .compatibilities,
-                  .registeredAt,
-                  .registeredBy
-                )
-                | .containerDefinitions |= map(
-                    if .name == "migrate"
-                    then .image = $IMAGE | .command = ["node", "scripts/run-migrations.mjs"]
-                    else . end
+            aws ecs describe-task-definition \
+              --task-definition "$MIGRATE_FAMILY" \
+              --query 'taskDefinition' \
+              --output json \
+              | jq --arg IMAGE "$CORE_API_IMAGE" '
+                  del(
+                    .taskDefinitionArn,
+                    .revision,
+                    .status,
+                    .requiresAttributes,
+                    .compatibilities,
+                    .registeredAt,
+                    .registeredBy
                   )
-              ' > /tmp/qa-migrate-task-def.json
+                  | .containerDefinitions |= map(
+                      if .name == "migrate"
+                      then .image = $IMAGE | .command = ["node", "scripts/run-migrations.mjs"]
+                      else . end
+                    )
+                ' > /tmp/qa-migrate-task-def.json
 
-          QA_MIGRATE_TASK_DEF=$(aws ecs register-task-definition \
-            --cli-input-json file:///tmp/qa-migrate-task-def.json \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
+            QA_MIGRATE_TASK_DEF=$(aws ecs register-task-definition \
+              --cli-input-json file:///tmp/qa-migrate-task-def.json \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text)
+          fi
+
+          if [ -n "$MOCK_PROVIDER_IMAGE" ] && aws ecs describe-services --cluster "$CLUSTER" --services "$MOCK_PROVIDER_SERVICE" --query 'services[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
+            MOCK_PROVIDER_SERVICE_TASK_DEF=$(aws ecs describe-services \
+              --cluster "$CLUSTER" \
+              --services "$MOCK_PROVIDER_SERVICE" \
+              --query 'services[0].taskDefinition' \
+              --output text)
+
+            aws ecs describe-task-definition \
+              --task-definition "$MOCK_PROVIDER_SERVICE_TASK_DEF" \
+              --query 'taskDefinition' \
+              --output json \
+              | jq --arg IMAGE "$MOCK_PROVIDER_IMAGE" '
+                  del(
+                    .taskDefinitionArn,
+                    .revision,
+                    .status,
+                    .requiresAttributes,
+                    .compatibilities,
+                    .registeredAt,
+                    .registeredBy
+                  )
+                  | .containerDefinitions |= map(
+                      if .name == "mock-contest-feed-provider" then .image = $IMAGE else . end
+                    )
+                ' > /tmp/qa-mock-provider-task-def.json
+
+            QA_MOCK_PROVIDER_TASK_DEF=$(aws ecs register-task-definition \
+              --cli-input-json file:///tmp/qa-mock-provider-task-def.json \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text)
+          fi
 
           echo "qa_core_api_task_definition=${QA_CORE_API_TASK_DEF}" >> $GITHUB_OUTPUT
           echo "qa_migrate_task_definition=${QA_MIGRATE_TASK_DEF}" >> $GITHUB_OUTPUT
+          echo "qa_mock_contest_feed_provider_task_definition=${QA_MOCK_PROVIDER_TASK_DEF}" >> $GITHUB_OUTPUT
 
-          echo "Registered QA core-api task definition: ${QA_CORE_API_TASK_DEF}"
-          echo "Registered QA migrate task definition: ${QA_MIGRATE_TASK_DEF}"
+          if [ -n "${QA_CORE_API_TASK_DEF}" ]; then
+            echo "Registered QA core-api task definition: ${QA_CORE_API_TASK_DEF}"
+          fi
+          if [ -n "${QA_MIGRATE_TASK_DEF}" ]; then
+            echo "Registered QA migrate task definition: ${QA_MIGRATE_TASK_DEF}"
+          fi
+          if [ -n "${QA_MOCK_PROVIDER_TASK_DEF}" ]; then
+            echo "Registered QA mock provider task definition: ${QA_MOCK_PROVIDER_TASK_DEF}"
+          fi
 
       # --- Web Clients -> S3 + CloudFront ---
 
@@ -474,39 +568,59 @@ jobs:
           fi
 
       - name: Deploy QA services
-        if: steps.ecr-check.outputs.exists == 'true'
+        if: steps.ecr-check.outputs.core_api_exists == 'true' || steps.ecr-check.outputs.mock_provider_exists == 'true'
         run: |
           if aws ecs describe-clusters --clusters poolmaster-qa-cluster --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
-            echo "Deploying poolmaster-qa-core-api with task definition ${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}..."
-            aws ecs update-service \
-              --cluster poolmaster-qa-cluster \
-              --service poolmaster-qa-core-api \
-              --task-definition "${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}" \
-              --no-cli-pager
+            if [ -n "${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}" ]; then
+              echo "Deploying poolmaster-qa-core-api with task definition ${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}..."
+              aws ecs update-service \
+                --cluster poolmaster-qa-cluster \
+                --service poolmaster-qa-core-api \
+                --task-definition "${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}" \
+                --no-cli-pager
+            fi
+
+            if [ -n "${{ steps.register-qa-task-defs.outputs.qa_mock_contest_feed_provider_task_definition }}" ]; then
+              echo "Deploying poolmaster-qa-mock-contest-feed-provider with task definition ${{ steps.register-qa-task-defs.outputs.qa_mock_contest_feed_provider_task_definition }}..."
+              aws ecs update-service \
+                --cluster poolmaster-qa-cluster \
+                --service poolmaster-qa-mock-contest-feed-provider \
+                --task-definition "${{ steps.register-qa-task-defs.outputs.qa_mock_contest_feed_provider_task_definition }}" \
+                --no-cli-pager
+            fi
           else
             echo "QA cluster not found — skipping deploy. Run terraform apply first."
           fi
 
       - name: No ECR notice
-        if: steps.ecr-check.outputs.exists != 'true'
+        if: steps.ecr-check.outputs.core_api_exists != 'true' && steps.ecr-check.outputs.mock_provider_exists != 'true'
         run: |
           echo "### ECR repos not found — image push skipped" >> $GITHUB_STEP_SUMMARY
           echo "Run \`terraform apply -var-file=envs/qa.tfvars\` to create QA infrastructure first." >> $GITHUB_STEP_SUMMARY
 
       - name: Summary
-        if: steps.ecr-check.outputs.exists == 'true'
+        if: steps.ecr-check.outputs.core_api_exists == 'true' || steps.ecr-check.outputs.mock_provider_exists == 'true'
         run: |
           echo "### Docker Images Published to ECR + QA Deployed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Image | Tags |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| core-api tag | \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| core-api immutable image | \`${{ steps.image-ref.outputs.core_api_image }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| QA core-api task definition | \`${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| QA migrate task definition | \`${{ steps.register-qa-task-defs.outputs.qa_migrate_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.ecr-check.outputs.core_api_exists }}" = "true" ]; then
+            echo "| core-api tag | \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| core-api immutable image | \`${{ steps.image-ref.outputs.core_api_image }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| QA core-api task definition | \`${{ steps.register-qa-task-defs.outputs.qa_core_api_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| QA migrate task definition | \`${{ steps.register-qa-task-defs.outputs.qa_migrate_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ steps.ecr-check.outputs.mock_provider_exists }}" = "true" ]; then
+            echo "| mock contest feed tag | \`${{ steps.tags.outputs.sha_tag }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| mock contest feed immutable image | \`${{ steps.image-ref.outputs.mock_provider_image }}\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| QA mock provider task definition | \`${{ steps.register-qa-task-defs.outputs.qa_mock_contest_feed_provider_task_definition }}\` |" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "| QA webapp release prefix | \`${{ steps.deploy-webapp.outputs.release_prefix }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**PoolMaster webapp** deployed to immutable S3 release prefixes with root index promotion" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The mock contest feed provider is deployed in QA only and is intentionally not promoted to staging or prod." >> $GITHUB_STEP_SUMMARY
 
   # =========================================================================
   # QA Database Migrations — apply schema changes before smoke tests

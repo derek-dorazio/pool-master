@@ -55,7 +55,8 @@ output "rds_endpoint" {
 output "ecr_repository_urls" {
   description = "ECR repository URLs for each service"
   value = {
-    core_api = aws_ecr_repository.services["core-api"].repository_url
+    for service, repo in aws_ecr_repository.services :
+    replace(service, "-", "_") => repo.repository_url
   }
 }
 
@@ -93,4 +94,24 @@ output "migrate_task_definition_family" {
 output "migrate_task_definition_arn" {
   description = "ECS task definition ARN for database migrations"
   value       = aws_ecs_task_definition.migrate.arn
+}
+
+output "sport_data_default_provider" {
+  description = "Environment-level default sports data provider id passed to core-api."
+  value       = local.resolved_sport_data_default_provider
+}
+
+output "sport_data_provider_bindings_json" {
+  description = "Environment-level sports data provider binding JSON passed to core-api."
+  value       = local.resolved_sport_data_provider_bindings_json
+}
+
+output "mock_contest_feed_provider_base_url" {
+  description = "Private QA-only base URL for the mock contest feed provider."
+  value       = var.environment == "qa" ? local.mock_provider_base_url : null
+}
+
+output "mock_contest_feed_provider_service_name" {
+  description = "QA-only ECS service name for the mock contest feed provider."
+  value       = var.environment == "qa" ? aws_ecs_service.mock_contest_feed_provider[0].name : null
 }

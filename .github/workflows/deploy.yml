@@ -149,3 +149,4 @@ jobs:
           echo "Triggered by: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Frontend release promotion remains a separate workflow from this ECS deploy." >> $GITHUB_STEP_SUMMARY
+          echo "The QA-only mock contest feed provider is intentionally not promoted by this workflow." >> $GITHUB_STEP_SUMMARY
