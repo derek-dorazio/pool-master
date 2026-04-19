@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const browserChannel = process.env.POOLMASTER_E2E_BROWSER_CHANNEL;
+
 export default defineConfig({
   testDir: './e2e',
   testMatch: /.*\.e2e\.ts/,
@@ -20,6 +22,7 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+        ...(browserChannel ? { channel: browserChannel } : {}),
       },
     },
   ],

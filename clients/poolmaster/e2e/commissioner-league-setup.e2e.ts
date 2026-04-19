@@ -1,0 +1,30 @@
+import { expect, test } from '@playwright/test';
+import {
+  buildE2EUser,
+  buildLeagueSeed,
+  createLeague,
+  generateInviteLink,
+  registerUser,
+} from './poolmaster-e2e-helpers';
+
+test('commissioner can create a league and generate an invite link', async ({ page }) => {
+  const commissioner = buildE2EUser('Commissioner');
+  const league = buildLeagueSeed('BIRDS');
+
+  await test.step('register a commissioner account', async () => {
+    await registerUser(page, commissioner);
+    await expect(page).toHaveURL(/\/welcome$/);
+  });
+
+  await test.step('create a league from the welcome flow', async () => {
+    await createLeague(page, league);
+    await expect(page.getByTestId('league-create-contest')).toBeVisible();
+  });
+
+  await test.step('generate a member invite link', async () => {
+    const inviteLink = await generateInviteLink(page);
+
+    expect(inviteLink).toContain('/invite/');
+    await expect(page.getByTestId('league-invite-link')).toHaveValue(inviteLink);
+  });
+});

@@ -72,3 +72,10 @@ The previous MVP browser journey suite was removed from the deploy gate because 
 
 - This file is the deferred richer suite for the rebuilt PoolMaster web app.
 - Use [plans/69-poolmaster-webapp-rebuild.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/69-poolmaster-webapp-rebuild.md) as the product-side prerequisite for when this suite should be resumed.
+
+## Execution Notes
+
+- 2026-04-19: Added first-pass Playwright journeys in `clients/poolmaster/e2e/` for:
+  - commissioner league creation plus invite-link generation
+  - member invite acceptance plus league join
+- These are intentionally bounded to stable auth/league/invite flows and stop short of contest-entry and standings browser coverage, which remains the next expansion area for this suite.
