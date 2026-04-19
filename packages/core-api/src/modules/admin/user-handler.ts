@@ -43,6 +43,7 @@ export function createUserHandlers(userService: UserService) {
       items: result.items.map((item) => ({
         id: item.id,
         email: item.email,
+        username: item.username,
         firstName: item.firstName,
         lastName: item.lastName,
         isRootAdmin: item.isRootAdmin,

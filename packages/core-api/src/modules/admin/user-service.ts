@@ -5,7 +5,12 @@
  * rest of the product rather than inventing a parallel admin-user shape.
  */
 
-import type { PrismaClient, UserAuthProvider as PrismaUserAuthProvider } from '@prisma/client';
+import type {
+  PrismaClient,
+  UserAuthProvider as PrismaUserAuthProvider,
+  UserDateFormat as PrismaUserDateFormat,
+  UserTimeFormat as PrismaUserTimeFormat,
+} from '@prisma/client';
 import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 import { logAdminAction } from './admin-audit-service';
 
@@ -19,6 +24,7 @@ export interface UserSearchQuery {
 export interface UserListItem {
   id: string;
   email: string;
+  username: string;
   firstName: string;
   lastName: string;
   isRootAdmin: boolean;
@@ -34,6 +40,7 @@ export interface UserListItem {
 export interface UserDetailView {
   id: string;
   email: string;
+  username: string;
   firstName: string;
   lastName: string;
   isRootAdmin: boolean;
@@ -89,6 +96,7 @@ export class UserService {
     const items: UserListItem[] = rows.map((row) => ({
       id: row.id,
       email: row.email,
+      username: row.username,
       firstName: row.firstName,
       lastName: row.lastName,
       isRootAdmin: row.isRootAdmin,
@@ -114,6 +122,7 @@ export class UserService {
     return {
       id: user.id,
       email: user.email,
+      username: user.username,
       firstName: user.firstName,
       lastName: user.lastName,
       isRootAdmin: user.isRootAdmin,
@@ -213,10 +222,15 @@ function mapAuthProvider(provider: PrismaUserAuthProvider | null | undefined): A
   return undefined;
 }
 
-function mapTimeFormat(value: string | null | undefined): TimeFormat | undefined {
-  return value ? (value as TimeFormat) : undefined;
+function mapTimeFormat(value: PrismaUserTimeFormat | null | undefined): TimeFormat | undefined {
+  if (value === 'TWELVE_HOUR') return TimeFormat.TWELVE_HOUR;
+  if (value === 'TWENTY_FOUR_HOUR') return TimeFormat.TWENTY_FOUR_HOUR;
+  return undefined;
 }
 
-function mapDateFormat(value: string | null | undefined): DateFormat | undefined {
-  return value ? (value as DateFormat) : undefined;
+function mapDateFormat(value: PrismaUserDateFormat | null | undefined): DateFormat | undefined {
+  if (value === 'MDY') return DateFormat.MDY;
+  if (value === 'DMY') return DateFormat.DMY;
+  if (value === 'YMD') return DateFormat.YMD;
+  return undefined;
 }

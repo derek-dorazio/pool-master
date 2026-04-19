@@ -3,6 +3,8 @@ import {
   IngestionJobResponseSchema,
   IngestionProvidersResponseSchema,
   IngestSportOddsResponseSchema,
+  UserDetailResponseSchema,
+  UserListResponseSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
@@ -158,6 +160,29 @@ describe('Contract verification (root admin)', () => {
     expect(res.statusCode).toBe(401);
     expect(ErrorEnvelopeSchema.safeParse(res.json()).success).toBe(true);
     expect(res.json().error.code).toBe('ROOT_ADMIN_SESSION_REQUIRED');
+  });
+
+  it('root-admin user reads match their DTOs on happy paths', async () => {
+    const rootAdmin = await createTestUser({
+      displayName: 'Root Admin Happy Path User',
+      isRootAdmin: true,
+    });
+
+    const listRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/admin/users',
+      headers: rootAdmin.headers,
+    });
+    expect(listRes.statusCode).toBe(200);
+    expect(UserListResponseSchema.safeParse(listRes.json()).success).toBe(true);
+
+    const detailRes = await getApp().inject({
+      method: 'GET',
+      url: `/api/v1/admin/users/${rootAdmin.user.id}`,
+      headers: rootAdmin.headers,
+    });
+    expect(detailRes.statusCode).toBe(200);
+    expect(UserDetailResponseSchema.safeParse(detailRes.json()).success).toBe(true);
   });
 
   it('root-admin routes expose stable not-found error codes', async () => {
