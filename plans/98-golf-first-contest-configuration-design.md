@@ -82,12 +82,15 @@ Approved tier sources:
 Basic commissioner inputs:
 - contest name
 - tournament / sport event
-- golfers picked (`rosterSize`)
-- golfer scores counted (`countedScores`)
-- tier source
-- default tier size
+- template selection
 - lock timing relative to event start
 - max entries per team
+
+Normal-flow expectation:
+- the default template should be preselected
+- commissioners should usually accept a seeded template without editing the
+  detailed fields below
+- detailed tier inputs belong to advanced configuration
 
 Advanced commissioner inputs:
 - manual tier boundaries
@@ -118,9 +121,14 @@ Approved starter category catalog:
 Basic commissioner inputs:
 - contest name
 - tournament / sport event
-- enabled categories
+- template selection
 - lock timing relative to event start
 - max entries per team
+
+Normal-flow expectation:
+- the default template should be preselected
+- commissioners should usually accept a seeded template without editing the
+  detailed category fields below
 
 Advanced commissioner inputs:
 - missed-cut fallback score
@@ -280,7 +288,7 @@ Instead:
 1. contest config stores commissioner-authored rules and parameters
 2. sport-event / participant data stores imported facts
 3. a resolver evaluates the contest config against the imported facts
-4. the resolver persists a resolved contest pool snapshot used by entry UI and
+4. the resolver persists a resolved contest-field snapshot used by entry UI and
    entry validation
 
 ### Imported Facts Required For Golf v1
@@ -299,9 +307,9 @@ The ingestion/event-participant layer must be able to provide:
 - cut status
 - playoff-hole exclusion semantics or raw data that allows exclusion
 
-### Recommended Resolved Snapshot Layer
+### Recommended Resolved Contest-Field Snapshot Layer
 
-Implementation should add a resolved contest pool layer rather than evaluating
+Implementation should add a resolved contest-field layer rather than evaluating
 rules on every entry request.
 
 Recommended records:
@@ -320,8 +328,8 @@ Recommended records:
   - resolved ordering / metadata fields as needed
 
 Lifecycle rule:
-- resolve and freeze the eligible pool before the contest locks
-- do not let later odds/rank changes drift the entry-eligibility pool after
+- resolve and freeze the contest field when the contest is created
+- do not let later odds/rank changes drift the entry-eligibility field after
   Teams have entered
 
 ## Module Responsibilities
@@ -338,7 +346,7 @@ Owns:
 ### Contest Configuration Module
 
 Owns:
-- commissioner-authored contest shell
+- seeded contest templates plus commissioner-authored contest instance config
 - typed contest config JSON
 - commissioner-visible defaults and advanced overrides
 
@@ -395,10 +403,10 @@ Owns:
 
 - whether category contests should ship in the same release as tiered contests
   or immediately after the first golf tiered lifecycle is complete
-- whether the commissioner should see a simple “Unlimited” toggle or a `null`
-  / sentinel value for unlimited team entries in the config contract
-- whether “world rank” should mean one canonical ranking source only in v1
-  rather than a configurable provider
+- whether timing-default policy should be modeled as a persisted seeded table or
+  a lighter seed-backed registry
+- whether the frozen released-contest field needs an auxiliary audit/debug JSON
+  snapshot in addition to normalized projection tables
 
 ## Task Table
 
@@ -406,6 +414,6 @@ Owns:
 |---|---|---|---|---|
 | 98-001 | 1 | Product/design review of golf-first contest family | Done | Locked `GolfTieredContestConfig` and `GolfCategoryContestConfig` as the first approved golf contest configs. |
 | 98-002 | 1 | Data-modeler review of contest config typing and resolver responsibilities | Done | Approved typed config per contest mode, event/participant fact ownership, and a frozen resolved-pool snapshot layer. |
-| 98-003 | 1 | Developer handoff for commissioner config UX defaults vs advanced controls | Done | Basic vs advanced controls are explicitly defined for tiered and category golf contests. |
+| 98-003 | 1 | Developer handoff for commissioner config UX defaults vs advanced controls | Done | Basic vs advanced controls are explicitly defined for tiered and category golf contests, and current direction now assumes a template-first normal flow with advanced overrides as an optional path. |
 | 98-004 | 2 | Backend/model narrowing plan for golf-first contest config | In Progress | Added typed golf contest config enums, DTOs, service narrowing, and persisted `configMode` / `configJson` fields; validating downstream integrations now. |
 | 98-005 | 2 | Frontend execution plan for commissioner create/configure contest flow | Done | Added a shared commissioner create/manage contest page, league/app-shell/detail entry points, relative lock-time controls, draft-only delete/manage behavior, category picks, advanced controls, and edit-mode save wiring aligned to the golf-first typed contract. |

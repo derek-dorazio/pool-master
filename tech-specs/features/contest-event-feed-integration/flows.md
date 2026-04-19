@@ -25,7 +25,7 @@
    - valuations/rankings
    - contest configuration
 
-### Flow 3: Commissioner Releases Contest
+### Flow 3: Contest Creation Finalizes The Released Contest Field
 
 1. Commissioner reviews the derived contest behavior during setup.
 2. Commissioner completes contest creation.

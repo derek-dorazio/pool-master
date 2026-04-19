@@ -38,11 +38,13 @@ participants, and entry updates.
 **Flow**
 1. Ingestion updates an event or participant
 2. Downstream logic identifies affected contests and entries
-3. System updates contest and entry read models
+3. System updates contest and entry read models according to contest state
 
 **Expected outcomes**
 - Event-driven updates are explicit and traceable
-- Contest and entry read models stay aligned with the source data
+- Unreleased contests may continue to reflect newer eligible event data
+- Released contests preserve their frozen contest-field derivations while still
+  surfacing informational participant status changes where appropriate
 
 ## Required Model Review Before Implementation
 
@@ -71,3 +73,7 @@ The review must explicitly inspect:
 - Strongly type reviewed closed sets
 - Keep event-driven update paths explicit so future contest work does not hide
   lifecycle logic in ad hoc service code
+- Distinguish clearly between:
+  - upstream event-field truth that may continue changing
+  - frozen released-contest field projections that should not drift after
+    contest creation

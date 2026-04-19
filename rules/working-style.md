@@ -62,6 +62,12 @@ The goal is not rigid ceremony. The goal is to reduce ambiguity about whether:
   modules or more than a few active open questions
 - `requirements/` and `tech-specs/` are handoff artifacts and design inputs,
   not replacements for active plans
+- when the user confirms a higher-level product or technical decision, infer and
+  propagate the obvious downstream implications through requirements, specs,
+  model, API, and implementation planning without asking the user to restate
+  the same intent at each layer
+- only escalate back to the user when the downstream implication creates a real
+  fork, hidden risk, or non-obvious tradeoff
 - prefer truthful lifecycle behavior over admin/test-only shortcuts
 - when product consequences are non-obvious, confirm the decision before
   implementation expands

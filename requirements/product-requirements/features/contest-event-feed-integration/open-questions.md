@@ -35,6 +35,15 @@ These question IDs are intended to stay stable as the discussion evolves.
   - Members may replace the selection before lock, but PoolMaster does not
     auto-rewrite entries.
 
+- `CEFI-011` Global advanced UI metadata `(Resolved)`
+  - Field names, descriptions, help text, and categories stay global to the
+    configuration definition/template layer.
+  - They are not contest-specific and should not be copied into each contest.
+
+- `CEFI-012` Frozen released-contest field persistence `(Resolved)`
+  - The frozen released-contest field is contest-specific and must persist per
+    contest.
+
 ## Blocking Questions
 
 - `CEFI-005` Commissioner override scope

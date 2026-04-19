@@ -34,29 +34,31 @@ lane and to require a fresh model review before implementation begins.
 - Contest belongs to the league
 - Contest is created with only the fields the product truly needs
 
-### CC-002: Commissioner reviews and edits contest configuration before launch
+### CC-002: Commissioner reviews and edits contest configuration during create
 
 **Actor:** Commissioner
 
 **Preconditions**
-- Contest exists
-- Contest is still in an editable pre-live state
+- Commissioner is in the contest create flow
+- A seeded default template or alternate template has been selected
 
 **Flow**
-1. Commissioner opens contest configuration
-2. Commissioner changes the allowed editable fields
-3. System validates and saves the update
+1. Commissioner reviews the seeded contest template and derived behavior
+2. Commissioner optionally opens advanced configuration
+3. Commissioner changes only the allowed editable fields
+4. System validates and saves the update
 
 **Expected outcomes**
 - Contest configuration remains truthful and constrained
 - Editing rules are explicit and lifecycle-aware
+- Most contests can be created without field-by-field manual editing
 
 ### CC-003: Commissioner configures lock timing relative to the golf event
 
 **Actor:** Commissioner
 
 **Preconditions**
-- Contest is still in draft
+- Commissioner is in the contest create flow
 - Contest is attached to a real golf event
 
 **Flow**
@@ -85,7 +87,7 @@ lane and to require a fresh model review before implementation begins.
 3. System removes the draft contest
 
 **Expected outcomes**
-- Commissioners can clean up draft contests before the live event begins
+- Commissioners can clean up created contests before the live event begins
 - Post-start lifecycle does not depend on manual commissioner status changes
 
 ## Required Model Review Before Implementation
@@ -109,6 +111,8 @@ The review must explicitly inspect:
 ## Design Direction
 
 - Start from the simplest truthful commissioner contest-creation flow
+- Prefer template-first contest creation with advanced overrides as an optional
+  path
 - Do not preserve generic engine fields just because they already exist
 - Add model fields only when the product flow clearly needs them
 - Reuse the new domain-model conventions and enum conventions during review
@@ -122,7 +126,7 @@ The active golf-first configuration design for this lane is now captured in:
 That companion should be treated as the current developer handoff for:
 
 - approved first golf contest config types
-- commissioner defaults versus advanced controls
+- commissioner seeded-template defaults versus advanced controls
 - relative lock-timing UX and automatic lifecycle expectations
 - event/participant fact-model expectations
 - resolver snapshot responsibilities

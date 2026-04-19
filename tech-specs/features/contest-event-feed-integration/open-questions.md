@@ -24,13 +24,44 @@
   - Pre-lock participant withdrawal/injury statuses are informational; existing
     entries do not auto-change.
 
+- `CEFI-011`
+  - Field labels, descriptions, help text, categories, and similar advanced UI
+    metadata remain global to the configuration definition/template layer.
+  - That UI metadata is not copied into contest instances.
+
+- `CEFI-012`
+  - The frozen released-contest field is contest-specific and must be persisted
+    per contest.
+
+- `CEFI-013`
+  - `ContestConfigTemplate` should be a first-class persisted seeded model with:
+    - scope fields (`sport`, `eventType`, `contestType`, `configMode`)
+    - template-selection metadata (`name`, `description`, `sortOrder`,
+      `isDefault`, `active`)
+    - `configJson`
+    - `templateKey`
+    - `schemaVersion`
+
+- `CEFI-014`
+  - Global timing defaults should live in a persisted seeded timing-policy
+    source, while `SportEvent.releaseAt` and `SportEvent.fieldLocksAt` remain
+    the resolved operational timestamps.
+
+- `CEFI-015`
+  - Contest creation should store `templateId` and `templateVersion` on the
+    contest instance and copy template values into `ContestConfiguration` before
+    applying any advanced overrides.
+
+- `CEFI-016`
+  - The frozen released-contest field should use normalized projection tables as
+    the primary runtime model, with optional JSON snapshot support only if later
+    needed for audit/debug.
+
 ## Blocking
 
-- `CEFI-005`
-  - Confirm the first-pass technical shape for template-first contest creation:
-    - first-class persisted seeded template model
-    - contest instance copy on create
-    - schema metadata support for advanced UI
+- None at the current technical-refinement level. The remaining items are
+  implementation tasks and follow-on cleanup, not unresolved core design
+  decisions.
 
 ## Non-Blocking
 

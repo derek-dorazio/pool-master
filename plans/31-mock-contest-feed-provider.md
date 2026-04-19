@@ -1,35 +1,37 @@
-# Mock Contest Feed Provider
+# Mock Sports Data Provider
 
 > **Planning Note (2026-04-04):** Re-analyze the current MVP scope, provider port/adapter contracts, and QA deployment boundaries before implementing this service. Do not reuse this plan for production or staging concerns, and do not introduce fallback behavior into the core app if the feed service is unavailable.
 
 ## Purpose
 
-Create a non-production-only `mock-contest-feed-provider` service that simulates third-party odds, rankings, and results feeds for contests and contestants.
+Create a seeded `mock-contest-feed-provider` service that simulates third-party
+sporting-event, participant-field, odds, rankings, and results feeds.
 
 This service exists so we can:
 
 - test ingestion and normalization without relying on external third parties
 - drive deterministic tier/price derivation scenarios
 - exercise results/standings/scoring flows with repeatable data
-- keep the product code pointed at real provider ports/adapters while swapping only the provider implementation in QA and local test runs
-- hold broad non-production contest feed data for automated and manual QA testing without polluting application seed data
+- keep the product code pointed at real provider ports/adapters while swapping
+  only the provider implementation in supported non-production environments
+- hold durable fake but stable event/participant data so the deployed product
+  can function end to end before real provider integration is complete
 
 ## Scope
 
-This plan covers the mock feed service itself plus the test-facing contracts it needs.
+This plan covers the mock provider service itself plus the contracts it needs.
 
 In scope:
 
 - provider naming and domain alignment
 - provider port/adapter fit
-- QA/local-only deployment model
+- supported deployment model
 - OpenAPI and generated client output for the mock provider
 - JSON scenario-file format and initial scenario data
 - test-suite ownership and future update rules
 
 Out of scope:
 
-- production or staging deployment
 - application fallback from real providers to the mock provider
 - general contest UI changes unrelated to ingestion/provider testing
 - replacing real ingestion provider logic in the main app
@@ -46,8 +48,8 @@ Seed data for the app should contain only:
 
 Seed data for the app should not contain:
 
-- fake QA contests
-- fake contestant pools
+- fake QA contests created directly in the app DB
+- fake participant pools created directly in the app DB
 - fake odds or rankings
 - fake result histories
 - broad manual-testing fixtures
@@ -59,7 +61,8 @@ Those non-production testing datasets should live in `mock-contest-feed-provider
 The mock service should fit the existing port/adapter model instead of bypassing it.
 
 - The app should keep talking to the same provider interface it uses for real odds/rankings/results sources.
-- The mock provider should be selected by environment/config only in local and QA contexts.
+- The mock provider should be selected by environment/config in supported
+  non-production and bootstrap contexts.
 - Production must continue to use real providers only.
 - The mock provider should expose the same route semantics and shape as the real provider adapters expect, so ingest, tier, price, and results code can run unchanged.
 
@@ -68,7 +71,8 @@ Recommended domain naming:
 - service name: `mock-contest-feed-provider`
 - provider id: `mock-contest-feed`
 - scenario folder: `contest-feed-scenarios`
-- file naming should reflect contest/feed terminology, not generic test terminology
+- file naming should reflect event/participant/feed terminology, not generic
+  test terminology
 
 ## Scenario Model
 
@@ -79,7 +83,7 @@ Scenario files should support:
 - sport
 - provider identifier
 - event metadata
-- contestant list
+- participant field
 - odds
 - rankings
 - seed values
@@ -139,17 +143,13 @@ The initial data should be broad enough to exercise:
 
 ## Deployment Rules
 
-This service should be deployable only in:
+This service should support:
 
 - local development
 - QA
+- other explicitly approved non-production/bootstrap environments
 
-It must not be deployed to:
-
-- production
-- staging, unless a future plan explicitly adds staging as a controlled test environment
-
-The product must not depend on this service being available.
+It must not silently replace real providers in production operation.
 
 Recommended runtime shape:
 
@@ -173,6 +173,7 @@ Primary test goals:
 - odds/ranking/result mapping
 - tier and price derivation from feed data
 - scoring/standings updates from final results
+- end-to-end product operation against stable fake events and participant fields
 - manual QA support through stable, named scenarios that can be referenced in test instructions
 
 Future test owners should update the scenario files rather than inventing ad hoc fixtures inside application tests.
@@ -185,7 +186,8 @@ Future test owners should update the scenario files rather than inventing ad hoc
 - Do not let the app silently fall back to the mock provider when real providers fail.
 - Do not add broad QA/manual-test fixture data to `prisma/seed.ts`; add or update mock feed scenarios instead.
 - Update this plan when the scenario format, provider contract, or deployment boundary changes.
-- Keep the service strictly non-production-only unless the plan is explicitly re-opened.
+- Keep the mock provider as explicit seeded infrastructure, not hidden fallback
+  behavior.
 
 ## Action Plan
 
@@ -193,7 +195,7 @@ Future test owners should update the scenario files rather than inventing ad hoc
 |---|---|---|---|---|
 | MCFP-001 | Naming | Finalize the domain-accurate service name, provider id, and scenario directory naming | Done | `mock-contest-feed-provider`, `mock-contest-feed`, and `contest-feed-scenarios` are now implemented in the standalone package |
 | MCFP-002 | Architecture | Define the provider port/adapter contract that the mock service must implement | Done | Standalone Fastify routes now expose the feed contract surface locally without touching the core app wiring |
-| MCFP-003 | Deployment | Define QA/local-only runtime and make production/staging deployment explicitly unsupported | In Progress | The package is explicitly local/QA-only by design, but QA ECS deployment wiring is still deferred to later infrastructure work; no prod/staging integration exists yet |
+| MCFP-003 | Deployment | Define supported deployment boundaries for the mock sports data provider | In Progress | The package currently runs locally and remains non-production-oriented; later work should clarify which non-production/bootstrap environments may rely on it explicitly without introducing hidden fallback behavior. |
 | MCFP-004 | OpenAPI | Generate and validate OpenAPI/client output for the mock service | Done | Package-local OpenAPI export and generated client output now exist under `packages/mock-contest-feed-provider/generated/` |
 | MCFP-005 | Scenarios | Design the JSON scenario-file format and baseline fixtures | Done | Baseline golf, tennis, NCAA team, and tie/correction scenarios now live under `contest-feed-scenarios/` |
 | MCFP-006 | Ingestion Tests | Build a dedicated ingestion test suite that exercises the mock provider end to end | Not Started | Use the mock service only for the ingestion contract test lane |

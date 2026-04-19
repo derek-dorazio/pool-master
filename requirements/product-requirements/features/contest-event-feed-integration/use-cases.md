@@ -90,7 +90,7 @@ Main flow:
 4. Commissioner may optionally open advanced configuration to override the
    seeded template values.
 5. PoolMaster validates the requested configuration against the event field.
-6. PoolMaster saves the contest in an editable pre-release state.
+6. PoolMaster creates the contest immediately in an entry-ready state.
 
 Expected outcomes:
 - commissioners can begin contest setup as soon as the event exists
@@ -101,7 +101,8 @@ Actor:
 - Commissioner
 
 Preconditions:
-- contest exists in a pre-release editable state
+- commissioner is reviewing the selected template and derived field behavior
+  during contest creation
 
 Trigger:
 - commissioner opens contest configuration details

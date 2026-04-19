@@ -48,6 +48,11 @@ Recommended response concepts:
 - readiness reasons / missing prerequisites
 - contest-eligible boolean
 
+Implementation recommendation:
+- keep timing defaults in a persisted seeded timing-policy source
+- resolve those rules into concrete timestamps on each event
+- expose the resolved timestamps in normal event/admin read models
+
 ### 3. Commissioner Contest Setup And Release
 
 Recommended additions or refinements:
@@ -56,6 +61,22 @@ Recommended additions or refinements:
 - add a contest-field preview/read model for pre-release review
 - add or clarify the released contest frozen-field behavior in the create
   contract
+- keep advanced field metadata global to the configuration/template definition
+  rather than returning it as contest-instance state
+
+Recommended create-contract shape:
+- `name`
+- `sportEventId`
+- `contestType`
+- `templateId`
+- `configurationOverrides?`
+
+Recommended create behavior:
+- load selected template
+- merge allowed overrides
+- persist the resolved config instance
+- persist `templateId` and `templateVersion` on the contest configuration
+- build the frozen released-contest field projection as part of contest create
 
 ### 4. Team Entry And Selection
 
@@ -63,6 +84,10 @@ Recommended additions or refinements:
 - keep team-context `Create entry`
 - expose contest-field data in the entry-edit flow instead of relying only on
   generic draft-room state
+
+Implementation recommendation:
+- released contest entry/edit flows should read the frozen contest-specific
+  projection, not live event valuations/orderings
 
 ### 5. Mock Provider
 
@@ -86,4 +111,6 @@ Mismatches:
   action in the normal flow
 - no first-pass read surface exists for seeded contest templates even though the
   desired create flow is template-first
+- advanced schema metadata source is still not explicit in the contract even
+  though it is now confirmed to be global rather than contest-specific
 - mock provider is usable but still shaped as a generic contest-feed simulator
