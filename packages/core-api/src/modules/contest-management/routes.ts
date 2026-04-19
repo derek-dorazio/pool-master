@@ -16,6 +16,9 @@ import {
   PrismaContestPrizeDefinitionRepository,
   PrismaLeagueMembershipRepository,
   PrismaParticipantContestScoringRuleRepository,
+  PrismaSportEventParticipantRepository,
+  PrismaSportEventParticipantSourceDataRepository,
+  PrismaSportEventParticipantValuationRepository,
 } from '../../adapters';
 import { requireCommissioner } from '../leagues/permissions';
 import { createContestManagementHandlers } from './handler';
@@ -34,6 +37,9 @@ export async function contestManagementModule(
     new PrismaParticipantContestScoringRuleRepository(prisma),
     new PrismaContestEntryAggregationRuleRepository(prisma),
     new PrismaContestPrizeDefinitionRepository(prisma),
+    new PrismaSportEventParticipantRepository(prisma),
+    new PrismaSportEventParticipantSourceDataRepository(prisma),
+    new PrismaSportEventParticipantValuationRepository(prisma),
   );
   const handlers = createContestManagementHandlers(contestManagementService);
 

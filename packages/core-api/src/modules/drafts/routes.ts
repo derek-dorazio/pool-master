@@ -58,7 +58,7 @@ interface ContestRecord {
 type ContestEntryRecord = Awaited<ReturnType<PrismaClient['contestEntry']['findMany']>>[number];
 type MembershipRecord = Awaited<ReturnType<PrismaClient['leagueMembership']['findMany']>>[number];
 type SquadMembershipRecord = Awaited<ReturnType<PrismaClient['squadMembership']['findMany']>>[number];
-type SportEventParticipantWithParticipantRecord = Awaited<
+type SportEventParticipantLookupRecord = Awaited<
   ReturnType<
     PrismaClient['sportEventParticipant']['findMany']
   >
@@ -179,7 +179,7 @@ function buildEntryUserIdMap(context: DraftContext): Map<string, string> {
 async function loadSportEventParticipantsByIds(
   prisma: PrismaClient,
   sportEventParticipantIds: string[],
-): Promise<Map<string, SportEventParticipantWithParticipantRecord>> {
+): Promise<Map<string, SportEventParticipantLookupRecord>> {
   if (sportEventParticipantIds.length === 0) {
     return new Map();
   }
@@ -337,6 +337,9 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
           where: { sportEventId: contest.sportEventId },
           include: {
             participant: true,
+            sourceData: {
+              orderBy: [{ receivedAt: 'desc' }, { createdAt: 'desc' }],
+            },
             valuations: {
               orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
             },
@@ -397,6 +400,11 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
     squadMemberships,
     selectionParticipants: sportEventParticipants.map((record) => {
       const valuation = record.valuations[0];
+      const sourceData = record.sourceData[0];
+      const sourceRanking =
+        getNumericSourceField(sourceData?.normalizedData, 'ranking')
+        ?? getNumericSourceField(sourceData?.rawPayload, 'ranking')
+        ?? getNumericSourceField(asSourceRecord(sourceData?.rawPayload)?.metadata, 'ranking');
       const normalizedStatus = record.status?.toUpperCase?.();
       const isAvailable = !normalizedStatus || !['INACTIVE', 'REMOVED', 'WITHDRAWN'].includes(normalizedStatus);
 
@@ -408,7 +416,7 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
         teamAffiliation: record.participant.teamAffiliation,
         status: record.status,
         price: valuation?.price ?? undefined,
-        ranking: rankingByParticipantId.get(record.participantId) ?? undefined,
+        ranking: rankingByParticipantId.get(record.participantId) ?? sourceRanking ?? undefined,
         tier: valuation?.tier ?? null,
         orderIndex: valuation?.orderIndex ?? undefined,
         isAvailable,
@@ -422,6 +430,23 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
       return a.participantName.localeCompare(b.participantName, undefined, { sensitivity: 'base' });
     }),
   };
+}
+
+function asSourceRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function getNumericSourceField(
+  record: unknown,
+  key: string,
+): number | undefined {
+  const source = asSourceRecord(record);
+  const value = source[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
 function buildContestConfigurationResponse(

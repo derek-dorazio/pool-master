@@ -5,6 +5,9 @@ import type {
   ContestEntryAggregationRuleRepository,
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
+  SportEventParticipantRepository,
+  SportEventParticipantSourceDataRepository,
+  SportEventParticipantValuationRepository,
 } from '@poolmaster/shared/db';
 import type {
   ContestConfigTemplateDto,
@@ -18,6 +21,7 @@ import type {
   ContestConfigTemplate,
   ContestConfiguration,
   GolfContestConfig,
+  PersistedGolfContestTierDefinition,
 } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
@@ -38,6 +42,9 @@ export class ContestManagementService {
     private readonly participantContestScoringRuleRepo: ParticipantContestScoringRuleRepository,
     private readonly contestEntryAggregationRuleRepo: ContestEntryAggregationRuleRepository,
     private readonly _contestPrizeDefinitionRepo: ContestPrizeDefinitionRepository,
+    private readonly sportEventParticipantRepo: SportEventParticipantRepository,
+    private readonly sportEventParticipantSourceDataRepo: SportEventParticipantSourceDataRepository,
+    private readonly sportEventParticipantValuationRepo: SportEventParticipantValuationRepository,
   ) {}
 
   async createContest(
@@ -72,7 +79,13 @@ export class ContestManagementService {
         resolvedConfiguration.configuration.maxEntriesPerSquad === null
           ? null
           : resolvedConfiguration.configuration.maxEntriesPerSquad,
-      ...deriveLegacyPersistenceFields(resolvedConfiguration.configuration),
+      ...await deriveLegacyPersistenceFields(
+        resolvedConfiguration.configuration,
+        input.sportEventId,
+        this.sportEventParticipantRepo,
+        this.sportEventParticipantSourceDataRepo,
+        this.sportEventParticipantValuationRepo,
+      ),
     });
 
     await syncDerivedScoring(
@@ -125,6 +138,11 @@ export class ContestManagementService {
     }
 
     const selectionType = mapSelectionType(input);
+    const contest = await this.contestCoreRepo.findById(contestId);
+    if (!contest) {
+      throw new ContestManagementError('Contest not found');
+    }
+
     await this.contestConfigurationRepo.update(configuration.id, {
       selectionType,
       configMode: input.mode,
@@ -132,7 +150,13 @@ export class ContestManagementService {
       locksAt: input.locksAt ? new Date(input.locksAt) : undefined,
       maxEntriesPerSquad:
         input.maxEntriesPerSquad === null ? null : input.maxEntriesPerSquad,
-      ...deriveLegacyPersistenceFields(input),
+      ...await deriveLegacyPersistenceFields(
+        input,
+        contest.sportEventId,
+        this.sportEventParticipantRepo,
+        this.sportEventParticipantSourceDataRepo,
+        this.sportEventParticipantValuationRepo,
+      ),
     });
 
     const refreshedConfiguration =
@@ -146,11 +170,6 @@ export class ContestManagementService {
       this.participantContestScoringRuleRepo,
       this.contestEntryAggregationRuleRepo,
     );
-
-    const contest = await this.contestCoreRepo.findById(contestId);
-    if (!contest) {
-      throw new ContestManagementError('Contest not found');
-    }
 
     return buildContestManagementDetail(contest, refreshedConfiguration);
   }
@@ -166,12 +185,24 @@ function mapSelectionType(
     : SelectionType.OPEN_SELECTION;
 }
 
-function deriveLegacyPersistenceFields(
+async function deriveLegacyPersistenceFields(
   configuration: ContestConfigurationRequest,
-): Partial<ContestConfiguration> {
+  sportEventId: string,
+  sportEventParticipantRepo: SportEventParticipantRepository,
+  sportEventParticipantSourceDataRepo: SportEventParticipantSourceDataRepository,
+  sportEventParticipantValuationRepo: SportEventParticipantValuationRepository,
+): Promise<Partial<ContestConfiguration>> {
   if (configuration.mode === GolfContestConfigMode.GOLF_TIERED) {
+    const tierConfig = await derivePersistedTierConfig(
+      configuration,
+      sportEventId,
+      sportEventParticipantRepo,
+      sportEventParticipantSourceDataRepo,
+      sportEventParticipantValuationRepo,
+    );
+
     return {
-      tierConfig: configuration.tiers,
+      tierConfig,
       pickCount: configuration.tiers.reduce(
         (total, tier) => total + tier.pickCount,
         0,
@@ -188,6 +219,171 @@ function deriveLegacyPersistenceFields(
     ),
     isExclusive: false,
   };
+}
+
+interface TierCandidate {
+  sportEventParticipantId: string;
+  participantId: string;
+  odds?: number;
+  ranking?: number;
+}
+
+async function derivePersistedTierConfig(
+  configuration: Extract<ContestConfigurationRequest, { mode: 'GOLF_TIERED' }>,
+  sportEventId: string,
+  sportEventParticipantRepo: SportEventParticipantRepository,
+  sportEventParticipantSourceDataRepo: SportEventParticipantSourceDataRepository,
+  sportEventParticipantValuationRepo: SportEventParticipantValuationRepository,
+): Promise<PersistedGolfContestTierDefinition[]> {
+  const participants = await sportEventParticipantRepo.findBySportEvent(sportEventId);
+
+  if (participants.length === 0) {
+    return configuration.tiers.map((tier) => ({
+      ...tier,
+      participantIds: [],
+    }));
+  }
+
+  const tierCandidates = await Promise.all(
+    participants.map(async (participant) => {
+      const [sourceDataRows, valuations] = await Promise.all([
+        sportEventParticipantSourceDataRepo.findBySportEventParticipant(participant.id),
+        sportEventParticipantValuationRepo.findBySportEventParticipant(participant.id),
+      ]);
+      const latestSourceData = sourceDataRows[0];
+      const metadata = extractSourceMetadata(latestSourceData);
+      const currentValuation = valuations[0];
+
+      return {
+        sportEventParticipantId: participant.id,
+        participantId: participant.participantId,
+        odds: getNumberValue(metadata, 'odds'),
+        ranking:
+          getNumberValue(metadata, 'ranking')
+          ?? currentValuation?.orderIndex,
+      } satisfies TierCandidate;
+    }),
+  );
+
+  const orderedCandidates = [...tierCandidates].sort((left, right) =>
+    compareTierCandidates(left, right, configuration.tierSource),
+  );
+  const persistedTiers = configuration.tiers.map((tier) => ({
+    ...tier,
+    participantIds: [] as string[],
+  }));
+
+  for (const [index, candidate] of orderedCandidates.entries()) {
+    const orderIndex = index + 1;
+    const matchingTier = persistedTiers.find((tier) => {
+      const endPosition = tier.endPosition ?? orderedCandidates.length;
+      return orderIndex >= tier.startPosition && orderIndex <= endPosition;
+    }) ?? persistedTiers[persistedTiers.length - 1];
+
+    matchingTier?.participantIds?.push(candidate.participantId);
+
+    const valuationSource = `AUTO_${configuration.tierSource}`;
+    const existingValuations =
+      await sportEventParticipantValuationRepo.findBySportEventParticipant(
+        candidate.sportEventParticipantId,
+      );
+    const existing = existingValuations.find(
+      (valuation) => valuation.valuationSource === valuationSource,
+    );
+    const valuationPayload = {
+      orderIndex,
+      tier: matchingTier?.label,
+      valuationSource,
+    };
+
+    if (existing) {
+      await sportEventParticipantValuationRepo.update(existing.id, valuationPayload);
+    } else {
+      await sportEventParticipantValuationRepo.create({
+        sportEventParticipantId: candidate.sportEventParticipantId,
+        price: undefined,
+        ...valuationPayload,
+      });
+    }
+  }
+
+  return persistedTiers;
+}
+
+function compareTierCandidates(
+  left: TierCandidate,
+  right: TierCandidate,
+  tierSource: 'ODDS' | 'WORLD_RANK',
+): number {
+  if (tierSource === 'WORLD_RANK') {
+    const rankingDiff = compareNullableNumbers(left.ranking, right.ranking);
+    if (rankingDiff !== 0) {
+      return rankingDiff;
+    }
+
+    const oddsDiff = compareNullableNumbers(left.odds, right.odds);
+    if (oddsDiff !== 0) {
+      return oddsDiff;
+    }
+  } else {
+    const oddsDiff = compareNullableNumbers(left.odds, right.odds);
+    if (oddsDiff !== 0) {
+      return oddsDiff;
+    }
+
+    const rankingDiff = compareNullableNumbers(left.ranking, right.ranking);
+    if (rankingDiff !== 0) {
+      return rankingDiff;
+    }
+  }
+
+  return left.participantId.localeCompare(right.participantId, undefined, {
+    sensitivity: 'base',
+  });
+}
+
+function compareNullableNumbers(
+  left: number | undefined,
+  right: number | undefined,
+): number {
+  if (left == null && right == null) {
+    return 0;
+  }
+  if (left == null) {
+    return 1;
+  }
+  if (right == null) {
+    return -1;
+  }
+  return left - right;
+}
+
+function extractSourceMetadata(sourceData?: {
+  normalizedData?: Record<string, unknown>;
+  rawPayload?: Record<string, unknown>;
+} | null): Record<string, unknown> {
+  if (!sourceData) {
+    return {};
+  }
+
+  return {
+    ...asRecord(sourceData.rawPayload?.metadata),
+    ...asRecord(sourceData.rawPayload),
+    ...asRecord(sourceData.normalizedData),
+  };
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function getNumberValue(record: Record<string, unknown>, key: string): number | undefined {
+  const value = record[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
 async function syncDerivedScoring(

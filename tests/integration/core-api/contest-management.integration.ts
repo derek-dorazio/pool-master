@@ -6,6 +6,7 @@ import {
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
+  withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
@@ -23,6 +24,8 @@ describe('Contest management integration', () => {
   let leagueId: string;
   let sportEventId: string;
   let contestId: string;
+  let topParticipantId: string;
+  let secondParticipantId: string;
 
   beforeAll(async () => {
     const owner = await createTestUser({
@@ -40,7 +43,35 @@ describe('Contest management integration', () => {
     expect(leagueRes.statusCode).toBe(201);
     leagueId = leagueRes.json().league.id;
 
-    const sportEvent = await getPrisma().sportEvent.create({
+    const prisma = getPrisma();
+    const sport = await prisma.sport.create({
+      data: {
+        name: `Contest Management Golf ${randomUUID().slice(0, 8)}`,
+        participantType: 'INDIVIDUAL',
+      },
+    });
+
+    const topParticipant = await prisma.participant.create({
+      data: {
+        sportId: sport.id,
+        name: 'Top Golfer',
+        participantType: 'INDIVIDUAL',
+        status: 'ACTIVE',
+      },
+    });
+    topParticipantId = topParticipant.id;
+
+    const secondParticipant = await prisma.participant.create({
+      data: {
+        sportId: sport.id,
+        name: 'Second Golfer',
+        participantType: 'INDIVIDUAL',
+        status: 'ACTIVE',
+      },
+    });
+    secondParticipantId = secondParticipant.id;
+
+    const sportEvent = await prisma.sportEvent.create({
       data: {
         externalId: `masters-2026-${randomUUID().slice(0, 8)}`,
         providerId: 'PGA',
@@ -53,6 +84,42 @@ describe('Contest management integration', () => {
       },
     });
     sportEventId = sportEvent.id;
+
+    const topEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId,
+        participantId: topParticipantId,
+        status: 'ACTIVE',
+      },
+    });
+    const secondEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId,
+        participantId: secondParticipantId,
+        status: 'ACTIVE',
+      },
+    });
+
+    await prisma.sportEventParticipantSourceData.createMany({
+      data: [
+        {
+          sportEventParticipantId: topEventParticipant.id,
+          providerId: 'PGA',
+          externalId: `top-${randomUUID().slice(0, 8)}`,
+          rawPayload: { metadata: { odds: 8.5, ranking: 1 } },
+          normalizedData: { odds: 8.5, ranking: 1 },
+          receivedAt: new Date('2026-04-08T10:00:00.000Z'),
+        },
+        {
+          sportEventParticipantId: secondEventParticipant.id,
+          providerId: 'PGA',
+          externalId: `second-${randomUUID().slice(0, 8)}`,
+          rawPayload: { metadata: { odds: 15.2, ranking: 8 } },
+          normalizedData: { odds: 15.2, ranking: 8 },
+          receivedAt: new Date('2026-04-08T10:00:00.000Z'),
+        },
+      ],
+    });
   });
 
   it('creates, reads, and updates golf-first contest management configuration', async () => {
@@ -104,6 +171,16 @@ describe('Contest management integration', () => {
     expect(createdContest.configuration.mode).toBe('GOLF_TIERED');
     expect(createdContest.configuration.countedScores).toBe(4);
 
+    const createdConfiguration = await getPrisma().contestConfiguration.findUniqueOrThrow({
+      where: { contestId },
+    });
+    expect(createdConfiguration.tierConfig).toEqual([
+      expect.objectContaining({
+        tierKey: 'A',
+        participantIds: [topParticipantId, secondParticipantId],
+      }),
+    ]);
+
     const getRes = await getApp().inject({
       method: 'GET',
       url: API_ROUTES.contestManagement.detail(leagueId, contestId),
@@ -115,6 +192,33 @@ describe('Contest management integration', () => {
     expect(getRes.json().contest.configuration.tiebreaker.type).toBe(
       'PREDICT_WINNING_SCORE',
     );
+
+    const entryRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.contests.myEntry(contestId),
+      headers: withoutJsonBodyHeaders(ownerHeaders),
+    });
+    expect([200, 201]).toContain(entryRes.statusCode);
+    const entryId = entryRes.json().entry.id;
+
+    const draftStateRes = await getApp().inject({
+      method: 'GET',
+      url: `/api/v1/drafts/${contestId}?entryId=${entryId}`,
+      headers: ownerHeaders,
+    });
+    expect(draftStateRes.statusCode).toBe(200);
+    expect(draftStateRes.json().selectionGroups[0].participants).toEqual([
+      expect.objectContaining({
+        participantId: topParticipantId,
+        orderIndex: 1,
+        ranking: 1,
+      }),
+      expect.objectContaining({
+        participantId: secondParticipantId,
+        orderIndex: 2,
+        ranking: 8,
+      }),
+    ]);
 
     const updateRes = await getApp().inject({
       method: 'PUT',

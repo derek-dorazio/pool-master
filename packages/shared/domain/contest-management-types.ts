@@ -39,6 +39,10 @@ export interface GolfContestTierDefinition {
   endPosition: number | null;
 }
 
+export interface PersistedGolfContestTierDefinition extends GolfContestTierDefinition {
+  participantIds?: string[];
+}
+
 export interface GolfCategoryDefinition {
   categoryKey: GolfCategoryKey;
   label: string;
@@ -158,7 +162,7 @@ export interface ContestConfiguration extends DomainEntity {
   // Legacy support fields retained temporarily for read paths not yet narrowed.
   roundValues?: number[];
   startRound?: string;
-  tierConfig?: GolfContestTierDefinition[];
+  tierConfig?: PersistedGolfContestTierDefinition[];
   budget?: number;
   pricingMethod?: string;
   pickCount?: number;

@@ -394,6 +394,10 @@ function toProviderParticipant(
     metadata: {
       seed: contestant.seed,
       participantStatus: contestant.participantStatus,
+      odds: contestant.odds,
+      ranking: contestant.ranking,
+      score: contestant.score,
+      result: contestant.result,
       note: contestant.note,
     },
   };

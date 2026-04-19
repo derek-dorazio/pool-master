@@ -25,6 +25,7 @@ export type {
   GolfTieredContestConfig,
   GolfTierGeneration,
   GolfTiebreakerRule,
+  PersistedGolfContestTierDefinition,
   ParticipantContestScoringRule,
   SportEvent,
   SportEventReadinessReason,

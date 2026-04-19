@@ -6,6 +6,9 @@ import type {
   ContestEntryAggregationRuleRepository,
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
+  SportEventParticipantRepository,
+  SportEventParticipantSourceDataRepository,
+  SportEventParticipantValuationRepository,
 } from '@poolmaster/shared/db';
 import { ContestManagementService } from '../../../packages/core-api/src/modules/contest-management/service';
 
@@ -211,6 +214,60 @@ function createPrizeDefinitionRepo(): ContestPrizeDefinitionRepository {
   };
 }
 
+function createSportEventParticipantRepo(): SportEventParticipantRepository {
+  return {
+    findById: jest.fn(),
+    findBySportEvent: jest.fn().mockResolvedValue([
+      {
+        id: 'sep-1',
+        sportEventId: '11111111-1111-1111-1111-111111111111',
+        participantId: 'participant-1',
+        status: 'ACTIVE',
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]),
+    create: jest.fn(),
+    update: jest.fn(),
+  };
+}
+
+function createSportEventParticipantSourceDataRepo(): SportEventParticipantSourceDataRepository {
+  return {
+    findById: jest.fn(),
+    findBySportEventParticipant: jest.fn().mockResolvedValue([
+      {
+        id: 'source-1',
+        sportEventParticipantId: 'sep-1',
+        providerId: 'mock-contest-feed',
+        externalId: 'golfer-1',
+        rawPayload: { metadata: { odds: 8.5, ranking: 1 } },
+        normalizedData: { odds: 8.5, ranking: 1 },
+        receivedAt: new Date('2026-04-07T12:00:00.000Z'),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]),
+    create: jest.fn(),
+    update: jest.fn(),
+  };
+}
+
+function createSportEventParticipantValuationRepo(): SportEventParticipantValuationRepository {
+  return {
+    findById: jest.fn(),
+    findBySportEventParticipant: jest.fn().mockResolvedValue([]),
+    create: jest.fn().mockImplementation(async (valuation) => ({
+      id: 'valuation-1',
+      ...valuation,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })),
+    update: jest.fn(),
+  };
+}
+
 describe('ContestManagementService', () => {
   it('creates a golf tiered contest and derives internal scoring rules automatically', async () => {
     const contestCoreRepo = createContestCoreRepo();
@@ -226,6 +283,9 @@ describe('ContestManagementService', () => {
       participantContestScoringRuleRepo,
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantSourceDataRepo(),
+      createSportEventParticipantValuationRepo(),
     );
 
     const result = await service.createContest(
@@ -279,6 +339,16 @@ describe('ContestManagementService', () => {
       throw new Error('Expected golf tiered configuration');
     }
     expect(result.configuration.countedScores).toBe(4);
+    expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tierConfig: [
+          expect.objectContaining({
+            tierKey: 'A',
+            participantIds: ['participant-1'],
+          }),
+        ],
+      }),
+    );
     expect(participantContestScoringRuleRepo.create).toHaveBeenCalledWith({
       contestConfigurationId: 'config-1',
       participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
@@ -312,6 +382,9 @@ describe('ContestManagementService', () => {
       createParticipantScoringRuleRepo(),
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantSourceDataRepo(),
+      createSportEventParticipantValuationRepo(),
     );
 
     const result = await service.createContest(
@@ -372,6 +445,9 @@ describe('ContestManagementService', () => {
       participantContestScoringRuleRepo,
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantSourceDataRepo(),
+      createSportEventParticipantValuationRepo(),
     );
 
     const result = await service.updateContestConfiguration('contest-1', {
@@ -420,6 +496,7 @@ describe('ContestManagementService', () => {
           pickCount: 2,
           startPosition: 1,
           endPosition: 8,
+          participantIds: ['participant-1'],
         },
       ],
       pickCount: 2,
@@ -444,6 +521,9 @@ describe('ContestManagementService', () => {
       createParticipantScoringRuleRepo(),
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantSourceDataRepo(),
+      createSportEventParticipantValuationRepo(),
     );
 
     const result = await service.getContest('contest-1');
@@ -468,6 +548,9 @@ describe('ContestManagementService', () => {
       participantContestScoringRuleRepo,
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantSourceDataRepo(),
+      createSportEventParticipantValuationRepo(),
     );
 
     const result = await service.createContest(
