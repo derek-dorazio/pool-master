@@ -71,6 +71,8 @@ The goal is not rigid ceremony. The goal is to reduce ambiguity about whether:
 - prefer truthful lifecycle behavior over admin/test-only shortcuts
 - when product consequences are non-obvious, confirm the decision before
   implementation expands
+- a slice is not finished if the relevant local test suites are still failing
+- do not treat "code complete" as finished work when validation is still red
 - when a slice is complete and the relevant local tests are green, commit and
   push that slice before moving on to the next one
 

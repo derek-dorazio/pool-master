@@ -83,6 +83,8 @@ Contract-verification-specific commands:
 
 Notes:
 
+- The precursor to the CI-baseline rule is local truthfulness: if the relevant
+  required local suites for a slice are failing, the slice is not finished.
 - DB-backed integration tests may need to run outside the Codex sandbox/container when they depend on a developer-local Postgres instance such as `localhost:5432`.
 - In those cases, ask for permission and run the exact integration command outside the sandbox rather than treating the failure as an application defect.
 - If a DB-backed integration command fails with a local connection error in the sandbox but local database commands such as `prisma migrate deploy` or `psql` succeed, retry the exact test command outside the sandbox before assuming the failure is in application code.

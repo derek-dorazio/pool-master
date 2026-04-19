@@ -82,6 +82,10 @@ When finishing work:
 - Coverage threshold changes are main-thread coordination work. Worker slices must not raise or lower thresholds on their own.
 - Update plan rows only for the exact slice being worked. Do not mark unrelated queue items `In Progress` or `Done`.
 - Mark a slice `Done` only when the exact scoped work is complete and validated. Partial work stays `In Progress`.
+- A slice is not finished while any relevant required local test suite for that
+  slice is still failing.
+- "Implementation complete" without green relevant local validation is still
+  `In Progress`, not `Done`.
 - If code cleanup resolves a previously logged plan finding, reconcile that plan
   finding in the same or immediately following slice. Do not leave active plans
   implying drift that no longer exists in the codebase.
@@ -190,6 +194,8 @@ mistaking them for regressions introduced by the new slice.
 Required behavior:
 
 - check the current relevant CI/CD status before new implementation work begins
+- do not start stacking new feature slices on top of a red `main` baseline
+  unless the active work is explicitly to fix that red baseline
 - if existing failures are already present, call that out explicitly before
   coding starts
 - distinguish clearly between:
