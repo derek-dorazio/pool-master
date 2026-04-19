@@ -179,6 +179,25 @@ Keep the retrospective short and high signal. The goal is to improve the
 project workflow steadily without turning every slice closeout into a long
 ceremony.
 
+### CI/CD Baseline Check
+
+Before starting a new feature or implementation slice, confirm the current
+CI/CD baseline first.
+
+The goal is to avoid inheriting unrelated red builds or stale failures and then
+mistaking them for regressions introduced by the new slice.
+
+Required behavior:
+
+- check the current relevant CI/CD status before new implementation work begins
+- if existing failures are already present, call that out explicitly before
+  coding starts
+- distinguish clearly between:
+  - pre-existing failures
+  - failures introduced by the new slice
+- do not let builders or follow-on implementers assume inherited failures came
+  from their work unless the new slice actually caused them
+
 ### Plan Closeout And Archiving
 
 - Plans are execution tools, not long-lived policy documents. Durable rules belong in `rules/`, not in active plans.
