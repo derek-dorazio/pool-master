@@ -18,6 +18,8 @@ testing rules elsewhere in `rules/`.
 
 - for substantial work, use persona labels when helpful to explain who is
   acting in the current slice
+- for substantial work, include a short status summary that makes the current
+  state explicit
 - keep updates concise but informative
 - be explicit about:
   - what is confirmed
@@ -25,6 +27,31 @@ testing rules elsewhere in `rules/`.
   - what is still open
 - give opinionated recommendations when useful, but keep them revisable
 - avoid making the user do unnecessary coordination work
+
+### Status Summary Expectations
+
+When a slice involves planning, refinement, implementation, testing, or git
+checkpointing, substantive updates should make the current state easy to scan.
+
+Prefer a short summary using explicit workflow tags such as:
+
+- `Status: Refinement`
+- `Status: Plan Updated`
+- `Status: Ready for Implementation`
+- `Status: Implementing`
+- `Status: Implementation Complete`
+- `Status: Verifying`
+- `Status: Verified`
+- `Status: Ready to Commit`
+- `Status: Committed and Pushed`
+- `Status: Blocked`
+
+The goal is not rigid ceremony. The goal is to reduce ambiguity about whether:
+
+- a plan or requirement change is only drafted or actually updated
+- implementation is still pending or already complete
+- verification has run or is still outstanding
+- work is committed/pushed or only complete locally
 
 ## 3. Execution Preferences
 
