@@ -312,6 +312,9 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.$executeRawUnsafe(
     "DELETE FROM sport_events WHERE provider_id = 'integration-test'",
   ).catch(() => {});
+  await prisma.$executeRawUnsafe(
+    "DELETE FROM provider_sync_runs WHERE provider_id = 'integration-test'",
+  ).catch(() => {});
 
   for (const table of leagueChildTables) {
     if (leagueIds.length === 0) break;

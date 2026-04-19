@@ -15,6 +15,11 @@ export const StartDraftRequestSchema = z.object({
 }).describe('Request payload for starting a draft.');
 export type StartDraftRequest = z.infer<typeof StartDraftRequestSchema>;
 
+export const DraftStateQuerySchema = z.object({
+  entryId: z.string().optional().describe('Specific contest entry to view within roster-based selection flows.'),
+}).describe('Optional query parameters for loading draft or selection state.');
+export type DraftStateQuery = z.infer<typeof DraftStateQuerySchema>;
+
 export const SubmitPickRequestSchema = z.object({
   entryId: z.string().describe('Entry making the pick.'),
   participantId: z.string().describe('Participant being selected.'),
@@ -62,6 +67,32 @@ export const DraftTierConfigDtoSchema = z.object({
   picksFromTier: z.number(),
 }).describe('Tier definition displayed within a draft room.');
 export type DraftTierConfigDto = z.infer<typeof DraftTierConfigDtoSchema>;
+
+export const DraftSelectionParticipantDtoSchema = z.object({
+  sportEventParticipantId: z.string(),
+  participantId: z.string(),
+  participantName: z.string(),
+  position: z.string().nullable().optional(),
+  team: z.string().nullable().optional(),
+  status: z.string().nullable().optional(),
+  price: z.number().nullable().optional(),
+  ranking: z.number().nullable().optional(),
+  orderIndex: z.number().nullable().optional(),
+  isAvailable: z.boolean(),
+  unavailableReason: z.string().nullable().optional(),
+  isSelected: z.boolean().optional().describe('Whether the currently selected entry has this participant selected.'),
+}).describe('Selectable participant row used by roster-based entry builders.');
+export type DraftSelectionParticipantDto = z.infer<typeof DraftSelectionParticipantDtoSchema>;
+
+export const DraftSelectionGroupDtoSchema = z.object({
+  groupId: z.string(),
+  groupName: z.string(),
+  groupNumber: z.number(),
+  picksFromGroup: z.number(),
+  selectedParticipantIds: z.array(z.string()).describe('Selections currently saved on the selected entry for this group.'),
+  participants: z.array(DraftSelectionParticipantDtoSchema).describe('Selectable participants shown inside the group.'),
+}).describe('Contest-specific selection group used by tiered or budget-style entry builders.');
+export type DraftSelectionGroupDto = z.infer<typeof DraftSelectionGroupDtoSchema>;
 
 export const DraftContestConfigurationDtoSchema = z.object({
   isExclusive: z.boolean(),
@@ -147,6 +178,10 @@ export const DraftStateDtoSchema = z.object({
   timePerPickSeconds: z.number(),
   currentTurnStartedAt: z.string().datetime().nullable(),
   availableParticipantIds: z.array(z.string()),
+  selectedEntryId: z.string().nullable().optional(),
+  selectedEntryName: z.string().nullable().optional(),
+  tiebreakerValue: z.number().nullable().optional(),
+  selectionGroups: z.array(DraftSelectionGroupDtoSchema).optional(),
   draftPickHistories: z.array(DraftPickHistoryDtoSchema),
   entries: z.array(DraftEntryDtoSchema),
   pickEmEvents: z.array(DraftPickEmEventDtoSchema).optional(),
@@ -190,6 +225,10 @@ export const DraftStateResponseSchema = z.object({
   entries: z.array(DraftEntryDtoSchema),
   draftPickHistories: z.array(DraftPickHistoryDtoSchema),
   availableParticipantIds: z.array(z.string()),
+  selectedEntryId: z.string().nullable().optional(),
+  selectedEntryName: z.string().nullable().optional(),
+  tiebreakerValue: z.number().nullable().optional(),
+  selectionGroups: z.array(DraftSelectionGroupDtoSchema).optional(),
   isComplete: z.boolean(),
   pickEmEvents: z.array(DraftPickEmEventDtoSchema).optional(),
   bracketMatchups: z.array(DraftBracketMatchupDtoSchema).optional().describe('Bracket pick data when relevant to the draft.'),
@@ -230,6 +269,10 @@ export const DraftPickResponseSchema = z.object({
   entries: z.array(DraftEntryDtoSchema),
   draftPickHistories: z.array(DraftPickHistoryDtoSchema),
   availableParticipantIds: z.array(z.string()),
+  selectedEntryId: z.string().nullable().optional(),
+  selectedEntryName: z.string().nullable().optional(),
+  tiebreakerValue: z.number().nullable().optional(),
+  selectionGroups: z.array(DraftSelectionGroupDtoSchema).optional(),
   isComplete: z.boolean(),
   pickEmEvents: z.array(DraftPickEmEventDtoSchema).optional(),
   bracketMatchups: z.array(DraftBracketMatchupDtoSchema).optional().describe('Bracket pick data when relevant to the draft.'),

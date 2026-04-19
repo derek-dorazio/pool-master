@@ -420,6 +420,72 @@ describe('SDK Functional: Contests and Entries', () => {
     });
   });
 
+  it('updates a contest-entry tiebreaker value through the generated SDK', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({
+      displayName: 'Tiebreaker Commissioner',
+      leagueName: 'Tiebreaker Functional League',
+    });
+
+    const createResponse = await createContest({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+      body: {
+        name: 'Tiebreaker Contest',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.BUDGET_PICK,
+        scoringEngine: ScoringEngine.POSITION,
+      },
+    });
+
+    const contestId = createResponse.data?.contest.id;
+    expect(contestId).toBeTruthy();
+
+    const prisma = getFunctionalPrisma();
+    await prisma.contest.update({
+      where: {
+        id: contestId as string,
+      },
+      data: {
+        status: ContestStatus.OPEN,
+      },
+    });
+
+    const entryResponse = await enterContest({
+      client: commissioner.client,
+      path: {
+        contestId: contestId as string,
+      },
+    });
+
+    expect(entryResponse.data?.entry.id).toBeTruthy();
+    expect(entryResponse.data?.entry.tiebreakerValue ?? null).toBeNull();
+
+    const updateResponse = await updateContestEntry({
+      client: commissioner.client,
+      path: {
+        contestId: contestId as string,
+        entryId: entryResponse.data?.entry.id as string,
+      },
+      body: {
+        tiebreakerValue: 271,
+      },
+    });
+
+    expect(updateResponse.data?.entry.id).toBe(entryResponse.data?.entry.id);
+    expect(updateResponse.data?.entry.tiebreakerValue).toBe(271);
+
+    const refreshedEntryResponse = await getMyContestEntry({
+      client: commissioner.client,
+      path: {
+        contestId: contestId as string,
+      },
+    });
+
+    expect(refreshedEntryResponse.data?.entry?.tiebreakerValue).toBe(271);
+  });
+
   it('rejects a league outsider from entering a contest', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({
       displayName: 'Outsider Commissioner',

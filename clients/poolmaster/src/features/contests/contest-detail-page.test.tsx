@@ -57,6 +57,7 @@ function renderContestDetailPage() {
       >
         <Routes>
           <Route element={<ContestDetailPage />} path="/contests/:contestId" />
+          <Route element={<div data-testid="contest-entry-page" />} path="/contests/:contestId/entries/:entryId" />
           <Route element={<div data-testid="league-team-page" />} path="/league/:leagueCode/team" />
           <Route
             element={<div data-testid="contest-manage-page" />}
@@ -128,41 +129,15 @@ describe('ContestDetailPage', () => {
 
   it('creates a first entry from the contest detail when the contest is open', async () => {
     primeCommonMocks();
-    listContestEntriesMock
-      .mockResolvedValueOnce({
-        data: {
-          contestId: 'contest-1',
-          total: 0,
-          isJoined: false,
-          myEntryId: '',
-          entries: [],
-        },
-      })
-      .mockResolvedValueOnce({
-        data: {
-          contestId: 'contest-1',
-          total: 1,
-          isJoined: true,
-          myEntryId: 'entry-22',
-          myEntryIds: ['entry-22'],
-          entries: [
-            {
-              id: 'entry-22',
-              contestId: 'contest-1',
-              squadId: 'squad-1',
-              squadName: 'Birdie Hunters',
-              entryNumber: 1,
-              name: 'Birdie Hunters Entry 1',
-              status: 'ACTIVE',
-              totalScore: 0,
-              standingsPosition: undefined,
-              isEliminated: false,
-              createdAt: '2026-04-15T00:00:00.000Z',
-              updatedAt: '2026-04-15T00:00:00.000Z',
-            },
-          ],
-        },
-      });
+    listContestEntriesMock.mockResolvedValueOnce({
+      data: {
+        contestId: 'contest-1',
+        total: 0,
+        isJoined: false,
+        myEntryId: '',
+        entries: [],
+      },
+    });
     enterContestMock.mockResolvedValue({
       data: {
         contestId: 'contest-1',
@@ -194,12 +169,7 @@ describe('ContestDetailPage', () => {
       }),
     );
 
-    expect(await screen.findByTestId('contest-my-team-entry-entry-22')).toHaveTextContent(
-      'Birdie Hunters Entry 1',
-    );
-    expect(screen.getByTestId('contest-leave-entry')).toHaveTextContent(
-      'Leave latest entry for Birdie Hunters',
-    );
+    expect(await screen.findByTestId('contest-entry-page')).toBeInTheDocument();
   });
 
   it('highlights the current team entries in the list and supports multiple entries while open', async () => {
@@ -270,6 +240,7 @@ describe('ContestDetailPage', () => {
       'Leave latest entry for Birdie Hunters',
     );
     expect(screen.getByTestId('contest-entry-entry-2')).toHaveTextContent('Fairway Finders Entry 1');
+    expect(screen.getAllByTestId('contest-entry-open-entry-1')[0]).toHaveTextContent('Open entry');
   });
 
   it('renames a team-owned entry from contest detail while the contest is open', async () => {

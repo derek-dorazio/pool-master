@@ -24,6 +24,7 @@ import {
   type ListLeagueSquadsResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
+import { buildContestEntryPath } from '@/features/contests/contest-entry-page';
 import { formatUserName } from '@/features/account/user-name';
 import { buildLeaguePath, setRecentLeagueCode } from '@/features/leagues/league-routing';
 import { getTeamIconOption, TEAM_ICON_OPTIONS } from './team-icon-catalog';
@@ -713,6 +714,16 @@ export function MyTeamPage() {
                                 <div>{entry.totalScore} pts</div>
                               </div>
                             </div>
+                            <div className="mt-4 flex flex-wrap gap-3">
+                              <Link
+                                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
+                                data-testid={`my-team-entry-open-${entry.id}`}
+                                state={{ leagueCode }}
+                                to={buildContestEntryPath(contest.id, entry.id)}
+                              >
+                                {contest.status === 'OPEN' ? 'Open entry' : 'View entry detail'}
+                              </Link>
+                            </div>
                             {contest.status === 'OPEN' && selectedTeamIsOwnedByCurrentUser ? (
                               <div className="mt-4 rounded-2xl border border-border bg-background px-4 py-4">
                                 {editingEntryId === entry.id ? (
@@ -859,6 +870,16 @@ export function MyTeamPage() {
                               <div>{entry.standingsPosition ? `#${entry.standingsPosition}` : 'Rank pending'}</div>
                               <div>{entry.totalScore} pts</div>
                             </div>
+                          </div>
+                          <div className="mt-4">
+                            <Link
+                              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
+                              data-testid={`my-team-history-entry-open-${entry.id}`}
+                              state={{ leagueCode }}
+                              to={buildContestEntryPath(contest.id, entry.id)}
+                            >
+                              View entry detail
+                            </Link>
                           </div>
                         </div>
                       ))}

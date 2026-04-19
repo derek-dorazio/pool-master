@@ -8,6 +8,9 @@ import {
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
+import {
+  UpdateContestEntryRequestSchema,
+} from '@poolmaster/shared/dto';
 import type { z } from 'zod';
 import { z as zod } from 'zod';
 import {
@@ -91,10 +94,6 @@ const UpdateContestBodySchema = zod.object({
   endsAt: zod.string().datetime().optional(),
   lockAt: zod.string().datetime().optional(),
   isExclusive: zod.boolean().optional(),
-});
-
-const UpdateContestEntryBodySchema = zod.object({
-  name: zod.string().trim().min(1).max(100),
 });
 
 export function createContestHandlers(contestService: ContestService) {
@@ -259,18 +258,21 @@ export function createContestHandlers(contestService: ContestService) {
   async function updateEntry(
     request: FastifyRequest<{
       Params: { contestId: string; entryId: string };
-      Body: z.infer<typeof UpdateContestEntryBodySchema>;
+      Body: z.infer<typeof UpdateContestEntryRequestSchema>;
     }>,
     reply: FastifyReply,
   ): Promise<void> {
     const userId = request.authUser?.userId as string;
     try {
-      const body = UpdateContestEntryBodySchema.parse(request.body);
+      const body = UpdateContestEntryRequestSchema.parse(request.body);
       const entry = await contestService.updateEntry(
         request.params.contestId,
         request.params.entryId,
         userId,
-        body.name,
+        {
+          name: body.name,
+          tiebreakerValue: body.tiebreakerValue,
+        },
       );
       return reply.send(toContestEntryResponse(request.params.contestId, entry));
     } catch (err) {

@@ -296,6 +296,7 @@ export interface ContestEntry extends DomainEntity {
   entryNumber: number;
   name: string;
   status: 'ACTIVE' | 'INACTIVE';
+  tiebreakerValue?: number | null;
   totalScore: number;
   standingsPosition?: number;
   isEliminated: boolean;

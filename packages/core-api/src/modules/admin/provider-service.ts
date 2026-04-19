@@ -67,6 +67,18 @@ export interface IngestionJob {
   errors: number;
 }
 
+export interface ProviderSyncRun {
+  id: string;
+  providerId: string;
+  sport: Sport;
+  eventId: string | null;
+  status: 'RUNNING' | 'COMPLETED' | 'FAILED';
+  startedAt: Date | null;
+  completedAt: Date | null;
+  createdAt: Date;
+  payload: Record<string, unknown>;
+}
+
 export interface IngestionError {
   providerId: string;
   errorType: string;
@@ -170,6 +182,13 @@ function parseErrorLogEntry(entry: unknown): { errorType: string; message: strin
 
 function providerDisplayName(provider: SportDataProvider): string {
   return provider.providerName;
+}
+
+function normalizeSyncRunPayload(payload: Prisma.JsonValue): Record<string, unknown> {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return {};
+  }
+  return payload as Record<string, unknown>;
 }
 
 // ---------------------------------------------------------------------------
@@ -456,6 +475,38 @@ export class ProviderService {
       unmappedParticipants,
       mappedParticipantCount,
     };
+  }
+
+  async listSyncRuns(filters: {
+    providerId?: string;
+    sport?: Sport;
+    status?: ProviderSyncRun['status'];
+    limit?: number;
+  } = {}): Promise<ProviderSyncRun[]> {
+    const runs = await this.prisma.providerSyncRun.findMany({
+      where: {
+        providerId: filters.providerId,
+        sport: filters.sport,
+        status: filters.status,
+      },
+      orderBy: [
+        { startedAt: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      take: filters.limit ?? 20,
+    });
+
+    return runs.map((row) => ({
+      id: row.id,
+      providerId: row.providerId,
+      sport: row.sport as Sport,
+      eventId: row.eventId,
+      status: row.status as ProviderSyncRun['status'],
+      startedAt: row.startedAt,
+      completedAt: row.completedAt,
+      createdAt: row.createdAt,
+      payload: normalizeSyncRunPayload(row.payloadJson),
+    }));
   }
 
   async updateProviderConfig(

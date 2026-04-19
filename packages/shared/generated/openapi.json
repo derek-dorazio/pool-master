@@ -14503,6 +14503,10 @@
                               "INACTIVE"
                             ]
                           },
+                          "tiebreakerValue": {
+                            "type": "integer",
+                            "nullable": true
+                          },
                           "totalScore": {
                             "type": "number"
                           },
@@ -14696,6 +14700,10 @@
                             "INACTIVE"
                           ]
                         },
+                        "tiebreakerValue": {
+                          "type": "integer",
+                          "nullable": true
+                        },
                         "totalScore": {
                           "type": "number"
                         },
@@ -14883,6 +14891,10 @@
                             "INACTIVE"
                           ]
                         },
+                        "tiebreakerValue": {
+                          "type": "integer",
+                          "nullable": true
+                        },
                         "totalScore": {
                           "type": "number"
                         },
@@ -14970,6 +14982,10 @@
                             "ACTIVE",
                             "INACTIVE"
                           ]
+                        },
+                        "tiebreakerValue": {
+                          "type": "integer",
+                          "nullable": true
                         },
                         "totalScore": {
                           "type": "number"
@@ -15247,17 +15263,19 @@
                     "minLength": 1,
                     "maxLength": 100,
                     "description": "Unique entry name shown anywhere the team entry is listed."
+                  },
+                  "tiebreakerValue": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Optional tiebreaker prediction saved on the contest entry."
                   }
                 },
-                "required": [
-                  "name"
-                ],
                 "additionalProperties": false,
-                "description": "Request payload for renaming a contest entry while the contest is still joinable."
+                "description": "Request payload for updating a contest entry while the contest is still joinable."
               }
             }
           },
-          "description": "Request payload for renaming a contest entry while the contest is still joinable."
+          "description": "Request payload for updating a contest entry while the contest is still joinable."
         },
         "parameters": [
           {
@@ -15317,6 +15335,10 @@
                             "ACTIVE",
                             "INACTIVE"
                           ]
+                        },
+                        "tiebreakerValue": {
+                          "type": "integer",
+                          "nullable": true
                         },
                         "totalScore": {
                           "type": "number"
@@ -21944,6 +21966,208 @@
         }
       }
     },
+    "/api/v1/admin/providers/sync-runs": {
+      "get": {
+        "operationId": "adminListProviderSyncRuns",
+        "summary": "List recent provider sync runs",
+        "tags": [
+          "Admin"
+        ],
+        "description": "Returns recent provider sync runs with thin payload-backed operational detail for root-admin visibility surfaces.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "providerId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GOLF",
+                "NFL",
+                "NBA",
+                "F1",
+                "NASCAR",
+                "NCAA_BASKETBALL",
+                "NCAA_HOCKEY",
+                "NCAA_FOOTBALL",
+                "TENNIS",
+                "HORSE_RACING",
+                "SOCCER",
+                "NHL",
+                "MLB",
+                "UFC"
+              ]
+            },
+            "in": "query",
+            "name": "sport",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "RUNNING",
+                "COMPLETED",
+                "FAILED"
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recent provider sync runs returned for root-admin operational visibility.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "providerId": {
+                            "type": "string"
+                          },
+                          "sport": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ]
+                          },
+                          "eventId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "RUNNING",
+                              "COMPLETED",
+                              "FAILED"
+                            ]
+                          },
+                          "startedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "completedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "payload": {
+                            "type": "object",
+                            "additionalProperties": {},
+                            "description": "Opaque provider sync payload retained for thin admin operational detail surfaces."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "providerId",
+                          "sport",
+                          "eventId",
+                          "status",
+                          "startedAt",
+                          "completedAt",
+                          "createdAt",
+                          "payload"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Recent provider sync run with payload-backed operational details."
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Recent provider sync runs returned for root-admin operational visibility."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/providers/ingestion": {
       "get": {
         "operationId": "adminGetIngestionDashboard",
@@ -26373,6 +26597,15 @@
         "parameters": [
           {
             "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "entryId",
+            "required": false,
+            "description": "Specific contest entry to view within roster-based selection flows."
+          },
+          {
+            "schema": {
               "type": "string",
               "format": "uuid"
             },
@@ -26638,6 +26871,116 @@
                       "type": "array",
                       "items": {
                         "type": "string"
+                      }
+                    },
+                    "selectedEntryId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "selectedEntryName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "tiebreakerValue": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "selectionGroups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "groupId": {
+                            "type": "string"
+                          },
+                          "groupName": {
+                            "type": "string"
+                          },
+                          "groupNumber": {
+                            "type": "number"
+                          },
+                          "picksFromGroup": {
+                            "type": "number"
+                          },
+                          "selectedParticipantIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Selections currently saved on the selected entry for this group."
+                          },
+                          "participants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "participantName": {
+                                  "type": "string"
+                                },
+                                "position": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "team": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "ranking": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "orderIndex": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "isAvailable": {
+                                  "type": "boolean"
+                                },
+                                "unavailableReason": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "isSelected": {
+                                  "type": "boolean",
+                                  "description": "Whether the currently selected entry has this participant selected."
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "participantName",
+                                "isAvailable"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Selectable participant row used by roster-based entry builders."
+                            },
+                            "description": "Selectable participants shown inside the group."
+                          }
+                        },
+                        "required": [
+                          "groupId",
+                          "groupName",
+                          "groupNumber",
+                          "picksFromGroup",
+                          "selectedParticipantIds",
+                          "participants"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Contest-specific selection group used by tiered or budget-style entry builders."
                       }
                     },
                     "isComplete": {
@@ -27261,6 +27604,116 @@
                         "type": "string"
                       }
                     },
+                    "selectedEntryId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "selectedEntryName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "tiebreakerValue": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "selectionGroups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "groupId": {
+                            "type": "string"
+                          },
+                          "groupName": {
+                            "type": "string"
+                          },
+                          "groupNumber": {
+                            "type": "number"
+                          },
+                          "picksFromGroup": {
+                            "type": "number"
+                          },
+                          "selectedParticipantIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Selections currently saved on the selected entry for this group."
+                          },
+                          "participants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "participantName": {
+                                  "type": "string"
+                                },
+                                "position": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "team": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "ranking": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "orderIndex": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "isAvailable": {
+                                  "type": "boolean"
+                                },
+                                "unavailableReason": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "isSelected": {
+                                  "type": "boolean",
+                                  "description": "Whether the currently selected entry has this participant selected."
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "participantName",
+                                "isAvailable"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Selectable participant row used by roster-based entry builders."
+                            },
+                            "description": "Selectable participants shown inside the group."
+                          }
+                        },
+                        "required": [
+                          "groupId",
+                          "groupName",
+                          "groupNumber",
+                          "picksFromGroup",
+                          "selectedParticipantIds",
+                          "participants"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Contest-specific selection group used by tiered or budget-style entry builders."
+                      }
+                    },
                     "isComplete": {
                       "type": "boolean"
                     },
@@ -27852,6 +28305,116 @@
                       "type": "array",
                       "items": {
                         "type": "string"
+                      }
+                    },
+                    "selectedEntryId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "selectedEntryName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "tiebreakerValue": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "selectionGroups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "groupId": {
+                            "type": "string"
+                          },
+                          "groupName": {
+                            "type": "string"
+                          },
+                          "groupNumber": {
+                            "type": "number"
+                          },
+                          "picksFromGroup": {
+                            "type": "number"
+                          },
+                          "selectedParticipantIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Selections currently saved on the selected entry for this group."
+                          },
+                          "participants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "participantName": {
+                                  "type": "string"
+                                },
+                                "position": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "team": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "ranking": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "orderIndex": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "isAvailable": {
+                                  "type": "boolean"
+                                },
+                                "unavailableReason": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "isSelected": {
+                                  "type": "boolean",
+                                  "description": "Whether the currently selected entry has this participant selected."
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "participantName",
+                                "isAvailable"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Selectable participant row used by roster-based entry builders."
+                            },
+                            "description": "Selectable participants shown inside the group."
+                          }
+                        },
+                        "required": [
+                          "groupId",
+                          "groupName",
+                          "groupNumber",
+                          "picksFromGroup",
+                          "selectedParticipantIds",
+                          "participants"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Contest-specific selection group used by tiered or budget-style entry builders."
                       }
                     },
                     "isComplete": {
@@ -28537,6 +29100,116 @@
                         "type": "string"
                       }
                     },
+                    "selectedEntryId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "selectedEntryName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "tiebreakerValue": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "selectionGroups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "groupId": {
+                            "type": "string"
+                          },
+                          "groupName": {
+                            "type": "string"
+                          },
+                          "groupNumber": {
+                            "type": "number"
+                          },
+                          "picksFromGroup": {
+                            "type": "number"
+                          },
+                          "selectedParticipantIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Selections currently saved on the selected entry for this group."
+                          },
+                          "participants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "participantName": {
+                                  "type": "string"
+                                },
+                                "position": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "team": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "ranking": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "orderIndex": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "isAvailable": {
+                                  "type": "boolean"
+                                },
+                                "unavailableReason": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "isSelected": {
+                                  "type": "boolean",
+                                  "description": "Whether the currently selected entry has this participant selected."
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "participantName",
+                                "isAvailable"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Selectable participant row used by roster-based entry builders."
+                            },
+                            "description": "Selectable participants shown inside the group."
+                          }
+                        },
+                        "required": [
+                          "groupId",
+                          "groupName",
+                          "groupNumber",
+                          "picksFromGroup",
+                          "selectedParticipantIds",
+                          "participants"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Contest-specific selection group used by tiered or budget-style entry builders."
+                      }
+                    },
                     "isComplete": {
                       "type": "boolean"
                     },
@@ -29179,6 +29852,116 @@
                       "type": "array",
                       "items": {
                         "type": "string"
+                      }
+                    },
+                    "selectedEntryId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "selectedEntryName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "tiebreakerValue": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "selectionGroups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "groupId": {
+                            "type": "string"
+                          },
+                          "groupName": {
+                            "type": "string"
+                          },
+                          "groupNumber": {
+                            "type": "number"
+                          },
+                          "picksFromGroup": {
+                            "type": "number"
+                          },
+                          "selectedParticipantIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Selections currently saved on the selected entry for this group."
+                          },
+                          "participants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "participantName": {
+                                  "type": "string"
+                                },
+                                "position": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "team": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "ranking": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "orderIndex": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "isAvailable": {
+                                  "type": "boolean"
+                                },
+                                "unavailableReason": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "isSelected": {
+                                  "type": "boolean",
+                                  "description": "Whether the currently selected entry has this participant selected."
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "participantName",
+                                "isAvailable"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Selectable participant row used by roster-based entry builders."
+                            },
+                            "description": "Selectable participants shown inside the group."
+                          }
+                        },
+                        "required": [
+                          "groupId",
+                          "groupName",
+                          "groupNumber",
+                          "picksFromGroup",
+                          "selectedParticipantIds",
+                          "participants"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Contest-specific selection group used by tiered or budget-style entry builders."
                       }
                     },
                     "isComplete": {
@@ -29849,6 +30632,116 @@
                         "type": "string"
                       }
                     },
+                    "selectedEntryId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "selectedEntryName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "tiebreakerValue": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "selectionGroups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "groupId": {
+                            "type": "string"
+                          },
+                          "groupName": {
+                            "type": "string"
+                          },
+                          "groupNumber": {
+                            "type": "number"
+                          },
+                          "picksFromGroup": {
+                            "type": "number"
+                          },
+                          "selectedParticipantIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Selections currently saved on the selected entry for this group."
+                          },
+                          "participants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "participantName": {
+                                  "type": "string"
+                                },
+                                "position": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "team": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "ranking": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "orderIndex": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "isAvailable": {
+                                  "type": "boolean"
+                                },
+                                "unavailableReason": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "isSelected": {
+                                  "type": "boolean",
+                                  "description": "Whether the currently selected entry has this participant selected."
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "participantName",
+                                "isAvailable"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Selectable participant row used by roster-based entry builders."
+                            },
+                            "description": "Selectable participants shown inside the group."
+                          }
+                        },
+                        "required": [
+                          "groupId",
+                          "groupName",
+                          "groupNumber",
+                          "picksFromGroup",
+                          "selectedParticipantIds",
+                          "participants"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Contest-specific selection group used by tiered or budget-style entry builders."
+                      }
+                    },
                     "isComplete": {
                       "type": "boolean"
                     },
@@ -30493,6 +31386,116 @@
                         "type": "string"
                       }
                     },
+                    "selectedEntryId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "selectedEntryName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "tiebreakerValue": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "selectionGroups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "groupId": {
+                            "type": "string"
+                          },
+                          "groupName": {
+                            "type": "string"
+                          },
+                          "groupNumber": {
+                            "type": "number"
+                          },
+                          "picksFromGroup": {
+                            "type": "number"
+                          },
+                          "selectedParticipantIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Selections currently saved on the selected entry for this group."
+                          },
+                          "participants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "participantName": {
+                                  "type": "string"
+                                },
+                                "position": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "team": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "ranking": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "orderIndex": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "isAvailable": {
+                                  "type": "boolean"
+                                },
+                                "unavailableReason": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "isSelected": {
+                                  "type": "boolean",
+                                  "description": "Whether the currently selected entry has this participant selected."
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "participantName",
+                                "isAvailable"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Selectable participant row used by roster-based entry builders."
+                            },
+                            "description": "Selectable participants shown inside the group."
+                          }
+                        },
+                        "required": [
+                          "groupId",
+                          "groupName",
+                          "groupNumber",
+                          "picksFromGroup",
+                          "selectedParticipantIds",
+                          "participants"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Contest-specific selection group used by tiered or budget-style entry builders."
+                      }
+                    },
                     "isComplete": {
                       "type": "boolean"
                     },
@@ -31135,6 +32138,116 @@
                       "type": "array",
                       "items": {
                         "type": "string"
+                      }
+                    },
+                    "selectedEntryId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "selectedEntryName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "tiebreakerValue": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "selectionGroups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "groupId": {
+                            "type": "string"
+                          },
+                          "groupName": {
+                            "type": "string"
+                          },
+                          "groupNumber": {
+                            "type": "number"
+                          },
+                          "picksFromGroup": {
+                            "type": "number"
+                          },
+                          "selectedParticipantIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Selections currently saved on the selected entry for this group."
+                          },
+                          "participants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "participantName": {
+                                  "type": "string"
+                                },
+                                "position": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "team": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "ranking": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "orderIndex": {
+                                  "type": "number",
+                                  "nullable": true
+                                },
+                                "isAvailable": {
+                                  "type": "boolean"
+                                },
+                                "unavailableReason": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "isSelected": {
+                                  "type": "boolean",
+                                  "description": "Whether the currently selected entry has this participant selected."
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "participantName",
+                                "isAvailable"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Selectable participant row used by roster-based entry builders."
+                            },
+                            "description": "Selectable participants shown inside the group."
+                          }
+                        },
+                        "required": [
+                          "groupId",
+                          "groupName",
+                          "groupNumber",
+                          "picksFromGroup",
+                          "selectedParticipantIds",
+                          "participants"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Contest-specific selection group used by tiered or budget-style entry builders."
                       }
                     },
                     "isComplete": {

@@ -6743,6 +6743,7 @@ export type ListContestEntriesResponses = {
             entryNumber: number;
             name: string;
             status: 'ACTIVE' | 'INACTIVE';
+            tiebreakerValue?: number;
             totalScore: number;
             standingsPosition?: number;
             isEliminated: boolean;
@@ -6914,6 +6915,7 @@ export type GetMyContestEntryResponses = {
             entryNumber: number;
             name: string;
             status: 'ACTIVE' | 'INACTIVE';
+            tiebreakerValue?: number;
             totalScore: number;
             standingsPosition?: number;
             isEliminated: boolean;
@@ -7009,6 +7011,7 @@ export type EnterContestResponses = {
             entryNumber: number;
             name: string;
             status: 'ACTIVE' | 'INACTIVE';
+            tiebreakerValue?: number;
             totalScore: number;
             standingsPosition?: number;
             isEliminated: boolean;
@@ -7041,6 +7044,7 @@ export type EnterContestResponses = {
             entryNumber: number;
             name: string;
             status: 'ACTIVE' | 'INACTIVE';
+            tiebreakerValue?: number;
             totalScore: number;
             standingsPosition?: number;
             isEliminated: boolean;
@@ -7060,13 +7064,17 @@ export type EnterContestResponse = EnterContestResponses[keyof EnterContestRespo
 
 export type UpdateContestEntryData = {
     /**
-     * Request payload for renaming a contest entry while the contest is still joinable.
+     * Request payload for updating a contest entry while the contest is still joinable.
      */
     body: {
         /**
          * Unique entry name shown anywhere the team entry is listed.
          */
-        name: string;
+        name?: string;
+        /**
+         * Optional tiebreaker prediction saved on the contest entry.
+         */
+        tiebreakerValue?: number;
     };
     path: {
         contestId: string;
@@ -7145,6 +7153,7 @@ export type UpdateContestEntryResponses = {
             entryNumber: number;
             name: string;
             status: 'ACTIVE' | 'INACTIVE';
+            tiebreakerValue?: number;
             totalScore: number;
             standingsPosition?: number;
             isEliminated: boolean;
@@ -10682,6 +10691,71 @@ export type AdminListProvidersResponses = {
 
 export type AdminListProvidersResponse = AdminListProvidersResponses[keyof AdminListProvidersResponses];
 
+export type AdminListProviderSyncRunsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        providerId?: string;
+        sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        status?: 'RUNNING' | 'COMPLETED' | 'FAILED';
+        limit?: number;
+    };
+    url: '/api/v1/admin/providers/sync-runs';
+};
+
+export type AdminListProviderSyncRunsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminListProviderSyncRunsError = AdminListProviderSyncRunsErrors[keyof AdminListProviderSyncRunsErrors];
+
+export type AdminListProviderSyncRunsResponses = {
+    /**
+     * Recent provider sync runs returned for root-admin operational visibility.
+     */
+    200: {
+        items: Array<{
+            id: string;
+            providerId: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+            eventId: string;
+            status: 'RUNNING' | 'COMPLETED' | 'FAILED';
+            startedAt: string;
+            completedAt: string;
+            createdAt: string;
+            /**
+             * Opaque provider sync payload retained for thin admin operational detail surfaces.
+             */
+            payload: {
+                [key: string]: unknown;
+            };
+        }>;
+    };
+};
+
+export type AdminListProviderSyncRunsResponse = AdminListProviderSyncRunsResponses[keyof AdminListProviderSyncRunsResponses];
+
 export type AdminGetIngestionDashboardData = {
     body?: never;
     path?: never;
@@ -12599,7 +12673,12 @@ export type GetDraftStateData = {
     path: {
         contestId: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Specific contest entry to view within roster-based selection flows.
+         */
+        entryId?: string;
+    };
     url: '/api/v1/drafts/{contestId}';
 };
 
@@ -12737,6 +12816,39 @@ export type GetDraftStateResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
+        selectedEntryId?: string;
+        selectedEntryName?: string;
+        tiebreakerValue?: number;
+        selectionGroups?: Array<{
+            groupId: string;
+            groupName: string;
+            groupNumber: number;
+            picksFromGroup: number;
+            /**
+             * Selections currently saved on the selected entry for this group.
+             */
+            selectedParticipantIds: Array<string>;
+            /**
+             * Selectable participants shown inside the group.
+             */
+            participants: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                participantName: string;
+                position?: string;
+                team?: string;
+                status?: string;
+                price?: number;
+                ranking?: number;
+                orderIndex?: number;
+                isAvailable: boolean;
+                unavailableReason?: string;
+                /**
+                 * Whether the currently selected entry has this participant selected.
+                 */
+                isSelected?: boolean;
+            }>;
+        }>;
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
@@ -12959,6 +13071,39 @@ export type StartDraftResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
+        selectedEntryId?: string;
+        selectedEntryName?: string;
+        tiebreakerValue?: number;
+        selectionGroups?: Array<{
+            groupId: string;
+            groupName: string;
+            groupNumber: number;
+            picksFromGroup: number;
+            /**
+             * Selections currently saved on the selected entry for this group.
+             */
+            selectedParticipantIds: Array<string>;
+            /**
+             * Selectable participants shown inside the group.
+             */
+            participants: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                participantName: string;
+                position?: string;
+                team?: string;
+                status?: string;
+                price?: number;
+                ranking?: number;
+                orderIndex?: number;
+                isAvailable: boolean;
+                unavailableReason?: string;
+                /**
+                 * Whether the currently selected entry has this participant selected.
+                 */
+                isSelected?: boolean;
+            }>;
+        }>;
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
@@ -13235,6 +13380,39 @@ export type SubmitContestSelectionResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
+        selectedEntryId?: string;
+        selectedEntryName?: string;
+        tiebreakerValue?: number;
+        selectionGroups?: Array<{
+            groupId: string;
+            groupName: string;
+            groupNumber: number;
+            picksFromGroup: number;
+            /**
+             * Selections currently saved on the selected entry for this group.
+             */
+            selectedParticipantIds: Array<string>;
+            /**
+             * Selectable participants shown inside the group.
+             */
+            participants: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                participantName: string;
+                position?: string;
+                team?: string;
+                status?: string;
+                price?: number;
+                ranking?: number;
+                orderIndex?: number;
+                isAvailable: boolean;
+                unavailableReason?: string;
+                /**
+                 * Whether the currently selected entry has this participant selected.
+                 */
+                isSelected?: boolean;
+            }>;
+        }>;
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
@@ -13477,6 +13655,39 @@ export type PauseDraftResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
+        selectedEntryId?: string;
+        selectedEntryName?: string;
+        tiebreakerValue?: number;
+        selectionGroups?: Array<{
+            groupId: string;
+            groupName: string;
+            groupNumber: number;
+            picksFromGroup: number;
+            /**
+             * Selections currently saved on the selected entry for this group.
+             */
+            selectedParticipantIds: Array<string>;
+            /**
+             * Selectable participants shown inside the group.
+             */
+            participants: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                participantName: string;
+                position?: string;
+                team?: string;
+                status?: string;
+                price?: number;
+                ranking?: number;
+                orderIndex?: number;
+                isAvailable: boolean;
+                unavailableReason?: string;
+                /**
+                 * Whether the currently selected entry has this participant selected.
+                 */
+                isSelected?: boolean;
+            }>;
+        }>;
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
@@ -13719,6 +13930,39 @@ export type ResumeDraftResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
+        selectedEntryId?: string;
+        selectedEntryName?: string;
+        tiebreakerValue?: number;
+        selectionGroups?: Array<{
+            groupId: string;
+            groupName: string;
+            groupNumber: number;
+            picksFromGroup: number;
+            /**
+             * Selections currently saved on the selected entry for this group.
+             */
+            selectedParticipantIds: Array<string>;
+            /**
+             * Selectable participants shown inside the group.
+             */
+            participants: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                participantName: string;
+                position?: string;
+                team?: string;
+                status?: string;
+                price?: number;
+                ranking?: number;
+                orderIndex?: number;
+                isAvailable: boolean;
+                unavailableReason?: string;
+                /**
+                 * Whether the currently selected entry has this participant selected.
+                 */
+                isSelected?: boolean;
+            }>;
+        }>;
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
@@ -13969,6 +14213,39 @@ export type ExtendCurrentTurnResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
+        selectedEntryId?: string;
+        selectedEntryName?: string;
+        tiebreakerValue?: number;
+        selectionGroups?: Array<{
+            groupId: string;
+            groupName: string;
+            groupNumber: number;
+            picksFromGroup: number;
+            /**
+             * Selections currently saved on the selected entry for this group.
+             */
+            selectedParticipantIds: Array<string>;
+            /**
+             * Selectable participants shown inside the group.
+             */
+            participants: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                participantName: string;
+                position?: string;
+                team?: string;
+                status?: string;
+                price?: number;
+                ranking?: number;
+                orderIndex?: number;
+                isAvailable: boolean;
+                unavailableReason?: string;
+                /**
+                 * Whether the currently selected entry has this participant selected.
+                 */
+                isSelected?: boolean;
+            }>;
+        }>;
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
@@ -14211,6 +14488,39 @@ export type UndoSnakeDraftSelectionResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
+        selectedEntryId?: string;
+        selectedEntryName?: string;
+        tiebreakerValue?: number;
+        selectionGroups?: Array<{
+            groupId: string;
+            groupName: string;
+            groupNumber: number;
+            picksFromGroup: number;
+            /**
+             * Selections currently saved on the selected entry for this group.
+             */
+            selectedParticipantIds: Array<string>;
+            /**
+             * Selectable participants shown inside the group.
+             */
+            participants: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                participantName: string;
+                position?: string;
+                team?: string;
+                status?: string;
+                price?: number;
+                ranking?: number;
+                orderIndex?: number;
+                isAvailable: boolean;
+                unavailableReason?: string;
+                /**
+                 * Whether the currently selected entry has this participant selected.
+                 */
+                isSelected?: boolean;
+            }>;
+        }>;
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;
@@ -14453,6 +14763,39 @@ export type SkipSnakeDraftTurnResponses = {
             pickedAt: string;
         }>;
         availableParticipantIds: Array<string>;
+        selectedEntryId?: string;
+        selectedEntryName?: string;
+        tiebreakerValue?: number;
+        selectionGroups?: Array<{
+            groupId: string;
+            groupName: string;
+            groupNumber: number;
+            picksFromGroup: number;
+            /**
+             * Selections currently saved on the selected entry for this group.
+             */
+            selectedParticipantIds: Array<string>;
+            /**
+             * Selectable participants shown inside the group.
+             */
+            participants: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                participantName: string;
+                position?: string;
+                team?: string;
+                status?: string;
+                price?: number;
+                ranking?: number;
+                orderIndex?: number;
+                isAvailable: boolean;
+                unavailableReason?: string;
+                /**
+                 * Whether the currently selected entry has this participant selected.
+                 */
+                isSelected?: boolean;
+            }>;
+        }>;
         isComplete: boolean;
         pickEmEvents?: Array<{
             id: string;

@@ -6,6 +6,7 @@ import { NotFoundPage } from '@/features/app-shell/not-found-page';
 import { PlaceholderPage } from '@/features/app-shell/placeholder-page';
 import { CreateContestPage } from '@/features/contests/create-contest-page';
 import { ContestDetailPage } from '@/features/contests/contest-detail-page';
+import { ContestEntryPage } from '@/features/contests/contest-entry-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { MyLeaguesPage, WelcomePage } from '@/features/leagues/leagues-page';
@@ -82,6 +83,10 @@ export const router = createBrowserRouter([
           {
             path: 'contests/:contestId',
             element: <ContestDetailPage />,
+          },
+          {
+            path: 'contests/:contestId/entries/:entryId',
+            element: <ContestEntryPage />,
           },
         ],
       },

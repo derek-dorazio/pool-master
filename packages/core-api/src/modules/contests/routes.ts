@@ -219,9 +219,9 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
   fastify.patch('/:contestId/entries/:entryId', {
     schema: {
       tags: ['Contests'],
-      summary: 'Rename a contest entry',
+      summary: 'Update a contest entry',
       description:
-        'Renames a specific contest entry owned by the authenticated user while the contest is still joinable.',
+        'Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is still joinable.',
       operationId: 'updateContestEntry',
       body: zodToJsonSchema(UpdateContestEntryRequestSchema),
       response: {

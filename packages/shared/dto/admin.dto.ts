@@ -3,7 +3,7 @@
  */
 import { z } from 'zod';
 import { Sport } from '@poolmaster/shared/domain';
-import { PaginatedSchema } from './common.dto';
+import { JsonObjectSchema, PaginatedSchema } from './common.dto';
 import { UserProfileDtoSchema } from './auth.dto';
 
 const SportSchema = z.enum([
@@ -170,6 +170,27 @@ export const ProviderIngestionJobDtoSchema = z.object({
   errors: z.number(),
 }).describe('Recent or active provider ingestion job.');
 export type ProviderIngestionJobDto = z.infer<typeof ProviderIngestionJobDtoSchema>;
+
+export const ProviderSyncRunStatusSchema = z.enum(['RUNNING', 'COMPLETED', 'FAILED']);
+export type ProviderSyncRunStatus = z.infer<typeof ProviderSyncRunStatusSchema>;
+
+export const ProviderSyncRunDtoSchema = z.object({
+  id: z.string(),
+  providerId: z.string(),
+  sport: SportSchema,
+  eventId: z.string().nullable(),
+  status: ProviderSyncRunStatusSchema,
+  startedAt: z.string().datetime().nullable(),
+  completedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+  payload: JsonObjectSchema.describe('Opaque provider sync payload retained for thin admin operational detail surfaces.'),
+}).describe('Recent provider sync run with payload-backed operational details.');
+export type ProviderSyncRunDto = z.infer<typeof ProviderSyncRunDtoSchema>;
+
+export const ProviderSyncRunListResponseSchema = z.object({
+  items: z.array(ProviderSyncRunDtoSchema),
+}).describe('Recent provider sync runs returned for root-admin operational visibility.');
+export type ProviderSyncRunListResponse = z.infer<typeof ProviderSyncRunListResponseSchema>;
 
 export const ProviderUnmappedParticipantDtoSchema = z.object({
   providerId: z.string(),

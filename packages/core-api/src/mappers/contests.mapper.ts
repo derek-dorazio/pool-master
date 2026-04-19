@@ -46,6 +46,7 @@ interface ContestEntryRow {
   entryNumber: number;
   name: string;
   status: ContestEntry['status'];
+  tiebreakerValue?: number | null;
   totalScore: number;
   standingsPosition?: number | null;
   isEliminated: boolean;
@@ -119,6 +120,7 @@ export function toContestEntryDto(
     entryNumber: entry.entryNumber,
     name: entry.name,
     status: entry.status as ContestEntryDto['status'],
+    tiebreakerValue: entry.tiebreakerValue ?? null,
     totalScore: entry.totalScore,
     standingsPosition: entry.standingsPosition ?? null,
     isEliminated: entry.isEliminated,

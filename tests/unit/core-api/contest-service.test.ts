@@ -179,6 +179,7 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
           entryNumber: 1,
           name: "Derek's Squad Entry 1",
           status: 'ACTIVE',
+          tiebreakerValue: null,
           totalScore: 0,
           standingsPosition: null,
           isEliminated: false,
@@ -194,6 +195,7 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
         entryNumber: 1,
         name: "Derek's Squad Entry 1",
         status: 'ACTIVE',
+        tiebreakerValue: null,
         totalScore: 0,
         standingsPosition: null,
         isEliminated: false,
@@ -650,6 +652,7 @@ describe('ContestService', () => {
               entryNumber: 1,
               name: 'Renamed Entry',
               status: 'ACTIVE',
+              tiebreakerValue: null,
               totalScore: 0,
               standingsPosition: null,
               isEliminated: false,
@@ -665,6 +668,7 @@ describe('ContestService', () => {
             entryNumber: 1,
             name: 'Renamed Entry',
             status: 'ACTIVE',
+            tiebreakerValue: null,
             totalScore: 0,
             standingsPosition: null,
             isEliminated: false,
@@ -696,7 +700,9 @@ describe('ContestService', () => {
         prisma as any,
       );
 
-      const result = await service.updateEntry('contest-1', 'entry-1', 'user-1', '  Renamed Entry  ');
+      const result = await service.updateEntry('contest-1', 'entry-1', 'user-1', {
+        name: '  Renamed Entry  ',
+      });
 
       expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { name: 'Renamed Entry' });
       expect(result.name).toBe('Renamed Entry');
@@ -720,6 +726,7 @@ describe('ContestService', () => {
             entryNumber: 1,
             name: "Derek's Squad Entry 1",
             status: 'ACTIVE',
+            tiebreakerValue: null,
             totalScore: 0,
             standingsPosition: undefined,
             isEliminated: false,
@@ -733,6 +740,7 @@ describe('ContestService', () => {
             entryNumber: 2,
             name: 'Second Bullet',
             status: 'ACTIVE',
+            tiebreakerValue: null,
             totalScore: 0,
             standingsPosition: undefined,
             isEliminated: false,
@@ -763,7 +771,9 @@ describe('ContestService', () => {
         createMockPrisma() as any,
       );
 
-      await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', ' second bullet ')).rejects.toMatchObject({
+      await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', {
+        name: ' second bullet ',
+      })).rejects.toMatchObject({
         code: 'CONTEST_ENTRY_NAME_DUPLICATE',
       });
       expect(entryRepo.update).not.toHaveBeenCalled();
@@ -800,9 +810,104 @@ describe('ContestService', () => {
         createMockPrisma() as any,
       );
 
-      await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', 'Renamed Entry')).rejects.toMatchObject({
+      await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', {
+        name: 'Renamed Entry',
+      })).rejects.toMatchObject({
         code: 'CONTEST_ENTRY_LOCKED',
       });
+    });
+
+    it('updates the contest-entry tiebreaker prediction without renaming the entry', async () => {
+      const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.OPEN });
+      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
+      const contestRepo = createMockContestRepo({
+        findById: jest.fn().mockResolvedValue(contest),
+      });
+      const membershipRepo = createMockMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
+      });
+      const entryRepo = createMockEntryRepo({
+        findBySquad: jest.fn().mockResolvedValue([
+          {
+            id: 'entry-1',
+            contestId: 'contest-1',
+            squadId: 'squad-1',
+            entryNumber: 1,
+            name: "Derek's Squad Entry 1",
+            status: 'ACTIVE',
+            tiebreakerValue: null,
+            totalScore: 0,
+            standingsPosition: undefined,
+            isEliminated: false,
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          },
+        ]),
+      });
+      const prisma = createMockPrisma({
+        contestEntry: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              id: 'entry-1',
+              contestId: 'contest-1',
+              squadId: 'squad-1',
+              entryNumber: 1,
+              name: "Derek's Squad Entry 1",
+              status: 'ACTIVE',
+              tiebreakerValue: 271,
+              totalScore: 0,
+              standingsPosition: null,
+              isEliminated: false,
+              createdAt: new Date('2026-01-01'),
+              updatedAt: new Date('2026-01-02'),
+              squad: { id: 'squad-1', name: "Derek's Squad" },
+            },
+          ]),
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'entry-1',
+            contestId: 'contest-1',
+            squadId: 'squad-1',
+            entryNumber: 1,
+            name: "Derek's Squad Entry 1",
+            status: 'ACTIVE',
+            tiebreakerValue: 271,
+            totalScore: 0,
+            standingsPosition: null,
+            isEliminated: false,
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-02'),
+            squad: { id: 'squad-1', name: "Derek's Squad" },
+          }),
+        },
+      });
+      const service = new ContestService(
+        contestRepo,
+        createMockContestConfigurationRepo(),
+        membershipRepo,
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue({
+            id: 'squad-membership-1',
+            squadId: 'squad-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            status: SquadMembershipStatus.ACTIVE,
+            joinedAt: new Date('2026-01-01'),
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }),
+        }),
+        entryRepo,
+        prisma as any,
+      );
+
+      const result = await service.updateEntry('contest-1', 'entry-1', 'user-1', {
+        tiebreakerValue: 271,
+      });
+
+      expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { tiebreakerValue: 271 });
+      expect(result.tiebreakerValue).toBe(271);
     });
   });
 });

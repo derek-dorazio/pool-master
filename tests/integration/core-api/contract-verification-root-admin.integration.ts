@@ -3,6 +3,7 @@ import {
   IngestionJobResponseSchema,
   IngestionProvidersResponseSchema,
   IngestSportOddsResponseSchema,
+  ProviderSyncRunListResponseSchema,
   UserDetailResponseSchema,
   UserListResponseSchema,
 } from '@poolmaster/shared/dto';
@@ -13,6 +14,7 @@ import {
   cleanupTestData,
   createTestUser,
   getApp,
+  getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
@@ -168,6 +170,39 @@ describe('Contract verification (root admin)', () => {
       isRootAdmin: true,
     });
 
+    await getPrisma().providerSyncRun.createMany({
+      data: [
+        {
+          id: '11111111-1111-1111-1111-111111111111',
+          providerId: 'integration-test',
+          sport: 'GOLF',
+          eventId: 'golf-masters-2026',
+          status: 'COMPLETED',
+          startedAt: new Date('2026-04-09T10:00:00.000Z'),
+          completedAt: new Date('2026-04-09T10:01:00.000Z'),
+          payloadJson: {
+            runType: 'EVENT_SYNC',
+            recordsProcessed: 42,
+            detail: 'Initial event and field import',
+          },
+        },
+        {
+          id: '22222222-2222-2222-2222-222222222222',
+          providerId: 'integration-test',
+          sport: 'GOLF',
+          eventId: null,
+          status: 'FAILED',
+          startedAt: new Date('2026-04-08T10:00:00.000Z'),
+          completedAt: new Date('2026-04-08T10:00:30.000Z'),
+          payloadJson: {
+            runType: 'SCHEDULE_SYNC',
+            errorCount: 1,
+            detail: 'Transient provider timeout',
+          },
+        },
+      ],
+    });
+
     const listRes = await getApp().inject({
       method: 'GET',
       url: '/api/v1/admin/users',
@@ -183,6 +218,17 @@ describe('Contract verification (root admin)', () => {
     });
     expect(detailRes.statusCode).toBe(200);
     expect(UserDetailResponseSchema.safeParse(detailRes.json()).success).toBe(true);
+
+    const syncRunsRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/admin/providers/sync-runs?providerId=integration-test&sport=GOLF&limit=10',
+      headers: rootAdmin.headers,
+    });
+    expect(syncRunsRes.statusCode).toBe(200);
+    expect(ProviderSyncRunListResponseSchema.safeParse(syncRunsRes.json()).success).toBe(true);
+    expect(syncRunsRes.json().items).toHaveLength(2);
+    expect(syncRunsRes.json().items[0].providerId).toBe('integration-test');
+    expect(syncRunsRes.json().items[0].payload.runType).toBeDefined();
   });
 
   it('root-admin routes expose stable not-found error codes', async () => {

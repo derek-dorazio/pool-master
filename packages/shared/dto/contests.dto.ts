@@ -80,8 +80,11 @@ export const UpdateContestRequestSchema = z.object({
 export type UpdateContestRequest = z.infer<typeof UpdateContestRequestSchema>;
 
 export const UpdateContestEntryRequestSchema = z.object({
-  name: z.string().trim().min(1).max(100).describe('Unique entry name shown anywhere the team entry is listed.'),
-}).describe('Request payload for renaming a contest entry while the contest is still joinable.');
+  name: z.string().trim().min(1).max(100).optional().describe('Unique entry name shown anywhere the team entry is listed.'),
+  tiebreakerValue: z.number().int().nullable().optional().describe('Optional tiebreaker prediction saved on the contest entry.'),
+}).refine((value) => value.name !== undefined || value.tiebreakerValue !== undefined, {
+  message: 'At least one contest entry field must be provided.',
+}).describe('Request payload for updating a contest entry while the contest is still joinable.');
 export type UpdateContestEntryRequest = z.infer<typeof UpdateContestEntryRequestSchema>;
 
 export const UndoContestDraftSelectionRequestSchema = z.object({
@@ -187,6 +190,7 @@ export const ContestEntryDtoSchema = z.object({
   entryNumber: z.number().int().min(1),
   name: z.string(),
   status: z.enum(['ACTIVE', 'INACTIVE']),
+  tiebreakerValue: z.number().int().nullable().optional(),
   totalScore: z.number(),
   standingsPosition: z.number().nullable().optional(),
   isEliminated: z.boolean(),

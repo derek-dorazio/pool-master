@@ -15,6 +15,7 @@ import {
 } from '@poolmaster/shared/domain';
 import {
   zodToJsonSchema,
+  DraftStateQuerySchema,
   DraftStateResponseSchema,
   DraftPickResponseSchema,
   ErrorEnvelopeSchema,
@@ -49,6 +50,7 @@ interface ContestRecord {
   name: string;
   leagueId: string;
   sportEventId: string | null;
+  sportEventStartDate: Date | null;
   selectionType: string;
   status: string;
   lockAt: Date | null;
@@ -71,12 +73,35 @@ interface SelectionParticipantRecord {
   teamAffiliation?: string | null;
   status?: string | null;
   price?: number;
+  ranking?: number;
   tier?: string | null;
   orderIndex?: number;
   isAvailable: boolean;
   unavailableReason?: string;
 }
 type RosterPickRecord = Awaited<ReturnType<PrismaClient['rosterPick']['findMany']>>[number];
+
+interface SelectionGroupResponseRecord {
+  groupId: string;
+  groupName: string;
+  groupNumber: number;
+  picksFromGroup: number;
+  selectedParticipantIds: string[];
+  participants: Array<{
+    sportEventParticipantId: string;
+    participantId: string;
+    participantName: string;
+    position?: string | null;
+    team?: string | null;
+    status?: string | null;
+    price?: number | null;
+    ranking?: number | null;
+    orderIndex?: number | null;
+    isAvailable: boolean;
+    unavailableReason?: string | null;
+    isSelected: boolean;
+  }>;
+}
 
 interface DraftContext {
   contest: ContestRecord;
@@ -285,6 +310,11 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
       name: true,
       leagueId: true,
       sportEventId: true,
+      sportEvent: {
+        select: {
+          startDate: true,
+        },
+      },
       selectionType: true,
       status: true,
       lockAt: true,
@@ -327,8 +357,40 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
         orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
       });
 
+  const participantIds = Array.from(new Set(sportEventParticipants.map((record) => record.participantId)));
+  const seasonAnchor = contest.sportEvent?.startDate ?? new Date();
+  const season = String(seasonAnchor.getUTCFullYear());
+  const seasonRecords = participantIds.length === 0
+    ? []
+    : await prisma.participantSeasonRecord.findMany({
+        where: {
+          participantId: { in: participantIds },
+          season,
+        },
+      });
+  const rankingByParticipantId = new Map<string, number>();
+  for (const seasonRecord of seasonRecords) {
+    const rankings = Array.isArray(seasonRecord.rankings) ? seasonRecord.rankings as Array<Record<string, unknown>> : [];
+    const preferredRanking = rankings.find((entry) =>
+      typeof entry?.rank === 'number'
+      && (entry.rankingType === 'OWGR' || entry.rankingType === 'default'),
+    ) ?? rankings.find((entry) => typeof entry?.rank === 'number');
+    if (preferredRanking && typeof preferredRanking.rank === 'number') {
+      rankingByParticipantId.set(seasonRecord.participantId, preferredRanking.rank);
+    }
+  }
+
   return {
-    contest,
+    contest: {
+      id: contest.id,
+      name: contest.name,
+      leagueId: contest.leagueId,
+      sportEventId: contest.sportEventId,
+      sportEventStartDate: contest.sportEvent?.startDate ?? null,
+      selectionType: contest.selectionType,
+      status: contest.status,
+      lockAt: contest.lockAt,
+    },
     contestConfiguration,
     contestEntries,
     memberships,
@@ -346,6 +408,7 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
         teamAffiliation: record.participant.teamAffiliation,
         status: record.status,
         price: valuation?.price ?? undefined,
+        ranking: rankingByParticipantId.get(record.participantId) ?? undefined,
         tier: valuation?.tier ?? null,
         orderIndex: valuation?.orderIndex ?? undefined,
         isAvailable,
@@ -387,6 +450,47 @@ function buildContestConfigurationResponse(
         }))
       : undefined,
   };
+}
+
+function buildSelectionGroups(
+  selectionParticipants: SelectionParticipantRecord[],
+  tiers: DraftTierConfig[],
+  selectedSportEventParticipantIds: Set<string>,
+): SelectionGroupResponseRecord[] {
+  const participantByParticipantId = new Map(
+    selectionParticipants.map((participant) => [participant.participantId, participant] as const),
+  );
+
+  return tiers.map((tier) => {
+    const participants = tier.participantIds
+      .map((participantId) => participantByParticipantId.get(participantId))
+      .filter((participant): participant is SelectionParticipantRecord => Boolean(participant))
+      .map((participant) => ({
+        sportEventParticipantId: participant.sportEventParticipantId,
+        participantId: participant.participantId,
+        participantName: participant.participantName,
+        position: participant.position ?? null,
+        team: participant.teamAffiliation ?? null,
+        status: participant.status ?? null,
+        price: participant.price ?? null,
+        ranking: participant.ranking ?? null,
+        orderIndex: participant.orderIndex ?? null,
+        isAvailable: participant.isAvailable,
+        unavailableReason: participant.unavailableReason ?? null,
+        isSelected: selectedSportEventParticipantIds.has(participant.sportEventParticipantId),
+      }));
+
+    return {
+      groupId: tier.tierId,
+      groupName: tier.tierName,
+      groupNumber: tier.tierNumber,
+      picksFromGroup: tier.picksFromTier,
+      selectedParticipantIds: participants
+        .filter((participant) => participant.isSelected)
+        .map((participant) => participant.sportEventParticipantId),
+      participants,
+    };
+  });
 }
 
 async function buildSnakeDraftResponse(
@@ -485,6 +589,7 @@ async function buildSnakeDraftResponse(
 async function buildRosterSelectionResponse(
   prisma: PrismaClient,
   context: DraftContext,
+  selectedEntryId?: string,
   requestUserId?: string,
 ) {
   const contestEntryById = new Map(context.contestEntries.map((entry) => [entry.id, entry]));
@@ -541,8 +646,24 @@ async function buildRosterSelectionResponse(
   const myEntryId = requestUserId
     ? entries.find((entry) => entry.userId === requestUserId)?.id ?? null
     : null;
+  const resolvedSelectedEntryId = selectedEntryId
+    && entries.some((entry) => entry.id === selectedEntryId)
+    ? selectedEntryId
+    : myEntryId;
+  const selectedEntry = resolvedSelectedEntryId
+    ? entries.find((entry) => entry.id === resolvedSelectedEntryId) ?? null
+    : null;
   const myEntryPicks = myEntryId ? picksByEntry.get(myEntryId) ?? [] : [];
+  const selectedEntryPicks = resolvedSelectedEntryId ? picksByEntry.get(resolvedSelectedEntryId) ?? [] : [];
   const isCommissioner = getIsCommissioner(context, requestUserId);
+  const selectedSportEventParticipantIds = new Set(
+    selectedEntryPicks.map((pick) => pick.sportEventParticipantId),
+  );
+  const selectionGroups = buildSelectionGroups(
+    context.selectionParticipants,
+    tiers,
+    selectedSportEventParticipantIds,
+  );
 
   const pickIndexByEntry = new Map<string, number>();
   const pickIndexByEntryTier = new Map<string, number>();
@@ -626,6 +747,10 @@ async function buildRosterSelectionResponse(
     currentTurnStartedAt: null,
     timePerPickSeconds: 0,
     entries: entries.map(({ pickCount: _pickCount, ...entry }) => entry),
+    selectedEntryId: resolvedSelectedEntryId,
+    selectedEntryName: selectedEntry?.name ?? null,
+    tiebreakerValue: contestEntryById.get(resolvedSelectedEntryId ?? '')?.tiebreakerValue ?? null,
+    selectionGroups,
     draftPickHistories: pickDtos,
     availableParticipantIds,
     isComplete,
@@ -635,6 +760,7 @@ async function buildRosterSelectionResponse(
 async function buildDraftStateResponse(
   prisma: PrismaClient,
   contestId: string,
+  selectedEntryId?: string,
   requestUserId?: string,
 ) {
   const context = await loadDraftContext(prisma, contestId);
@@ -666,8 +792,8 @@ async function buildDraftStateResponse(
     || context.contest.selectionType === SelectionType.BUDGET_PICK
   ) {
     return {
-      kind: 'success' as const,
-      payload: await buildRosterSelectionResponse(prisma, context, requestUserId),
+        kind: 'success' as const,
+      payload: await buildRosterSelectionResponse(prisma, context, selectedEntryId, requestUserId),
       context,
     };
   }
@@ -697,6 +823,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         required: ['contestId'],
         properties: { contestId: { type: 'string', format: 'uuid' } },
       },
+      querystring: zodToJsonSchema(DraftStateQuerySchema),
       response: {
         200: zodToJsonSchema(DraftStateResponseSchema),
         ...draftErrorResponses(404, 501),
@@ -704,8 +831,9 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
     },
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
+      const { entryId } = (request.query ?? {}) as { entryId?: string };
       const requestUserId = request.authUser?.userId;
-      const result = await buildDraftStateResponse(prisma, contestId, requestUserId);
+      const result = await buildDraftStateResponse(prisma, contestId, entryId, requestUserId);
       if (result.kind === 'error') {
         return sendWithStatus(reply, result.statusCode, result.payload);
       }
@@ -1018,16 +1146,28 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
           participantIdsInTier.has(pick.sportEventParticipant.participantId),
         );
         if (picksInTier.length >= tier.picksFromTier) {
+          if (tier.picksFromTier === 1 && picksInTier.length === 1) {
+            const existingTierPick = picksInTier[0];
+            if (existingTierPick.sportEventParticipantId === participantId) {
+              return buildRosterSelectionResponse(prisma, context, entryId, requestUserId);
+            }
+
+            await prisma.rosterPick.delete({
+              where: { id: existingTierPick.id },
+            });
+          } else {
           return sendWithStatus(reply, 400, {
             error: 'TIER_FULL',
             message: `Entry ${entryId} has already filled ${tier.tierName}`,
           });
+          }
         }
 
+        const effectivePicksInTierCount = Math.min(picksInTier.length, tier.picksFromTier - 1);
         const roundsBeforeTier = tiers
           .filter((item) => item.tierNumber < tier.tierNumber)
           .reduce((sum, item) => sum + item.picksFromTier, 0);
-        draftRound = roundsBeforeTier + picksInTier.length + 1;
+        draftRound = roundsBeforeTier + effectivePicksInTierCount + 1;
       }
 
       const globalPickCount = await prisma.rosterPick.count({

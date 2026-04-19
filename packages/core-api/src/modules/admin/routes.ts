@@ -22,6 +22,7 @@ import {
   UserListResponseSchema,
   UserDetailResponseSchema,
   ProviderListResponseSchema,
+  ProviderSyncRunListResponseSchema,
   ProviderDetailResponseSchema,
   ProviderIngestionDashboardResponseSchema,
   ProviderUnmappedParticipantListResponseSchema,
@@ -165,6 +166,26 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       response: withAdminErrorResponses({ 200: zodToJsonSchema(ProviderListResponseSchema) }),
     },
     handler: provider.listProviders,
+  });
+
+  fastify.get('/providers/sync-runs', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List recent provider sync runs',
+      description: 'Returns recent provider sync runs with thin payload-backed operational detail for root-admin visibility surfaces.',
+      operationId: 'adminListProviderSyncRuns',
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(ProviderSyncRunListResponseSchema) }),
+      querystring: {
+        type: 'object',
+        properties: {
+          providerId: { type: 'string' },
+          sport: { type: 'string', enum: ['GOLF', 'NFL', 'NBA', 'F1', 'NASCAR', 'NCAA_BASKETBALL', 'NCAA_HOCKEY', 'NCAA_FOOTBALL', 'TENNIS', 'HORSE_RACING', 'SOCCER', 'NHL', 'MLB', 'UFC'] },
+          status: { type: 'string', enum: ['RUNNING', 'COMPLETED', 'FAILED'] },
+          limit: { type: 'integer', minimum: 1, maximum: 100 },
+        },
+      },
+    },
+    handler: provider.listSyncRuns,
   });
 
   fastify.get('/providers/ingestion', {

@@ -287,7 +287,7 @@ export class ContestService {
     contestId: string,
     entryId: string,
     userId: string,
-    nextName: string,
+    updates: { name?: string; tiebreakerValue?: number | null },
   ): Promise<ContestEntryDto> {
     const context = await this.getEntryContext(contestId, userId);
     const membership = context.membership;
@@ -316,26 +316,36 @@ export class ContestService {
       throw new ContestEntryNotFoundError(contestId, context.squadMembership.squadId);
     }
 
-    const sanitizedName = nextName.trim();
-    if (!sanitizedName) {
-      throw new ContestEntryOperationError(
-        'Contest entry name is required',
-        'CONTEST_ENTRY_NAME_REQUIRED',
+    const pendingUpdates: Partial<ContestEntry> = {};
+
+    if (updates.name !== undefined) {
+      const sanitizedName = updates.name.trim();
+      if (!sanitizedName) {
+        throw new ContestEntryOperationError(
+          'Contest entry name is required',
+          'CONTEST_ENTRY_NAME_REQUIRED',
+        );
+      }
+
+      const normalizedName = sanitizedName.toLocaleLowerCase();
+      const duplicateEntry = entries.find(
+        (entry) => entry.id !== entryId && entry.name.trim().toLocaleLowerCase() === normalizedName,
       );
+      if (duplicateEntry) {
+        throw new ContestEntryOperationError(
+          'This team already has another entry with that name in the contest',
+          'CONTEST_ENTRY_NAME_DUPLICATE',
+        );
+      }
+
+      pendingUpdates.name = sanitizedName;
     }
 
-    const normalizedName = sanitizedName.toLocaleLowerCase();
-    const duplicateEntry = entries.find(
-      (entry) => entry.id !== entryId && entry.name.trim().toLocaleLowerCase() === normalizedName,
-    );
-    if (duplicateEntry) {
-      throw new ContestEntryOperationError(
-        'This team already has another entry with that name in the contest',
-        'CONTEST_ENTRY_NAME_DUPLICATE',
-      );
+    if (updates.tiebreakerValue !== undefined) {
+      pendingUpdates.tiebreakerValue = updates.tiebreakerValue;
     }
 
-    await this.requireEntryRepo().update(entryId, { name: sanitizedName });
+    await this.requireEntryRepo().update(entryId, pendingUpdates);
     return this.loadEntryDtoById(entryId);
   }
 

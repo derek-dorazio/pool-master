@@ -7,6 +7,7 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { Sport } from '@poolmaster/shared/domain';
 import type { ProviderService } from './provider-service';
 import {
   ProviderConfigUnsupportedError,
@@ -23,6 +24,7 @@ import { extractRootAdminContext } from './request-admin-context';
 export function createProviderHandlers(providerService: ProviderService) {
   return {
     listProviders,
+    listSyncRuns,
     getProviderDetail,
     updateProviderConfig,
     triggerHealthCheck,
@@ -40,6 +42,39 @@ export function createProviderHandlers(providerService: ProviderService) {
   ) {
     const providers = await providerService.listProviders();
     return { items: providers };
+  }
+
+  async function listSyncRuns(
+    request: FastifyRequest<{
+      Querystring: {
+        providerId?: string;
+        sport?: Sport;
+        status?: 'RUNNING' | 'COMPLETED' | 'FAILED';
+        limit?: number;
+      };
+    }>,
+    _reply: FastifyReply,
+  ) {
+    const syncRuns = await providerService.listSyncRuns({
+      providerId: request.query.providerId,
+      sport: request.query.sport,
+      status: request.query.status,
+      limit: request.query.limit,
+    });
+
+    return {
+      items: syncRuns.map((run) => ({
+        id: run.id,
+        providerId: run.providerId,
+        sport: run.sport,
+        eventId: run.eventId,
+        status: run.status,
+        startedAt: run.startedAt?.toISOString() ?? null,
+        completedAt: run.completedAt?.toISOString() ?? null,
+        createdAt: run.createdAt.toISOString(),
+        payload: run.payload,
+      })),
+    };
   }
 
   // --- Provider detail ---

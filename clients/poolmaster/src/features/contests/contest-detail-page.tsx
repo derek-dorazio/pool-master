@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   enterContest,
   getContest,
@@ -14,6 +14,7 @@ import {
   type ListContestEntriesResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
+import { buildContestEntryPath } from '@/features/contests/contest-entry-page';
 import {
   buildLeagueContestManagePath,
   buildLeaguePath,
@@ -119,6 +120,7 @@ function getEntryLifecycleCopy(contest: ContestDetail, teamEntryCount: number) {
 export function ContestDetailPage() {
   const { contestId = '' } = useParams<{ contestId: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const auth = useAuth();
   const queryClient = useQueryClient();
   const hintedLeagueCode = parseRouteState(location.state).leagueCode ?? null;
@@ -215,12 +217,15 @@ export function ContestDetailPage() {
 
       return response.data.entry;
     },
-    onSuccess: async () => {
+    onSuccess: async (entry) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-leaderboard', contestId] }),
       ]);
+      navigate(buildContestEntryPath(contestId, entry.id), {
+        state: { leagueCode: hintedLeagueCode ?? leagueCodeQuery.data?.leagueCode ?? null },
+      });
     },
   });
 
@@ -411,6 +416,16 @@ export function ContestDetailPage() {
                             {entry.standingsPosition ? `Rank #${entry.standingsPosition}` : 'Rank pending'}
                           </div>
                         </div>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <Link
+                          className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
+                          data-testid={`contest-entry-open-${entry.id}`}
+                          state={{ leagueCode: hintedLeagueCode ?? leagueCodeQuery.data?.leagueCode ?? null }}
+                          to={buildContestEntryPath(contestId, entry.id)}
+                        >
+                          {contestQuery.data.status === 'OPEN' ? 'Open entry' : 'View entry detail'}
+                        </Link>
                       </div>
                       {contestQuery.data.status === 'OPEN' ? (
                         <div className="mt-4 rounded-2xl border border-border bg-card px-4 py-4">
@@ -629,6 +644,18 @@ export function ContestDetailPage() {
                         <div>{entry.totalScore} pts</div>
                       </div>
                     </div>
+                    {isCurrentUserEntry ? (
+                      <div className="mt-4">
+                        <Link
+                          className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
+                          data-testid={`contest-entry-open-${entry.id}`}
+                          state={{ leagueCode: hintedLeagueCode ?? leagueCodeQuery.data?.leagueCode ?? null }}
+                          to={buildContestEntryPath(contestId, entry.id)}
+                        >
+                          {contestQuery.data.status === 'OPEN' ? 'Open entry' : 'View entry detail'}
+                        </Link>
+                      </div>
+                    ) : null}
                   </div>
                 );
               })

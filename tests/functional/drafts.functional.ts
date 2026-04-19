@@ -870,12 +870,31 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       path: {
         contestId: fixture.contestId,
       },
+      query: {
+        entryId: fixture.entryId,
+      },
     });
 
     expect(stateResponse.data).toBeDefined();
     expect(stateResponse.data?.contestId).toBe(fixture.contestId);
     expect(stateResponse.data?.selectionType).toBe(SelectionType.TIERED);
     expect(stateResponse.data?.myEntryId).toBe(fixture.entryId);
+    expect(stateResponse.data?.selectedEntryId).toBe(fixture.entryId);
+    expect(stateResponse.data?.selectionGroups).toHaveLength(1);
+    expect(stateResponse.data?.selectionGroups?.[0]).toEqual(
+      expect.objectContaining({
+        groupId: 'tier-1',
+        groupName: 'Tier 1',
+        groupNumber: 1,
+        picksFromGroup: 1,
+      }),
+    );
+    expect(stateResponse.data?.selectionGroups?.[0]?.participants[0]).toEqual(
+      expect.objectContaining({
+        sportEventParticipantId: fixture.sportEventParticipantId,
+        isSelected: false,
+      }),
+    );
     expect(stateResponse.data?.availableParticipantIds).toContain(fixture.sportEventParticipantId);
     expect(stateResponse.data?.draftPickHistories).toHaveLength(0);
 
@@ -909,6 +928,9 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       path: {
         contestId: fixture.contestId,
       },
+      query: {
+        entryId: fixture.entryId,
+      },
     });
 
     expect(afterPickStateResponse.data?.draftPickHistories).toHaveLength(1);
@@ -921,5 +943,9 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
     );
     expect(afterPickStateResponse.data?.isComplete).toBe(true);
     expect(afterPickStateResponse.data?.availableParticipantIds).toContain(fixture.sportEventParticipantId);
+    expect(afterPickStateResponse.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([
+      fixture.sportEventParticipantId,
+    ]);
+    expect(afterPickStateResponse.data?.selectionGroups?.[0]?.participants[0]?.isSelected).toBe(true);
   });
 });
