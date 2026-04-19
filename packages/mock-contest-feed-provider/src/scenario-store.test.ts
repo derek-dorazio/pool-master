@@ -24,7 +24,8 @@ test('ScenarioStore loads event-first scenarios and exposes field snapshots', ()
 
   const resultUpdates = store.getUpdates('golf-major-2026', 'golf-masters-2026');
   assert.equal(resultUpdates.updates[0]?.feedKind, 'field');
-  assert.equal(resultUpdates.updates[1]?.feedKind, 'results');
+  assert.equal(resultUpdates.updates[1]?.feedKind, 'odds');
+  assert.equal(resultUpdates.updates[2]?.feedKind, 'results');
 });
 
 test('ScenarioStore rejects new contestants in deltas unless they include a name', () => {
@@ -106,7 +107,7 @@ test('routes expose detail and field endpoints', async () => {
     assert.equal(fieldResponse.statusCode, 200);
     const fieldJson = fieldResponse.json();
     assert.equal(fieldJson.feedKind, 'field');
-    assert.equal(fieldJson.contestants.length, 4);
+    assert.equal(fieldJson.contestants.length, 8);
   } finally {
     await app.close();
     if (previousScenarioDir === undefined) {
