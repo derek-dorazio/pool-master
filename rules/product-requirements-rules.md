@@ -132,3 +132,17 @@ Before product requirements are handed forward, they must make clear:
 - if an older plan is still useful for execution context but no longer
   trustworthy as product definition, add an explicit note that it is historical
   context only and point back to the current requirements and tech spec
+
+## 10. Continuous Propagation
+
+- refined product requirements are not write-once artifacts
+- when active design discussions resolve product meaning, actor behavior,
+  lifecycle rules, navigation assumptions, or cross-feature product goals,
+  propagate those decisions upward into the shared product-requirement files in
+  the same lane
+- do not leave important product truth trapped only inside a localized feature
+  slice if it changes the broader product model, actor definitions, or product
+  goals
+- when a resolved feature-level decision materially changes high-level product
+  framing, also update the matching `requirements/product-overview/` artifacts
+  so discovery and refined requirements stay aligned

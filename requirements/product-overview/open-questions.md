@@ -1,4 +1,6 @@
 # Open Questions
 
-Use this file for the broad discovery questions that still need refinement
-before detailed product requirements begin.
+- None currently at the broad product-overview layer.
+
+Active unresolved details should live in the relevant refined feature
+requirements or technical specs, not here.

@@ -46,6 +46,7 @@ Main flow:
 
 Expected outcomes:
 - event state stays current without forcing commissioners to recreate contests
+- root-admin action remains exceptional rather than routine
 
 ## MP-001: Mock provider exposes a golf tournament and its field
 
@@ -92,6 +93,7 @@ Main flow:
 
 Expected outcomes:
 - commissioners can begin contest setup as soon as the event exists
+- the common path remains quick and template-driven
 
 ## CC-002: Commissioner reviews derived contest field behavior during creation
 
@@ -184,6 +186,29 @@ Expected outcomes:
 - entries use the contest-derived field, not a generic participant catalog
 - already-selected participants remain on the entry unless the member changes
   them, even if their informational status later changes before contest lock
+
+## TE-003: Commissioner uses the same entry tools as a member
+
+Actor:
+- Commissioner
+
+Preconditions:
+- commissioner has league-scoped authority over the relevant team or contest
+
+Trigger:
+- commissioner needs to help with a team, entry, or co-owner administrative
+  action
+
+Main flow:
+1. Commissioner opens the same team or contest context used by members.
+2. PoolMaster applies the same entry/team tools with broader league-scoped
+   authority.
+3. Commissioner completes the needed administrative action without switching to
+   a separate high-friction operational flow.
+
+Expected outcomes:
+- commissioner support actions reuse the same core participation tools
+- the product avoids unnecessary parallel commissioner-only workflows
 
 ## AS-001: Event updates automatically affect scoring and leaderboards
 

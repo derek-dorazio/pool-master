@@ -17,13 +17,15 @@ compare it with the current route surface.
 - contest entry routes
 - draft/selection routes
 - mock contest-feed-provider routes
+- template-listing and template-based contest creation support
 
 ### Missing Or Implicit
 
-- explicit root-admin event operations workflow routes
+- thin root-admin event operations workflow routes focused on exceptional
+  provider/sync issues
 - explicit event readiness / contest-eligibility contract
 - explicit contest-field projection contract
-- release-oriented contest operation distinct from generic editing
+- automated scoring/result propagation contract surfaces
 
 ## Recommended First-Pass Contract Areas
 
@@ -36,6 +38,8 @@ Recommended operations:
 - inspect event readiness and last sync outcome
 
 Notes:
+- this should stay operational and exceptional rather than becoming a daily
+  admin workflow
 - this does not require broad member-facing event discovery
 
 ### 2. Event Readiness Contract
@@ -53,11 +57,10 @@ Implementation recommendation:
 - resolve those rules into concrete timestamps on each event
 - expose the resolved timestamps in normal event/admin read models
 
-### 3. Commissioner Contest Setup And Release
+### 3. Commissioner Contest Setup And Contest Creation
 
 Recommended additions or refinements:
 - current contest-management create/update remains the base
-- add template-selection support to contest creation inputs/read models
 - add a contest-field preview/read model for pre-release review
 - add or clarify the released contest frozen-field behavior in the create
   contract
@@ -88,6 +91,8 @@ Recommended additions or refinements:
 Implementation recommendation:
 - released contest entry/edit flows should read the frozen contest-specific
   projection, not live event valuations/orderings
+- commissioner administrative help flows should reuse the same team/entry tools
+  rather than requiring a parallel contest-ops surface
 
 ### 5. Mock Provider
 
@@ -109,8 +114,6 @@ Mismatches:
 - released-contest field freeze semantics are not yet exposed as a contract
 - current design direction no longer needs a separate commissioner release
   action in the normal flow
-- no first-pass read surface exists for seeded contest templates even though the
-  desired create flow is template-first
-- advanced schema metadata source is still not explicit in the contract even
-  though it is now confirmed to be global rather than contest-specific
+- advanced schema metadata source is intentionally global rather than
+  contest-specific, but the precise read surface still needs to be clarified
 - mock provider is usable but still shaped as a generic contest-feed simulator

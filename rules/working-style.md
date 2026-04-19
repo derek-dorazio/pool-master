@@ -90,3 +90,8 @@ The goal is not rigid ceremony. The goal is to reduce ambiguity about whether:
   `rules/` or `docs/` rather than relying on conversational memory alone
 - use `docs/SESSION-HANDOFF.md` for short “resume here” notes when a session is
   intentionally paused or the machine/repo context is about to change
+- when product discussions resolve broad goals, actor behavior, or operating
+  principles, update the shared `requirements/product-overview/` and
+  `requirements/product-requirements/` artifacts continuously rather than
+  letting important decisions accumulate only inside localized feature docs or
+  chat history

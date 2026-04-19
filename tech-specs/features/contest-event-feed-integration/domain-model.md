@@ -38,7 +38,7 @@ Owns:
 - default field lock rule expression
 
 Current status:
-- not first-class yet
+- implemented
 
 Notes:
 - recommended as a persisted seeded concept rather than a code-only registry so
@@ -153,7 +153,7 @@ Owns:
 - schema-version compatibility marker
 
 Current status:
-- not first-class yet
+- implemented
 
 Notes:
 - first-pass lifecycle should be seed/migration managed only
@@ -212,7 +212,7 @@ Owns:
   - frozen participant eligibility / selectability
 
 Current status:
-- not explicit yet
+- not fully implemented yet
 
 Notes:
 - recommended because released contests must not be invalidated by later

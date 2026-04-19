@@ -77,3 +77,8 @@ Before discovery is handed to Pam, it must make clear:
 - active execution tracking still belongs in `plans/`
 - if discovery materially reshapes an active feature lane, update the relevant
   plan notes or task rows in the same effort
+- discovery artifacts must not be treated as one-time kickoff documents only
+- when later product discussions materially change goals, actors, module
+  boundaries, or operating principles, update the shared
+  `requirements/product-overview/` artifacts in the same lane so broad product
+  truth does not get stranded only inside feature-level documents

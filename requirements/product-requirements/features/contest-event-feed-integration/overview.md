@@ -13,6 +13,14 @@ Define the cross-module product design for the feature lane that connects:
 This feature treats contest setup and contest entry as downstream consumers of a
 truthful sport-event and event-field model.
 
+This feature should preserve a frictionless operating model:
+
+- normal event and participant lifecycle is automated
+- root-admin involvement is exceptional and operational
+- commissioner setup should be fast and template-driven
+- commissioners behave like members for ongoing contest participation
+- live scoring updates are backend automation, not a manual workflow
+
 ## Feature Summary
 
 PoolMaster should support a real first-pass flow where:
@@ -59,6 +67,12 @@ The normal flow is automated. Events are provider-imported from real-world
 schedules, and default relative timing rules resolve into event-specific
 datetimes without requiring routine admin action.
 
+### 3A. Commissioner Operations Stay Light-Touch `(Confirmed)`
+
+Commissioners should not accumulate extra operational steps after contest
+creation. They create contests quickly, handle occasional league
+administration, and otherwise use the same team and entry tools as members.
+
 ### 4. The Mock Provider Is Real Product Infrastructure `(Confirmed)`
 
 The mock sports data provider is not a test-only shortcut inside the app. It is
@@ -71,18 +85,17 @@ provider is integrated.
 ### Admin Event Operations
 
 Goal:
-- allow root admins to create, authorize, sync, and refresh event data needed
-  for contest creation
+- keep imported events operationally healthy with minimal routine admin effort
 
 Current match:
 - provider admin and ingestion trigger surfaces exist
 - event list ingestion exists
+- event operational timestamps such as `releaseAt` and `fieldLocksAt` now
+  exist in the model and timing foundation
 
 Current mismatch:
 - there is no cohesive admin event lifecycle UX or explicit event readiness
   contract yet
-- event operational timestamps such as `releaseAt` and `fieldLocksAt` are not
-  yet modeled as the first-class admin control surface
 
 ### Mock Sports Data Provider
 
@@ -106,6 +119,9 @@ Goal:
 
 Current match:
 - event-anchored contest creation and golf-first configuration are real
+- seeded contest-config templates are now modeled as a first-class persisted
+  concept
+- template-first contest creation flow is now implemented
 
 Current mismatch:
 - contest-field readiness and frozen-field semantics are still implicit
@@ -113,8 +129,6 @@ Current mismatch:
   product contract
 - released-contest frozen field behavior is not yet explicit in the product or
   technical design
-- first-pass seeded contest-config templates are not yet modeled as a
-  first-class persisted concept
 
 ### Team Entry And Selection
 
@@ -128,6 +142,8 @@ Current match:
 Current mismatch:
 - entry selection is still coupled to draft-room/runtime contracts rather than
   a first-class contest-field flow designed from this module set
+- commissioner-as-member behavior and league-scoped administrative use of the
+  same tools should be made more explicit in the product flow
 
 ### Automatic Scoring And Results Propagation
 
@@ -156,8 +172,8 @@ Current mismatch:
   - seeded templates
   - smart defaults
   - optional advanced overrides
-- event creation/loading, contest configuration, contest release, and team entry
-  should be designed together as one chain
+- event creation/loading, contest configuration, contest creation, and team
+  entry should be designed together as one chain
 - later sports should reuse the same event -> field -> contest field -> entry
   pattern even if the scoring and selection rules differ
 

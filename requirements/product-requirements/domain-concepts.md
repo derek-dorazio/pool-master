@@ -1,4 +1,39 @@
 # Domain Concepts
 
-Use this file for product-level concept definitions that sit above the
-technical domain model and below broad vision language.
+## Sporting Event
+
+A real-world scheduled competition imported from provider data. PoolMaster does
+not normally author these manually.
+
+## Event Field
+
+The participant set for a specific sporting event. It is upstream truth for
+contest derivation.
+
+## Contest Template
+
+A seeded reusable product configuration that provides the default contest setup
+experience for a given sport and contest style.
+
+## Contest
+
+A league-scoped competition derived from a sporting event plus a selected
+template and any optional advanced overrides. Contest creation immediately
+makes the contest live for entries in the normal flow.
+
+## Contest Field
+
+The contest-specific interpretation of the event field, including frozen rules
+such as tiers, prices, ordering, and other selection constraints that members
+use when building entries.
+
+## Entry
+
+A team-owned participation record inside a contest. A team may have multiple
+entries when the contest allows it.
+
+## Live Scoring
+
+An automated backend process that consumes provider updates, refreshes event
+and participant facts, recalculates entry scores, and updates leaderboard
+ordering without normal manual operation.

@@ -27,10 +27,19 @@
 - `BR-101B` `(Confirmed)` Root admin does not normally release events manually;
   event availability is driven by imported events plus default event-relative
   `releaseAt` and `fieldLocksAt` timing rules.
+- `BR-101C` `(Confirmed)` Root-admin routes and functions are exceptional
+  operational tools, not the normal way the product runs day to day.
 - `BR-102` `(Confirmed)` Commissioners create and configure contests for their
   leagues, and contest creation immediately makes the contest live for entries.
+- `BR-102A` `(Confirmed)` Commissioners should have minimal recurring duties
+  after contest creation beyond occasional league administration.
 - `BR-103` `(Confirmed)` Team owners/members act in the context of a team when
   creating contest entries.
+- `BR-103A` `(Confirmed)` Commissioners are also members and should use the
+  same team and entry tools as members for ongoing play.
+- `BR-103B` `(Confirmed)` When needed for league administration, commissioners
+  may use those same team and entry tools across teams within their league
+  scope.
 - `BR-104` `(Inferred)` Commissioners should not manually author the real-world
   event field; they configure contest behavior on top of imported event data.
 - `BR-105` `(Confirmed)` Root admin does not manage contest templates through a
