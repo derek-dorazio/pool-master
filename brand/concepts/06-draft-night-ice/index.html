@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PoolMaster — Draft Night (Ice)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --midnight: #0b1030;
+    --midnight-deep: #05081a;
+    --cyan: #22e7ff;
+    --cyan-deep: #0fb4cc;
+    --royal: #3b82f6;
+    --royal-deep: #1e4fb3;
+    --frost: #e6f4ff;
+    --text: #ffffff;
+    --muted: rgba(230, 244, 255, 0.65);
+    --border: rgba(230, 244, 255, 0.12);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    background: var(--midnight-deep);
+    color: var(--text);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(59, 130, 246, 0.16) 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 90%, rgba(34, 231, 255, 0.1) 0%, transparent 50%);
+  }
+  .page { max-width: 1180px; margin: 0 auto; padding: 32px 24px 80px; }
+  .top { display: flex; align-items: center; justify-content: space-between; padding-bottom: 36px; }
+  .wordmark { display: flex; align-items: center; gap: 12px; }
+  .wordmark .name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.02em; color: var(--frost); }
+  .ticker { font-size: 12px; color: var(--muted); letter-spacing: 0.1em;
+    display: flex; align-items: center; gap: 10px; font-family: 'Space Grotesk', sans-serif; }
+  .ticker .dot { width: 7px; height: 7px; border-radius: 999px; background: var(--cyan);
+    box-shadow: 0 0 14px var(--cyan); animation: blink 2s infinite; }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    border-radius: 22px;
+    background: var(--midnight);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow:
+      0 0 0 1px rgba(34, 231, 255, 0.1),
+      0 30px 70px -30px rgba(59, 130, 246, 0.32),
+      0 60px 120px -40px rgba(34, 231, 255, 0.18);
+  }
+  @media (max-width: 960px) { .shell { grid-template-columns: 1fr; } }
+
+  .hero {
+    position: relative;
+    min-height: 580px;
+    padding: 44px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: var(--midnight);
+    background-image:
+      linear-gradient(180deg, rgba(11, 16, 48, 0.4) 0%, rgba(5, 8, 26, 0.8) 100%),
+      url('hero.jpg');
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+  }
+  .hero-fallback { position: absolute; inset: 0; z-index: 0; overflow: hidden;
+    background:
+      radial-gradient(ellipse at 30% 35%, rgba(59, 130, 246, 0.38) 0%, transparent 55%),
+      radial-gradient(ellipse at 75% 75%, rgba(34, 231, 255, 0.28) 0%, transparent 50%),
+      linear-gradient(180deg, #0d1538 0%, var(--midnight-deep) 100%);
+  }
+  .hero-fallback::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(transparent 0 39px, rgba(230, 244, 255, 0.035) 39px 40px),
+      linear-gradient(90deg, transparent 0 39px, rgba(230, 244, 255, 0.035) 39px 40px);
+    mask-image: radial-gradient(ellipse at 50% 50%, black 10%, transparent 78%);
+  }
+  .hero-fallback::after {
+    content: "DRAFT NIGHT";
+    position: absolute; top: 44%; left: 50%; transform: translate(-50%, -50%) rotate(-3deg);
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 88px;
+    letter-spacing: -0.03em;
+    color: transparent;
+    -webkit-text-stroke: 1.2px rgba(34, 231, 255, 0.75);
+    text-shadow:
+      0 0 18px rgba(34, 231, 255, 0.35),
+      0 0 48px rgba(59, 130, 246, 0.28);
+    white-space: nowrap;
+    opacity: 0.78;
+  }
+  .hero > * { position: relative; z-index: 1; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--cyan);
+    padding: 6px 14px;
+    border: 1px solid rgba(34, 231, 255, 0.4);
+    border-radius: 4px;
+    background: rgba(34, 231, 255, 0.06);
+    backdrop-filter: blur(10px);
+  }
+  .headline {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 68px;
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+    margin: 24px 0 18px;
+    max-width: 520px;
+    color: var(--frost);
+  }
+  .headline .glow {
+    color: var(--cyan);
+    text-shadow:
+      0 0 26px rgba(34, 231, 255, 0.55),
+      0 0 70px rgba(34, 231, 255, 0.25);
+  }
+  .subhead {
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 460px;
+    color: var(--muted);
+  }
+  .pill-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 5px 12px; border-radius: 4px; border: 1px solid var(--border);
+    color: var(--muted); background: rgba(230, 244, 255, 0.03); backdrop-filter: blur(8px); }
+  .pill.hot { color: var(--cyan); border-color: rgba(34, 231, 255, 0.5); background: rgba(34, 231, 255, 0.08); }
+
+  .form-pane { padding: 48px 40px; background: linear-gradient(180deg, rgba(11, 16, 48, 0.92), rgba(5, 8, 26, 0.92)); border-left: 1px solid var(--border); }
+  @media (max-width: 960px) { .form-pane { border-left: 0; border-top: 1px solid var(--border); } }
+  .tabs { display: flex; background: rgba(230, 244, 255, 0.04); border: 1px solid var(--border); border-radius: 8px; padding: 3px; gap: 2px; }
+  .tab { flex: 1; padding: 10px 16px; border-radius: 5px; border: 0; background: transparent;
+    font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; font-family: inherit; }
+  .tab.active { background: var(--midnight); color: var(--cyan); box-shadow: inset 0 0 0 1px rgba(34, 231, 255, 0.35); }
+  form { margin-top: 28px; display: flex; flex-direction: column; gap: 18px; }
+  label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); }
+  input { width: 100%; margin-top: 8px; padding: 13px 16px; border-radius: 8px;
+    border: 1px solid var(--border); background: rgba(230, 244, 255, 0.04); color: var(--frost);
+    font-size: 14px; font-family: inherit; }
+  input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(34, 231, 255, 0.2); }
+  .submit { padding: 14px; border-radius: 8px; border: 0;
+    background: linear-gradient(135deg, var(--cyan) 0%, var(--royal) 100%);
+    color: var(--midnight-deep); font-weight: 800; font-size: 14px; cursor: pointer;
+    letter-spacing: 0.04em; font-family: inherit; text-transform: uppercase;
+    box-shadow: 0 8px 24px -8px rgba(34, 231, 255, 0.5); }
+  .submit:hover { filter: brightness(1.1); }
+  .meta { margin-top: 22px; font-size: 13px; color: var(--muted); }
+  .meta a { color: var(--cyan); font-weight: 600; text-decoration: none; }
+  .meta a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <div class="wordmark">
+      <svg width="36" height="36" viewBox="0 0 36 36" aria-label="PoolMaster">
+        <defs>
+          <linearGradient id="pm-grad-ice" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#22e7ff"/>
+            <stop offset="100%" stop-color="#3b82f6"/>
+          </linearGradient>
+        </defs>
+        <rect x="1" y="1" width="34" height="34" rx="10" fill="#0b1030" stroke="url(#pm-grad-ice)" stroke-width="1.5"/>
+        <text x="18" y="19" text-anchor="middle" dominant-baseline="central"
+              fill="url(#pm-grad-ice)" font-family="Syne, sans-serif"
+              font-weight="800" font-size="15" letter-spacing="-0.5">PM</text>
+      </svg>
+      <span class="name">PoolMaster</span>
+    </div>
+    <div class="ticker"><span class="dot"></span>next draft · tonight · 8:00 pm</div>
+  </header>
+
+  <section class="shell">
+    <div class="hero">
+      <div class="hero-fallback"></div>
+      <div>
+        <span class="eyebrow">· draft lobby open ·</span>
+        <h1 class="headline">Draft day, <span class="glow">every day.</span></h1>
+        <p class="subhead">Picks, pools, and payouts — with your people. Spin up a league in sixty seconds and start drafting tonight.</p>
+      </div>
+      <div class="pill-row">
+        <span class="pill hot">· live · 3 drafts tonight</span>
+        <span class="pill">survivor</span>
+        <span class="pill">bracket</span>
+        <span class="pill">weekly picks</span>
+      </div>
+    </div>
+
+    <div class="form-pane">
+      <div class="tabs">
+        <button class="tab active" type="button">Sign in</button>
+        <button class="tab" type="button">Create account</button>
+      </div>
+      <form onsubmit="event.preventDefault()">
+        <label>Username or email
+          <input type="text" autocomplete="username" />
+        </label>
+        <label>Password
+          <input type="password" autocomplete="current-password" />
+        </label>
+        <button class="submit" type="submit">Sign in</button>
+      </form>
+      <p class="meta">New? <a href="#">Spin up an account →</a></p>
+    </div>
+  </section>
+</div>
+</body>
+</html>

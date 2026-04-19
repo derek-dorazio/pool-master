@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ultimate Pool Manager — Theme Sample</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,600;0,700;0,900;1,800;1,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body);
+    background: var(--surface-canvas);
+    color: var(--text-primary);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+  }
+
+  .page { max-width: 1180px; margin: 0 auto; padding: 48px 32px 96px; }
+  .section { margin-top: 64px; }
+  .section:first-child { margin-top: 0; }
+  .section-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .grid { display: grid; gap: 16px; }
+  .cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .cols-6 { grid-template-columns: repeat(6, 1fr); }
+  @media (max-width: 720px) {
+    .cols-3, .cols-4, .cols-6 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ---------- Header strip ---------- */
+  .header {
+    background: var(--surface-inverse);
+    color: var(--text-on-inverse);
+    border-radius: var(--radius-3xl);
+    padding: 36px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: var(--shadow-xl);
+    margin-bottom: 40px;
+  }
+  .header-title {
+    font-family: var(--font-display);
+    font-weight: 900; font-style: italic;
+    font-size: var(--text-2xl);
+    letter-spacing: var(--tracking-display);
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .header-title .gold { color: var(--text-accent); }
+  .header-sub { color: var(--text-on-inverse-muted); margin: 8px 0 0; font-size: var(--text-md); }
+
+  /* ---------- Swatches ---------- */
+  .swatch {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    background: var(--surface-raised);
+  }
+  .swatch .chip { height: 72px; }
+  .swatch .meta { padding: 12px 14px; font-size: var(--text-xs); }
+  .swatch .meta .name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+  .swatch .meta .hex { color: var(--text-muted); margin-top: 2px; }
+
+  /* ---------- Type specimens ---------- */
+  .type-row {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 24px;
+    padding: 14px 0;
+    border-top: 1px dashed var(--border-subtle);
+    align-items: baseline;
+  }
+  .type-row:first-child { border-top: 0; }
+  .type-row .label {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .specimen-display {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: var(--tracking-display);
+    text-transform: uppercase;
+    line-height: var(--leading-tight);
+  }
+  .specimen-body { font-family: var(--font-body); line-height: var(--leading-normal); }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px;
+    padding: 12px 18px;
+    border-radius: var(--radius-lg);
+    border: 1px solid transparent;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: var(--text-base);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+  }
+  .btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+  .btn-primary { background: var(--color-navy-600); color: var(--color-gold-400); }
+  .btn-primary:hover { background: var(--color-navy-700); }
+  .btn-secondary { background: transparent; color: var(--text-primary); border-color: var(--border-default); }
+  .btn-secondary:hover { background: var(--color-neutral-100); }
+  .btn-ghost { background: transparent; color: var(--text-primary); }
+  .btn-ghost:hover { background: var(--color-neutral-100); }
+  .btn-danger { background: var(--color-red-400); color: #fff; }
+  .btn-danger:hover { background: var(--color-red-500); }
+  .btn-accent { background: var(--color-gold-400); color: var(--color-navy-600); }
+  .btn-accent:hover { background: var(--color-gold-300); }
+  .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-row { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  /* ---------- Form field ---------- */
+  .field { display: flex; flex-direction: column; gap: 8px; }
+  .field label {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+  .field input[type="text"],
+  .field input[type="email"],
+  .field input[type="password"],
+  .field select,
+  .field textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: var(--radius-lg);
+    border: 1.5px solid var(--border-default);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: var(--text-base);
+    font-family: var(--font-body);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--color-navy-600);
+    box-shadow: var(--focus-ring);
+  }
+  .field .helper { font-size: var(--text-xs); color: var(--text-muted); }
+  .field.is-error input { border-color: var(--color-red-400); }
+  .field.is-error .helper { color: var(--text-danger); }
+
+  /* ---------- Badges ---------- */
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: var(--radius-pill); }
+  .badge-live { background: rgba(168, 32, 45, 0.12); color: var(--text-danger); }
+  .badge-live::before { background: var(--color-red-400); box-shadow: var(--shadow-red-pulse); }
+  .badge-upcoming { background: rgba(245, 184, 0, 0.18); color: var(--color-gold-600); }
+  .badge-upcoming::before { background: var(--color-gold-400); }
+  .badge-locked { background: var(--color-neutral-100); color: var(--text-muted); }
+  .badge-locked::before { background: var(--color-neutral-400); }
+  .badge-final { background: rgba(11, 30, 63, 0.08); color: var(--text-primary); }
+  .badge-final::before { background: var(--color-navy-600); }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-eyebrow {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--color-gold-600);
+  }
+  .card-title {
+    font-family: var(--font-display);
+    font-weight: 900; font-style: italic;
+    font-size: var(--text-xl);
+    letter-spacing: var(--tracking-display);
+    text-transform: uppercase;
+    margin: 8px 0 4px;
+  }
+  .card-body { color: var(--text-secondary); font-size: var(--text-base); }
+
+  .card-inverse {
+    background: var(--surface-inverse);
+    border-color: var(--border-on-inverse);
+    color: var(--text-on-inverse);
+  }
+  .card-inverse .card-body { color: var(--text-on-inverse-muted); }
+  .card-inverse .card-eyebrow { color: var(--text-accent); }
+
+  /* ---------- Table ---------- */
+  table.standings {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+  }
+  .standings th, .standings td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: var(--text-base);
+  }
+  .standings tr:last-child td { border-bottom: 0; }
+  .standings th {
+    background: var(--color-neutral-100);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .standings td.rank {
+    font-family: var(--font-display);
+    font-weight: 900; font-style: italic;
+    color: var(--color-navy-600);
+    width: 48px;
+  }
+  .standings td.points {
+    font-family: var(--font-display);
+    font-weight: 900;
+    color: var(--color-gold-600);
+    text-align: right;
+  }
+  .standings tr.is-leader td.rank { color: var(--color-gold-400); }
+
+  /* ---------- Alert / empty state ---------- */
+  .alert {
+    display: flex; gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    background: var(--surface-raised);
+  }
+  .alert-info { border-left: 4px solid var(--color-navy-600); }
+  .alert-danger { border-left: 4px solid var(--color-red-400); }
+  .alert-success { border-left: 4px solid var(--color-gold-400); }
+  .alert .title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+  .alert .body { color: var(--text-secondary); margin-top: 2px; font-size: var(--text-sm); }
+
+  .empty {
+    text-align: center;
+    padding: 48px 32px;
+    border: 1.5px dashed var(--border-default);
+    border-radius: var(--radius-xl);
+    background: var(--color-neutral-50);
+  }
+  .empty h3 {
+    font-family: var(--font-display);
+    font-weight: 900; font-style: italic;
+    font-size: var(--text-xl);
+    letter-spacing: var(--tracking-display);
+    text-transform: uppercase;
+    margin: 0 0 8px;
+  }
+  .empty p { color: var(--text-muted); margin: 0 0 20px; }
+
+  /* ---------- Nav sample ---------- */
+  .nav {
+    background: var(--surface-inverse);
+    color: var(--text-on-inverse);
+    border-radius: var(--radius-xl);
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 24px;
+    box-shadow: var(--shadow-md);
+  }
+  .nav .brand {
+    font-family: var(--font-display);
+    font-weight: 900; font-style: italic;
+    font-size: var(--text-md);
+    letter-spacing: var(--tracking-display);
+    text-transform: uppercase;
+  }
+  .nav .brand .gold { color: var(--text-accent); }
+  .nav .links { display: flex; gap: 4px; margin-left: 12px; }
+  .nav .links a {
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    color: var(--text-on-inverse-muted);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: var(--text-sm);
+  }
+  .nav .links a:hover { color: var(--text-on-inverse); background: rgba(255,255,255,0.06); }
+  .nav .links a.active { color: var(--text-accent); background: rgba(245, 184, 0, 0.12); }
+  .nav .spacer { flex: 1; }
+
+  /* ---------- Radius / shadow demo ---------- */
+  .demo-tile {
+    aspect-ratio: 1.4 / 1;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div>
+      <h1 class="header-title">Ultimate Pool Manager <span class="gold">Theme</span></h1>
+      <p class="header-sub">Sunday Prime direction — tokens, primitives, and surfaces for planning layer rollout.</p>
+    </div>
+    <span class="badge badge-live">Sample</span>
+  </div>
+
+  <!-- ---------- Color ---------- -->
+  <section class="section">
+    <h2 class="section-title">Brand scales</h2>
+    <div class="grid cols-4">
+      <div class="swatch"><div class="chip" style="background:#0b1e3f"></div><div class="meta"><div class="name">Navy 600</div><div class="hex">#0b1e3f · primary</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#16325e"></div><div class="meta"><div class="name">Navy 500</div><div class="hex">#16325e · elevated</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#05122a"></div><div class="meta"><div class="name">Navy 800</div><div class="hex">#05122a · deep</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#f5b800"></div><div class="meta"><div class="name">Gold 400</div><div class="hex">#f5b800 · accent</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#ffc82e"></div><div class="meta"><div class="name">Gold 300</div><div class="hex">#ffc82e · hover</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#a8202d"></div><div class="meta"><div class="name">Red 400</div><div class="hex">#a8202d · alert</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#f5f5f2"></div><div class="meta"><div class="name">Paper</div><div class="hex">#f5f5f2 · canvas</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#0b0b0b"></div><div class="meta"><div class="name">Ink</div><div class="hex">#0b0b0b · text</div></div></div>
+    </div>
+  </section>
+
+  <!-- ---------- Type ---------- -->
+  <section class="section">
+    <h2 class="section-title">Typography</h2>
+    <div class="type-row">
+      <div class="label">Display 6xl</div>
+      <div class="specimen-display" style="font-size: var(--text-6xl);">Every Event</div>
+    </div>
+    <div class="type-row">
+      <div class="label">Display 4xl</div>
+      <div class="specimen-display" style="font-size: var(--text-4xl);">Tournament central</div>
+    </div>
+    <div class="type-row">
+      <div class="label">Display 2xl</div>
+      <div class="specimen-display" style="font-size: var(--text-2xl);">Section heading</div>
+    </div>
+    <div class="type-row">
+      <div class="label">Eyebrow</div>
+      <div style="font-family: var(--font-display); font-weight: 700; font-size: var(--text-xs); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; color: var(--color-gold-600);">Prime-time Commissioner</div>
+    </div>
+    <div class="type-row">
+      <div class="label">Body md</div>
+      <div class="specimen-body" style="font-size: var(--text-md); max-width: 640px;">Office pools, brackets, and survivor contests — your way. Run by the Prime-time Commissioner and scored live as the tournament plays out.</div>
+    </div>
+    <div class="type-row">
+      <div class="label">Body sm</div>
+      <div class="specimen-body" style="font-size: var(--text-sm); color: var(--text-secondary); max-width: 640px;">Standings update after each round. Tiebreakers resolve by total correct picks, then head-to-head, then random draw among the commissioner's trusted few.</div>
+    </div>
+  </section>
+
+  <!-- ---------- Buttons ---------- -->
+  <section class="section">
+    <h2 class="section-title">Buttons</h2>
+    <div class="btn-row">
+      <button class="btn btn-primary">Primary</button>
+      <button class="btn btn-accent">Accent</button>
+      <button class="btn btn-secondary">Secondary</button>
+      <button class="btn btn-ghost">Ghost</button>
+      <button class="btn btn-danger">Destructive</button>
+      <button class="btn btn-primary" disabled>Disabled</button>
+    </div>
+    <p class="specimen-body" style="margin-top:16px; color:var(--text-muted); font-size: var(--text-sm);">
+      Primary = navy fill + gold text (high-authority actions). Accent = gold fill + navy text (hero / login CTA). Secondary = outlined on paper. Destructive = red for irreversible.
+    </p>
+  </section>
+
+  <!-- ---------- Forms ---------- -->
+  <section class="section">
+    <h2 class="section-title">Form fields</h2>
+    <div class="grid cols-2">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" value="commish" />
+        <div class="helper">Your display name for pool members.</div>
+      </div>
+      <div class="field is-error">
+        <label>Password</label>
+        <input type="password" value="shortpw" />
+        <div class="helper">Passwords must be at least 10 characters.</div>
+      </div>
+      <div class="field">
+        <label>League type</label>
+        <select>
+          <option>Bracket</option>
+          <option>Survivor</option>
+          <option>Pick 'em</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Commissioner's note</label>
+        <textarea rows="3">Entry deadline Friday at 5pm ET. No exceptions unless you bring coffee.</textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- Badges ---------- -->
+  <section class="section">
+    <h2 class="section-title">Status badges</h2>
+    <div class="btn-row">
+      <span class="badge badge-live">Live</span>
+      <span class="badge badge-upcoming">Upcoming</span>
+      <span class="badge badge-locked">Locked</span>
+      <span class="badge badge-final">Final</span>
+    </div>
+  </section>
+
+  <!-- ---------- Nav ---------- -->
+  <section class="section">
+    <h2 class="section-title">Navigation</h2>
+    <div class="nav">
+      <div class="brand">Ultimate <span class="gold">Pool</span> Manager</div>
+      <div class="links">
+        <a href="#" class="active">Home</a>
+        <a href="#">Leagues</a>
+        <a href="#">Contests</a>
+        <a href="#">Standings</a>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-accent" style="padding: 8px 14px; font-size: var(--text-xs);">New league</button>
+    </div>
+  </section>
+
+  <!-- ---------- Cards ---------- -->
+  <section class="section">
+    <h2 class="section-title">Cards — paper &amp; navy surfaces</h2>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="card-eyebrow">Round 4 · Live</div>
+        <h3 class="card-title">Hometown Hustle</h3>
+        <p class="card-body">21 picks in. Three leaders within a single-game swing of first place. Results update as the night's games finalize.</p>
+        <div style="margin-top:16px;"><button class="btn btn-primary">Open league</button></div>
+      </div>
+      <div class="card card-inverse">
+        <div class="card-eyebrow">Prime-time Commissioner</div>
+        <h3 class="card-title">Survivor: Dynasty Cup</h3>
+        <p class="card-body">Lock day begins Friday at 5pm. Invite your pool, scored live, and decide your own tiebreakers.</p>
+        <div style="margin-top:16px;"><button class="btn btn-accent">Create contest</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- Table ---------- -->
+  <section class="section">
+    <h2 class="section-title">Standings table</h2>
+    <table class="standings">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Member</th>
+          <th>Correct</th>
+          <th>Streak</th>
+          <th style="text-align:right;">Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="is-leader"><td class="rank">1</td><td>Riley Okafor</td><td>18</td><td>W5</td><td class="points">148</td></tr>
+        <tr><td class="rank">2</td><td>Sam Calderón</td><td>17</td><td>W2</td><td class="points">141</td></tr>
+        <tr><td class="rank">3</td><td>Jun Park</td><td>16</td><td>L1</td><td class="points">133</td></tr>
+        <tr><td class="rank">4</td><td>The Commish</td><td>15</td><td>W1</td><td class="points">128</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ---------- Alerts / empty state ---------- -->
+  <section class="section">
+    <h2 class="section-title">Alerts &amp; empty state</h2>
+    <div class="grid cols-3">
+      <div class="alert alert-info">
+        <div>
+          <div class="title">Round 4 locks in 2h</div>
+          <div class="body">Members still entering picks will be frozen at lock.</div>
+        </div>
+      </div>
+      <div class="alert alert-success">
+        <div>
+          <div class="title">Payouts posted</div>
+          <div class="body">Your Week 3 top-three payouts are on file.</div>
+        </div>
+      </div>
+      <div class="alert alert-danger">
+        <div>
+          <div class="title">Invite failed</div>
+          <div class="body">Two addresses bounced — re-send from the members page.</div>
+        </div>
+      </div>
+    </div>
+    <div class="empty" style="margin-top: 24px;">
+      <h3>No contests yet</h3>
+      <p>Your first contest creates your first pool night. Fifteen seconds, tops.</p>
+      <button class="btn btn-accent">Create contest</button>
+    </div>
+  </section>
+
+  <!-- ---------- Radii / shadows ---------- -->
+  <section class="section">
+    <h2 class="section-title">Radii &amp; shadow</h2>
+    <div class="grid cols-6">
+      <div class="demo-tile" style="border-radius: var(--radius-sm);">sm</div>
+      <div class="demo-tile" style="border-radius: var(--radius-md);">md</div>
+      <div class="demo-tile" style="border-radius: var(--radius-lg);">lg</div>
+      <div class="demo-tile" style="border-radius: var(--radius-xl);">xl</div>
+      <div class="demo-tile" style="border-radius: var(--radius-2xl);">2xl</div>
+      <div class="demo-tile" style="border-radius: var(--radius-pill);">pill</div>
+    </div>
+    <div class="grid cols-4" style="margin-top: 16px;">
+      <div class="demo-tile" style="box-shadow: var(--shadow-sm); border-radius: var(--radius-lg);">shadow-sm</div>
+      <div class="demo-tile" style="box-shadow: var(--shadow-md); border-radius: var(--radius-lg);">shadow-md</div>
+      <div class="demo-tile" style="box-shadow: var(--shadow-lg); border-radius: var(--radius-lg);">shadow-lg</div>
+      <div class="demo-tile" style="box-shadow: var(--shadow-xl); border-radius: var(--radius-lg);">shadow-xl</div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

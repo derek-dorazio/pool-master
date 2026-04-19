@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PoolMaster — Brand Concepts</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #0a0a0a;
+    color: #f5f5f5;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 64px 32px 96px; }
+  .kicker { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: #8c8c8c; font-weight: 600; }
+  h1 { font-size: 44px; line-height: 1.05; letter-spacing: -0.02em; margin: 16px 0 12px; }
+  .lede { font-size: 17px; color: #b5b5b5; max-width: 640px; line-height: 1.55; }
+  .grid { margin-top: 56px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .card {
+    display: block; text-decoration: none; color: inherit;
+    border: 1px solid #1e1e1e; border-radius: 18px;
+    background: #111; overflow: hidden;
+    transition: transform 180ms ease, border-color 180ms ease;
+  }
+  .card:hover { transform: translateY(-2px); border-color: #333; }
+  .swatch { height: 180px; position: relative; overflow: hidden; }
+  .swatch .tag {
+    position: absolute; top: 12px; left: 12px;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700;
+    padding: 4px 10px; border-radius: 999px;
+  }
+  .body { padding: 20px 22px 22px; }
+  .name { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+  .tag-line { margin-top: 4px; font-size: 14px; color: #b5b5b5; font-style: italic; }
+  .meta { margin-top: 14px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .dot { display: inline-block; width: 16px; height: 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.1); }
+
+  /* swatches */
+  .sw-01 { background: radial-gradient(ellipse at 30% 30%, #1a5a43 0%, #0e2a3b 70%, #071822 100%); }
+  .sw-01 .tag { background: #cfa456; color: #0e2a3b; }
+  .sw-02 { background: #0a0a0a; }
+  .sw-02::after { content: ""; position: absolute; inset: 0;
+    background:
+      linear-gradient(135deg, transparent 40%, rgba(200,255,61,0.9) 40%, rgba(200,255,61,0.9) 42%, transparent 42%),
+      linear-gradient(135deg, transparent 55%, rgba(200,255,61,0.3) 55%, rgba(200,255,61,0.3) 56%, transparent 56%); }
+  .sw-02 .tag { background: #c8ff3d; color: #0a0a0a; }
+  .sw-02b { background: #fafaf8; position: relative; overflow: hidden; }
+  .sw-02b::before { content: ""; position: absolute; right: -18px; top: 48%;
+    width: 150px; height: 72px; background: #c8ff3d; border: 1.5px solid #0a0a0a;
+    transform: rotate(-4deg); box-shadow: -6px 6px 0 #0a0a0a; }
+  .sw-02b::after { content: ""; position: absolute; left: 14px; top: 18%;
+    width: 44%; height: 60%; border: 1.5px solid #0a0a0a; border-right: 0; }
+  .sw-02b .tag { background: #0a0a0a; color: #c8ff3d; }
+  .sw-03 { background: linear-gradient(180deg, #0b1e3f 0%, #122a55 60%, #0b1e3f 100%); }
+  .sw-03::after { content: ""; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 85%, rgba(245,184,0,0.35) 0%, transparent 60%); }
+  .sw-03 .tag { background: #f5b800; color: #0b1e3f; }
+  .sw-04 { background: #f3ead6; position: relative; }
+  .sw-04::before { content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(182,85,60,0.25) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(31,74,78,0.25) 0%, transparent 40%); }
+  .sw-04 .tag { background: #1f4a4e; color: #f3ead6; }
+  .sw-05 { background: radial-gradient(ellipse at 30% 40%, #1a1f4f 0%, #0b1030 60%, #05081a 100%); }
+  .sw-05::after { content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 70% 35%, rgba(34,231,255,0.55) 0%, transparent 35%),
+      radial-gradient(circle at 30% 75%, rgba(168,255,61,0.5) 0%, transparent 35%);
+    filter: blur(8px); }
+  .sw-05 .tag { background: #22e7ff; color: #0b1030; }
+  .sw-06 { background: radial-gradient(ellipse at 30% 40%, #101a48 0%, #0b1030 55%, #05081a 100%); }
+  .sw-06::after { content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 65% 40%, rgba(34,231,255,0.55) 0%, transparent 38%),
+      radial-gradient(circle at 35% 70%, rgba(59,130,246,0.5) 0%, transparent 38%);
+    filter: blur(10px); }
+  .sw-06 .tag { background: #e6f4ff; color: #0b1030; }
+
+  footer { margin-top: 64px; color: #666; font-size: 13px; }
+  footer a { color: #b5b5b5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">Pam × Fran · Brand Exploration</div>
+  <h1>Five directions for the PoolMaster login.</h1>
+  <p class="lede">
+    Each concept is a standalone HTML mockup with an inline SVG logo, cleaned
+    copy, a palette, and a hero-image prompt. Pick a direction; we'll plan the
+    real slice against <code>auth-home-page.tsx</code>.
+  </p>
+
+  <div class="grid">
+    <a class="card" href="concepts/01-season-ticket/index.html">
+      <div class="swatch sw-01"><span class="tag">01</span></div>
+      <div class="body">
+        <div class="name">Season Ticket</div>
+        <div class="tag-line">"Where your league lives."</div>
+        <div class="meta">
+          <span class="dot" style="background:#0e2a3b"></span>
+          <span class="dot" style="background:#f3ecdc"></span>
+          <span class="dot" style="background:#cfa456"></span>
+          <span class="dot" style="background:#7a2230"></span>
+        </div>
+      </div>
+    </a>
+    <a class="card" href="concepts/02-playbook/index.html">
+      <div class="swatch sw-02"><span class="tag">02</span></div>
+      <div class="body">
+        <div class="name">Playbook — Dark</div>
+        <div class="tag-line">"Run the league. Skip the spreadsheet."</div>
+        <div class="meta">
+          <span class="dot" style="background:#0a0a0a"></span>
+          <span class="dot" style="background:#c8ff3d"></span>
+          <span class="dot" style="background:#2a2a2a"></span>
+          <span class="dot" style="background:#ffffff"></span>
+        </div>
+      </div>
+    </a>
+    <a class="card" href="concepts/02b-playbook-light/index.html">
+      <div class="swatch sw-02b"><span class="tag">02b</span></div>
+      <div class="body">
+        <div class="name">Playbook — Light</div>
+        <div class="tag-line">"Run the league. Skip the spreadsheet."</div>
+        <div class="meta">
+          <span class="dot" style="background:#fafaf8;border-color:#ccc"></span>
+          <span class="dot" style="background:#0a0a0a"></span>
+          <span class="dot" style="background:#c8ff3d"></span>
+          <span class="dot" style="background:#9cd412"></span>
+        </div>
+      </div>
+    </a>
+    <a class="card" href="concepts/03-sunday-prime/index.html">
+      <div class="swatch sw-03"><span class="tag">03</span></div>
+      <div class="body">
+        <div class="name">Sunday Prime</div>
+        <div class="tag-line">"Every pick. Every week. One place."</div>
+        <div class="meta">
+          <span class="dot" style="background:#0b1e3f"></span>
+          <span class="dot" style="background:#f5b800"></span>
+          <span class="dot" style="background:#a8202d"></span>
+          <span class="dot" style="background:#ffffff"></span>
+        </div>
+      </div>
+    </a>
+    <a class="card" href="concepts/04-back-table/index.html">
+      <div class="swatch sw-04"><span class="tag">04</span></div>
+      <div class="body">
+        <div class="name">Back Table</div>
+        <div class="tag-line">"Your league, your rules, your people."</div>
+        <div class="meta">
+          <span class="dot" style="background:#b6553c"></span>
+          <span class="dot" style="background:#1f4a4e"></span>
+          <span class="dot" style="background:#f8f1e4"></span>
+          <span class="dot" style="background:#2b2522"></span>
+        </div>
+      </div>
+    </a>
+    <a class="card" href="concepts/05-draft-night/index.html">
+      <div class="swatch sw-05"><span class="tag">05</span></div>
+      <div class="body">
+        <div class="name">Draft Night — Neon</div>
+        <div class="tag-line">"Draft day, every day."</div>
+        <div class="meta">
+          <span class="dot" style="background:#0b1030"></span>
+          <span class="dot" style="background:#22e7ff"></span>
+          <span class="dot" style="background:#a8ff3d"></span>
+          <span class="dot" style="background:#ffffff"></span>
+        </div>
+      </div>
+    </a>
+    <a class="card" href="concepts/06-draft-night-ice/index.html">
+      <div class="swatch sw-06"><span class="tag">06</span></div>
+      <div class="body">
+        <div class="name">Draft Night — Ice</div>
+        <div class="tag-line">"Draft day, every day."</div>
+        <div class="meta">
+          <span class="dot" style="background:#0b1030"></span>
+          <span class="dot" style="background:#22e7ff"></span>
+          <span class="dot" style="background:#3b82f6"></span>
+          <span class="dot" style="background:#e6f4ff"></span>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <footer>
+    Read <a href="README.md">README.md</a> for the copy audit and next-step workflow.
+  </footer>
+</div>
+</body>
+</html>

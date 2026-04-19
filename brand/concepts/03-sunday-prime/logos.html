@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sunday Prime — Logo Variations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,600;0,700;0,900;1,800;1,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0b1e3f;
+    --navy-deep: #05122a;
+    --gold: #f5b800;
+    --red: #e11d2b;
+    --paper: #f5f5f2;
+    --paper-warm: #efeee8;
+    --ink: #0b0b0b;
+    --muted: #6b6b68;
+    --border: #dcdcd6;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+  .page { max-width: 1100px; margin: 0 auto; padding: 48px 32px 96px; }
+  .kicker { font-family: 'Archivo', sans-serif; font-weight: 700;
+    font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-family: 'Archivo', sans-serif; font-weight: 900; font-style: italic;
+    font-size: 44px; line-height: 1.02; letter-spacing: -0.03em; margin: 12px 0 10px; text-transform: uppercase; }
+  .lede { font-size: 16px; color: var(--muted); max-width: 640px; line-height: 1.55; }
+
+  .legend { display: flex; gap: 18px; margin: 28px 0 8px; font-family: 'Archivo', sans-serif;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+
+  .card {
+    margin-top: 28px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fff;
+    overflow: hidden;
+  }
+  .card-head {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: baseline; justify-content: space-between; gap: 18px;
+    flex-wrap: wrap;
+  }
+  .name { font-family: 'Archivo', sans-serif; font-weight: 900; font-size: 20px;
+    letter-spacing: -0.015em; }
+  .name .tag { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 11px;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold);
+    background: var(--navy); padding: 3px 8px; border-radius: 3px; margin-left: 10px; vertical-align: 2px; }
+  .desc { font-size: 14px; color: var(--muted); max-width: 540px; line-height: 1.5; }
+
+  .surfaces { display: grid; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 720px) { .surfaces { grid-template-columns: 1fr; } }
+
+  .surface { padding: 28px 24px; display: flex; flex-direction: column; gap: 18px; }
+  .surface.navy { background: var(--navy); color: var(--gold); }
+  .surface.cream { background: var(--paper-warm); color: var(--ink); }
+
+  .surface .label { font-family: 'Archivo', sans-serif; font-size: 10px;
+    font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+    opacity: 0.55; }
+
+  .sizes { display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap; min-height: 120px; }
+  .size { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .size .h { font-family: 'Archivo', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.45; }
+
+  footer { margin-top: 48px; color: var(--muted); font-size: 13px; text-align: center; }
+  footer a { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="kicker">Sunday Prime · Mark Variations</div>
+  <h1>Five marks for one voice.</h1>
+  <p class="lede">
+    Each variation is a different read on the same brand — broadcast, gameday,
+    high-energy. Current mark is #01; the rest are new directions. All shown on
+    navy (primary surface) and cream (secondary surface) at three sizes:
+    <b>24px</b> (nav), <b>48px</b> (hero), <b>96px</b> (billboard).
+  </p>
+
+  <!-- ===================== 01 CURRENT — stadium-M monogram ===================== -->
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <div class="name">01 · Stadium-M<span class="tag">current</span></div>
+        <div class="desc">Abstract "M" formed from two stadium uprights with a gold crossbar, a diagonal red stripe for motion. What's on the login mockup today.</div>
+      </div>
+    </div>
+    <div class="surfaces">
+      <div class="surface navy">
+        <span class="label">on navy</span>
+        <div class="sizes">
+          <div class="size"><svg width="24" height="24" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M6 30 L14 10 L20 10 L26 30 L30 30 L22 8 L14 8 L6 30 Z" fill="#f5b800"/><rect x="8" y="20" width="14" height="2.5" fill="#f5b800"/><path d="M30 30 L34 10" stroke="#e11d2b" stroke-width="3" stroke-linecap="square"/></svg><span class="h">24</span></div>
+          <div class="size"><svg width="48" height="48" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M6 30 L14 10 L20 10 L26 30 L30 30 L22 8 L14 8 L6 30 Z" fill="#f5b800"/><rect x="8" y="20" width="14" height="2.5" fill="#f5b800"/><path d="M30 30 L34 10" stroke="#e11d2b" stroke-width="3" stroke-linecap="square"/></svg><span class="h">48</span></div>
+          <div class="size"><svg width="96" height="96" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M6 30 L14 10 L20 10 L26 30 L30 30 L22 8 L14 8 L6 30 Z" fill="#f5b800"/><rect x="8" y="20" width="14" height="2.5" fill="#f5b800"/><path d="M30 30 L34 10" stroke="#e11d2b" stroke-width="3" stroke-linecap="square"/></svg><span class="h">96</span></div>
+        </div>
+      </div>
+      <div class="surface cream">
+        <span class="label">on cream</span>
+        <div class="sizes">
+          <div class="size"><svg width="24" height="24" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M6 30 L14 10 L20 10 L26 30 L30 30 L22 8 L14 8 L6 30 Z" fill="#f5b800"/><rect x="8" y="20" width="14" height="2.5" fill="#f5b800"/><path d="M30 30 L34 10" stroke="#e11d2b" stroke-width="3" stroke-linecap="square"/></svg><span class="h">24</span></div>
+          <div class="size"><svg width="48" height="48" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M6 30 L14 10 L20 10 L26 30 L30 30 L22 8 L14 8 L6 30 Z" fill="#f5b800"/><rect x="8" y="20" width="14" height="2.5" fill="#f5b800"/><path d="M30 30 L34 10" stroke="#e11d2b" stroke-width="3" stroke-linecap="square"/></svg><span class="h">48</span></div>
+          <div class="size"><svg width="96" height="96" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M6 30 L14 10 L20 10 L26 30 L30 30 L22 8 L14 8 L6 30 Z" fill="#f5b800"/><rect x="8" y="20" width="14" height="2.5" fill="#f5b800"/><path d="M30 30 L34 10" stroke="#e11d2b" stroke-width="3" stroke-linecap="square"/></svg><span class="h">96</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 02 CHEVRON ===================== -->
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <div class="name">02 · Chevron</div>
+        <div class="desc">Two forward-leaning chevrons stacked — victory stripe, speed, momentum. Reads instantly at small sizes. Red underline for the broadcast-motion cue.</div>
+      </div>
+    </div>
+    <div class="surfaces">
+      <div class="surface navy">
+        <span class="label">on navy</span>
+        <div class="sizes">
+          <div class="size">
+            <svg width="24" height="24" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M9 12 L19 20 L9 28" stroke="#f5b800" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/><path d="M19 12 L29 20 L19 28" stroke="#f5b800" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/><line x1="7" y1="33" x2="33" y2="33" stroke="#e11d2b" stroke-width="2"/></svg>
+            <span class="h">24</span>
+          </div>
+          <div class="size">
+            <svg width="48" height="48" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M9 12 L19 20 L9 28" stroke="#f5b800" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/><path d="M19 12 L29 20 L19 28" stroke="#f5b800" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/><line x1="7" y1="33" x2="33" y2="33" stroke="#e11d2b" stroke-width="2"/></svg>
+            <span class="h">48</span>
+          </div>
+          <div class="size">
+            <svg width="96" height="96" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M9 12 L19 20 L9 28" stroke="#f5b800" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/><path d="M19 12 L29 20 L19 28" stroke="#f5b800" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/><line x1="7" y1="33" x2="33" y2="33" stroke="#e11d2b" stroke-width="2"/></svg>
+            <span class="h">96</span>
+          </div>
+        </div>
+      </div>
+      <div class="surface cream">
+        <span class="label">on cream</span>
+        <div class="sizes">
+          <div class="size">
+            <svg width="24" height="24" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M9 12 L19 20 L9 28" stroke="#f5b800" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/><path d="M19 12 L29 20 L19 28" stroke="#f5b800" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/><line x1="7" y1="33" x2="33" y2="33" stroke="#e11d2b" stroke-width="2"/></svg>
+            <span class="h">24</span>
+          </div>
+          <div class="size">
+            <svg width="48" height="48" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M9 12 L19 20 L9 28" stroke="#f5b800" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/><path d="M19 12 L29 20 L19 28" stroke="#f5b800" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/><line x1="7" y1="33" x2="33" y2="33" stroke="#e11d2b" stroke-width="2"/></svg>
+            <span class="h">48</span>
+          </div>
+          <div class="size">
+            <svg width="96" height="96" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M9 12 L19 20 L9 28" stroke="#f5b800" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/><path d="M19 12 L29 20 L19 28" stroke="#f5b800" stroke-width="3" fill="none" stroke-linecap="square" stroke-linejoin="miter"/><line x1="7" y1="33" x2="33" y2="33" stroke="#e11d2b" stroke-width="2"/></svg>
+            <span class="h">96</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 03 STADIUM ARCH ===================== -->
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <div class="name">03 · Stadium Arch</div>
+        <div class="desc">A venue roofline arc over a grounded field line, "UPM" set inside. Evokes the literal place where the pool happens. More editorial than the current mark.</div>
+      </div>
+    </div>
+    <div class="surfaces">
+      <div class="surface navy">
+        <span class="label">on navy</span>
+        <div class="sizes">
+          <div class="size">
+            <svg width="24" height="24" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M6 30 Q 20 6 34 30" fill="none" stroke="#f5b800" stroke-width="2"/><line x1="6" y1="30" x2="34" y2="30" stroke="#f5b800" stroke-width="2"/><text x="20" y="29" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="10.5" letter-spacing="-0.5">UPM</text></svg>
+            <span class="h">24</span>
+          </div>
+          <div class="size">
+            <svg width="48" height="48" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M6 30 Q 20 6 34 30" fill="none" stroke="#f5b800" stroke-width="2"/><line x1="6" y1="30" x2="34" y2="30" stroke="#f5b800" stroke-width="2"/><text x="20" y="29" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="10.5" letter-spacing="-0.5">UPM</text></svg>
+            <span class="h">48</span>
+          </div>
+          <div class="size">
+            <svg width="96" height="96" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M6 30 Q 20 6 34 30" fill="none" stroke="#f5b800" stroke-width="2"/><line x1="6" y1="30" x2="34" y2="30" stroke="#f5b800" stroke-width="2"/><text x="20" y="29" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="10.5" letter-spacing="-0.5">UPM</text></svg>
+            <span class="h">96</span>
+          </div>
+        </div>
+      </div>
+      <div class="surface cream">
+        <span class="label">on cream</span>
+        <div class="sizes">
+          <div class="size">
+            <svg width="24" height="24" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M6 30 Q 20 6 34 30" fill="none" stroke="#f5b800" stroke-width="2"/><line x1="6" y1="30" x2="34" y2="30" stroke="#f5b800" stroke-width="2"/><text x="20" y="29" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="10.5" letter-spacing="-0.5">UPM</text></svg>
+            <span class="h">24</span>
+          </div>
+          <div class="size">
+            <svg width="48" height="48" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M6 30 Q 20 6 34 30" fill="none" stroke="#f5b800" stroke-width="2"/><line x1="6" y1="30" x2="34" y2="30" stroke="#f5b800" stroke-width="2"/><text x="20" y="29" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="10.5" letter-spacing="-0.5">UPM</text></svg>
+            <span class="h">48</span>
+          </div>
+          <div class="size">
+            <svg width="96" height="96" viewBox="0 0 40 40"><rect width="40" height="40" rx="4" fill="#0b1e3f"/><path d="M6 30 Q 20 6 34 30" fill="none" stroke="#f5b800" stroke-width="2"/><line x1="6" y1="30" x2="34" y2="30" stroke="#f5b800" stroke-width="2"/><text x="20" y="29" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="10.5" letter-spacing="-0.5">UPM</text></svg>
+            <span class="h">96</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 04 BROADCAST BUG ===================== -->
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <div class="name">04 · Broadcast Bug</div>
+        <div class="desc">A wide horizontal badge — think the lower-corner scorebug on a Sunday broadcast. "UPM" + "LIVE" with a red stripe. Not square; pairs well with a sibling wordmark for the header.</div>
+      </div>
+    </div>
+    <div class="surfaces">
+      <div class="surface navy">
+        <span class="label">on navy</span>
+        <div class="sizes">
+          <div class="size">
+            <svg width="38" height="24" viewBox="0 0 60 40"><rect width="60" height="40" rx="4" fill="#0b1e3f"/><rect x="0" y="0" width="7" height="40" fill="#e11d2b"/><text x="33" y="24" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="15" letter-spacing="-0.5">UPM</text><text x="33" y="33" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="700" font-size="5.2" letter-spacing="2">LIVE</text></svg>
+            <span class="h">24</span>
+          </div>
+          <div class="size">
+            <svg width="72" height="48" viewBox="0 0 60 40"><rect width="60" height="40" rx="4" fill="#0b1e3f"/><rect x="0" y="0" width="7" height="40" fill="#e11d2b"/><text x="33" y="24" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="15" letter-spacing="-0.5">UPM</text><text x="33" y="33" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="700" font-size="5.2" letter-spacing="2">LIVE</text></svg>
+            <span class="h">48</span>
+          </div>
+          <div class="size">
+            <svg width="144" height="96" viewBox="0 0 60 40"><rect width="60" height="40" rx="4" fill="#0b1e3f"/><rect x="0" y="0" width="7" height="40" fill="#e11d2b"/><text x="33" y="24" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="15" letter-spacing="-0.5">UPM</text><text x="33" y="33" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="700" font-size="5.2" letter-spacing="2">LIVE</text></svg>
+            <span class="h">96</span>
+          </div>
+        </div>
+      </div>
+      <div class="surface cream">
+        <span class="label">on cream</span>
+        <div class="sizes">
+          <div class="size">
+            <svg width="38" height="24" viewBox="0 0 60 40"><rect width="60" height="40" rx="4" fill="#0b1e3f"/><rect x="0" y="0" width="7" height="40" fill="#e11d2b"/><text x="33" y="24" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="15" letter-spacing="-0.5">UPM</text><text x="33" y="33" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="700" font-size="5.2" letter-spacing="2">LIVE</text></svg>
+            <span class="h">24</span>
+          </div>
+          <div class="size">
+            <svg width="72" height="48" viewBox="0 0 60 40"><rect width="60" height="40" rx="4" fill="#0b1e3f"/><rect x="0" y="0" width="7" height="40" fill="#e11d2b"/><text x="33" y="24" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="15" letter-spacing="-0.5">UPM</text><text x="33" y="33" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="700" font-size="5.2" letter-spacing="2">LIVE</text></svg>
+            <span class="h">48</span>
+          </div>
+          <div class="size">
+            <svg width="144" height="96" viewBox="0 0 60 40"><rect width="60" height="40" rx="4" fill="#0b1e3f"/><rect x="0" y="0" width="7" height="40" fill="#e11d2b"/><text x="33" y="24" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="15" letter-spacing="-0.5">UPM</text><text x="33" y="33" text-anchor="middle" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="700" font-size="5.2" letter-spacing="2">LIVE</text></svg>
+            <span class="h">96</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 05 ITALIC WORDMARK ===================== -->
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <div class="name">05 · Italic Wordmark</div>
+        <div class="desc">No mark — just "ULTIMATE POOL MANAGER" in heavy Archivo italic with a gold underline slash. Broadcast title-card energy. Works best in the header; pairs well with #02, #03, or #04 as a sibling mark where a square icon is needed.</div>
+      </div>
+    </div>
+    <div class="surfaces">
+      <div class="surface navy">
+        <span class="label">on navy</span>
+        <div class="sizes">
+          <div class="size" style="align-items:flex-start">
+            <svg width="110" height="18" viewBox="0 0 440 36"><text x="0" y="26" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="28" letter-spacing="-1">ULTIMATE POOL MANAGER</text><line x1="0" y1="31" x2="440" y2="31" stroke="#e11d2b" stroke-width="2.5"/></svg>
+            <span class="h">header</span>
+          </div>
+          <div class="size" style="align-items:flex-start">
+            <svg width="220" height="36" viewBox="0 0 440 36"><text x="0" y="26" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="28" letter-spacing="-1">ULTIMATE POOL MANAGER</text><line x1="0" y1="31" x2="440" y2="31" stroke="#e11d2b" stroke-width="2.5"/></svg>
+            <span class="h">hero</span>
+          </div>
+          <div class="size" style="align-items:flex-start">
+            <svg width="440" height="72" viewBox="0 0 440 36"><text x="0" y="26" fill="#f5b800" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="28" letter-spacing="-1">ULTIMATE POOL MANAGER</text><line x1="0" y1="31" x2="440" y2="31" stroke="#e11d2b" stroke-width="2.5"/></svg>
+            <span class="h">billboard</span>
+          </div>
+        </div>
+      </div>
+      <div class="surface cream">
+        <span class="label">on cream</span>
+        <div class="sizes">
+          <div class="size" style="align-items:flex-start">
+            <svg width="110" height="18" viewBox="0 0 440 36"><text x="0" y="26" fill="#0b1e3f" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="28" letter-spacing="-1">ULTIMATE POOL MANAGER</text><line x1="0" y1="31" x2="440" y2="31" stroke="#f5b800" stroke-width="2.5"/></svg>
+            <span class="h">header</span>
+          </div>
+          <div class="size" style="align-items:flex-start">
+            <svg width="220" height="36" viewBox="0 0 440 36"><text x="0" y="26" fill="#0b1e3f" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="28" letter-spacing="-1">ULTIMATE POOL MANAGER</text><line x1="0" y1="31" x2="440" y2="31" stroke="#f5b800" stroke-width="2.5"/></svg>
+            <span class="h">hero</span>
+          </div>
+          <div class="size" style="align-items:flex-start">
+            <svg width="440" height="72" viewBox="0 0 440 36"><text x="0" y="26" fill="#0b1e3f" font-family="Archivo, sans-serif" font-weight="900" font-style="italic" font-size="28" letter-spacing="-1">ULTIMATE POOL MANAGER</text><line x1="0" y1="31" x2="440" y2="31" stroke="#f5b800" stroke-width="2.5"/></svg>
+            <span class="h">billboard</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Part of the Sunday Prime concept bundle.
+    <a href="index.html">Back to the login mockup</a> ·
+    <a href="../../index.html">Back to the gallery</a>
+  </footer>
+</div>
+</body>
+</html>

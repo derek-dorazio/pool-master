@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PoolMaster — Playbook (Light)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf8;
+    --panel: #ffffff;
+    --panel-2: #f4f4f1;
+    --line: #e5e5e2;
+    --line-2: #cfcfca;
+    --text: #0a0a0a;
+    --muted: #6b6b68;
+    --lime: #c8ff3d;
+    --lime-deep: #9cd412;
+    --ink: #0a0a0a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 1180px; margin: 0 auto; padding: 32px 24px 80px; }
+  .top { display: flex; align-items: center; justify-content: space-between; padding-bottom: 40px; }
+  .wordmark { display: flex; align-items: center; gap: 12px; }
+  .wordmark .name { font-weight: 800; font-size: 17px; letter-spacing: -0.01em; }
+  .status { font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .status .dot { width: 8px; height: 8px; border-radius: 2px; background: var(--lime);
+    border: 1px solid var(--ink); }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--panel);
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(10, 10, 10, 0.04),
+      0 30px 60px -30px rgba(10, 10, 10, 0.12);
+  }
+  @media (max-width: 960px) { .shell { grid-template-columns: 1fr; } }
+
+  .hero {
+    position: relative;
+    min-height: 560px;
+    padding: 44px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-right: 1px solid var(--line);
+    background-color: var(--panel);
+    background-image: url('hero.jpg');
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+  }
+  .hero-fallback { position: absolute; inset: 0; z-index: 0; overflow: hidden;
+    background: var(--panel);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: -1px -1px;
+  }
+  .hero-fallback::before {
+    content: "";
+    position: absolute;
+    right: -28px; top: 44%;
+    width: 46%; height: 34%;
+    background: var(--lime);
+    border: 1.5px solid var(--ink);
+    box-shadow: -10px 10px 0 var(--ink);
+    transform: rotate(-1.5deg);
+  }
+  .hero-fallback::after {
+    content: "";
+    position: absolute;
+    left: 6%; top: 15%;
+    width: 52%; height: 60%;
+    border: 1.5px solid var(--ink);
+    border-right: 0;
+  }
+  .hero > * { position: relative; z-index: 1; }
+
+  .eyebrow {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink);
+    padding: 5px 10px;
+    border: 1.5px solid var(--ink);
+    background: var(--lime);
+    border-radius: 2px;
+  }
+  .headline {
+    font-size: 60px;
+    font-weight: 800;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    margin: 22px 0 16px;
+    max-width: 520px;
+    color: var(--ink);
+  }
+  .headline .accent {
+    background: var(--lime);
+    padding: 0 10px;
+    margin: 0 -4px;
+    color: var(--ink);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    border: 1.5px solid var(--ink);
+    box-shadow: -4px 4px 0 var(--ink);
+    display: inline-block;
+    transform: rotate(-1deg);
+  }
+  .subhead {
+    font-size: 16px;
+    line-height: 1.55;
+    max-width: 440px;
+    color: var(--muted);
+  }
+  .stats { display: flex; gap: 28px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .stats strong { display: block; color: var(--ink); font-size: 22px;
+    font-family: 'Inter', sans-serif; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 2px; }
+
+  .form-pane { padding: 48px 40px; background: var(--panel-2); }
+  .tabs { display: flex; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 2px; }
+  .tab { flex: 1; padding: 10px 12px; border-radius: 7px; border: 0; background: transparent;
+    font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; font-family: inherit; }
+  .tab.active { background: var(--ink); color: var(--panel); }
+  form { margin-top: 28px; display: flex; flex-direction: column; gap: 16px; }
+  label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  input { width: 100%; margin-top: 8px; padding: 13px 14px; border-radius: 10px;
+    border: 1px solid var(--line-2); background: var(--panel); color: var(--text);
+    font-size: 14px; font-family: inherit; }
+  input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(200, 255, 61, 0.55); }
+  .submit { padding: 14px; border-radius: 10px; border: 0;
+    background: var(--ink); color: var(--panel);
+    font-weight: 700; font-size: 14px; cursor: pointer; letter-spacing: -0.01em; font-family: inherit; }
+  .submit:hover { background: #1c1c1c; }
+  .meta { margin-top: 22px; font-size: 13px; color: var(--muted); }
+  .meta a { color: var(--ink); font-weight: 700; text-decoration: none;
+    border-bottom: 3px solid var(--lime); padding-bottom: 1px; }
+  .meta a:hover { background: var(--lime); }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <div class="wordmark">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-label="PoolMaster">
+        <rect x="2" y="2" width="28" height="28" rx="6" fill="#0a0a0a"/>
+        <path d="M9 22 L14 9 L18 9 L23 22" stroke="#c8ff3d" stroke-width="2.5" fill="none" stroke-linecap="square" stroke-linejoin="miter"/>
+        <line x1="11.5" y1="17" x2="20.5" y2="17" stroke="#c8ff3d" stroke-width="2.5"/>
+      </svg>
+      <span class="name">PoolMaster<span style="color: var(--lime-deep);">/</span></span>
+    </div>
+    <div class="status"><span class="dot"></span>operational · v2026.04</div>
+  </header>
+
+  <section class="shell">
+    <div class="hero">
+      <div class="hero-fallback"></div>
+      <div>
+        <span class="eyebrow">// commissioners only</span>
+        <h1 class="headline">Run the league.<br><span class="accent">Skip</span> the spreadsheet.</h1>
+        <p class="subhead">Leagues, drafts, standings, and scoring — in one place, without the group-chat chaos.</p>
+      </div>
+      <div class="stats">
+        <div><strong>1 min</strong>time to spin up</div>
+        <div><strong>0</strong>spreadsheets</div>
+        <div><strong>∞</strong>seasons</div>
+      </div>
+    </div>
+
+    <div class="form-pane">
+      <div class="tabs">
+        <button class="tab active" type="button">Sign in</button>
+        <button class="tab" type="button">Create account</button>
+      </div>
+      <form onsubmit="event.preventDefault()">
+        <label>Username or email
+          <input type="text" autocomplete="username" />
+        </label>
+        <label>Password
+          <input type="password" autocomplete="current-password" />
+        </label>
+        <button class="submit" type="submit">Sign in →</button>
+      </form>
+      <p class="meta">First time here? <a href="#">Create an account</a></p>
+    </div>
+  </section>
+</div>
+</body>
+</html>
