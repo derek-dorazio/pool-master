@@ -132,6 +132,7 @@ describe('ContestEntryPage', () => {
           rosterSize: 2,
           tierConfig: [
             { tierId: 'tier-1', tierName: 'Tier 1', tierNumber: 1, picksFromTier: 1 },
+            { tierId: 'tier-2', tierName: 'Tier 2', tierNumber: 2, picksFromTier: 1 },
           ],
         },
         status: 'LIVE',
@@ -175,9 +176,32 @@ describe('ContestEntryPage', () => {
               },
             ],
           },
+          {
+            groupId: 'tier-2',
+            groupName: 'Tier 2',
+            groupNumber: 2,
+            picksFromGroup: 1,
+            selectedParticipantIds: [],
+            participants: [
+              {
+                sportEventParticipantId: 'sep-2',
+                participantId: 'participant-2',
+                participantName: 'Rory McIlroy',
+                position: 'GOLFER',
+                team: null,
+                status: 'ACTIVE',
+                price: null,
+                ranking: 2,
+                orderIndex: 2,
+                isAvailable: true,
+                unavailableReason: null,
+                isSelected: false,
+              },
+            ],
+          },
         ],
         draftPickHistories: [],
-        availableParticipantIds: ['sep-1'],
+        availableParticipantIds: ['sep-1', 'sep-2'],
         isComplete: false,
       },
     });
@@ -211,6 +235,13 @@ describe('ContestEntryPage', () => {
 
     expect(await screen.findByText('Build your lineup')).toBeInTheDocument();
     expect(screen.getByText('World rank #1')).toBeInTheDocument();
+    expect(screen.getAllByText('0/2')).toHaveLength(2);
+    expect(screen.getByText('Saved')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toBeInTheDocument();
+    expect(screen.queryByText('Rory McIlroy')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-entry-group-toggle-tier-2'));
+    expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
 
     fireEvent.change(screen.getByTestId('contest-entry-name-input'), {
       target: { value: 'Sunday Charge' },
@@ -230,7 +261,8 @@ describe('ContestEntryPage', () => {
       }),
     );
 
-    fireEvent.click(screen.getByTestId('contest-entry-participant-sep-1'));
+    fireEvent.click(screen.getByTestId('contest-entry-group-toggle-tier-1'));
+    fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-1'));
 
     await waitFor(() =>
       expect(submitContestSelectionMock).toHaveBeenCalledWith({
@@ -311,6 +343,10 @@ describe('ContestEntryPage', () => {
     expect(screen.getByTestId('contest-entry-selected-tier-1-sep-1')).toHaveTextContent(
       'Scottie Scheffler',
     );
+    expect(screen.getByTestId('contest-entry-locked-participant-tier-1-sep-1')).toHaveTextContent(
+      'Scottie Scheffler',
+    );
     expect(screen.queryByTestId('contest-entry-save-details')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-participant-sep-1')).not.toBeInTheDocument();
   });
 });

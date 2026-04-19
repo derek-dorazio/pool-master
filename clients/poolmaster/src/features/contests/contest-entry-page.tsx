@@ -83,6 +83,61 @@ function getSelectedParticipants(group: SelectionGroup) {
   return group.participants.filter((participant) => selectedIds.has(participant.sportEventParticipantId));
 }
 
+function getCompletionStats(selectionGroups: SelectionGroup[]) {
+  const completedTiers = selectionGroups.filter(
+    (group) => group.selectedParticipantIds.length >= group.picksFromGroup,
+  ).length;
+  const totalSelections = selectionGroups.reduce(
+    (sum, group) => sum + group.selectedParticipantIds.length,
+    0,
+  );
+  const requiredSelections = selectionGroups.reduce(
+    (sum, group) => sum + group.picksFromGroup,
+    0,
+  );
+
+  return {
+    completedTiers,
+    totalSelections,
+    requiredSelections,
+  };
+}
+
+function getNextIncompleteGroupId(selectionGroups: SelectionGroup[]) {
+  return selectionGroups.find((group) => group.selectedParticipantIds.length < group.picksFromGroup)?.groupId ?? null;
+}
+
+function getGroupStatusLabel(group: SelectionGroup) {
+  if (group.selectedParticipantIds.length >= group.picksFromGroup) {
+    return 'Complete';
+  }
+
+  if (group.selectedParticipantIds.length > 0) {
+    return 'In progress';
+  }
+
+  return 'Next up';
+}
+
+function getParticipantMetaSummary(participant: SelectionParticipant) {
+  const parts: string[] = [];
+
+  if (participant.orderIndex) {
+    parts.push(`Contest rank #${participant.orderIndex}`);
+  }
+  if (participant.ranking !== undefined && participant.ranking !== null) {
+    parts.push(`World rank #${participant.ranking}`);
+  }
+  if (participant.price !== undefined && participant.price !== null) {
+    parts.push(`${participant.price} salary`);
+  }
+  if (participant.status) {
+    parts.push(`Status: ${participant.status}`);
+  }
+
+  return parts;
+}
+
 function SelectionParticipantCard({
   canSelect,
   group,
@@ -142,14 +197,78 @@ function SelectionParticipantCard({
         </span>
       </div>
       <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-        {participant.orderIndex ? <span>Contest rank #{participant.orderIndex}</span> : null}
-        {participant.ranking !== undefined && participant.ranking !== null ? (
-          <span>World rank #{participant.ranking}</span>
-        ) : null}
-        {participant.price !== undefined && participant.price !== null ? <span>{participant.price} salary</span> : null}
-        {participant.status ? <span>Status: {participant.status}</span> : null}
+        {getParticipantMetaSummary(participant).map((part) => (
+          <span key={`${participant.sportEventParticipantId}-${part}`}>{part}</span>
+        ))}
       </div>
     </button>
+  );
+}
+
+function LockedSelectionGroup({
+  group,
+}: {
+  group: SelectionGroup;
+}) {
+  const selectedParticipants = getSelectedParticipants(group);
+
+  return (
+    <section
+      className="rounded-[1.75rem] border border-border bg-background p-4"
+      data-testid={`contest-entry-group-${group.groupId}`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h4 className="text-lg font-semibold text-foreground">{group.groupName}</h4>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Frozen lineup from Tier {group.groupNumber}.
+          </p>
+        </div>
+        <span className="rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          Locked
+        </span>
+      </div>
+
+      <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="grid grid-cols-[minmax(0,1.6fr)_100px_110px_90px] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <span>Golfer</span>
+          <span className="text-right">Contest rank</span>
+          <span className="text-right">World rank</span>
+          <span className="text-right">Status</span>
+        </div>
+        <div className="divide-y divide-border">
+          {selectedParticipants.length ? (
+            selectedParticipants.map((participant) => (
+              <div
+                className="grid grid-cols-[minmax(0,1.6fr)_100px_110px_90px] gap-2 px-4 py-3 text-sm"
+                data-testid={`contest-entry-locked-participant-${group.groupId}-${participant.sportEventParticipantId}`}
+                key={participant.sportEventParticipantId}
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-medium text-foreground">{participant.participantName}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {participant.team ?? participant.position ?? 'Golf field participant'}
+                  </div>
+                </div>
+                <span className="text-right text-foreground">
+                  {participant.orderIndex ? `#${participant.orderIndex}` : '—'}
+                </span>
+                <span className="text-right text-muted-foreground">
+                  {participant.ranking !== undefined && participant.ranking !== null ? `#${participant.ranking}` : '—'}
+                </span>
+                <span className="text-right text-muted-foreground">
+                  {participant.status ?? 'ACTIVE'}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="px-4 py-4 text-sm text-muted-foreground">
+              No golfer was saved from this tier.
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -161,6 +280,7 @@ export function ContestEntryPage() {
 
   const [entryNameDraft, setEntryNameDraft] = useState('');
   const [tiebreakerDraft, setTiebreakerDraft] = useState('');
+  const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
 
   const contestQuery = useQuery({
     queryKey: ['poolmaster', 'contest', contestId],
@@ -231,6 +351,23 @@ export function ContestEntryPage() {
         : String(draftStateQuery.data.tiebreakerValue),
     );
   }, [draftStateQuery.data]);
+
+  useEffect(() => {
+    const selectionGroups = draftStateQuery.data?.selectionGroups ?? [];
+    if (!selectionGroups.length) {
+      setExpandedGroupId(null);
+      return;
+    }
+
+    const nextIncomplete = getNextIncompleteGroupId(selectionGroups);
+    setExpandedGroupId((current) => {
+      if (current && selectionGroups.some((group) => group.groupId === current)) {
+        return current;
+      }
+
+      return nextIncomplete ?? selectionGroups[0].groupId;
+    });
+  }, [draftStateQuery.data?.selectionGroups]);
 
   const saveEntryDetailsMutation = useMutation({
     mutationFn: async () => {
@@ -346,6 +483,10 @@ export function ContestEntryPage() {
   const isEditable = contest.status === 'OPEN';
   const selectedEntry = draftState.entries.find((entry) => entry.id === entryId) ?? null;
   const selectionGroups = draftState.selectionGroups ?? [];
+  const completionStats = getCompletionStats(selectionGroups);
+  const nextIncompleteGroupId = getNextIncompleteGroupId(selectionGroups);
+  const hasSavedTiebreaker =
+    draftState.tiebreakerValue !== null && draftState.tiebreakerValue !== undefined;
 
   if (contest.selectionType !== 'TIERED') {
     return (
@@ -397,6 +538,49 @@ export function ContestEntryPage() {
             >
               Back to league
             </Link>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-4">
+          <div className="rounded-[1.5rem] bg-background px-4 py-4">
+            <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Tier progress</div>
+            <div className="mt-2 text-2xl font-semibold text-foreground">
+              {completionStats.completedTiers}/{selectionGroups.length || 0}
+            </div>
+            <div className="mt-1 text-sm text-muted-foreground">Tiers complete</div>
+          </div>
+          <div className="rounded-[1.5rem] bg-background px-4 py-4">
+            <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Picks saved</div>
+            <div className="mt-2 text-2xl font-semibold text-foreground">
+              {completionStats.totalSelections}/{completionStats.requiredSelections}
+            </div>
+            <div className="mt-1 text-sm text-muted-foreground">Lineup slots filled</div>
+          </div>
+          <div className="rounded-[1.5rem] bg-background px-4 py-4">
+            <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Tiebreaker</div>
+            <div className="mt-2 text-2xl font-semibold text-foreground">
+              {hasSavedTiebreaker ? 'Saved' : isEditable ? 'Needed' : 'Closed'}
+            </div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              {hasSavedTiebreaker
+                ? `Winning score ${draftState.tiebreakerValue}`
+                : isEditable
+                  ? 'Add your winning score prediction'
+                  : 'No tiebreaker prediction was saved'}
+            </div>
+          </div>
+          <div className="rounded-[1.5rem] bg-background px-4 py-4">
+            <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Lock time</div>
+            <div className="mt-2 text-lg font-semibold text-foreground">
+              {formatDateTimeDisplay(contest.lockAt)}
+            </div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              {isEditable
+                ? nextIncompleteGroupId
+                  ? `Next focus: ${selectionGroups.find((group) => group.groupId === nextIncompleteGroupId)?.groupName ?? 'Open tier'}`
+                  : 'Lineup is fully selected'
+                : 'Entry editing is closed'}
+            </div>
           </div>
         </div>
       </div>
@@ -550,8 +734,12 @@ export function ContestEntryPage() {
                             key={participant.sportEventParticipantId}
                           >
                             <div className="font-medium text-foreground">{participant.participantName}</div>
-                            <div className="mt-1 text-sm text-muted-foreground">
-                              {participant.status ? `Status: ${participant.status}` : 'Currently on this entry'}
+                            <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                              {getParticipantMetaSummary(participant).length
+                                ? getParticipantMetaSummary(participant).map((part) => (
+                                  <span key={`${participant.sportEventParticipantId}-${part}`}>{part}</span>
+                                ))
+                                : <span>Currently on this entry</span>}
                             </div>
                           </div>
                         ))
@@ -574,43 +762,96 @@ export function ContestEntryPage() {
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
             {isEditable
-              ? 'Each tier below uses the contest-ready field already frozen for this contest. Tap a golfer to fill or replace that tier.'
-              : 'These tiers show the frozen contest field and the golfers this entry carried once the contest moved past editing.'}
+              ? 'Each tier below uses the contest-ready field already frozen for this contest. Complete one tier at a time, save your tiebreaker, and your entry will be ready for lock.'
+              : 'These tiers now read like your team-specific leaderboard card: frozen picks, live scoring detail, and no editable controls.'}
           </p>
           <div className="mt-5 space-y-5">
-            {selectionGroups.map((group) => (
-              <section
-                className="rounded-[1.75rem] border border-border bg-background p-4"
-                data-testid={`contest-entry-group-${group.groupId}`}
-                key={group.groupId}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h4 className="text-lg font-semibold text-foreground">{group.groupName}</h4>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Choose {group.picksFromGroup} golfer{group.picksFromGroup === 1 ? '' : 's'} from this tier.
-                    </p>
-                  </div>
-                  <span className="rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                    {group.selectedParticipantIds.length}/{group.picksFromGroup} saved
-                  </span>
-                </div>
+            {selectionGroups.map((group) => {
+              if (!isEditable) {
+                return <LockedSelectionGroup group={group} key={group.groupId} />;
+              }
 
-                <div className="mt-4 grid gap-3">
-                  {group.participants.map((participant) => (
-                    <SelectionParticipantCard
-                      canSelect={isEditable && isMyEntry}
-                      group={group}
-                      isBusy={submitSelectionMutation.isPending}
-                      key={participant.sportEventParticipantId}
-                      onSelect={(nextParticipant) =>
-                        void submitSelectionMutation.mutateAsync(nextParticipant.sportEventParticipantId)}
-                      participant={participant}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))}
+              const isExpanded = expandedGroupId === group.groupId;
+              const selectedParticipants = getSelectedParticipants(group);
+              const isComplete = group.selectedParticipantIds.length >= group.picksFromGroup;
+              const statusLabel = getGroupStatusLabel(group);
+
+              return (
+                <section
+                  className="rounded-[1.75rem] border border-border bg-background p-4"
+                  data-testid={`contest-entry-group-${group.groupId}`}
+                  key={group.groupId}
+                >
+                  <button
+                    className="flex w-full flex-wrap items-start justify-between gap-3 text-left"
+                    data-testid={`contest-entry-group-toggle-${group.groupId}`}
+                    onClick={() => setExpandedGroupId(isExpanded ? null : group.groupId)}
+                    type="button"
+                  >
+                    <div>
+                      <h4 className="text-lg font-semibold text-foreground">{group.groupName}</h4>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Choose {group.picksFromGroup} golfer{group.picksFromGroup === 1 ? '' : 's'} from this tier.
+                      </p>
+                      {selectedParticipants.length ? (
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                          {selectedParticipants.map((participant) => (
+                            <span
+                              className="rounded-full border border-border px-3 py-1"
+                              key={participant.sportEventParticipantId}
+                            >
+                              {participant.participantName}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className="rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                        {statusLabel}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {group.selectedParticipantIds.length}/{group.picksFromGroup} saved
+                      </span>
+                      <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        {isExpanded ? 'Hide tier' : isComplete ? 'Review tier' : 'Open tier'}
+                      </span>
+                    </div>
+                  </button>
+
+                  {isExpanded ? (
+                    <div className="mt-4 grid gap-3">
+                      {group.participants.map((participant) => (
+                        <SelectionParticipantCard
+                          canSelect={isEditable && isMyEntry}
+                          group={group}
+                          isBusy={submitSelectionMutation.isPending}
+                          key={participant.sportEventParticipantId}
+                          onSelect={async (nextParticipant) => {
+                            await submitSelectionMutation.mutateAsync(nextParticipant.sportEventParticipantId);
+                            setExpandedGroupId((current) => {
+                              if (current !== group.groupId) {
+                                return current;
+                              }
+
+                              const currentIndex = selectionGroups.findIndex(
+                                (candidate) => candidate.groupId === group.groupId,
+                              );
+                              const nextGroup = selectionGroups
+                                .slice(currentIndex + 1)
+                                .find((candidate) => candidate.selectedParticipantIds.length < candidate.picksFromGroup);
+
+                              return nextGroup?.groupId ?? group.groupId;
+                            });
+                          }}
+                          participant={participant}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                </section>
+              );
+            })}
 
             {submitSelectionMutation.isError ? (
               <p className="text-sm text-destructive">
