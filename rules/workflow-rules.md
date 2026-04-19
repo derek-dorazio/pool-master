@@ -12,6 +12,14 @@ Use the layers this way:
 - `plans/` = rationale, scope, phased rollout notes, and execution context
 - `Beads` = live status, dependencies, stable question IDs, and active slices
 
+When these layers disagree:
+
+- `requirements/` is the product source of truth
+- `tech-specs/` is the technical source of truth
+- older plan prose must not override either one
+- if an old plan still carries stale product or technical guidance, update it
+  or clearly mark it as historical/non-authoritative in the same effort
+
 For larger cross-module design and refinement work, Beads should also hold the
 stable IDs for active questions and decisions so chat numbering does not drift
 as the discussion evolves.

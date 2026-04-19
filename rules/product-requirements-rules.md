@@ -125,3 +125,10 @@ Before product requirements are handed forward, they must make clear:
 - active implementation tracking still belongs in `plans/`
 - when a requirement materially changes an active feature lane, update the
   relevant plan notes or task rows in the same effort
+- when older plan prose drifts from current refined requirements, the
+  `requirements/` layer wins
+- do not surface product questions from older plan prose without first checking
+  the current `requirements/product-requirements/` feature files
+- if an older plan is still useful for execution context but no longer
+  trustworthy as product definition, add an explicit note that it is historical
+  context only and point back to the current requirements and tech spec

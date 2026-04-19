@@ -1,233 +1,29 @@
 # Mock Sports Data Provider
 
-> **Planning Note (2026-04-04):** Re-analyze the current MVP scope, provider port/adapter contracts, and QA deployment boundaries before implementing this service. Do not reuse this plan for production or staging concerns, and do not introduce fallback behavior into the core app if the feed service is unavailable.
-
 ## Purpose
 
-Create a seeded `mock-contest-feed-provider` service that simulates third-party
-sporting-event, participant-field, odds, rankings, and results feeds.
+Track execution for the non-production mock sports data provider lane.
 
-This service exists so we can:
+## Authority
 
-- test ingestion and normalization without relying on external third parties
-- drive deterministic tier/price derivation scenarios
-- exercise results/standings/scoring flows with repeatable data
-- keep the product code pointed at real provider ports/adapters while swapping
-  only the provider implementation in supported non-production environments
-- hold durable fake but stable event/participant data so the deployed product
-  can function end to end before real provider integration is complete
+This file is execution context only.
 
-## Scope
+Current product and technical source of truth lives in:
 
-This plan covers the mock provider service itself plus the contracts it needs.
+- [requirements/product-requirements/features/contest-event-feed-integration/overview.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/overview.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/use-cases.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/use-cases.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/business-rules.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/business-rules.md)
+- [tech-specs/features/contest-event-feed-integration/flows.md](/Users/DDorazio/development/Github-Personal/pool-master/tech-specs/features/contest-event-feed-integration/flows.md)
 
-In scope:
+Do not use older plan prose to reopen product questions. Use requirements for
+product truth, tech specs for implementation truth, and Beads for live status.
 
-- provider naming and domain alignment
-- provider port/adapter fit
-- supported deployment model
-- OpenAPI and generated client output for the mock provider
-- JSON scenario-file format and initial scenario data
-- test-suite ownership and future update rules
+## Execution Constraints
 
-Out of scope:
-
-- application fallback from real providers to the mock provider
-- general contest UI changes unrelated to ingestion/provider testing
-- replacing real ingestion provider logic in the main app
-
-## Seed Boundary
-
-This service is also the boundary that keeps QA test fixtures out of application seeding.
-
-Seed data for the app should contain only:
-
-- production-required bootstrap records
-- required default configurations
-- necessary operator/admin access records
-
-Seed data for the app should not contain:
-
-- fake QA contests created directly in the app DB
-- fake participant pools created directly in the app DB
-- fake odds or rankings
-- fake result histories
-- broad manual-testing fixtures
-
-Those non-production testing datasets should live in `mock-contest-feed-provider` scenario files and be served through the mock feed API instead of being inserted through `prisma/seed.ts`.
-
-## Architecture Fit
-
-The mock service should fit the existing port/adapter model instead of bypassing it.
-
-- The app should keep talking to the same provider interface it uses for real odds/rankings/results sources.
-- The mock provider should be selected by environment/config in supported
-  non-production and bootstrap contexts.
-- Production must continue to use real providers only.
-- The mock provider should expose the same route semantics and shape as the real provider adapters expect, so ingest, tier, price, and results code can run unchanged.
-
-Recommended domain naming:
-
-- service name: `mock-contest-feed-provider`
-- provider id: `mock-contest-feed`
-- scenario folder: `contest-feed-scenarios`
-- file naming should reflect event/participant/feed terminology, not generic
-  test terminology
-
-## Scenario Model
-
-The service should use local JSON scenario files as its source of truth.
-
-Scenario files should support:
-
-- sport
-- provider identifier
-- event metadata
-- participant field
-- odds
-- rankings
-- seed values
-- live score updates
-- final results
-- optional corrections or delayed updates
-
-Suggested file shape:
-
-```json
-{
-  "scenarioId": "golf-major-2026",
-  "sport": "GOLF",
-  "provider": "mock-contest-feed",
-  "events": [
-    {
-      "eventId": "event-1",
-      "name": "Mock Major",
-      "startsAt": "2026-04-10T15:00:00.000Z",
-      "contestants": [
-        {
-          "contestantId": "player-1",
-          "name": "Player One",
-          "odds": 12.5,
-          "ranking": 1,
-          "seed": 1
-        }
-      ]
-    }
-  ]
-}
-```
-
-The format should be stable enough to support:
-
-- a few fixed baseline scenarios
-- additional scenarios added as integration and smoke coverage grows
-- deterministic updates without a database
-
-## Initial Scenario Set
-
-Start with a small but useful set of sport families:
-
-- golf season-backbone scenario
-- tennis tournament scenario
-- NCAA-style team tournament scenario
-- one team-slate scenario with live result updates
-- one edge-case scenario for ties, withdrawals, or corrections
-
-The initial data should be broad enough to exercise:
-
-- season-level event discovery
-- odds-based tier assignment
-- ranking-based pricing
-- seed-based fallback ordering
-- final result ingestion
-- contest standing updates after results arrive
-
-## 2026 Golf Season Backbone
-
-The first golf scenario should now behave like a small deterministic season
-catalog rather than a single isolated event.
-
-Current direction:
-
-- keep the existing `golf-major-2026` scenario id stable for compatibility with
-  the mock-provider tests and routes
-- expand that scenario's `events[]` catalog to cover a useful 2026 backbone of
-  real tournament names and dates
-- use a small stable roster of recognizable golfers across the season so
-  rankings, odds, field status, and results can evolve deterministically from
-  event to event
-- mix completed and upcoming events so QA can exercise:
-  - historical ingestion and standings
-  - future event release timing
-  - field-lock behavior
-  - pre-lock participant status changes
-
-Schedule references used for the first-pass 2026 golf catalog:
-
-- THE PLAYERS Championship official 2026 field announcement
-  - [theplayers.com](https://www.theplayers.com/news/2026/03/09/the-players-championship-announces-field-2026)
-- Masters Tournament 2026 staffing page with tournament-week dates
-  - [jobs.masters.com](https://jobs.masters.com/at/)
-- PGA Championship 2026 official site
-  - [pgachampionship.com](https://www.pgachampionship.com/)
-- U.S. Open 2026 official site
-  - [usopen.com](https://www.usopen.com/.html)
-- The Open at Royal Birkdale official pages
-  - [theopen.com](https://www.theopen.com/royal-birkdale-154th-open)
-- the Memorial Tournament and RBC Canadian Open official 2026 PGA TOUR overviews
-  - [pgatour.com Memorial](https://www.pgatour.com/tournaments/2026/the-memorial-tournament-presented-by-workday/R2026023/overview)
-  - [pgatour.com RBC Canadian Open](https://www.pgatour.com/tournaments/2026/rbc-canadian-open/R2026032/overview)
-- Open Qualifying Series references for the Memorial and Genesis Scottish Open
-  - [theopen.com Memorial OQS](https://www.theopen.com/qualification/the-open-qualifying-series/usa-memorial-tournament)
-  - [theopen.com Scottish OQS](https://www.theopen.com/qualification/the-open-qualifying-series/scotland)
-
-## Deployment Rules
-
-This service should support:
-
-- local development
-- QA
-- other explicitly approved non-production/bootstrap environments
-
-It must not silently replace real providers in production operation.
-
-Recommended runtime shape:
-
-- local: run as a lightweight local service from scenario JSON files
-- QA: deploy as a dedicated long-running ECS-backed HTTP service so CI smoke/E2E, ingestion tests, and manual testers can all hit the same deterministic feed catalog
-
-Recommended QA role:
-
-- the service should act as shared non-production feed infrastructure for QA
-- it should replace the need to stuff broad fake contest data into application seed scripts
-- it should be safe to expand with more scenario files over time without changing the core app seed contract
-
-## Test Ownership
-
-This service should own one dedicated test lane first, with future expansion only after the initial suite is stable.
-
-Primary test goals:
-
-- provider contract validation
-- ingestion normalization
-- odds/ranking/result mapping
-- tier and price derivation from feed data
-- scoring/standings updates from final results
-- end-to-end product operation against stable fake events and participant fields
-- manual QA support through stable, named scenarios that can be referenced in test instructions
-
-Future test owners should update the scenario files rather than inventing ad hoc fixtures inside application tests.
-
-## Update Rules For Future Agents
-
-- Re-analyze the current MVP and provider contracts before adding scenarios.
-- Keep JSON scenarios small and deterministic.
-- Do not add production fallback code to support missing scenario data.
-- Do not let the app silently fall back to the mock provider when real providers fail.
-- Do not add broad QA/manual-test fixture data to `prisma/seed.ts`; add or update mock feed scenarios instead.
-- Update this plan when the scenario format, provider contract, or deployment boundary changes.
-- Keep the mock provider as explicit seeded infrastructure, not hidden fallback
-  behavior.
+- QA only
+- no production fallback
+- local JSON scenario files as source of truth
+- no mock app seed data replacing provider scenarios
 
 ## Action Plan
 
@@ -235,26 +31,13 @@ Future test owners should update the scenario files rather than inventing ad hoc
 |---|---|---|---|---|
 | MCFP-001 | Naming | Finalize the domain-accurate service name, provider id, and scenario directory naming | Done | `mock-contest-feed-provider`, `mock-contest-feed`, and `contest-feed-scenarios` are now implemented in the standalone package |
 | MCFP-002 | Architecture | Define the provider port/adapter contract that the mock service must implement | Done | Standalone Fastify routes now expose the feed contract surface locally without touching the core app wiring |
-| MCFP-003 | Deployment | Define supported deployment boundaries for the mock sports data provider | In Progress | The package currently runs locally and remains non-production-oriented; later work should clarify which non-production/bootstrap environments may rely on it explicitly without introducing hidden fallback behavior. |
+| MCFP-003 | Deployment | Define supported deployment boundaries for the mock sports data provider | In Progress | QA deployment is supported; keep later work explicit about approved non-production environments and no production fallback |
 | MCFP-004 | OpenAPI | Generate and validate OpenAPI/client output for the mock service | Done | Package-local OpenAPI export and generated client output now exist under `packages/mock-contest-feed-provider/generated/` |
-| MCFP-005 | Scenarios | Design the JSON scenario-file format and baseline fixtures | Done | Baseline golf, tennis, NCAA team, and tie/correction scenarios now live under `contest-feed-scenarios/`; golf now uses a season-backbone catalog direction instead of a single isolated event |
-| MCFP-006 | Ingestion Tests | Build a dedicated ingestion test suite that exercises the mock provider end to end | Not Started | Use the mock service only for the ingestion contract test lane |
+| MCFP-005 | Scenarios | Design the JSON scenario-file format and baseline fixtures | Done | Baseline scenarios now live under `contest-feed-scenarios/`; golf now uses a season-backbone catalog direction instead of a single isolated event |
+| MCFP-006 | Ingestion Tests | Build a dedicated ingestion test suite that exercises the mock provider end to end | Not Started | Use the mock service for ingestion contract coverage |
 | MCFP-007 | Tiering / Pricing | Verify odds, rankings, and seed data drive tier and price derivation deterministically | Not Started | The mock feed should make tier and price derivation repeatable for tournament contests |
 | MCFP-008 | Results / Scoring | Verify final results and live updates propagate into standings and scoring flows | Not Started | Cover ties, withdrawals, and corrections in the scenario set |
-| MCFP-009 | Maintenance | Define update rules for adding new scenarios and for changing existing ones | Done | Scenario updates are now explicitly treated as test-contract changes, not app seed data |
-| MCFP-010 | Seed Separation | Remove the need for broad QA fixture data in application seed flows and document the new boundary | Done | The seed boundary is now documented in `rules/testing-rules.md` and in this plan; QA/manual test fixtures belong in mock feed scenarios |
-| MCFP-011 | Golf Schedule Sourcing | Source the 2026 golf event schedule from real-world references and translate it into deterministic mock-provider event scenarios | Done | The `golf-major-2026` scenario now encodes a season-level 2026 golf backbone using real event names/dates from official tournament references while retaining its stable scenario id |
-| MCFP-012 | Golf Field Synthesis | Create believable deterministic upcoming-event fields, rankings, and odds from completed tournaments and stable historical/reference signals | In Progress | The first-pass golf catalog now carries deterministic fields, rankings, prices, and a few completed leaderboards across the season backbone; future slices should deepen field size, late alternates, and more event-to-event statistical drift |
-
-## Acceptance Criteria
-
-- The service name clearly communicates that it mocks contest feeds, not product behavior.
-- The service is usable locally and in QA only.
-- QA can use it as shared feed infrastructure for automated and manual testing.
-- The app continues to use the normal provider port/adapter model.
-- The product does not rely on this service for production operation.
-- JSON scenario files are deterministic and easy to extend.
-- Application seed scripts no longer need broad fake QA contest data.
-- At least one ingestion test suite runs fully against the mock service.
-- Tiering, pricing, and results flows can be exercised without external third parties.
-- Future agents have a clear rule set for when and how to add scenarios.
+| MCFP-009 | Maintenance | Define update rules for adding new scenarios and for changing existing ones | Done | Scenario updates are explicitly treated as contract changes, not app seed data |
+| MCFP-010 | Seed Separation | Remove the need for broad QA fixture data in application seed flows and document the new boundary | Done | QA/manual test fixtures belong in mock feed scenarios, not app seed scripts |
+| MCFP-011 | Golf Schedule Sourcing | Source the 2026 golf event schedule from real-world references and translate it into deterministic mock-provider event scenarios | Done | The `golf-major-2026` scenario now encodes a season-level 2026 golf backbone while retaining its stable scenario id |
+| MCFP-012 | Golf Field Synthesis | Create believable deterministic upcoming-event fields, rankings, and odds from completed tournaments and stable historical/reference signals | In Progress | The first-pass golf catalog now carries deterministic fields, rankings, prices, and a few completed leaderboards; future slices should deepen field size, late alternates, and event-to-event drift |

@@ -1,133 +1,22 @@
-## Purpose
+# Plan 88 Note: Contest Creation And Configuration
 
-Define the product and modeling expectations for commissioners creating and
-configuring contests inside a league.
+This file is intentionally no longer a product-definition document.
 
-This plan is intentionally a starter plan. It exists to capture the feature
-lane and to require a fresh model review before implementation begins.
+## Current Role
 
-## Scope
+- historical execution context only
+- legacy plan ID continuity for references from other docs/commits
 
-- commissioner creates a contest for a league
-- commissioner configures the contest using truthful first-pass settings
-- contest configuration is reviewed as a real product/domain model rather than
-  carried forward from legacy generic contest-engine assumptions
+## Current Product Source Of Truth
 
-## Starter User Cases
+- [requirements/product-requirements/features/contest-event-feed-integration/overview.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/overview.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/use-cases.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/use-cases.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/business-rules.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/business-rules.md)
+- [tech-specs/features/contest-event-feed-integration/api-surface.md](/Users/DDorazio/development/Github-Personal/pool-master/tech-specs/features/contest-event-feed-integration/api-surface.md)
+- [tech-specs/features/contest-event-feed-integration/flows.md](/Users/DDorazio/development/Github-Personal/pool-master/tech-specs/features/contest-event-feed-integration/flows.md)
 
-### CC-001: Commissioner creates a contest for a league
+## Execution Note
 
-**Actor:** Commissioner
-
-**Preconditions**
-- User is authenticated
-- User is a commissioner for the league
-
-**Flow**
-1. Commissioner opens the league context
-2. Commissioner chooses to create a contest
-3. Commissioner enters the required contest details
-4. System validates the configuration
-5. System creates the contest and returns the commissioner to contest context
-
-**Expected outcomes**
-- Contest belongs to the league
-- Contest is created with only the fields the product truly needs
-
-### CC-002: Commissioner reviews and edits contest configuration during create
-
-**Actor:** Commissioner
-
-**Preconditions**
-- Commissioner is in the contest create flow
-- A seeded default template or alternate template has been selected
-
-**Flow**
-1. Commissioner reviews the seeded contest template and derived behavior
-2. Commissioner optionally opens advanced configuration
-3. Commissioner changes only the allowed editable fields
-4. System validates and saves the update
-
-**Expected outcomes**
-- Contest configuration remains truthful and constrained
-- Editing rules are explicit and lifecycle-aware
-- Most contests can be created without field-by-field manual editing
-
-### CC-003: Commissioner configures lock timing relative to the golf event
-
-**Actor:** Commissioner
-
-**Preconditions**
-- Commissioner is in the contest create flow
-- Contest is attached to a real golf event
-
-**Flow**
-1. Commissioner selects a relative lock option such as `5 minutes before start`
-   or `1 hour before start`
-2. Commissioner may switch to a custom hours/minutes offset before the event
-3. System derives the exact `lockAt` timestamp from the event start time
-4. System saves the absolute timestamp while continuing to present it as an
-   event-relative rule in the UI
-
-**Expected outcomes**
-- Lock timing is easy for commissioners to understand
-- PoolMaster persists an exact timestamp without exposing raw datetime entry as
-  the primary UX
-
-### CC-004: Commissioner deletes a contest before the event begins
-
-**Actor:** Commissioner
-
-**Preconditions**
-- Contest is still in draft
-
-**Flow**
-1. Commissioner opens the contest management surface
-2. Commissioner chooses to delete the contest
-3. System removes the draft contest
-
-**Expected outcomes**
-- Commissioners can clean up created contests before the live event begins
-- Post-start lifecycle does not depend on manual commissioner status changes
-
-## Required Model Review Before Implementation
-
-Before backend or frontend implementation begins, perform a dedicated
-data-model review of:
-
-- `Contest`
-- `ContestConfiguration`
-- supporting DTOs, mappers, and generated contracts
-
-The review must explicitly inspect:
-
-- JSON fields and whether they are honest flexible payloads or modeling debt
-- string fields that may actually be closed-set enums
-- duplicate or speculative fields that should be removed before feature work
-- DTO/entity/persistence alignment
-- whether current configuration concepts belong on `Contest`,
-  `ContestConfiguration`, or should be removed entirely
-
-## Design Direction
-
-- Start from the simplest truthful commissioner contest-creation flow
-- Prefer template-first contest creation with advanced overrides as an optional
-  path
-- Do not preserve generic engine fields just because they already exist
-- Add model fields only when the product flow clearly needs them
-- Reuse the new domain-model conventions and enum conventions during review
-
-## Current Design Companion
-
-The active golf-first configuration design for this lane is now captured in:
-
-- [plans/98-golf-first-contest-configuration-design.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/98-golf-first-contest-configuration-design.md)
-
-That companion should be treated as the current developer handoff for:
-
-- approved first golf contest config types
-- commissioner seeded-template defaults versus advanced controls
-- relative lock-timing UX and automatic lifecycle expectations
-- event/participant fact-model expectations
-- resolver snapshot responsibilities
-- future-sport safety guardrails
+Do not use this file to surface functional questions or product requirements.
+If implementation work remains for this lane, track it in Beads and in the
+active execution-oriented plans only.

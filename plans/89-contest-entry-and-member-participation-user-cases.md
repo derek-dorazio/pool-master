@@ -1,73 +1,21 @@
-## Purpose
+# Plan 89 Note: Contest Entry And Member Participation
 
-Define the first-pass member contest-entry experience and the modeling review
-required before building it.
+This file is intentionally no longer a product-definition document.
 
-## Scope
+## Current Role
 
-- members discovering an eligible contest within a league
-- members creating an entry for a contest
-- member entry ownership and editability rules
+- historical execution context only
+- legacy plan ID continuity for references from older slices
 
-## Starter User Cases
+## Current Product Source Of Truth
 
-### CE-001: Member creates an entry for an active contest
+- [requirements/product-requirements/features/contest-event-feed-integration/overview.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/overview.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/use-cases.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/use-cases.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/business-rules.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/business-rules.md)
+- [tech-specs/features/contest-event-feed-integration/flows.md](/Users/DDorazio/development/Github-Personal/pool-master/tech-specs/features/contest-event-feed-integration/flows.md)
 
-**Actor:** League member
+## Execution Note
 
-**Preconditions**
-- User is authenticated
-- User belongs to the league
-- Contest is in a state that allows entry creation
-
-**Flow**
-1. Member opens the contest
-2. Member chooses to create an entry
-3. Member completes the required entry setup
-4. System validates the entry
-5. System creates the entry and returns the member to contest context
-
-**Expected outcomes**
-- Entry belongs to the member and contest
-- Entry surface exposes only the first-pass required concepts
-
-### CE-002: Member reviews their own contest entries
-
-**Actor:** League member
-
-**Preconditions**
-- User has at least one entry in the contest
-
-**Flow**
-1. Member opens the contest detail
-2. Member views their entries
-3. Member sees whether the entry is still editable or locked
-
-**Expected outcomes**
-- Entry ownership and visibility are explicit
-- Lock/edit rules follow the contest lifecycle truthfully
-
-## Required Model Review Before Implementation
-
-Before implementation, perform a dedicated review of:
-
-- `ContestEntry`
-- entry-related read models
-- any entry status, editability, lock, or ownership fields
-- related DTOs and generated contracts
-
-The review must explicitly inspect:
-
-- JSON fields that may be carrying speculative entry structure
-- string fields that should become enums
-- fields that are placeholders for future contest modes rather than current
-  member entry behavior
-- whether entry-level lifecycle state belongs on the core entry model or a
-  derived read model
-
-## Design Direction
-
-- Start with one truthful entry flow, not a generalized contest-engine surface
-- Model entry ownership, lockability, and member visibility explicitly
-- Remove placeholder entry fields before implementation if they do not support
-  the approved first-pass member flow
+Do not use this file to ask or answer current member-entry product questions.
+Use the current requirements and tech specs, then track implementation in Beads
+and active execution plans.

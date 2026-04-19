@@ -1,25 +1,23 @@
 # Contest Event Feed Integration Use Cases
 
-## AE-001: Root admin syncs a new event from a provider
+## AE-001: PoolMaster imports a new event from a provider
 
 Actor:
-- Root Admin
+- System
 
 Preconditions:
 - a provider is configured and enabled
 - the target event exists in the provider source
 
 Trigger:
-- root admin chooses to sync or authorize the event
+- a provider import runs or a root-admin retry/refresh is triggered
 
 Main flow:
-1. Root admin opens event operations for a sport/provider.
-2. Root admin chooses a provider event to sync.
-3. PoolMaster imports the event and participant field.
-4. PoolMaster creates or matches normalized participants.
-5. PoolMaster resolves `releaseAt` and `fieldLocksAt` from the applicable
+1. PoolMaster imports the event and participant field.
+2. PoolMaster creates or matches normalized participants.
+3. PoolMaster resolves `releaseAt` and `fieldLocksAt` from the applicable
    defaults.
-6. PoolMaster marks the event with its current readiness state.
+4. PoolMaster marks the event with its current readiness state.
 
 Expected outcomes:
 - the event becomes visible for contest operations only when the minimum
@@ -35,7 +33,7 @@ Preconditions:
 - the event already exists in PoolMaster
 
 Trigger:
-- root admin re-syncs the event manually or through an operational control
+- root admin re-syncs the event manually or an automated refresh runs
 
 Main flow:
 1. PoolMaster requests fresh provider data for the event.
@@ -95,7 +93,7 @@ Main flow:
 Expected outcomes:
 - commissioners can begin contest setup as soon as the event exists
 
-## CC-002: Commissioner reviews derived contest field behavior before release
+## CC-002: Commissioner reviews derived contest field behavior during creation
 
 Actor:
 - Commissioner
@@ -113,7 +111,8 @@ Main flow:
 3. Commissioner reviews tier/category/price/ranking behavior according to the
    contest mode.
 4. Commissioner adjusts allowed advanced configuration inputs only if needed.
-5. PoolMaster re-derives the contest field behavior.
+5. PoolMaster re-derives the contest field behavior for the pending create
+   request.
 
 Expected outcomes:
 - commissioners understand the effect of their configuration before teams enter
@@ -186,7 +185,7 @@ Expected outcomes:
 - already-selected participants remain on the entry unless the member changes
   them, even if their informational status later changes before contest lock
 
-## TE-003: Event updates affect contests and entries
+## AS-001: Event updates automatically affect scoring and leaderboards
 
 Actor:
 - System
@@ -198,10 +197,14 @@ Trigger:
 - a provider sync updates the event or participant field
 
 Main flow:
-1. PoolMaster updates event and field data.
-2. PoolMaster identifies impacted contests.
-3. PoolMaster updates contest lifecycle state, entry editability, or scoring as
-   appropriate.
+1. PoolMaster polls the provider for event updates on a scheduled cadence.
+2. PoolMaster updates event and event-participant data.
+3. PoolMaster identifies impacted contests and entries.
+4. PoolMaster recalculates entry scores and refreshes leaderboard order.
 
 Expected outcomes:
-- event-driven effects on contests and entries are explicit and traceable
+- scoring and standings update automatically from provider data
+- there is no normal commissioner/member/admin interaction required for live
+  scoring updates
+- admin involvement, if needed later, is limited to operational reruns or feed
+  repair

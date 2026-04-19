@@ -105,6 +105,7 @@ Before technical specs are handed forward, they must make clear:
 ## 10. Interaction With Plans
 
 - `tech-specs/` are design inputs and handoff artifacts
-- `plans/` remain the execution/status source of truth
+- `plans/` remain the execution/context layer, not the technical source of
+  truth
 - when a technical spec materially changes an active feature lane, update the
   relevant plan notes or task rows too

@@ -17,6 +17,13 @@
     flow.
   - Contest creation itself makes the contest immediately entry-ready.
 
+- `CEFI-000`
+  - The first complete user-facing loop is:
+    imported event -> commissioner creates contest -> team creates/edits
+    entries and selections.
+  - Scoring/results propagation is a backend automation flow, not a normal
+    commissioner/member/admin interaction flow.
+
 - `CEFI-004`
   - Released contests freeze their derived contest-field attributes at release.
 
@@ -83,6 +90,8 @@ Start with:
 - derived contest-field projection
 - released-contest frozen field projection
 - no extra intermediate release action in the normal commissioner flow
+- automatic provider polling and scoring propagation with no normal manual user
+  step
 - mock-provider evolution around golf-first tournament data
 
 Then split implementation into parallel slices once those contracts are settled.

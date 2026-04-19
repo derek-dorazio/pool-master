@@ -2,15 +2,19 @@
 
 ## End-To-End Flow
 
-### Flow 1: Root Admin Syncs Event
+### Flow 1: Event Import Resolves Operational Timing
 
-1. Root admin chooses sport/provider/event.
-2. PoolMaster imports event metadata and participant field.
-3. PoolMaster creates or matches normalized participants.
-4. PoolMaster persists `SportEvent`, `SportEventParticipant`, source data, and
+1. PoolMaster imports event metadata and participant field from the provider.
+2. PoolMaster creates or matches normalized participants.
+3. PoolMaster persists `SportEvent`, `SportEventParticipant`, source data, and
    derivation inputs.
-5. PoolMaster resolves and persists `releaseAt` and `fieldLocksAt`.
-6. PoolMaster computes event readiness.
+4. PoolMaster resolves and persists `releaseAt` and `fieldLocksAt`.
+5. PoolMaster computes event readiness.
+
+Root-admin action in this flow is optional and operational:
+- monitor imports
+- retry a broken sync
+- rarely override event timing if a special case requires it
 
 ### Flow 2: Commissioner Creates Contest
 
@@ -45,11 +49,17 @@
 
 ### Flow 5: Event Updates Propagate Downstream
 
-1. PoolMaster refreshes event/participant data from the provider.
-2. PoolMaster updates readiness and event status.
-3. PoolMaster identifies impacted contests.
-4. PoolMaster updates contest lifecycle state and scoring/read models as
-   appropriate.
+1. Scheduled backend jobs poll providers for event updates.
+2. PoolMaster refreshes event and event-participant data.
+3. PoolMaster identifies impacted contests and entries.
+4. PoolMaster recalculates entry scores and refreshes leaderboard ordering.
+5. PoolMaster updates contest lifecycle/read models as appropriate.
+
+There is no normal user flow in this step:
+- no commissioner action
+- no member action
+- no root-admin action unless a provider feed is broken and needs an
+  operational rerun or repair
 
 ## Key Design Decision
 

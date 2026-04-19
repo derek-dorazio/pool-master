@@ -6,8 +6,9 @@ Define the cross-module product design for the feature lane that connects:
 
 - root-admin event operations
 - sports-data provider ingestion
-- commissioner contest creation/configuration/release
+- commissioner contest creation/configuration
 - team contest entry and selection
+- automatic scoring and results propagation
 
 This feature treats contest setup and contest entry as downstream consumers of a
 truthful sport-event and event-field model.
@@ -17,16 +18,19 @@ truthful sport-event and event-field model.
 PoolMaster should support a real first-pass flow where:
 
 1. a sport data provider exposes an event and its participant field
-2. root admin synchronizes that event into PoolMaster
+2. PoolMaster imports that event and participant field from the provider
 3. PoolMaster normalizes the event and participants
 4. PoolMaster resolves event-level `releaseAt` and `fieldLocksAt` operational
    timestamps from global defaults
 5. a commissioner creates a contest for that event
 6. PoolMaster derives the contest-ready participant field from the event field
    plus contest configuration
-7. once released, the contest uses its own frozen contest-field interpretation
+7. contest creation immediately makes the contest live for entries and freezes
+   its own contest-field interpretation
 8. teams create one or more entries and make their selections from that
    contest-ready field
+9. backend ingestion/scoring jobs automatically update participant stats,
+   entry scores, and leaderboard order as provider data changes
 
 ## Big Themes
 
@@ -41,17 +45,19 @@ The real-world event field should be modeled once at the event layer. Contest
 selection should derive its own rules, ordering, tiering, prices, and category
 groupings from that field plus contest configuration.
 
-### 3. Admin Operations Bootstrap Trust `(Confirmed)`
+### 3. Admin Operations Stay Light-Touch `(Confirmed)`
 
-Root-admin event operations are the first-pass operational control surface for:
+Root-admin event operations are a light-touch operational control surface for:
 
 - enabling provider use
-- syncing a new event
-- monitoring sync readiness
-- retrying or refreshing a specific event
+- monitoring imports and provider health
+- retrying or refreshing a specific event if needed
+- advanced override of event-level `releaseAt` and `fieldLocksAt` only in rare
+  cases
 
-The long-term goal is more automation, but the first implementation should make
-admin control explicit rather than hiding it.
+The normal flow is automated. Events are provider-imported from real-world
+schedules, and default relative timing rules resolve into event-specific
+datetimes without requiring routine admin action.
 
 ### 4. The Mock Provider Is Real Product Infrastructure `(Confirmed)`
 
@@ -91,7 +97,7 @@ Current mismatch:
 - it is still shaped around generic contest-feed snapshots rather than the full
   event/participant vocabulary we now need for event-first integration
 
-### Commissioner Contest Setup And Release
+### Commissioner Contest Setup
 
 Goal:
 - let commissioners create contests for imported events by choosing from seeded
@@ -102,7 +108,7 @@ Current match:
 - event-anchored contest creation and golf-first configuration are real
 
 Current mismatch:
-- contest release semantics and contest-field readiness are still implicit
+- contest-field readiness and frozen-field semantics are still implicit
 - contest field derivation is mostly internal runtime behavior, not a clean
   product contract
 - released-contest frozen field behavior is not yet explicit in the product or
@@ -122,6 +128,23 @@ Current match:
 Current mismatch:
 - entry selection is still coupled to draft-room/runtime contracts rather than
   a first-class contest-field flow designed from this module set
+
+### Automatic Scoring And Results Propagation
+
+Goal:
+- let backend jobs poll provider updates, refresh event-participant stats,
+  recompute entry scores, and update leaderboard order automatically
+
+Current match:
+- ingestion/provider foundations already exist
+- scoring/runtime modules already exist in partial form
+
+Current mismatch:
+- the automatic scoring pipeline is not yet documented as a first-class module
+- provider polling cadence, update handling, and scoring propagation need a
+  cleaner end-to-end contract
+- there is no identified commissioner/member/admin operational role in normal
+  scoring flow beyond monitoring and rare reruns for broken feeds
 
 ## Product Direction For First Pass
 

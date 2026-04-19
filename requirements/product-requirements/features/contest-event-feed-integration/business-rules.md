@@ -24,8 +24,11 @@
   event sync controls in the first pass.
 - `BR-101A` `(Confirmed)` Root admin does not manually author sporting events;
   events are provider-discovered/imported from real-world schedules.
-- `BR-102` `(Confirmed)` Commissioners create, configure, and release contests
-  for their leagues.
+- `BR-101B` `(Confirmed)` Root admin does not normally release events manually;
+  event availability is driven by imported events plus default event-relative
+  `releaseAt` and `fieldLocksAt` timing rules.
+- `BR-102` `(Confirmed)` Commissioners create and configure contests for their
+  leagues, and contest creation immediately makes the contest live for entries.
 - `BR-103` `(Confirmed)` Team owners/members act in the context of a team when
   creating contest entries.
 - `BR-104` `(Inferred)` Commissioners should not manually author the real-world
@@ -64,6 +67,12 @@
 - `BR-209` `(Confirmed)` In the normal flow, commissioners choose among seeded
   templates and only use advanced configuration when they intentionally want to
   override defaults.
+- `BR-210` `(Confirmed)` There is no normal admin, commissioner, or member user
+  flow for live scoring updates; backend ingestion/scoring jobs update event
+  data, entry scores, and leaderboard order automatically.
+- `BR-211` `(Confirmed)` If an admin role surfaces in scoring later, it is
+  operational only, such as rerunning or repairing broken provider feeds, not
+  manually entering or editing stats/results.
 
 ## Validation Rules
 

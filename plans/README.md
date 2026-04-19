@@ -6,6 +6,16 @@
 ## How To Use This Folder
 
 - Treat files in `plans/` as the current execution and replanning surface.
+- Plans are execution-oriented only:
+  - progress
+  - scope
+  - sequencing
+  - execution notes
+  - task tables
+- Plans should not act as the product source of truth or technical source of
+  truth.
+- Product behavior belongs in `requirements/`.
+- Technical design belongs in `tech-specs/`.
 - Treat files in `plans/deferred/` as future enhancement planning, not current delivery scope.
 
 ## Current Intent

@@ -4,6 +4,18 @@ These question IDs are intended to stay stable as the discussion evolves.
 
 ## Resolved Decisions
 
+- `CEFI-000` First complete commissioner-to-member loop `(Resolved)`
+  - There is no manual root-admin event release step in the normal flow.
+  - Events are provider-imported and use default event-relative `releaseAt`
+    and `fieldLocksAt` rules.
+  - Commissioner contest creation immediately makes the contest live for team
+    entries.
+  - The first meaningful user loop is:
+    imported event -> commissioner creates contest -> team creates/edit entries
+    and selections.
+  - Scoring and results propagation are backend automation, not a commissioner
+    or member workflow.
+
 - `CEFI-001` Event creation authority `(Resolved)`
   - Events are provider-discovered/imported only.
   - Root admin does not manually create event shells or stubs.
@@ -46,9 +58,7 @@ These question IDs are intended to stay stable as the discussion evolves.
 
 ## Blocking Questions
 
-- `CEFI-005` Commissioner override scope
-  - Which derived contest-field behaviors may commissioners override before
-    release?
+- None currently.
 
 ## Non-Blocking Questions
 

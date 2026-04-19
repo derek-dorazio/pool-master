@@ -31,7 +31,7 @@ ownership and artifacts.
   there instead
 - `requirements/product-overview/` holds Piper output
 - `requirements/product-requirements/` holds Pam output
-- `plans/` remains the active execution-tracking source of truth
+- `plans/` remains the execution-context layer, not the product source of truth
 
 ## Action Plan
 
