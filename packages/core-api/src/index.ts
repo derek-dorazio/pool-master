@@ -43,13 +43,13 @@ import { ContestScoringRecalculationService } from './modules/contest-scoring';
 import { notificationsModule } from './modules/notifications/routes';
 
 // Ingestion module
-import { Sport } from '@poolmaster/shared/domain';
 import { ProviderRegistry, IngestionScheduler, publishStatEvents } from './modules/ingestion/core';
 import type { IngestionCallbacks, IngestionJobRecord } from './modules/ingestion/core';
 import type { SportEvent, ProviderParticipant, ProviderRanking, ProviderStatEvent } from './modules/ingestion/core';
-import { OpenF1Adapter, OddsApiAdapter, EspnAdapter, PgaTourAdapter } from './modules/ingestion/adapters';
+import { OddsApiAdapter } from './modules/ingestion/adapters';
 import { ingestionModule } from './modules/ingestion/routes';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
+import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -59,13 +59,7 @@ export function buildApp() {
   app.decorate('prisma', prisma);
 
   const registry = new ProviderRegistry();
-  registry.register(Sport.GOLF, new PgaTourAdapter(), 'PRIMARY');
-  registry.register(Sport.F1, new OpenF1Adapter(), 'PRIMARY');
-  registry.register(Sport.NFL, new EspnAdapter(), 'PRIMARY');
-  registry.register(Sport.NBA, new EspnAdapter(), 'PRIMARY');
-  registry.register(Sport.MLB, new EspnAdapter(), 'PRIMARY');
-  registry.register(Sport.NHL, new EspnAdapter(), 'PRIMARY');
-  registry.register(Sport.NCAA_BASKETBALL, new EspnAdapter(), 'PRIMARY');
+  registerConfiguredProviders(registry);
   const oddsAdapter = new OddsApiAdapter();
   const ingestionPersistence = new IngestionPersistence(prisma);
 
