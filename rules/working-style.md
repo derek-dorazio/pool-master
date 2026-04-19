@@ -34,6 +34,8 @@ testing rules elsewhere in `rules/`.
 - prefer truthful lifecycle behavior over admin/test-only shortcuts
 - when product consequences are non-obvious, confirm the decision before
   implementation expands
+- when a slice is complete and the relevant local tests are green, commit and
+  push that slice before moving on to the next one
 
 ## 4. Testing And Truthfulness Defaults
 
