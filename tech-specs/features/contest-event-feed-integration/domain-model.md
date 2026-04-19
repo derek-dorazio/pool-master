@@ -101,6 +101,8 @@ Current status:
 Notes:
 - currently already used by draft routes
 - pre-release valuations remain a derivation input
+- provider odds/ranks inform PoolMaster derivation, but budget-style prices are
+  PoolMaster-owned valuation outputs rather than feed-provider fields
 - released contests must persist the contest-specific frozen interpretation
   derived from these inputs rather than reading mutable live valuation rows
 

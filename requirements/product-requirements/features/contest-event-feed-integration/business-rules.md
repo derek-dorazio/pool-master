@@ -120,6 +120,9 @@
 - `BR-226` `(Confirmed)` Supporting participant information such as world rank
   may be shown in the tiered golf entry UI without replacing the default odds-
   based tier source.
+- `BR-226A` `(Confirmed)` Future budget-based contests should derive participant
+  prices inside PoolMaster from contest/event valuation rules rather than treat
+  provider feeds as the source of budget prices.
 - `BR-227` `(Confirmed)` The first-pass tiered golf entry flow should support
   sequential tier-by-tier selection, optional tier collapse after selection,
   and a winner-score tiebreaker input before final entry submission.

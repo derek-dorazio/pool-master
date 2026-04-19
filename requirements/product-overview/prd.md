@@ -47,6 +47,8 @@ changes.
   contest history
 - first sport family remains golf
 - first entry-selection UI should be tiered golf
+- future budget-based contests should use PoolMaster-derived participant prices
+  rather than provider-sourced budget values
 - additional sports should follow after the full contest lifecycle and history
   loop is working cleanly
 
