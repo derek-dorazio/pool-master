@@ -6633,6 +6633,110 @@ export type EnterContestResponses = {
 
 export type EnterContestResponse = EnterContestResponses[keyof EnterContestResponses];
 
+export type UpdateContestEntryData = {
+    /**
+     * Request payload for renaming a contest entry while the contest is still joinable.
+     */
+    body: {
+        /**
+         * Unique entry name shown anywhere the team entry is listed.
+         */
+        name: string;
+    };
+    path: {
+        contestId: string;
+        entryId: string;
+    };
+    query?: never;
+    url: '/api/v1/contests/{contestId}/entries/{entryId}';
+};
+
+export type UpdateContestEntryErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type UpdateContestEntryError = UpdateContestEntryErrors[keyof UpdateContestEntryErrors];
+
+export type UpdateContestEntryResponses = {
+    /**
+     * Single contest-entry response.
+     */
+    200: {
+        /**
+         * Contest that owns the entry.
+         */
+        contestId: string;
+        /**
+         * Contest entry summary.
+         */
+        entry: {
+            id: string;
+            contestId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
+            name: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            totalScore: number;
+            standingsPosition?: number;
+            isEliminated: boolean;
+            /**
+             * When the contest entry was created.
+             */
+            createdAt: string;
+            /**
+             * When the contest entry was last updated.
+             */
+            updatedAt: string;
+        };
+    };
+};
+
+export type UpdateContestEntryResponse = UpdateContestEntryResponses[keyof UpdateContestEntryResponses];
+
 export type UndoContestDraftSelectionData = {
     /**
      * Commissioner request payload for undoing a contest draft selection.

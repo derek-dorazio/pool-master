@@ -7,6 +7,7 @@ import {
   leaveContest,
   listContestEntries,
   listContests,
+  updateContestEntry,
   updateContest,
   submitContestSelection,
 } from '@poolmaster/shared/generated/hey-api';
@@ -321,6 +322,101 @@ describe('SDK Functional: Contests and Entries', () => {
     expectFunctionalError(deletedContest, {
       status: 404,
       code: 'CONTEST_NOT_FOUND',
+    });
+  });
+
+  it('renames a team-owned contest entry and rejects duplicate names through the generated SDK', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({
+      displayName: 'Rename Commissioner',
+      leagueName: 'Rename Functional League',
+    });
+
+    const createResponse = await createContest({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+      body: {
+        name: 'Rename Contest',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.BUDGET_PICK,
+        scoringEngine: ScoringEngine.POSITION,
+      },
+    });
+
+    const contestId = createResponse.data?.contest.id;
+    expect(contestId).toBeTruthy();
+
+    const prisma = getFunctionalPrisma();
+    await prisma.contest.update({
+      where: {
+        id: contestId as string,
+      },
+      data: {
+        status: ContestStatus.OPEN,
+      },
+    });
+
+    const enterResponse = await enterContest({
+      client: commissioner.client,
+      path: {
+        contestId: contestId as string,
+      },
+    });
+
+    expect(enterResponse.data?.entry.id).toBeTruthy();
+
+    const secondEntry = await prisma.contestEntry.create({
+      data: {
+        contestId: contestId as string,
+        squadId: enterResponse.data?.entry.squadId as string,
+        entryNumber: 2,
+        name: 'Rename Functional League Entry 2',
+        status: 'ACTIVE',
+        totalScore: 0,
+        isEliminated: false,
+      },
+    });
+
+    const renameResponse = await updateContestEntry({
+      client: commissioner.client,
+      path: {
+        contestId: contestId as string,
+        entryId: enterResponse.data?.entry.id as string,
+      },
+      body: {
+        name: 'Sunday Charge',
+      },
+    });
+
+    expect(renameResponse.data).toBeDefined();
+    expect(renameResponse.data?.entry.id).toBe(enterResponse.data?.entry.id);
+    expect(renameResponse.data?.entry.name).toBe('Sunday Charge');
+
+    const entriesResponse = await listContestEntries({
+      client: commissioner.client,
+      path: {
+        contestId: contestId as string,
+      },
+    });
+
+    expect(entriesResponse.data?.entries.find((entry) => entry.id === enterResponse.data?.entry.id)?.name)
+      .toBe('Sunday Charge');
+
+    const duplicateRenameResponse = await updateContestEntry({
+      client: commissioner.client,
+      path: {
+        contestId: contestId as string,
+        entryId: secondEntry.id,
+      },
+      body: {
+        name: 'Sunday Charge',
+      },
+    });
+
+    expectFunctionalError(duplicateRenameResponse, {
+      status: 400,
+      code: 'CONTEST_ENTRY_NAME_DUPLICATE',
     });
   });
 

@@ -79,6 +79,11 @@ export const UpdateContestRequestSchema = z.object({
 }).describe('Patch payload for updating editable contest metadata.');
 export type UpdateContestRequest = z.infer<typeof UpdateContestRequestSchema>;
 
+export const UpdateContestEntryRequestSchema = z.object({
+  name: z.string().trim().min(1).max(100).describe('Unique entry name shown anywhere the team entry is listed.'),
+}).describe('Request payload for renaming a contest entry while the contest is still joinable.');
+export type UpdateContestEntryRequest = z.infer<typeof UpdateContestEntryRequestSchema>;
+
 export const UndoContestDraftSelectionRequestSchema = z.object({
   pickId: z.string().describe('Draft pick to undo.'),
   reason: z.string().describe('Commissioner reason recorded for the undo action.'),

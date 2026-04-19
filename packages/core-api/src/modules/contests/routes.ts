@@ -22,6 +22,7 @@ import {
   ReopenContestRequestSchema,
   SuccessSchema,
   UndoContestDraftSelectionRequestSchema,
+  UpdateContestEntryRequestSchema,
   UpdateContestLockTimeRequestSchema,
   UpdateContestRequestSchema,
   zodToJsonSchema,
@@ -213,6 +214,23 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       },
     },
     handler: handlers.deleteMyEntry,
+  });
+
+  fastify.patch('/:contestId/entries/:entryId', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Rename a contest entry',
+      description:
+        'Renames a specific contest entry owned by the authenticated user while the contest is still joinable.',
+      operationId: 'updateContestEntry',
+      body: zodToJsonSchema(UpdateContestEntryRequestSchema),
+      response: {
+        200: zodToJsonSchema(ContestEntryResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handlers.updateEntry,
   });
 
   fastify.put('/:contestId', {

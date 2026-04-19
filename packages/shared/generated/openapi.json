@@ -14277,6 +14277,226 @@
         }
       }
     },
+    "/api/v1/contests/{contestId}/entries/{entryId}": {
+      "patch": {
+        "operationId": "updateContestEntry",
+        "summary": "Rename a contest entry",
+        "tags": [
+          "Contests"
+        ],
+        "description": "Renames a specific contest entry owned by the authenticated user while the contest is still joinable.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Unique entry name shown anywhere the team entry is listed."
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false,
+                "description": "Request payload for renaming a contest entry while the contest is still joinable."
+              }
+            }
+          },
+          "description": "Request payload for renaming a contest entry while the contest is still joinable."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "entryId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single contest-entry response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contestId": {
+                      "type": "string",
+                      "description": "Contest that owns the entry."
+                    },
+                    "entry": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "contestId": {
+                          "type": "string"
+                        },
+                        "squadId": {
+                          "type": "string"
+                        },
+                        "squadName": {
+                          "type": "string"
+                        },
+                        "entryNumber": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "ACTIVE",
+                            "INACTIVE"
+                          ]
+                        },
+                        "totalScore": {
+                          "type": "number"
+                        },
+                        "standingsPosition": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "isEliminated": {
+                          "type": "boolean"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When the contest entry was created."
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When the contest entry was last updated."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "contestId",
+                        "squadId",
+                        "squadName",
+                        "entryNumber",
+                        "name",
+                        "status",
+                        "totalScore",
+                        "isEliminated",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Contest entry summary."
+                    }
+                  },
+                  "required": [
+                    "contestId",
+                    "entry"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Single contest-entry response."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/contests/{contestId}/draft/undo-pick": {
       "post": {
         "operationId": "undoContestDraftSelection",

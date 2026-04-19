@@ -283,6 +283,62 @@ export class ContestService {
     await this.requireEntryRepo().delete(existing.id);
   }
 
+  async updateEntry(
+    contestId: string,
+    entryId: string,
+    userId: string,
+    nextName: string,
+  ): Promise<ContestEntryDto> {
+    const context = await this.getEntryContext(contestId, userId);
+    const membership = context.membership;
+    if (!membership) {
+      throw new ContestEntryOperationError(
+        'You must be an active league member to rename this contest entry',
+        'LEAGUE_MEMBERSHIP_REQUIRED',
+      );
+    }
+    if (!isContestJoinable(context.contest.status)) {
+      throw new ContestEntryOperationError(
+        'Contest entries can only be changed before the contest starts',
+        'CONTEST_ENTRY_LOCKED',
+      );
+    }
+    if (!context.squadMembership) {
+      throw new ContestEntryOperationError(
+        'You do not manage a squad in this league',
+        'SQUAD_MANAGER_REQUIRED',
+      );
+    }
+
+    const entries = await this.findEntriesBySquad(contestId, context.squadMembership.squadId);
+    const existing = entries.find((entry) => entry.id === entryId);
+    if (!existing) {
+      throw new ContestEntryNotFoundError(contestId, context.squadMembership.squadId);
+    }
+
+    const sanitizedName = nextName.trim();
+    if (!sanitizedName) {
+      throw new ContestEntryOperationError(
+        'Contest entry name is required',
+        'CONTEST_ENTRY_NAME_REQUIRED',
+      );
+    }
+
+    const normalizedName = sanitizedName.toLocaleLowerCase();
+    const duplicateEntry = entries.find(
+      (entry) => entry.id !== entryId && entry.name.trim().toLocaleLowerCase() === normalizedName,
+    );
+    if (duplicateEntry) {
+      throw new ContestEntryOperationError(
+        'This team already has another entry with that name in the contest',
+        'CONTEST_ENTRY_NAME_DUPLICATE',
+      );
+    }
+
+    await this.requireEntryRepo().update(entryId, { name: sanitizedName });
+    return this.loadEntryDtoById(entryId);
+  }
+
   private async getEntryContext(
     contestId: string,
     userId: string,

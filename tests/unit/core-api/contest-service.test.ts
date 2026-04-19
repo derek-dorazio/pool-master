@@ -587,5 +587,222 @@ describe('ContestService', () => {
       );
       expect(entryRepo.delete).not.toHaveBeenCalled();
     });
+
+    it('renames a team-owned contest entry while the contest is still open', async () => {
+      const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.OPEN });
+      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
+      const contestRepo = createMockContestRepo({
+        findById: jest.fn().mockResolvedValue(contest),
+      });
+      const membershipRepo = createMockMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
+      });
+      const entryRepo = createMockEntryRepo({
+        findBySquad: jest.fn().mockResolvedValue([
+          {
+            id: 'entry-1',
+            contestId: 'contest-1',
+            squadId: 'squad-1',
+            entryNumber: 1,
+            name: "Derek's Squad Entry 1",
+            status: 'ACTIVE',
+            totalScore: 0,
+            standingsPosition: undefined,
+            isEliminated: false,
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          },
+          {
+            id: 'entry-2',
+            contestId: 'contest-1',
+            squadId: 'squad-1',
+            entryNumber: 2,
+            name: "Derek's Squad Entry 2",
+            status: 'ACTIVE',
+            totalScore: 0,
+            standingsPosition: undefined,
+            isEliminated: false,
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          },
+        ]),
+        update: jest.fn().mockImplementation(async (id, updates) => ({
+          id,
+          contestId: 'contest-1',
+          squadId: 'squad-1',
+          entryNumber: id === 'entry-1' ? 1 : 2,
+          name: updates.name ?? "Derek's Squad Entry 1",
+          status: 'ACTIVE',
+          totalScore: 0,
+          standingsPosition: undefined,
+          isEliminated: false,
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-02'),
+        })),
+      });
+      const prisma = createMockPrisma({
+        contestEntry: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              id: 'entry-1',
+              contestId: 'contest-1',
+              squadId: 'squad-1',
+              entryNumber: 1,
+              name: 'Renamed Entry',
+              status: 'ACTIVE',
+              totalScore: 0,
+              standingsPosition: null,
+              isEliminated: false,
+              createdAt: new Date('2026-01-01'),
+              updatedAt: new Date('2026-01-02'),
+              squad: { id: 'squad-1', name: "Derek's Squad" },
+            },
+          ]),
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'entry-1',
+            contestId: 'contest-1',
+            squadId: 'squad-1',
+            entryNumber: 1,
+            name: 'Renamed Entry',
+            status: 'ACTIVE',
+            totalScore: 0,
+            standingsPosition: null,
+            isEliminated: false,
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-02'),
+            squad: { id: 'squad-1', name: "Derek's Squad" },
+          }),
+        },
+      });
+      const service = new ContestService(
+        contestRepo,
+        createMockContestConfigurationRepo(),
+        membershipRepo,
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue({
+            id: 'squad-membership-1',
+            squadId: 'squad-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            status: SquadMembershipStatus.ACTIVE,
+            joinedAt: new Date('2026-01-01'),
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }),
+        }),
+        entryRepo,
+        prisma as any,
+      );
+
+      const result = await service.updateEntry('contest-1', 'entry-1', 'user-1', '  Renamed Entry  ');
+
+      expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { name: 'Renamed Entry' });
+      expect(result.name).toBe('Renamed Entry');
+    });
+
+    it('rejects renaming a contest entry to a duplicate team entry name', async () => {
+      const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.OPEN });
+      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
+      const contestRepo = createMockContestRepo({
+        findById: jest.fn().mockResolvedValue(contest),
+      });
+      const membershipRepo = createMockMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
+      });
+      const entryRepo = createMockEntryRepo({
+        findBySquad: jest.fn().mockResolvedValue([
+          {
+            id: 'entry-1',
+            contestId: 'contest-1',
+            squadId: 'squad-1',
+            entryNumber: 1,
+            name: "Derek's Squad Entry 1",
+            status: 'ACTIVE',
+            totalScore: 0,
+            standingsPosition: undefined,
+            isEliminated: false,
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          },
+          {
+            id: 'entry-2',
+            contestId: 'contest-1',
+            squadId: 'squad-1',
+            entryNumber: 2,
+            name: 'Second Bullet',
+            status: 'ACTIVE',
+            totalScore: 0,
+            standingsPosition: undefined,
+            isEliminated: false,
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          },
+        ]),
+      });
+      const service = new ContestService(
+        contestRepo,
+        createMockContestConfigurationRepo(),
+        membershipRepo,
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue({
+            id: 'squad-membership-1',
+            squadId: 'squad-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            status: SquadMembershipStatus.ACTIVE,
+            joinedAt: new Date('2026-01-01'),
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }),
+        }),
+        entryRepo,
+        createMockPrisma() as any,
+      );
+
+      await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', ' second bullet ')).rejects.toMatchObject({
+        code: 'CONTEST_ENTRY_NAME_DUPLICATE',
+      });
+      expect(entryRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects renaming a contest entry after the contest locks', async () => {
+      const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.LOCKED });
+      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
+      const contestRepo = createMockContestRepo({
+        findById: jest.fn().mockResolvedValue(contest),
+      });
+      const membershipRepo = createMockMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
+      });
+      const service = new ContestService(
+        contestRepo,
+        createMockContestConfigurationRepo(),
+        membershipRepo,
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue({
+            id: 'squad-membership-1',
+            squadId: 'squad-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            status: SquadMembershipStatus.ACTIVE,
+            joinedAt: new Date('2026-01-01'),
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }),
+        }),
+        createMockEntryRepo(),
+        createMockPrisma() as any,
+      );
+
+      await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', 'Renamed Entry')).rejects.toMatchObject({
+        code: 'CONTEST_ENTRY_LOCKED',
+      });
+    });
   });
 });

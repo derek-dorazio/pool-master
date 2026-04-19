@@ -1,20 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   changeMemberRole,
+  enterContest,
   generateInviteLink,
   getLeagueByCode,
   leaveLeague,
+  listContestEntries,
   listContests,
   listLeagueMembers,
+  listLeagueSquads,
   removeMember,
   sendLeagueInvitations,
   type ChangeMemberRoleResponses,
   type GetLeagueResponses,
   type LeaveLeagueResponses,
+  type ListContestEntriesResponses,
   type ListContestsResponses,
   type ListLeagueMembersResponses,
+  type ListLeagueSquadsResponses,
   type RemoveMemberResponses,
 } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
@@ -31,6 +36,8 @@ import {
 type LeagueDetail = GetLeagueResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
 type ContestSummary = ListContestsResponses[200]['contests'][number];
+type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
+type ContestEntrySummary = ListContestEntriesResponses[200]['entries'][number];
 type ChangeRoleResponse = ChangeMemberRoleResponses[200]['membership'];
 type RemoveMemberResponse = RemoveMemberResponses[200];
 type LeaveLeagueResponse = LeaveLeagueResponses[200];
@@ -57,6 +64,10 @@ function formatJoinedAt(value: string | undefined) {
   }
 
   return `Joined ${parsed.toLocaleDateString()}`;
+}
+
+function isHistoricalContest(status: ContestSummary['status']) {
+  return status === 'COMPLETED' || status === 'CANCELLED';
 }
 
 function extractErrorMessage(error: unknown, fallback: string) {
@@ -146,6 +157,21 @@ export function LeagueDetailPage() {
       }
 
       return response.data.contests;
+    },
+    enabled: Boolean(leagueId),
+    retry: false,
+  });
+
+  const teamsQuery = useQuery({
+    queryKey: ['poolmaster', 'league-teams', leagueId],
+    queryFn: async (): Promise<TeamSummary[]> => {
+      const response = await listLeagueSquads({ path: { id: leagueId } });
+
+      if (!response.data?.squads) {
+        throw response.error ?? new Error('Team list response is missing data.');
+      }
+
+      return response.data.squads;
     },
     enabled: Boolean(leagueId),
     retry: false,
@@ -267,8 +293,81 @@ export function LeagueDetailPage() {
   const isCommissioner = leagueQuery.data?.role === 'COMMISSIONER';
   const isInactiveLeague = leagueQuery.data?.isActive === false;
   const currentUserId = auth.user?.id;
+  const myTeam = useMemo(() => {
+    if (!currentUserId) {
+      return null;
+    }
+
+    return teamsQuery.data?.find((team) =>
+      team.members?.some((member) => member.userId === currentUserId && member.status === 'ACTIVE'),
+    ) ?? null;
+  }, [currentUserId, teamsQuery.data]);
   const activeCommissionerCount =
     membersQuery.data?.filter((member) => member.role === 'COMMISSIONER').length ?? 0;
+
+  const contestEntriesByContestQuery = useQuery({
+    queryKey: ['poolmaster', 'league-contest-entries', myTeam?.id, contestsQuery.data?.map((contest) => contest.id).join(',')],
+    queryFn: async (): Promise<Record<string, ListContestEntriesResponses[200]>> => {
+      if (!myTeam || !contestsQuery.data) {
+        return {};
+      }
+
+      const results = await Promise.all(
+        contestsQuery.data.map(async (contest) => {
+          const response = await listContestEntries({ path: { contestId: contest.id } });
+
+          if (!response.data) {
+            throw response.error ?? new Error('Contest entries response is missing data.');
+          }
+
+          return [contest.id, response.data] as const;
+        }),
+      );
+
+      return Object.fromEntries(results);
+    },
+    enabled: Boolean(myTeam && contestsQuery.data),
+    retry: false,
+  });
+
+  const contestCards = useMemo(() => {
+    if (!contestsQuery.data) {
+      return [];
+    }
+
+    return contestsQuery.data.map((contest) => {
+      const entryResponse = contestEntriesByContestQuery.data?.[contest.id];
+      const myTeamEntries = myTeam
+        ? (entryResponse?.entries ?? []).filter((entry) => entry.squadId === myTeam.id)
+        : [];
+
+      return {
+        contest,
+        isEntryLoading: contestEntriesByContestQuery.isLoading,
+        isEntryError: contestEntriesByContestQuery.isError,
+        myTeamEntries,
+      };
+    });
+  }, [contestEntriesByContestQuery.data, contestEntriesByContestQuery.isError, contestEntriesByContestQuery.isLoading, contestsQuery.data, myTeam]);
+  const activeContestCards = contestCards.filter((card) => !isHistoricalContest(card.contest.status));
+
+  const createContestEntryMutation = useMutation({
+    mutationFn: async (contestId: string) => {
+      const response = await enterContest({ path: { contestId } });
+
+      if (!response.data?.entry) {
+        throw response.error ?? new Error('Contest entry creation response is missing data.');
+      }
+
+      return response.data.entry;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-contests', leagueId] }),
+        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-contest-entries', myTeam?.id] }),
+      ]);
+    },
+  });
 
   async function handleGenerateInviteLink() {
     if (isInactiveLeague) {
@@ -738,8 +837,8 @@ export function LeagueDetailPage() {
               <div>
                 <h3 className="text-xl font-semibold">Contests</h3>
                 <p className="text-sm text-muted-foreground">
-                  League contests now route into the rebuilt contest detail surface instead of the
-                  old frontend stack.
+                  League Home is a valid team-context entry point. Active contest tiles show your
+                  team&apos;s entries alongside the contest-level entry count.
                 </p>
               </div>
               {isCommissioner && !isInactiveLeague ? (
@@ -760,15 +859,33 @@ export function LeagueDetailPage() {
                 <p className="text-sm text-muted-foreground">
                   We couldn&apos;t load contests for this league.
                 </p>
-              ) : contestsQuery.data?.length ? (
-                contestsQuery.data.map((contest) => (
+              ) : teamsQuery.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading your team context...</p>
+              ) : teamsQuery.isError ? (
+                <p className="text-sm text-muted-foreground">
+                  We couldn&apos;t load team context for contest entry actions.
+                </p>
+              ) : !myTeam ? (
+                <div className="rounded-2xl border border-border bg-background px-4 py-4">
+                  <p className="font-medium text-foreground">Create your team to enter contests.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Contest entries always belong to an existing team in this league.
+                  </p>
                   <Link
-                    className="block rounded-2xl border border-border bg-background px-4 py-4 transition hover:border-primary/40"
-                    key={contest.id}
-                    state={{ leagueCode: leagueQuery.data.leagueCode }}
-                    to={`/contests/${contest.id}`}
+                    className="mt-4 inline-flex rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+                    to={buildLeagueTeamPath(leagueQuery.data.leagueCode)}
                   >
-                    <div className="flex items-center justify-between gap-4">
+                    Open team home
+                  </Link>
+                </div>
+              ) : activeContestCards.length ? (
+                activeContestCards.map(({ contest, isEntryError, isEntryLoading, myTeamEntries }) => (
+                  <div
+                    className="rounded-2xl border border-border bg-background px-4 py-4"
+                    data-testid={`league-contest-${contest.id}`}
+                    key={contest.id}
+                  >
+                    <div className="flex items-start justify-between gap-4">
                       <div>
                         <div className="font-medium">{contest.name}</div>
                         <div className="mt-1 text-sm text-muted-foreground">
@@ -780,13 +897,91 @@ export function LeagueDetailPage() {
                         <div>{contest.entryCount ?? 0} entries</div>
                       </div>
                     </div>
-                  </Link>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Link
+                        className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+                        state={{ leagueCode: leagueQuery.data.leagueCode }}
+                        to={`/contests/${contest.id}`}
+                      >
+                        Open contest
+                      </Link>
+                      {contest.status === 'OPEN' ? (
+                        <button
+                          className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                          data-testid={`league-create-entry-${contest.id}`}
+                          disabled={createContestEntryMutation.isPending || isInactiveLeague}
+                          onClick={() => void createContestEntryMutation.mutateAsync(contest.id)}
+                          type="button"
+                        >
+                          {createContestEntryMutation.isPending
+                            ? 'Creating...'
+                            : myTeamEntries.length
+                              ? `Create another entry for ${myTeam.name}`
+                              : `Create first entry for ${myTeam.name}`}
+                        </button>
+                      ) : null}
+                      <Link
+                        className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+                        to={buildLeagueTeamPath(leagueQuery.data.leagueCode)}
+                      >
+                        Team home
+                      </Link>
+                    </div>
+
+                    <div className="mt-4 rounded-2xl border border-border bg-card px-4 py-4">
+                      <div className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                        {myTeam.name}
+                      </div>
+                      {isEntryLoading ? (
+                        <p className="mt-2 text-sm text-muted-foreground">Loading your team entries...</p>
+                      ) : isEntryError ? (
+                        <p className="mt-2 text-sm text-destructive">
+                          We couldn&apos;t load your team&apos;s entries for this contest.
+                        </p>
+                      ) : myTeamEntries.length ? (
+                        <div className="mt-3 space-y-3">
+                          {myTeamEntries.map((entry: ContestEntrySummary) => (
+                            <div
+                              className="rounded-2xl border border-border bg-background px-4 py-4"
+                              data-testid={`league-contest-entry-${entry.id}`}
+                              key={entry.id}
+                            >
+                              <div className="flex items-center justify-between gap-4">
+                                <div>
+                                  <div className="font-medium text-foreground">{entry.name}</div>
+                                  <div className="mt-1 text-sm text-muted-foreground">
+                                    {entry.squadName} · Entry {entry.entryNumber}
+                                  </div>
+                                </div>
+                                <div className="text-right text-sm text-muted-foreground">
+                                  <div>{entry.standingsPosition ? `#${entry.standingsPosition}` : 'Rank pending'}</div>
+                                  <div>{entry.totalScore} pts</div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Your team does not have an entry in this contest yet.
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  No contests exist for this league yet.
+                  No active contests are available for this league yet.
                 </p>
               )}
+              {createContestEntryMutation.isError ? (
+                <p className="text-sm text-destructive">
+                  {extractErrorMessage(
+                    createContestEntryMutation.error,
+                    'We could not create that contest entry right now.',
+                  )}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>

@@ -82,6 +82,8 @@ Important:
 ## Workflow Expectations
 
 - Check whether the work is already tracked in `plans/`, and update the relevant task rows as work starts and finishes.
+- At the start of a resumed session, re-read `rules/working-style.md` to restore the expected collaboration style and continuity defaults before implementing.
+- When a prior session intentionally paused work, check `docs/SESSION-HANDOFF.md` for the current "resume here" note before choosing the next slice.
 - When a refactor changes architecture, testing patterns, or developer workflow, update the matching `rules/*.md` files in the same effort.
 - Do not maintain competing instruction sets across `AGENTS.md`, `CLAUDE.md`, `rules/`, and `agents/`.
 - Treat `requirements/` and `tech-specs/` as design inputs and handoff artifacts; active execution tracking still belongs in `plans/`.

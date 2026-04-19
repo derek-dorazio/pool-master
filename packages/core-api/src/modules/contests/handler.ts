@@ -93,6 +93,10 @@ const UpdateContestBodySchema = zod.object({
   isExclusive: zod.boolean().optional(),
 });
 
+const UpdateContestEntryBodySchema = zod.object({
+  name: zod.string().trim().min(1).max(100),
+});
+
 export function createContestHandlers(contestService: ContestService) {
   return {
     createContest,
@@ -102,6 +106,7 @@ export function createContestHandlers(contestService: ContestService) {
     getMyEntry,
     createMyEntry,
     deleteMyEntry,
+    updateEntry,
     updateContest,
     deleteContest,
   };
@@ -240,6 +245,34 @@ export function createContestHandlers(contestService: ContestService) {
         contestId: request.params.contestId,
         deleted: true as const,
       });
+    } catch (err) {
+      if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
+        return sendError(reply, 404, 'CONTEST_ENTRY_NOT_FOUND', err.message);
+      }
+      if (err instanceof ContestEntryOperationError) {
+        return sendError(reply, 400, err.code, err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function updateEntry(
+    request: FastifyRequest<{
+      Params: { contestId: string; entryId: string };
+      Body: z.infer<typeof UpdateContestEntryBodySchema>;
+    }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const userId = request.authUser?.userId as string;
+    try {
+      const body = UpdateContestEntryBodySchema.parse(request.body);
+      const entry = await contestService.updateEntry(
+        request.params.contestId,
+        request.params.entryId,
+        userId,
+        body.name,
+      );
+      return reply.send(toContestEntryResponse(request.params.contestId, entry));
     } catch (err) {
       if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
         return sendError(reply, 404, 'CONTEST_ENTRY_NOT_FOUND', err.message);
