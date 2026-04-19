@@ -150,6 +150,8 @@ describe('History Read Integration', () => {
         name: 'History Event',
         status: 'COMPLETED',
         startDate: new Date('2026-04-03T12:00:00Z'),
+        releaseAt: new Date('2026-04-03T12:00:00Z'),
+        fieldLocksAt: new Date('2026-04-03T12:00:00Z'),
       },
     });
 

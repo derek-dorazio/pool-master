@@ -47,6 +47,8 @@ describe('Contest management integration', () => {
         sport: Sport.GOLF,
         name: 'Masters Tournament 2026',
         startDate: new Date('2026-04-10T12:00:00.000Z'),
+        releaseAt: new Date('2026-04-10T12:00:00.000Z'),
+        fieldLocksAt: new Date('2026-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
       },
     });

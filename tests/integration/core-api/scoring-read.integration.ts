@@ -126,6 +126,8 @@ describe('Scoring Read Integration', () => {
         sport: 'NCAA_BASKETBALL',
         name: 'Scoring Read Event',
         startDate: new Date('2026-04-09T12:00:00.000Z'),
+        releaseAt: new Date('2026-04-09T12:00:00.000Z'),
+        fieldLocksAt: new Date('2026-04-09T12:00:00.000Z'),
         status: 'IN_PROGRESS',
       },
     });

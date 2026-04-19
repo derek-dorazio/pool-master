@@ -256,6 +256,8 @@ async function createScoringFixture() {
       sport: 'BASKETBALL',
       name: 'Scoring Integration Event',
       startDate: new Date('2026-04-08T12:00:00.000Z'),
+      releaseAt: new Date('2026-04-08T12:00:00.000Z'),
+      fieldLocksAt: new Date('2026-04-08T12:00:00.000Z'),
       status: 'SCHEDULED',
     },
   });

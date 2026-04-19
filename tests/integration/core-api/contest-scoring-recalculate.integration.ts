@@ -90,6 +90,8 @@ describe('Contest scoring recalculation integration', () => {
         sport: Sport.NCAA_BASKETBALL,
         name: 'Recalc Event',
         startDate: new Date('2026-04-09T12:00:00.000Z'),
+        releaseAt: new Date('2026-04-09T12:00:00.000Z'),
+        fieldLocksAt: new Date('2026-04-09T12:00:00.000Z'),
         status: 'SCHEDULED',
       },
     });
