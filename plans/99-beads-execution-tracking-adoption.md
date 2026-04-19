@@ -28,6 +28,8 @@ This plan exists to support a clean transition after:
 - `tech-specs/` remains the technical-input layer
 - `plans/` remains the narrative execution-context layer
 - Beads should become the **live execution-state layer**
+- Beads should also become the stable refinement-question and decision-ID layer
+  for larger cross-module discussions
 - Beads should replace detailed markdown task tracking over time, but not the
   richer design rationale stored in plans
 
@@ -43,6 +45,7 @@ This plan exists to support a clean transition after:
    - purpose, scope, decisions, rationale, phased rollout notes
 4. `Beads`
    - live execution graph
+   - stable question and decision IDs
    - status
    - dependency chain
    - ownership
@@ -53,6 +56,8 @@ This plan exists to support a clean transition after:
 
 - one active plan lane -> one Beads epic
 - one actionable plan row or sub-slice -> one bead
+- one active cross-module refinement question or decision -> one bead when
+  stable IDs would reduce conversational drift
 - dependencies should be expressed in Beads rather than only implied in plan
   prose
 
@@ -105,6 +110,19 @@ Example bead groupings:
 - verification
 - review
 
+## Project-Wide Follow-On Direction
+
+The pilot has now proven enough value that new active lanes should adopt Beads
+project-wide for:
+
+- live slice status
+- dependency tracking
+- stable refinement question IDs for larger discussions
+- clean handoff across concurrent module work
+
+This does **not** mean moving product truth or technical truth into Beads.
+Those still belong in `requirements/` and `tech-specs/`.
+
 ## Next-Session Restart Checklist
 
 Before resuming in a new session:
@@ -121,8 +139,8 @@ Before resuming in a new session:
 ## Questions To Resolve In The Next Session
 
 - Should Beads metadata live inside the repo or in user-local state?
-- Should Beads adoption begin with contests only or also cover new feature
-  lanes going forward?
+- Should older active lanes be backfilled into Beads immediately or only as
+  they become active again?
 - How much of the current plan task-table behavior should remain once the pilot
   starts?
 
@@ -147,6 +165,11 @@ Before resuming in a new session:
     - status: `open`
   - `pool-master-73j.3` — `Review Beads workflow impact on plans task tables`
     - status: `open`
+- The workflow direction is now expanding project-wide:
+  - Beads tracks live execution state
+  - Beads also provides stable IDs for active refinement questions on larger
+    cross-module lanes
+  - resolved truth still belongs in docs, not only in Beads
 
 ## Action Plan
 
@@ -155,5 +178,6 @@ Before resuming in a new session:
 | 99-001 | 1 | Confirm Beads install/init workflow on the local machine after the repo move | Done | Confirmed on 2026-04-19: `bd version 1.0.2 (Homebrew)` is installed locally, the repo is not initialized yet, and `bd init` defaults to a repo-local `.beads/` embedded setup. |
 | 99-002 | 1 | Decide where Beads state should live for this repo | Done | Selected repo-local embedded mode for the pilot and initialized `.beads/` with `bd init --non-interactive --role maintainer --skip-agents --skip-hooks`. |
 | 99-003 | 2 | Define the PoolMaster Beads mapping from plan lane -> epic and plan row -> bead | Done | Created pilot epic `pool-master-73j` for the contest lane and seeded child beads for the current slice plus immediate follow-up work. |
-| 99-004 | 2 | Pilot Beads on the current contest execution lane | In Progress | The pilot is live. `pool-master-73j.1` has already moved through `in_progress` to `closed` for the completed CTA-copy slice, while follow-up contest-entry work remains queued in `pool-master-73j.2` and `pool-master-73j.3`. |
-| 99-005 | 3 | Review whether markdown task tables in active plans should be reduced once the pilot works | Not Started | Do not remove plan context; only reconsider duplicate task-status bookkeeping. |
+| 99-004 | 2 | Pilot Beads on the current contest execution lane | Done | The pilot is live and has already tracked a completed real slice plus follow-up queue items. The pilot also surfaced a broader workflow benefit: stable refinement IDs reduce conversational drift on multi-question lanes. |
+| 99-005 | 3 | Review whether markdown task tables in active plans should be reduced once the pilot works | In Progress | The repo is now moving toward Beads as the live tracker while preserving plans as narrative context. Final reduction decisions should follow a few more real multi-module lanes. |
+| 99-006 | 3 | Expand Beads usage project-wide for active execution and refinement-question tracking | In Progress | Repo rules are being updated so Beads is used project-wide for live slice tracking, dependency tracking, and stable question IDs on larger cross-module discussions. |

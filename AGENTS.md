@@ -14,7 +14,7 @@ All agents working in this repo should:
 - Never add mock data, fake data, fallback sample payloads, or hardcoded API responses to application code.
 - Fix the real architecture and contract problems first; only adjust tests after the production behavior is correct.
 - Keep OpenAPI, shared DTOs, mappers, generated clients, and frontend/backend usage in sync.
-- Update plan task tables in `plans/` when working against an existing plan.
+- Update Beads and affected plan task tables when working against an existing plan or active lane.
 - Keep documentation and rules in sync when architecture, workflow, or testing patterns change.
 
 ## Read These Files Before Implementing
@@ -37,7 +37,7 @@ All agents working in this repo should:
 
 ## Purpose of the Rules Files
 
-- `rules/workflow-rules.md`: plan tracking, execution protocol, and how to update plan task status.
+- `rules/workflow-rules.md`: Beads/plan workflow, execution protocol, and how to keep active slice tracking in sync.
 - `rules/working-style.md`: collaboration defaults, communication preferences, and working-session continuity guidance.
 - `rules/product-discovery-rules.md`: high-level product-discovery artifacts, Piper's discovery scope, and discovery handoff expectations.
 - `rules/architecture-rules.md`: system boundaries, contract-first architecture, generated SDK expectations, and infrastructure assumptions.
@@ -75,18 +75,18 @@ Important:
 
 - `AGENTS.md` and `rules/` remain the canonical shared contract.
 - `agents/` files must not redefine or contradict repo-wide policy.
-- Cross-cutting workflow requirements such as checking plans, updating task rows, and validating slices remain required for all agents, not just the project-manager persona.
+- Cross-cutting workflow requirements such as checking Beads, updating affected plan rows, and validating slices remain required for all agents, not just the project-manager persona.
 - Frontend implementation should be driven by reviewed plans, generated SDK/types, and documented API contracts rather than backend implementation details.
 - Contract meaning, API documentation quality, and model-change implementation remain backend-owned responsibilities.
 
 ## Workflow Expectations
 
-- Check whether the work is already tracked in `plans/`, and update the relevant task rows as work starts and finishes.
+- Check whether the work is already tracked in Beads and/or `plans/`, update the relevant Beads items as work starts and finishes, and reconcile the affected plan rows when they apply.
 - At the start of a resumed session, re-read `rules/working-style.md` to restore the expected collaboration style and continuity defaults before implementing.
 - When a prior session intentionally paused work, check `docs/SESSION-HANDOFF.md` for the current "resume here" note before choosing the next slice.
 - When a refactor changes architecture, testing patterns, or developer workflow, update the matching `rules/*.md` files in the same effort.
 - Do not maintain competing instruction sets across `AGENTS.md`, `CLAUDE.md`, `rules/`, and `agents/`.
-- Treat `requirements/` and `tech-specs/` as design inputs and handoff artifacts; active execution tracking still belongs in `plans/`.
+- Treat `requirements/` and `tech-specs/` as design inputs and handoff artifacts; Beads is the live execution/refinement tracker and `plans/` remain the narrative execution context.
 
 ## Documentation Expectations
 

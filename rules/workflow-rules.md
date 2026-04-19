@@ -2,7 +2,23 @@
 
 ## 1. Action Plan Tracking
 
-Every plan document in `plans/` has an **Action Plan** section with a task table. These are the project's issue tracker.
+`plans/` remain the narrative execution context for the repo, but Beads is the
+project's live workflow tracker for active execution and large-lane refinement.
+
+Use the layers this way:
+
+- `requirements/` = product truth and refinement handoff artifacts
+- `tech-specs/` = technical truth and implementation handoff artifacts
+- `plans/` = rationale, scope, phased rollout notes, and execution context
+- `Beads` = live status, dependencies, stable question IDs, and active slices
+
+For larger cross-module design and refinement work, Beads should also hold the
+stable IDs for active questions and decisions so chat numbering does not drift
+as the discussion evolves.
+
+Every active plan document in `plans/` should still have an **Action Plan**
+section with a task table, but those tables are now the narrative companion to
+Beads rather than the sole live issue tracker.
 
 ### Task Table Format
 
@@ -27,15 +43,36 @@ Every plan document in `plans/` has an **Action Plan** section with a task table
 
 When starting work:
 
-1. Find the relevant task in the plan.
-2. Mark it `In Progress`.
-3. Add notes about the implementation slice you are taking.
+1. Find or create the relevant bead for the slice, question, or decision.
+2. Update the bead status first so the live tracker reflects the active work.
+3. Find the relevant task in the plan.
+4. Mark it `In Progress` when the plan row is affected.
+5. Add notes about the implementation or refinement slice you are taking.
 
 When finishing work:
 
-1. Mark the task `Done` or `Removed`.
-2. Add notes with the relevant files and decisions.
-3. Update every affected plan, not just the first one you looked at.
+1. Close or otherwise update the relevant bead status first.
+2. Mark the plan task `Done` or `Removed` when the row is truly complete.
+3. Add notes with the relevant files and decisions.
+4. Update every affected plan, not just the first one you looked at.
+
+### Beads Usage Rules
+
+- Use one Beads epic per active feature lane or cross-module initiative.
+- Use child beads for:
+  - refinement questions
+  - design decisions
+  - implementation slices
+  - verification/review slices
+- For multi-question refinement threads, prefer Beads decision/task items with
+  stable IDs over renumbered ad hoc chat bullets.
+- Keep the resolved truth in `requirements/`, `tech-specs/`, or `plans/` as
+  appropriate; do not let Beads become the only durable home for product or
+  technical decisions.
+- When a Beads-tracked question is resolved, update the corresponding document
+  in the same effort or immediately after.
+- When a plan already exists for the lane, keep the plan notes in sync with the
+  Beads state for material milestones and direction changes.
 
 ### Slice Execution Rules
 
@@ -125,6 +162,23 @@ When plans break work into slices (e.g., Plan 59's A–I slices), each slice sho
 
 Or confirm all layers pass the Slice Completion Checklist above before marking the slice `Done`. A slice is only complete when all applicable layers are done — not when the "hard part" (schema + service) lands.
 
+### Slice Retrospective
+
+After each completed feature slice, do a brief retrospective before moving on
+to deeper adjacent work.
+
+The retrospective should:
+
+- identify any workflow friction, coordination overhead, or avoidable rework
+- recommend any process or tooling change that would make future slices more
+  efficient
+- record durable workflow changes in `rules/` or `docs/` when the team agrees
+  they should persist beyond the current session
+
+Keep the retrospective short and high signal. The goal is to improve the
+project workflow steadily without turning every slice closeout into a long
+ceremony.
+
 ### Plan Closeout And Archiving
 
 - Plans are execution tools, not long-lived policy documents. Durable rules belong in `rules/`, not in active plans.
@@ -172,11 +226,13 @@ Artifact hierarchy:
 - `requirements/product-overview/` = product-discovery inputs and handoff artifacts
 - `requirements/product-requirements/` = refined product-requirement inputs and handoff artifacts
 - `tech-specs/` = technical inputs and handoff artifacts
-- `plans/` = execution ledger and active status-tracking source of truth
+- `plans/` = execution ledger and narrative context
+- `Beads` = live execution/refinement tracker and stable question-ID layer
 
-Do not treat `requirements/` or `tech-specs/` as replacements for active plans.
-If implementation is underway, the relevant `plans/` rows still need to be
-updated as work starts and finishes.
+Do not treat `requirements/` or `tech-specs/` as replacements for active plans
+or Beads. If implementation or large-lane refinement is underway, the relevant
+Beads items should be updated as work starts and finishes, and the affected
+`plans/` rows should still be reconciled when they apply.
 
 ### Webapp Rebuild Direction
 

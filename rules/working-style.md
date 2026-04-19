@@ -28,7 +28,11 @@ testing rules elsewhere in `rules/`.
 
 ## 3. Execution Preferences
 
-- `plans/` remain the execution source of truth
+- `requirements/`, `tech-specs/`, `plans/`, and Beads should each keep their
+  own role
+- Beads is the live tracker for active slices and larger-lane refinement
+- use Beads for stable question/decision IDs when a discussion spans multiple
+  modules or more than a few active open questions
 - `requirements/` and `tech-specs/` are handoff artifacts and design inputs,
   not replacements for active plans
 - prefer truthful lifecycle behavior over admin/test-only shortcuts
