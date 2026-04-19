@@ -100,7 +100,9 @@ Current status:
 
 Notes:
 - currently already used by draft routes
-- freeze semantics for contest release/lock still need definition
+- pre-release valuations remain a derivation input
+- released contests must persist the contest-specific frozen interpretation
+  derived from these inputs rather than reading mutable live valuation rows
 
 ### `Contest`
 
@@ -193,8 +195,14 @@ Current status:
 - partially implicit inside draft runtime
 
 Notes:
-- recommended as a read/projection concept first, not necessarily a new full
-  persistence table
+- for first-pass tiered golf this should expose:
+  - tier/group identity
+  - pick requirement
+  - participant ordering within the group
+  - supporting display facts such as world rank
+  - contest-specific availability/selectability
+- this should be the read model used by entry creation/editing instead of a
+  generic draft-room abstraction
 
 ### `Released Contest Field Snapshot / Projection` `(Proposed derived concept)`
 
@@ -251,9 +259,196 @@ Current status:
 - implemented
 
 Notes:
+- should gain or clearly expose:
+  - saved selected participants by contest selection group/tier
+  - tiebreaker payload such as winner score
+  - frozen/read-only state after contest lock
+- post-lock entry read model should behave more like entry-specific standings
+  detail than an editable draft form
+
+### `ContestEntrySelection` `(Proposed persistence cleanup concept)`
+
+Role:
+- normalized persistence for the selections saved on a contest entry
+
+Owns:
+- `contestEntryId`
+- `contestSelectionGroupId`
+- `sportEventParticipantId`
+- selection order when needed
+
+Current status:
+- may be implicit or draft-coupled depending on current implementation
+
+Notes:
+- first-pass tiered golf needs one saved participant per required tier/group
+- this concept should align entry validation with the frozen contest field
+- tiebreaker input should remain on the entry or an entry-owned adjunct model,
+  not on this row set
+
+### `ContestLeaderboardEntry` `(Proposed derived read model concept)`
+
+Role:
+- contest-level standings projection used by the primary live/final leaderboard
+
+Owns:
+- contest rank/position
+- entry/team identity
+- aggregate score
+- live/final status
+- detail-expansion payload references
+
+Current status:
+- partially implicit in scoring/runtime outputs
+
+Notes:
+- this should support both concise and expanded leaderboard modes
+- expanded mode should reveal the entry's selected participants and their live
+  scoring details without changing overall ordering
+
+### `ContestHistoryItem` `(Proposed derived read model concept)`
+
+Role:
+- league-facing completed-contest history projection
+
+Owns:
+- league id
+- contest id
+- sport
+- contest type/config mode
+- event name
+- completion/finalization timing
+- winner/final standings summary
+
+Current status:
+- not explicit yet
+
+Notes:
+- first-pass history is contest-centric only
+- broader aggregate stats such as streaks or win counts are intentionally out of
+  scope
+
+### `ProviderSyncRun` `(Proposed operational read/persistence concept)`
+
+Role:
+- operational visibility for feed/import execution history
+
+Owns:
+- provider/system source
+- target event or sync scope
+- status
+- started/finished timestamps
+- provider-specific details in `payloadJson`
+
+Current status:
+- not explicit yet
+
+Notes:
+- first pass only needs read-only visibility
+- retry/rerun controls are deferred
+- recommended first-pass persisted shape:
+  - `id`
+  - `provider`
+  - `sport`
+  - `scopeType`
+  - `scopeId`
+  - `status`
+  - `startedAt`
+  - `finishedAt`
+  - `payloadJson`
+  - `createdAt`
+- JSON payload is acceptable in first pass to keep operational capture simple
+
+Notes:
 - multi-entry support and rename-after-create exist
-- selection/edit model still needs to be aligned with the contest selection
-  field concept
+- should gain or clearly expose:
+  - saved selected participants by contest selection group/tier
+  - tiebreaker payload such as winner score
+  - frozen/read-only state after contest lock
+- post-lock entry read model should behave more like entry-specific standings
+  detail than an editable draft form
+
+### `ContestEntrySelection` `(Proposed persistence cleanup concept)`
+
+Role:
+- normalized persistence for the selections saved on a contest entry
+
+Owns:
+- `contestEntryId`
+- `contestSelectionGroupId`
+- `sportEventParticipantId`
+- selection order when needed
+
+Current status:
+- may be implicit or draft-coupled depending on current implementation
+
+Notes:
+- first-pass tiered golf needs one saved participant per required tier/group
+- this concept should align entry validation with the frozen contest field
+- tiebreaker input should remain on the entry or an entry-owned adjunct model,
+  not on this row set
+
+### `ContestLeaderboardEntry` `(Proposed derived read model concept)`
+
+Role:
+- contest-level standings projection used by the primary live/final leaderboard
+
+Owns:
+- contest rank/position
+- entry/team identity
+- aggregate score
+- live/final status
+- detail-expansion payload references
+
+Current status:
+- partially implicit in scoring/runtime outputs
+
+Notes:
+- this should support both concise and expanded leaderboard modes
+- expanded mode should reveal the entry's selected participants and their live
+  scoring details without changing overall ordering
+
+### `ContestHistoryItem` `(Proposed derived read model concept)`
+
+Role:
+- league-facing completed-contest history projection
+
+Owns:
+- league id
+- contest id
+- sport
+- contest type/config mode
+- event name
+- completion/finalization timing
+- winner/final standings summary
+
+Current status:
+- not explicit yet
+
+Notes:
+- first-pass history is contest-centric only
+- broader aggregate stats such as streaks or win counts are intentionally out of
+  scope
+
+### `ProviderSyncRun` `(Proposed operational read/persistence concept)`
+
+Role:
+- operational visibility for feed/import execution history
+
+Owns:
+- provider/system source
+- target event or sync scope
+- started/finished timestamps
+- status
+- failure summary when applicable
+
+Current status:
+- implementation may exist in logs or internal records, but the first-pass
+  read-only operational surface is not yet explicit in the spec
+
+Notes:
+- first pass only needs read-only visibility
+- retry/rerun controls are deferred
 
 ## Recommended Ownership Boundaries
 
@@ -273,10 +468,13 @@ Matches:
 - draft/selection runtime already consumes event participants
 
 Mismatches:
-- no explicit event-readiness concept
 - no first-class contest-field projection contract
-- no explicit released-contest frozen-field concept
-- no first-class seeded contest-template concept
+- no explicit normalized entry-selection persistence/read contract
+- no explicit leaderboard/history read models
+- no explicit sync-run visibility concept
 - some older language still implies contest-local participant pools
 - contest configuration still mirrors some legacy fields that should narrow over
   time
+- leaderboard/history materialization strategy for later optimization is
+  intentionally deferred as a follow-on enhancement rather than a current
+  blocker

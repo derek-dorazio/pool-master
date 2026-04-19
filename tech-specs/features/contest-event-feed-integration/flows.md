@@ -41,11 +41,25 @@ Root-admin action in this flow is optional and operational:
 
 1. User starts `Create entry` in team context.
 2. PoolMaster creates a uniquely named entry.
-3. User edits the entry using the contest-facing field.
-4. PoolMaster validates against contest rules and lock state.
-5. Entry remains editable until contest lock.
-6. Participant status changes before lock are informational unless the member
+3. PoolMaster returns the frozen contest-facing field grouped for the contest
+   type.
+4. For first-pass tiered golf, PoolMaster shows tiers/groups, participant
+   ordering derived from tournament-winning odds, supporting world-rank context,
+   and winner-score tiebreaker input.
+5. User selects through the tiers sequentially and saves the entry.
+6. PoolMaster validates against contest rules, lock state, and tier/group
+   constraints.
+7. Entry remains editable until contest lock.
+8. Participant status changes before lock are informational unless the member
    decides to change the entry.
+
+### Flow 4A: Locked Entry Becomes Read-Only Detail
+
+1. Contest reaches lock.
+2. PoolMaster freezes entry editing.
+3. The same entry surface now behaves as read-only standings/detail.
+4. Users can inspect selected participants and scoring detail, but cannot
+   change the entry.
 
 ### Flow 5: Event Updates Propagate Downstream
 
@@ -53,8 +67,17 @@ Root-admin action in this flow is optional and operational:
 2. PoolMaster refreshes event and event-participant data using latest fetched
    provider truth for the affected records.
 3. PoolMaster identifies impacted contests and entries.
-4. PoolMaster recalculates entry scores and refreshes leaderboard ordering.
-5. PoolMaster updates contest lifecycle/read models as appropriate.
+4. PoolMaster recalculates entry scores from the frozen contest field plus the
+   latest event-participant facts.
+5. PoolMaster refreshes leaderboard ordering and entry-detail read models.
+6. PoolMaster updates contest lifecycle/read models as appropriate.
+
+### Flow 6: Contest Completes And Enters History
+
+1. Event reaches final completion.
+2. PoolMaster finalizes contest standings and winners.
+3. Contest leaderboard becomes the final leaderboard view.
+4. Contest is included in league completed-contest history.
 
 There is no normal user flow in this step:
 - no commissioner action

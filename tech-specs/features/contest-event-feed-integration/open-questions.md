@@ -64,7 +64,7 @@
     the primary runtime model, with optional JSON snapshot support only if later
     needed for audit/debug.
 
-- `CEFI-013`
+- `CEFI-018`
   - The first member-visible live-event presentation is the leaderboard.
   - Default view emphasizes entries/teams and total score.
   - Expanded view reveals participant-level scoring rows.
@@ -74,6 +74,14 @@
   - First-pass history should expose completed contests by sport and contest
     type within a league.
   - Broader historical summaries are deferred.
+
+- `CEFI-019`
+  - First-pass tiered golf entry selection should be group/tier-driven with:
+    - one saved participant per required tier/group
+    - contest ordering derived from tournament-winning odds
+    - supporting world-rank display
+    - winner-score tiebreaker input
+    - read-only post-lock entry detail
 
 ## Blocking
 
@@ -91,6 +99,18 @@
   - Which sport-specific participant-matching heuristics stay acceptable before
     a stronger mapping workflow is required?
 
+- `CEFI-020`
+  - Sync-run visibility should use a dedicated lightweight `ProviderSyncRun`
+    table/read model with a JSON payload column for first-pass provider-specific
+    details.
+
+- `CEFI-021`
+  - Leaderboard/history materialization optimization is deferred.
+  - First pass may use non-materialized read paths while the UI/behavior is
+    being validated.
+  - Persisted/cached read-model optimization should be treated as a later
+    enhancement feature.
+
 ## Current Recommendation
 
 Start with:
@@ -103,6 +123,15 @@ Start with:
 - no extra intermediate release action in the normal commissioner flow
 - automatic provider polling and scoring propagation with no normal manual user
   step
+- entry-selection persistence aligned to frozen contest selection groups
+- leaderboard/history read contracts as explicit first-pass surfaces
+- thin read-only sync-run visibility for operations
 - mock-provider evolution around golf-first tournament data
 
 Then split implementation into parallel slices once those contracts are settled.
+
+## Deferred Enhancement Notes
+
+- Materialized or cached leaderboard/history projections are intentionally
+  deferred until first-pass UI, scoring behavior, and completion/history flows
+  are working cleanly.

@@ -26,6 +26,7 @@ compare it with the current route surface.
 - explicit event readiness / contest-eligibility contract
 - explicit contest-field projection contract
 - automated scoring/result propagation contract surfaces
+- explicit leaderboard/history read contracts
 
 ## Recommended First-Pass Contract Areas
 
@@ -36,11 +37,14 @@ Recommended operations:
 - sync/import a specific provider event
 - refresh a synced event
 - inspect event readiness and last sync outcome
+- list recent sync runs with datetime and status
 
 Notes:
 - this should stay operational and exceptional rather than becoming a daily
   admin workflow
 - this does not require broad member-facing event discovery
+- sync-run records may use a simple JSON payload field in first pass so the
+  operational surface can ship without over-modeling provider-specific details
 
 ### 2. Event Readiness Contract
 
@@ -87,14 +91,52 @@ Recommended additions or refinements:
 - keep team-context `Create entry`
 - expose contest-field data in the entry-edit flow instead of relying only on
   generic draft-room state
+- expose saved tier selections and tiebreaker input as entry-owned state
 
 Implementation recommendation:
 - released contest entry/edit flows should read the frozen contest-specific
   projection, not live event valuations/orderings
 - commissioner administrative help flows should reuse the same team/entry tools
   rather than requiring a parallel contest-ops surface
+- tiered golf first pass should support:
+  - one selection per required tier/group
+  - participant ordering by contest rank derived from tournament-winning odds
+  - supporting display of world rank
+  - winner-score tiebreaker input
+  - post-lock read-only entry detail
 
-### 5. Mock Provider
+Recommended read/write contract areas:
+- `GET contest entry editor/detail`
+  - contest metadata
+  - lock state
+  - frozen selection groups/tiers
+  - current selected participant per group
+  - tiebreaker value
+- `PUT/PATCH contest entry selections`
+  - selected participant ids keyed by group/tier
+  - tiebreaker input
+
+### 5. Leaderboard And History
+
+Recommended additions:
+- `GET contest leaderboard`
+  - concise ordering for entries/teams and total score
+  - optional expanded participant detail payload
+  - final/live status metadata
+- `GET contest entry detail`
+  - team-scoped/post-lock standings view of a single entry
+- `GET league completed contest history`
+  - completed contests scoped to a league
+  - filter/group fields for sport and contest type
+
+Implementation recommendation:
+- keep the leaderboard as the main live-event read model
+- support detail expansion without changing base ordering
+- keep first-pass history contest-centric rather than aggregate-stat-centric
+- first pass may compute these views without separate materialized persisted
+  copies; optimization/persistence can come later as a follow-on enhancement
+
+### 6. Mock Provider
 
 Recommended evolution areas:
 - support event-first vocabulary explicitly
@@ -116,4 +158,6 @@ Mismatches:
   action in the normal flow
 - advanced schema metadata source is intentionally global rather than
   contest-specific, but the precise read surface still needs to be clarified
+- leaderboard/history read models are not yet explicit contracts
+- sync-run visibility is not yet explicit as a lightweight operational contract
 - mock provider is usable but still shaped as a generic contest-feed simulator
