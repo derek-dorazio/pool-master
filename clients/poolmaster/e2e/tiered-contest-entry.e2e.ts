@@ -14,11 +14,12 @@ test('commissioner can create and complete a tiered golf entry', async ({ page }
   const league = buildLeagueSeed('TEEBOX');
   const contestName = `Tiered Entry ${Date.now().toString(36).toUpperCase()}`;
   const entryName = `Sunday Charge ${Date.now().toString(36).toUpperCase()}`;
+  let actualLeagueCode = '';
 
   await test.step('register commissioner and create league + contest', async () => {
     await registerUser(page, commissioner);
     await expect(page).toHaveURL(/\/welcome$/);
-    await createLeague(page, league);
+    actualLeagueCode = await createLeague(page, league);
     await openCreateContestFlow(page);
     await createTieredContest(page, contestName);
   });
@@ -32,6 +33,8 @@ test('commissioner can create and complete a tiered golf entry', async ({ page }
 
   await test.step('show the saved entry detail after selections', async () => {
     await expect(page.getByRole('heading', { name: entryName })).toBeVisible();
+    expect(page.url()).toContain('/entries/');
+    expect(page.url()).not.toContain(`/league/${actualLeagueCode}`);
     await expect(page.getByText('Build your lineup')).toBeVisible();
     await expect(page.getByText('Saved')).toBeVisible();
     await expect(page.locator('[data-testid^="contest-entry-selected-"]').first()).toBeVisible();

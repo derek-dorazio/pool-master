@@ -10,6 +10,7 @@ import {
 test('commissioner can create a league and generate an invite link', async ({ page }) => {
   const commissioner = buildE2EUser('Commissioner');
   const league = buildLeagueSeed('BIRDS');
+  let actualLeagueCode = '';
 
   await test.step('register a commissioner account', async () => {
     await registerUser(page, commissioner);
@@ -17,7 +18,7 @@ test('commissioner can create a league and generate an invite link', async ({ pa
   });
 
   await test.step('create a league from the welcome flow', async () => {
-    await createLeague(page, league);
+    actualLeagueCode = await createLeague(page, league);
     await expect(page.getByTestId('league-create-contest')).toBeVisible();
   });
 
@@ -25,6 +26,7 @@ test('commissioner can create a league and generate an invite link', async ({ pa
     const inviteLink = await generateInviteLink(page);
 
     expect(inviteLink).toContain('/invite/');
+    expect(page.url()).toContain(`/league/${actualLeagueCode}`);
     await expect(page.getByTestId('league-invite-link')).toHaveValue(inviteLink);
   });
 });

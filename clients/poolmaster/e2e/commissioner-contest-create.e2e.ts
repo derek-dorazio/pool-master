@@ -12,11 +12,12 @@ test('commissioner can create a tiered golf contest from an imported event', asy
   const commissioner = buildE2EUser('ContestCommissioner');
   const league = buildLeagueSeed('FAIRWAY');
   const contestName = `Masters Tiered ${Date.now().toString(36).toUpperCase()}`;
+  let actualLeagueCode = '';
 
   await test.step('register and create the league shell', async () => {
     await registerUser(page, commissioner);
     await expect(page).toHaveURL(/\/welcome$/);
-    await createLeague(page, league);
+    actualLeagueCode = await createLeague(page, league);
   });
 
   await test.step('open contest creation and pick an imported golf event', async () => {
@@ -26,6 +27,8 @@ test('commissioner can create a tiered golf contest from an imported event', asy
 
   await test.step('land on contest detail with the contest immediately live', async () => {
     await expect(page.getByRole('heading', { name: contestName })).toBeVisible();
+    expect(page.url()).toContain(`/contests/`);
+    expect(page.url()).not.toContain(`/league/${actualLeagueCode}`);
     await expect(page.getByTestId('contest-enter-entry')).toBeVisible();
     await expect(page.getByText('TIERED')).toBeVisible();
     await expect(page.getByTestId('contest-leaderboard')).toBeVisible();

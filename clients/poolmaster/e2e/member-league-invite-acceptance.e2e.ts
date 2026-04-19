@@ -11,11 +11,12 @@ test('member can register from an invite and join the league', async ({ browser,
   const commissioner = buildE2EUser('Commissioner');
   const member = buildE2EUser('Member');
   const league = buildLeagueSeed('EAGLES');
+  let actualLeagueCode = '';
 
   await test.step('commissioner creates a league and invite link', async () => {
     await registerUser(page, commissioner);
     await expect(page).toHaveURL(/\/welcome$/);
-    await createLeague(page, league);
+    actualLeagueCode = await createLeague(page, league);
   });
 
   const inviteLink = await test.step('commissioner generates a shareable invite link', async () => {
@@ -36,7 +37,7 @@ test('member can register from an invite and join the league', async ({ browser,
     await expect(memberPage.getByTestId('join-league-team-name')).not.toHaveValue('');
 
     await memberPage.getByTestId('invite-accept').click();
-    await expect(memberPage).toHaveURL(new RegExp(`/league/${league.code}$`));
+    await expect(memberPage).toHaveURL(new RegExp(`/league/${actualLeagueCode}$`));
     await expect(memberPage.getByTestId('league-home')).toBeVisible();
 
     await memberContext.close();

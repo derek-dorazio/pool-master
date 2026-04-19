@@ -59,11 +59,16 @@ export async function createLeague(
     await page.getByTestId('create-league-description').fill(league.description);
   }
 
+  const leagueCodeInput = page.getByTestId('create-league-code');
+  await expect(leagueCodeInput).toHaveValue(/^[A-Z0-9]{3,16}$/);
+  const actualLeagueCode = await leagueCodeInput.inputValue();
+
   await page.getByTestId('create-league-next').click();
   await expect(page.getByTestId('create-league-submit')).toBeVisible();
   await page.getByTestId('create-league-submit').click();
-  await expect(page).toHaveURL(new RegExp(`/league/${league.code}$`));
+  await expect(page).toHaveURL(new RegExp(`/league/${actualLeagueCode}$`));
   await expect(page.getByTestId('league-home')).toBeVisible();
+  return actualLeagueCode;
 }
 
 export async function generateInviteLink(page: Page) {
