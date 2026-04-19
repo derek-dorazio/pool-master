@@ -78,4 +78,6 @@ The previous MVP browser journey suite was removed from the deploy gate because 
 - 2026-04-19: Added first-pass Playwright journeys in `clients/poolmaster/e2e/` for:
   - commissioner league creation plus invite-link generation
   - member invite acceptance plus league join
-- These are intentionally bounded to stable auth/league/invite flows and stop short of contest-entry and standings browser coverage, which remains the next expansion area for this suite.
+  - commissioner contest creation from an imported event
+  - commissioner tiered contest-entry creation and lineup completion
+- These still stop short of browser coverage for locked-entry/history/final-standings verification, which remains the next expansion area for this suite.

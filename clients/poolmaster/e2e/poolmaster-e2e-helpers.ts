@@ -75,3 +75,74 @@ export async function generateInviteLink(page: Page) {
 
   return inviteInput.inputValue();
 }
+
+export async function openCreateContestFlow(page: Page) {
+  await expect(page.getByTestId('league-create-contest')).toBeVisible();
+  await page.getByTestId('league-create-contest').click();
+  await expect(page.getByTestId('create-contest-page')).toBeVisible();
+}
+
+export async function selectFirstAvailableGolfEvent(page: Page) {
+  const eventSelect = page.getByTestId('contest-sport-event');
+  await expect(eventSelect).toBeVisible();
+
+  const eventOptions = await eventSelect.locator('option').evaluateAll((options) =>
+    options
+      .map((option) => ({
+        value: (option as HTMLOptionElement).value,
+        label: option.textContent?.trim() ?? '',
+      }))
+      .filter((option) => option.value),
+  );
+
+  expect(
+    eventOptions.length,
+    'QA must have at least one imported golf event available before this browser contest flow can run.',
+  ).toBeGreaterThan(0);
+
+  await eventSelect.selectOption(eventOptions[0].value);
+  return eventOptions[0];
+}
+
+export async function createTieredContest(
+  page: Page,
+  contestName: string,
+) {
+  await expect(page.getByTestId('contest-mode-tiered')).toBeVisible();
+  await page.getByTestId('contest-mode-tiered').click();
+  const selectedEvent = await selectFirstAvailableGolfEvent(page);
+  await page.getByTestId('contest-name').fill(contestName);
+  await page.getByTestId('create-contest-submit').click();
+  await expect(page.getByTestId('contest-back-to-league')).toBeVisible();
+  await expect(page.getByTestId('contest-my-entry')).toBeVisible();
+  return selectedEvent;
+}
+
+export async function completeTieredEntry(
+  page: Page,
+  entry: { name: string; tiebreakerValue: string },
+) {
+  await expect(page.getByTestId('contest-enter-entry')).toBeVisible();
+  await page.getByTestId('contest-enter-entry').click();
+  await expect(page.getByText('Build your lineup')).toBeVisible();
+
+  await page.getByTestId('contest-entry-name-input').fill(entry.name);
+  await page.getByTestId('contest-entry-tiebreaker-input').fill(entry.tiebreakerValue);
+  await page.getByTestId('contest-entry-save-details').click();
+
+  const groupCount = await page.locator('[data-testid^="contest-entry-group-"]').count();
+
+  expect(groupCount, 'Tiered golf entry flow should expose at least one selection group.').toBeGreaterThan(0);
+
+  for (let index = 0; index < groupCount; index += 1) {
+    const group = page.locator('[data-testid^="contest-entry-group-"]').nth(index);
+    const participantButtons = group.locator('[data-testid^="contest-entry-participant-"]:not([disabled])');
+
+    if ((await participantButtons.count()) === 0) {
+      await group.locator('[data-testid^="contest-entry-group-toggle-"]').click();
+    }
+
+    await expect(group.locator('[data-testid^="contest-entry-participant-"]:not([disabled])').first()).toBeVisible();
+    await group.locator('[data-testid^="contest-entry-participant-"]:not([disabled])').first().click();
+  }
+}
