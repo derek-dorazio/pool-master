@@ -515,7 +515,7 @@ export function ContestDetailPage() {
                   >
                     {enterContestMutation.isPending
                       ? 'Creating entry...'
-                      : `Create another entry for ${primaryTeamEntry?.squadName ?? 'your team'}`}
+                      : 'Create entry'}
                   </button>
                 ) : null}
                 {canLeaveEntries && primaryTeamEntry ? (

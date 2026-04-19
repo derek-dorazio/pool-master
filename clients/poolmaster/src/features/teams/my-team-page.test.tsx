@@ -925,7 +925,7 @@ describe('MyTeamPage', () => {
     renderMyTeamPage();
 
     expect(await screen.findByTestId('my-team-create-entry-contest-open')).toHaveTextContent(
-      'Create another entry',
+      'Create entry',
     );
     fireEvent.click(screen.getByTestId('my-team-create-entry-contest-open'));
 

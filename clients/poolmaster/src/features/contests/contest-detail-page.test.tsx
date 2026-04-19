@@ -265,9 +265,7 @@ describe('ContestDetailPage', () => {
     );
     expect(screen.getByTestId('contest-my-team-entry-entry-3')).toHaveTextContent('Birdie Hunters Entry 2');
     expect(screen.getAllByText('Your team')).toHaveLength(2);
-    expect(screen.getByTestId('contest-enter-entry')).toHaveTextContent(
-      'Create another entry for Birdie Hunters',
-    );
+    expect(screen.getByTestId('contest-enter-entry')).toHaveTextContent('Create entry');
     expect(screen.getByTestId('contest-leave-entry')).toHaveTextContent(
       'Leave latest entry for Birdie Hunters',
     );

@@ -915,9 +915,7 @@ export function LeagueDetailPage() {
                         >
                           {createContestEntryMutation.isPending
                             ? 'Creating...'
-                            : myTeamEntries.length
-                              ? `Create another entry for ${myTeam.name}`
-                              : `Create first entry for ${myTeam.name}`}
+                            : 'Create entry'}
                         </button>
                       ) : null}
                       <Link

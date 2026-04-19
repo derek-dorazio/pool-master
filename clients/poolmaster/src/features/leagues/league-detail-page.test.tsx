@@ -308,9 +308,7 @@ describe('LeagueDetailPage', () => {
       'Casey Crushers Entry 2',
     );
     expect(screen.queryByText('Other Team Entry 1')).not.toBeInTheDocument();
-    expect(screen.getByTestId('league-create-entry-contest-1')).toHaveTextContent(
-      'Create another entry for Casey Crushers',
-    );
+    expect(screen.getByTestId('league-create-entry-contest-1')).toHaveTextContent('Create entry');
   });
 
   it('creates another entry for the current team from league home', async () => {

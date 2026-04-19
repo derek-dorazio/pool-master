@@ -633,7 +633,7 @@ export function MyTeamPage() {
           <div className="rounded-[2rem] border border-border bg-card p-6">
             <h3 className="text-xl font-semibold">Active contest entries</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Every contest entry belongs to this team. Create the first entry or another entry from the same contest tile when the contest is still open.
+              Every contest entry belongs to this team. Use the same Create entry action from the contest tile whenever the contest is still open.
             </p>
 
             <div className="mt-5 space-y-3">
@@ -683,9 +683,7 @@ export function MyTeamPage() {
                           >
                             {createContestEntryMutation.isPending
                               ? 'Creating...'
-                              : teamEntries.length
-                                ? `Create another entry`
-                                : 'Create first entry'}
+                              : 'Create entry'}
                           </button>
                         ) : null}
                       </div>
