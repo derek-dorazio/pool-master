@@ -7,7 +7,10 @@ import type {
   ContestResponse,
   ContestListResponse,
   ContestEntryDto,
+  ContestEntryDetailDto,
+  ContestEntryParticipantDetailDto,
   ContestEntryListResponse,
+  ContestEntryDetailResponse,
   ContestEntryResponse,
   MyContestEntryResponse,
 } from '@poolmaster/shared/dto';
@@ -52,6 +55,19 @@ interface ContestEntryRow {
   isEliminated: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface ContestEntryParticipantRow {
+  rosterPickId: string;
+  sportEventParticipantId: string;
+  participantId: string;
+  participantName: string;
+  participantStatus?: string | null;
+  position?: string | null;
+  teamAffiliation?: string | null;
+  contestPoints: number;
+  pickedAt: Date;
+  latestPerformance: Record<string, unknown>;
 }
 
 export function toContestSummaryDto(
@@ -130,6 +146,41 @@ export function toContestEntryDto(
 }
 
 export function toContestEntryResponse(contestId: string, entry: ContestEntryDto): ContestEntryResponse {
+  return { contestId, entry };
+}
+
+export function toContestEntryParticipantDetailDto(
+  participant: ContestEntryParticipantRow,
+): ContestEntryParticipantDetailDto {
+  return {
+    rosterPickId: participant.rosterPickId,
+    sportEventParticipantId: participant.sportEventParticipantId,
+    participantId: participant.participantId,
+    participantName: participant.participantName,
+    participantStatus: participant.participantStatus ?? null,
+    position: participant.position ?? null,
+    teamAffiliation: participant.teamAffiliation ?? null,
+    contestPoints: participant.contestPoints,
+    pickedAt: participant.pickedAt.toISOString(),
+    latestPerformance: participant.latestPerformance,
+  };
+}
+
+export function toContestEntryDetailDto(
+  entry: ContestEntryRow,
+  squad: { name: string },
+  participants: ContestEntryParticipantRow[],
+): ContestEntryDetailDto {
+  return {
+    ...toContestEntryDto(entry, squad),
+    participants: participants.map(toContestEntryParticipantDetailDto),
+  };
+}
+
+export function toContestEntryDetailResponse(
+  contestId: string,
+  entry: ContestEntryDetailDto,
+): ContestEntryDetailResponse {
   return { contestId, entry };
 }
 

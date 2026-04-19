@@ -15,6 +15,7 @@ import type { z } from 'zod';
 import { z as zod } from 'zod';
 import {
   toContestListResponse,
+  toContestEntryDetailResponse,
   toContestEntryListResponse,
   toContestEntryResponse,
   toMyContestEntryResponse,
@@ -102,6 +103,7 @@ export function createContestHandlers(contestService: ContestService) {
     listContests,
     getContest,
     listEntries,
+    getEntry,
     getMyEntry,
     createMyEntry,
     deleteMyEntry,
@@ -185,6 +187,29 @@ export function createContestHandlers(contestService: ContestService) {
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
         return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
+      }
+      if (err instanceof ContestEntryOperationError) {
+        return sendError(reply, 400, err.code, err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function getEntry(
+    request: FastifyRequest<{ Params: { contestId: string; entryId: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      const entry = await contestService.getEntryDetail(
+        request.params.contestId,
+        request.params.entryId,
+      );
+      return reply.send(
+        toContestEntryDetailResponse(request.params.contestId, entry),
+      );
+    } catch (err) {
+      if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
+        return sendError(reply, 404, 'CONTEST_ENTRY_NOT_FOUND', err.message);
       }
       if (err instanceof ContestEntryOperationError) {
         return sendError(reply, 400, err.code, err.message);

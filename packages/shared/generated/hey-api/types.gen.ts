@@ -6761,6 +6761,238 @@ export type ListContestEntriesResponses = {
 
 export type ListContestEntriesResponse = ListContestEntriesResponses[keyof ListContestEntriesResponses];
 
+export type GetContestEntryData = {
+    body?: never;
+    path: {
+        contestId: string;
+        entryId: string;
+    };
+    query?: never;
+    url: '/api/v1/contests/{contestId}/entries/{entryId}';
+};
+
+export type GetContestEntryErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type GetContestEntryError = GetContestEntryErrors[keyof GetContestEntryErrors];
+
+export type GetContestEntryResponses = {
+    /**
+     * Expanded contest-entry detail response.
+     */
+    200: {
+        /**
+         * Contest that owns the entry.
+         */
+        contestId: string;
+        /**
+         * Expanded contest entry detail.
+         */
+        entry: {
+            id: string;
+            contestId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
+            name: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            tiebreakerValue?: number;
+            totalScore: number;
+            standingsPosition?: number;
+            isEliminated: boolean;
+            /**
+             * When the contest entry was created.
+             */
+            createdAt: string;
+            /**
+             * When the contest entry was last updated.
+             */
+            updatedAt: string;
+            /**
+             * Current picked participants for the contest entry.
+             */
+            participants: Array<{
+                rosterPickId: string;
+                sportEventParticipantId: string;
+                participantId: string;
+                participantName: string;
+                participantStatus?: string;
+                position?: string;
+                teamAffiliation?: string;
+                /**
+                 * Current points earned within the contest for this picked participant.
+                 */
+                contestPoints: number;
+                /**
+                 * When the participant was added to the contest entry.
+                 */
+                pickedAt: string;
+                /**
+                 * Latest provider-backed performance snapshot available for the picked participant.
+                 */
+                latestPerformance: {
+                    [key: string]: unknown;
+                };
+            }>;
+        };
+    };
+};
+
+export type GetContestEntryResponse = GetContestEntryResponses[keyof GetContestEntryResponses];
+
+export type UpdateContestEntryData = {
+    /**
+     * Request payload for updating a contest entry while the contest is still joinable.
+     */
+    body: {
+        /**
+         * Unique entry name shown anywhere the team entry is listed.
+         */
+        name?: string;
+        /**
+         * Optional tiebreaker prediction saved on the contest entry.
+         */
+        tiebreakerValue?: number;
+    };
+    path: {
+        contestId: string;
+        entryId: string;
+    };
+    query?: never;
+    url: '/api/v1/contests/{contestId}/entries/{entryId}';
+};
+
+export type UpdateContestEntryErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type UpdateContestEntryError = UpdateContestEntryErrors[keyof UpdateContestEntryErrors];
+
+export type UpdateContestEntryResponses = {
+    /**
+     * Single contest-entry response.
+     */
+    200: {
+        /**
+         * Contest that owns the entry.
+         */
+        contestId: string;
+        /**
+         * Contest entry summary.
+         */
+        entry: {
+            id: string;
+            contestId: string;
+            squadId: string;
+            squadName: string;
+            entryNumber: number;
+            name: string;
+            status: 'ACTIVE' | 'INACTIVE';
+            tiebreakerValue?: number;
+            totalScore: number;
+            standingsPosition?: number;
+            isEliminated: boolean;
+            /**
+             * When the contest entry was created.
+             */
+            createdAt: string;
+            /**
+             * When the contest entry was last updated.
+             */
+            updatedAt: string;
+        };
+    };
+};
+
+export type UpdateContestEntryResponse = UpdateContestEntryResponses[keyof UpdateContestEntryResponses];
+
 export type LeaveContestData = {
     body?: never;
     path: {
@@ -7061,115 +7293,6 @@ export type EnterContestResponses = {
 };
 
 export type EnterContestResponse = EnterContestResponses[keyof EnterContestResponses];
-
-export type UpdateContestEntryData = {
-    /**
-     * Request payload for updating a contest entry while the contest is still joinable.
-     */
-    body: {
-        /**
-         * Unique entry name shown anywhere the team entry is listed.
-         */
-        name?: string;
-        /**
-         * Optional tiebreaker prediction saved on the contest entry.
-         */
-        tiebreakerValue?: number;
-    };
-    path: {
-        contestId: string;
-        entryId: string;
-    };
-    query?: never;
-    url: '/api/v1/contests/{contestId}/entries/{entryId}';
-};
-
-export type UpdateContestEntryErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type UpdateContestEntryError = UpdateContestEntryErrors[keyof UpdateContestEntryErrors];
-
-export type UpdateContestEntryResponses = {
-    /**
-     * Single contest-entry response.
-     */
-    200: {
-        /**
-         * Contest that owns the entry.
-         */
-        contestId: string;
-        /**
-         * Contest entry summary.
-         */
-        entry: {
-            id: string;
-            contestId: string;
-            squadId: string;
-            squadName: string;
-            entryNumber: number;
-            name: string;
-            status: 'ACTIVE' | 'INACTIVE';
-            tiebreakerValue?: number;
-            totalScore: number;
-            standingsPosition?: number;
-            isEliminated: boolean;
-            /**
-             * When the contest entry was created.
-             */
-            createdAt: string;
-            /**
-             * When the contest entry was last updated.
-             */
-            updatedAt: string;
-        };
-    };
-};
-
-export type UpdateContestEntryResponse = UpdateContestEntryResponses[keyof UpdateContestEntryResponses];
 
 export type UndoContestDraftSelectionData = {
     /**

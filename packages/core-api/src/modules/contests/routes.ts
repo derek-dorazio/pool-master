@@ -9,6 +9,7 @@ import {
   CloseContestRequestSchema,
   ContestAuditLogResponseSchema,
   ContestEntryDeletionResponseSchema,
+  ContestEntryDetailResponseSchema,
   ContestEntryListResponseSchema,
   ContestEntryResponseSchema,
   ContestListResponseSchema,
@@ -165,6 +166,22 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       },
     },
     handler: handlers.listEntries,
+  });
+
+  fastify.get('/:contestId/entries/:entryId', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Get contest entry detail',
+      description:
+        'Returns a contest entry plus its current picked participants and latest performance context for entry-detail and expanded leaderboard surfaces.',
+      operationId: 'getContestEntry',
+      response: {
+        200: zodToJsonSchema(ContestEntryDetailResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handlers.getEntry,
   });
 
   fastify.get('/:contestId/entries/me', {

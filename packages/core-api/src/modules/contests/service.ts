@@ -27,9 +27,10 @@ import {
   SelectionType,
   SquadMembershipStatus,
 } from '@poolmaster/shared/domain';
-import type { ContestEntryDto } from '@poolmaster/shared/dto';
+import type { ContestEntryDetailDto, ContestEntryDto } from '@poolmaster/shared/dto';
 import {
   toContestEntryDto,
+  toContestEntryDetailDto,
 } from '../../mappers/contests.mapper';
 export interface CreateContestInput {
   leagueId: string;
@@ -188,6 +189,65 @@ export class ContestService {
     }
     const entries = await this.loadEntryDtos(contestId);
     return entries.find((entry) => entry.squadId === context.squadMembership?.squadId) ?? null;
+  }
+
+  async getEntryDetail(
+    contestId: string,
+    entryId: string,
+  ): Promise<ContestEntryDetailDto> {
+    const prisma = this.requirePrisma();
+    const row = await prisma.contestEntry.findFirst({
+      where: {
+        id: entryId,
+        contestId,
+      },
+      include: {
+        squad: true,
+        rosterPicks: {
+          include: {
+            participantScores: true,
+            sportEventParticipant: {
+              include: {
+                participant: true,
+                sourceData: {
+                  orderBy: [{ receivedAt: 'desc' }, { createdAt: 'desc' }],
+                  take: 1,
+                },
+              },
+            },
+          },
+          orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
+        },
+      },
+    });
+
+    if (!row) {
+      throw new ContestEntryNotFoundError(contestId, entryId);
+    }
+
+    return toContestEntryDetailDto(
+      {
+        ...row,
+        status: row.status as ContestEntry['status'],
+      },
+      {
+        name: row.squad.name,
+      },
+      row.rosterPicks.map((pick) => ({
+        rosterPickId: pick.id,
+        sportEventParticipantId: pick.sportEventParticipantId,
+        participantId: pick.sportEventParticipant.participantId,
+        participantName: pick.sportEventParticipant.participant.name,
+        participantStatus: pick.sportEventParticipant.status ?? null,
+        position: pick.sportEventParticipant.participant.position ?? null,
+        teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
+        contestPoints: pick.participantScores.reduce((sum, score) => sum + score.pointsEarned, 0),
+        pickedAt: pick.pickedAt,
+        latestPerformance: normalizeLatestPerformance(
+          pick.sportEventParticipant.sourceData[0]?.normalizedData,
+        ),
+      })),
+    );
   }
 
   async createEntry(
@@ -543,6 +603,14 @@ export class ContestEntryNotFoundError extends Error {
 
 function buildDefaultEntryName(squadName: string, entryNumber: number): string {
   return `${squadName} Entry ${entryNumber}`;
+}
+
+function normalizeLatestPerformance(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, unknown>;
 }
 
 function isContestJoinable(status: ContestStatus): boolean {

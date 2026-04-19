@@ -6,8 +6,9 @@ import { ContestDetailPage } from './contest-detail-page';
 
 const enterContestMock = vi.fn();
 const getContestMock = vi.fn();
-const getContestLeaderboardMock = vi.fn();
+const getContestEntryMock = vi.fn();
 const getLeagueMock = vi.fn();
+const getStandingsMock = vi.fn();
 const leaveContestMock = vi.fn();
 const listContestEntriesMock = vi.fn();
 const updateContestEntryMock = vi.fn();
@@ -15,8 +16,9 @@ const updateContestEntryMock = vi.fn();
 vi.mock('@/lib/api', () => ({
   enterContest: (...args: unknown[]) => enterContestMock(...args),
   getContest: (...args: unknown[]) => getContestMock(...args),
-  getContestLeaderboard: (...args: unknown[]) => getContestLeaderboardMock(...args),
+  getContestEntry: (...args: unknown[]) => getContestEntryMock(...args),
   getLeague: (...args: unknown[]) => getLeagueMock(...args),
+  getStandings: (...args: unknown[]) => getStandingsMock(...args),
   leaveContest: (...args: unknown[]) => leaveContestMock(...args),
   listContestEntries: (...args: unknown[]) => listContestEntriesMock(...args),
   updateContestEntry: (...args: unknown[]) => updateContestEntryMock(...args),
@@ -91,16 +93,68 @@ function primeCommonMocks(overrides?: {
     },
   });
 
-  getContestLeaderboardMock.mockResolvedValue({
+  getStandingsMock.mockResolvedValue({
     data: {
-      leaderboard: [
+      standings: [
         {
           entryId: 'entry-1',
           rank: 1,
           totalScore: 42,
-          isTied: false,
+          entryName: 'Birdie Hunters Entry 1',
+          ownerDisplayName: 'Morgan Member',
+          ownerId: 'user-1',
+          previousRank: 1,
+          movement: 'same',
+          isEliminated: false,
+          lastUpdatedAt: '2026-04-15T00:00:00.000Z',
         },
       ],
+      total: 1,
+      page: 1,
+      pageSize: 50,
+      contestId: 'contest-1',
+    },
+  });
+
+  getContestEntryMock.mockResolvedValue({
+    data: {
+      contestId: 'contest-1',
+      entry: {
+        id: 'entry-1',
+        contestId: 'contest-1',
+        squadId: 'squad-1',
+        squadName: 'Birdie Hunters',
+        entryNumber: 1,
+        name: 'Birdie Hunters Entry 1',
+        status: 'ACTIVE',
+        tiebreakerValue: 271,
+        totalScore: 42,
+        standingsPosition: 1,
+        isEliminated: false,
+        createdAt: '2026-04-15T00:00:00.000Z',
+        updatedAt: '2026-04-15T00:00:00.000Z',
+        participants: [
+          {
+            rosterPickId: 'pick-1',
+            sportEventParticipantId: 'sep-1',
+            participantId: 'participant-1',
+            participantName: 'Scottie Scheffler',
+            participantStatus: 'ACTIVE',
+            position: null,
+            teamAffiliation: 'USA',
+            contestPoints: -11,
+            pickedAt: '2026-04-15T00:00:00.000Z',
+            latestPerformance: {
+              scoreToPar: -11,
+              thru: 'F',
+              round1: 70,
+              round2: 74,
+              round3: 65,
+              round4: 68,
+            },
+          },
+        ],
+      },
     },
   });
 
@@ -120,8 +174,9 @@ describe('ContestDetailPage', () => {
   afterEach(() => {
     enterContestMock.mockReset();
     getContestMock.mockReset();
-    getContestLeaderboardMock.mockReset();
+    getContestEntryMock.mockReset();
     getLeagueMock.mockReset();
+    getStandingsMock.mockReset();
     leaveContestMock.mockReset();
     listContestEntriesMock.mockReset();
     updateContestEntryMock.mockReset();
@@ -241,6 +296,50 @@ describe('ContestDetailPage', () => {
     );
     expect(screen.getByTestId('contest-entry-entry-2')).toHaveTextContent('Fairway Finders Entry 1');
     expect(screen.getAllByTestId('contest-entry-open-entry-1')[0]).toHaveTextContent('Open entry');
+  });
+
+  it('expands leaderboard details when requested', async () => {
+    primeCommonMocks();
+    listContestEntriesMock.mockResolvedValue({
+      data: {
+        contestId: 'contest-1',
+        total: 1,
+        isJoined: true,
+        myEntryId: 'entry-1',
+        myEntryIds: ['entry-1'],
+        entries: [
+          {
+            id: 'entry-1',
+            contestId: 'contest-1',
+            squadId: 'squad-1',
+            squadName: 'Birdie Hunters',
+            entryNumber: 1,
+            name: 'Birdie Hunters Entry 1',
+            status: 'ACTIVE',
+            totalScore: 42,
+            standingsPosition: 1,
+            isEliminated: false,
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    renderContestDetailPage();
+
+    expect(await screen.findByTestId('contest-leaderboard-entry-entry-1')).toHaveTextContent(
+      'Birdie Hunters Entry 1',
+    );
+
+    fireEvent.click(screen.getByTestId('contest-toggle-leaderboard-details'));
+
+    expect(await screen.findByTestId('contest-leaderboard-participant-entry-1-participant-1')).toHaveTextContent(
+      'Scottie Scheffler',
+    );
+    expect(getContestEntryMock).toHaveBeenCalledWith({
+      path: { contestId: 'contest-1', entryId: 'entry-1' },
+    });
   });
 
   it('renames a team-owned entry from contest detail while the contest is open', async () => {

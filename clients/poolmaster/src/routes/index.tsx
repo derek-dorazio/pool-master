@@ -10,6 +10,7 @@ import { ContestEntryPage } from '@/features/contests/contest-entry-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { MyLeaguesPage, WelcomePage } from '@/features/leagues/leagues-page';
+import { RootAdminPage } from '@/features/root-admin/root-admin-page';
 import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
 import { TeamsPage } from '@/features/teams/teams-page';
@@ -105,13 +106,7 @@ export const router = createBrowserRouter([
         children: [
           {
             path: 'root-admin',
-            element: (
-              <PlaceholderPage
-                description="Future platform administration will be rebuilt from scratch inside PoolMaster rather than through a separate app."
-                eyebrow="Root Admin"
-                title="Root-admin routes"
-              />
-            ),
+            element: <RootAdminPage />,
           },
         ],
       },

@@ -8,6 +8,7 @@ import {
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
+import { JsonObjectSchema } from './common.dto';
 
 // --- Requests ---
 
@@ -199,6 +200,25 @@ export const ContestEntryDtoSchema = z.object({
 }).describe('Contest entry summary.');
 export type ContestEntryDto = z.infer<typeof ContestEntryDtoSchema>;
 
+export const ContestEntryParticipantDetailDtoSchema = z.object({
+  rosterPickId: z.string(),
+  sportEventParticipantId: z.string(),
+  participantId: z.string(),
+  participantName: z.string(),
+  participantStatus: z.string().nullable().optional(),
+  position: z.string().nullable().optional(),
+  teamAffiliation: z.string().nullable().optional(),
+  contestPoints: z.number().describe('Current points earned within the contest for this picked participant.'),
+  pickedAt: z.string().datetime().describe('When the participant was added to the contest entry.'),
+  latestPerformance: JsonObjectSchema.describe('Latest provider-backed performance snapshot available for the picked participant.'),
+}).describe('Contest entry participant detail used by entry-detail and expanded leaderboard surfaces.');
+export type ContestEntryParticipantDetailDto = z.infer<typeof ContestEntryParticipantDetailDtoSchema>;
+
+export const ContestEntryDetailDtoSchema = ContestEntryDtoSchema.extend({
+  participants: z.array(ContestEntryParticipantDetailDtoSchema).describe('Current picked participants for the contest entry.'),
+}).describe('Expanded contest entry detail.');
+export type ContestEntryDetailDto = z.infer<typeof ContestEntryDetailDtoSchema>;
+
 // --- Responses ---
 
 export const ContestResponseSchema = z.object({
@@ -217,6 +237,12 @@ export const ContestEntryResponseSchema = z.object({
   entry: ContestEntryDtoSchema,
 }).describe('Single contest-entry response.');
 export type ContestEntryResponse = z.infer<typeof ContestEntryResponseSchema>;
+
+export const ContestEntryDetailResponseSchema = z.object({
+  contestId: z.string().describe('Contest that owns the entry.'),
+  entry: ContestEntryDetailDtoSchema,
+}).describe('Expanded contest-entry detail response.');
+export type ContestEntryDetailResponse = z.infer<typeof ContestEntryDetailResponseSchema>;
 
 export const ContestEntryListResponseSchema = z.object({
   contestId: z.string().describe('Contest whose entries are being returned.'),

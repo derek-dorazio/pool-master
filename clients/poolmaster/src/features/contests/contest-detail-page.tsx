@@ -4,13 +4,15 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   enterContest,
   getContest,
-  getContestLeaderboard,
+  getContestEntry,
   getLeague,
+  getStandings,
   leaveContest,
   listContestEntries,
   updateContestEntry,
-  type GetContestLeaderboardResponses,
+  type GetContestEntryResponses,
   type GetContestResponses,
+  type GetStandingsResponses,
   type ListContestEntriesResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -23,8 +25,9 @@ import {
 import { parseRouteState } from '@/routes/route-state';
 
 type ContestDetail = GetContestResponses[200]['contest'];
-type LeaderboardEntry = GetContestLeaderboardResponses[200]['leaderboard'][number];
+type LeaderboardEntry = GetStandingsResponses[200]['standings'][number];
 type ContestEntrySummary = ListContestEntriesResponses[200]['entries'][number];
+type ContestEntryDetail = GetContestEntryResponses[200]['entry'];
 
 function formatDateTimeDisplay(isoString: string | null | undefined) {
   if (!isoString) {
@@ -117,6 +120,186 @@ function getEntryLifecycleCopy(contest: ContestDetail, teamEntryCount: number) {
   }
 }
 
+function formatRelativeToPar(value: unknown) {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return null;
+  }
+
+  if (value === 0) {
+    return 'E';
+  }
+
+  return value > 0 ? `+${value}` : `${value}`;
+}
+
+function formatRoundScore(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : '—';
+}
+
+function readLatestPerformanceMetric(
+  latestPerformance: Record<string, unknown>,
+  key: string,
+) {
+  return latestPerformance[key];
+}
+
+function getParticipantPerformanceView(
+  participant: ContestEntryDetail['participants'][number],
+) {
+  const latestPerformance = participant.latestPerformance ?? {};
+  const scoreToPar = formatRelativeToPar(
+    readLatestPerformanceMetric(latestPerformance, 'scoreToPar'),
+  );
+  const finishPosition = readLatestPerformanceMetric(latestPerformance, 'finishPosition');
+  const thru = readLatestPerformanceMetric(latestPerformance, 'thru');
+  const roundScores = [1, 2, 3, 4].map((round) =>
+    formatRoundScore(readLatestPerformanceMetric(latestPerformance, `round${round}`)),
+  );
+
+  return {
+    scoreToPar,
+    finishPosition: typeof finishPosition === 'number' ? finishPosition : null,
+    thru:
+      typeof thru === 'number' || typeof thru === 'string'
+        ? String(thru)
+        : null,
+    roundScores,
+  };
+}
+
+function sortDetailedParticipants(
+  participants: ContestEntryDetail['participants'],
+) {
+  return [...participants].sort((left, right) => {
+    const leftPerformance = getParticipantPerformanceView(left);
+    const rightPerformance = getParticipantPerformanceView(right);
+
+    if (
+      leftPerformance.finishPosition !== null
+      && rightPerformance.finishPosition !== null
+      && leftPerformance.finishPosition !== rightPerformance.finishPosition
+    ) {
+      return leftPerformance.finishPosition - rightPerformance.finishPosition;
+    }
+
+    const leftScoreToPar = left.latestPerformance?.scoreToPar;
+    const rightScoreToPar = right.latestPerformance?.scoreToPar;
+    if (
+      typeof leftScoreToPar === 'number'
+      && typeof rightScoreToPar === 'number'
+      && leftScoreToPar !== rightScoreToPar
+    ) {
+      return leftScoreToPar - rightScoreToPar;
+    }
+
+    return left.participantName.localeCompare(right.participantName);
+  });
+}
+
+function ContestLeaderboardEntryDetail({
+  contestId,
+  entryId,
+  enabled,
+}: {
+  contestId: string;
+  entryId: string;
+  enabled: boolean;
+}) {
+  const entryDetailQuery = useQuery({
+    queryKey: ['poolmaster', 'contest-entry-detail', contestId, entryId],
+    queryFn: async (): Promise<ContestEntryDetail> => {
+      const response = await getContestEntry({
+        path: { contestId, entryId },
+      });
+
+      if (!response.data?.entry) {
+        throw response.error ?? new Error('Contest entry detail response is missing data.');
+      }
+
+      return response.data.entry;
+    },
+    enabled,
+    retry: false,
+  });
+
+  if (!enabled) {
+    return null;
+  }
+
+  if (entryDetailQuery.isLoading) {
+    return (
+      <div className="mt-4 rounded-2xl bg-card px-4 py-4 text-sm text-muted-foreground">
+        Loading lineup detail...
+      </div>
+    );
+  }
+
+  if (entryDetailQuery.isError || !entryDetailQuery.data) {
+    return (
+      <div className="mt-4 rounded-2xl bg-card px-4 py-4 text-sm text-muted-foreground">
+        We couldn&apos;t load the lineup detail for this entry.
+      </div>
+    );
+  }
+
+  const participants = sortDetailedParticipants(entryDetailQuery.data.participants);
+
+  if (participants.length === 0) {
+    return (
+      <div className="mt-4 rounded-2xl bg-card px-4 py-4 text-sm text-muted-foreground">
+        This entry does not have any picked participants yet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="grid grid-cols-[minmax(0,1.5fr)_80px_70px_repeat(4,56px)] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <span>Participant</span>
+        <span className="text-right">Total</span>
+        <span className="text-right">Thru</span>
+        <span className="text-right">R1</span>
+        <span className="text-right">R2</span>
+        <span className="text-right">R3</span>
+        <span className="text-right">R4</span>
+      </div>
+      <div className="divide-y divide-border">
+        {participants.map((participant) => {
+          const performance = getParticipantPerformanceView(participant);
+
+          return (
+            <div
+              className="grid grid-cols-[minmax(0,1.5fr)_80px_70px_repeat(4,56px)] gap-2 px-4 py-3 text-sm"
+              data-testid={`contest-leaderboard-participant-${entryId}-${participant.participantId}`}
+              key={participant.rosterPickId}
+            >
+              <div className="min-w-0">
+                <div className="truncate font-medium text-foreground">{participant.participantName}</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {participant.participantStatus
+                    ? `Status: ${participant.participantStatus}`
+                    : participant.teamAffiliation ?? participant.position ?? 'Contest participant'}
+                </div>
+              </div>
+              <span className="text-right font-medium text-foreground">
+                {performance.scoreToPar ?? formatRelativeToPar(participant.contestPoints) ?? '—'}
+              </span>
+              <span className="text-right text-muted-foreground">
+                {performance.thru ?? '—'}
+              </span>
+              {performance.roundScores.map((roundScore, index) => (
+                <span className="text-right text-muted-foreground" key={`${participant.rosterPickId}-round-${index + 1}`}>
+                  {roundScore}
+                </span>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function ContestDetailPage() {
   const { contestId = '' } = useParams<{ contestId: string }>();
   const location = useLocation();
@@ -126,6 +309,7 @@ export function ContestDetailPage() {
   const hintedLeagueCode = parseRouteState(location.state).leagueCode ?? null;
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [entryNameDraft, setEntryNameDraft] = useState('');
+  const [showLeaderboardDetails, setShowLeaderboardDetails] = useState(false);
 
   const contestQuery = useQuery({
     queryKey: ['poolmaster', 'contest', contestId],
@@ -143,15 +327,22 @@ export function ContestDetailPage() {
   });
 
   const leaderboardQuery = useQuery({
-    queryKey: ['poolmaster', 'contest-leaderboard', contestId],
+    queryKey: ['poolmaster', 'contest-standings', contestId],
     queryFn: async (): Promise<LeaderboardEntry[]> => {
-      const response = await getContestLeaderboard({ path: { contestId } });
+      const response = await getStandings({
+        path: { contestId },
+        query: {
+          page: '1',
+          pageSize: '50',
+          sortBy: 'rank',
+        },
+      });
 
-      if (!response.data?.leaderboard) {
-        throw response.error ?? new Error('Contest leaderboard response is missing data.');
+      if (!response.data?.standings) {
+        throw response.error ?? new Error('Contest standings response is missing data.');
       }
 
-      return response.data.leaderboard;
+      return response.data.standings;
     },
     enabled: Boolean(contestId),
     retry: false,
@@ -221,7 +412,7 @@ export function ContestDetailPage() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] }),
-        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-leaderboard', contestId] }),
+        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-standings', contestId] }),
       ]);
       navigate(buildContestEntryPath(contestId, entry.id), {
         state: { leagueCode: hintedLeagueCode ?? leagueCodeQuery.data?.leagueCode ?? null },
@@ -243,7 +434,7 @@ export function ContestDetailPage() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] }),
-        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-leaderboard', contestId] }),
+        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-standings', contestId] }),
       ]);
     },
   });
@@ -267,7 +458,7 @@ export function ContestDetailPage() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] }),
-        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-leaderboard', contestId] }),
+        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-standings', contestId] }),
       ]);
     },
   });
@@ -349,8 +540,8 @@ export function ContestDetailPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[2rem] border border-border bg-card p-6">
-          <h3 className="text-xl font-semibold">Contest snapshot</h3>
+        <div className="rounded-[2rem] border border-border bg-card p-6" id="contest-rules">
+          <h3 className="text-xl font-semibold">Contest rules and snapshot</h3>
           <dl className="mt-5 grid gap-3 sm:grid-cols-2 text-sm text-muted-foreground">
             <div className="rounded-2xl bg-background px-4 py-4">
               <dt>Contest type</dt>
@@ -670,7 +861,31 @@ export function ContestDetailPage() {
         </div>
 
         <div className="rounded-[2rem] border border-border bg-card p-6">
-          <h3 className="text-xl font-semibold">Leaderboard</h3>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-xl font-semibold">Leaderboard</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                This is the primary live and final contest view. Hide details to focus on entry standings only.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <a
+                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
+                data-testid="contest-view-rules"
+                href="#contest-rules"
+              >
+                View rules
+              </a>
+              <button
+                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
+                data-testid="contest-toggle-leaderboard-details"
+                onClick={() => setShowLeaderboardDetails((current) => !current)}
+                type="button"
+              >
+                {showLeaderboardDetails ? 'Hide details' : 'Show details'}
+              </button>
+            </div>
+          </div>
           <div className="mt-5 space-y-3" data-testid="contest-leaderboard">
             {leaderboardQuery.isLoading ? (
               <p className="text-sm text-muted-foreground">Loading leaderboard...</p>
@@ -681,22 +896,28 @@ export function ContestDetailPage() {
             ) : leaderboardQuery.data?.length ? (
               leaderboardQuery.data.map((entry) => (
                 <div
-                  className="flex items-center justify-between rounded-2xl border border-border bg-background px-4 py-4"
+                  className="rounded-2xl border border-border bg-background px-4 py-4"
                   data-testid={`contest-leaderboard-entry-${entry.entryId}`}
                   key={entry.entryId}
                 >
-                  <div>
-                    <div className="font-medium" title={entry.entryId}>
-                      Entry {entry.entryId.slice(0, 8)}
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="font-medium text-foreground">{entry.entryName}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {entry.ownerDisplayName}
+                        {entry.isEliminated ? ' · Eliminated' : ''}
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {entry.isTied ? 'Tied' : 'Solo'} leaderboard position
+                    <div className="text-right">
+                      <div className="text-lg font-semibold text-foreground">#{entry.rank}</div>
+                      <div className="text-sm text-muted-foreground">{entry.totalScore}</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-semibold text-foreground">#{entry.rank}</div>
-                    <div className="text-sm text-muted-foreground">{entry.totalScore} pts</div>
-                  </div>
+                  <ContestLeaderboardEntryDetail
+                    contestId={contestId}
+                    enabled={showLeaderboardDetails}
+                    entryId={entry.entryId}
+                  />
                 </div>
               ))
             ) : (

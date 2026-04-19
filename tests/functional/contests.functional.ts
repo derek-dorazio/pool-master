@@ -3,6 +3,7 @@ import {
   deleteContest,
   enterContest,
   getContest,
+  getContestEntry,
   getMyContestEntry,
   leaveContest,
   listContestEntries,
@@ -38,6 +39,26 @@ async function cleanupContestArtifacts(): Promise<void> {
   const prisma = getFunctionalPrisma();
 
   if (createdSportEventParticipantIds.length > 0) {
+    await prisma.contestEntryParticipantScoreEvent.deleteMany({
+      where: {
+        participantScore: {
+          rosterPick: {
+            sportEventParticipantId: {
+              in: createdSportEventParticipantIds,
+            },
+          },
+        },
+      },
+    });
+    await prisma.contestEntryParticipantScore.deleteMany({
+      where: {
+        rosterPick: {
+          sportEventParticipantId: {
+            in: createdSportEventParticipantIds,
+          },
+        },
+      },
+    });
     await prisma.rosterPick.deleteMany({
       where: {
         sportEventParticipantId: {
@@ -484,6 +505,191 @@ describe('SDK Functional: Contests and Entries', () => {
     });
 
     expect(refreshedEntryResponse.data?.entry?.tiebreakerValue).toBe(271);
+  });
+
+  it('returns expanded contest-entry detail with roster picks and latest performance', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({
+      displayName: 'Entry Detail Commissioner',
+      leagueName: 'Entry Detail Functional League',
+    });
+
+    const createResponse = await createContest({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+      body: {
+        name: 'Entry Detail Contest',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.TIERED,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
+        contestConfiguration: {
+          rounds: 1,
+          tierAssignmentMethod: TierAssignmentMethod.ODDS,
+          tierConfig: [
+            {
+              tierId: 'tier-1',
+              tierName: 'Tier 1',
+              tierNumber: 1,
+              picksFromTier: 1,
+              participantIds: [],
+            },
+          ],
+        },
+      },
+    });
+
+    const contestId = createResponse.data?.contest.id;
+    expect(contestId).toBeTruthy();
+
+    const prisma = getFunctionalPrisma();
+    await prisma.contest.update({
+      where: {
+        id: contestId as string,
+      },
+      data: {
+        status: ContestStatus.OPEN,
+      },
+    });
+
+    const sport = await prisma.sport.create({
+      data: {
+        name: `EntryDetailSport-${randomUUID().slice(0, 8)}`,
+        participantType: ParticipantType.INDIVIDUAL,
+        statSchema: {},
+      },
+    });
+    createdSportIds.push(sport.id);
+
+    const participant = await prisma.participant.create({
+      data: {
+        sportId: sport.id,
+        name: `Entry Detail Golfer ${randomUUID().slice(0, 8)}`,
+        participantType: ParticipantType.INDIVIDUAL,
+        externalIds: {},
+        metadata: {},
+        position: 'GOLFER',
+        teamAffiliation: 'USA',
+      },
+    });
+    createdParticipantIds.push(participant.id);
+
+    const sportEvent = await prisma.sportEvent.create({
+      data: {
+        externalId: `entry-detail-event-${randomUUID().slice(0, 8)}`,
+        providerId: 'functional-test',
+        sport: Sport.GOLF,
+        name: 'Entry Detail Event',
+        startDate: new Date('2026-04-10T12:00:00.000Z'),
+        releaseAt: new Date('2026-04-10T12:00:00.000Z'),
+        fieldLocksAt: new Date('2026-04-10T12:00:00.000Z'),
+        status: 'IN_PROGRESS',
+      },
+    });
+    createdSportEventIds.push(sportEvent.id);
+
+    const sportEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: sportEvent.id,
+        participantId: participant.id,
+        status: 'ACTIVE',
+      },
+    });
+    createdSportEventParticipantIds.push(sportEventParticipant.id);
+
+    await prisma.sportEventParticipantSourceData.create({
+      data: {
+        sportEventParticipantId: sportEventParticipant.id,
+        providerId: 'functional-test',
+        externalId: participant.id,
+        rawPayload: { scoreToPar: -11, round1: 70, round2: 68 },
+        normalizedData: {
+          scoreToPar: -11,
+          thru: 'F',
+          round1: 70,
+          round2: 68,
+          finishPosition: 1,
+        },
+        receivedAt: new Date('2026-04-10T15:00:00.000Z'),
+      },
+    });
+
+    await prisma.contest.update({
+      where: {
+        id: contestId as string,
+      },
+      data: {
+        sportEventId: sportEvent.id,
+      },
+    });
+
+    await prisma.contestConfiguration.update({
+      where: {
+        contestId: contestId as string,
+      },
+      data: {
+        tierConfig: [
+          {
+            tierId: 'tier-1',
+            tierName: 'Tier 1',
+            tierNumber: 1,
+            picksFromTier: 1,
+            participantIds: [participant.id],
+          },
+        ],
+      },
+    });
+
+    const entryResponse = await enterContest({
+      client: commissioner.client,
+      path: {
+        contestId: contestId as string,
+      },
+    });
+
+    const entryId = entryResponse.data?.entry.id;
+    expect(entryId).toBeTruthy();
+
+    const rosterPick = await prisma.rosterPick.create({
+      data: {
+        entryId: entryId as string,
+        sportEventParticipantId: sportEventParticipant.id,
+        autoPicked: false,
+      },
+    });
+
+    await prisma.contestEntryParticipantScore.create({
+      data: {
+        entryId: entryId as string,
+        rosterPickId: rosterPick.id,
+        pointsEarned: -11,
+      },
+    });
+
+    const detailResponse = await getContestEntry({
+      client: commissioner.client,
+      path: {
+        contestId: contestId as string,
+        entryId: entryId as string,
+      },
+    });
+
+    expect(detailResponse.data?.entry.id).toBe(entryId);
+    expect(detailResponse.data?.entry.participants).toEqual([
+      expect.objectContaining({
+        participantId: participant.id,
+        participantName: participant.name,
+        participantStatus: 'ACTIVE',
+        contestPoints: -11,
+        latestPerformance: expect.objectContaining({
+          scoreToPar: -11,
+          thru: 'F',
+          round1: 70,
+          round2: 68,
+          finishPosition: 1,
+        }),
+      }),
+    ]);
   });
 
   it('rejects a league outsider from entering a contest', async () => {
