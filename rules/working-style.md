@@ -27,6 +27,11 @@ testing rules elsewhere in `rules/`.
   - what is still open
 - give opinionated recommendations when useful, but keep them revisable
 - avoid making the user do unnecessary coordination work
+- when screenshots, reference visuals, or example flows would materially improve
+  product definition or interaction design, ask for them explicitly instead of
+  guessing from prose alone
+- keep visual requests narrow and specific so the user knows exactly what kind
+  of screenshot or example would help
 
 ### Status Summary Expectations
 

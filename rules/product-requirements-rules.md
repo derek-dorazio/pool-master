@@ -105,6 +105,9 @@ When visual references are used:
   - leave unresolved
 - avoid treating spacing, layout, or legacy control placement as mandatory
   unless the user explicitly says so
+- when visuals would materially improve product-definition accuracy, ask for
+  targeted screenshots or examples rather than silently inferring important UX
+  behavior from incomplete prose
 
 ## 8. Handoff Floor
 
