@@ -64,6 +64,17 @@
     the primary runtime model, with optional JSON snapshot support only if later
     needed for audit/debug.
 
+- `CEFI-013`
+  - The first member-visible live-event presentation is the leaderboard.
+  - Default view emphasizes entries/teams and total score.
+  - Expanded view reveals participant-level scoring rows.
+  - Contest rules should be accessible from leaderboard context.
+
+- `CEFI-017`
+  - First-pass history should expose completed contests by sport and contest
+    type within a league.
+  - Broader historical summaries are deferred.
+
 ## Blocking
 
 - None at the current technical-refinement level. The remaining items are

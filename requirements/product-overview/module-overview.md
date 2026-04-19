@@ -28,13 +28,23 @@ Backend jobs poll providers for live event updates, refresh participant facts,
 recompute entry scores, and reorder leaderboards automatically. Normal users do
 not operate this flow manually.
 
+Leaderboards and participant drill-down are universal contest concepts across
+sports, even though the exact visible data columns and details will vary by
+sport.
+
 ## 5. League And Membership Operations
 
 Leagues manage membership, invitations, team ownership, co-ownership, and
 general social play structure. These are the main recurring commissioner
 administrative tasks outside of initial contest creation.
 
-## 6. Mock Provider Infrastructure
+## 6. League Contest History
+
+League history should first focus on completed contests grouped or filterable
+by sport and contest type. Members should be able to browse prior completed
+tournaments within the league.
+
+## 7. Mock Provider Infrastructure
 
 The mock sports-data provider is real QA/non-production infrastructure that
 allows the product to function end to end before real provider coverage is

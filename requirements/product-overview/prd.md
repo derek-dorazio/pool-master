@@ -36,6 +36,19 @@ changes.
    frozen field interpretation.
 5. Backend jobs poll provider updates and refresh participant stats, entry
    scores, and leaderboard ordering.
+6. The contest completes, final standings are shown, and winners are visible.
+
+## First Pass Delivery Focus
+
+- complete one full end-to-end contest lifecycle before broadening to more
+  sports
+- first end-to-end target is:
+  entry creation -> live scoring -> contest completion -> winners -> completed
+  contest history
+- first sport family remains golf
+- first entry-selection UI should be tiered golf
+- additional sports should follow after the full contest lifecycle and history
+  loop is working cleanly
 
 ## First Pass Product Boundaries
 
@@ -69,3 +82,4 @@ changes.
 - Joins leagues, manages their team, creates entries, and edits selections
   until contest lock.
 - Sees live leaderboard changes driven by automated provider updates.
+- Can browse completed contests within league history.

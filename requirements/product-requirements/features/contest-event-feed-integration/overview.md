@@ -21,6 +21,15 @@ This feature should preserve a frictionless operating model:
 - commissioners behave like members for ongoing contest participation
 - live scoring updates are backend automation, not a manual workflow
 
+This lane should also deliver a full first-pass lifecycle, not just contest
+creation:
+
+- entry creation
+- live scoring
+- contest completion
+- winners
+- completed contest history
+
 ## Feature Summary
 
 PoolMaster should support a real first-pass flow where:
@@ -172,10 +181,15 @@ Current mismatch:
   - seeded templates
   - smart defaults
   - optional advanced overrides
-- event creation/loading, contest configuration, contest creation, and team
-  entry should be designed together as one chain
+- first entry-selection implementation should target tiered golf contests
+- event creation/loading, contest configuration, contest creation, team entry,
+  live scoring, and completion/history should be designed together as one chain
+- leaderboards are a universal contest concept across sports even though detail
+  columns will vary by sport
+- first-pass history should focus on completed contests by sport and contest
+  type within the league
 - later sports should reuse the same event -> field -> contest field -> entry
-  pattern even if the scoring and selection rules differ
+  -> scoring -> history pattern even if the scoring and selection rules differ
 
 ## Recommended Deliverables For This Lane
 

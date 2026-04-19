@@ -60,6 +60,8 @@
   operations.
 - `BR-202` `(Confirmed)` Team entries are editable only while the contest is
   still open/editable.
+- `BR-202A` `(Confirmed)` After contest lock, entries become frozen and
+  read-only.
 - `BR-203` `(Confirmed)` Commissioners may create/configure contests as soon as
   the event exists.
 - `BR-204` `(Confirmed)` Members may create and edit entries before the contest
@@ -76,12 +78,54 @@
 - `BR-209` `(Confirmed)` In the normal flow, commissioners choose among seeded
   templates and only use advanced configuration when they intentionally want to
   override defaults.
+- `BR-209A` `(Confirmed)` If no eligible imported events are currently
+  available for contest creation, the commissioner flow should show a truthful
+  empty state rather than implying a missing manual admin step.
 - `BR-210` `(Confirmed)` There is no normal admin, commissioner, or member user
   flow for live scoring updates; backend ingestion/scoring jobs update event
   data, entry scores, and leaderboard order automatically.
 - `BR-211` `(Confirmed)` If an admin role surfaces in scoring later, it is
   operational only, such as rerunning or repairing broken provider feeds, not
   manually entering or editing stats/results.
+- `BR-212` `(Confirmed)` In the first pass, live provider updates are treated
+  as latest-truth overwrites for the affected event and participants.
+- `BR-213` `(Confirmed)` PoolMaster does not need first-pass audit logging for
+  every stat change before accepting repeated live provider updates.
+- `BR-214` `(Confirmed)` The first-pass admin feed-health surface should be
+  read-only and focused on sync-run visibility such as datetime and status.
+- `BR-215` `(Confirmed)` Retry/rerun controls for sync runs may be deferred
+  until real provider delta/latest-data behavior is better understood.
+- `BR-216` `(Confirmed)` The leaderboard is the primary member-visible live
+  event view.
+- `BR-217` `(Confirmed)` The default leaderboard presentation should emphasize
+  entries/teams and total score ordered from winner to loser.
+- `BR-218` `(Confirmed)` Expanded leaderboard details may reveal participant
+  rows and participant scores without changing the leaderboard ordering.
+- `BR-219` `(Confirmed)` Contest rules should be viewable from the live-event
+  leaderboard context.
+- `BR-220` `(Confirmed)` Leaderboards and participant drill-down are universal
+  contest concepts across sports, even though exact visible details vary by
+  sport.
+- `BR-221` `(Confirmed)` First-pass history focuses on completed contests
+  within the league, grouped or filterable by sport and contest type.
+- `BR-222` `(Confirmed)` Broader historical summaries such as win counts or
+  streaks are deferred until after completed-contest history is working.
+- `BR-223` `(Confirmed)` Entry-selection UI is contest-type-specific rather
+  than universal.
+- `BR-224` `(Confirmed)` First-pass entry-selection design should target tiered
+  golf contests.
+- `BR-225` `(Confirmed)` In first-pass tiered golf contests, default tier
+  grouping and ordering should be derived from tournament-winning odds rather
+  than world rank.
+- `BR-226` `(Confirmed)` Supporting participant information such as world rank
+  may be shown in the tiered golf entry UI without replacing the default odds-
+  based tier source.
+- `BR-227` `(Confirmed)` The first-pass tiered golf entry flow should support
+  sequential tier-by-tier selection, optional tier collapse after selection,
+  and a winner-score tiebreaker input before final entry submission.
+- `BR-228` `(Confirmed)` After contest lock, a team's entry view should present
+  like a leaderboard/detail view of that entry rather than an editable draft
+  form.
 
 ## Validation Rules
 

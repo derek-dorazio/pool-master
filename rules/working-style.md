@@ -76,6 +76,13 @@ The goal is not rigid ceremony. The goal is to reduce ambiguity about whether:
 - prefer truthful lifecycle behavior over admin/test-only shortcuts
 - when product consequences are non-obvious, confirm the decision before
   implementation expands
+- keep persona boundaries clear and do not casually blur product, technical,
+  frontend UX, backend, architecture, and QA ownership
+- if a role boundary is unclear or a persona was misassigned in the current
+  discussion, correct it proactively instead of making the user referee role
+  ownership
+- when a repeated role mix-up appears, update the relevant persona playbooks or
+  shared rules in the same slice so the correction becomes durable
 - a slice is not finished if the relevant local test suites are still failing
 - do not treat "code complete" as finished work when validation is still red
 - when a slice is complete and the relevant local tests are green, commit and

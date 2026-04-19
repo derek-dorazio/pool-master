@@ -50,7 +50,8 @@ Root-admin action in this flow is optional and operational:
 ### Flow 5: Event Updates Propagate Downstream
 
 1. Scheduled backend jobs poll providers for event updates.
-2. PoolMaster refreshes event and event-participant data.
+2. PoolMaster refreshes event and event-participant data using latest fetched
+   provider truth for the affected records.
 3. PoolMaster identifies impacted contests and entries.
 4. PoolMaster recalculates entry scores and refreshes leaderboard ordering.
 5. PoolMaster updates contest lifecycle/read models as appropriate.
@@ -60,6 +61,12 @@ There is no normal user flow in this step:
 - no member action
 - no root-admin action unless a provider feed is broken and needs an
   operational rerun or repair
+
+First-pass operational visibility should stay thin:
+- read-only sync-run visibility
+- datetime and status per run
+- retry/rerun controls can be added later after real provider behavior is
+  better understood
 
 ## Key Design Decision
 

@@ -18,6 +18,12 @@ Contest pages should show contest status, rules summary, entries, and the
 contest-specific field/selections experience. Contest pages are valid places to
 launch team-scoped entry creation.
 
+## History Context
+
+League history should provide a way to browse completed contests by sport and
+contest type. First-pass history is contest-centric rather than statistics- or
+streak-centric.
+
 ## Role Behavior
 
 - root admin should not require a separate day-to-day navigation universe for

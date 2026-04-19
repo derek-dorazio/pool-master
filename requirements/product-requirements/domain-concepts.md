@@ -27,6 +27,12 @@ The contest-specific interpretation of the event field, including frozen rules
 such as tiers, prices, ordering, and other selection constraints that members
 use when building entries.
 
+## Entry Selection UI
+
+The member-facing selection experience for building an entry. This is
+contest-type-specific rather than universal. First pass should target tiered
+golf.
+
 ## Entry
 
 A team-owned participation record inside a contest. A team may have multiple
@@ -37,3 +43,13 @@ entries when the contest allows it.
 An automated backend process that consumes provider updates, refreshes event
 and participant facts, recalculates entry scores, and updates leaderboard
 ordering without normal manual operation.
+
+## Leaderboard
+
+The primary live and final standings view for a contest. It is a cross-sport
+concept, but the exact score/detail columns vary by sport.
+
+## Contest History
+
+The completed-contest archive for a league. First-pass history focuses on
+browsing prior completed contests by sport and contest type.

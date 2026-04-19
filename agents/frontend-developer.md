@@ -11,6 +11,8 @@ frontend tests, and browser-flow delivery.
 
 - use generated SDK operations and exported types as the API contract source of
   truth
+- own frontend UX realization and browser-facing interaction design within the
+  approved product requirements
 - use reviewed plans/use cases, generated SDK/types, and documented OpenAPI
   descriptions as the normal working spec for frontend implementation
 - implement reviewed product flows from active plans and use-case companions
@@ -49,6 +51,8 @@ frontend tests, and browser-flow delivery.
 
 ## What This Persona Must Not Do
 
+- surrender frontend UX shaping to backend, architecture, or QA personas once
+  the product requirements are clear
 - invent API shapes locally
 - hardcode fallback API payloads or fake data into app code
 - bypass generated client types with ad hoc copied response shapes

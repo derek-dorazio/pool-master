@@ -9,5 +9,6 @@
   with the system rather than managed through normal UI flows
 - `Live scoring`: automated backend propagation of provider updates into entry
   scores and leaderboard order
+- `Contest history`: the league-facing archive of completed contests
 - `Exceptional admin action`: operational intervention for unusual problems, not
   a normal user workflow

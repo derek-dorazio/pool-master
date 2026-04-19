@@ -56,6 +56,15 @@ These question IDs are intended to stay stable as the discussion evolves.
   - The frozen released-contest field is contest-specific and must persist per
     contest.
 
+- `CEFI-013` First member-visible live-event presentation `(Resolved)`
+  - The leaderboard is the main live-event view.
+  - Default concise view should show entries/teams and total score ordered from
+    winner to loser.
+  - Expanded detail view should reveal participant rows and participant scores.
+  - `View rules` should expose contest configuration rules.
+  - Hiding details should hide participant-level rows without changing the
+    leaderboard ordering.
+
 ## Blocking Questions
 
 - None currently.
@@ -64,7 +73,7 @@ These question IDs are intended to stay stable as the discussion evolves.
 
 - `CEFI-007` Mock provider time progression
   - Should the first-pass mock provider support scripted live progression over
-    time, or only named snapshots and update collections?
+  time, or only named snapshots and update collections?
 
 - `CEFI-008` Event operations UX depth
   - How much operational detail should the first-pass root-admin event screen
@@ -95,3 +104,9 @@ These question IDs are intended to stay stable as the discussion evolves.
   not as application fallback behavior.
 - `CEFI-R5` Add a first-class seeded contest-template model, but defer any
   template-management UI/API.
+- `CEFI-R6` Treat live event updates as latest-truth overwrites from provider
+  polling; latest fetched participant/event data replaces prior values in the
+  first pass.
+- `CEFI-R7` Keep first-pass feed-health visibility thin and read-only:
+  sync-run list, datetime, and status, with retry/rerun deferred until real
+  provider behavior is better understood.

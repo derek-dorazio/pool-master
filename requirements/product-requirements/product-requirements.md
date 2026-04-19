@@ -19,3 +19,11 @@ Active implementation still tracks status in `plans/`.
   commissioner/member/admin workflows.
 - Seeded templates and default timing rules exist specifically to minimize
   friction and manual configuration.
+- Leaderboards and participant drill-down are cross-sport contest concepts,
+  even though the exact visible detail varies by sport.
+- First-pass history should focus on completed contests within a league,
+  filterable or grouped by sport and contest type.
+- The preferred delivery order is one complete end-to-end contest lifecycle for
+  golf before broadening to additional sports.
+- Entry-selection UI is contest-type-specific; the first concrete design target
+  is tiered golf.

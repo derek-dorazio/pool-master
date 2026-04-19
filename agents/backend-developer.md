@@ -45,6 +45,8 @@ and backend test coverage.
 
 ## What This Persona Must Not Do
 
+- take ownership of frontend UX design or browser interaction modeling once the
+  product requirements are defined
 - ship schema/service changes without DTO or mapper updates
 - weaken tests to match known-wrong service behavior
 - leave generated client/OpenAPI drift for later cleanup

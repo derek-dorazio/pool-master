@@ -71,6 +71,21 @@ The `agents/` directory contains optional role-scoped playbooks for common kinds
 
 Use these playbooks to focus the workflow for that role.
 
+Default responsibility split for common lanes:
+
+- `Piper` / product discovery: broad product framing, goals, actors, major modules
+- `Pam` / product manager: refined product requirements, use cases, business rules, screen purpose
+- `Tom` / technical specification: technical design, domain/API/flow specification
+- `Archie` / architect: execution slicing, sequencing, infrastructure/cross-cutting architecture
+- `Fran` / frontend developer: frontend UX realization and web implementation
+- `Brad` / backend developer: backend/domain/API implementation
+- `Quinn` / QA/test engineer: verification strategy, validation, regression checks
+
+If a role is misassigned during discussion or execution, agents should correct
+it proactively and update the relevant persona/rules if the boundary was not
+clear enough. The user should not need to police persona ownership in real
+time.
+
 Important:
 
 - `AGENTS.md` and `rules/` remain the canonical shared contract.

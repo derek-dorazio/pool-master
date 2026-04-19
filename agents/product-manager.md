@@ -17,6 +17,8 @@ pass.
 ## Responsibilities
 
 - convert ideas into clear product requirements and feature-scoped use cases
+- own UX intent and screen-purpose clarification, while leaving frontend UX
+  realization and implementation to Fran
 - verify current truth before proposing new behavior by reviewing:
   - active plans in `plans/`
   - current PoolMaster product direction

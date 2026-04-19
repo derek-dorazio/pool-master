@@ -95,6 +95,11 @@ Expected outcomes:
 - commissioners can begin contest setup as soon as the event exists
 - the common path remains quick and template-driven
 
+Alternate flow:
+- if no eligible imported events are currently available for contest creation,
+  PoolMaster should show a truthful empty state rather than implying a missing
+  admin action or broken workflow
+
 ## CC-002: Commissioner reviews derived contest field behavior during creation
 
 Actor:
@@ -187,6 +192,46 @@ Expected outcomes:
 - already-selected participants remain on the entry unless the member changes
   them, even if their informational status later changes before contest lock
 
+Alternate flow:
+- after contest lock, the same entry should become read-only and present as a
+  team-scoped standings/detail view rather than an editable selection form
+
+## TE-004: Team owner makes selections in a tiered golf contest
+
+Actor:
+- Team Owner / league member acting in team context
+
+Preconditions:
+- the contest uses a tiered golf format
+- the entry exists and is editable
+
+Trigger:
+- user opens the entry-selection experience
+
+Main flow:
+1. PoolMaster shows the contest field grouped by tiers.
+2. PoolMaster shows the pick requirement for each tier and the contest's tier
+   ordering inputs.
+3. Within each tier, PoolMaster orders golfers by contest rank derived from the
+   contest field, using tournament-winning odds by default for tiering and
+   ordering.
+4. PoolMaster may also show supporting information such as world rank without
+   changing the default tier source.
+5. User selects one golfer from the current tier.
+6. PoolMaster may collapse the completed tier and move focus to the next tier
+   for fast entry completion.
+7. User repeats this until all required tiers are filled.
+8. User enters the winner score tiebreaker.
+9. PoolMaster validates the selections against the frozen contest field and
+   per-tier limits.
+10. User creates or saves the entry.
+
+Expected outcomes:
+- first-pass selection is clearly tier-based for golf
+- the UI reflects the contest type rather than pretending all draft types share
+  the same selection interaction
+- the tier-selection flow is optimized for quick sequential picks
+
 ## TE-003: Commissioner uses the same entry tools as a member
 
 Actor:
@@ -229,7 +274,74 @@ Main flow:
 
 Expected outcomes:
 - scoring and standings update automatically from provider data
+- latest fetched event/participant facts overwrite prior facts in the first
+  pass
 - there is no normal commissioner/member/admin interaction required for live
   scoring updates
 - admin involvement, if needed later, is limited to operational reruns or feed
   repair
+
+## AS-002: Member views the live contest leaderboard
+
+Actor:
+- Member / Team Owner / Commissioner acting as participant
+
+Preconditions:
+- contest has entries
+- live scoring data exists or standings can otherwise be ranked
+
+Trigger:
+- user opens the contest leaderboard view
+
+Main flow:
+1. PoolMaster shows entries ordered from winner to loser by total score.
+2. Default concise view emphasizes entry/team identity and total score.
+3. User may expand details to reveal participant-level rows and participant
+   scores.
+4. User may open `View rules` to inspect the contest configuration rules.
+
+Expected outcomes:
+- leaderboard is the primary live-event presentation surface
+- concise and expanded modes share the same ranking/order
+- participant detail visibility is optional, not required for the primary view
+
+## AS-003: Member browses completed contest history
+
+Actor:
+- Member / Team Owner / Commissioner
+
+Preconditions:
+- the league has one or more completed contests
+
+Trigger:
+- user opens league history
+
+Main flow:
+1. PoolMaster shows completed contests for the league.
+2. User browses or filters completed contests by sport and contest type.
+3. User opens a completed contest to review final standings and winners.
+
+Expected outcomes:
+- first-pass history is contest-centric
+- completed contests remain browsable after live play ends
+
+## AE-003: Root admin reviews sync-run history
+
+Actor:
+- Root Admin
+
+Preconditions:
+- provider syncs have already run
+
+Trigger:
+- root admin opens feed-health or sync history visibility
+
+Main flow:
+1. PoolMaster shows a read-only list of sync runs.
+2. PoolMaster shows at least datetime and status for each run.
+3. Root admin uses that visibility to understand whether imports are healthy.
+
+Expected outcomes:
+- first-pass operations stay lightweight
+- admins can inspect sync health without becoming part of the normal runtime
+  flow
