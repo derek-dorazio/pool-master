@@ -37,6 +37,7 @@ import { accountConsentModule } from '../../packages/core-api/src/modules/accoun
 import { accountModule } from '../../packages/core-api/src/modules/account/routes';
 import { configModule } from '../../packages/core-api/src/modules/config/routes';
 import { draftsModule } from '../../packages/core-api/src/modules/drafts/routes';
+import { eventsModule } from '../../packages/core-api/src/modules/events/routes';
 import { adminModule } from '../../packages/core-api/src/modules/admin/routes';
 import { historyModule } from '../../packages/core-api/src/modules/history/routes';
 import { notificationsModule } from '../../packages/core-api/src/modules/notifications/routes';
@@ -93,6 +94,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(accountModule, { prefix: '/api/v1/account' });
   testApp.register(accountConsentModule, { prefix: '/api/v1/account' });
   testApp.register(configModule, { prefix: '/api/v1/config' });
+  testApp.register(eventsModule, { prefix: '/api/v1/events' });
   testApp.register(draftsModule, { prefix: '/api/v1/drafts' });
   testApp.register(adminModule, { prefix: '/api/v1/admin' });
   testApp.register(historyModule, { prefix: '/api/v1' });

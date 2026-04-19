@@ -13,6 +13,10 @@ import type {
   ProviderParticipant,
   ProviderRanking,
 } from '../core/provider-interface';
+import {
+  resolveEventTiming,
+  selectTimingPolicy,
+} from '../../events/operational-timing';
 
 export class IngestionPersistence {
   constructor(private readonly prisma: PrismaClient) {}
@@ -25,6 +29,13 @@ export class IngestionPersistence {
     let count = 0;
 
     for (const event of events) {
+      const timingPolicy = await this.resolveTimingPolicy(event.sport, event.metadata);
+      const resolvedTiming = resolveEventTiming({
+        sport: event.sport,
+        startDate: event.startDate,
+        metadata: event.metadata,
+      }, timingPolicy);
+
       await this.prisma.sportEvent.upsert({
         where: {
           providerId_externalId: {
@@ -44,6 +55,8 @@ export class IngestionPersistence {
           status: event.status,
           rounds: event.rounds ?? null,
           participantCount: event.participantCount ?? null,
+          releaseAt: resolvedTiming.releaseAt,
+          fieldLocksAt: resolvedTiming.fieldLocksAt,
           fieldLocked: event.fieldLocked,
           metadata: event.metadata as any,
         },
@@ -56,6 +69,8 @@ export class IngestionPersistence {
           status: event.status,
           rounds: event.rounds ?? null,
           participantCount: event.participantCount ?? null,
+          releaseAt: resolvedTiming.releaseAt,
+          fieldLocksAt: resolvedTiming.fieldLocksAt,
           fieldLocked: event.fieldLocked,
           metadata: event.metadata as any,
         },
@@ -64,6 +79,27 @@ export class IngestionPersistence {
     }
 
     return count;
+  }
+
+  private async resolveTimingPolicy(
+    sport: Sport,
+    metadata: Record<string, unknown>,
+  ) {
+    const policies = await this.prisma.contestTimingPolicy.findMany({
+      where: {
+        sport,
+        active: true,
+      },
+      orderBy: [
+        { isDefault: 'desc' },
+        { createdAt: 'asc' },
+      ],
+    });
+
+    return selectTimingPolicy(
+      policies,
+      metadata,
+    );
   }
 
   /**

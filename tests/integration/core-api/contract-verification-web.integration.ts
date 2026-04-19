@@ -17,6 +17,7 @@ import {
   ConsentRecordResponseSchema,
   DraftStateResponseSchema,
   ErrorEnvelopeSchema,
+  EventListResponseSchema,
   GenerateInviteLinkResponseSchema,
   LeagueDashboardResponseSchema,
   LeagueResponseSchema,
@@ -161,6 +162,43 @@ describe('Contract verification (web)', () => {
     expect(SuccessSchema.safeParse(deleteRes.json()).success).toBe(true);
   });
 
+  it('event list route matches EventListResponseSchema on the happy path', async () => {
+    const prisma = getPrisma();
+    const eventId = randomUUID();
+    const viewer = await createTestUser({ displayName: 'Contract Events Viewer' });
+
+    await prisma.sportEvent.create({
+      data: {
+        id: eventId,
+        providerId: 'contract-events-provider',
+        externalId: `contract-event-${eventId}`,
+        sport: Sport.GOLF,
+        name: 'Contract Events Major',
+        startDate: new Date('2026-04-20T15:00:00.000Z'),
+        endDate: new Date('2026-04-23T23:00:00.000Z'),
+        releaseAt: new Date('2026-04-17T12:00:00.000Z'),
+        fieldLocksAt: new Date('2026-04-19T12:00:00.000Z'),
+        status: 'SCHEDULED',
+        participantCount: 144,
+        fieldLocked: false,
+        metadata: {},
+      },
+    });
+
+    try {
+      const res = await getApp().inject({
+        method: 'GET',
+        url: '/api/v1/events/?sport=GOLF&limit=5',
+        headers: viewer.headers,
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(EventListResponseSchema.safeParse(res.json()).success).toBe(true);
+    } finally {
+      await prisma.sportEvent.delete({ where: { id: eventId } });
+    }
+  });
+
   it('league detail update route matches LeagueResponseSchema', async () => {
     const owner = await createTestUser({ displayName: 'Contract League Editor' });
 
@@ -260,6 +298,8 @@ describe('Contract verification (web)', () => {
         sport: Sport.GOLF,
         name: 'Contract Event',
         startDate: new Date('2026-04-12T12:00:00.000Z'),
+        releaseAt: new Date('2026-04-12T12:00:00.000Z'),
+        fieldLocksAt: new Date('2026-04-12T12:00:00.000Z'),
         status: 'SCHEDULED',
       },
     });

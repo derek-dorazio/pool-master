@@ -7217,8 +7217,17 @@ export type ListEventsData = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * Optional sport filter.
+         */
         sport?: string;
+        /**
+         * Optional provider-normalized event status filter.
+         */
         status?: string;
+        /**
+         * Optional page-size style limit.
+         */
         limit?: number;
     };
     url: '/api/v1/events/';
@@ -7263,13 +7272,33 @@ export type ListEventsResponses = {
              */
             endDate?: string;
             /**
+             * PoolMaster operational datetime when the event becomes available for contest setup.
+             */
+            releaseAt: string;
+            /**
+             * PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.
+             */
+            fieldLocksAt: string;
+            /**
              * Participant count when the provider exposes field size.
              */
             participantCount?: number;
             /**
-             * Whether contest participant pools should be treated as locked for the event.
+             * Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior.
              */
             fieldLocked: boolean;
+            /**
+             * Current readiness state for contest setup and event-driven contest operations.
+             */
+            readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+            /**
+             * Structured reasons explaining why the event is or is not contest-eligible right now.
+             */
+            readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
+            /**
+             * Whether the event is currently eligible for contest creation/configuration flows.
+             */
+            contestEligible: boolean;
         }>;
     };
 };

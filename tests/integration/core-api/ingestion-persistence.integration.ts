@@ -94,6 +94,8 @@ describe('IngestionPersistence', () => {
       });
 
     expect(sportEventParticipant.status).toBe('ACTIVE');
+    expect(event.releaseAt.toISOString()).toBe('2026-04-15T12:00:00.000Z');
+    expect(event.fieldLocksAt.toISOString()).toBe('2026-04-15T12:00:00.000Z');
     expect(sourceData.externalId).toBe('ingestion-player-1');
     expect(sourceData.normalizedData).toMatchObject({
       scoreToPar: -4,

@@ -3,6 +3,7 @@ import type { Sport } from '@poolmaster/shared/domain';
 import { zodToJsonSchema } from '@poolmaster/shared/dto';
 import {
   EventListResponseSchema,
+  EventListQuerySchema,
   type EventStatusDto,
 } from '@poolmaster/shared/dto/events.dto';
 import { toEventListResponse } from '../../mappers';
@@ -18,14 +19,7 @@ export async function eventsModule(fastify: FastifyInstance): Promise<void> {
       description:
         'Returns ingested sport events so admin, scoring, and contest setup surfaces can browse the current event catalog.',
       operationId: 'listEvents',
-      querystring: {
-        type: 'object',
-        properties: {
-          sport: { type: 'string' },
-          status: { type: 'string' },
-          limit: { type: 'integer', minimum: 1, maximum: 100 },
-        },
-      },
+      querystring: zodToJsonSchema(EventListQuerySchema),
       response: { 200: zodToJsonSchema(EventListResponseSchema) },
     },
     async handler(request) {
@@ -44,6 +38,9 @@ export async function eventsModule(fastify: FastifyInstance): Promise<void> {
           ...event,
           sport: event.sport as Sport,
           status: event.status as EventStatusDto,
+          releaseAt: event.releaseAt,
+          fieldLocksAt: event.fieldLocksAt,
+          providerFieldLocked: event.fieldLocked,
         })),
       );
     },

@@ -1,5 +1,11 @@
 import type { Sport } from '@poolmaster/shared/domain';
-import type { EventStatusDto, EventSummaryDto } from '@poolmaster/shared/dto/events.dto';
+import type {
+  EventReadinessReasonDto,
+  EventReadinessStatusDto,
+  EventStatusDto,
+  EventSummaryDto,
+} from '@poolmaster/shared/dto/events.dto';
+import { evaluateEventOperationalState } from '../modules/events/operational-timing';
 
 type EventStatus = EventStatusDto;
 
@@ -12,11 +18,20 @@ interface EventRow {
   status: EventStatus;
   startDate: Date;
   endDate: Date | null;
+  releaseAt: Date;
+  fieldLocksAt: Date;
   participantCount: number | null;
-  fieldLocked: boolean;
+  providerFieldLocked: boolean;
 }
 
 export function toEventSummaryDto(event: EventRow): EventSummaryDto {
+  const operationalState = evaluateEventOperationalState({
+    participantCount: event.participantCount,
+    releaseAt: event.releaseAt,
+    fieldLocksAt: event.fieldLocksAt,
+    providerFieldLocked: event.providerFieldLocked,
+  });
+
   return {
     id: event.id,
     sport: event.sport,
@@ -26,8 +41,13 @@ export function toEventSummaryDto(event: EventRow): EventSummaryDto {
     status: event.status,
     startDate: event.startDate.toISOString(),
     endDate: event.endDate?.toISOString() ?? null,
+    releaseAt: event.releaseAt.toISOString(),
+    fieldLocksAt: event.fieldLocksAt.toISOString(),
     participantCount: event.participantCount ?? null,
-    fieldLocked: event.fieldLocked,
+    fieldLocked: operationalState.fieldLocked,
+    readinessStatus: operationalState.readinessStatus as EventReadinessStatusDto,
+    readinessReasons: operationalState.readinessReasons as EventReadinessReasonDto[],
+    contestEligible: operationalState.contestEligible,
   };
 }
 

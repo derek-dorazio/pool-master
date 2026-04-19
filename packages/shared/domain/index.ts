@@ -8,6 +8,7 @@ export type {
   ParticipantScoringDefinitionId,
 } from './contest-scoring';
 export type {
+  ContestTimingPolicy,
   ContestConfiguration,
   ContestCoreSummary,
   ContestEntryAggregationRule,
@@ -24,6 +25,9 @@ export type {
   GolfTierGeneration,
   GolfTiebreakerRule,
   ParticipantContestScoringRule,
+  SportEvent,
+  SportEventReadinessReason,
+  SportEventReadinessStatus,
   SportEventParticipant,
   SportEventParticipantSourceData,
   SportEventParticipantValuation,

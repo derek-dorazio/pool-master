@@ -592,6 +592,8 @@ describe('SDK Functional: Contests and Entries', () => {
         sport: Sport.GOLF,
         name: 'Functional Contest Event',
         startDate: new Date('2026-04-10T12:00:00.000Z'),
+        releaseAt: new Date('2026-04-10T12:00:00.000Z'),
+        fieldLocksAt: new Date('2026-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
       },
     });

@@ -15731,7 +15731,8 @@
             },
             "in": "query",
             "name": "sport",
-            "required": false
+            "required": false,
+            "description": "Optional sport filter."
           },
           {
             "schema": {
@@ -15739,7 +15740,8 @@
             },
             "in": "query",
             "name": "status",
-            "required": false
+            "required": false,
+            "description": "Optional provider-normalized event status filter."
           },
           {
             "schema": {
@@ -15749,7 +15751,8 @@
             },
             "in": "query",
             "name": "limit",
-            "required": false
+            "required": false,
+            "description": "Optional page-size style limit."
           }
         ],
         "responses": {
@@ -15825,6 +15828,16 @@
                             "description": "Scheduled or actual event end time, when known.",
                             "nullable": true
                           },
+                          "releaseAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "PoolMaster operational datetime when the event becomes available for contest setup."
+                          },
+                          "fieldLocksAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup."
+                          },
                           "participantCount": {
                             "type": "integer",
                             "nullable": true,
@@ -15832,7 +15845,33 @@
                           },
                           "fieldLocked": {
                             "type": "boolean",
-                            "description": "Whether contest participant pools should be treated as locked for the event."
+                            "description": "Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior."
+                          },
+                          "readinessStatus": {
+                            "type": "string",
+                            "enum": [
+                              "NOT_RELEASED",
+                              "PENDING_FIELD",
+                              "CONTEST_ELIGIBLE",
+                              "FIELD_LOCKED"
+                            ],
+                            "description": "Current readiness state for contest setup and event-driven contest operations."
+                          },
+                          "readinessReasons": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "EVENT_NOT_RELEASED",
+                                "FIELD_NOT_LOADED",
+                                "FIELD_LOCKED"
+                              ]
+                            },
+                            "description": "Structured reasons explaining why the event is or is not contest-eligible right now."
+                          },
+                          "contestEligible": {
+                            "type": "boolean",
+                            "description": "Whether the event is currently eligible for contest creation/configuration flows."
                           }
                         },
                         "required": [
@@ -15841,7 +15880,12 @@
                           "name",
                           "status",
                           "startDate",
-                          "fieldLocked"
+                          "releaseAt",
+                          "fieldLocksAt",
+                          "fieldLocked",
+                          "readinessStatus",
+                          "readinessReasons",
+                          "contestEligible"
                         ],
                         "additionalProperties": false,
                         "description": "Event list item returned from event-discovery endpoints."

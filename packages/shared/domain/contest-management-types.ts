@@ -1,5 +1,6 @@
 import type {
   ContestStatus,
+  ContestType,
   GolfCategoryKey,
   GolfContestConfigMode,
   GolfCutRuleType,
@@ -9,6 +10,7 @@ import type {
   GolfTierSource,
   ScoringEngine,
   SelectionType,
+  Sport,
 } from './enums';
 import type {
   AggregationDefinitionId,
@@ -68,6 +70,47 @@ export interface GolfCategoryContestConfig {
 export type GolfContestConfig =
   | GolfTieredContestConfig
   | GolfCategoryContestConfig;
+
+export type SportEventReadinessStatus =
+  | 'NOT_RELEASED'
+  | 'PENDING_FIELD'
+  | 'CONTEST_ELIGIBLE'
+  | 'FIELD_LOCKED';
+
+export type SportEventReadinessReason =
+  | 'EVENT_NOT_RELEASED'
+  | 'FIELD_NOT_LOADED'
+  | 'FIELD_LOCKED';
+
+/** Imported real-world event augmented with PoolMaster operational timing. */
+export interface SportEvent extends DomainEntity {
+  externalId: string;
+  providerId: string;
+  sport: Sport;
+  name: string;
+  venue?: string;
+  location?: string;
+  startDate: Date;
+  endDate?: Date;
+  status: string;
+  rounds?: number;
+  participantCount?: number;
+  fieldLocked: boolean;
+  releaseAt: Date;
+  fieldLocksAt: Date;
+  metadata: Record<string, unknown>;
+}
+
+/** Seeded timing policy used to resolve event release/field-lock datetimes. */
+export interface ContestTimingPolicy extends DomainEntity {
+  sport: Sport;
+  eventType?: string | null;
+  contestType?: ContestType | null;
+  releaseRule: string;
+  fieldLockRule: string;
+  isDefault: boolean;
+  active: boolean;
+}
 
 /** Join record linking a provider event to a normalized participant. */
 export interface SportEventParticipant extends DomainEntity {

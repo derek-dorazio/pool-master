@@ -884,6 +884,8 @@ model SportEvent {
   status          String    @default("SCHEDULED") @db.VarChar(50)
   rounds          Int?
   participantCount Int?     @map("participant_count")
+  releaseAt       DateTime  @map("release_at") @db.Timestamptz
+  fieldLocksAt    DateTime  @map("field_locks_at") @db.Timestamptz
   fieldLocked     Boolean   @default(false) @map("field_locked")
   metadata        Json      @default("{}")
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
@@ -896,6 +898,23 @@ model SportEvent {
   @@index([sport, status])
   @@index([startDate, endDate])
   @@map("sport_events")
+}
+
+model ContestTimingPolicy {
+  id             String   @id @default(uuid()) @db.Uuid
+  sport          String   @db.VarChar(50)
+  eventType      String?  @map("event_type") @db.VarChar(100)
+  contestType    String?  @map("contest_type") @db.VarChar(100)
+  releaseRule    String   @map("release_rule") @db.VarChar(255)
+  fieldLockRule  String   @map("field_lock_rule") @db.VarChar(255)
+  isDefault      Boolean  @default(false) @map("is_default")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([sport, active])
+  @@unique([sport, eventType, contestType])
+  @@map("contest_timing_policies")
 }
 
 model SportEventParticipant {
