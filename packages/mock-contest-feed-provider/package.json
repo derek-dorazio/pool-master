@@ -7,7 +7,9 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "lint": "eslint src/",
+    "test": "node --test --import tsx src/**/*.test.ts",
     "typecheck": "tsc --noEmit",
+    "validate:scenarios": "node --import tsx src/validate-scenarios.ts",
     "generate:openapi": "node --import tsx scripts/export-openapi.ts",
     "generate:client": "npx @hey-api/openapi-ts -f openapi-ts.config.ts",
     "generate": "npm run generate:openapi && npm run generate:client"

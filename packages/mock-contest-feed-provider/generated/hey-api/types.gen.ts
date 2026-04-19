@@ -20,6 +20,7 @@ export type MockContestFeedHealthResponses = {
         service: string;
         scenarioCount: number;
         eventCount: number;
+        feedKinds: Array<'field' | 'odds' | 'rankings' | 'results'>;
     };
 };
 
@@ -42,6 +43,9 @@ export type ListMockContestFeedScenariosResponses = {
             sport: 'GOLF' | 'TENNIS' | 'NCAA_BASKETBALL' | 'TEAM_TOURNAMENT';
             provider: 'mock-contest-feed';
             description?: string;
+            seasonId: string;
+            seasonName: string;
+            seasonYear: number;
             eventCount: number;
         }>;
     };
@@ -68,31 +72,48 @@ export type GetMockContestFeedScenarioResponses = {
             sport: 'GOLF' | 'TENNIS' | 'NCAA_BASKETBALL' | 'TEAM_TOURNAMENT';
             provider: 'mock-contest-feed';
             description?: string;
+            season: {
+                seasonId: string;
+                name: string;
+                year: number;
+                startsAt?: string;
+                endsAt?: string;
+            };
             events: Array<{
                 eventId: string;
                 name: string;
-                startsAt: string;
-                endsAt?: string;
-                venue?: string;
-                contestants: Array<{
-                    contestantId: string;
+                status: 'scheduled' | 'field_announced' | 'in_progress' | 'completed' | 'corrected';
+                schedule: {
+                    startsAt: string;
+                    endsAt?: string;
+                    releaseAt?: string;
+                    fieldLocksAt?: string;
+                };
+                venue?: {
                     name: string;
-                    teamName?: string;
-                    seed?: number;
-                    odds?: number;
-                    ranking?: number;
-                    score?: number;
-                    result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
-                    note?: string;
-                }>;
-                odds: {
+                    city?: string;
+                    region?: string;
+                    countryCode?: string;
+                    timeZone?: string;
+                };
+                metadata?: {
+                    officialName?: string;
+                    eventType?: string;
+                    tour?: string;
+                    externalEventId?: string;
+                    notes?: Array<string>;
+                };
+                field: {
                     asOf: string;
+                    status: 'provisional' | 'announced' | 'locked' | 'final';
                     note?: string;
                     contestants: Array<{
                         contestantId: string;
                         name: string;
                         teamName?: string;
+                        countryCode?: string;
                         seed?: number;
+                        participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                         odds?: number;
                         ranking?: number;
                         score?: number;
@@ -100,46 +121,72 @@ export type GetMockContestFeedScenarioResponses = {
                         note?: string;
                     }>;
                 };
-                rankings: {
-                    asOf: string;
-                    note?: string;
-                    contestants: Array<{
-                        contestantId: string;
-                        name: string;
-                        teamName?: string;
-                        seed?: number;
-                        odds?: number;
-                        ranking?: number;
-                        score?: number;
-                        result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                feeds: {
+                    odds: {
+                        asOf: string;
                         note?: string;
-                    }>;
-                };
-                results: {
-                    asOf: string;
-                    note?: string;
-                    contestants: Array<{
-                        contestantId: string;
-                        name: string;
-                        teamName?: string;
-                        seed?: number;
-                        odds?: number;
-                        ranking?: number;
-                        score?: number;
-                        result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                        contestants: Array<{
+                            contestantId: string;
+                            name?: string;
+                            teamName?: string;
+                            countryCode?: string;
+                            seed?: number;
+                            participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
+                            odds?: number;
+                            ranking?: number;
+                            score?: number;
+                            result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                            note?: string;
+                        }>;
+                    };
+                    rankings: {
+                        asOf: string;
                         note?: string;
-                    }>;
+                        contestants: Array<{
+                            contestantId: string;
+                            name?: string;
+                            teamName?: string;
+                            countryCode?: string;
+                            seed?: number;
+                            participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
+                            odds?: number;
+                            ranking?: number;
+                            score?: number;
+                            result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                            note?: string;
+                        }>;
+                    };
+                    results: {
+                        asOf: string;
+                        note?: string;
+                        contestants: Array<{
+                            contestantId: string;
+                            name?: string;
+                            teamName?: string;
+                            countryCode?: string;
+                            seed?: number;
+                            participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
+                            odds?: number;
+                            ranking?: number;
+                            score?: number;
+                            result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                            note?: string;
+                        }>;
+                    };
                 };
                 updates?: Array<{
                     updateId: string;
                     asOf: string;
-                    feedKind: 'odds' | 'rankings' | 'results';
+                    feedKind: 'field' | 'odds' | 'rankings' | 'results';
+                    updateType: 'refresh' | 'correction' | 'live' | 'final';
                     note?: string;
                     contestants: Array<{
                         contestantId: string;
-                        name: string;
+                        name?: string;
                         teamName?: string;
+                        countryCode?: string;
                         seed?: number;
+                        participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                         odds?: number;
                         ranking?: number;
                         score?: number;
@@ -172,9 +219,13 @@ export type ListMockContestFeedScenarioEventsResponses = {
         events: Array<{
             eventId: string;
             name: string;
+            status: 'scheduled' | 'field_announced' | 'in_progress' | 'completed' | 'corrected';
             startsAt: string;
             endsAt?: string;
-            venue?: string;
+            releaseAt?: string;
+            fieldLocksAt?: string;
+            venueName?: string;
+            fieldStatus: 'provisional' | 'announced' | 'locked' | 'final';
             contestantCount: number;
         }>;
     };
@@ -200,28 +251,38 @@ export type GetMockContestFeedScenarioEventResponses = {
         event: {
             eventId: string;
             name: string;
-            startsAt: string;
-            endsAt?: string;
-            venue?: string;
-            contestants: Array<{
-                contestantId: string;
+            status: 'scheduled' | 'field_announced' | 'in_progress' | 'completed' | 'corrected';
+            schedule: {
+                startsAt: string;
+                endsAt?: string;
+                releaseAt?: string;
+                fieldLocksAt?: string;
+            };
+            venue?: {
                 name: string;
-                teamName?: string;
-                seed?: number;
-                odds?: number;
-                ranking?: number;
-                score?: number;
-                result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
-                note?: string;
-            }>;
-            odds: {
+                city?: string;
+                region?: string;
+                countryCode?: string;
+                timeZone?: string;
+            };
+            metadata?: {
+                officialName?: string;
+                eventType?: string;
+                tour?: string;
+                externalEventId?: string;
+                notes?: Array<string>;
+            };
+            field: {
                 asOf: string;
+                status: 'provisional' | 'announced' | 'locked' | 'final';
                 note?: string;
                 contestants: Array<{
                     contestantId: string;
                     name: string;
                     teamName?: string;
+                    countryCode?: string;
                     seed?: number;
+                    participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                     odds?: number;
                     ranking?: number;
                     score?: number;
@@ -229,46 +290,72 @@ export type GetMockContestFeedScenarioEventResponses = {
                     note?: string;
                 }>;
             };
-            rankings: {
-                asOf: string;
-                note?: string;
-                contestants: Array<{
-                    contestantId: string;
-                    name: string;
-                    teamName?: string;
-                    seed?: number;
-                    odds?: number;
-                    ranking?: number;
-                    score?: number;
-                    result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+            feeds: {
+                odds: {
+                    asOf: string;
                     note?: string;
-                }>;
-            };
-            results: {
-                asOf: string;
-                note?: string;
-                contestants: Array<{
-                    contestantId: string;
-                    name: string;
-                    teamName?: string;
-                    seed?: number;
-                    odds?: number;
-                    ranking?: number;
-                    score?: number;
-                    result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                    contestants: Array<{
+                        contestantId: string;
+                        name?: string;
+                        teamName?: string;
+                        countryCode?: string;
+                        seed?: number;
+                        participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
+                        odds?: number;
+                        ranking?: number;
+                        score?: number;
+                        result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                        note?: string;
+                    }>;
+                };
+                rankings: {
+                    asOf: string;
                     note?: string;
-                }>;
+                    contestants: Array<{
+                        contestantId: string;
+                        name?: string;
+                        teamName?: string;
+                        countryCode?: string;
+                        seed?: number;
+                        participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
+                        odds?: number;
+                        ranking?: number;
+                        score?: number;
+                        result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                        note?: string;
+                    }>;
+                };
+                results: {
+                    asOf: string;
+                    note?: string;
+                    contestants: Array<{
+                        contestantId: string;
+                        name?: string;
+                        teamName?: string;
+                        countryCode?: string;
+                        seed?: number;
+                        participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
+                        odds?: number;
+                        ranking?: number;
+                        score?: number;
+                        result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                        note?: string;
+                    }>;
+                };
             };
             updates?: Array<{
                 updateId: string;
                 asOf: string;
-                feedKind: 'odds' | 'rankings' | 'results';
+                feedKind: 'field' | 'odds' | 'rankings' | 'results';
+                updateType: 'refresh' | 'correction' | 'live' | 'final';
                 note?: string;
                 contestants: Array<{
                     contestantId: string;
-                    name: string;
+                    name?: string;
                     teamName?: string;
+                    countryCode?: string;
                     seed?: number;
+                    participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                     odds?: number;
                     ranking?: number;
                     score?: number;
@@ -281,6 +368,192 @@ export type GetMockContestFeedScenarioEventResponses = {
 };
 
 export type GetMockContestFeedScenarioEventResponse = GetMockContestFeedScenarioEventResponses[keyof GetMockContestFeedScenarioEventResponses];
+
+export type GetMockContestFeedScenarioEventDetailData = {
+    body?: never;
+    path: {
+        scenarioId: string;
+        eventId: string;
+    };
+    query?: never;
+    url: '/v1/scenarios/{scenarioId}/events/{eventId}/detail';
+};
+
+export type GetMockContestFeedScenarioEventDetailResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        scenarioId: string;
+        sport: 'GOLF' | 'TENNIS' | 'NCAA_BASKETBALL' | 'TEAM_TOURNAMENT';
+        provider: 'mock-contest-feed';
+        scenarioDescription?: string;
+        season: {
+            seasonId: string;
+            name: string;
+            year: number;
+            startsAt?: string;
+            endsAt?: string;
+        };
+        event: {
+            eventId: string;
+            name: string;
+            status: 'scheduled' | 'field_announced' | 'in_progress' | 'completed' | 'corrected';
+            schedule: {
+                startsAt: string;
+                endsAt?: string;
+                releaseAt?: string;
+                fieldLocksAt?: string;
+            };
+            venue?: {
+                name: string;
+                city?: string;
+                region?: string;
+                countryCode?: string;
+                timeZone?: string;
+            };
+            metadata?: {
+                officialName?: string;
+                eventType?: string;
+                tour?: string;
+                externalEventId?: string;
+                notes?: Array<string>;
+            };
+            field: {
+                asOf: string;
+                status: 'provisional' | 'announced' | 'locked' | 'final';
+                note?: string;
+                contestants: Array<{
+                    contestantId: string;
+                    name: string;
+                    teamName?: string;
+                    countryCode?: string;
+                    seed?: number;
+                    participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
+                    odds?: number;
+                    ranking?: number;
+                    score?: number;
+                    result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                    note?: string;
+                }>;
+            };
+            feeds: {
+                odds: {
+                    asOf: string;
+                    note?: string;
+                    contestants: Array<{
+                        contestantId: string;
+                        name?: string;
+                        teamName?: string;
+                        countryCode?: string;
+                        seed?: number;
+                        participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
+                        odds?: number;
+                        ranking?: number;
+                        score?: number;
+                        result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                        note?: string;
+                    }>;
+                };
+                rankings: {
+                    asOf: string;
+                    note?: string;
+                    contestants: Array<{
+                        contestantId: string;
+                        name?: string;
+                        teamName?: string;
+                        countryCode?: string;
+                        seed?: number;
+                        participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
+                        odds?: number;
+                        ranking?: number;
+                        score?: number;
+                        result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                        note?: string;
+                    }>;
+                };
+                results: {
+                    asOf: string;
+                    note?: string;
+                    contestants: Array<{
+                        contestantId: string;
+                        name?: string;
+                        teamName?: string;
+                        countryCode?: string;
+                        seed?: number;
+                        participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
+                        odds?: number;
+                        ranking?: number;
+                        score?: number;
+                        result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                        note?: string;
+                    }>;
+                };
+            };
+            updates?: Array<{
+                updateId: string;
+                asOf: string;
+                feedKind: 'field' | 'odds' | 'rankings' | 'results';
+                updateType: 'refresh' | 'correction' | 'live' | 'final';
+                note?: string;
+                contestants: Array<{
+                    contestantId: string;
+                    name?: string;
+                    teamName?: string;
+                    countryCode?: string;
+                    seed?: number;
+                    participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
+                    odds?: number;
+                    ranking?: number;
+                    score?: number;
+                    result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+                    note?: string;
+                }>;
+            }>;
+        };
+    };
+};
+
+export type GetMockContestFeedScenarioEventDetailResponse = GetMockContestFeedScenarioEventDetailResponses[keyof GetMockContestFeedScenarioEventDetailResponses];
+
+export type GetMockContestFeedFieldSnapshotData = {
+    body?: never;
+    path: {
+        scenarioId: string;
+        eventId: string;
+    };
+    query?: never;
+    url: '/v1/scenarios/{scenarioId}/events/{eventId}/field';
+};
+
+export type GetMockContestFeedFieldSnapshotResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        scenarioId: string;
+        eventId: string;
+        eventName: string;
+        feedKind: 'field' | 'odds' | 'rankings' | 'results';
+        asOf: string;
+        note?: string;
+        contestants: Array<{
+            contestantId: string;
+            name: string;
+            teamName?: string;
+            countryCode?: string;
+            seed?: number;
+            participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
+            odds?: number;
+            ranking?: number;
+            score?: number;
+            result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+            note?: string;
+        }>;
+    };
+};
+
+export type GetMockContestFeedFieldSnapshotResponse = GetMockContestFeedFieldSnapshotResponses[keyof GetMockContestFeedFieldSnapshotResponses];
 
 export type GetMockContestFeedOddsSnapshotData = {
     body?: never;
@@ -300,14 +573,16 @@ export type GetMockContestFeedOddsSnapshotResponses = {
         scenarioId: string;
         eventId: string;
         eventName: string;
-        feedKind: 'odds' | 'rankings' | 'results';
+        feedKind: 'field' | 'odds' | 'rankings' | 'results';
         asOf: string;
         note?: string;
         contestants: Array<{
             contestantId: string;
             name: string;
             teamName?: string;
+            countryCode?: string;
             seed?: number;
+            participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
             odds?: number;
             ranking?: number;
             score?: number;
@@ -337,14 +612,16 @@ export type GetMockContestFeedRankingsSnapshotResponses = {
         scenarioId: string;
         eventId: string;
         eventName: string;
-        feedKind: 'odds' | 'rankings' | 'results';
+        feedKind: 'field' | 'odds' | 'rankings' | 'results';
         asOf: string;
         note?: string;
         contestants: Array<{
             contestantId: string;
             name: string;
             teamName?: string;
+            countryCode?: string;
             seed?: number;
+            participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
             odds?: number;
             ranking?: number;
             score?: number;
@@ -374,14 +651,16 @@ export type GetMockContestFeedResultsSnapshotResponses = {
         scenarioId: string;
         eventId: string;
         eventName: string;
-        feedKind: 'odds' | 'rankings' | 'results';
+        feedKind: 'field' | 'odds' | 'rankings' | 'results';
         asOf: string;
         note?: string;
         contestants: Array<{
             contestantId: string;
             name: string;
             teamName?: string;
+            countryCode?: string;
             seed?: number;
+            participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
             odds?: number;
             ranking?: number;
             score?: number;
@@ -414,13 +693,16 @@ export type GetMockContestFeedEventUpdatesResponses = {
         updates: Array<{
             updateId: string;
             asOf: string;
-            feedKind: 'odds' | 'rankings' | 'results';
+            feedKind: 'field' | 'odds' | 'rankings' | 'results';
+            updateType: 'refresh' | 'correction' | 'live' | 'final';
             note?: string;
             contestants: Array<{
                 contestantId: string;
-                name: string;
+                name?: string;
                 teamName?: string;
+                countryCode?: string;
                 seed?: number;
+                participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                 odds?: number;
                 ranking?: number;
                 score?: number;

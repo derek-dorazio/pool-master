@@ -2,7 +2,9 @@ import type { FastifyInstance } from 'fastify';
 import { resolve } from 'node:path';
 import {
   eventRecordSchema,
+  eventResponseSchema,
   eventSummarySchema,
+  feedKinds,
   mockFeedProviderId,
   scenarioRecordSchema,
   scenarioSummarySchema,
@@ -30,12 +32,13 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
           200: {
             type: 'object',
             additionalProperties: false,
-            required: ['status', 'service', 'scenarioCount', 'eventCount'],
+            required: ['status', 'service', 'scenarioCount', 'eventCount', 'feedKinds'],
             properties: {
               status: { type: 'string' },
               service: { type: 'string' },
               scenarioCount: { type: 'number' },
               eventCount: { type: 'number' },
+              feedKinds: { type: 'array', items: { type: 'string', enum: feedKinds } },
             },
           },
         },
@@ -46,6 +49,7 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
       service: mockFeedProviderId,
       scenarioCount: store.getScenarioCount(),
       eventCount: store.getEventCount(),
+      feedKinds,
     }),
   );
 
@@ -167,9 +171,34 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
     }),
   );
 
-  for (const feedKind of ['odds', 'rankings', 'results'] as const) {
+  fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
+    '/v1/scenarios/:scenarioId/events/:eventId/detail',
+    {
+      schema: {
+        tags: ['Scenarios'],
+        summary: 'Get event detail with season context and baseline feeds',
+        operationId: 'getMockContestFeedScenarioEventDetail',
+        params: {
+          type: 'object',
+          required: ['scenarioId', 'eventId'],
+          properties: {
+            scenarioId: { type: 'string' },
+            eventId: { type: 'string' },
+          },
+        },
+        response: {
+          200: eventResponseSchema,
+        },
+      },
+    },
+    async (request) => store.getEventResponse(request.params.scenarioId, request.params.eventId),
+  );
+
+  for (const feedKind of ['field', 'odds', 'rankings', 'results'] as const) {
     const operationId =
-      feedKind === 'odds'
+      feedKind === 'field'
+        ? 'getMockContestFeedFieldSnapshot'
+        : feedKind === 'odds'
         ? 'getMockContestFeedOddsSnapshot'
         : feedKind === 'rankings'
           ? 'getMockContestFeedRankingsSnapshot'

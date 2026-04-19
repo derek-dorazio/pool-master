@@ -203,6 +203,8 @@ Future test owners should update the scenario files rather than inventing ad hoc
 | MCFP-008 | Results / Scoring | Verify final results and live updates propagate into standings and scoring flows | Not Started | Cover ties, withdrawals, and corrections in the scenario set |
 | MCFP-009 | Maintenance | Define update rules for adding new scenarios and for changing existing ones | Done | Scenario updates are now explicitly treated as test-contract changes, not app seed data |
 | MCFP-010 | Seed Separation | Remove the need for broad QA fixture data in application seed flows and document the new boundary | Done | The seed boundary is now documented in `rules/testing-rules.md` and in this plan; QA/manual test fixtures belong in mock feed scenarios |
+| MCFP-011 | Golf Schedule Sourcing | Source the 2026 golf event schedule from real-world references and translate it into deterministic mock-provider event scenarios | Not Started | Use real tournament names/dates as the season backbone for the golf catalog, then stabilize the resulting JSON for durable non-production use |
+| MCFP-012 | Golf Field Synthesis | Create believable deterministic upcoming-event fields, rankings, and odds from completed tournaments and stable historical/reference signals | Not Started | Use prior completed tournament results and known ranking/odds signals to synthesize stable mock participant fields for upcoming events without requiring a live provider or database |
 
 ## Acceptance Criteria
 

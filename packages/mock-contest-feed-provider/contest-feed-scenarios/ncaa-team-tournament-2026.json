@@ -2,51 +2,79 @@
   "scenarioId": "ncaa-team-tournament-2026",
   "sport": "NCAA_BASKETBALL",
   "provider": "mock-contest-feed",
-  "description": "Tournament-style team field with seeds and odds for tier/budget testing.",
+  "description": "Tournament-style team field with seeds, odds, and live advancement results.",
+  "season": {
+    "seasonId": "ncaa-postseason-2026",
+    "name": "Mock NCAA Postseason 2026",
+    "year": 2026
+  },
   "events": [
     {
       "eventId": "ncaa-bracket-2026",
       "name": "Mock National Tournament",
-      "startsAt": "2026-03-18T16:00:00.000Z",
-      "venue": "Mock Regional Sites",
-      "contestants": [
-        { "contestantId": "team-01", "name": "North Ridge", "seed": 1, "teamName": "North" },
-        { "contestantId": "team-02", "name": "South Harbor", "seed": 2, "teamName": "South" },
-        { "contestantId": "team-03", "name": "East Valley", "seed": 5, "teamName": "East" },
-        { "contestantId": "team-04", "name": "West Shore", "seed": 12, "teamName": "West" }
-      ],
-      "odds": {
+      "status": "completed",
+      "schedule": {
+        "startsAt": "2026-03-18T16:00:00.000Z",
+        "endsAt": "2026-04-08T20:00:00.000Z",
+        "releaseAt": "2026-03-10T17:00:00.000Z",
+        "fieldLocksAt": "2026-03-17T23:00:00.000Z"
+      },
+      "venue": {
+        "name": "Mock Regional Sites",
+        "city": "Multiple Cities",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "metadata": {
+        "officialName": "Mock National Tournament 2026",
+        "eventType": "single_elimination",
+        "tour": "NCAA"
+      },
+      "field": {
         "asOf": "2026-03-12T12:00:00.000Z",
+        "status": "announced",
         "contestants": [
-          { "contestantId": "team-01", "odds": 3.5 },
-          { "contestantId": "team-02", "odds": 6.5 },
-          { "contestantId": "team-03", "odds": 16.0 },
-          { "contestantId": "team-04", "odds": 45.0 }
+          { "contestantId": "team-01", "name": "North Ridge", "seed": 1, "teamName": "North", "participantStatus": "active" },
+          { "contestantId": "team-02", "name": "South Harbor", "seed": 2, "teamName": "South", "participantStatus": "active" },
+          { "contestantId": "team-03", "name": "East Valley", "seed": 5, "teamName": "East", "participantStatus": "active" },
+          { "contestantId": "team-04", "name": "West Shore", "seed": 12, "teamName": "West", "participantStatus": "active" }
         ]
       },
-      "rankings": {
-        "asOf": "2026-03-12T12:00:00.000Z",
-        "contestants": [
-          { "contestantId": "team-01", "ranking": 1 },
-          { "contestantId": "team-02", "ranking": 2 },
-          { "contestantId": "team-03", "ranking": 5 },
-          { "contestantId": "team-04", "ranking": 12 }
-        ]
-      },
-      "results": {
-        "asOf": "2026-04-08T20:00:00.000Z",
-        "contestants": [
-          { "contestantId": "team-01", "score": 4, "result": "win" },
-          { "contestantId": "team-02", "score": 3, "result": "loss" },
-          { "contestantId": "team-03", "score": 2, "result": "loss" },
-          { "contestantId": "team-04", "score": 1, "result": "loss" }
-        ]
+      "feeds": {
+        "odds": {
+          "asOf": "2026-03-12T12:00:00.000Z",
+          "contestants": [
+            { "contestantId": "team-01", "odds": 3.5 },
+            { "contestantId": "team-02", "odds": 6.5 },
+            { "contestantId": "team-03", "odds": 16.0 },
+            { "contestantId": "team-04", "odds": 45.0 }
+          ]
+        },
+        "rankings": {
+          "asOf": "2026-03-12T12:00:00.000Z",
+          "contestants": [
+            { "contestantId": "team-01", "ranking": 1 },
+            { "contestantId": "team-02", "ranking": 2 },
+            { "contestantId": "team-03", "ranking": 5 },
+            { "contestantId": "team-04", "ranking": 12 }
+          ]
+        },
+        "results": {
+          "asOf": "2026-04-08T20:00:00.000Z",
+          "contestants": [
+            { "contestantId": "team-01", "score": 4, "result": "win" },
+            { "contestantId": "team-02", "score": 3, "result": "loss" },
+            { "contestantId": "team-03", "score": 2, "result": "loss" },
+            { "contestantId": "team-04", "score": 1, "result": "loss" }
+          ]
+        }
       },
       "updates": [
         {
           "updateId": "ncaa-team-tournament-2026-live-1",
           "asOf": "2026-03-20T21:00:00.000Z",
           "feedKind": "results",
+          "updateType": "live",
           "note": "First round complete.",
           "contestants": [
             { "contestantId": "team-04", "score": 1, "result": "win" },

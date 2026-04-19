@@ -5,13 +5,23 @@ import {
   mockFeedProviderId,
   supportedSports,
   type ContestFeedEventRecord,
+  type ContestFeedEventResponse,
+  type ContestantDeltaRecord,
   type ContestantRecord,
   type ContestFeedScenarioRecord,
   type ContestFeedSnapshotResponse,
   type ContestFeedUpdateResponse,
+  type EventFeedsRecord,
+  type EventMetadataRecord,
+  type EventScheduleRecord,
   type EventSummary,
+  type EventVenueRecord,
   type FeedKind,
+  type FeedSnapshotRecord,
+  type FeedUpdateRecord,
+  type FieldSnapshotRecord,
   type ScenarioSummary,
+  type SeasonRecord,
 } from './contracts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -25,6 +35,27 @@ function toStringValue(value: unknown, field: string): string {
   return value;
 }
 
+function toOptionalString(value: unknown, field: string): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  return toStringValue(value, field);
+}
+
+function toNumberValue(value: unknown, field: string): number {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    throw new Error(`Invalid or missing ${field}`);
+  }
+  return value;
+}
+
+function toOptionalNumber(value: unknown, field: string): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  return toNumberValue(value, field);
+}
+
 function toReadonlyArray<T>(value: unknown, field: string): readonly T[] {
   if (!Array.isArray(value)) {
     throw new Error(`Invalid or missing ${field}`);
@@ -32,49 +63,411 @@ function toReadonlyArray<T>(value: unknown, field: string): readonly T[] {
   return value as readonly T[];
 }
 
-interface ContestantOverride {
-  readonly contestantId: string;
-  readonly name?: string;
-  readonly teamName?: string;
-  readonly seed?: number;
-  readonly odds?: number;
-  readonly ranking?: number;
-  readonly score?: number;
-  readonly result?: ContestantRecord['result'];
-  readonly note?: string;
+function ensureEnumValue<T extends readonly string[]>(value: string, allowed: T, field: string): T[number] {
+  if (!allowed.includes(value)) {
+    throw new Error(`Invalid ${field}: ${value}`);
+  }
+  return value as T[number];
 }
 
-function validateScenario(record: unknown): ContestFeedScenarioRecord {
+function ensureIsoDateTime(value: string, field: string): string {
+  if (Number.isNaN(Date.parse(value))) {
+    throw new Error(`Invalid ${field}: ${value}`);
+  }
+  return value;
+}
+
+function ensureChronological(start: string, end: string | undefined, startField: string, endField: string): void {
+  if (!end) {
+    return;
+  }
+  if (Date.parse(end) < Date.parse(start)) {
+    throw new Error(`${endField} must be after ${startField}`);
+  }
+}
+
+function ensureUniqueIds(values: readonly string[], field: string): void {
+  const seen = new Set<string>();
+  for (const value of values) {
+    if (seen.has(value)) {
+      throw new Error(`Duplicate ${field}: ${value}`);
+    }
+    seen.add(value);
+  }
+}
+
+function parseSeason(record: unknown, field: string): SeasonRecord {
+  if (!isRecord(record)) {
+    throw new Error(`Invalid or missing ${field}`);
+  }
+
+  const seasonId = toStringValue(record.seasonId, `${field}.seasonId`);
+  const name = toStringValue(record.name, `${field}.name`);
+  const year = toNumberValue(record.year, `${field}.year`);
+  const startsAt = toOptionalString(record.startsAt, `${field}.startsAt`);
+  const endsAt = toOptionalString(record.endsAt, `${field}.endsAt`);
+
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+    throw new Error(`Invalid ${field}.year`);
+  }
+
+  if (startsAt) {
+    ensureIsoDateTime(startsAt, `${field}.startsAt`);
+  }
+  if (endsAt) {
+    ensureIsoDateTime(endsAt, `${field}.endsAt`);
+  }
+  if (startsAt && endsAt) {
+    ensureChronological(startsAt, endsAt, `${field}.startsAt`, `${field}.endsAt`);
+  }
+
+  return { seasonId, name, year, startsAt, endsAt };
+}
+
+function parseSchedule(record: unknown, field: string): EventScheduleRecord {
+  if (!isRecord(record)) {
+    throw new Error(`Invalid or missing ${field}`);
+  }
+
+  const startsAt = ensureIsoDateTime(toStringValue(record.startsAt, `${field}.startsAt`), `${field}.startsAt`);
+  const endsAt = toOptionalString(record.endsAt, `${field}.endsAt`);
+  const releaseAt = toOptionalString(record.releaseAt, `${field}.releaseAt`);
+  const fieldLocksAt = toOptionalString(record.fieldLocksAt, `${field}.fieldLocksAt`);
+
+  if (endsAt) {
+    ensureIsoDateTime(endsAt, `${field}.endsAt`);
+  }
+  if (releaseAt) {
+    ensureIsoDateTime(releaseAt, `${field}.releaseAt`);
+  }
+  if (fieldLocksAt) {
+    ensureIsoDateTime(fieldLocksAt, `${field}.fieldLocksAt`);
+  }
+
+  ensureChronological(startsAt, endsAt, `${field}.startsAt`, `${field}.endsAt`);
+  ensureChronological(releaseAt ?? startsAt, fieldLocksAt, `${field}.releaseAt`, `${field}.fieldLocksAt`);
+
+  return { startsAt, endsAt, releaseAt, fieldLocksAt };
+}
+
+function parseVenue(record: unknown, field: string): EventVenueRecord | undefined {
+  if (record === undefined) {
+    return undefined;
+  }
+  if (!isRecord(record)) {
+    throw new Error(`Invalid ${field}`);
+  }
+
+  return {
+    name: toStringValue(record.name, `${field}.name`),
+    city: toOptionalString(record.city, `${field}.city`),
+    region: toOptionalString(record.region, `${field}.region`),
+    countryCode: toOptionalString(record.countryCode, `${field}.countryCode`),
+    timeZone: toOptionalString(record.timeZone, `${field}.timeZone`),
+  };
+}
+
+function parseMetadata(record: unknown, field: string): EventMetadataRecord | undefined {
+  if (record === undefined) {
+    return undefined;
+  }
+  if (!isRecord(record)) {
+    throw new Error(`Invalid ${field}`);
+  }
+
+  const notesValue = record.notes;
+  const notes =
+    notesValue === undefined
+      ? undefined
+      : toReadonlyArray<string>(notesValue, `${field}.notes`).map((note, index) =>
+          toStringValue(note, `${field}.notes[${index}]`),
+        );
+
+  return {
+    officialName: toOptionalString(record.officialName, `${field}.officialName`),
+    eventType: toOptionalString(record.eventType, `${field}.eventType`),
+    tour: toOptionalString(record.tour, `${field}.tour`),
+    externalEventId: toOptionalString(record.externalEventId, `${field}.externalEventId`),
+    notes,
+  };
+}
+
+function parseContestantRecord(record: unknown, field: string): ContestantRecord {
+  if (!isRecord(record)) {
+    throw new Error(`Invalid ${field}`);
+  }
+
+  const contestantId = toStringValue(record.contestantId, `${field}.contestantId`);
+  const participantStatusValue = toOptionalString(record.participantStatus, `${field}.participantStatus`);
+  const resultValue = toOptionalString(record.result, `${field}.result`);
+
+  return {
+    contestantId,
+    name: toStringValue(record.name, `${field}.name`),
+    teamName: toOptionalString(record.teamName, `${field}.teamName`),
+    countryCode: toOptionalString(record.countryCode, `${field}.countryCode`),
+    seed: toOptionalNumber(record.seed, `${field}.seed`),
+    participantStatus: participantStatusValue
+      ? ensureEnumValue(participantStatusValue, ['active', 'provisional', 'withdrawn', 'alternate', 'cut', 'eliminated', 'inactive'] as const, `${field}.participantStatus`)
+      : undefined,
+    odds: toOptionalNumber(record.odds, `${field}.odds`),
+    ranking: toOptionalNumber(record.ranking, `${field}.ranking`),
+    score: toOptionalNumber(record.score, `${field}.score`),
+    result: resultValue
+      ? ensureEnumValue(resultValue, ['win', 'loss', 'tie', 'cut', 'withdrawn', 'pending'] as const, `${field}.result`)
+      : undefined,
+    note: toOptionalString(record.note, `${field}.note`),
+  };
+}
+
+function parseContestantDeltaRecord(record: unknown, field: string): ContestantDeltaRecord {
+  if (!isRecord(record)) {
+    throw new Error(`Invalid ${field}`);
+  }
+
+  const contestantId = toStringValue(record.contestantId, `${field}.contestantId`);
+  const participantStatusValue = toOptionalString(record.participantStatus, `${field}.participantStatus`);
+  const resultValue = toOptionalString(record.result, `${field}.result`);
+
+  return {
+    contestantId,
+    name: toOptionalString(record.name, `${field}.name`),
+    teamName: toOptionalString(record.teamName, `${field}.teamName`),
+    countryCode: toOptionalString(record.countryCode, `${field}.countryCode`),
+    seed: toOptionalNumber(record.seed, `${field}.seed`),
+    participantStatus: participantStatusValue
+      ? ensureEnumValue(participantStatusValue, ['active', 'provisional', 'withdrawn', 'alternate', 'cut', 'eliminated', 'inactive'] as const, `${field}.participantStatus`)
+      : undefined,
+    odds: toOptionalNumber(record.odds, `${field}.odds`),
+    ranking: toOptionalNumber(record.ranking, `${field}.ranking`),
+    score: toOptionalNumber(record.score, `${field}.score`),
+    result: resultValue
+      ? ensureEnumValue(resultValue, ['win', 'loss', 'tie', 'cut', 'withdrawn', 'pending'] as const, `${field}.result`)
+      : undefined,
+    note: toOptionalString(record.note, `${field}.note`),
+  };
+}
+
+function parseFieldSnapshot(record: unknown, field: string): FieldSnapshotRecord {
+  if (!isRecord(record)) {
+    throw new Error(`Invalid or missing ${field}`);
+  }
+
+  const asOf = ensureIsoDateTime(toStringValue(record.asOf, `${field}.asOf`), `${field}.asOf`);
+  const status = ensureEnumValue(
+    toStringValue(record.status, `${field}.status`),
+    ['provisional', 'announced', 'locked', 'final'] as const,
+    `${field}.status`,
+  );
+  const contestants = toReadonlyArray<unknown>(record.contestants, `${field}.contestants`).map((contestant, index) =>
+    parseContestantRecord(contestant, `${field}.contestants[${index}]`),
+  );
+
+  ensureUniqueIds(
+    contestants.map((contestant) => contestant.contestantId),
+    `${field}.contestants.contestantId`,
+  );
+
+  return {
+    asOf,
+    status,
+    note: toOptionalString(record.note, `${field}.note`),
+    contestants,
+  };
+}
+
+function parseFeedSnapshot(record: unknown, field: string): FeedSnapshotRecord {
+  if (!isRecord(record)) {
+    throw new Error(`Invalid or missing ${field}`);
+  }
+
+  const asOf = ensureIsoDateTime(toStringValue(record.asOf, `${field}.asOf`), `${field}.asOf`);
+  const contestants = toReadonlyArray<unknown>(record.contestants, `${field}.contestants`).map((contestant, index) =>
+    parseContestantDeltaRecord(contestant, `${field}.contestants[${index}]`),
+  );
+
+  ensureUniqueIds(
+    contestants.map((contestant) => contestant.contestantId),
+    `${field}.contestants.contestantId`,
+  );
+
+  return {
+    asOf,
+    note: toOptionalString(record.note, `${field}.note`),
+    contestants,
+  };
+}
+
+function parseFeeds(record: unknown, field: string): EventFeedsRecord {
+  if (!isRecord(record)) {
+    throw new Error(`Invalid or missing ${field}`);
+  }
+
+  return {
+    odds: parseFeedSnapshot(record.odds, `${field}.odds`),
+    rankings: parseFeedSnapshot(record.rankings, `${field}.rankings`),
+    results: parseFeedSnapshot(record.results, `${field}.results`),
+  };
+}
+
+function parseUpdates(record: unknown, field: string): readonly FeedUpdateRecord[] | undefined {
+  if (record === undefined) {
+    return undefined;
+  }
+
+  const updates = toReadonlyArray<unknown>(record, field).map((item, index) => {
+    if (!isRecord(item)) {
+      throw new Error(`Invalid ${field}[${index}]`);
+    }
+
+    const updateId = toStringValue(item.updateId, `${field}[${index}].updateId`);
+    const asOf = ensureIsoDateTime(
+      toStringValue(item.asOf, `${field}[${index}].asOf`),
+      `${field}[${index}].asOf`,
+    );
+    const feedKind = ensureEnumValue(
+      toStringValue(item.feedKind, `${field}[${index}].feedKind`),
+      feedKinds,
+      `${field}[${index}].feedKind`,
+    );
+    const updateType = ensureEnumValue(
+      toStringValue(item.updateType, `${field}[${index}].updateType`),
+      ['refresh', 'correction', 'live', 'final'] as const,
+      `${field}[${index}].updateType`,
+    );
+    const contestants = toReadonlyArray<unknown>(item.contestants, `${field}[${index}].contestants`).map(
+      (contestant, contestantIndex) =>
+        parseContestantDeltaRecord(
+          contestant,
+          `${field}[${index}].contestants[${contestantIndex}]`,
+        ),
+    );
+
+    ensureUniqueIds(
+      contestants.map((contestant) => contestant.contestantId),
+      `${field}[${index}].contestants.contestantId`,
+    );
+
+    return {
+      updateId,
+      asOf,
+      feedKind,
+      updateType,
+      note: toOptionalString(item.note, `${field}[${index}].note`),
+      contestants,
+    };
+  });
+
+  ensureUniqueIds(
+    updates.map((update) => update.updateId),
+    `${field}.updateId`,
+  );
+
+  return updates;
+}
+
+function validateFeedReferences(
+  fieldSnapshot: FieldSnapshotRecord,
+  feeds: EventFeedsRecord,
+  updates: readonly FeedUpdateRecord[] | undefined,
+  field: string,
+): void {
+  const knownContestantIds = new Set(fieldSnapshot.contestants.map((contestant) => contestant.contestantId));
+
+  const ensureKnownOrNamed = (contestant: ContestantDeltaRecord, contestantField: string): void => {
+    if (knownContestantIds.has(contestant.contestantId)) {
+      return;
+    }
+    if (!contestant.name) {
+      throw new Error(`${contestantField} must include name when introducing a new contestant`);
+    }
+    knownContestantIds.add(contestant.contestantId);
+  };
+
+  for (const feedKey of ['odds', 'rankings', 'results'] as const) {
+    for (const contestant of feeds[feedKey].contestants) {
+      ensureKnownOrNamed(contestant, `${field}.feeds.${feedKey}.contestants`);
+    }
+  }
+
+  for (const update of updates ?? []) {
+    for (const contestant of update.contestants) {
+      ensureKnownOrNamed(contestant, `${field}.updates[${update.updateId}].contestants`);
+    }
+  }
+}
+
+function parseEvent(record: unknown, field: string): ContestFeedEventRecord {
+  if (!isRecord(record)) {
+    throw new Error(`Invalid ${field}`);
+  }
+
+  const eventId = toStringValue(record.eventId, `${field}.eventId`);
+  const name = toStringValue(record.name, `${field}.name`);
+  const status = ensureEnumValue(
+    toStringValue(record.status, `${field}.status`),
+    ['scheduled', 'field_announced', 'in_progress', 'completed', 'corrected'] as const,
+    `${field}.status`,
+  );
+  const schedule = parseSchedule(record.schedule, `${field}.schedule`);
+  const venue = parseVenue(record.venue, `${field}.venue`);
+  const metadata = parseMetadata(record.metadata, `${field}.metadata`);
+  const fieldSnapshot = parseFieldSnapshot(record.field, `${field}.field`);
+  const feeds = parseFeeds(record.feeds, `${field}.feeds`);
+  const updates = parseUpdates(record.updates, `${field}.updates`);
+
+  ensureChronological(fieldSnapshot.asOf, schedule.startsAt, `${field}.field.asOf`, `${field}.schedule.startsAt`);
+  validateFeedReferences(fieldSnapshot, feeds, updates, field);
+
+  return {
+    eventId,
+    name,
+    status,
+    schedule,
+    venue,
+    metadata,
+    field: fieldSnapshot,
+    feeds,
+    updates,
+  };
+}
+
+export function validateScenario(record: unknown): ContestFeedScenarioRecord {
   if (!isRecord(record)) {
     throw new Error('Scenario file must contain an object');
   }
 
   const scenarioId = toStringValue(record.scenarioId, 'scenarioId');
-  const sport = toStringValue(record.sport, 'sport');
+  const sport = ensureEnumValue(toStringValue(record.sport, 'sport'), supportedSports, 'sport');
   const provider = toStringValue(record.provider, 'provider');
   const description = typeof record.description === 'string' ? record.description : undefined;
-  const events = toReadonlyArray<ContestFeedEventRecord>(record.events, 'events');
+  const season = parseSeason(record.season, 'season');
+  const events = toReadonlyArray<unknown>(record.events, 'events').map((event, index) =>
+    parseEvent(event, `events[${index}]`),
+  );
 
   if (provider !== mockFeedProviderId) {
     throw new Error(`Scenario ${scenarioId} must use provider ${mockFeedProviderId}`);
   }
 
-  if (!supportedSports.includes(sport as (typeof supportedSports)[number])) {
-    throw new Error(`Scenario ${scenarioId} has unsupported sport ${sport}`);
-  }
+  ensureUniqueIds(
+    events.map((event) => event.eventId),
+    `scenario ${scenarioId} eventId`,
+  );
 
   return {
     scenarioId,
-    sport: sport as ContestFeedScenarioRecord['sport'],
+    sport,
     provider: mockFeedProviderId,
     description,
+    season,
     events,
   };
 }
 
 function mergeContestants(
   contestants: readonly ContestantRecord[],
-  overrides: readonly ContestantOverride[],
+  overrides: readonly ContestantDeltaRecord[],
 ): readonly ContestantRecord[] {
   const map = new Map<string, ContestantRecord>();
 
@@ -87,7 +480,15 @@ function mergeContestants(
       contestantId: override.contestantId,
       name: override.name ?? override.contestantId,
     };
-    map.set(override.contestantId, { ...current, ...override, contestantId: override.contestantId });
+    const merged = { ...current, contestantId: override.contestantId };
+
+    for (const [key, value] of Object.entries(override) as Array<[keyof ContestantDeltaRecord, unknown]>) {
+      if (value !== undefined) {
+        Object.assign(merged, { [key]: value });
+      }
+    }
+
+    map.set(override.contestantId, merged);
   }
 
   return [...map.values()].sort((left, right) => {
@@ -100,7 +501,7 @@ function mergeContestants(
     const leftSeed = typeof left.seed === 'number' ? left.seed : Number.POSITIVE_INFINITY;
     const rightSeed = typeof right.seed === 'number' ? right.seed : Number.POSITIVE_INFINITY;
     if (leftSeed !== rightSeed) return leftSeed - rightSeed;
-    return String(left.name ?? left.contestantId).localeCompare(String(right.name ?? right.contestantId));
+    return left.name.localeCompare(right.name);
   });
 }
 
@@ -117,6 +518,11 @@ export class ScenarioStore {
       .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
       .map((entry) => loadJsonFile(join(scenarioDir, entry.name)));
 
+    ensureUniqueIds(
+      entries.map((scenario) => scenario.scenarioId),
+      'scenarioId',
+    );
+
     this.scenarios = entries.sort((left, right) => left.scenarioId.localeCompare(right.scenarioId));
   }
 
@@ -126,6 +532,9 @@ export class ScenarioStore {
       sport: scenario.sport,
       provider: scenario.provider,
       description: scenario.description,
+      seasonId: scenario.season.seasonId,
+      seasonName: scenario.season.name,
+      seasonYear: scenario.season.year,
       eventCount: scenario.events.length,
     }));
   }
@@ -141,14 +550,21 @@ export class ScenarioStore {
   public listEvents(scenarioId: string): readonly EventSummary[] {
     const scenario = this.getScenario(scenarioId);
     return [...scenario.events]
-      .sort((left, right) => left.startsAt.localeCompare(right.startsAt) || left.eventId.localeCompare(right.eventId))
+      .sort(
+        (left, right) =>
+          left.schedule.startsAt.localeCompare(right.schedule.startsAt) || left.eventId.localeCompare(right.eventId),
+      )
       .map((event) => ({
-      eventId: event.eventId,
-      name: event.name,
-      startsAt: event.startsAt,
-      endsAt: event.endsAt,
-      venue: event.venue,
-      contestantCount: event.contestants.length,
+        eventId: event.eventId,
+        name: event.name,
+        status: event.status,
+        startsAt: event.schedule.startsAt,
+        endsAt: event.schedule.endsAt,
+        releaseAt: event.schedule.releaseAt,
+        fieldLocksAt: event.schedule.fieldLocksAt,
+        venueName: event.venue?.name,
+        fieldStatus: event.field.status,
+        contestantCount: event.field.contestants.length,
       }));
   }
 
@@ -161,17 +577,35 @@ export class ScenarioStore {
     return event;
   }
 
-  public getSnapshot(
-    scenarioId: string,
-    eventId: string,
-    feedKind: FeedKind,
-  ): ContestFeedSnapshotResponse {
+  public getEventResponse(scenarioId: string, eventId: string): ContestFeedEventResponse {
+    const scenario = this.getScenario(scenarioId);
+    return {
+      scenarioId,
+      sport: scenario.sport,
+      provider: scenario.provider,
+      scenarioDescription: scenario.description,
+      season: scenario.season,
+      event: this.getEvent(scenarioId, eventId),
+    };
+  }
+
+  public getSnapshot(scenarioId: string, eventId: string, feedKind: FeedKind): ContestFeedSnapshotResponse {
     const event = this.getEvent(scenarioId, eventId);
-    const feed = event[feedKind];
-    const contestants = mergeContestants(
-      event.contestants,
-      feed.contestants as readonly ContestantOverride[],
-    );
+
+    if (feedKind === 'field') {
+      return {
+        scenarioId,
+        eventId,
+        eventName: event.name,
+        feedKind,
+        asOf: event.field.asOf,
+        note: event.field.note,
+        contestants: event.field.contestants,
+      };
+    }
+
+    const feed = event.feeds[feedKind];
+    const contestants = mergeContestants(event.field.contestants, feed.contestants);
 
     return {
       scenarioId,
@@ -192,10 +626,7 @@ export class ScenarioStore {
       eventName: event.name,
       updates: (event.updates ?? []).map((update) => ({
         ...update,
-        contestants: mergeContestants(
-          event.contestants,
-          update.contestants as readonly ContestantOverride[],
-        ),
+        contestants: mergeContestants(event.field.contestants, update.contestants),
       })),
     };
   }
