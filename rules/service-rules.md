@@ -86,6 +86,13 @@ Every module that registers Fastify routes **must** have a corresponding mapper 
 - Inline `.map()` transformations in route handlers or handler files are not acceptable as a substitute for a dedicated mapper.
 - The mapper is the single place where persistence/domain shapes are translated to API response shapes.
 - Modules exempt from this rule: `config` (static data only), `health` (no domain objects).
+- Reusing an existing shared DTO on a new route surface does **not** justify
+  local inline shaping in the handler. The route must call a mapper, and if no
+  suitable shared mapper/helper exists yet, creating or extracting one is part
+  of the slice.
+- "Small", "obvious", or "admin-only" response shaping is not an exception.
+  Handler-level DTO assembly is prohibited because it is one of the main ways
+  DTO/domain drift re-enters the codebase.
 
 If a module currently lacks a mapper file, creating one is part of the slice — not deferred cleanup.
 

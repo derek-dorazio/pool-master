@@ -134,6 +134,25 @@ it('GET /api/v1/<resource> matches <Resource>ResponseSchema', async () => {
 
 Do not defer contract verification to a "testing cleanup slice." It is part of the slice that changes the contract.
 
+### Shared DTO Reuse Rule
+
+When a route reuses an existing shared DTO on a new API surface, contract
+verification must include at least one representative happy-path assertion for
+that surface, not only error-path checks.
+
+Why:
+
+- shared DTO reuse is a common place where fields get omitted or remapped
+  incorrectly
+- negative-path-only coverage will miss serialization and enum-mapping drift
+  until broader CI coverage fails
+
+Examples that require happy-path verification:
+
+- root-admin or admin routes reusing account/auth user DTOs
+- alternate list/detail surfaces reusing an existing entity DTO
+- new role-scoped endpoints returning a previously defined response schema
+
 ### Contract Verification Heuristics
 
 Use contract verification when the goal is to prove exported DTO/OpenAPI alignment, not to re-run whole user journeys.
