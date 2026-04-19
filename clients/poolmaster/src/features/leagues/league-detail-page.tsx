@@ -350,6 +350,7 @@ export function LeagueDetailPage() {
     });
   }, [contestEntriesByContestQuery.data, contestEntriesByContestQuery.isError, contestEntriesByContestQuery.isLoading, contestsQuery.data, myTeam]);
   const activeContestCards = contestCards.filter((card) => !isHistoricalContest(card.contest.status));
+  const historicalContestCards = contestCards.filter((card) => isHistoricalContest(card.contest.status));
 
   const createContestEntryMutation = useMutation({
     mutationFn: async (contestId: string) => {
@@ -980,6 +981,62 @@ export function LeagueDetailPage() {
                   )}
                 </p>
               ) : null}
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-border bg-card p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-semibold">Completed contest history</h3>
+                <p className="text-sm text-muted-foreground">
+                  Browse completed and cancelled contests for this league by sport and contest type.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {contestsQuery.isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading completed contests...</p>
+              ) : contestsQuery.isError ? (
+                <p className="text-sm text-muted-foreground">
+                  We couldn&apos;t load completed contests for this league.
+                </p>
+              ) : historicalContestCards.length ? (
+                historicalContestCards.map(({ contest, myTeamEntries }) => (
+                  <div
+                    className="rounded-2xl border border-border bg-background px-4 py-4"
+                    data-testid={`league-history-contest-${contest.id}`}
+                    key={contest.id}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="font-medium">{contest.name}</div>
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          {contest.sport} · {contest.selectionType} · {contest.status}
+                        </div>
+                      </div>
+                      <div className="text-right text-sm text-muted-foreground">
+                        <div>{contest.entryCount ?? 0} entries</div>
+                        <div>{myTeamEntries.length} team entries</div>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Link
+                        className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+                        data-testid={`league-history-open-${contest.id}`}
+                        state={{ leagueCode: leagueQuery.data.leagueCode }}
+                        to={`/contests/${contest.id}`}
+                      >
+                        Open contest history
+                      </Link>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  This league does not have any completed contests yet.
+                </p>
+              )}
             </div>
           </div>
         </div>

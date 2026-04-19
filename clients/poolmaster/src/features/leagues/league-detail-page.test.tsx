@@ -386,4 +386,59 @@ describe('LeagueDetailPage', () => {
       }),
     );
   });
+
+  it('shows completed contests in a league history section', async () => {
+    primeCommonMocks();
+    listContestsMock.mockResolvedValue({
+      data: {
+        contests: [
+          {
+            id: 'contest-history-1',
+            name: 'Masters 2026',
+            status: 'COMPLETED',
+            contestType: 'SINGLE_EVENT',
+            selectionType: 'TIERED',
+            scoringEngine: 'STROKE_PLAY',
+            leagueId: 'league-1',
+            sport: 'GOLF',
+            entryCount: 12,
+          },
+        ],
+      },
+    });
+    listContestEntriesMock.mockResolvedValue({
+      data: {
+        contestId: 'contest-history-1',
+        total: 1,
+        isJoined: true,
+        myEntryId: 'entry-history-1',
+        myEntryIds: ['entry-history-1'],
+        entries: [
+          {
+            id: 'entry-history-1',
+            contestId: 'contest-history-1',
+            squadId: 'team-1',
+            squadName: 'Casey Crushers',
+            entryNumber: 1,
+            name: 'Casey Crushers Entry 1',
+            status: 'ACTIVE',
+            totalScore: -34,
+            standingsPosition: 1,
+            isEliminated: false,
+            createdAt: '2026-04-01T00:00:00.000Z',
+            updatedAt: '2026-04-12T22:30:00.000Z',
+          },
+        ],
+      },
+    });
+
+    renderLeagueDetailPage();
+
+    expect(await screen.findByTestId('league-history-contest-contest-history-1')).toHaveTextContent(
+      'Masters 2026',
+    );
+    expect(screen.getByTestId('league-history-open-contest-history-1')).toHaveTextContent(
+      'Open contest history',
+    );
+  });
 });
