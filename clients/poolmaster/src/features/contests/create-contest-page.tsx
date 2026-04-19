@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import type {
   GetManagedContestResponses,
   GetLeagueByCodeResponses,
+  ListManagedContestTemplatesResponses,
   ListEventsResponses,
 } from '@/lib/api';
 import type { CreateContestManagementRequest, UpdateContestRequest } from '@poolmaster/shared/dto';
@@ -12,6 +13,7 @@ import {
   deleteContest,
   getLeagueByCode,
   getManagedContest,
+  listManagedContestTemplates,
   listEvents,
   updateContest,
   updateManagedContestConfiguration,
@@ -25,6 +27,7 @@ import {
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type SportEventSummary = ListEventsResponses[200]['events'][number];
 type ManagedContest = GetManagedContestResponses[200]['contest'];
+type ManagedContestTemplate = ListManagedContestTemplatesResponses[200]['templates'][number];
 type ContestMode = 'GOLF_TIERED' | 'GOLF_CATEGORY_PICKS';
 type TierSource = 'ODDS' | 'WORLD_RANK';
 type LockPreset = 'FIVE_MINUTES' | 'ONE_HOUR' | 'CUSTOM';
@@ -209,6 +212,7 @@ export function CreateContestPage() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [contestName, setContestName] = useState('');
   const [sportEventId, setSportEventId] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [lockPreset, setLockPreset] = useState<LockPreset>('FIVE_MINUTES');
   const [customLockHours, setCustomLockHours] = useState('0');
   const [customLockMinutes, setCustomLockMinutes] = useState('5');
@@ -291,9 +295,35 @@ export function CreateContestPage() {
     retry: false,
   });
 
+  const templatesQuery = useQuery({
+    queryKey: ['poolmaster', 'managed-contest-templates', leagueQuery.data?.id, 'GOLF'],
+    queryFn: async (): Promise<ManagedContestTemplate[]> => {
+      const response = await listManagedContestTemplates({
+        path: { id: leagueQuery.data!.id },
+        query: {
+          sport: 'GOLF',
+          contestType: 'SINGLE_EVENT',
+        },
+      });
+
+      if (!response.data?.templates) {
+        throw response.error ?? new Error('Contest template response is missing data.');
+      }
+
+      return response.data.templates;
+    },
+    enabled: Boolean(leagueQuery.data?.id),
+    retry: false,
+  });
+
   const selectedEvent = useMemo(
     () => eventsQuery.data?.find((event) => event.id === sportEventId) ?? null,
     [eventsQuery.data, sportEventId],
+  );
+  const selectedTemplate = useMemo(
+    () =>
+      templatesQuery.data?.find((template) => template.id === selectedTemplateId) ?? null,
+    [selectedTemplateId, templatesQuery.data],
   );
   const derivedLockAt = useMemo(
     () =>
@@ -306,6 +336,72 @@ export function CreateContestPage() {
     [customLockHours, customLockMinutes, lockPreset, selectedEvent?.startDate],
   );
 
+  function applyTemplateConfiguration(
+    configuration: ManagedContestTemplate['configuration'],
+  ) {
+    setMode(configuration.mode);
+    setUnlimitedEntries(configuration.maxEntriesPerSquad == null);
+    setMaxEntriesPerTeam(
+      configuration.maxEntriesPerSquad == null
+        ? '1'
+        : String(configuration.maxEntriesPerSquad),
+    );
+
+    if (configuration.mode === 'GOLF_TIERED') {
+      setRosterSize(String(configuration.rosterSize));
+      setCountedScores(String(configuration.countedScores));
+      setTierSource(configuration.tierSource);
+      setDefaultTierSize(String(configuration.tierGeneration.defaultTierSize));
+      setTiers(configuration.tiers);
+      setHasCustomTiers(false);
+      setTieredFallbackScore(String(configuration.cutRule.fixedScore));
+      return;
+    }
+
+    setSelectedCategories(
+      configuration.categories.map((category) => category.categoryKey as CategoryKey),
+    );
+    setCategoryPickCounts(
+      configuration.categories.reduce<Record<CategoryKey, string>>(
+        (accumulator, category) => {
+          accumulator[category.categoryKey as CategoryKey] = String(
+            category.pickCount,
+          );
+          return accumulator;
+        },
+        {
+          SENIOR: '1',
+          ROOKIE: '1',
+          PREVIOUS_WINNER: '1',
+          US_PLAYER: '1',
+          INTERNATIONAL_PLAYER: '1',
+        },
+      ),
+    );
+    setCategoryFallbackScore(String(configuration.cutRule.fixedScore));
+  }
+
+  function selectTemplate(templateId: string) {
+    setSelectedTemplateId(templateId);
+    const template = templatesQuery.data?.find((entry) => entry.id === templateId);
+    if (template) {
+      applyTemplateConfiguration(template.configuration);
+    }
+  }
+
+  function selectDefaultTemplateForMode(nextMode: ContestMode) {
+    const template = templatesQuery.data?.find(
+      (entry) => entry.configMode === nextMode && entry.isDefault,
+    ) ?? templatesQuery.data?.find((entry) => entry.configMode === nextMode);
+
+    if (template) {
+      selectTemplate(template.id);
+      return;
+    }
+
+    setMode(nextMode);
+  }
+
   useEffect(() => {
     if (!managedContestQuery.data || isHydratedFromManagedContest) {
       return;
@@ -316,6 +412,7 @@ export function CreateContestPage() {
 
     setContestName(contest.name);
     setSportEventId(contest.sportEventId);
+    setSelectedTemplateId(contest.templateId ?? '');
     setUnlimitedEntries(configuration.maxEntriesPerSquad == null);
     setMaxEntriesPerTeam(
       configuration.maxEntriesPerSquad == null
@@ -379,6 +476,20 @@ export function CreateContestPage() {
       setSportEventId(eventsQuery.data[0].id);
     }
   }, [eventsQuery.data, sportEventId]);
+
+  useEffect(() => {
+    if (isEditMode || selectedTemplateId || !templatesQuery.data?.length) {
+      return;
+    }
+
+    const defaultTemplate =
+      templatesQuery.data.find((template) => template.isDefault)
+      ?? templatesQuery.data[0];
+
+    if (defaultTemplate) {
+      selectTemplate(defaultTemplate.id);
+    }
+  }, [isEditMode, selectedTemplateId, templatesQuery.data]);
 
   useEffect(() => {
     if (mode === 'GOLF_CATEGORY_PICKS') {
@@ -517,11 +628,16 @@ export function CreateContestPage() {
             })();
 
       if (!isEditMode) {
+        if (!selectedTemplateId || !selectedTemplate) {
+          throw new Error('Select a contest template before creating the contest.');
+        }
+
         const body: CreateContestManagementRequest = {
           name: trimmedName,
           sportEventId,
           contestType: 'SINGLE_EVENT',
-          configuration,
+          templateId: selectedTemplateId,
+          configurationOverrides: configuration,
         };
 
         const response = await createManagedContest({
@@ -640,7 +756,12 @@ export function CreateContestPage() {
     leagueQuery.data?.role === 'COMMISSIONER' || Boolean(auth.user?.isRootAdmin);
   const isDraftEditable = !isEditMode || managedContestQuery.data?.status === 'DRAFT';
 
-  if (leagueQuery.isLoading || eventsQuery.isLoading || managedContestQuery.isLoading) {
+  if (
+    leagueQuery.isLoading
+    || eventsQuery.isLoading
+    || managedContestQuery.isLoading
+    || templatesQuery.isLoading
+  ) {
     return (
       <section
         className="rounded-[2rem] border border-border bg-card p-8"
@@ -655,6 +776,7 @@ export function CreateContestPage() {
     leagueQuery.isError
     || !leagueQuery.data
     || managedContestQuery.isError
+    || templatesQuery.isError
   ) {
     return (
       <section
@@ -739,7 +861,7 @@ export function CreateContestPage() {
                   : 'border border-border text-foreground hover:bg-muted/40'
               }`}
               data-testid="contest-mode-tiered"
-              onClick={() => setMode('GOLF_TIERED')}
+              onClick={() => selectDefaultTemplateForMode('GOLF_TIERED')}
               type="button"
             >
               Tiered contest
@@ -751,7 +873,7 @@ export function CreateContestPage() {
                   : 'border border-border text-foreground hover:bg-muted/40'
               }`}
               data-testid="contest-mode-category"
-              onClick={() => setMode('GOLF_CATEGORY_PICKS')}
+              onClick={() => selectDefaultTemplateForMode('GOLF_CATEGORY_PICKS')}
               type="button"
             >
               Category picks
@@ -779,6 +901,48 @@ export function CreateContestPage() {
             ) : null}
 
             <fieldset className="space-y-5" disabled={!isDraftEditable}>
+            {!isEditMode ? (
+              <div className="space-y-3 rounded-2xl border border-border bg-background p-4">
+                <div>
+                  <div className="text-sm font-medium">Contest template</div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Start from a seeded contest template. The selected template seeds the setup
+                    below, and any commissioner changes become the contest-specific configuration
+                    saved at creation time.
+                  </p>
+                </div>
+                <div className="grid gap-3">
+                  {templatesQuery.data?.map((template) => (
+                    <button
+                      className={`rounded-2xl border px-4 py-4 text-left transition ${
+                        selectedTemplateId === template.id
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border bg-card hover:bg-muted/40'
+                      }`}
+                      data-testid={`contest-template-${template.templateKey}`}
+                      key={template.id}
+                      onClick={() => selectTemplate(template.id)}
+                      type="button"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-medium text-foreground">
+                          {template.name}
+                        </span>
+                        {template.isDefault ? (
+                          <span className="rounded-full border border-border px-2 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                            Default
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {template.description}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <label className="block space-y-2">
               <span className="text-sm font-medium">Contest name</span>
               <input

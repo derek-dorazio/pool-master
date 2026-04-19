@@ -142,6 +142,8 @@ export interface SportEventParticipantValuation extends DomainEntity {
 /** Commissioner-managed contest configuration persisted alongside the contest. */
 export interface ContestConfiguration extends DomainEntity {
   contestId: string;
+  templateId?: string | null;
+  templateVersion?: number | null;
   selectionType: SelectionType;
   configMode?: GolfContestConfigMode | null;
   configJson?: GolfContestConfig;
@@ -163,6 +165,22 @@ export interface ContestConfiguration extends DomainEntity {
   isExclusive?: boolean;
   picksPerPeriod?: number;
   rosterSize?: number;
+}
+
+/** Seeded reusable contest template selected during commissioner create flow. */
+export interface ContestConfigTemplate extends DomainEntity {
+  sport: Sport;
+  eventType?: string | null;
+  contestType: ContestType;
+  configMode: GolfContestConfigMode;
+  templateKey: string;
+  name: string;
+  description: string;
+  sortOrder: number;
+  isDefault: boolean;
+  active: boolean;
+  configJson: GolfContestConfig;
+  schemaVersion: number;
 }
 
 /** Participant scoring rule attached to a managed contest configuration. */

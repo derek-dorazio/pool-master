@@ -1,4 +1,5 @@
 import type {
+  ContestConfigTemplate,
   ContestCoreSummary,
   ContestConfiguration,
   ContestEntryAggregationRule,
@@ -81,6 +82,15 @@ export interface ContestConfigurationRepository {
     id: string,
     updates: Partial<ContestConfiguration>,
   ): Promise<ContestConfiguration>;
+}
+
+export interface ContestConfigTemplateRepository {
+  findById(id: string): Promise<ContestConfigTemplate | null>;
+  listBySportAndContestType(input: {
+    sport: ContestConfigTemplate['sport'];
+    contestType: ContestConfigTemplate['contestType'];
+    eventType?: string | null;
+  }): Promise<ContestConfigTemplate[]>;
 }
 
 export interface ParticipantContestScoringRuleRepository {

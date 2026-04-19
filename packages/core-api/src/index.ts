@@ -93,7 +93,7 @@ export function buildApp() {
   app.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations' });
   app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
   app.register(contestManagementModule, {
-    prefix: '/api/v1/leagues/:id/contest-management/contests',
+    prefix: '/api/v1/leagues/:id/contest-management',
   });
   app.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   app.register(eventsModule, { prefix: '/api/v1/events' });

@@ -88,6 +88,8 @@ export const API_ROUTES = {
   },
 
   contestManagement: {
+    templates: (leagueId: string) =>
+      `/api/v1/leagues/${leagueId}/contest-management/templates`,
     detail: (leagueId: string, contestId: string) =>
       `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}`,
     configuration: (leagueId: string, contestId: string) =>

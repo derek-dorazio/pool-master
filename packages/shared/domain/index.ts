@@ -8,6 +8,7 @@ export type {
   ParticipantScoringDefinitionId,
 } from './contest-scoring';
 export type {
+  ContestConfigTemplate,
   ContestTimingPolicy,
   ContestConfiguration,
   ContestCoreSummary,

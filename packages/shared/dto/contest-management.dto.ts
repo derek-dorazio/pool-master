@@ -8,7 +8,11 @@ import {
   GolfDisplayScoring,
   GolfPlayoffHandling,
   GolfTierSource,
+  Sport,
 } from '@poolmaster/shared/domain';
+
+const sportValues = Object.values(Sport) as [string, ...string[]];
+const contestTypeValues = Object.values(ContestType) as [string, ...string[]];
 
 const nullablePositiveIntSchema = z
   .number()
@@ -93,12 +97,29 @@ export type ContestConfigurationRequest = z.infer<
   typeof ContestConfigurationRequestSchema
 >;
 
-export const CreateContestManagementRequestSchema = z.object({
+const CreateContestManagementBaseSchema = z.object({
   name: z.string().min(1).max(100).describe('Contest name shown to commissioners and members.'),
   sportEventId: z.string().uuid().describe('Sport-event identifier that anchors the contest.'),
-  contestType: z.enum([ContestType.SINGLE_EVENT]),
-  configuration: ContestConfigurationRequestSchema,
-}).describe('Commissioner request payload for creating a golf-first managed contest.');
+  contestType: z.enum(contestTypeValues),
+});
+
+export const LegacyCreateContestManagementRequestSchema =
+  CreateContestManagementBaseSchema.extend({
+    configuration: ContestConfigurationRequestSchema,
+  }).describe('Legacy commissioner request payload that supplies the full contest configuration directly.');
+
+export const TemplateCreateContestManagementRequestSchema =
+  CreateContestManagementBaseSchema.extend({
+    templateId: z.string().uuid().describe('Seeded contest template selected for the create flow.'),
+    configurationOverrides: ContestConfigurationRequestSchema.optional().describe(
+      'Optional full configuration payload used after selecting advanced mode. First pass expects a complete configuration object when overrides are supplied.',
+    ),
+  }).describe('Template-first commissioner request payload for creating a managed contest.');
+
+export const CreateContestManagementRequestSchema = z.union([
+  LegacyCreateContestManagementRequestSchema,
+  TemplateCreateContestManagementRequestSchema,
+]).describe('Commissioner request payload for creating a golf-first managed contest.');
 export type CreateContestManagementRequest = z.infer<
   typeof CreateContestManagementRequestSchema
 >;
@@ -127,6 +148,42 @@ export const ContestConfigurationDtoSchema = z.discriminatedUnion('mode', [
 ]).describe('Persisted commissioner-managed golf contest configuration.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 
+export const ContestConfigTemplateDtoSchema = z.object({
+  id: z.string().uuid().describe('Seeded contest template identifier.'),
+  sport: z.enum(sportValues).describe('Sport this template applies to.'),
+  eventType: z.string().nullable().optional().describe('Optional event-type scope for the template.'),
+  contestType: z.enum(contestTypeValues).describe('Contest type that may use the template.'),
+  configMode: z.enum([
+    GolfContestConfigMode.GOLF_TIERED,
+    GolfContestConfigMode.GOLF_CATEGORY_PICKS,
+  ]).describe('Configuration mode seeded by the template.'),
+  templateKey: z.string().describe('Stable machine key for the template.'),
+  name: z.string().describe('Commissioner-facing template label.'),
+  description: z.string().describe('Commissioner-facing template description.'),
+  sortOrder: z.number().int().describe('Display order for template selection.'),
+  isDefault: z.boolean().describe('Whether the template should be preselected in the create flow.'),
+  active: z.boolean().describe('Whether the template is currently selectable.'),
+  schemaVersion: z.number().int().describe('Version of the configuration schema metadata expected by the template.'),
+  configuration: ContestConfigurationRequestSchema.describe('Seeded configuration payload copied into a contest instance when the template is chosen.'),
+}).describe('Seeded commissioner-facing contest configuration template.');
+export type ContestConfigTemplateDto = z.infer<typeof ContestConfigTemplateDtoSchema>;
+
+export const ListContestConfigTemplatesQuerySchema = z.object({
+  sport: z.enum(sportValues).describe('Sport to filter templates by.'),
+  contestType: z.enum(contestTypeValues).describe('Contest type to filter templates by.'),
+  eventType: z.string().optional().describe('Optional event type used to narrow template selection.'),
+}).describe('Query parameters for listing commissioner contest templates.');
+export type ListContestConfigTemplatesQuery = z.infer<
+  typeof ListContestConfigTemplatesQuerySchema
+>;
+
+export const ContestConfigTemplateListResponseSchema = z.object({
+  templates: z.array(ContestConfigTemplateDtoSchema),
+}).describe('Available seeded contest templates for commissioner create flow.');
+export type ContestConfigTemplateListResponse = z.infer<
+  typeof ContestConfigTemplateListResponseSchema
+>;
+
 export const ContestManagementDetailDtoSchema = z.object({
   id: z.string().describe('Contest identifier.'),
   leagueId: z.string().describe('League that owns the contest.'),
@@ -144,6 +201,8 @@ export const ContestManagementDetailDtoSchema = z.object({
   configuration: ContestConfigurationDtoSchema.describe('Current commissioner-managed contest configuration.'),
   createdAt: z.string().datetime().describe('When the contest was created.'),
   updatedAt: z.string().datetime().describe('When the contest was last updated.'),
+  templateId: z.string().uuid().nullable().optional().describe('Seeded template chosen when the contest was created, if any.'),
+  templateVersion: z.number().int().nullable().optional().describe('Schema/template version captured when the contest was created, if any.'),
 }).describe('Golf-first contest-management detail returned to commissioner tooling.');
 export type ContestManagementDetailDto = z.infer<
   typeof ContestManagementDetailDtoSchema

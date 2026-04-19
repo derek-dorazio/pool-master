@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import type {
+  ContestConfigTemplateRepository,
   ContestConfigurationRepository,
   ContestCoreRepository,
   ContestEntryAggregationRuleRepository,
@@ -13,6 +14,7 @@ import type {
   SportEventParticipantValuationRepository,
 } from '@poolmaster/shared/db';
 import type {
+  ContestConfigTemplate,
   ContestConfiguration,
   ContestCoreSummary,
   ContestEntryAggregationRule,
@@ -278,6 +280,8 @@ export class PrismaContestConfigurationRepository
     const row = await this.prisma.contestConfiguration.create({
       data: {
         contestId: configuration.contestId,
+        templateId: configuration.templateId,
+        templateVersion: configuration.templateVersion,
         selectionType: configuration.selectionType,
         configMode: configuration.configMode,
         configJson: configuration.configJson as object | undefined,
@@ -309,6 +313,12 @@ export class PrismaContestConfigurationRepository
     const row = await this.prisma.contestConfiguration.update({
       where: { id },
       data: {
+        ...(updates.templateId !== undefined && {
+          templateId: updates.templateId,
+        }),
+        ...(updates.templateVersion !== undefined && {
+          templateVersion: updates.templateVersion,
+        }),
         ...(updates.selectionType !== undefined && {
           selectionType: updates.selectionType,
         }),
@@ -359,6 +369,40 @@ export class PrismaContestConfigurationRepository
       },
     });
     return mapContestConfiguration(row);
+  }
+}
+
+export class PrismaContestConfigTemplateRepository
+  implements ContestConfigTemplateRepository
+{
+  constructor(private readonly prisma: PrismaClient) {}
+
+  async findById(id: string): Promise<ContestConfigTemplate | null> {
+    const row = await this.prisma.contestConfigTemplate.findUnique({
+      where: { id },
+    });
+    return row ? mapContestConfigTemplate(row) : null;
+  }
+
+  async listBySportAndContestType(input: {
+    sport: ContestConfigTemplate['sport'];
+    contestType: ContestConfigTemplate['contestType'];
+    eventType?: string | null;
+  }): Promise<ContestConfigTemplate[]> {
+    const rows = await this.prisma.contestConfigTemplate.findMany({
+      where: {
+        sport: input.sport,
+        contestType: input.contestType,
+        active: true,
+        OR: [
+          { eventType: input.eventType ?? null },
+          { eventType: null },
+        ],
+      },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    });
+
+    return rows.map(mapContestConfigTemplate);
   }
 }
 
@@ -810,6 +854,8 @@ function mapSportEventParticipantValuation(row: {
 function mapContestConfiguration(row: {
   id: string;
   contestId: string;
+  templateId: string | null;
+  templateVersion: number | null;
   selectionType: string;
   configMode: string | null;
   configJson: unknown;
@@ -835,6 +881,8 @@ function mapContestConfiguration(row: {
   return {
     id: row.id,
     contestId: row.contestId,
+    templateId: row.templateId ?? undefined,
+    templateVersion: row.templateVersion ?? undefined,
     selectionType: row.selectionType as ContestConfiguration['selectionType'],
     configMode: row.configMode as ContestConfiguration['configMode'],
     configJson: row.configJson as ContestConfiguration['configJson'],
@@ -854,6 +902,42 @@ function mapContestConfiguration(row: {
     maxEntriesPerSquad: row.maxEntriesPerSquad ?? undefined,
     rosterSize: row.rosterSize ?? undefined,
     totalPrizePoolAmount: row.totalPrizePoolAmount ?? undefined,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+function mapContestConfigTemplate(row: {
+  id: string;
+  sport: string;
+  eventType: string | null;
+  contestType: string;
+  configMode: string;
+  templateKey: string;
+  name: string;
+  description: string;
+  sortOrder: number;
+  isDefault: boolean;
+  active: boolean;
+  configJson: unknown;
+  schemaVersion: number;
+  createdAt: Date;
+  updatedAt: Date;
+}): ContestConfigTemplate {
+  return {
+    id: row.id,
+    sport: row.sport as ContestConfigTemplate['sport'],
+    eventType: row.eventType ?? undefined,
+    contestType: row.contestType as ContestConfigTemplate['contestType'],
+    configMode: row.configMode as ContestConfigTemplate['configMode'],
+    templateKey: row.templateKey,
+    name: row.name,
+    description: row.description,
+    sortOrder: row.sortOrder,
+    isDefault: row.isDefault,
+    active: row.active,
+    configJson: row.configJson as ContestConfigTemplate['configJson'],
+    schemaVersion: row.schemaVersion,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

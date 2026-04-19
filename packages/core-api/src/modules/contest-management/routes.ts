@@ -1,12 +1,15 @@
 import type { FastifyInstance } from 'fastify';
 import {
+  ContestConfigTemplateListResponseSchema,
   ContestConfigurationRequestSchema,
   ContestManagementResponseSchema,
   CreateContestManagementRequestSchema,
   ErrorEnvelopeSchema,
+  ListContestConfigTemplatesQuerySchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
 import {
+  PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
   PrismaContestCoreRepository,
   PrismaContestEntryAggregationRuleRepository,
@@ -26,6 +29,7 @@ export async function contestManagementModule(
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const contestManagementService = new ContestManagementService(
     new PrismaContestCoreRepository(prisma),
+    new PrismaContestConfigTemplateRepository(prisma),
     new PrismaContestConfigurationRepository(prisma),
     new PrismaParticipantContestScoringRuleRepository(prisma),
     new PrismaContestEntryAggregationRuleRepository(prisma),
@@ -33,7 +37,26 @@ export async function contestManagementModule(
   );
   const handlers = createContestManagementHandlers(contestManagementService);
 
-  fastify.post('/', {
+  fastify.get('/templates', {
+    schema: {
+      tags: ['Contest Management'],
+      summary: 'List seeded contest templates for commissioner create flow',
+      description:
+        'Returns the seeded contest configuration templates available for a sport and contest type so commissioner create flows can default to smart presets before advanced editing.',
+      operationId: 'listManagedContestTemplates',
+      querystring: zodToJsonSchema(ListContestConfigTemplatesQuerySchema),
+      response: {
+        200: zodToJsonSchema(ContestConfigTemplateListResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: handlers.listTemplates,
+  });
+
+  fastify.post('/contests', {
     schema: {
       tags: ['Contest Management'],
       summary: 'Create a commissioner-managed contest with configuration',
@@ -53,7 +76,7 @@ export async function contestManagementModule(
     handler: handlers.createContest,
   });
 
-  fastify.get('/:contestId', {
+  fastify.get('/contests/:contestId', {
     schema: {
       tags: ['Contest Management'],
       summary: 'Get commissioner contest-management detail',
@@ -72,7 +95,7 @@ export async function contestManagementModule(
     handler: handlers.getContest,
   });
 
-  fastify.put('/:contestId/configuration', {
+  fastify.put('/contests/:contestId/configuration', {
     schema: {
       tags: ['Contest Management'],
       summary: 'Update commissioner contest configuration',

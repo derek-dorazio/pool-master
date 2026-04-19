@@ -99,7 +99,7 @@ describe('Contest management integration', () => {
     expect(createRes.statusCode).toBe(201);
     const createdContest = createRes.json().contest;
     contestId = createdContest.id;
-    expect(createdContest.status).toBe(ContestStatus.DRAFT);
+    expect(createdContest.status).toBe(ContestStatus.OPEN);
     expect(createdContest.sportEventId).toBe(sportEventId);
     expect(createdContest.configuration.mode).toBe('GOLF_TIERED');
     expect(createdContest.configuration.countedScores).toBe(4);
@@ -167,6 +167,49 @@ describe('Contest management integration', () => {
       'SUM_ALL_ENTRIES',
     );
     expect(configuration.participantScoringRules).toHaveLength(1);
+  });
+
+  it('lists seeded templates and creates a contest from a selected template', async () => {
+    const templateRes = await getApp().inject({
+      method: 'GET',
+      url: `${API_ROUTES.contestManagement.templates(leagueId)}?sport=GOLF&contestType=SINGLE_EVENT`,
+      headers: ownerHeaders,
+    });
+
+    expect(templateRes.statusCode).toBe(200);
+    const templates = templateRes.json().templates;
+    expect(templates.length).toBeGreaterThan(0);
+    expect(templates[0].configuration.mode).toBeTruthy();
+
+    const defaultTemplate = templates.find(
+      (template: { isDefault: boolean }) => template.isDefault,
+    );
+    expect(defaultTemplate).toBeDefined();
+
+    const createRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.contestManagement(leagueId),
+      headers: ownerHeaders,
+      payload: {
+        name: 'Masters Template Contest',
+        sportEventId,
+        contestType: 'SINGLE_EVENT',
+        templateId: defaultTemplate.id,
+      },
+    });
+
+    expect(createRes.statusCode).toBe(201);
+    const createdContest = createRes.json().contest;
+    expect(createdContest.status).toBe(ContestStatus.OPEN);
+    expect(createdContest.templateId).toBe(defaultTemplate.id);
+    expect(createdContest.templateVersion).toBe(1);
+    expect(createdContest.configuration.mode).toBe(defaultTemplate.configuration.mode);
+
+    const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
+      where: { contestId: createdContest.id },
+    });
+    expect(configuration.templateId).toBe(defaultTemplate.id);
+    expect(configuration.templateVersion).toBe(1);
   });
 
   it('rejects unsupported legacy contest-management payloads', async () => {

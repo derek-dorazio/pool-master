@@ -629,6 +629,8 @@ model Contest {
 model ContestConfiguration {
   id                   String    @id @default(uuid()) @db.Uuid
   contestId            String    @unique @map("contest_id") @db.Uuid
+  templateId           String?   @map("template_id") @db.Uuid
+  templateVersion      Int?      @map("template_version")
   selectionType        String    @map("selection_type") @db.VarChar(50)
   configMode           String?   @map("config_mode") @db.VarChar(50)
   configJson           Json?     @map("config_json")
@@ -652,11 +654,36 @@ model ContestConfiguration {
   updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   contest               Contest                        @relation(fields: [contestId], references: [id])
+  template              ContestConfigTemplate?         @relation(fields: [templateId], references: [id])
   participantScoringRules ParticipantContestScoringRule[]
   entryAggregationRule  ContestEntryAggregationRule?
   prizeDefinitions      ContestPrizeDefinition[]
 
   @@map("contest_configurations")
+}
+
+model ContestConfigTemplate {
+  id            String   @id @db.Uuid
+  sport         String   @db.VarChar(50)
+  eventType     String?  @map("event_type") @db.VarChar(100)
+  contestType   String   @map("contest_type") @db.VarChar(50)
+  configMode    String   @map("config_mode") @db.VarChar(50)
+  templateKey   String   @map("template_key") @db.VarChar(100)
+  name          String   @db.VarChar(120)
+  description   String   @db.VarChar(500)
+  sortOrder     Int      @map("sort_order")
+  isDefault     Boolean  @default(false) @map("is_default")
+  active        Boolean  @default(true)
+  configJson    Json     @map("config_json")
+  schemaVersion Int      @default(1) @map("schema_version")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  configurations ContestConfiguration[]
+
+  @@unique([sport, eventType, contestType, configMode, templateKey])
+  @@index([sport, contestType, active, sortOrder])
+  @@map("contest_config_templates")
 }
 
 model ParticipantContestScoringRule {

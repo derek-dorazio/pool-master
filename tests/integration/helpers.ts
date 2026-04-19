@@ -75,7 +75,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(invitationsModule, { prefix: '/api/v1/invitations' });
   testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests' });
   testApp.register(contestManagementModule, {
-    prefix: '/api/v1/leagues/:id/contest-management/contests',
+    prefix: '/api/v1/leagues/:id/contest-management',
   });
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   testApp.register(participantsModule, { prefix: '/api/v1/participants' });

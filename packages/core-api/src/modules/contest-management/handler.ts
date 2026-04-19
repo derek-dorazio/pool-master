@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type {
   CreateContestManagementRequest,
+  ListContestConfigTemplatesQuery,
   UpdateContestConfigurationRequest,
 } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
@@ -14,6 +15,7 @@ export function createContestManagementHandlers(
 ) {
   return {
     createContest,
+    listTemplates,
     getContest,
     updateContestConfiguration,
   };
@@ -37,6 +39,16 @@ export function createContestManagementHandlers(
       }
       throw error;
     }
+  }
+
+  async function listTemplates(
+    request: FastifyRequest<{
+      Querystring: ListContestConfigTemplatesQuery;
+    }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const templates = await contestManagementService.listTemplates(request.query);
+    return reply.send({ templates });
   }
 
   async function getContest(

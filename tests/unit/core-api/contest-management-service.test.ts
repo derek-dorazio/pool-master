@@ -1,5 +1,6 @@
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type {
+  ContestConfigTemplateRepository,
   ContestConfigurationRepository,
   ContestCoreRepository,
   ContestEntryAggregationRuleRepository,
@@ -37,6 +38,8 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
   const state = {
     id: 'config-1',
     contestId: 'contest-1',
+    templateId: null,
+    templateVersion: null,
     selectionType: 'TIERED',
     configMode: 'GOLF_TIERED',
     configJson: {
@@ -95,6 +98,49 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
       });
       return { ...state };
     }),
+  };
+}
+
+function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
+  return {
+    findById: jest.fn().mockResolvedValue({
+      id: '11111111-1111-4111-8111-111111111111',
+      sport: 'GOLF',
+      contestType: 'SINGLE_EVENT',
+      configMode: 'GOLF_TIERED',
+      templateKey: 'golf-tiered-pick-6',
+      name: 'Select one from each tier, 4 count',
+      description: 'Default golf tiered template',
+      sortOrder: 1,
+      isDefault: true,
+      active: true,
+      configJson: {
+        mode: 'GOLF_TIERED',
+        locksAt: '2026-04-10T12:00:00.000Z',
+        maxEntriesPerSquad: 1,
+        rosterSize: 6,
+        countedScores: 4,
+        tierSource: 'ODDS',
+        tierGeneration: { defaultTierSize: 10 },
+        tiers: [
+          {
+            tierKey: 'A',
+            label: 'Tier A',
+            pickCount: 1,
+            startPosition: 1,
+            endPosition: 10,
+          },
+        ],
+        cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
+        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+        displayScoring: 'TO_PAR',
+        tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
+      },
+      schemaVersion: 1,
+      createdAt: new Date('2026-04-07T12:00:00.000Z'),
+      updatedAt: new Date('2026-04-07T12:00:00.000Z'),
+    }),
+    listBySportAndContestType: jest.fn().mockResolvedValue([]),
   };
 }
 
@@ -168,12 +214,14 @@ function createPrizeDefinitionRepo(): ContestPrizeDefinitionRepository {
 describe('ContestManagementService', () => {
   it('creates a golf tiered contest and derives internal scoring rules automatically', async () => {
     const contestCoreRepo = createContestCoreRepo();
+    const contestConfigTemplateRepo = createContestConfigTemplateRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
     const contestEntryAggregationRuleRepo = createAggregationRuleRepo();
 
     const service = new ContestManagementService(
       contestCoreRepo,
+      contestConfigTemplateRepo,
       contestConfigurationRepo,
       participantContestScoringRuleRepo,
       contestEntryAggregationRuleRepo,
@@ -224,7 +272,7 @@ describe('ContestManagementService', () => {
       name: 'Masters Pick 6',
       selectionType: 'TIERED',
       scoringEngine: 'STROKE_PLAY',
-      status: ContestStatus.DRAFT,
+      status: ContestStatus.OPEN,
     });
     expect(result.configuration.mode).toBe('GOLF_TIERED');
     if (result.configuration.mode !== 'GOLF_TIERED') {
@@ -259,6 +307,7 @@ describe('ContestManagementService', () => {
 
     const service = new ContestManagementService(
       contestCoreRepo,
+      createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
       contestEntryAggregationRuleRepo,
@@ -318,6 +367,7 @@ describe('ContestManagementService', () => {
     const contestEntryAggregationRuleRepo = createAggregationRuleRepo();
     const service = new ContestManagementService(
       createContestCoreRepo(),
+      createContestConfigTemplateRepo(),
       contestConfigurationRepo,
       participantContestScoringRuleRepo,
       contestEntryAggregationRuleRepo,
@@ -389,6 +439,7 @@ describe('ContestManagementService', () => {
   it('returns contest management detail by contest id', async () => {
     const service = new ContestManagementService(
       createContestCoreRepo(),
+      createContestConfigTemplateRepo(),
       createContestConfigurationRepo(),
       createParticipantScoringRuleRepo(),
       createAggregationRuleRepo(),
@@ -401,5 +452,45 @@ describe('ContestManagementService', () => {
     expect(result.configuration.id).toBe('config-1');
     expect(result.configuration.mode).toBe('GOLF_TIERED');
     expect(result.configuration.tiebreaker.type).toBe('PREDICT_WINNING_SCORE');
+  });
+
+  it('creates a contest from a seeded template and stores template provenance', async () => {
+    const contestCoreRepo = createContestCoreRepo();
+    const contestConfigTemplateRepo = createContestConfigTemplateRepo();
+    const contestConfigurationRepo = createContestConfigurationRepo();
+    const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
+    const contestEntryAggregationRuleRepo = createAggregationRuleRepo();
+
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      contestConfigTemplateRepo,
+      contestConfigurationRepo,
+      participantContestScoringRuleRepo,
+      contestEntryAggregationRuleRepo,
+      createPrizeDefinitionRepo(),
+    );
+
+    const result = await service.createContest(
+      { leagueId: 'league-1' },
+      {
+        name: 'Masters Template Contest',
+        sportEventId: '11111111-1111-1111-1111-111111111111',
+        contestType: 'SINGLE_EVENT',
+        templateId: '11111111-1111-4111-8111-111111111111',
+      },
+    );
+
+    expect(contestConfigTemplateRepo.findById).toHaveBeenCalledWith(
+      '11111111-1111-4111-8111-111111111111',
+    );
+    expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        templateId: '11111111-1111-4111-8111-111111111111',
+        templateVersion: 1,
+        configMode: 'GOLF_TIERED',
+      }),
+    );
+    expect(result.templateId).toBe('11111111-1111-4111-8111-111111111111');
+    expect(result.templateVersion).toBe(1);
   });
 });

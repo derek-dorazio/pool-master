@@ -4871,6 +4871,276 @@ export type CreateContestResponses = {
 
 export type CreateContestResponse = CreateContestResponses[keyof CreateContestResponses];
 
+export type ListManagedContestTemplatesData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query: {
+        /**
+         * Sport to filter templates by.
+         */
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        /**
+         * Contest type to filter templates by.
+         */
+        contestType: 'SINGLE_EVENT';
+        /**
+         * Optional event type used to narrow template selection.
+         */
+        eventType?: string;
+    };
+    url: '/api/v1/leagues/{id}/contest-management/templates';
+};
+
+export type ListManagedContestTemplatesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    403: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type ListManagedContestTemplatesError = ListManagedContestTemplatesErrors[keyof ListManagedContestTemplatesErrors];
+
+export type ListManagedContestTemplatesResponses = {
+    /**
+     * Available seeded contest templates for commissioner create flow.
+     */
+    200: {
+        templates: Array<{
+            /**
+             * Seeded contest template identifier.
+             */
+            id: string;
+            /**
+             * Sport this template applies to.
+             */
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+            /**
+             * Optional event-type scope for the template.
+             */
+            eventType?: string;
+            /**
+             * Contest type that may use the template.
+             */
+            contestType: 'SINGLE_EVENT';
+            /**
+             * Configuration mode seeded by the template.
+             */
+            configMode: 'GOLF_TIERED' | 'GOLF_CATEGORY_PICKS';
+            /**
+             * Stable machine key for the template.
+             */
+            templateKey: string;
+            /**
+             * Commissioner-facing template label.
+             */
+            name: string;
+            /**
+             * Commissioner-facing template description.
+             */
+            description: string;
+            /**
+             * Display order for template selection.
+             */
+            sortOrder: number;
+            /**
+             * Whether the template should be preselected in the create flow.
+             */
+            isDefault: boolean;
+            /**
+             * Whether the template is currently selectable.
+             */
+            active: boolean;
+            /**
+             * Version of the configuration schema metadata expected by the template.
+             */
+            schemaVersion: number;
+            /**
+             * Seeded configuration payload copied into a contest instance when the template is chosen.
+             */
+            configuration: {
+                mode: 'GOLF_TIERED';
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number;
+                /**
+                 * How many golfers each Team entry must pick.
+                 */
+                rosterSize: number;
+                /**
+                 * How many golfer scores count toward the Team total.
+                 */
+                countedScores: number;
+                /**
+                 * Single tier source used to generate all tiers.
+                 */
+                tierSource: 'ODDS' | 'WORLD_RANK';
+                tierGeneration: {
+                    /**
+                     * Basic mode tier size used to seed the tier list.
+                     */
+                    defaultTierSize: number;
+                };
+                /**
+                 * Persisted tier boundaries and pick counts after seeding or advanced editing.
+                 */
+                tiers: Array<{
+                    /**
+                     * Stable tier key such as A, B, or C.
+                     */
+                    tierKey: string;
+                    /**
+                     * Commissioner-facing tier label.
+                     */
+                    label: string;
+                    /**
+                     * How many golfers must be picked from the tier.
+                     */
+                    pickCount: number;
+                    /**
+                     * Starting resolved rank/odds position for the tier.
+                     */
+                    startPosition: number;
+                    /**
+                     * Ending resolved rank/odds position for the tier. Null means remainder of field.
+                     */
+                    endPosition: number;
+                }>;
+                /**
+                 * Golf cut rule for first-pass contests.
+                 */
+                cutRule: {
+                    type: 'FIXED_SCORE';
+                    /**
+                     * Fallback score assigned when a golfer misses the cut.
+                     */
+                    fixedScore: number;
+                };
+                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+                displayScoring: 'TO_PAR';
+                /**
+                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
+                 */
+                tiebreaker: {
+                    type: 'PREDICT_WINNING_SCORE';
+                };
+            } | {
+                mode: 'GOLF_CATEGORY_PICKS';
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number;
+                /**
+                 * Enabled category slots for the contest.
+                 */
+                categories: Array<{
+                    categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
+                    /**
+                     * Commissioner-facing category label.
+                     */
+                    label: string;
+                    /**
+                     * How many golfers must be picked for the category.
+                     */
+                    pickCount: number;
+                }>;
+                /**
+                 * Golf cut rule for first-pass contests.
+                 */
+                cutRule: {
+                    type: 'FIXED_SCORE';
+                    /**
+                     * Fallback score assigned when a golfer misses the cut.
+                     */
+                    fixedScore: number;
+                };
+                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+                displayScoring: 'TO_PAR';
+                /**
+                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
+                 */
+                tiebreaker: {
+                    type: 'PREDICT_WINNING_SCORE';
+                };
+            };
+        }>;
+    };
+};
+
+export type ListManagedContestTemplatesResponse = ListManagedContestTemplatesResponses[keyof ListManagedContestTemplatesResponses];
+
 export type CreateManagedContestData = {
     /**
      * Commissioner request payload for creating a golf-first managed contest.
@@ -5002,12 +5272,143 @@ export type CreateManagedContestData = {
                 type: 'PREDICT_WINNING_SCORE';
             };
         };
+    } | {
+        /**
+         * Contest name shown to commissioners and members.
+         */
+        name: string;
+        /**
+         * Sport-event identifier that anchors the contest.
+         */
+        sportEventId: string;
+        contestType: 'SINGLE_EVENT';
+        /**
+         * Seeded contest template selected for the create flow.
+         */
+        templateId: string;
+        /**
+         * Approved commissioner-managed contest configuration payload for golf-first contest creation.
+         */
+        configurationOverrides?: {
+            mode: 'GOLF_TIERED';
+            /**
+             * Contest entry lock timestamp.
+             */
+            locksAt?: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number;
+            /**
+             * How many golfers each Team entry must pick.
+             */
+            rosterSize: number;
+            /**
+             * How many golfer scores count toward the Team total.
+             */
+            countedScores: number;
+            /**
+             * Single tier source used to generate all tiers.
+             */
+            tierSource: 'ODDS' | 'WORLD_RANK';
+            tierGeneration: {
+                /**
+                 * Basic mode tier size used to seed the tier list.
+                 */
+                defaultTierSize: number;
+            };
+            /**
+             * Persisted tier boundaries and pick counts after seeding or advanced editing.
+             */
+            tiers: Array<{
+                /**
+                 * Stable tier key such as A, B, or C.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked from the tier.
+                 */
+                pickCount: number;
+                /**
+                 * Starting resolved rank/odds position for the tier.
+                 */
+                startPosition: number;
+                /**
+                 * Ending resolved rank/odds position for the tier. Null means remainder of field.
+                 */
+                endPosition: number;
+            }>;
+            /**
+             * Golf cut rule for first-pass contests.
+             */
+            cutRule: {
+                type: 'FIXED_SCORE';
+                /**
+                 * Fallback score assigned when a golfer misses the cut.
+                 */
+                fixedScore: number;
+            };
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+            displayScoring: 'TO_PAR';
+            /**
+             * Golf tiebreaker configuration. Teams predict the winning to-par score.
+             */
+            tiebreaker: {
+                type: 'PREDICT_WINNING_SCORE';
+            };
+        } | {
+            mode: 'GOLF_CATEGORY_PICKS';
+            /**
+             * Contest entry lock timestamp.
+             */
+            locksAt?: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number;
+            /**
+             * Enabled category slots for the contest.
+             */
+            categories: Array<{
+                categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
+                /**
+                 * Commissioner-facing category label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked for the category.
+                 */
+                pickCount: number;
+            }>;
+            /**
+             * Golf cut rule for first-pass contests.
+             */
+            cutRule: {
+                type: 'FIXED_SCORE';
+                /**
+                 * Fallback score assigned when a golfer misses the cut.
+                 */
+                fixedScore: number;
+            };
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+            displayScoring: 'TO_PAR';
+            /**
+             * Golf tiebreaker configuration. Teams predict the winning to-par score.
+             */
+            tiebreaker: {
+                type: 'PREDICT_WINNING_SCORE';
+            };
+        };
     };
     path: {
         id: string;
     };
     query?: never;
-    url: '/api/v1/leagues/{id}/contest-management/contests/';
+    url: '/api/v1/leagues/{id}/contest-management/contests';
 };
 
 export type CreateManagedContestErrors = {
@@ -5270,6 +5671,14 @@ export type CreateManagedContestResponses = {
              * When the contest was last updated.
              */
             updatedAt: string;
+            /**
+             * Seeded template chosen when the contest was created, if any.
+             */
+            templateId?: string;
+            /**
+             * Schema/template version captured when the contest was created, if any.
+             */
+            templateVersion?: number;
         };
     };
 };
@@ -5546,6 +5955,14 @@ export type GetManagedContestResponses = {
              * When the contest was last updated.
              */
             updatedAt: string;
+            /**
+             * Seeded template chosen when the contest was created, if any.
+             */
+            templateId?: string;
+            /**
+             * Schema/template version captured when the contest was created, if any.
+             */
+            templateVersion?: number;
         };
     };
 };
@@ -5960,6 +6377,14 @@ export type UpdateManagedContestConfigurationResponses = {
              * When the contest was last updated.
              */
             updatedAt: string;
+            /**
+             * Seeded template chosen when the contest was created, if any.
+             */
+            templateId?: string;
+            /**
+             * Schema/template version captured when the contest was created, if any.
+             */
+            templateVersion?: number;
         };
     };
 };

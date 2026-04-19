@@ -1,4 +1,5 @@
 import type {
+  ContestConfigTemplateRepository,
   ContestConfigurationRepository,
   ContestCoreRepository,
   ContestEntryAggregationRuleRepository,
@@ -6,12 +7,15 @@ import type {
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
 import type {
+  ContestConfigTemplateDto,
   ContestManagementDetailDto,
   ContestConfigurationRequest,
   CreateContestManagementRequest,
+  ListContestConfigTemplatesQuery,
   UpdateContestConfigurationRequest,
 } from '@poolmaster/shared/dto';
 import type {
+  ContestConfigTemplate,
   ContestConfiguration,
   GolfContestConfig,
 } from '@poolmaster/shared/domain';
@@ -29,6 +33,7 @@ interface CreateContestManagementContext {
 export class ContestManagementService {
   constructor(
     private readonly contestCoreRepo: ContestCoreRepository,
+    private readonly contestConfigTemplateRepo: ContestConfigTemplateRepository,
     private readonly contestConfigurationRepo: ContestConfigurationRepository,
     private readonly participantContestScoringRuleRepo: ParticipantContestScoringRuleRepository,
     private readonly contestEntryAggregationRuleRepo: ContestEntryAggregationRuleRepository,
@@ -39,34 +44,57 @@ export class ContestManagementService {
     context: CreateContestManagementContext,
     input: CreateContestManagementRequest,
   ): Promise<ContestManagementDetailDto> {
-    const selectionType = mapSelectionType(input.configuration);
+    const resolvedConfiguration = await resolveCreateConfiguration(
+      input,
+      this.contestConfigTemplateRepo,
+    );
+    const selectionType = mapSelectionType(resolvedConfiguration.configuration);
     const contest = await this.contestCoreRepo.create({
       leagueId: context.leagueId,
       sportEventId: input.sportEventId,
       name: input.name,
-      status: ContestStatus.DRAFT,
+      status: ContestStatus.OPEN,
       selectionType,
       scoringEngine: ScoringEngine.STROKE_PLAY,
     });
 
     const configuration = await this.contestConfigurationRepo.create({
       contestId: contest.id,
+      templateId: resolvedConfiguration.template?.id,
+      templateVersion: resolvedConfiguration.template?.schemaVersion,
       selectionType,
-      configMode: input.configuration.mode,
-      configJson: input.configuration,
-      locksAt: input.configuration.locksAt
-        ? new Date(input.configuration.locksAt)
+      configMode: resolvedConfiguration.configuration.mode,
+      configJson: resolvedConfiguration.configuration,
+      locksAt: resolvedConfiguration.configuration.locksAt
+        ? new Date(resolvedConfiguration.configuration.locksAt)
         : undefined,
       maxEntriesPerSquad:
-        input.configuration.maxEntriesPerSquad === null
+        resolvedConfiguration.configuration.maxEntriesPerSquad === null
           ? null
-          : input.configuration.maxEntriesPerSquad,
-      ...deriveLegacyPersistenceFields(input.configuration),
+          : resolvedConfiguration.configuration.maxEntriesPerSquad,
+      ...deriveLegacyPersistenceFields(resolvedConfiguration.configuration),
     });
 
-    await syncDerivedScoring(configuration, this.participantContestScoringRuleRepo, this.contestEntryAggregationRuleRepo);
+    await syncDerivedScoring(
+      configuration,
+      this.participantContestScoringRuleRepo,
+      this.contestEntryAggregationRuleRepo,
+    );
 
     return buildContestManagementDetail(contest, configuration);
+  }
+
+  async listTemplates(
+    input: ListContestConfigTemplatesQuery,
+  ): Promise<ContestConfigTemplateDto[]> {
+    const templates =
+      await this.contestConfigTemplateRepo.listBySportAndContestType({
+        sport: input.sport as ContestConfigTemplate['sport'],
+        contestType: input.contestType as ContestConfigTemplate['contestType'],
+        eventType: input.eventType,
+      });
+
+    return templates.map(mapContestConfigTemplateDto);
   }
 
   async getContest(contestId: string): Promise<ContestManagementDetailDto> {
@@ -75,7 +103,9 @@ export class ContestManagementService {
       throw new ContestManagementError('Contest not found');
     }
 
-    const configuration = await this.contestConfigurationRepo.findByContest(contestId);
+    const configuration = await this.contestConfigurationRepo.findByContest(
+      contestId,
+    );
     if (!configuration) {
       throw new ContestManagementError('Contest configuration not found');
     }
@@ -87,7 +117,9 @@ export class ContestManagementService {
     contestId: string,
     input: UpdateContestConfigurationRequest,
   ): Promise<ContestManagementDetailDto> {
-    const configuration = await this.contestConfigurationRepo.findByContest(contestId);
+    const configuration = await this.contestConfigurationRepo.findByContest(
+      contestId,
+    );
     if (!configuration) {
       throw new ContestManagementError('Contest configuration not found');
     }
@@ -166,7 +198,9 @@ async function syncDerivedScoring(
   const typedConfiguration = ensureTypedConfiguration(configuration);
   const existingParticipantRules =
     await participantRuleRepo.findByContestConfiguration(configuration.id);
-  await Promise.all(existingParticipantRules.map((rule) => participantRuleRepo.delete(rule.id)));
+  await Promise.all(
+    existingParticipantRules.map((rule) => participantRuleRepo.delete(rule.id)),
+  );
 
   await participantRuleRepo.create({
     contestConfigurationId: configuration.id,
@@ -181,7 +215,10 @@ async function syncDerivedScoring(
   const aggregationPayload = buildAggregationRule(typedConfiguration);
 
   if (existingAggregationRule) {
-    await aggregationRuleRepo.update(existingAggregationRule.id, aggregationPayload);
+    await aggregationRuleRepo.update(
+      existingAggregationRule.id,
+      aggregationPayload,
+    );
   } else {
     await aggregationRuleRepo.create({
       contestConfigurationId: configuration.id,
@@ -239,6 +276,8 @@ function buildContestManagementDetail(
   configuration: {
     id: string;
     contestId: string;
+    templateId?: string | null;
+    templateVersion?: number | null;
     configMode?: string | null;
     configJson?: GolfContestConfig;
     locksAt?: Date | null;
@@ -258,6 +297,8 @@ function buildContestManagementDetail(
     status: contest.status,
     createdAt: contest.createdAt.toISOString(),
     updatedAt: contest.updatedAt.toISOString(),
+    templateId: configuration.templateId ?? null,
+    templateVersion: configuration.templateVersion ?? null,
     configuration: {
       id: configuration.id,
       contestId: configuration.contestId,
@@ -294,14 +335,15 @@ function ensureTypedConfiguration(configuration: {
           return {
             tierKey: String(record.tierKey ?? record.tierId ?? `T${index + 1}`),
             label: String(
-              record.label ?? record.tierName ?? record.tierId ?? `Tier ${index + 1}`,
+              record.label ??
+                record.tierName ??
+                record.tierId ??
+                `Tier ${index + 1}`,
             ),
             pickCount: Number(record.pickCount ?? record.picksFromTier ?? 1),
             startPosition: Number(record.startPosition ?? index * 10 + 1),
             endPosition:
-              record.endPosition == null
-                ? null
-                : Number(record.endPosition),
+              record.endPosition == null ? null : Number(record.endPosition),
           };
         })
       : [];
@@ -335,4 +377,62 @@ function ensureTypedConfiguration(configuration: {
   throw new ContestManagementError(
     'Contest configuration is missing typed golf contest data',
   );
+}
+
+async function resolveCreateConfiguration(
+  input: CreateContestManagementRequest,
+  templateRepo: ContestConfigTemplateRepository,
+): Promise<{
+  template?: ContestConfigTemplate;
+  configuration: ContestConfigurationRequest;
+}> {
+  if ('configuration' in input) {
+    return { configuration: input.configuration };
+  }
+
+  const template = await templateRepo.findById(input.templateId);
+  if (!template || !template.active) {
+    throw new ContestManagementError('Contest configuration template not found');
+  }
+
+  if (template.contestType !== input.contestType) {
+    throw new ContestManagementError(
+      'Contest configuration template does not match the requested contest type',
+    );
+  }
+
+  const configuration =
+    input.configurationOverrides ??
+    (template.configJson as ContestConfigurationRequest);
+
+  if (configuration.mode !== template.configMode) {
+    throw new ContestManagementError(
+      'Advanced configuration override must use the same configuration mode as the selected template',
+    );
+  }
+
+  return {
+    template,
+    configuration,
+  };
+}
+
+function mapContestConfigTemplateDto(
+  template: ContestConfigTemplate,
+): ContestConfigTemplateDto {
+  return {
+    id: template.id,
+    sport: template.sport,
+    eventType: template.eventType ?? null,
+    contestType: template.contestType,
+    configMode: template.configMode,
+    templateKey: template.templateKey,
+    name: template.name,
+    description: template.description,
+    sortOrder: template.sortOrder,
+    isDefault: template.isDefault,
+    active: template.active,
+    schemaVersion: template.schemaVersion,
+    configuration: template.configJson,
+  };
 }

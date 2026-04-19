@@ -12,6 +12,7 @@ export { PrismaActionItemRepository } from './prisma-action-item-repository';
 export { PrismaContestEntryRepository } from './prisma-contest-entry-repository';
 export { PrismaDraftSessionRepository } from './prisma-draft-session-repository';
 export {
+  PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
   PrismaContestCoreRepository,
   PrismaContestEntryAggregationRuleRepository,

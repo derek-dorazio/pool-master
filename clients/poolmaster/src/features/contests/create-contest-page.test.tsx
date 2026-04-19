@@ -8,6 +8,7 @@ const createManagedContestMock = vi.fn();
 const deleteContestMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const getManagedContestMock = vi.fn();
+const listManagedContestTemplatesMock = vi.fn();
 const listEventsMock = vi.fn();
 const updateContestMock = vi.fn();
 const updateManagedContestConfigurationMock = vi.fn();
@@ -17,6 +18,7 @@ vi.mock('@/lib/api', () => ({
   deleteContest: (...args: unknown[]) => deleteContestMock(...args),
   getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
   getManagedContest: (...args: unknown[]) => getManagedContestMock(...args),
+  listManagedContestTemplates: (...args: unknown[]) => listManagedContestTemplatesMock(...args),
   listEvents: (...args: unknown[]) => listEventsMock(...args),
   updateContest: (...args: unknown[]) => updateContestMock(...args),
   updateManagedContestConfiguration: (...args: unknown[]) =>
@@ -100,6 +102,71 @@ function primeCommonMocks() {
       ],
     },
   });
+  listManagedContestTemplatesMock.mockResolvedValue({
+    data: {
+      templates: [
+        {
+          id: '11111111-1111-4111-8111-111111111111',
+          sport: 'GOLF',
+          contestType: 'SINGLE_EVENT',
+          configMode: 'GOLF_TIERED',
+          templateKey: 'golf-tiered-pick-6',
+          name: 'Select one from each tier, 4 count',
+          description: 'Default golf tiered template',
+          sortOrder: 1,
+          isDefault: true,
+          active: true,
+          schemaVersion: 1,
+          configuration: {
+            mode: 'GOLF_TIERED',
+            maxEntriesPerSquad: 1,
+            rosterSize: 6,
+            countedScores: 4,
+            tierSource: 'ODDS',
+            tierGeneration: { defaultTierSize: 10 },
+            tiers: [
+              { tierKey: 'A', label: 'Tier A', pickCount: 1, startPosition: 1, endPosition: 10 },
+              { tierKey: 'B', label: 'Tier B', pickCount: 1, startPosition: 11, endPosition: 20 },
+              { tierKey: 'C', label: 'Tier C', pickCount: 1, startPosition: 21, endPosition: 30 },
+              { tierKey: 'D', label: 'Tier D', pickCount: 1, startPosition: 31, endPosition: 40 },
+              { tierKey: 'E', label: 'Tier E', pickCount: 1, startPosition: 41, endPosition: 50 },
+              { tierKey: 'F', label: 'Tier F', pickCount: 1, startPosition: 51, endPosition: null },
+            ],
+            cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+            displayScoring: 'TO_PAR',
+            tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
+          },
+        },
+        {
+          id: '33333333-3333-4333-8333-333333333333',
+          sport: 'GOLF',
+          contestType: 'SINGLE_EVENT',
+          configMode: 'GOLF_CATEGORY_PICKS',
+          templateKey: 'golf-category-picks',
+          name: 'Category picks',
+          description: 'Pick one golfer from each category.',
+          sortOrder: 2,
+          isDefault: false,
+          active: true,
+          schemaVersion: 1,
+          configuration: {
+            mode: 'GOLF_CATEGORY_PICKS',
+            maxEntriesPerSquad: 1,
+            categories: [
+              { categoryKey: 'SENIOR', label: 'Senior', pickCount: 1 },
+              { categoryKey: 'ROOKIE', label: 'Rookie', pickCount: 1 },
+              { categoryKey: 'PREVIOUS_WINNER', label: 'Previous Winner', pickCount: 1 },
+            ],
+            cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+            displayScoring: 'TO_PAR',
+            tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
+          },
+        },
+      ],
+    },
+  });
 }
 
 describe('CreateContestPage', () => {
@@ -108,6 +175,7 @@ describe('CreateContestPage', () => {
     deleteContestMock.mockReset();
     getLeagueByCodeMock.mockReset();
     getManagedContestMock.mockReset();
+    listManagedContestTemplatesMock.mockReset();
     listEventsMock.mockReset();
     updateContestMock.mockReset();
     updateManagedContestConfigurationMock.mockReset();
@@ -144,7 +212,8 @@ describe('CreateContestPage', () => {
           name: 'Masters Pick 6',
           sportEventId: 'event-1',
           contestType: 'SINGLE_EVENT',
-          configuration: expect.objectContaining({
+          templateId: '11111111-1111-4111-8111-111111111111',
+          configurationOverrides: expect.objectContaining({
             mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T11:55:00.000Z',
             rosterSize: 6,
@@ -185,8 +254,8 @@ describe('CreateContestPage', () => {
 
     renderCreateContestPage();
 
-    await screen.findByTestId('contest-mode-category');
-    fireEvent.click(screen.getByTestId('contest-mode-category'));
+    await screen.findByTestId('contest-template-golf-category-picks');
+    fireEvent.click(screen.getByTestId('contest-template-golf-category-picks'));
     fireEvent.change(screen.getByTestId('contest-name'), {
       target: { value: 'Masters Categories' },
     });
@@ -206,7 +275,8 @@ describe('CreateContestPage', () => {
           name: 'Masters Categories',
           sportEventId: 'event-1',
           contestType: 'SINGLE_EVENT',
-          configuration: expect.objectContaining({
+          templateId: '33333333-3333-4333-8333-333333333333',
+          configurationOverrides: expect.objectContaining({
             mode: 'GOLF_CATEGORY_PICKS',
             locksAt: '2026-04-10T11:55:00.000Z',
             cutRule: { type: 'FIXED_SCORE', fixedScore: 82 },
@@ -215,6 +285,8 @@ describe('CreateContestPage', () => {
               { categoryKey: 'SENIOR', label: 'Senior', pickCount: 1 },
               { categoryKey: 'ROOKIE', label: 'Rookie', pickCount: 1 },
               { categoryKey: 'PREVIOUS_WINNER', label: 'Previous Winner', pickCount: 1 },
+              { categoryKey: 'US_PLAYER', label: 'US Player', pickCount: 1 },
+              { categoryKey: 'INTERNATIONAL_PLAYER', label: 'International Player', pickCount: 1 },
             ],
           }),
         }),
