@@ -2,40 +2,149 @@
   "scenarioId": "golf-major-2026",
   "sport": "GOLF",
   "provider": "mock-contest-feed",
-  "description": "Single-event golf major with baseline field, pricing inputs, and live leaderboard updates.",
+  "description": "Season-level 2026 golf QA catalog with deterministic major and flagship event snapshots. The scenario id stays stable for existing mock-provider tests while the contents now model a broader season backbone.",
   "season": {
     "seasonId": "golf-2026-majors",
     "name": "Mock Golf Majors 2026",
     "year": 2026,
-    "startsAt": "2026-01-01T00:00:00.000Z",
-    "endsAt": "2026-12-31T23:59:59.000Z"
+    "startsAt": "2026-03-10T11:00:00.000Z",
+    "endsAt": "2026-07-19T21:00:00.000Z"
   },
   "events": [
     {
-      "eventId": "golf-masters-2026",
-      "name": "Mock Major Championship",
+      "eventId": "golf-players-2026",
+      "name": "THE PLAYERS Championship",
       "status": "completed",
       "schedule": {
-        "startsAt": "2026-04-10T15:00:00.000Z",
-        "endsAt": "2026-04-14T22:00:00.000Z",
-        "releaseAt": "2026-04-06T16:00:00.000Z",
+        "startsAt": "2026-03-12T11:00:00.000Z",
+        "endsAt": "2026-03-15T22:00:00.000Z",
+        "releaseAt": "2026-03-02T17:00:00.000Z",
+        "fieldLocksAt": "2026-03-11T17:00:00.000Z"
+      },
+      "venue": {
+        "name": "TPC Sawgrass",
+        "city": "Ponte Vedra Beach",
+        "region": "FL",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "metadata": {
+        "officialName": "THE PLAYERS Championship 2026",
+        "eventType": "stroke_play_flagship",
+        "tour": "PGA TOUR",
+        "externalEventId": "golf-players-2026",
+        "notes": [
+          "Real schedule backbone sourced from THE PLAYERS official 2026 field announcement.",
+          "Use this event for early-season ranking and pricing validation."
+        ]
+      },
+      "field": {
+        "asOf": "2026-03-09T17:00:00.000Z",
+        "status": "announced",
+        "note": "Flagship field locked after the final pre-tournament alternates were resolved.",
+        "contestants": [
+          { "contestantId": "golfer-01", "name": "Scottie Scheffler", "seed": 1, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-02", "name": "Rory McIlroy", "seed": 2, "teamName": "Northern Ireland", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-03", "name": "Xander Schauffele", "seed": 3, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-04", "name": "Collin Morikawa", "seed": 4, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-05", "name": "Ludvig Aberg", "seed": 5, "teamName": "Sweden", "countryCode": "SE", "participantStatus": "active" },
+          { "contestantId": "golfer-06", "name": "Viktor Hovland", "seed": 6, "teamName": "Norway", "countryCode": "NO", "participantStatus": "active" },
+          { "contestantId": "golfer-07", "name": "Hideki Matsuyama", "seed": 7, "teamName": "Japan", "countryCode": "JP", "participantStatus": "active" },
+          { "contestantId": "golfer-08", "name": "Justin Thomas", "seed": 8, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-09", "name": "Tommy Fleetwood", "seed": 9, "teamName": "England", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-10", "name": "Bryson DeChambeau", "seed": 10, "teamName": "USA", "countryCode": "US", "participantStatus": "active" }
+        ]
+      },
+      "feeds": {
+        "odds": {
+          "asOf": "2026-03-09T17:00:00.000Z",
+          "note": "Baseline outright prices for the season opener snapshot.",
+          "contestants": [
+            { "contestantId": "golfer-01", "odds": 8.0 },
+            { "contestantId": "golfer-02", "odds": 10.5 },
+            { "contestantId": "golfer-03", "odds": 12.0 },
+            { "contestantId": "golfer-04", "odds": 14.5 },
+            { "contestantId": "golfer-05", "odds": 16.0 },
+            { "contestantId": "golfer-06", "odds": 18.0 },
+            { "contestantId": "golfer-07", "odds": 22.0 },
+            { "contestantId": "golfer-08", "odds": 25.0 },
+            { "contestantId": "golfer-09", "odds": 32.0 },
+            { "contestantId": "golfer-10", "odds": 35.0 }
+          ]
+        },
+        "rankings": {
+          "asOf": "2026-03-09T17:00:00.000Z",
+          "note": "Deterministic early-season world-order proxy.",
+          "contestants": [
+            { "contestantId": "golfer-01", "ranking": 1 },
+            { "contestantId": "golfer-02", "ranking": 2 },
+            { "contestantId": "golfer-03", "ranking": 3 },
+            { "contestantId": "golfer-04", "ranking": 4 },
+            { "contestantId": "golfer-05", "ranking": 5 },
+            { "contestantId": "golfer-06", "ranking": 6 },
+            { "contestantId": "golfer-07", "ranking": 7 },
+            { "contestantId": "golfer-08", "ranking": 8 },
+            { "contestantId": "golfer-09", "ranking": 9 },
+            { "contestantId": "golfer-10", "ranking": 10 }
+          ]
+        },
+        "results": {
+          "asOf": "2026-03-15T22:00:00.000Z",
+          "note": "Completed flagship-event leaderboard for season calibration.",
+          "contestants": [
+            { "contestantId": "golfer-01", "score": -15, "result": "win" },
+            { "contestantId": "golfer-03", "score": -13, "result": "loss" },
+            { "contestantId": "golfer-08", "score": -12, "result": "loss" },
+            { "contestantId": "golfer-02", "score": -11, "result": "loss" },
+            { "contestantId": "golfer-04", "score": -10, "result": "loss" },
+            { "contestantId": "golfer-05", "score": -9, "result": "loss" },
+            { "contestantId": "golfer-06", "score": -8, "result": "loss" },
+            { "contestantId": "golfer-07", "score": -6, "result": "loss" },
+            { "contestantId": "golfer-09", "score": -5, "result": "loss" },
+            { "contestantId": "golfer-10", "score": -3, "result": "loss" }
+          ]
+        }
+      },
+      "updates": [
+        {
+          "updateId": "golf-players-2026-live-1",
+          "asOf": "2026-03-14T22:00:00.000Z",
+          "feedKind": "results",
+          "updateType": "live",
+          "note": "Saturday leaderboard update before the final round.",
+          "contestants": [
+            { "contestantId": "golfer-01", "score": -11, "result": "pending" },
+            { "contestantId": "golfer-03", "score": -10, "result": "pending" },
+            { "contestantId": "golfer-08", "score": -9, "result": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "eventId": "golf-masters-2026",
+      "name": "Masters Tournament",
+      "status": "completed",
+      "schedule": {
+        "startsAt": "2026-04-09T12:00:00.000Z",
+        "endsAt": "2026-04-12T22:00:00.000Z",
+        "releaseAt": "2026-04-01T16:00:00.000Z",
         "fieldLocksAt": "2026-04-09T16:00:00.000Z"
       },
       "venue": {
-        "name": "Mock National Golf Club",
+        "name": "Augusta National Golf Club",
         "city": "Augusta",
         "region": "GA",
         "countryCode": "US",
         "timeZone": "America/New_York"
       },
       "metadata": {
-        "officialName": "Mock Major Championship 2026",
+        "officialName": "Masters Tournament 2026",
         "eventType": "stroke_play_major",
         "tour": "PGA",
         "externalEventId": "golf-masters-2026",
         "notes": [
-          "Use for golf tier and pricing ingestion.",
-          "Includes one live results update and one field status change."
+          "Real tournament week sourced from Augusta National's 2026 Masters staffing page.",
+          "Use for major-championship entry and lock-flow testing."
         ]
       },
       "field": {
@@ -83,7 +192,7 @@
       },
       "updates": [
         {
-          "updateId": "golf-major-2026-field-1",
+          "updateId": "golf-masters-2026-field-1",
           "asOf": "2026-04-08T15:00:00.000Z",
           "feedKind": "field",
           "updateType": "refresh",
@@ -93,7 +202,7 @@
           ]
         },
         {
-          "updateId": "golf-major-2026-live-1",
+          "updateId": "golf-masters-2026-live-1",
           "asOf": "2026-04-12T18:30:00.000Z",
           "feedKind": "results",
           "updateType": "live",
@@ -101,6 +210,651 @@
           "contestants": [
             { "contestantId": "golfer-01", "score": -10, "result": "pending" },
             { "contestantId": "golfer-02", "score": -8, "result": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "eventId": "golf-pga-championship-2026",
+      "name": "PGA Championship",
+      "status": "completed",
+      "schedule": {
+        "startsAt": "2026-05-14T11:00:00.000Z",
+        "endsAt": "2026-05-17T22:00:00.000Z",
+        "releaseAt": "2026-05-04T16:00:00.000Z",
+        "fieldLocksAt": "2026-05-13T16:00:00.000Z"
+      },
+      "venue": {
+        "name": "Aronimink Golf Club",
+        "city": "Newtown Square",
+        "region": "PA",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "metadata": {
+        "officialName": "PGA Championship 2026",
+        "eventType": "stroke_play_major",
+        "tour": "PGA",
+        "externalEventId": "golf-pga-championship-2026",
+        "notes": [
+          "Real tournament week sourced from the official PGA Championship 2026 site.",
+          "Use for second-major freeze and results propagation coverage."
+        ]
+      },
+      "field": {
+        "asOf": "2026-05-12T16:00:00.000Z",
+        "status": "locked",
+        "note": "Major field locked after practice-round week.",
+        "contestants": [
+          { "contestantId": "golfer-01", "name": "Scottie Scheffler", "seed": 1, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-02", "name": "Rory McIlroy", "seed": 2, "teamName": "Northern Ireland", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-03", "name": "Xander Schauffele", "seed": 3, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-04", "name": "Collin Morikawa", "seed": 4, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-05", "name": "Ludvig Aberg", "seed": 5, "teamName": "Sweden", "countryCode": "SE", "participantStatus": "active" },
+          { "contestantId": "golfer-06", "name": "Viktor Hovland", "seed": 6, "teamName": "Norway", "countryCode": "NO", "participantStatus": "active" },
+          { "contestantId": "golfer-07", "name": "Hideki Matsuyama", "seed": 7, "teamName": "Japan", "countryCode": "JP", "participantStatus": "active" },
+          { "contestantId": "golfer-08", "name": "Justin Thomas", "seed": 8, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-09", "name": "Tommy Fleetwood", "seed": 9, "teamName": "England", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-10", "name": "Bryson DeChambeau", "seed": 10, "teamName": "USA", "countryCode": "US", "participantStatus": "active" }
+        ]
+      },
+      "feeds": {
+        "odds": {
+          "asOf": "2026-05-12T16:00:00.000Z",
+          "note": "Updated after the first spring major.",
+          "contestants": [
+            { "contestantId": "golfer-02", "odds": 8.5 },
+            { "contestantId": "golfer-01", "odds": 9.0 },
+            { "contestantId": "golfer-03", "odds": 11.0 },
+            { "contestantId": "golfer-05", "odds": 14.0 },
+            { "contestantId": "golfer-04", "odds": 15.0 },
+            { "contestantId": "golfer-08", "odds": 18.0 },
+            { "contestantId": "golfer-06", "odds": 20.0 },
+            { "contestantId": "golfer-07", "odds": 23.0 },
+            { "contestantId": "golfer-10", "odds": 27.0 },
+            { "contestantId": "golfer-09", "odds": 30.0 }
+          ]
+        },
+        "rankings": {
+          "asOf": "2026-05-12T16:00:00.000Z",
+          "note": "Ranking-order proxy entering the second major.",
+          "contestants": [
+            { "contestantId": "golfer-02", "ranking": 1 },
+            { "contestantId": "golfer-01", "ranking": 2 },
+            { "contestantId": "golfer-05", "ranking": 3 },
+            { "contestantId": "golfer-03", "ranking": 4 },
+            { "contestantId": "golfer-04", "ranking": 5 },
+            { "contestantId": "golfer-08", "ranking": 6 },
+            { "contestantId": "golfer-06", "ranking": 7 },
+            { "contestantId": "golfer-07", "ranking": 8 },
+            { "contestantId": "golfer-10", "ranking": 9 },
+            { "contestantId": "golfer-09", "ranking": 10 }
+          ]
+        },
+        "results": {
+          "asOf": "2026-05-17T22:00:00.000Z",
+          "note": "Second-major results used for season progression testing.",
+          "contestants": [
+            { "contestantId": "golfer-03", "score": -9, "result": "win" },
+            { "contestantId": "golfer-02", "score": -8, "result": "loss" },
+            { "contestantId": "golfer-08", "score": -7, "result": "loss" },
+            { "contestantId": "golfer-01", "score": -6, "result": "loss" },
+            { "contestantId": "golfer-04", "score": -5, "result": "loss" },
+            { "contestantId": "golfer-05", "score": -4, "result": "loss" },
+            { "contestantId": "golfer-10", "score": -2, "result": "loss" },
+            { "contestantId": "golfer-09", "score": -1, "result": "loss" },
+            { "contestantId": "golfer-07", "score": 1, "result": "loss" },
+            { "contestantId": "golfer-06", "score": 3, "result": "cut" }
+          ]
+        }
+      },
+      "updates": [
+        {
+          "updateId": "golf-pga-2026-live-1",
+          "asOf": "2026-05-16T22:00:00.000Z",
+          "feedKind": "results",
+          "updateType": "live",
+          "note": "Saturday PGA leaderboard before the final round.",
+          "contestants": [
+            { "contestantId": "golfer-03", "score": -7, "result": "pending" },
+            { "contestantId": "golfer-02", "score": -6, "result": "pending" },
+            { "contestantId": "golfer-08", "score": -5, "result": "pending" }
+          ]
+        }
+      ]
+    },
+    {
+      "eventId": "golf-memorial-2026",
+      "name": "the Memorial Tournament presented by Workday",
+      "status": "field_announced",
+      "schedule": {
+        "startsAt": "2026-06-04T11:00:00.000Z",
+        "endsAt": "2026-06-07T22:00:00.000Z",
+        "releaseAt": "2026-05-27T16:00:00.000Z",
+        "fieldLocksAt": "2026-06-03T16:00:00.000Z"
+      },
+      "venue": {
+        "name": "Muirfield Village Golf Club",
+        "city": "Dublin",
+        "region": "OH",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "metadata": {
+        "officialName": "the Memorial Tournament presented by Workday 2026",
+        "eventType": "stroke_play_signature",
+        "tour": "PGA TOUR",
+        "externalEventId": "golf-memorial-2026",
+        "notes": [
+          "Real dates sourced from PGA TOUR and Open Qualifying Series references.",
+          "Good pre-major checkpoint for field-lock and alternate handling."
+        ]
+      },
+      "field": {
+        "asOf": "2026-06-02T16:00:00.000Z",
+        "status": "announced",
+        "note": "Field announced with one alternate still in contention.",
+        "contestants": [
+          { "contestantId": "golfer-01", "name": "Scottie Scheffler", "seed": 1, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-02", "name": "Rory McIlroy", "seed": 2, "teamName": "Northern Ireland", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-03", "name": "Xander Schauffele", "seed": 3, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-04", "name": "Collin Morikawa", "seed": 4, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-05", "name": "Ludvig Aberg", "seed": 5, "teamName": "Sweden", "countryCode": "SE", "participantStatus": "active" },
+          { "contestantId": "golfer-06", "name": "Viktor Hovland", "seed": 6, "teamName": "Norway", "countryCode": "NO", "participantStatus": "active" },
+          { "contestantId": "golfer-08", "name": "Justin Thomas", "seed": 7, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-09", "name": "Tommy Fleetwood", "seed": 8, "teamName": "England", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-10", "name": "Bryson DeChambeau", "seed": 9, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-07", "name": "Hideki Matsuyama", "seed": 10, "teamName": "Japan", "countryCode": "JP", "participantStatus": "provisional" }
+        ]
+      },
+      "feeds": {
+        "odds": {
+          "asOf": "2026-06-02T16:00:00.000Z",
+          "note": "Signature-event prices seeded from spring form.",
+          "contestants": [
+            { "contestantId": "golfer-01", "odds": 8.5 },
+            { "contestantId": "golfer-02", "odds": 9.0 },
+            { "contestantId": "golfer-03", "odds": 11.5 },
+            { "contestantId": "golfer-08", "odds": 14.0 },
+            { "contestantId": "golfer-04", "odds": 15.0 },
+            { "contestantId": "golfer-05", "odds": 16.0 },
+            { "contestantId": "golfer-06", "odds": 18.0 },
+            { "contestantId": "golfer-10", "odds": 20.0 },
+            { "contestantId": "golfer-09", "odds": 24.0 },
+            { "contestantId": "golfer-07", "odds": 26.0 }
+          ]
+        },
+        "rankings": {
+          "asOf": "2026-06-02T16:00:00.000Z",
+          "note": "Projected order entering the Memorial.",
+          "contestants": [
+            { "contestantId": "golfer-02", "ranking": 1 },
+            { "contestantId": "golfer-01", "ranking": 2 },
+            { "contestantId": "golfer-03", "ranking": 3 },
+            { "contestantId": "golfer-08", "ranking": 4 },
+            { "contestantId": "golfer-05", "ranking": 5 },
+            { "contestantId": "golfer-04", "ranking": 6 },
+            { "contestantId": "golfer-06", "ranking": 7 },
+            { "contestantId": "golfer-10", "ranking": 8 },
+            { "contestantId": "golfer-09", "ranking": 9 },
+            { "contestantId": "golfer-07", "ranking": 10 }
+          ]
+        },
+        "results": {
+          "asOf": "2026-06-02T16:00:00.000Z",
+          "note": "Future event placeholder results remain pending until play begins.",
+          "contestants": [
+            { "contestantId": "golfer-01", "result": "pending" },
+            { "contestantId": "golfer-02", "result": "pending" },
+            { "contestantId": "golfer-03", "result": "pending" },
+            { "contestantId": "golfer-04", "result": "pending" },
+            { "contestantId": "golfer-05", "result": "pending" },
+            { "contestantId": "golfer-06", "result": "pending" },
+            { "contestantId": "golfer-07", "result": "pending" },
+            { "contestantId": "golfer-08", "result": "pending" },
+            { "contestantId": "golfer-09", "result": "pending" },
+            { "contestantId": "golfer-10", "result": "pending" }
+          ]
+        }
+      },
+      "updates": [
+        {
+          "updateId": "golf-memorial-2026-field-1",
+          "asOf": "2026-06-03T14:00:00.000Z",
+          "feedKind": "field",
+          "updateType": "refresh",
+          "note": "Hideki Matsuyama cleared from provisional to active before the field lock.",
+          "contestants": [
+            { "contestantId": "golfer-07", "participantStatus": "active" }
+          ]
+        }
+      ]
+    },
+    {
+      "eventId": "golf-rbc-canadian-open-2026",
+      "name": "RBC Canadian Open",
+      "status": "scheduled",
+      "schedule": {
+        "startsAt": "2026-06-11T11:00:00.000Z",
+        "endsAt": "2026-06-14T22:00:00.000Z",
+        "releaseAt": "2026-06-03T16:00:00.000Z",
+        "fieldLocksAt": "2026-06-10T16:00:00.000Z"
+      },
+      "venue": {
+        "name": "TPC Toronto at Osprey Valley (North Course)",
+        "city": "Caledon",
+        "region": "ON",
+        "countryCode": "CA",
+        "timeZone": "America/Toronto"
+      },
+      "metadata": {
+        "officialName": "RBC Canadian Open 2026",
+        "eventType": "stroke_play_open",
+        "tour": "PGA TOUR",
+        "externalEventId": "golf-rbc-canadian-open-2026",
+        "notes": [
+          "Real dates sourced from the PGA TOUR 2026 event overview.",
+          "Use for open-field lock timing and pre-U.S. Open roster movement."
+        ]
+      },
+      "field": {
+        "asOf": "2026-06-09T16:00:00.000Z",
+        "status": "announced",
+        "note": "Canadian Open field announced before Wednesday lock.",
+        "contestants": [
+          { "contestantId": "golfer-01", "name": "Scottie Scheffler", "seed": 1, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-02", "name": "Rory McIlroy", "seed": 2, "teamName": "Northern Ireland", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-03", "name": "Xander Schauffele", "seed": 3, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-04", "name": "Collin Morikawa", "seed": 4, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-05", "name": "Ludvig Aberg", "seed": 5, "teamName": "Sweden", "countryCode": "SE", "participantStatus": "active" },
+          { "contestantId": "golfer-06", "name": "Viktor Hovland", "seed": 6, "teamName": "Norway", "countryCode": "NO", "participantStatus": "active" },
+          { "contestantId": "golfer-07", "name": "Hideki Matsuyama", "seed": 7, "teamName": "Japan", "countryCode": "JP", "participantStatus": "active" },
+          { "contestantId": "golfer-08", "name": "Justin Thomas", "seed": 8, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-09", "name": "Tommy Fleetwood", "seed": 9, "teamName": "England", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-10", "name": "Bryson DeChambeau", "seed": 10, "teamName": "USA", "countryCode": "US", "participantStatus": "active" }
+        ]
+      },
+      "feeds": {
+        "odds": {
+          "asOf": "2026-06-09T16:00:00.000Z",
+          "note": "Open-week pricing after the Memorial checkpoint.",
+          "contestants": [
+            { "contestantId": "golfer-01", "odds": 8.0 },
+            { "contestantId": "golfer-02", "odds": 9.5 },
+            { "contestantId": "golfer-03", "odds": 12.0 },
+            { "contestantId": "golfer-04", "odds": 14.0 },
+            { "contestantId": "golfer-08", "odds": 15.0 },
+            { "contestantId": "golfer-05", "odds": 16.0 },
+            { "contestantId": "golfer-06", "odds": 18.0 },
+            { "contestantId": "golfer-07", "odds": 22.0 },
+            { "contestantId": "golfer-09", "odds": 25.0 },
+            { "contestantId": "golfer-10", "odds": 28.0 }
+          ]
+        },
+        "rankings": {
+          "asOf": "2026-06-09T16:00:00.000Z",
+          "note": "Projected order entering the Canadian Open.",
+          "contestants": [
+            { "contestantId": "golfer-02", "ranking": 1 },
+            { "contestantId": "golfer-01", "ranking": 2 },
+            { "contestantId": "golfer-03", "ranking": 3 },
+            { "contestantId": "golfer-08", "ranking": 4 },
+            { "contestantId": "golfer-04", "ranking": 5 },
+            { "contestantId": "golfer-05", "ranking": 6 },
+            { "contestantId": "golfer-06", "ranking": 7 },
+            { "contestantId": "golfer-07", "ranking": 8 },
+            { "contestantId": "golfer-09", "ranking": 9 },
+            { "contestantId": "golfer-10", "ranking": 10 }
+          ]
+        },
+        "results": {
+          "asOf": "2026-06-09T16:00:00.000Z",
+          "note": "Future event placeholder results remain pending.",
+          "contestants": [
+            { "contestantId": "golfer-01", "result": "pending" },
+            { "contestantId": "golfer-02", "result": "pending" },
+            { "contestantId": "golfer-03", "result": "pending" },
+            { "contestantId": "golfer-04", "result": "pending" },
+            { "contestantId": "golfer-05", "result": "pending" },
+            { "contestantId": "golfer-06", "result": "pending" },
+            { "contestantId": "golfer-07", "result": "pending" },
+            { "contestantId": "golfer-08", "result": "pending" },
+            { "contestantId": "golfer-09", "result": "pending" },
+            { "contestantId": "golfer-10", "result": "pending" }
+          ]
+        }
+      },
+      "updates": [
+        {
+          "updateId": "golf-rbc-canadian-open-2026-field-1",
+          "asOf": "2026-06-10T14:00:00.000Z",
+          "feedKind": "field",
+          "updateType": "refresh",
+          "note": "One final status reminder before the Wednesday lock.",
+          "contestants": [
+            { "contestantId": "golfer-09", "participantStatus": "provisional", "note": "Late practice-round back concern." }
+          ]
+        }
+      ]
+    },
+    {
+      "eventId": "golf-us-open-2026",
+      "name": "U.S. Open",
+      "status": "scheduled",
+      "schedule": {
+        "startsAt": "2026-06-18T11:00:00.000Z",
+        "endsAt": "2026-06-21T22:00:00.000Z",
+        "releaseAt": "2026-06-10T16:00:00.000Z",
+        "fieldLocksAt": "2026-06-17T16:00:00.000Z"
+      },
+      "venue": {
+        "name": "Shinnecock Hills Golf Club",
+        "city": "Southampton",
+        "region": "NY",
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "metadata": {
+        "officialName": "U.S. Open Championship 2026",
+        "eventType": "stroke_play_major",
+        "tour": "USGA",
+        "externalEventId": "golf-us-open-2026",
+        "notes": [
+          "Real dates sourced from the official U.S. Open 2026 site.",
+          "Use for major-ready field snapshots that are still pre-play."
+        ]
+      },
+      "field": {
+        "asOf": "2026-06-16T16:00:00.000Z",
+        "status": "announced",
+        "note": "Major field announced with final status checks still pending.",
+        "contestants": [
+          { "contestantId": "golfer-01", "name": "Scottie Scheffler", "seed": 1, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-02", "name": "Rory McIlroy", "seed": 2, "teamName": "Northern Ireland", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-03", "name": "Xander Schauffele", "seed": 3, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-04", "name": "Collin Morikawa", "seed": 4, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-05", "name": "Ludvig Aberg", "seed": 5, "teamName": "Sweden", "countryCode": "SE", "participantStatus": "active" },
+          { "contestantId": "golfer-06", "name": "Viktor Hovland", "seed": 6, "teamName": "Norway", "countryCode": "NO", "participantStatus": "active" },
+          { "contestantId": "golfer-07", "name": "Hideki Matsuyama", "seed": 7, "teamName": "Japan", "countryCode": "JP", "participantStatus": "active" },
+          { "contestantId": "golfer-08", "name": "Justin Thomas", "seed": 8, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-09", "name": "Tommy Fleetwood", "seed": 9, "teamName": "England", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-10", "name": "Bryson DeChambeau", "seed": 10, "teamName": "USA", "countryCode": "US", "participantStatus": "active" }
+        ]
+      },
+      "feeds": {
+        "odds": {
+          "asOf": "2026-06-16T16:00:00.000Z",
+          "note": "Major-week pricing for Shinnecock setup.",
+          "contestants": [
+            { "contestantId": "golfer-01", "odds": 8.5 },
+            { "contestantId": "golfer-02", "odds": 9.0 },
+            { "contestantId": "golfer-03", "odds": 11.5 },
+            { "contestantId": "golfer-04", "odds": 13.5 },
+            { "contestantId": "golfer-08", "odds": 15.0 },
+            { "contestantId": "golfer-05", "odds": 16.0 },
+            { "contestantId": "golfer-06", "odds": 18.5 },
+            { "contestantId": "golfer-10", "odds": 20.0 },
+            { "contestantId": "golfer-09", "odds": 22.0 },
+            { "contestantId": "golfer-07", "odds": 24.0 }
+          ]
+        },
+        "rankings": {
+          "asOf": "2026-06-16T16:00:00.000Z",
+          "note": "Ranking order entering the U.S. Open.",
+          "contestants": [
+            { "contestantId": "golfer-02", "ranking": 1 },
+            { "contestantId": "golfer-01", "ranking": 2 },
+            { "contestantId": "golfer-03", "ranking": 3 },
+            { "contestantId": "golfer-08", "ranking": 4 },
+            { "contestantId": "golfer-04", "ranking": 5 },
+            { "contestantId": "golfer-05", "ranking": 6 },
+            { "contestantId": "golfer-10", "ranking": 7 },
+            { "contestantId": "golfer-06", "ranking": 8 },
+            { "contestantId": "golfer-09", "ranking": 9 },
+            { "contestantId": "golfer-07", "ranking": 10 }
+          ]
+        },
+        "results": {
+          "asOf": "2026-06-16T16:00:00.000Z",
+          "note": "Future event placeholder results remain pending.",
+          "contestants": [
+            { "contestantId": "golfer-01", "result": "pending" },
+            { "contestantId": "golfer-02", "result": "pending" },
+            { "contestantId": "golfer-03", "result": "pending" },
+            { "contestantId": "golfer-04", "result": "pending" },
+            { "contestantId": "golfer-05", "result": "pending" },
+            { "contestantId": "golfer-06", "result": "pending" },
+            { "contestantId": "golfer-07", "result": "pending" },
+            { "contestantId": "golfer-08", "result": "pending" },
+            { "contestantId": "golfer-09", "result": "pending" },
+            { "contestantId": "golfer-10", "result": "pending" }
+          ]
+        }
+      },
+      "updates": [
+        {
+          "updateId": "golf-us-open-2026-field-1",
+          "asOf": "2026-06-17T14:00:00.000Z",
+          "feedKind": "field",
+          "updateType": "refresh",
+          "note": "One informational injury status update before the field lock.",
+          "contestants": [
+            { "contestantId": "golfer-10", "participantStatus": "provisional", "note": "Monitor shoulder treatment after Tuesday practice." }
+          ]
+        }
+      ]
+    },
+    {
+      "eventId": "golf-genesis-scottish-open-2026",
+      "name": "Genesis Scottish Open",
+      "status": "scheduled",
+      "schedule": {
+        "startsAt": "2026-07-09T11:00:00.000Z",
+        "endsAt": "2026-07-12T20:00:00.000Z",
+        "releaseAt": "2026-07-01T11:00:00.000Z",
+        "fieldLocksAt": "2026-07-08T11:00:00.000Z"
+      },
+      "venue": {
+        "name": "The Renaissance Club",
+        "city": "North Berwick",
+        "region": "Scotland",
+        "countryCode": "GB",
+        "timeZone": "Europe/London"
+      },
+      "metadata": {
+        "officialName": "Genesis Scottish Open 2026",
+        "eventType": "stroke_play_links",
+        "tour": "DP World Tour",
+        "externalEventId": "golf-genesis-scottish-open-2026",
+        "notes": [
+          "Real dates sourced from The Open Qualifying Series page.",
+          "Useful late-season links form checkpoint before The Open."
+        ]
+      },
+      "field": {
+        "asOf": "2026-07-07T11:00:00.000Z",
+        "status": "announced",
+        "note": "Scottish Open field announced in the run-up to Royal Birkdale week.",
+        "contestants": [
+          { "contestantId": "golfer-01", "name": "Scottie Scheffler", "seed": 1, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-02", "name": "Rory McIlroy", "seed": 2, "teamName": "Northern Ireland", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-03", "name": "Xander Schauffele", "seed": 3, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-04", "name": "Collin Morikawa", "seed": 4, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-05", "name": "Ludvig Aberg", "seed": 5, "teamName": "Sweden", "countryCode": "SE", "participantStatus": "active" },
+          { "contestantId": "golfer-06", "name": "Viktor Hovland", "seed": 6, "teamName": "Norway", "countryCode": "NO", "participantStatus": "active" },
+          { "contestantId": "golfer-07", "name": "Hideki Matsuyama", "seed": 7, "teamName": "Japan", "countryCode": "JP", "participantStatus": "active" },
+          { "contestantId": "golfer-08", "name": "Justin Thomas", "seed": 8, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-09", "name": "Tommy Fleetwood", "seed": 9, "teamName": "England", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-10", "name": "Bryson DeChambeau", "seed": 10, "teamName": "USA", "countryCode": "US", "participantStatus": "active" }
+        ]
+      },
+      "feeds": {
+        "odds": {
+          "asOf": "2026-07-07T11:00:00.000Z",
+          "note": "Links-week pricing ahead of The Open.",
+          "contestants": [
+            { "contestantId": "golfer-02", "odds": 8.0 },
+            { "contestantId": "golfer-01", "odds": 9.0 },
+            { "contestantId": "golfer-09", "odds": 12.0 },
+            { "contestantId": "golfer-05", "odds": 13.0 },
+            { "contestantId": "golfer-03", "odds": 14.0 },
+            { "contestantId": "golfer-04", "odds": 16.0 },
+            { "contestantId": "golfer-06", "odds": 18.0 },
+            { "contestantId": "golfer-08", "odds": 20.0 },
+            { "contestantId": "golfer-07", "odds": 24.0 },
+            { "contestantId": "golfer-10", "odds": 28.0 }
+          ]
+        },
+        "rankings": {
+          "asOf": "2026-07-07T11:00:00.000Z",
+          "note": "Projected order entering the links swing.",
+          "contestants": [
+            { "contestantId": "golfer-02", "ranking": 1 },
+            { "contestantId": "golfer-01", "ranking": 2 },
+            { "contestantId": "golfer-03", "ranking": 3 },
+            { "contestantId": "golfer-09", "ranking": 4 },
+            { "contestantId": "golfer-05", "ranking": 5 },
+            { "contestantId": "golfer-04", "ranking": 6 },
+            { "contestantId": "golfer-06", "ranking": 7 },
+            { "contestantId": "golfer-08", "ranking": 8 },
+            { "contestantId": "golfer-07", "ranking": 9 },
+            { "contestantId": "golfer-10", "ranking": 10 }
+          ]
+        },
+        "results": {
+          "asOf": "2026-07-07T11:00:00.000Z",
+          "note": "Future event placeholder results remain pending.",
+          "contestants": [
+            { "contestantId": "golfer-01", "result": "pending" },
+            { "contestantId": "golfer-02", "result": "pending" },
+            { "contestantId": "golfer-03", "result": "pending" },
+            { "contestantId": "golfer-04", "result": "pending" },
+            { "contestantId": "golfer-05", "result": "pending" },
+            { "contestantId": "golfer-06", "result": "pending" },
+            { "contestantId": "golfer-07", "result": "pending" },
+            { "contestantId": "golfer-08", "result": "pending" },
+            { "contestantId": "golfer-09", "result": "pending" },
+            { "contestantId": "golfer-10", "result": "pending" }
+          ]
+        }
+      },
+      "updates": [
+        {
+          "updateId": "golf-genesis-scottish-open-2026-field-1",
+          "asOf": "2026-07-08T09:30:00.000Z",
+          "feedKind": "field",
+          "updateType": "refresh",
+          "note": "Pre-lock status refresh after Wednesday travel reports.",
+          "contestants": [
+            { "contestantId": "golfer-07", "participantStatus": "provisional", "note": "Awaiting final arrival confirmation." }
+          ]
+        }
+      ]
+    },
+    {
+      "eventId": "golf-open-championship-2026",
+      "name": "The Open Championship",
+      "status": "scheduled",
+      "schedule": {
+        "startsAt": "2026-07-16T10:00:00.000Z",
+        "endsAt": "2026-07-19T20:00:00.000Z",
+        "releaseAt": "2026-07-08T10:00:00.000Z",
+        "fieldLocksAt": "2026-07-15T10:00:00.000Z"
+      },
+      "venue": {
+        "name": "Royal Birkdale",
+        "city": "Southport",
+        "region": "Merseyside",
+        "countryCode": "GB",
+        "timeZone": "Europe/London"
+      },
+      "metadata": {
+        "officialName": "The 154th Open",
+        "eventType": "stroke_play_major",
+        "tour": "R&A",
+        "externalEventId": "golf-open-championship-2026",
+        "notes": [
+          "Real dates sourced from The Open at Royal Birkdale official pages.",
+          "This is the late-season major target for the first-pass QA season."
+        ]
+      },
+      "field": {
+        "asOf": "2026-07-14T10:00:00.000Z",
+        "status": "announced",
+        "note": "Open field announced before the Wednesday lock at Royal Birkdale.",
+        "contestants": [
+          { "contestantId": "golfer-01", "name": "Scottie Scheffler", "seed": 1, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-02", "name": "Rory McIlroy", "seed": 2, "teamName": "Northern Ireland", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-03", "name": "Xander Schauffele", "seed": 3, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-04", "name": "Collin Morikawa", "seed": 4, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-05", "name": "Ludvig Aberg", "seed": 5, "teamName": "Sweden", "countryCode": "SE", "participantStatus": "active" },
+          { "contestantId": "golfer-06", "name": "Viktor Hovland", "seed": 6, "teamName": "Norway", "countryCode": "NO", "participantStatus": "active" },
+          { "contestantId": "golfer-07", "name": "Hideki Matsuyama", "seed": 7, "teamName": "Japan", "countryCode": "JP", "participantStatus": "active" },
+          { "contestantId": "golfer-08", "name": "Justin Thomas", "seed": 8, "teamName": "USA", "countryCode": "US", "participantStatus": "active" },
+          { "contestantId": "golfer-09", "name": "Tommy Fleetwood", "seed": 9, "teamName": "England", "countryCode": "GB", "participantStatus": "active" },
+          { "contestantId": "golfer-10", "name": "Bryson DeChambeau", "seed": 10, "teamName": "USA", "countryCode": "US", "participantStatus": "active" }
+        ]
+      },
+      "feeds": {
+        "odds": {
+          "asOf": "2026-07-14T10:00:00.000Z",
+          "note": "Final major-week pricing entering Royal Birkdale.",
+          "contestants": [
+            { "contestantId": "golfer-02", "odds": 8.0 },
+            { "contestantId": "golfer-01", "odds": 8.5 },
+            { "contestantId": "golfer-09", "odds": 11.0 },
+            { "contestantId": "golfer-05", "odds": 12.5 },
+            { "contestantId": "golfer-03", "odds": 13.0 },
+            { "contestantId": "golfer-04", "odds": 15.0 },
+            { "contestantId": "golfer-06", "odds": 17.0 },
+            { "contestantId": "golfer-08", "odds": 20.0 },
+            { "contestantId": "golfer-07", "odds": 24.0 },
+            { "contestantId": "golfer-10", "odds": 26.0 }
+          ]
+        },
+        "rankings": {
+          "asOf": "2026-07-14T10:00:00.000Z",
+          "note": "Projected order entering the final major of the QA season backbone.",
+          "contestants": [
+            { "contestantId": "golfer-02", "ranking": 1 },
+            { "contestantId": "golfer-01", "ranking": 2 },
+            { "contestantId": "golfer-03", "ranking": 3 },
+            { "contestantId": "golfer-09", "ranking": 4 },
+            { "contestantId": "golfer-05", "ranking": 5 },
+            { "contestantId": "golfer-04", "ranking": 6 },
+            { "contestantId": "golfer-06", "ranking": 7 },
+            { "contestantId": "golfer-08", "ranking": 8 },
+            { "contestantId": "golfer-07", "ranking": 9 },
+            { "contestantId": "golfer-10", "ranking": 10 }
+          ]
+        },
+        "results": {
+          "asOf": "2026-07-14T10:00:00.000Z",
+          "note": "Future event placeholder results remain pending.",
+          "contestants": [
+            { "contestantId": "golfer-01", "result": "pending" },
+            { "contestantId": "golfer-02", "result": "pending" },
+            { "contestantId": "golfer-03", "result": "pending" },
+            { "contestantId": "golfer-04", "result": "pending" },
+            { "contestantId": "golfer-05", "result": "pending" },
+            { "contestantId": "golfer-06", "result": "pending" },
+            { "contestantId": "golfer-07", "result": "pending" },
+            { "contestantId": "golfer-08", "result": "pending" },
+            { "contestantId": "golfer-09", "result": "pending" },
+            { "contestantId": "golfer-10", "result": "pending" }
+          ]
+        }
+      },
+      "updates": [
+        {
+          "updateId": "golf-open-championship-2026-field-1",
+          "asOf": "2026-07-15T08:30:00.000Z",
+          "feedKind": "field",
+          "updateType": "refresh",
+          "note": "Final pre-lock status update after practice-round completion.",
+          "contestants": [
+            { "contestantId": "golfer-09", "participantStatus": "active", "note": "Cleared after Tuesday treatment." },
+            { "contestantId": "golfer-07", "participantStatus": "active", "note": "Arrival confirmed after Scottish Open week." }
           ]
         }
       ]

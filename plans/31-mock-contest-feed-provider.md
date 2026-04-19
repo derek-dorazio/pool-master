@@ -127,7 +127,7 @@ The format should be stable enough to support:
 
 Start with a small but useful set of sport families:
 
-- golf tournament scenario
+- golf season-backbone scenario
 - tennis tournament scenario
 - NCAA-style team tournament scenario
 - one team-slate scenario with live result updates
@@ -135,11 +135,51 @@ Start with a small but useful set of sport families:
 
 The initial data should be broad enough to exercise:
 
+- season-level event discovery
 - odds-based tier assignment
 - ranking-based pricing
 - seed-based fallback ordering
 - final result ingestion
 - contest standing updates after results arrive
+
+## 2026 Golf Season Backbone
+
+The first golf scenario should now behave like a small deterministic season
+catalog rather than a single isolated event.
+
+Current direction:
+
+- keep the existing `golf-major-2026` scenario id stable for compatibility with
+  the mock-provider tests and routes
+- expand that scenario's `events[]` catalog to cover a useful 2026 backbone of
+  real tournament names and dates
+- use a small stable roster of recognizable golfers across the season so
+  rankings, odds, field status, and results can evolve deterministically from
+  event to event
+- mix completed and upcoming events so QA can exercise:
+  - historical ingestion and standings
+  - future event release timing
+  - field-lock behavior
+  - pre-lock participant status changes
+
+Schedule references used for the first-pass 2026 golf catalog:
+
+- THE PLAYERS Championship official 2026 field announcement
+  - [theplayers.com](https://www.theplayers.com/news/2026/03/09/the-players-championship-announces-field-2026)
+- Masters Tournament 2026 staffing page with tournament-week dates
+  - [jobs.masters.com](https://jobs.masters.com/at/)
+- PGA Championship 2026 official site
+  - [pgachampionship.com](https://www.pgachampionship.com/)
+- U.S. Open 2026 official site
+  - [usopen.com](https://www.usopen.com/.html)
+- The Open at Royal Birkdale official pages
+  - [theopen.com](https://www.theopen.com/royal-birkdale-154th-open)
+- the Memorial Tournament and RBC Canadian Open official 2026 PGA TOUR overviews
+  - [pgatour.com Memorial](https://www.pgatour.com/tournaments/2026/the-memorial-tournament-presented-by-workday/R2026023/overview)
+  - [pgatour.com RBC Canadian Open](https://www.pgatour.com/tournaments/2026/rbc-canadian-open/R2026032/overview)
+- Open Qualifying Series references for the Memorial and Genesis Scottish Open
+  - [theopen.com Memorial OQS](https://www.theopen.com/qualification/the-open-qualifying-series/usa-memorial-tournament)
+  - [theopen.com Scottish OQS](https://www.theopen.com/qualification/the-open-qualifying-series/scotland)
 
 ## Deployment Rules
 
@@ -197,14 +237,14 @@ Future test owners should update the scenario files rather than inventing ad hoc
 | MCFP-002 | Architecture | Define the provider port/adapter contract that the mock service must implement | Done | Standalone Fastify routes now expose the feed contract surface locally without touching the core app wiring |
 | MCFP-003 | Deployment | Define supported deployment boundaries for the mock sports data provider | In Progress | The package currently runs locally and remains non-production-oriented; later work should clarify which non-production/bootstrap environments may rely on it explicitly without introducing hidden fallback behavior. |
 | MCFP-004 | OpenAPI | Generate and validate OpenAPI/client output for the mock service | Done | Package-local OpenAPI export and generated client output now exist under `packages/mock-contest-feed-provider/generated/` |
-| MCFP-005 | Scenarios | Design the JSON scenario-file format and baseline fixtures | Done | Baseline golf, tennis, NCAA team, and tie/correction scenarios now live under `contest-feed-scenarios/` |
+| MCFP-005 | Scenarios | Design the JSON scenario-file format and baseline fixtures | Done | Baseline golf, tennis, NCAA team, and tie/correction scenarios now live under `contest-feed-scenarios/`; golf now uses a season-backbone catalog direction instead of a single isolated event |
 | MCFP-006 | Ingestion Tests | Build a dedicated ingestion test suite that exercises the mock provider end to end | Not Started | Use the mock service only for the ingestion contract test lane |
 | MCFP-007 | Tiering / Pricing | Verify odds, rankings, and seed data drive tier and price derivation deterministically | Not Started | The mock feed should make tier and price derivation repeatable for tournament contests |
 | MCFP-008 | Results / Scoring | Verify final results and live updates propagate into standings and scoring flows | Not Started | Cover ties, withdrawals, and corrections in the scenario set |
 | MCFP-009 | Maintenance | Define update rules for adding new scenarios and for changing existing ones | Done | Scenario updates are now explicitly treated as test-contract changes, not app seed data |
 | MCFP-010 | Seed Separation | Remove the need for broad QA fixture data in application seed flows and document the new boundary | Done | The seed boundary is now documented in `rules/testing-rules.md` and in this plan; QA/manual test fixtures belong in mock feed scenarios |
-| MCFP-011 | Golf Schedule Sourcing | Source the 2026 golf event schedule from real-world references and translate it into deterministic mock-provider event scenarios | Not Started | Use real tournament names/dates as the season backbone for the golf catalog, then stabilize the resulting JSON for durable non-production use |
-| MCFP-012 | Golf Field Synthesis | Create believable deterministic upcoming-event fields, rankings, and odds from completed tournaments and stable historical/reference signals | Not Started | Use prior completed tournament results and known ranking/odds signals to synthesize stable mock participant fields for upcoming events without requiring a live provider or database |
+| MCFP-011 | Golf Schedule Sourcing | Source the 2026 golf event schedule from real-world references and translate it into deterministic mock-provider event scenarios | Done | The `golf-major-2026` scenario now encodes a season-level 2026 golf backbone using real event names/dates from official tournament references while retaining its stable scenario id |
+| MCFP-012 | Golf Field Synthesis | Create believable deterministic upcoming-event fields, rankings, and odds from completed tournaments and stable historical/reference signals | In Progress | The first-pass golf catalog now carries deterministic fields, rankings, prices, and a few completed leaderboards across the season backbone; future slices should deepen field size, late alternates, and more event-to-event statistical drift |
 
 ## Acceptance Criteria
 
