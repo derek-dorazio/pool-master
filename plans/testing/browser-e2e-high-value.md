@@ -10,6 +10,12 @@ Rebuild a higher-value browser E2E suite that covers real MVP journeys in the ne
 
 The previous MVP browser journey suite was removed from the deploy gate because it was too brittle relative to the signal it provided. The environment now has stronger backend functional coverage and a fresh PoolMaster frontend baseline, so the next browser phase should be built more deliberately rather than patched in CI.
 
+As of 2026-04-20, richer browser E2E remains intentionally deferred not only
+because of environment/data setup, but also because the lower-layer automated
+proof is still being strengthened. Browser E2E should not be relied upon to
+discover ordinary coding defects that should have failed local unit,
+integration, contract, or functional suites first.
+
 ## Target Journeys
 
 1. Commissioner creates league and invites a member
@@ -60,6 +66,8 @@ The previous MVP browser journey suite was removed from the deploy gate because 
 - Start outside the deploy gate
 - Run in ad hoc QA verification or a non-blocking CI lane first
 - Promote only the most reliable subset into required CI after repeated stable runs
+- Do not resume this plan until the active non-E2E use-case coverage remediation
+  lane has materially improved lower-layer proof for the same workflows
 
 ## Acceptance Criteria
 

@@ -156,12 +156,27 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 - [ ] DB integration test covers create, read, update, delete/inactivate, findById for new/changed domain objects
 - [ ] Contract-verification case added to `contract-verification-web.integration.ts`, `contract-verification-root-admin.integration.ts`, or an equivalent contract-verification suite for every new/changed endpoint
 - [ ] Coverage on changed files ≥ 80% statements
+- [ ] Positive documented use cases affected by the slice are covered at an
+      appropriate automated layer
+- [ ] Negative/error/permission use cases affected by the slice are covered at
+      an appropriate automated layer
 
 **OpenAPI:**
 - [ ] `npm run api:refresh` succeeds
 - [ ] `npm run api:validate` succeeds
 
 A slice that lands the schema and service logic correctly but skips DTOs, mappers, or tests is `In Progress`, not `Done`.
+
+For user-facing or workflow-heavy slices, "tests" also means the team can
+explain where the end-to-end use case is proven:
+
+- unit/data integration/contract coverage may prove sub-layers
+- functional API should prove the API-facing user journey
+- browser E2E should prove at least one truthful connected UI workflow when the
+  released feature is intended to be browser-usable
+
+If no automated layer currently proves the documented positive and negative use
+cases for the released behavior, the slice is not complete enough to deploy.
 
 For backend/shared contract slices, "complete" also means the documentation
 surface is complete enough for frontend consumption:

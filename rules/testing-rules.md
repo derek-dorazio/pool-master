@@ -42,6 +42,22 @@ All services and clients must follow these testing standards. This document defi
 - `Riley` reviews code quality and regression risk, but does not replace Tess
   as the coverage-matrix owner.
 
+### Core Testing Standard
+
+Coverage percentages are only a backstop. The primary standard is behavioral
+proof:
+
+- every documented positive use case must be represented by at least one
+  automated test at the most appropriate layer
+- every documented negative/error/permission use case must be represented by at
+  least one automated test at the most appropriate layer
+- if a released behavior does not have a truthful automated proof, it is not
+  considered complete just because line coverage thresholds pass
+
+The 80% changed-file expectation exists to pressure slices toward writing tests,
+but it does not replace use-case coverage. A slice with acceptable percentage
+coverage but missing core positive/negative use-case proof is still incomplete.
+
 ---
 
 ## 2. Test Layers
@@ -94,6 +110,13 @@ Notes:
 - Backend work must not be pushed with required test gates intentionally
   skipped. CI is confirmation, not the first place we discover missing local
   validation.
+- Failing automated tests indicate either:
+  - a real defect that must be fixed immediately, or
+  - a test that is no longer truthful and must be corrected or removed in the
+    same slice
+- Do not knowingly deploy broken or half-implemented code behind a green-ish
+  test story. If the released behavior is still broken, the fixing slice is not
+  done and deployment should stop.
 - Webapp work that changes shared domain types, DTOs, generated contract
   outputs, backend mappers, or backend response shaping is not frontend-only
   testing scope. Treat it as backend-impacting work and rerun the full backend
@@ -217,6 +240,35 @@ Before deleting an existing test suite for architecture/strategy reasons, confir
 
 Backend functional tests and any future browser E2E tests must be **use-case driven**. Each test file must walk a documented user journey from the plan use-case companions rather than poking endpoints or asserting page loads.
 
+### Required Use-Case Coverage Mapping
+
+For every active feature lane, Tess and Quinn must be able to point to where
+the documented use cases are proven.
+
+Minimum expectation before deployment:
+
+- positive happy path coverage for each released use case
+- negative/error or permission-path coverage for each released use case where a
+  failure mode is product-significant
+- at least one full-stack connected proof for each released user-facing
+  workflow family
+
+Acceptable proof layers vary by behavior:
+
+- unit: business logic and validation branches
+- data integration: persistence/query semantics
+- contract verification: DTO/runtime shape proof
+- functional API: truthful API-level user journey proof
+- browser E2E: truthful connected browser workflow proof
+
+Do not rely on only one layer when the released behavior spans multiple risks.
+For example, a commissioner contest setup flow may need:
+
+- contract verification for the routes
+- functional API for the create/update journey
+- browser E2E smoke for one truthful connected path once the environment is
+  stable
+
 ### Use-Case Traceability
 
 Smoke and E2E tests should be use-case driven and traceable to documented product behavior:
@@ -250,6 +302,32 @@ Smoke and E2E tests should be use-case driven and traceable to documented produc
 - Do not create multiple commissioner scripts unless there is a concrete reason
   that one commissioner journey can no longer stay coherent.
 
+### Browser E2E Purpose
+
+The browser E2E suite exists to smoke test a real connected workflow through
+the deployed stack so we can catch integration breakage that lower layers miss.
+
+That means:
+
+- each browser journey must prove a real user can complete the intended flow,
+  not just load the first page
+- browser E2E should flush out connection defects between frontend, API,
+  persistence, auth, background work, and environment data/setup
+- if a browser E2E workflow cannot run because required environment data does
+  not exist, that is an environment/product-readiness defect to plan around,
+  not a reason to pretend the flow is already proven
+
+Browser E2E is **not** the primary mechanism for discovering ordinary coding
+defects. The intended defect-detection order is:
+
+1. local unit/integration/contract/functional suites before commit
+2. CI validation before publish/artifact promotion
+3. browser E2E smoke for deployment failures, broken stack wiring, and
+   environment/configuration regressions
+
+If browser E2E is repeatedly finding defects that should have been caught by
+lower layers, stop expanding E2E and strengthen the lower-layer tests first.
+
 ### Browser E2E Cleanup Rules
 
 - Browser E2E should not rely on application seed data, legacy QA state, or
@@ -258,6 +336,8 @@ Smoke and E2E tests should be use-case driven and traceable to documented produc
   flows whenever practical.
 - Prefer cleanup through real product lifecycle APIs and UI flows rather than
   privileged backdoors.
+- It is acceptable to defer richer browser E2E expansion while the lower-layer
+  test foundation is still not reliably proving the same workflows.
 - Long-term target:
   - commissioner journeys clean up league-owned data through real commissioner
     lifecycle flows
