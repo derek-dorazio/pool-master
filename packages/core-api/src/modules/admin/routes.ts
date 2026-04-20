@@ -22,6 +22,7 @@ import {
   UserListResponseSchema,
   UserDetailResponseSchema,
   ProviderListResponseSchema,
+  ProviderSportSyncPreparationResponseSchema,
   ProviderSyncRunListResponseSchema,
   ProviderDetailResponseSchema,
   ProviderIngestionDashboardResponseSchema,
@@ -194,6 +195,17 @@ export async function adminModule(
       },
     },
     handler: provider.listSyncRuns,
+  });
+
+  fastify.post('/providers/sync/:sport', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Prepare contest-ready sport data',
+      description: 'Triggers manual provider sync plus event-detail hydration for the requested sport so root-admins can unblock contest-ready event data.',
+      operationId: 'adminPrepareSportSync',
+      response: withAdminErrorResponses({ 201: zodToJsonSchema(ProviderSportSyncPreparationResponseSchema) }, [404]),
+    },
+    handler: provider.prepareSportSync,
   });
 
   fastify.get('/providers/ingestion', {

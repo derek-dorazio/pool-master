@@ -192,6 +192,17 @@ export const ProviderSyncRunListResponseSchema = z.object({
 }).describe('Recent provider sync runs returned for root-admin operational visibility.');
 export type ProviderSyncRunListResponse = z.infer<typeof ProviderSyncRunListResponseSchema>;
 
+export const ProviderSportSyncPreparationResponseSchema = z.object({
+  sport: SportSchema,
+  providerIds: z.array(z.string()),
+  eventsDiscovered: z.number(),
+  eventsHydrated: z.number(),
+  participantRecordsSynced: z.number(),
+  rankingRecordsSynced: z.number(),
+  syncRuns: z.array(ProviderSyncRunDtoSchema),
+}).describe('Manual root-admin sport sync result that prepares contest-ready event data for the requested sport.');
+export type ProviderSportSyncPreparationResponse = z.infer<typeof ProviderSportSyncPreparationResponseSchema>;
+
 export const ProviderUnmappedParticipantDtoSchema = z.object({
   providerId: z.string(),
   providerName: z.string(),

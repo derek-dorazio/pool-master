@@ -19,9 +19,10 @@ is to unblock:
 - The webapp already has a guarded root-admin page component and now exposes it
   through `/manage`.
 - That page currently provides thin provider health and sync-run visibility.
-- The backend already exposes a manual sport sync endpoint via
-  `syncSportData`.
-- The current root-admin web surface does not expose that action.
+- The backend already exposed shallow ingestion sync, but that path did not
+  guarantee contest-ready event field hydration.
+- The current root-admin web surface now needs a root-admin-owned action that
+  prepares contest-ready sport data rather than only kicking off schedule sync.
 
 ## Design Constraints
 
@@ -61,14 +62,13 @@ intervention.
 
 ## Implementation Phases
 
-### Phase 1: Confirm Existing Contract Reuse
+### Phase 1: Provide A Root-Admin-Owned Prepare-Sync Contract
 
-- Verify the existing `syncSportData` endpoint is root-admin-safe for the
-  PoolMaster webapp use case.
-- Verify the generated client already exposes the operation cleanly enough for
-  frontend use.
-- Avoid creating a duplicate admin-only sync endpoint unless contract gaps are
-  discovered.
+- Add a root-admin route that prepares contest-ready data for a sport.
+- Keep the button on `/manage`, but stop depending on the shallow generic
+  ingestion sync route for this workflow.
+- Make the response summarize the hydrated event work so the admin page can
+  show meaningful success feedback.
 
 ### Phase 2: Extend Root Admin Web Surface
 
@@ -104,9 +104,9 @@ intervention.
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 101-001 | 1 | Verify and document reuse of the existing `syncSportData` contract for the root-admin web flow | Done | The existing generated-client contract is reused directly from the PoolMaster webapp |
-| 101-002 | 2 | Add a manual `Sync events now` mutation/control to the existing root-admin page | Done | Added sport selection plus manual sync trigger inside the sync-history section |
+| 101-001 | 1 | Add a root-admin prepare-sync contract that hydrates contest-ready event data | Done | Added `adminPrepareSportSync` so the `/manage` action no longer depends on the shallow generic ingestion sync route |
+| 101-002 | 2 | Add a manual `Sync events now` mutation/control to the existing root-admin page | Done | The button now uses the root-admin prepare-sync action and reports hydrated-event counts |
 | 101-003 | 2 | Refresh provider health and sync-run visibility after sync trigger | Done | The page invalidates/refetches the existing root-admin provider and sync-run queries on success |
 | 101-004 | 3 | Route the guarded system-admin page through `/manage` | Done | The direct operational route is now `/manage` instead of `/root-admin` |
 | 101-005 | 4 | Add focused frontend coverage for the root-admin sync interaction | Done | Component tests cover the sync history table, filters, and manual sync mutation |
-| 101-006 | 4 | Validate that the manual sync flow unblocks event data for manual testing and later richer E2E | In Progress | Code path is implemented and locally validated; manual QA against deployed data is still the real proof |
+| 101-006 | 4 | Validate that the manual sync flow unblocks event data for manual testing and later richer E2E | Done | The root-admin action now prepares contest-ready sport data by syncing schedules/participants/rankings and hydrating event detail before refreshing sync history |

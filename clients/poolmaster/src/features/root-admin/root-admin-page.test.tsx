@@ -6,12 +6,12 @@ import { RootAdminPage } from './root-admin-page';
 
 const adminListProviderSyncRunsMock = vi.fn();
 const adminListProvidersMock = vi.fn();
-const syncSportDataMock = vi.fn();
+const adminPrepareSportSyncMock = vi.fn();
 
 vi.mock('@/lib/api', () => ({
   adminListProviderSyncRuns: (...args: unknown[]) => adminListProviderSyncRunsMock(...args),
   adminListProviders: (...args: unknown[]) => adminListProvidersMock(...args),
-  syncSportData: (...args: unknown[]) => syncSportDataMock(...args),
+  adminPrepareSportSync: (...args: unknown[]) => adminPrepareSportSyncMock(...args),
 }));
 
 function renderRootAdminPage() {
@@ -36,7 +36,7 @@ describe('RootAdminPage', () => {
   afterEach(() => {
     adminListProviderSyncRunsMock.mockReset();
     adminListProvidersMock.mockReset();
-    syncSportDataMock.mockReset();
+    adminPrepareSportSyncMock.mockReset();
   });
 
   it('renders recent provider sync runs in the sync history table', async () => {
@@ -171,17 +171,30 @@ describe('RootAdminPage', () => {
         items: [],
       },
     });
-    syncSportDataMock.mockResolvedValue({
+    adminPrepareSportSyncMock.mockResolvedValue({
       data: {
-        job: {
-          jobType: 'SCHEDULE_SYNC',
-          providerId: 'mock-golf-provider',
-          sport: 'GOLF',
-          eventExternalId: null,
-          status: 'PENDING',
-          startedAt: '2026-04-19T16:05:00.000Z',
-          completedAt: null,
-        },
+        sport: 'GOLF',
+        providerIds: ['mock-golf-provider'],
+        eventsDiscovered: 2,
+        eventsHydrated: 2,
+        participantRecordsSynced: 144,
+        rankingRecordsSynced: 144,
+        syncRuns: [
+          {
+            id: 'run-2',
+            providerId: 'mock-golf-provider',
+            sport: 'GOLF',
+            eventId: null,
+            status: 'COMPLETED',
+            startedAt: '2026-04-19T16:05:00.000Z',
+            completedAt: '2026-04-19T16:06:00.000Z',
+            createdAt: '2026-04-19T16:05:00.000Z',
+            payload: {
+              runType: 'MANUAL_SPORT_SYNC',
+              detail: 'Prepared 2 GOLF event fields for contest setup.',
+            },
+          },
+        ],
       },
     });
 
@@ -192,7 +205,7 @@ describe('RootAdminPage', () => {
     fireEvent.click(screen.getByTestId('root-admin-sync-now'));
 
     await waitFor(() =>
-      expect(syncSportDataMock).toHaveBeenCalledWith({
+      expect(adminPrepareSportSyncMock).toHaveBeenCalledWith({
         path: {
           sport: 'GOLF',
         },
@@ -200,7 +213,7 @@ describe('RootAdminPage', () => {
     );
 
     expect(await screen.findByTestId('root-admin-sync-success')).toHaveTextContent(
-      'Started GOLF sync with mock-golf-provider.',
+      'Prepared GOLF event data across 1 provider with 2 hydrated events.',
     );
   });
 });

@@ -1,17 +1,17 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  adminPrepareSportSync,
   adminListProviderSyncRuns,
   adminListProviders,
-  syncSportData,
+  type AdminPrepareSportSyncResponses,
   type AdminListProviderSyncRunsResponses,
   type AdminListProvidersResponses,
-  type SyncSportDataResponses,
 } from '@/lib/api';
 
 type ProviderSyncRun = AdminListProviderSyncRunsResponses[200]['items'][number];
 type ProviderSummary = AdminListProvidersResponses[200]['items'][number];
-type SyncJob = SyncSportDataResponses[200]['job'];
+type SportSyncPreparation = AdminPrepareSportSyncResponses[201];
 
 const SPORT_OPTIONS = [
   'GOLF',
@@ -219,16 +219,16 @@ export function RootAdminPage() {
   }, [recentRuns]);
 
   const syncMutation = useMutation({
-    mutationFn: async (sport: (typeof SPORT_OPTIONS)[number]): Promise<SyncJob> => {
-      const response = await syncSportData({
+    mutationFn: async (sport: (typeof SPORT_OPTIONS)[number]): Promise<SportSyncPreparation> => {
+      const response = await adminPrepareSportSync({
         path: { sport },
       });
 
-      if (!response.data?.job) {
-        throw response.error ?? new Error('Sport sync response is missing the job payload.');
+      if (!response.data) {
+        throw response.error ?? new Error('Sport sync response is missing the preparation payload.');
       }
 
-      return response.data.job;
+      return response.data;
     },
     onSuccess: async () => {
       await Promise.all([
@@ -414,13 +414,23 @@ export function RootAdminPage() {
 
             {syncMutation.isSuccess ? (
               <p className="mt-3 text-sm text-emerald-700" data-testid="root-admin-sync-success">
-                Started
+                Prepared
                 {' '}
                 {syncMutation.data.sport}
                 {' '}
-                sync with
+                event data across
                 {' '}
-                {syncMutation.data.providerId}
+                {syncMutation.data.providerIds.length}
+                {' '}
+                provider
+                {syncMutation.data.providerIds.length === 1 ? '' : 's'}
+                {' '}
+                with
+                {' '}
+                {syncMutation.data.eventsHydrated}
+                {' '}
+                hydrated event
+                {syncMutation.data.eventsHydrated === 1 ? '' : 's'}
                 .
               </p>
             ) : null}

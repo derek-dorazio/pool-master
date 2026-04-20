@@ -13,6 +13,7 @@ import {
   ProviderConfigUnsupportedError,
   ProviderEventNotFoundError,
   ProviderNotFoundError,
+  SportProviderNotFoundError,
 } from './provider-service';
 import { sendError } from '../../core/error-handler';
 import { extractRootAdminContext } from './request-admin-context';
@@ -28,6 +29,7 @@ export function createProviderHandlers(providerService: ProviderService) {
     getProviderDetail,
     updateProviderConfig,
     triggerHealthCheck,
+    prepareSportSync,
     getIngestionDashboard,
     reIngestEvent,
     getUnmappedParticipants,
@@ -144,6 +146,45 @@ export function createProviderHandlers(providerService: ProviderService) {
     } catch (err) {
       if (err instanceof ProviderNotFoundError) {
         return sendError(reply, 404, 'PROVIDER_NOT_FOUND', err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function prepareSportSync(
+    request: FastifyRequest<{ Params: { sport: Sport } }>,
+    reply: FastifyReply,
+  ) {
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
+
+    try {
+      const result = await providerService.prepareSportSync(
+        request.params.sport,
+        rootAdminUserId,
+        rootAdminEmail,
+      );
+      return reply.status(201).send({
+        sport: result.sport,
+        providerIds: result.providerIds,
+        eventsDiscovered: result.eventsDiscovered,
+        eventsHydrated: result.eventsHydrated,
+        participantRecordsSynced: result.participantRecordsSynced,
+        rankingRecordsSynced: result.rankingRecordsSynced,
+        syncRuns: result.syncRuns.map((run) => ({
+          id: run.id,
+          providerId: run.providerId,
+          sport: run.sport,
+          eventId: run.eventId,
+          status: run.status,
+          startedAt: run.startedAt?.toISOString() ?? null,
+          completedAt: run.completedAt?.toISOString() ?? null,
+          createdAt: run.createdAt.toISOString(),
+          payload: run.payload,
+        })),
+      });
+    } catch (err) {
+      if (err instanceof SportProviderNotFoundError) {
+        return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
       }
       throw err;
     }

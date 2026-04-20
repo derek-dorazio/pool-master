@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import {
+  adminPrepareSportSync,
   adminListProviderSyncRuns,
   adminReIngestEvent,
   adminTriggerHealthCheck,
@@ -49,6 +50,18 @@ describe('SDK Functional: Root Admin', () => {
     });
 
     expectFunctionalError(providerResponse, {
+      status: 403,
+      code: 'ROOT_ADMIN_ACCESS_REQUIRED',
+    });
+
+    const prepareSyncResponse = await adminPrepareSportSync({
+      client: user.client,
+      path: {
+        sport: 'GOLF',
+      },
+    });
+
+    expectFunctionalError(prepareSyncResponse, {
       status: 403,
       code: 'ROOT_ADMIN_ACCESS_REQUIRED',
     });
@@ -175,6 +188,18 @@ describe('SDK Functional: Root Admin', () => {
     expectFunctionalError(reIngestResponse, {
       status: 404,
       code: 'PROVIDER_NOT_FOUND',
+    });
+
+    const prepareSyncResponse = await adminPrepareSportSync({
+      client: user.client,
+      path: {
+        sport: 'UFC',
+      },
+    });
+
+    expectFunctionalError(prepareSyncResponse, {
+      status: 404,
+      code: 'SPORT_PROVIDER_NOT_FOUND',
     });
   });
 });

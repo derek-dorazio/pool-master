@@ -22,6 +22,8 @@ Major states:
 Notes:
 - this can remain a direct guarded `/manage` route without menu wiring in first
   pass
+- the first-pass manual sync should prepare contest-ready event data, not only
+  start a shallow schedule sync
 
 ## Commissioner Contest Create / Configure
 

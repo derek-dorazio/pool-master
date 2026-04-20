@@ -7,6 +7,7 @@ import {
   ProviderHealthCheckDtoSchema,
   ProviderIngestionJobDtoSchema,
   ProviderListResponseSchema,
+  ProviderSportSyncPreparationResponseSchema,
   ProviderSyncRunListResponseSchema,
   UserDetailResponseSchema,
   UserListResponseSchema,
@@ -66,7 +67,23 @@ class OperationalContractProvider implements SportDataProvider {
   sportsCovered: Sport[] = ['GOLF'];
 
   async getUpcomingEvents(): Promise<SportEvent[]> {
-    return [];
+    return [
+      {
+        externalId: 'event-1',
+        providerId: this.providerId,
+        sport: 'GOLF',
+        name: 'Contract Masters',
+        venue: 'Contract National',
+        location: 'Augusta, GA',
+        startDate: new Date('2026-04-10T15:00:00.000Z'),
+        endDate: new Date('2026-04-14T21:00:00.000Z'),
+        status: 'SCHEDULED',
+        rounds: 4,
+        participantCount: 2,
+        fieldLocked: false,
+        metadata: {},
+      },
+    ];
   }
 
   async getEventDetails(eventId: string): Promise<SportEventDetail | null> {
@@ -131,7 +148,15 @@ class OperationalContractProvider implements SportDataProvider {
   }
 
   async getRankings(): Promise<ProviderRanking[]> {
-    return [];
+    return [
+      {
+        participantExternalId: 'golfer-1',
+        rankingType: 'OWGR',
+        rank: 1,
+        points: 15.2,
+        asOfDate: new Date('2026-04-08T00:00:00.000Z'),
+      },
+    ];
   }
 
   async getLiveScores(): Promise<ProviderStatEvent[]> {
@@ -462,6 +487,17 @@ describe('Contract verification (root admin)', () => {
       expect(ProviderHealthCheckDtoSchema.safeParse(healthRes.json()).success).toBe(true);
       expect(healthRes.json().providerId).toBe('contract-provider');
 
+      const prepareSyncRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/admin/providers/sync/GOLF',
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(prepareSyncRes.statusCode).toBe(201);
+      expect(ProviderSportSyncPreparationResponseSchema.safeParse(prepareSyncRes.json()).success).toBe(true);
+      expect(prepareSyncRes.json().sport).toBe('GOLF');
+      expect(prepareSyncRes.json().eventsHydrated).toBe(1);
+      expect(prepareSyncRes.json().providerIds).toContain('contract-provider');
+
       const reIngestRes = await app.inject({
         method: 'POST',
         url: '/api/v1/admin/providers/contract-provider/re-ingest/event-1',
@@ -520,6 +556,15 @@ describe('Contract verification (root admin)', () => {
       expect(reIngestMissingProviderRes.statusCode).toBe(404);
       expect(ErrorEnvelopeSchema.safeParse(reIngestMissingProviderRes.json()).success).toBe(true);
       expect(reIngestMissingProviderRes.json().error.code).toBe('PROVIDER_NOT_FOUND');
+
+      const missingSportProviderRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/admin/providers/sync/UFC',
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(missingSportProviderRes.statusCode).toBe(404);
+      expect(ErrorEnvelopeSchema.safeParse(missingSportProviderRes.json()).success).toBe(true);
+      expect(missingSportProviderRes.json().error.code).toBe('SPORT_PROVIDER_NOT_FOUND');
 
       const reIngestMissingEventRes = await app.inject({
         method: 'POST',

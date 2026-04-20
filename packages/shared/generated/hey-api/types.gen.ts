@@ -10879,6 +10879,96 @@ export type AdminListProviderSyncRunsResponses = {
 
 export type AdminListProviderSyncRunsResponse = AdminListProviderSyncRunsResponses[keyof AdminListProviderSyncRunsResponses];
 
+export type AdminPrepareSportSyncData = {
+    body?: never;
+    path: {
+        sport: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/providers/sync/{sport}';
+};
+
+export type AdminPrepareSportSyncErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminPrepareSportSyncError = AdminPrepareSportSyncErrors[keyof AdminPrepareSportSyncErrors];
+
+export type AdminPrepareSportSyncResponses = {
+    /**
+     * Manual root-admin sport sync result that prepares contest-ready event data for the requested sport.
+     */
+    201: {
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        providerIds: Array<string>;
+        eventsDiscovered: number;
+        eventsHydrated: number;
+        participantRecordsSynced: number;
+        rankingRecordsSynced: number;
+        syncRuns: Array<{
+            id: string;
+            providerId: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+            eventId: string;
+            status: 'RUNNING' | 'COMPLETED' | 'FAILED';
+            startedAt: string;
+            completedAt: string;
+            createdAt: string;
+            /**
+             * Opaque provider sync payload retained for thin admin operational detail surfaces.
+             */
+            payload: {
+                [key: string]: unknown;
+            };
+        }>;
+    };
+};
+
+export type AdminPrepareSportSyncResponse = AdminPrepareSportSyncResponses[keyof AdminPrepareSportSyncResponses];
+
 export type AdminGetIngestionDashboardData = {
     body?: never;
     path?: never;

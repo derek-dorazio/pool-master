@@ -361,8 +361,8 @@ Trigger:
 Main flow:
 1. PoolMaster lets the root admin choose the sport scope to synchronize.
 2. Root admin starts the sync manually.
-3. PoolMaster calls the existing operational sync endpoint and records the
-   requested job.
+3. PoolMaster runs the operational sport sync plus the event-detail hydration
+   needed to make imported events contest-ready.
 4. PoolMaster refreshes provider health/sync-run visibility so the operator can
    see that work has started or completed.
 5. Commissioner contest creation becomes unblocked once the imported event and

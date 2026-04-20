@@ -79,6 +79,16 @@ export interface ProviderSyncRun {
   payload: Record<string, unknown>;
 }
 
+export interface ProviderSportSyncPreparationResult {
+  sport: Sport;
+  providerIds: string[];
+  eventsDiscovered: number;
+  eventsHydrated: number;
+  participantRecordsSynced: number;
+  rankingRecordsSynced: number;
+  syncRuns: ProviderSyncRun[];
+}
+
 export interface IngestionError {
   providerId: string;
   errorType: string;
@@ -141,6 +151,13 @@ export class ProviderSportCoverageError extends Error {
   constructor(providerId: string) {
     super(`Provider ${providerId} does not expose any covered sports`);
     this.name = 'ProviderSportCoverageError';
+  }
+}
+
+export class SportProviderNotFoundError extends Error {
+  constructor(sport: Sport) {
+    super(`No provider is registered for sport ${sport}`);
+    this.name = 'SportProviderNotFoundError';
   }
 }
 
@@ -562,6 +579,157 @@ export class ProviderService {
     });
 
     return result;
+  }
+
+  async prepareSportSync(
+    sport: Sport,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
+  ): Promise<ProviderSportSyncPreparationResult> {
+    const providers = this.registry.getProvidersForSport(sport);
+    if (providers.length === 0) {
+      throw new SportProviderNotFoundError(sport);
+    }
+
+    const providerIds: string[] = [];
+    const syncRuns: ProviderSyncRun[] = [];
+    let eventsDiscovered = 0;
+    let eventsHydrated = 0;
+    let participantRecordsSynced = 0;
+    let rankingRecordsSynced = 0;
+
+    for (const provider of providers) {
+      providerIds.push(provider.providerId);
+      const startedAt = new Date();
+      const syncRun = await this.prisma.providerSyncRun.create({
+        data: {
+          providerId: provider.providerId,
+          sport,
+          eventId: null,
+          status: 'RUNNING',
+          startedAt,
+          payloadJson: {
+            runType: 'MANUAL_SPORT_SYNC',
+            detail: `Preparing ${sport} event data for contest setup.`,
+          },
+        },
+      });
+
+      try {
+        const from = new Date();
+        const to = new Date(from.getTime() + 14 * 24 * 60 * 60 * 1000);
+        const events = await provider.getUpcomingEvents(sport, { from, to });
+        eventsDiscovered += events.length;
+        await this.ingestionPersistence.persistEvents(events);
+
+        const participants = await provider.getParticipants(sport);
+        participantRecordsSynced += await this.ingestionPersistence.persistParticipants(participants);
+
+        try {
+          const rankings = await provider.getRankings(sport, sport === Sport.GOLF ? 'OWGR' : 'default');
+          rankingRecordsSynced += await this.ingestionPersistence.persistRankings(rankings);
+        } catch {
+          // Ranking support varies by provider; keep the manual sync resilient.
+        }
+
+        for (const event of events) {
+          const detail = await provider.getEventDetails(event.externalId);
+          if (!detail) {
+            continue;
+          }
+
+          await this.ingestionPersistence.persistEventDetail(detail);
+          eventsHydrated += 1;
+        }
+
+        const completedAt = new Date();
+        const updatedSyncRun = await this.prisma.providerSyncRun.update({
+          where: { id: syncRun.id },
+          data: {
+            status: 'COMPLETED',
+            completedAt,
+            payloadJson: {
+              runType: 'MANUAL_SPORT_SYNC',
+              detail: `Prepared ${eventsHydrated} ${sport} event fields for contest setup.`,
+              eventsDiscovered,
+              eventsHydrated,
+              participantCount: participantRecordsSynced,
+              rankingCount: rankingRecordsSynced,
+            },
+          },
+        });
+
+        syncRuns.push({
+          id: updatedSyncRun.id,
+          providerId: updatedSyncRun.providerId,
+          sport: updatedSyncRun.sport as Sport,
+          eventId: updatedSyncRun.eventId,
+          status: updatedSyncRun.status as ProviderSyncRun['status'],
+          startedAt: updatedSyncRun.startedAt,
+          completedAt: updatedSyncRun.completedAt,
+          createdAt: updatedSyncRun.createdAt,
+          payload: normalizeSyncRunPayload(updatedSyncRun.payloadJson),
+        });
+      } catch (error) {
+        const completedAt = new Date();
+        const failedSyncRun = await this.prisma.providerSyncRun.update({
+          where: { id: syncRun.id },
+          data: {
+            status: 'FAILED',
+            completedAt,
+            payloadJson: {
+              runType: 'MANUAL_SPORT_SYNC',
+              detail: error instanceof Error ? error.message : String(error),
+              eventsDiscovered,
+              eventsHydrated,
+              participantCount: participantRecordsSynced,
+              rankingCount: rankingRecordsSynced,
+            },
+          },
+        });
+
+        syncRuns.push({
+          id: failedSyncRun.id,
+          providerId: failedSyncRun.providerId,
+          sport: failedSyncRun.sport as Sport,
+          eventId: failedSyncRun.eventId,
+          status: failedSyncRun.status as ProviderSyncRun['status'],
+          startedAt: failedSyncRun.startedAt,
+          completedAt: failedSyncRun.completedAt,
+          createdAt: failedSyncRun.createdAt,
+          payload: normalizeSyncRunPayload(failedSyncRun.payloadJson),
+        });
+
+        throw error;
+      }
+    }
+
+    await logAdminAction({
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
+      action: 'sportsdata.sync_sport_prepare',
+      resourceType: 'SPORT',
+      resourceId: sport,
+      description: `Prepared ${sport} event data for contest setup across ${providerIds.length} provider(s)`,
+      afterState: {
+        sport,
+        providerIds,
+        eventsDiscovered,
+        eventsHydrated,
+        participantRecordsSynced,
+        rankingRecordsSynced,
+      },
+    });
+
+    return {
+      sport,
+      providerIds,
+      eventsDiscovered,
+      eventsHydrated,
+      participantRecordsSynced,
+      rankingRecordsSynced,
+      syncRuns,
+    };
   }
 
   async getIngestionDashboard(): Promise<IngestionDashboard> {
