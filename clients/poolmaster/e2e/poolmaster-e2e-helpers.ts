@@ -135,19 +135,22 @@ export async function completeTieredEntry(
   await page.getByTestId('contest-entry-tiebreaker-input').fill(entry.tiebreakerValue);
   await page.getByTestId('contest-entry-save-details').click();
 
-  const groupCount = await page.locator('[data-testid^="contest-entry-group-"]').count();
+  const selectionGroups = page.locator('section[data-testid^="contest-entry-group-"]');
+  const groupCount = await selectionGroups.count();
 
   expect(groupCount, 'Tiered golf entry flow should expose at least one selection group.').toBeGreaterThan(0);
 
   for (let index = 0; index < groupCount; index += 1) {
-    const group = page.locator('[data-testid^="contest-entry-group-"]').nth(index);
-    const participantButtons = group.locator('[data-testid^="contest-entry-participant-"]:not([disabled])');
+    const group = selectionGroups.nth(index);
+    const groupToggle = group.locator('button[data-testid^="contest-entry-group-toggle-"]');
+    const participantButtons = group.locator('button[data-testid^="contest-entry-participant-"]:not([disabled])');
 
     if ((await participantButtons.count()) === 0) {
-      await group.locator('[data-testid^="contest-entry-group-toggle-"]').click();
+      await groupToggle.click();
     }
 
-    await expect(group.locator('[data-testid^="contest-entry-participant-"]:not([disabled])').first()).toBeVisible();
-    await group.locator('[data-testid^="contest-entry-participant-"]:not([disabled])').first().click();
+    const firstSelectableParticipant = participantButtons.first();
+    await expect(firstSelectableParticipant).toBeVisible();
+    await firstSelectableParticipant.click();
   }
 }
