@@ -91,22 +91,28 @@ export async function selectFirstAvailableGolfEvent(page: Page) {
   const eventSelect = page.getByTestId('contest-sport-event');
   await expect(eventSelect).toBeVisible();
 
-  const eventOptions = await eventSelect.locator('option').evaluateAll((options) =>
-    options
-      .map((option) => ({
-        value: (option as HTMLOptionElement).value,
-        label: option.textContent?.trim() ?? '',
-      }))
-      .filter((option) => option.value),
+  const eventsResponse = await page.request.get('/api/v1/events?sport=GOLF&limit=25');
+  expect(eventsResponse.ok(), 'Browser E2E needs the events API to be reachable for contest setup.').toBeTruthy();
+
+  const eventsPayload = await eventsResponse.json() as {
+    events?: Array<{
+      id: string;
+      contestEligible?: boolean;
+      participantCount?: number | null;
+    }>;
+  };
+
+  const candidateEvent = (eventsPayload.events ?? []).find(
+    (event) => event.contestEligible && (event.participantCount ?? 0) > 0,
   );
 
   expect(
-    eventOptions.length,
-    'QA must have at least one imported golf event available before this browser contest flow can run.',
-  ).toBeGreaterThan(0);
+    candidateEvent,
+    'QA must expose at least one contest-eligible golf event with participant data before this browser contest flow can run.',
+  ).toBeTruthy();
 
-  await eventSelect.selectOption(eventOptions[0].value);
-  return eventOptions[0];
+  await eventSelect.selectOption(candidateEvent!.id);
+  return candidateEvent!;
 }
 
 export async function createTieredContest(
