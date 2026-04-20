@@ -80,4 +80,7 @@ The previous MVP browser journey suite was removed from the deploy gate because 
   - member invite acceptance plus league join
   - commissioner contest creation from an imported event
   - commissioner tiered contest-entry creation and lineup completion
+- 2026-04-20: The two richer contest browser journeys remain draft and are now
+  env-gated behind `POOLMASTER_ENABLE_CONTEST_E2E` so they do not block the
+  deploy-gate browser smoke while QA event-field data is still non-deterministic.
 - These still stop short of browser coverage for locked-entry/history/final-standings verification, which remains the next expansion area for this suite.

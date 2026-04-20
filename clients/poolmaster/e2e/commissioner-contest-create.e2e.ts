@@ -8,6 +8,11 @@ import {
   registerUser,
 } from './poolmaster-e2e-helpers';
 
+test.skip(
+  !process.env.POOLMASTER_ENABLE_CONTEST_E2E,
+  'Draft contest browser journey requires stable contest-ready QA event data and is not part of the deploy-gate smoke by default.',
+);
+
 test('commissioner can create a tiered golf contest from an imported event', async ({ page }) => {
   const commissioner = buildE2EUser('ContestCommissioner');
   const league = buildLeagueSeed('FAIRWAY');
