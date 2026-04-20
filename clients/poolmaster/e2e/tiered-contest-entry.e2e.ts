@@ -32,11 +32,11 @@ test('commissioner can create and complete a tiered golf entry', async ({ page }
   });
 
   await test.step('show the saved entry detail after selections', async () => {
-    await expect(page.getByRole('heading', { name: entryName })).toBeVisible();
+    await expect(page.getByTestId('contest-entry-heading')).toHaveText(entryName);
     expect(page.url()).toContain('/entries/');
     expect(page.url()).not.toContain(`/league/${actualLeagueCode}`);
-    await expect(page.getByText('Build your lineup')).toBeVisible();
-    await expect(page.getByText('Winning score 271')).toBeVisible();
+    await expect(page.getByTestId('contest-entry-builder-heading')).toHaveText('Build your lineup');
+    await expect(page.getByTestId('contest-entry-tiebreaker-summary')).toHaveText('Winning score 271');
     await expect(page.locator('[data-testid^="contest-entry-selected-"]').first()).toBeVisible();
   });
 });

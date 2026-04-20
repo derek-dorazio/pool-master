@@ -129,12 +129,12 @@ export async function completeTieredEntry(
 ) {
   await expect(page.getByTestId('contest-enter-entry')).toBeVisible();
   await page.getByTestId('contest-enter-entry').click();
-  await expect(page.getByText('Build your lineup')).toBeVisible();
+  await expect(page.getByTestId('contest-entry-builder-heading')).toHaveText('Build your lineup');
 
   await page.getByTestId('contest-entry-name-input').fill(entry.name);
   await page.getByTestId('contest-entry-tiebreaker-input').fill(entry.tiebreakerValue);
   await page.getByTestId('contest-entry-save-details').click();
-  await expect(page.getByText(`Winning score ${entry.tiebreakerValue}`)).toBeVisible();
+  await expect(page.getByTestId('contest-entry-tiebreaker-summary')).toHaveText(`Winning score ${entry.tiebreakerValue}`);
 
   const selectionGroups = page.locator('section[data-testid^="contest-entry-group-"]');
   const groupCount = await selectionGroups.count();

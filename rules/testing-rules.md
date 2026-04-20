@@ -426,6 +426,8 @@ E2E tests must prove complete user journeys, not page loads. Each test walks the
 - Interactive controls: `data-testid`
 - Form inputs: semantic `id`
 - Page landmarks: `data-testid` with domain-oriented kebab-case naming (e.g., `league-create-submit`, `contest-entry-list`)
+- Browser E2E must use machine-oriented selectors (`getByTestId`, stable `id`, or equivalent deterministic selectors) for workflow navigation and state assertions.
+- Do not use visible copy selectors such as `getByText`, `getByRole({ name })`, or link/button text as the primary locator strategy in browser E2E unless the explicit purpose of the test is to validate user-facing copy.
 
 **Error detection:**
 - Every E2E test must assert no uncaught exceptions, no console errors (excluding known benign patterns), and no error boundary fallback UI.

@@ -511,8 +511,10 @@ export function ContestDetailPage() {
               {contestQuery.data.status}
             </span>
             <div>
-              <h2 className="text-3xl font-semibold tracking-tight">{contestQuery.data.name}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <h2 className="text-3xl font-semibold tracking-tight" data-testid="contest-detail-heading">
+                {contestQuery.data.name}
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-detail-summary">
                 {contestQuery.data.selectionType} · {contestQuery.data.scoringEngine}
                 {contestQuery.data.sport ? ` · ${contestQuery.data.sport}` : ''}
               </p>

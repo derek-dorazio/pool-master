@@ -513,10 +513,10 @@ export function ContestEntryPage() {
               {getContestPhaseLabel(contest)}
             </span>
             <div>
-              <h2 className="text-3xl font-semibold tracking-tight">
+              <h2 className="text-3xl font-semibold tracking-tight" data-testid="contest-entry-heading">
                 {selectedEntry?.name ?? entrySummary?.name ?? 'Contest entry'}
               </h2>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
                 {contest.name}
                 {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
               </p>
@@ -558,10 +558,10 @@ export function ContestEntryPage() {
           </div>
           <div className="rounded-[1.5rem] bg-background px-4 py-4">
             <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Tiebreaker</div>
-            <div className="mt-2 text-2xl font-semibold text-foreground">
+            <div className="mt-2 text-2xl font-semibold text-foreground" data-testid="contest-entry-tiebreaker-status">
               {hasSavedTiebreaker ? 'Saved' : isEditable ? 'Needed' : 'Closed'}
             </div>
-            <div className="mt-1 text-sm text-muted-foreground">
+            <div className="mt-1 text-sm text-muted-foreground" data-testid="contest-entry-tiebreaker-summary">
               {hasSavedTiebreaker
                 ? `Winning score ${draftState.tiebreakerValue}`
                 : isEditable
@@ -757,7 +757,7 @@ export function ContestEntryPage() {
         </div>
 
         <div className="rounded-[2rem] border border-border bg-card p-6">
-          <h3 className="text-xl font-semibold">
+          <h3 className="text-xl font-semibold" data-testid="contest-entry-builder-heading">
             {isEditable ? 'Build your lineup' : 'Saved lineup detail'}
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
