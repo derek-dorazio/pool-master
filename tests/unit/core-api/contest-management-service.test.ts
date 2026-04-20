@@ -483,17 +483,46 @@ describe('ContestManagementService', () => {
     expect(contestConfigurationRepo.update).toHaveBeenCalledWith('config-1', {
       selectionType: 'TIERED',
       configMode: 'GOLF_TIERED',
-      configJson: expect.objectContaining({
+      configJson: {
         mode: 'GOLF_TIERED',
         countedScores: 5,
-      }),
+        locksAt: '2026-04-11T12:00:00.000Z',
+        maxEntriesPerSquad: 2,
+        rosterSize: 8,
+        tierSource: 'WORLD_RANK',
+        tierGeneration: {
+          defaultTierSize: 10,
+        },
+        tiers: [
+          {
+            tierKey: 'A',
+            label: 'Tier A',
+            pickCount: 2,
+            startPosition: 1,
+            endPosition: 8,
+          },
+        ],
+        cutRule: {
+          type: 'FIXED_SCORE',
+          fixedScore: 82,
+        },
+        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+        displayScoring: 'TO_PAR',
+        tiebreaker: {
+          type: 'PREDICT_WINNING_SCORE',
+        },
+      },
       locksAt: new Date('2026-04-11T12:00:00.000Z'),
       maxEntriesPerSquad: 2,
       tierConfig: [
         {
+          tierId: 'A',
           tierKey: 'A',
+          tierName: 'Tier A',
+          tierNumber: 1,
           label: 'Tier A',
           pickCount: 2,
+          picksFromTier: 2,
           startPosition: 1,
           endPosition: 8,
           participantIds: ['participant-1'],
