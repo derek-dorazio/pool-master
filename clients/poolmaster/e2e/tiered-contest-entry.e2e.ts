@@ -36,7 +36,7 @@ test('commissioner can create and complete a tiered golf entry', async ({ page }
     expect(page.url()).toContain('/entries/');
     expect(page.url()).not.toContain(`/league/${actualLeagueCode}`);
     await expect(page.getByText('Build your lineup')).toBeVisible();
-    await expect(page.getByText('Saved')).toBeVisible();
+    await expect(page.getByText('Winning score 271')).toBeVisible();
     await expect(page.locator('[data-testid^="contest-entry-selected-"]').first()).toBeVisible();
   });
 });

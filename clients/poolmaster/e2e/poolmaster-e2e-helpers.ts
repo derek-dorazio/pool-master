@@ -134,7 +134,7 @@ export async function completeTieredEntry(
   await page.getByTestId('contest-entry-name-input').fill(entry.name);
   await page.getByTestId('contest-entry-tiebreaker-input').fill(entry.tiebreakerValue);
   await page.getByTestId('contest-entry-save-details').click();
-  await expect(page.getByText('Saved')).toBeVisible();
+  await expect(page.getByText(`Winning score ${entry.tiebreakerValue}`)).toBeVisible();
 
   const selectionGroups = page.locator('section[data-testid^="contest-entry-group-"]');
   const groupCount = await selectionGroups.count();
