@@ -134,6 +134,7 @@ export async function completeTieredEntry(
   await page.getByTestId('contest-entry-name-input').fill(entry.name);
   await page.getByTestId('contest-entry-tiebreaker-input').fill(entry.tiebreakerValue);
   await page.getByTestId('contest-entry-save-details').click();
+  await expect(page.getByText('Saved')).toBeVisible();
 
   const selectionGroups = page.locator('section[data-testid^="contest-entry-group-"]');
   const groupCount = await selectionGroups.count();
@@ -141,16 +142,29 @@ export async function completeTieredEntry(
   expect(groupCount, 'Tiered golf entry flow should expose at least one selection group.').toBeGreaterThan(0);
 
   for (let index = 0; index < groupCount; index += 1) {
-    const group = selectionGroups.nth(index);
-    const groupToggle = group.locator('button[data-testid^="contest-entry-group-toggle-"]');
-    const participantButtons = group.locator('button[data-testid^="contest-entry-participant-"]:not([disabled])');
+    let selectionMade = false;
 
-    if ((await participantButtons.count()) === 0) {
-      await groupToggle.click();
+    for (let groupIndex = 0; groupIndex < groupCount; groupIndex += 1) {
+      const group = selectionGroups.nth(groupIndex);
+      const groupToggle = group.locator('button[data-testid^="contest-entry-group-toggle-"]');
+      let participantButtons = group.locator('button[data-testid^="contest-entry-participant-"]:not([disabled])');
+
+      if ((await participantButtons.count()) === 0) {
+        await groupToggle.click();
+        participantButtons = group.locator('button[data-testid^="contest-entry-participant-"]:not([disabled])');
+      }
+
+      if ((await participantButtons.count()) === 0) {
+        continue;
+      }
+
+      const firstSelectableParticipant = participantButtons.first();
+      await expect(firstSelectableParticipant).toBeVisible();
+      await firstSelectableParticipant.click();
+      selectionMade = true;
+      break;
     }
 
-    const firstSelectableParticipant = participantButtons.first();
-    await expect(firstSelectableParticipant).toBeVisible();
-    await firstSelectableParticipant.click();
+    expect(selectionMade, `Selection round ${index + 1} should find an available participant in one of the tier groups.`).toBeTruthy();
   }
 }
