@@ -9,7 +9,10 @@ import {
   CreateLeagueModal,
   buildCreateLeagueDestination,
 } from '@/features/leagues/create-league-modal';
-import { buildLeagueContestCreatePath } from '@/features/leagues/league-routing';
+import {
+  buildLeagueContestCreatePath,
+  buildLeaguePath,
+} from '@/features/leagues/league-routing';
 import { LeagueSelector } from './league-selector';
 
 export function AppShell() {
@@ -132,22 +135,43 @@ export function AppShell() {
                 Create Contest
               </button>
             )}
-            <button
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
-              disabled
-              title="Contest list routing will be implemented in a later slice."
-              type="button"
-            >
-              Contest List
-            </button>
-            <button
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
-              disabled
-              title="Standings and history navigation will be implemented in a later slice."
-              type="button"
-            >
-              Standings &amp; History
-            </button>
+            {activeLeagueCode ? (
+              <>
+                <Link
+                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
+                  data-testid="app-nav-contest-list"
+                  to={`${buildLeaguePath(activeLeagueCode)}#league-contests`}
+                >
+                  Contest List
+                </Link>
+                <Link
+                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
+                  data-testid="app-nav-standings-history"
+                  to={`${buildLeaguePath(activeLeagueCode)}#league-history`}
+                >
+                  Standings &amp; History
+                </Link>
+              </>
+            ) : (
+              <>
+                <button
+                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
+                  disabled
+                  title="Open a league first to browse its contests."
+                  type="button"
+                >
+                  Contest List
+                </button>
+                <button
+                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
+                  disabled
+                  title="Open a league first to browse standings and history."
+                  type="button"
+                >
+                  Standings &amp; History
+                </button>
+              </>
+            )}
           </nav>
         ) : null}
 

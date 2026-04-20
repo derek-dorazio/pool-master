@@ -3,7 +3,6 @@ import { AuthHomePage } from '@/features/auth/auth-home-page';
 import { MyAccountPage } from '@/features/account/my-account-page';
 import { AppShell } from '@/features/app-shell/app-shell';
 import { NotFoundPage } from '@/features/app-shell/not-found-page';
-import { PlaceholderPage } from '@/features/app-shell/placeholder-page';
 import { CreateContestPage } from '@/features/contests/create-contest-page';
 import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { ContestEntryPage } from '@/features/contests/contest-entry-page';
@@ -93,13 +92,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'contests',
-        element: (
-          <PlaceholderPage
-            description="Contest discovery within a league, entry creation, standings, scoring, and history will converge here."
-            eyebrow="Member"
-            title="Contest routes"
-          />
-        ),
+        element: <Navigate replace to="/my-leagues" />,
       },
       {
         element: <RootAdminRouteGuard />,

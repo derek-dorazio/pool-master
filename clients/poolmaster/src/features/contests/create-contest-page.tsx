@@ -59,6 +59,8 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
   { key: 'INTERNATIONAL_PLAYER', label: 'International Player' },
 ];
 
+const SUPPORTED_CREATE_MODES: ContestMode[] = ['GOLF_TIERED'];
+
 const LOCK_PRESET_OPTIONS: Array<{
   value: LockPreset;
   label: string;
@@ -116,6 +118,41 @@ function formatDateTimeDisplay(isoString: string | null) {
   }
 
   return date.toLocaleString();
+}
+
+function formatReadinessLabel(event: SportEventSummary) {
+  switch (event.readinessStatus) {
+    case 'CONTEST_ELIGIBLE':
+      return 'Contest ready';
+    case 'PENDING_FIELD':
+      return 'Waiting for field';
+    case 'FIELD_LOCKED':
+      return 'Field locked';
+    case 'NOT_RELEASED':
+    default:
+      return 'Not released yet';
+  }
+}
+
+function formatReadinessReasons(event: SportEventSummary) {
+  if (!event.readinessReasons.length) {
+    return 'This event is ready for contest setup.';
+  }
+
+  return event.readinessReasons
+    .map((reason) => {
+      switch (reason) {
+        case 'EVENT_NOT_RELEASED':
+          return 'not released yet';
+        case 'FIELD_NOT_LOADED':
+          return 'field not loaded';
+        case 'FIELD_LOCKED':
+          return 'field already locked';
+        default:
+          return 'readiness status unavailable';
+      }
+    })
+    .join(', ');
 }
 
 function subtractMinutesFromIso(isoString: string, minutes: number) {
@@ -320,10 +357,27 @@ export function CreateContestPage() {
     () => eventsQuery.data?.find((event) => event.id === sportEventId) ?? null,
     [eventsQuery.data, sportEventId],
   );
+  const eligibleEvents = useMemo(
+    () => eventsQuery.data?.filter((event) => event.contestEligible) ?? [],
+    [eventsQuery.data],
+  );
+  const unavailableEvents = useMemo(
+    () => eventsQuery.data?.filter((event) => !event.contestEligible) ?? [],
+    [eventsQuery.data],
+  );
   const selectedTemplate = useMemo(
     () =>
       templatesQuery.data?.find((template) => template.id === selectedTemplateId) ?? null,
     [selectedTemplateId, templatesQuery.data],
+  );
+  const visibleTemplates = useMemo(
+    () =>
+      isEditMode
+        ? (templatesQuery.data ?? [])
+        : (templatesQuery.data ?? []).filter((template) =>
+            SUPPORTED_CREATE_MODES.includes(template.configMode),
+          ),
+    [isEditMode, templatesQuery.data],
   );
   const derivedLockAt = useMemo(
     () =>
@@ -390,6 +444,10 @@ export function CreateContestPage() {
   }
 
   function selectDefaultTemplateForMode(nextMode: ContestMode) {
+    if (!isEditMode && !SUPPORTED_CREATE_MODES.includes(nextMode)) {
+      return;
+    }
+
     const template = templatesQuery.data?.find(
       (entry) => entry.configMode === nextMode && entry.isDefault,
     ) ?? templatesQuery.data?.find((entry) => entry.configMode === nextMode);
@@ -472,24 +530,34 @@ export function CreateContestPage() {
   }, [defaultTierSize, hasCustomTiers, rosterSize]);
 
   useEffect(() => {
-    if (!sportEventId && eventsQuery.data?.length) {
-      setSportEventId(eventsQuery.data[0].id);
+    if (!sportEventId && eligibleEvents.length) {
+      setSportEventId(eligibleEvents[0].id);
     }
-  }, [eventsQuery.data, sportEventId]);
+  }, [eligibleEvents, sportEventId]);
 
   useEffect(() => {
-    if (isEditMode || selectedTemplateId || !templatesQuery.data?.length) {
+    if (sportEventId && eligibleEvents.some((event) => event.id === sportEventId)) {
+      return;
+    }
+
+    if (eligibleEvents.length) {
+      setSportEventId(eligibleEvents[0].id);
+    }
+  }, [eligibleEvents, sportEventId]);
+
+  useEffect(() => {
+    if (isEditMode || selectedTemplateId || !visibleTemplates.length) {
       return;
     }
 
     const defaultTemplate =
-      templatesQuery.data.find((template) => template.isDefault)
-      ?? templatesQuery.data[0];
+      visibleTemplates.find((template) => template.isDefault)
+      ?? visibleTemplates[0];
 
     if (defaultTemplate) {
       selectTemplate(defaultTemplate.id);
     }
-  }, [isEditMode, selectedTemplateId, templatesQuery.data]);
+  }, [isEditMode, selectedTemplateId, visibleTemplates]);
 
   useEffect(() => {
     if (mode === 'GOLF_CATEGORY_PICKS') {
@@ -511,8 +579,12 @@ export function CreateContestPage() {
         throw new Error('Contest name is required.');
       }
 
-      if (!sportEventId) {
+      if (!sportEventId || !selectedEvent) {
         throw new Error('Select a golf event before creating the contest.');
+      }
+
+      if (!selectedEvent.contestEligible) {
+        throw new Error('Select a contest-ready golf event before creating the contest.');
       }
 
       if (!parsedLockAt) {
@@ -830,7 +902,7 @@ export function CreateContestPage() {
               <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
                 {isEditMode
                   ? 'Keep contest setup and league-facing rules aligned from the same commissioner shell used during creation.'
-                  : 'Start with the approved golf-first contest family. Tiered contests lead the flow, and category picks are available from the same shell when you need a different format.'}
+                  : 'Start with the approved golf-first contest family. The current web flow supports tiered golf contests end to end.'}
               </p>
             </div>
           </div>
@@ -870,10 +942,16 @@ export function CreateContestPage() {
               className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
                 mode === 'GOLF_CATEGORY_PICKS'
                   ? 'bg-primary text-primary-foreground'
-                  : 'border border-border text-foreground hover:bg-muted/40'
+                  : 'border border-border text-muted-foreground'
               }`}
               data-testid="contest-mode-category"
+              disabled={!isEditMode}
               onClick={() => selectDefaultTemplateForMode('GOLF_CATEGORY_PICKS')}
+              title={
+                isEditMode
+                  ? undefined
+                  : 'Category-picks web entry flow will be enabled in a later slice.'
+              }
               type="button"
             >
               Category picks
@@ -894,9 +972,8 @@ export function CreateContestPage() {
                 className="rounded-2xl border border-border bg-background px-4 py-4 text-sm text-muted-foreground"
                 data-testid="contest-manage-readonly-note"
               >
-                Contest configuration is only editable while the contest is still in draft. Lock,
-                in-progress, and completed states follow the real event timing and feed updates
-                automatically.
+                Contest structure is no longer editable. Lock, in-progress, and completed states
+                follow the real event timing and feed updates automatically.
               </div>
             ) : null}
 
@@ -912,7 +989,7 @@ export function CreateContestPage() {
                   </p>
                 </div>
                 <div className="grid gap-3">
-                  {templatesQuery.data?.map((template) => (
+                  {visibleTemplates.map((template) => (
                     <button
                       className={`rounded-2xl border px-4 py-4 text-left transition ${
                         selectedTemplateId === template.id
@@ -940,6 +1017,12 @@ export function CreateContestPage() {
                     </button>
                   ))}
                 </div>
+                {!isEditMode ? (
+                  <div className="rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm text-muted-foreground">
+                    Category-picks contests remain part of the overall design, but the current web
+                    entry flow is tiered-only for this first pass.
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
@@ -966,13 +1049,53 @@ export function CreateContestPage() {
                 value={sportEventId}
               >
                 <option value="">Select an event</option>
-                {eventsQuery.data?.map((event) => (
+                {eligibleEvents.map((event) => (
                   <option key={event.id} value={event.id}>
-                    {event.name} · {new Date(event.startDate).toLocaleDateString()} · {event.status}
+                    {event.name}
+                    {' · '}
+                    {new Date(event.startDate).toLocaleDateString()}
+                    {' · '}
+                    {event.participantCount ?? 0}
+                    {' golfers'}
                   </option>
                 ))}
               </select>
             </label>
+
+            {selectedEvent ? (
+              <div className="rounded-2xl border border-border bg-background p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-medium text-foreground">Selected event readiness</div>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {formatReadinessReasons(selectedEvent)}
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    {formatReadinessLabel(selectedEvent)}
+                  </span>
+                </div>
+
+                <dl className="mt-4 grid gap-3 text-sm text-muted-foreground md:grid-cols-2">
+                  <div className="rounded-2xl border border-border/70 bg-card px-4 py-3">
+                    <dt className="font-medium text-foreground">Participants loaded</dt>
+                    <dd className="mt-1">{selectedEvent.participantCount ?? 0}</dd>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-card px-4 py-3">
+                    <dt className="font-medium text-foreground">Release at</dt>
+                    <dd className="mt-1">{formatDateTimeDisplay(selectedEvent.releaseAt)}</dd>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-card px-4 py-3">
+                    <dt className="font-medium text-foreground">Field locks at</dt>
+                    <dd className="mt-1">{formatDateTimeDisplay(selectedEvent.fieldLocksAt)}</dd>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-card px-4 py-3">
+                    <dt className="font-medium text-foreground">Event status</dt>
+                    <dd className="mt-1">{selectedEvent.status}</dd>
+                  </div>
+                </dl>
+              </div>
+            ) : null}
 
             <div className="space-y-3 rounded-2xl border border-border bg-background p-4">
               <div>
@@ -1299,7 +1422,12 @@ export function CreateContestPage() {
                 <button
                   className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
                   data-testid="create-contest-submit"
-                  disabled={saveContestMutation.isPending || eventsQuery.isError || !eventsQuery.data?.length}
+                  disabled={
+                    saveContestMutation.isPending
+                    || eventsQuery.isError
+                    || !eligibleEvents.length
+                    || !selectedEvent?.contestEligible
+                  }
                   onClick={() => {
                     setFormError(null);
                     void saveContestMutation.mutateAsync();
@@ -1390,7 +1518,7 @@ export function CreateContestPage() {
           <div className="rounded-[2rem] border border-border bg-card p-6">
             <h3 className="text-xl font-semibold">Lifecycle truth</h3>
             <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
-              <li>Commissioners configure and delete contests while they are still drafts.</li>
+              <li>Creating a contest makes it immediately live for league entries.</li>
               <li>Lock time is configured relative to the event start, then stored as an exact timestamp.</li>
               <li>Locked, in-progress, and completed states should follow event timing and feed updates automatically.</li>
             </ul>
@@ -1400,6 +1528,30 @@ export function CreateContestPage() {
             <div className="rounded-[2rem] border border-destructive/30 bg-destructive/5 p-6 text-sm text-destructive">
               We couldn&apos;t load golf events. Contest creation needs an imported event before a
               commissioner can continue.
+            </div>
+          ) : !eligibleEvents.length ? (
+            <div
+              className="rounded-[2rem] border border-sky-200 bg-sky-50 p-6 text-sm text-sky-950"
+              data-testid="create-contest-no-events"
+            >
+              <h3 className="text-lg font-semibold">No golf events are currently available for contest setup.</h3>
+              <p className="mt-2 text-sky-900/90">
+                PoolMaster only shows real imported events once they are released and the field is
+                loaded. Check back when the next tournament reaches contest-ready status.
+              </p>
+              {unavailableEvents.length ? (
+                <ul className="mt-4 space-y-2 text-sky-900/90">
+                  {unavailableEvents.slice(0, 3).map((event) => (
+                    <li key={event.id}>
+                      {event.name}
+                      {' · '}
+                      {formatReadinessLabel(event)}
+                      {' · '}
+                      {formatReadinessReasons(event)}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
           ) : null}
         </aside>

@@ -97,7 +97,13 @@ function primeCommonMocks() {
           name: 'Masters Tournament',
           status: 'SCHEDULED',
           startDate: '2026-04-10T12:00:00.000Z',
+          releaseAt: '2026-04-06T12:00:00.000Z',
+          fieldLocksAt: '2026-04-10T11:00:00.000Z',
+          participantCount: 144,
           fieldLocked: false,
+          readinessStatus: 'CONTEST_ELIGIBLE',
+          readinessReasons: [],
+          contestEligible: true,
         },
       ],
     },
@@ -242,56 +248,122 @@ describe('CreateContestPage', () => {
     );
   });
 
-  it('submits the commissioner golf category contest payload', async () => {
+  it('keeps category picks unavailable in the first-pass create flow', async () => {
     primeCommonMocks();
-    createManagedContestMock.mockResolvedValue({
+
+    renderCreateContestPage();
+
+    expect(await screen.findByTestId('contest-mode-category')).toBeDisabled();
+    expect(screen.queryByTestId('contest-template-golf-category-picks')).not.toBeInTheDocument();
+    expect(screen.getByText(/tiered-only for this first pass/i)).toBeInTheDocument();
+    expect(createManagedContestMock).not.toHaveBeenCalled();
+  });
+
+  it('still allows category-picks configuration to be viewed from the manage flow', async () => {
+    primeCommonMocks();
+    getManagedContestMock.mockResolvedValue({
       data: {
         contest: {
-          id: 'contest-2',
+          id: 'contest-78',
+          leagueId: 'league-1',
+          sportEventId: 'event-1',
+          name: 'Category Contest',
+          status: 'DRAFT',
+          createdAt: '2026-04-15T00:00:00.000Z',
+          updatedAt: '2026-04-15T00:00:00.000Z',
+          configuration: {
+            id: 'config-78',
+            contestId: 'contest-78',
+            mode: 'GOLF_CATEGORY_PICKS',
+            locksAt: '2026-04-10T11:55:00.000Z',
+            maxEntriesPerSquad: 1,
+            categories: [{ categoryKey: 'SENIOR', label: 'Senior', pickCount: 1 }],
+            cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+            displayScoring: 'TO_PAR',
+            tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
+          },
         },
+      },
+    });
+
+    renderContestPage('/league/BIGDAWGS/contests/contest-78/manage');
+
+    expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-mode-category')).not.toBeDisabled();
+    expect(screen.getByTestId('contest-category-toggle-SENIOR')).toBeChecked();
+  });
+
+  it('deletes a draft contest from the manage page', async () => {
+    primeCommonMocks();
+    getManagedContestMock.mockResolvedValue({
+      data: {
+        contest: {
+          id: 'contest-78',
+          leagueId: 'league-1',
+          sportEventId: 'event-1',
+          name: 'Delete Me',
+          status: 'DRAFT',
+          createdAt: '2026-04-15T00:00:00.000Z',
+          updatedAt: '2026-04-15T00:00:00.000Z',
+          configuration: {
+            id: 'config-78',
+            contestId: 'contest-78',
+            mode: 'GOLF_CATEGORY_PICKS',
+            locksAt: '2026-04-10T11:55:00.000Z',
+            maxEntriesPerSquad: 1,
+            categories: [{ categoryKey: 'SENIOR', label: 'Senior', pickCount: 1 }],
+            cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+            displayScoring: 'TO_PAR',
+            tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
+          },
+        },
+      },
+    });
+    deleteContestMock.mockResolvedValue({ data: undefined });
+
+    renderContestPage('/league/BIGDAWGS/contests/contest-78/manage');
+
+    expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('contest-delete'));
+
+    await waitFor(() =>
+      expect(deleteContestMock).toHaveBeenCalledWith({
+        path: { contestId: 'contest-78' },
+      }),
+    );
+  });
+
+  it('shows a no-events-available message when no golf event is contest-ready', async () => {
+    primeCommonMocks();
+    listEventsMock.mockResolvedValue({
+      data: {
+        events: [
+          {
+            id: 'event-1',
+            sport: 'GOLF',
+            name: 'Masters Tournament',
+            status: 'SCHEDULED',
+            startDate: '2026-04-10T12:00:00.000Z',
+            releaseAt: '2026-04-06T12:00:00.000Z',
+            fieldLocksAt: '2026-04-10T11:00:00.000Z',
+            participantCount: 0,
+            fieldLocked: false,
+            readinessStatus: 'PENDING_FIELD',
+            readinessReasons: ['FIELD_NOT_LOADED'],
+            contestEligible: false,
+          },
+        ],
       },
     });
 
     renderCreateContestPage();
 
-    await screen.findByTestId('contest-template-golf-category-picks');
-    fireEvent.click(screen.getByTestId('contest-template-golf-category-picks'));
-    fireEvent.change(screen.getByTestId('contest-name'), {
-      target: { value: 'Masters Categories' },
-    });
-    fireEvent.click(screen.getByTestId('contest-category-toggle-US_PLAYER'));
-    fireEvent.click(screen.getByTestId('contest-category-toggle-INTERNATIONAL_PLAYER'));
-    fireEvent.click(screen.getByTestId('contest-toggle-advanced'));
-    fireEvent.change(screen.getByTestId('contest-category-fallback-score'), {
-      target: { value: '82' },
-    });
-    fireEvent.click(screen.getByTestId('contest-max-entries-unlimited'));
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
-
-    await waitFor(() =>
-      expect(createManagedContestMock).toHaveBeenCalledWith({
-        path: { id: 'league-1' },
-        body: expect.objectContaining({
-          name: 'Masters Categories',
-          sportEventId: 'event-1',
-          contestType: 'SINGLE_EVENT',
-          templateId: '33333333-3333-4333-8333-333333333333',
-          configurationOverrides: expect.objectContaining({
-            mode: 'GOLF_CATEGORY_PICKS',
-            locksAt: '2026-04-10T11:55:00.000Z',
-            cutRule: { type: 'FIXED_SCORE', fixedScore: 82 },
-            tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
-            categories: [
-              { categoryKey: 'SENIOR', label: 'Senior', pickCount: 1 },
-              { categoryKey: 'ROOKIE', label: 'Rookie', pickCount: 1 },
-              { categoryKey: 'PREVIOUS_WINNER', label: 'Previous Winner', pickCount: 1 },
-              { categoryKey: 'US_PLAYER', label: 'US Player', pickCount: 1 },
-              { categoryKey: 'INTERNATIONAL_PLAYER', label: 'International Player', pickCount: 1 },
-            ],
-          }),
-        }),
-      }),
+    expect(await screen.findByTestId('create-contest-no-events')).toHaveTextContent(
+      'No golf events are currently available for contest setup.',
     );
+    expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
   });
 
   it('hydrates and saves the commissioner managed golf contest payload', async () => {
@@ -377,44 +449,4 @@ describe('CreateContestPage', () => {
     );
   });
 
-  it('deletes a draft contest from the manage page', async () => {
-    primeCommonMocks();
-    getManagedContestMock.mockResolvedValue({
-      data: {
-        contest: {
-          id: 'contest-78',
-          leagueId: 'league-1',
-          sportEventId: 'event-1',
-          name: 'Delete Me',
-          status: 'DRAFT',
-          createdAt: '2026-04-15T00:00:00.000Z',
-          updatedAt: '2026-04-15T00:00:00.000Z',
-          configuration: {
-            id: 'config-78',
-            contestId: 'contest-78',
-            mode: 'GOLF_CATEGORY_PICKS',
-            locksAt: '2026-04-10T11:55:00.000Z',
-            maxEntriesPerSquad: 1,
-            categories: [{ categoryKey: 'SENIOR', label: 'Senior', pickCount: 1 }],
-            cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-            displayScoring: 'TO_PAR',
-            tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
-          },
-        },
-      },
-    });
-    deleteContestMock.mockResolvedValue({ data: undefined });
-
-    renderContestPage('/league/BIGDAWGS/contests/contest-78/manage');
-
-    expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('contest-delete'));
-
-    await waitFor(() =>
-      expect(deleteContestMock).toHaveBeenCalledWith({
-        path: { contestId: 'contest-78' },
-      }),
-    );
-  });
 });

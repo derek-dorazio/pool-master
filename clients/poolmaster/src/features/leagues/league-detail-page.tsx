@@ -833,7 +833,7 @@ export function LeagueDetailPage() {
             </div>
           ) : null}
 
-          <div className="rounded-[2rem] border border-border bg-card p-6">
+          <div className="rounded-[2rem] border border-border bg-card p-6" id="league-contests">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h3 className="text-xl font-semibold">Contests</h3>
@@ -984,7 +984,7 @@ export function LeagueDetailPage() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-border bg-card p-6">
+          <div className="rounded-[2rem] border border-border bg-card p-6" id="league-history">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h3 className="text-xl font-semibold">Completed contest history</h3>
