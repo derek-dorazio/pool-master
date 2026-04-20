@@ -1,13 +1,16 @@
 import {
   createContest,
+  createManagedContest,
   deleteContest,
   enterContest,
   getContest,
   getContestEntry,
+  getManagedContest,
   getMyContestEntry,
   leaveContest,
   listContestEntries,
   listContests,
+  listManagedContestTemplates,
   updateContestEntry,
   updateContest,
   submitContestSelection,
@@ -117,6 +120,100 @@ async function cleanupContestArtifacts(): Promise<void> {
   }
 }
 
+async function seedImportedGolfEvent(options: {
+  eventName: string;
+  participantCount: number;
+  providerId?: string;
+}) {
+  const prisma = getFunctionalPrisma();
+  const sport = await prisma.sport.create({
+    data: {
+      name: `ManagedContestSport-${randomUUID().slice(0, 8)}`,
+      participantType: ParticipantType.INDIVIDUAL,
+      statSchema: {},
+    },
+  });
+  createdSportIds.push(sport.id);
+
+  const sportEvent = await prisma.sportEvent.create({
+    data: {
+      externalId: `managed-contest-event-${randomUUID().slice(0, 8)}`,
+      providerId: options.providerId ?? 'functional-test',
+      sport: Sport.GOLF,
+      name: options.eventName,
+      startDate: new Date('2026-04-10T12:00:00.000Z'),
+      releaseAt: new Date('2026-04-07T16:00:00.000Z'),
+      fieldLocksAt: new Date('2026-04-09T16:00:00.000Z'),
+      status: 'SCHEDULED',
+    },
+  });
+  createdSportEventIds.push(sportEvent.id);
+
+  const seededParticipants: Array<{
+    participantId: string;
+    sportEventParticipantId: string;
+    participantName: string;
+  }> = [];
+
+  for (let index = 0; index < options.participantCount; index += 1) {
+    const participant = await prisma.participant.create({
+      data: {
+        sportId: sport.id,
+        name: `Managed Contest Golfer ${index + 1}-${randomUUID().slice(0, 8)}`,
+        participantType: ParticipantType.INDIVIDUAL,
+        externalIds: {},
+        metadata: {},
+        position: 'GOLFER',
+        teamAffiliation: index % 2 === 0 ? 'USA' : 'EUR',
+      },
+    });
+    createdParticipantIds.push(participant.id);
+
+    const sportEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: sportEvent.id,
+        participantId: participant.id,
+        status: 'ACTIVE',
+      },
+    });
+    createdSportEventParticipantIds.push(sportEventParticipant.id);
+
+    await prisma.sportEventParticipantSourceData.create({
+      data: {
+        sportEventParticipantId: sportEventParticipant.id,
+        providerId: options.providerId ?? 'functional-test',
+        externalId: `managed-contest-golfer-${index + 1}`,
+        rawPayload: {
+          metadata: {
+            odds: 8 + index * 2,
+            ranking: index + 1,
+            scoreToPar: -(index + 1),
+          },
+        },
+        normalizedData: {
+          odds: 8 + index * 2,
+          ranking: index + 1,
+          scoreToPar: -(index + 1),
+          thru: 'F',
+          finishPosition: index + 1,
+        },
+        receivedAt: new Date(`2026-04-08T1${index}:00:00.000Z`),
+      },
+    });
+
+    seededParticipants.push({
+      participantId: participant.id,
+      sportEventParticipantId: sportEventParticipant.id,
+      participantName: participant.name,
+    });
+  }
+
+  return {
+    sportEventId: sportEvent.id,
+    participants: seededParticipants,
+  };
+}
+
 afterEach(async () => {
   await cleanupContestArtifacts();
   await cleanupFunctionalData();
@@ -127,6 +224,312 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: Contests and Entries', () => {
+  it('creates a template-first managed contest for an imported golf event and is immediately entry-ready', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({
+      displayName: 'Managed Contest Commissioner',
+      leagueName: 'Managed Contest Functional League',
+    });
+    const importedEvent = await seedImportedGolfEvent({
+      eventName: 'Managed Masters Functional Event',
+      participantCount: 6,
+    });
+
+    const templatesResponse = await listManagedContestTemplates({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+      query: {
+        sport: Sport.GOLF,
+        contestType: ContestType.SINGLE_EVENT,
+      },
+    });
+
+    expect(templatesResponse.data?.templates.length).toBeGreaterThan(0);
+    const defaultTemplate = templatesResponse.data?.templates.find(
+      (template) => template.isDefault,
+    );
+    expect(defaultTemplate).toBeDefined();
+
+    const createResponse = await createManagedContest({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+      body: {
+        name: `${league.name} Managed Masters Functional Event`,
+        sportEventId: importedEvent.sportEventId,
+        contestType: ContestType.SINGLE_EVENT,
+        templateId: defaultTemplate?.id as string,
+      },
+    });
+
+    expect(createResponse.data?.contest.id).toBeTruthy();
+    expect(createResponse.data?.contest.status).toBe(ContestStatus.OPEN);
+    expect(createResponse.data?.contest.templateId).toBe(defaultTemplate?.id);
+    expect(createResponse.data?.contest.configuration.mode).toBe(
+      defaultTemplate?.configuration.mode,
+    );
+
+    const contestId = createResponse.data?.contest.id as string;
+    const managedDetailResponse = await getManagedContest({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+        contestId,
+      },
+    });
+
+    expect(managedDetailResponse.data?.contest.id).toBe(contestId);
+    expect(managedDetailResponse.data?.contest.sportEventId).toBe(
+      importedEvent.sportEventId,
+    );
+
+    const entryResponse = await enterContest({
+      client: commissioner.client,
+      path: {
+        contestId,
+      },
+    });
+
+    expect(entryResponse.data?.contestId).toBe(contestId);
+    expect(entryResponse.data?.entry.entryNumber).toBe(1);
+
+    const myEntryResponse = await getMyContestEntry({
+      client: commissioner.client,
+      path: {
+        contestId,
+      },
+    });
+
+    expect(myEntryResponse.data?.entry?.id).toBe(entryResponse.data?.entry.id);
+  });
+
+  it('runs managed contest entry lifecycle against an imported event-backed field and rejects participants from another event', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({
+      displayName: 'Managed Selection Commissioner',
+      leagueName: 'Managed Selection Functional League',
+    });
+    const importedEvent = await seedImportedGolfEvent({
+      eventName: 'Managed Selection Event',
+      participantCount: 1,
+    });
+    const outsiderEvent = await seedImportedGolfEvent({
+      eventName: 'Managed Outsider Event',
+      participantCount: 1,
+    });
+
+    const templatesResponse = await listManagedContestTemplates({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+      query: {
+        sport: Sport.GOLF,
+        contestType: ContestType.SINGLE_EVENT,
+      },
+    });
+    const defaultTemplate = templatesResponse.data?.templates.find(
+      (template) => template.isDefault,
+    );
+    expect(defaultTemplate).toBeDefined();
+
+    const createResponse = await createManagedContest({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+      body: {
+        name: `${league.name} Managed Selection Event`,
+        sportEventId: importedEvent.sportEventId,
+        contestType: ContestType.SINGLE_EVENT,
+        templateId: defaultTemplate?.id as string,
+        configurationOverrides: {
+          mode: 'GOLF_TIERED',
+          locksAt: '2026-04-10T11:55:00.000Z',
+          maxEntriesPerSquad: 3,
+          rosterSize: 1,
+          countedScores: 1,
+          tierSource: 'ODDS',
+          tierGeneration: {
+            defaultTierSize: 10,
+          },
+          tiers: [
+            {
+              tierKey: 'A',
+              label: 'Tier A',
+              pickCount: 1,
+              startPosition: 1,
+              endPosition: 10,
+            },
+          ],
+          cutRule: {
+            type: 'FIXED_SCORE',
+            fixedScore: 80,
+          },
+          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+          displayScoring: 'TO_PAR',
+          tiebreaker: {
+            type: 'PREDICT_WINNING_SCORE',
+          },
+        },
+      },
+    });
+
+    const contestId = createResponse.data?.contest.id as string;
+    const firstEntryResponse = await enterContest({
+      client: commissioner.client,
+      path: {
+        contestId,
+      },
+    });
+    const secondEntryResponse = await enterContest({
+      client: commissioner.client,
+      path: {
+        contestId,
+      },
+    });
+
+    const selectedParticipant = importedEvent.participants[0];
+    const outsiderParticipant = outsiderEvent.participants[0];
+
+    const selectionResponse = await submitContestSelection({
+      client: commissioner.client,
+      path: {
+        contestId,
+      },
+      body: {
+        entryId: firstEntryResponse.data?.entry.id as string,
+        participantId: selectedParticipant.sportEventParticipantId,
+      },
+    });
+
+    expect(selectionResponse.data?.contestId).toBe(contestId);
+    expect(selectionResponse.data?.draftPickHistories).toHaveLength(1);
+    expect(selectionResponse.data?.draftPickHistories[0]?.participantId).toBe(
+      selectedParticipant.sportEventParticipantId,
+    );
+    expect(selectionResponse.data?.isComplete).toBe(false);
+
+    const entryDetailResponse = await getContestEntry({
+      client: commissioner.client,
+      path: {
+        contestId,
+        entryId: firstEntryResponse.data?.entry.id as string,
+      },
+    });
+
+    expect(entryDetailResponse.data?.entry.participants).toEqual([
+      expect.objectContaining({
+        participantId: selectedParticipant.participantId,
+        participantName: selectedParticipant.participantName,
+        participantStatus: 'ACTIVE',
+        latestPerformance: expect.objectContaining({
+          scoreToPar: -1,
+          thru: 'F',
+          finishPosition: 1,
+        }),
+      }),
+    ]);
+
+    const outsiderSelectionResponse = await submitContestSelection({
+      client: commissioner.client,
+      path: {
+        contestId,
+      },
+      body: {
+        entryId: secondEntryResponse.data?.entry.id as string,
+        participantId: outsiderParticipant.sportEventParticipantId,
+      },
+    });
+
+    expectFunctionalError(outsiderSelectionResponse, {
+      status: 400,
+      code: 'PARTICIPANT_NOT_IN_EVENT',
+    });
+  });
+
+  it('rejects invalid template-first managed contest creation requests through the generated SDK', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({
+      displayName: 'Managed Invalid Commissioner',
+      leagueName: 'Managed Invalid Functional League',
+    });
+    const importedEvent = await seedImportedGolfEvent({
+      eventName: 'Managed Invalid Event',
+      participantCount: 1,
+    });
+    const templatesResponse = await listManagedContestTemplates({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+      query: {
+        sport: Sport.GOLF,
+        contestType: ContestType.SINGLE_EVENT,
+      },
+    });
+    const defaultTemplate = templatesResponse.data?.templates.find(
+      (template) => template.isDefault,
+    );
+    expect(defaultTemplate).toBeDefined();
+
+    const missingTemplateResponse = await createManagedContest({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+      body: {
+        name: 'Missing Template Contest',
+        sportEventId: importedEvent.sportEventId,
+        contestType: ContestType.SINGLE_EVENT,
+        templateId: '00000000-0000-4000-8000-000000000000',
+      },
+    });
+
+    expectFunctionalError(missingTemplateResponse, {
+      status: 422,
+      code: 'CONTEST_CONFIGURATION_INVALID',
+    });
+
+    const mismatchedOverrideResponse = await createManagedContest({
+      client: commissioner.client,
+      path: {
+        id: league.id,
+      },
+      body: {
+        name: 'Mismatch Template Contest',
+        sportEventId: importedEvent.sportEventId,
+        contestType: ContestType.SINGLE_EVENT,
+        templateId: defaultTemplate?.id as string,
+        configurationOverrides: {
+          mode: 'GOLF_CATEGORY_PICKS',
+          maxEntriesPerSquad: 1,
+          categories: [
+            {
+              categoryKey: 'ROOKIE',
+              label: 'Rookie',
+              pickCount: 1,
+            },
+          ],
+          cutRule: {
+            type: 'FIXED_SCORE',
+            fixedScore: 80,
+          },
+          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+          displayScoring: 'TO_PAR',
+          tiebreaker: {
+            type: 'PREDICT_WINNING_SCORE',
+          },
+        },
+      },
+    });
+
+    expectFunctionalError(mismatchedOverrideResponse, {
+      status: 422,
+      code: 'CONTEST_CONFIGURATION_INVALID',
+    });
+  });
+
   it('creates, lists, reads, updates, and deletes a contest through the generated SDK', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({
       displayName: 'Contest Commissioner',

@@ -11426,13 +11426,18 @@ export type AdminReIngestEventError = AdminReIngestEventErrors[keyof AdminReInge
 
 export type AdminReIngestEventResponses = {
     /**
-     * Minimal success response envelope.
+     * Recent or active provider ingestion job.
      */
-    200: {
-        /**
-         * Confirms that the requested operation succeeded.
-         */
-        success: true;
+    201: {
+        id: string;
+        providerId: string;
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        eventId: string;
+        status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+        startedAt: string;
+        completedAt: string;
+        recordsProcessed: number;
+        errors: number;
     };
 };
 

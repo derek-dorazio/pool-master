@@ -268,8 +268,12 @@ async function derivePersistedTierConfig(
   const orderedCandidates = [...tierCandidates].sort((left, right) =>
     compareTierCandidates(left, right, configuration.tierSource),
   );
-  const persistedTiers = configuration.tiers.map((tier) => ({
+  const persistedTiers = configuration.tiers.map((tier, index) => ({
     ...tier,
+    tierId: tier.tierKey,
+    tierName: tier.label,
+    tierNumber: index + 1,
+    picksFromTier: tier.pickCount,
     participantIds: [] as string[],
   }));
 
@@ -292,7 +296,7 @@ async function derivePersistedTierConfig(
     );
     const valuationPayload = {
       orderIndex,
-      tier: matchingTier?.label,
+      tier: matchingTier?.tierId ?? matchingTier?.tierName ?? matchingTier?.label,
       valuationSource,
     };
 

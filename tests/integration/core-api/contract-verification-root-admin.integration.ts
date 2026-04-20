@@ -1,13 +1,20 @@
 import Fastify from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import {
   IngestionJobResponseSchema,
   IngestionProvidersResponseSchema,
   IngestSportOddsResponseSchema,
+  ProviderHealthCheckDtoSchema,
+  ProviderIngestionJobDtoSchema,
+  ProviderListResponseSchema,
   ProviderSyncRunListResponseSchema,
   UserDetailResponseSchema,
   UserListResponseSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+import { adminModule } from '../../../packages/core-api/src/modules/admin/routes';
+import { ProviderService } from '../../../packages/core-api/src/modules/admin/provider-service';
+import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
 import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import {
@@ -17,6 +24,7 @@ import {
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
+  withoutJsonBodyHeaders,
 } from '../helpers';
 import type {
   ProviderEventResult,
@@ -52,6 +60,117 @@ class ContractProvider implements SportDataProvider {
   }
 }
 
+class OperationalContractProvider implements SportDataProvider {
+  providerId = 'contract-provider';
+  providerName = 'Contract Provider';
+  sportsCovered: Sport[] = ['GOLF'];
+
+  async getUpcomingEvents(): Promise<SportEvent[]> {
+    return [];
+  }
+
+  async getEventDetails(eventId: string): Promise<SportEventDetail | null> {
+    if (eventId !== 'event-1') {
+      return null;
+    }
+
+    return {
+      externalId: 'event-1',
+      providerId: this.providerId,
+      sport: 'GOLF',
+      name: 'Contract Masters',
+      venue: 'Contract National',
+      location: 'Augusta, GA',
+      startDate: new Date('2026-04-10T15:00:00.000Z'),
+      endDate: new Date('2026-04-14T21:00:00.000Z'),
+      status: 'SCHEDULED',
+      rounds: 4,
+      participantCount: 2,
+      fieldLocked: false,
+      metadata: {
+        releaseRule: '3 days prior at noon',
+      },
+      participants: [
+        {
+          externalId: 'golfer-1',
+          providerId: this.providerId,
+          sport: 'GOLF',
+          name: 'Avery Hart',
+          firstName: 'Avery',
+          lastName: 'Hart',
+          nationality: 'US',
+          active: true,
+          metadata: {},
+        },
+        {
+          externalId: 'golfer-2',
+          providerId: this.providerId,
+          sport: 'GOLF',
+          name: 'Brooke Vale',
+          firstName: 'Brooke',
+          lastName: 'Vale',
+          nationality: 'US',
+          active: true,
+          metadata: {},
+        },
+      ],
+    };
+  }
+
+  async getParticipants(): Promise<ProviderParticipant[]> {
+    return [
+      {
+        externalId: 'golfer-1',
+        providerId: this.providerId,
+        sport: 'GOLF',
+        name: 'Avery Hart',
+        active: true,
+        metadata: {},
+      },
+    ];
+  }
+
+  async getRankings(): Promise<ProviderRanking[]> {
+    return [];
+  }
+
+  async getLiveScores(): Promise<ProviderStatEvent[]> {
+    return [];
+  }
+
+  async getEventResults(): Promise<ProviderEventResult | null> {
+    return null;
+  }
+
+  async healthCheck(): Promise<ProviderHealthStatus> {
+    return {
+      providerId: this.providerId,
+      status: 'HEALTHY',
+      errorRateLastHour: 0,
+      latencyMsP95: 8,
+      lastSuccessfulPoll: new Date('2026-04-09T09:59:00.000Z'),
+      message: 'Provider responding normally.',
+    };
+  }
+}
+
+async function buildOperationalAdminApp(): Promise<FastifyInstance> {
+  const app = Fastify({ logger: false });
+  const registry = new ProviderRegistry();
+  registry.register('GOLF', new OperationalContractProvider(), 'PRIMARY');
+  const providerService = new ProviderService(getPrisma(), registry);
+
+  app.decorate('prisma', getPrisma());
+  app.setErrorHandler(globalErrorHandler);
+  await app.register(adminModule, {
+    prefix: '/api/v1/admin',
+    providerService,
+  });
+  await app.ready();
+
+  return app;
+}
+
 describe('Contract verification (root admin)', () => {
   beforeAll(async () => {
     await setupIntegrationTests();
@@ -66,6 +185,7 @@ describe('Contract verification (root admin)', () => {
     const app = Fastify({ logger: false });
     const registry = new ProviderRegistry();
     registry.register('GOLF', new ContractProvider(), 'PRIMARY');
+    app.setErrorHandler(globalErrorHandler);
 
     await app.register(ingestionModule, {
       prefix: '/api/v1/admin/ingestion',
@@ -231,6 +351,131 @@ describe('Contract verification (root admin)', () => {
     expect(syncRunsRes.json().items[0].payload.runType).toBeDefined();
   });
 
+  it('root-admin provider operational routes match their DTOs on happy paths', async () => {
+    const rootAdmin = await createTestUser({
+      displayName: 'Root Admin Provider Ops User',
+      isRootAdmin: true,
+    });
+
+    await getPrisma().sportEvent.upsert({
+      where: {
+        providerId_externalId: {
+          providerId: 'contract-provider',
+          externalId: 'event-1',
+        },
+      },
+      create: {
+        externalId: 'event-1',
+        providerId: 'contract-provider',
+        sport: 'GOLF',
+        name: 'Contract Masters',
+        venue: 'Contract National',
+        location: 'Augusta, GA',
+        startDate: new Date('2026-04-10T15:00:00.000Z'),
+        endDate: new Date('2026-04-14T21:00:00.000Z'),
+        status: 'SCHEDULED',
+        rounds: 4,
+        participantCount: 2,
+        releaseAt: new Date('2026-04-07T16:00:00.000Z'),
+        fieldLocksAt: new Date('2026-04-09T16:00:00.000Z'),
+        fieldLocked: false,
+        metadata: {},
+      },
+      update: {
+        sport: 'GOLF',
+        name: 'Contract Masters',
+        venue: 'Contract National',
+        location: 'Augusta, GA',
+        startDate: new Date('2026-04-10T15:00:00.000Z'),
+        endDate: new Date('2026-04-14T21:00:00.000Z'),
+        status: 'SCHEDULED',
+        rounds: 4,
+        participantCount: 2,
+        releaseAt: new Date('2026-04-07T16:00:00.000Z'),
+        fieldLocksAt: new Date('2026-04-09T16:00:00.000Z'),
+        fieldLocked: false,
+        metadata: {},
+      },
+    });
+
+    await getPrisma().providerSyncRun.upsert({
+      where: {
+        id: '33333333-3333-3333-3333-333333333333',
+      },
+      create: {
+        id: '33333333-3333-3333-3333-333333333333',
+        providerId: 'contract-provider',
+        sport: 'GOLF',
+        eventId: 'event-1',
+        status: 'COMPLETED',
+        startedAt: new Date('2026-04-09T10:00:00.000Z'),
+        completedAt: new Date('2026-04-09T10:02:00.000Z'),
+        payloadJson: {
+          runType: 'MANUAL_SYNC',
+          recordsProcessed: 12,
+          detail: 'Imported event and participant field.',
+        },
+      },
+      update: {
+        providerId: 'contract-provider',
+        sport: 'GOLF',
+        eventId: 'event-1',
+        status: 'COMPLETED',
+        startedAt: new Date('2026-04-09T10:00:00.000Z'),
+        completedAt: new Date('2026-04-09T10:02:00.000Z'),
+        payloadJson: {
+          runType: 'MANUAL_SYNC',
+          recordsProcessed: 12,
+          detail: 'Imported event and participant field.',
+        },
+      },
+    });
+
+    const app = await buildOperationalAdminApp();
+
+    try {
+      const providersRes = await app.inject({
+        method: 'GET',
+        url: '/api/v1/admin/providers/health',
+        headers: rootAdmin.headers,
+      });
+      expect(providersRes.statusCode).toBe(200);
+      expect(ProviderListResponseSchema.safeParse(providersRes.json()).success).toBe(true);
+      expect(providersRes.json().items[0].providerId).toBe('contract-provider');
+
+      const syncRunsRes = await app.inject({
+        method: 'GET',
+        url: '/api/v1/admin/providers/sync-runs?providerId=contract-provider&sport=GOLF&status=COMPLETED&limit=10',
+        headers: rootAdmin.headers,
+      });
+      expect(syncRunsRes.statusCode).toBe(200);
+      expect(ProviderSyncRunListResponseSchema.safeParse(syncRunsRes.json()).success).toBe(true);
+      expect(syncRunsRes.json().items).toHaveLength(1);
+      expect(syncRunsRes.json().items[0].payload.detail).toBe('Imported event and participant field.');
+
+      const healthRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/admin/providers/contract-provider/health-check',
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(healthRes.statusCode).toBe(200);
+      expect(ProviderHealthCheckDtoSchema.safeParse(healthRes.json()).success).toBe(true);
+      expect(healthRes.json().providerId).toBe('contract-provider');
+
+      const reIngestRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/admin/providers/contract-provider/re-ingest/event-1',
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(reIngestRes.statusCode).toBe(201);
+      expect(ProviderIngestionJobDtoSchema.safeParse(reIngestRes.json()).success).toBe(true);
+      expect(reIngestRes.json().providerId).toBe('contract-provider');
+      expect(reIngestRes.json().eventId).toBe('event-1');
+    } finally {
+      await app.close();
+    }
+  });
+
   it('root-admin routes expose stable not-found error codes', async () => {
     const rootAdmin = await createTestUser({
       displayName: 'Root Admin Contract User',
@@ -255,5 +500,37 @@ describe('Contract verification (root admin)', () => {
     expect(ErrorEnvelopeSchema.safeParse(providerRes.json()).success).toBe(true);
     expect(providerRes.json().error.code).toBe('PROVIDER_NOT_FOUND');
 
+    const app = await buildOperationalAdminApp();
+
+    try {
+      const healthCheckRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/admin/providers/missing-provider/health-check',
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(healthCheckRes.statusCode).toBe(404);
+      expect(ErrorEnvelopeSchema.safeParse(healthCheckRes.json()).success).toBe(true);
+      expect(healthCheckRes.json().error.code).toBe('PROVIDER_NOT_FOUND');
+
+      const reIngestMissingProviderRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/admin/providers/missing-provider/re-ingest/event-1',
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(reIngestMissingProviderRes.statusCode).toBe(404);
+      expect(ErrorEnvelopeSchema.safeParse(reIngestMissingProviderRes.json()).success).toBe(true);
+      expect(reIngestMissingProviderRes.json().error.code).toBe('PROVIDER_NOT_FOUND');
+
+      const reIngestMissingEventRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/admin/providers/contract-provider/re-ingest/missing-event',
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(reIngestMissingEventRes.statusCode).toBe(404);
+      expect(ErrorEnvelopeSchema.safeParse(reIngestMissingEventRes.json()).success).toBe(true);
+      expect(reIngestMissingEventRes.json().error.code).toBe('PROVIDER_EVENT_NOT_FOUND');
+    } finally {
+      await app.close();
+    }
   });
 });

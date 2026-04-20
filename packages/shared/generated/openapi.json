@@ -23797,26 +23797,81 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Minimal success response envelope.",
+          "201": {
+            "description": "Recent or active provider ingestion job.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {
-                      "type": "boolean",
+                    "id": {
+                      "type": "string"
+                    },
+                    "providerId": {
+                      "type": "string"
+                    },
+                    "sport": {
+                      "type": "string",
                       "enum": [
-                        true
-                      ],
-                      "description": "Confirms that the requested operation succeeded."
+                        "GOLF",
+                        "NFL",
+                        "NBA",
+                        "F1",
+                        "NASCAR",
+                        "NCAA_BASKETBALL",
+                        "NCAA_HOCKEY",
+                        "NCAA_FOOTBALL",
+                        "TENNIS",
+                        "HORSE_RACING",
+                        "SOCCER",
+                        "NHL",
+                        "MLB",
+                        "UFC"
+                      ]
+                    },
+                    "eventId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "RUNNING",
+                        "COMPLETED",
+                        "FAILED"
+                      ]
+                    },
+                    "startedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "completedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "recordsProcessed": {
+                      "type": "number"
+                    },
+                    "errors": {
+                      "type": "number"
                     }
                   },
                   "required": [
-                    "success"
+                    "id",
+                    "providerId",
+                    "sport",
+                    "eventId",
+                    "status",
+                    "startedAt",
+                    "completedAt",
+                    "recordsProcessed",
+                    "errors"
                   ],
                   "additionalProperties": false,
-                  "description": "Minimal success response envelope."
+                  "description": "Recent or active provider ingestion job."
                 }
               }
             }

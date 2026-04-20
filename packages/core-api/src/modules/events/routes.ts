@@ -29,6 +29,13 @@ export async function eventsModule(fastify: FastifyInstance): Promise<void> {
           ...(query.sport ? { sport: query.sport } : {}),
           ...(query.status ? { status: query.status } : {}),
         },
+        include: {
+          _count: {
+            select: {
+              sportEventParticipants: true,
+            },
+          },
+        },
         orderBy: { startDate: 'asc' },
         take: query.limit ?? 25,
       });
@@ -40,6 +47,7 @@ export async function eventsModule(fastify: FastifyInstance): Promise<void> {
           status: event.status as EventStatusDto,
           releaseAt: event.releaseAt,
           fieldLocksAt: event.fieldLocksAt,
+          loadedParticipantCount: event._count.sportEventParticipants,
           providerFieldLocked: event.fieldLocked,
         })),
       );

@@ -193,9 +193,9 @@ What is missing:
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 102-001 | 1 | Create the active MVP use-case-to-test coverage matrix | Not Started | This is the durable map Tess and Quinn should maintain |
-| 102-002 | 2 | Add root-admin functional coverage for sync history, manual sport sync, and re-ingest flows | Not Started | Current root-admin FAPI only covers user-management reads |
-| 102-003 | 3 | Add managed contest functional coverage for imported-event -> contest -> entry-ready workflow | Not Started | Current contest FAPI is still centered on legacy `createContest` paths |
-| 102-004 | 4 | Add truthful readiness tests for scheduler/manual sync/re-ingest contest-ready data behavior | Not Started | This is the current hidden architecture/testing gap |
+| 102-001 | 1 | Create the active MVP use-case-to-test coverage matrix | Complete | Added [plans/testing/mvp-use-case-coverage-matrix.md](/Users/DDorazio/development/Github-Personal/pool-master/plans/testing/mvp-use-case-coverage-matrix.md) as the execution-facing traceability map |
+| 102-002 | 2 | Add root-admin functional coverage for sync history, manual sport sync, and re-ingest flows | Complete | Added FAPI and contract coverage, and fixed the re-ingest route schema drift so OpenAPI matches the real `201` ingestion-job payload |
+| 102-003 | 3 | Add managed contest functional coverage for imported-event -> contest -> entry-ready workflow | Complete | Added imported-event managed-contest FAPI and contract proof, and fixed managed tier compatibility so imported-event selections work in the live draft runtime |
+| 102-004 | 4 | Add truthful readiness tests for scheduler/manual sync/re-ingest contest-ready data behavior | Complete | Added startup-vs-re-ingest proof and tightened event-list readiness so shallow imported events stay `PENDING_FIELD` until `SportEventParticipant` rows exist |
 | ~~102-005~~ | 5 | ~~Redefine richer browser E2E around deterministic setup and only reintroduce supported journeys~~ | Removed | Deferred until lower-layer use-case proof is stable; browser smoke stays minimal for now |
-| 102-006 | 5 | Log and fix every defect exposed by the new automated coverage before treating the slice as deployable | Not Started | Tests are supposed to create immediate defect pressure, not passive TODOs |
+| 102-006 | 5 | Log and fix every defect exposed by the new automated coverage before treating the slice as deployable | Complete | This remediation slice fixed the concrete defects the new proof surfaced: managed tier compatibility, admin re-ingest contract drift, and event-readiness false positives from shallow imports |

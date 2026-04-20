@@ -25,6 +25,7 @@ import {
   ProviderSyncRunListResponseSchema,
   ProviderDetailResponseSchema,
   ProviderIngestionDashboardResponseSchema,
+  ProviderIngestionJobDtoSchema,
   ProviderUnmappedParticipantListResponseSchema,
   ProviderHealthCheckDtoSchema,
   ServiceHealthListResponseSchema,
@@ -58,7 +59,14 @@ function withAdminErrorResponses(
 // Module registration
 // ---------------------------------------------------------------------------
 
-export async function adminModule(fastify: FastifyInstance): Promise<void> {
+export interface AdminModuleOptions {
+  providerService?: ProviderService;
+}
+
+export async function adminModule(
+  fastify: FastifyInstance,
+  opts: AdminModuleOptions = {},
+): Promise<void> {
   await fastify.register(adminAuth);
 
   // --- Shared Prisma client for all admin services ---
@@ -72,7 +80,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
   // --- Services ---
   const userService = new UserService(prisma);
   const healthService = new HealthService(prisma);
-  const providerService = new ProviderService(prisma);
+  const providerService = opts.providerService ?? new ProviderService(prisma);
   const pollConfigService = new PollConfigService();
   const ingestionConfigService = new IngestionConfigService();
 
@@ -284,7 +292,7 @@ export async function adminModule(fastify: FastifyInstance): Promise<void> {
       summary: 'Re-ingest event data from a provider',
       description: 'Triggers on-demand event-data re-ingestion for a provider and event identifier.',
       operationId: 'adminReIngestEvent',
-      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
+      response: withAdminErrorResponses({ 201: zodToJsonSchema(ProviderIngestionJobDtoSchema) }, [404]),
     },
     handler: provider.reIngestEvent,
   });

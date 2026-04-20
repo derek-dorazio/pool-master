@@ -21,12 +21,13 @@ interface EventRow {
   releaseAt: Date;
   fieldLocksAt: Date;
   participantCount: number | null;
+  loadedParticipantCount?: number | null;
   providerFieldLocked: boolean;
 }
 
 export function toEventSummaryDto(event: EventRow): EventSummaryDto {
   const operationalState = evaluateEventOperationalState({
-    participantCount: event.participantCount,
+    participantCount: event.loadedParticipantCount ?? event.participantCount,
     releaseAt: event.releaseAt,
     fieldLocksAt: event.fieldLocksAt,
     providerFieldLocked: event.providerFieldLocked,

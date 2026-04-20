@@ -335,17 +335,30 @@ describe('IngestionScheduler', () => {
       jest.useRealTimers();
     });
 
-    it('start() begins polling and runs initial sync', () => {
+    it('start() begins polling, runs the shallow startup syncs, and does not fetch event detail', async () => {
       const provider = createMockProvider();
       const registry = createMockRegistry(provider, ['GOLF' as Sport]);
       const scheduler = new IngestionScheduler(registry, mockCallbacks);
 
       scheduler.start();
 
+      await Promise.resolve();
+      await Promise.resolve();
+
       // Initial sync calls getSupportedSports (from syncAllSchedules, syncAllParticipants, syncAllRankings)
       // and getAllProviders (from runHealthChecks)
       expect(registry.getAllProviders).toHaveBeenCalled();
       expect(registry.getSupportedSports).toHaveBeenCalled();
+      expect(provider.getUpcomingEvents).toHaveBeenCalledWith(
+        'GOLF',
+        expect.objectContaining({ from: expect.any(Date), to: expect.any(Date) }),
+      );
+      expect(provider.getParticipants).toHaveBeenCalledWith('GOLF');
+      expect(provider.getRankings).toHaveBeenCalledWith('GOLF', 'default');
+      expect(provider.getEventDetails).not.toHaveBeenCalled();
+      expect(mockCallbacks.onEvents).toHaveBeenCalled();
+      expect(mockCallbacks.onParticipants).toHaveBeenCalled();
+      expect(mockCallbacks.onRankings).toHaveBeenCalled();
     });
 
     it('start() is idempotent — calling twice does not double timers', () => {

@@ -13,6 +13,7 @@ import {
   AccountPasswordChangeResponseSchema,
   AccountDeleteResponseSchema,
   AccountResponseSchema,
+  ContestConfigTemplateListResponseSchema,
   ContestManagementResponseSchema,
   ConsentRecordResponseSchema,
   DraftStateResponseSchema,
@@ -165,19 +166,97 @@ describe('Contract verification (web)', () => {
   it('event list route matches EventListResponseSchema on the happy path', async () => {
     const prisma = getPrisma();
     const eventId = randomUUID();
+    const participantId = randomUUID();
+    const sportId = randomUUID();
     const viewer = await createTestUser({ displayName: 'Contract Events Viewer' });
 
+    await prisma.sport.create({
+      data: {
+        id: sportId,
+        name: Sport.UFC,
+        participantType: 'INDIVIDUAL',
+        statSchema: {},
+      },
+    });
     await prisma.sportEvent.create({
       data: {
         id: eventId,
         providerId: 'contract-events-provider',
         externalId: `contract-event-${eventId}`,
-        sport: Sport.GOLF,
+        sport: Sport.UFC,
         name: 'Contract Events Major',
-        startDate: new Date('2026-04-20T15:00:00.000Z'),
-        endDate: new Date('2026-04-23T23:00:00.000Z'),
+        startDate: new Date('2026-05-20T15:00:00.000Z'),
+        endDate: new Date('2026-05-23T23:00:00.000Z'),
         releaseAt: new Date('2026-04-17T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-04-19T12:00:00.000Z'),
+        fieldLocksAt: new Date('2026-05-19T12:00:00.000Z'),
+        status: 'SCHEDULED',
+        participantCount: 144,
+        fieldLocked: false,
+        metadata: {},
+      },
+    });
+    await prisma.participant.create({
+      data: {
+        id: participantId,
+        sport: {
+          connect: {
+            name: Sport.UFC,
+          },
+        },
+        participantType: 'INDIVIDUAL',
+        firstName: 'Scottie',
+        lastName: 'Scheffler',
+        name: 'Scottie Scheffler',
+      },
+    });
+    await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: eventId,
+        participantId,
+        status: 'ACTIVE',
+      },
+    });
+
+    try {
+      const res = await getApp().inject({
+        method: 'GET',
+        url: '/api/v1/events/?sport=UFC&limit=100',
+        headers: viewer.headers,
+      });
+
+      expect(res.statusCode).toBe(200);
+      const parsed = EventListResponseSchema.safeParse(res.json());
+      expect(parsed.success).toBe(true);
+      const event = parsed.data?.events.find((item) => item.id === eventId);
+      expect(event).toMatchObject({
+        id: eventId,
+        contestEligible: true,
+        readinessStatus: 'CONTEST_ELIGIBLE',
+      });
+    } finally {
+      await prisma.sportEventParticipant.deleteMany({ where: { sportEventId: eventId } });
+      await prisma.participant.delete({ where: { id: participantId } });
+      await prisma.sportEvent.delete({ where: { id: eventId } });
+      await prisma.sport.delete({ where: { id: sportId } });
+    }
+  });
+
+  it('event list route keeps shallow imported events pending until field detail is hydrated', async () => {
+    const prisma = getPrisma();
+    const eventId = randomUUID();
+    const viewer = await createTestUser({ displayName: 'Contract Shallow Events Viewer' });
+
+    await prisma.sportEvent.create({
+      data: {
+        id: eventId,
+        providerId: 'contract-events-provider',
+        externalId: `contract-shallow-event-${eventId}`,
+        sport: Sport.UFC,
+        name: 'Contract Shallow Event',
+        startDate: new Date('2026-05-20T15:00:00.000Z'),
+        endDate: new Date('2026-05-23T23:00:00.000Z'),
+        releaseAt: new Date('2026-04-17T12:00:00.000Z'),
+        fieldLocksAt: new Date('2026-05-19T12:00:00.000Z'),
         status: 'SCHEDULED',
         participantCount: 144,
         fieldLocked: false,
@@ -188,12 +267,20 @@ describe('Contract verification (web)', () => {
     try {
       const res = await getApp().inject({
         method: 'GET',
-        url: '/api/v1/events/?sport=GOLF&limit=5',
+        url: '/api/v1/events/?sport=UFC&limit=100',
         headers: viewer.headers,
       });
 
       expect(res.statusCode).toBe(200);
-      expect(EventListResponseSchema.safeParse(res.json()).success).toBe(true);
+      const parsed = EventListResponseSchema.safeParse(res.json());
+      expect(parsed.success).toBe(true);
+      const event = parsed.data?.events.find((item) => item.id === eventId);
+      expect(event).toMatchObject({
+        id: eventId,
+        contestEligible: false,
+        readinessStatus: 'PENDING_FIELD',
+      });
+      expect(event?.readinessReasons).toContain('FIELD_NOT_LOADED');
     } finally {
       await prisma.sportEvent.delete({ where: { id: eventId } });
     }
@@ -280,7 +367,7 @@ describe('Contract verification (web)', () => {
     expect(SquadResponseSchema.safeParse(inactivateRes.json()).success).toBe(true);
   });
 
-  it('contest management routes match ContestManagementResponseSchema', async () => {
+  it('contest management routes match their template-first response DTOs', async () => {
     const owner = await createTestUser({ displayName: 'Contract Contest Owner' });
 
     const leagueRes = await getApp().inject({
@@ -304,6 +391,22 @@ describe('Contract verification (web)', () => {
       },
     });
 
+    const templateRes = await getApp().inject({
+      method: 'GET',
+      url: `${API_ROUTES.contestManagement.templates(leagueId)}?sport=GOLF&contestType=SINGLE_EVENT`,
+      headers: owner.headers,
+    });
+
+    expect(templateRes.statusCode).toBe(200);
+    expect(
+      ContestConfigTemplateListResponseSchema.safeParse(templateRes.json()).success,
+    ).toBe(true);
+
+    const defaultTemplate = templateRes.json().templates.find(
+      (template: { isDefault: boolean }) => template.isDefault,
+    );
+    expect(defaultTemplate).toBeDefined();
+
     const res = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.contestManagement(leagueId),
@@ -312,35 +415,7 @@ describe('Contract verification (web)', () => {
         name: 'Contract Managed Contest',
         sportEventId: sportEvent.id,
         contestType: ContestType.SINGLE_EVENT,
-        configuration: {
-          mode: 'GOLF_TIERED',
-          locksAt: '2026-04-12T11:30:00.000Z',
-          maxEntriesPerSquad: 1,
-          rosterSize: 6,
-          countedScores: 4,
-          tierSource: 'ODDS',
-          tierGeneration: {
-            defaultTierSize: 10,
-          },
-          tiers: [
-            {
-              tierKey: 'A',
-              label: 'Tier A',
-              pickCount: 1,
-              startPosition: 1,
-              endPosition: 10,
-            },
-          ],
-          cutRule: {
-            type: 'FIXED_SCORE',
-            fixedScore: 80,
-          },
-          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-          displayScoring: 'TO_PAR',
-          tiebreaker: {
-            type: 'PREDICT_WINNING_SCORE',
-          },
-        },
+        templateId: defaultTemplate.id,
       },
     });
 

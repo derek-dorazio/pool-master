@@ -40,6 +40,10 @@ export interface GolfContestTierDefinition {
 }
 
 export interface PersistedGolfContestTierDefinition extends GolfContestTierDefinition {
+  tierId?: string;
+  tierName?: string;
+  tierNumber?: number;
+  picksFromTier?: number;
   participantIds?: string[];
 }
 

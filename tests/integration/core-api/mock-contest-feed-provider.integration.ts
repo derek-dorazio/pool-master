@@ -1,7 +1,12 @@
 import { Sport } from '@poolmaster/shared/domain';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
+import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
+import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import { ProviderService } from '../../../packages/core-api/src/modules/admin/provider-service';
 import {
+  cleanupTestData,
+  createTestUser,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -15,28 +20,21 @@ let mockProvider: Awaited<ReturnType<typeof startMockContestFeedProvider>>;
 let importedParticipantExternalIds: string[] = [];
 let integrationSetupComplete = false;
 
-beforeAll(async () => {
-  await setupIntegrationTests();
-  integrationSetupComplete = true;
-  mockProvider = await startMockContestFeedProvider();
-});
-
-afterAll(async () => {
+async function cleanupMockProviderImportData(): Promise<void> {
   if (!integrationSetupComplete) {
     return;
   }
 
   const prisma = getPrisma();
-
-  const participants = importedParticipantExternalIds.length === 0
-    ? []
-    : await prisma.participant.findMany({
-        where: {
-          externalId: { in: importedParticipantExternalIds },
-        },
-        select: { id: true },
-      });
-  const participantIds = participants.map((participant) => participant.id);
+  const providerMappings = await prisma.participantProviderMapping.findMany({
+    where: {
+      providerId,
+    },
+    select: {
+      participantId: true,
+    },
+  });
+  const participantIds = providerMappings.map((mapping) => mapping.participantId);
 
   await prisma.sportEventParticipantSourceData.deleteMany({
     where: { providerId },
@@ -46,7 +44,6 @@ afterAll(async () => {
       sportEventParticipant: {
         sportEvent: {
           providerId,
-          externalId: eventExternalId,
         },
       },
     },
@@ -55,7 +52,6 @@ afterAll(async () => {
     where: {
       sportEvent: {
         providerId,
-        externalId: eventExternalId,
       },
     },
   });
@@ -66,24 +62,48 @@ afterAll(async () => {
       },
     });
   }
+  await prisma.ingestionJob.deleteMany({
+    where: {
+      providerId,
+    },
+  });
   await prisma.sportEvent.deleteMany({
     where: {
       providerId,
-      externalId: eventExternalId,
     },
   });
   await prisma.participantProviderMapping.deleteMany({
     where: {
       providerId,
-      externalId: { in: importedParticipantExternalIds },
     },
   });
-  await prisma.participant.deleteMany({
-    where: {
-      externalId: { in: importedParticipantExternalIds },
-    },
-  });
+  if (participantIds.length > 0) {
+    await prisma.participant.deleteMany({
+      where: {
+        id: { in: participantIds },
+      },
+    });
+  }
+  importedParticipantExternalIds = [];
+}
 
+beforeAll(async () => {
+  await setupIntegrationTests();
+  integrationSetupComplete = true;
+  mockProvider = await startMockContestFeedProvider();
+});
+
+afterEach(async () => {
+  await cleanupMockProviderImportData();
+  await cleanupTestData();
+});
+
+afterAll(async () => {
+  if (!integrationSetupComplete) {
+    return;
+  }
+
+  await cleanupMockProviderImportData();
   await mockProvider.close();
   await teardownIntegrationTests();
 });
@@ -274,5 +294,101 @@ describe('mock contest feed provider event-first verification', () => {
         }),
       ]),
     );
+  });
+
+  it('keeps startup-style schedule sync shallow until manual re-ingest loads contest-ready event detail', async () => {
+    const prisma = getPrisma();
+    const provider = new MockContestFeedAdapter(mockProvider.baseUrl);
+    const registry = new ProviderRegistry();
+    const getUpcomingEventsSpy = jest.spyOn(provider, 'getUpcomingEvents').mockImplementation(async () =>
+      new MockContestFeedAdapter(mockProvider.baseUrl).getUpcomingEvents(Sport.GOLF, {
+        from: new Date('2026-04-01T00:00:00.000Z'),
+        to: new Date('2026-04-30T23:59:59.999Z'),
+      }));
+    const getParticipantsSpy = jest.spyOn(provider, 'getParticipants').mockImplementation(async () =>
+      new MockContestFeedAdapter(mockProvider.baseUrl).getParticipants(Sport.GOLF));
+    const getRankingsSpy = jest.spyOn(provider, 'getRankings').mockImplementation(async (_sport: Sport, rankingType: string) =>
+      new MockContestFeedAdapter(mockProvider.baseUrl).getRankings(Sport.GOLF, rankingType));
+    const getEventDetailsSpy = jest.spyOn(provider, 'getEventDetails');
+    registry.register(Sport.GOLF, provider, 'PRIMARY');
+
+    const persistence = new IngestionPersistence(prisma);
+    const scheduler = new IngestionScheduler(registry, {
+      onEvents: async (events) => {
+        await persistence.persistEvents(events);
+      },
+      onParticipants: async (participants) => {
+        await persistence.persistParticipants(participants);
+      },
+      onRankings: async (rankings) => {
+        await persistence.persistRankings(rankings);
+      },
+      onLiveScores: async () => undefined,
+      onJobComplete: async () => undefined,
+    });
+
+    const scheduleJob = await scheduler.syncSport(Sport.GOLF);
+    expect(scheduleJob.status).toBe('COMPLETED');
+
+    const startupParticipants = await provider.getParticipants(Sport.GOLF);
+    await persistence.persistParticipants(startupParticipants);
+    const startupRankings = await provider.getRankings(Sport.GOLF, 'OWGR');
+    await persistence.persistRankings(startupRankings);
+
+    const shallowEvent = await prisma.sportEvent.findUniqueOrThrow({
+      where: {
+        providerId_externalId: {
+          providerId,
+          externalId: eventExternalId,
+        },
+      },
+    });
+    expect(shallowEvent.participantCount).toBeGreaterThan(0);
+
+    const shallowEventParticipantCount = await prisma.sportEventParticipant.count({
+      where: {
+        sportEventId: shallowEvent.id,
+      },
+    });
+    expect(shallowEventParticipantCount).toBe(0);
+    expect(getUpcomingEventsSpy).toHaveBeenCalled();
+    expect(getParticipantsSpy).toHaveBeenCalledWith(Sport.GOLF);
+    expect(getRankingsSpy).toHaveBeenCalledWith(Sport.GOLF, 'OWGR');
+    expect(getEventDetailsSpy).not.toHaveBeenCalled();
+
+    const rootAdmin = await createTestUser({
+      displayName: 'Mock Provider Root Admin',
+      isRootAdmin: true,
+    });
+    const providerService = new ProviderService(prisma, registry);
+
+    const reIngestJob = await providerService.reIngestEvent(
+      providerId,
+      eventExternalId,
+      rootAdmin.user.id,
+      rootAdmin.user.email,
+    );
+
+    expect(reIngestJob.status).toBe('COMPLETED');
+    expect(getEventDetailsSpy).toHaveBeenCalledWith(eventExternalId);
+
+    const hydratedEventParticipantCount = await prisma.sportEventParticipant.count({
+      where: {
+        sportEventId: shallowEvent.id,
+      },
+    });
+    expect(hydratedEventParticipantCount).toBeGreaterThan(0);
+
+    const latestJob = await prisma.ingestionJob.findFirstOrThrow({
+      where: {
+        providerId,
+        eventExternalId,
+        jobType: 'MANUAL_REINGEST',
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    expect(latestJob.status).toBe('COMPLETED');
   });
 });
