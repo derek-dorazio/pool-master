@@ -100,6 +100,37 @@ When finishing work:
 
 ### Slice Completion Checklist (Required Before Marking Done)
 
+Before marking any slice `Done`, reconcile the live Beads tracker so it matches
+the actual repo state. A slice is not complete if the code, tests, and commit
+history say "finished" but the corresponding Beads item still reads like active
+unfinished work.
+
+**Beads Reconciliation Gate:**
+- [ ] The exact Beads item for the slice has been reviewed at closeout time
+- [ ] The item has been moved to the correct end state:
+  - `closed` if the scoped work is complete
+  - `deferred` if the remaining work is intentionally postponed
+  - `pinned` only if it is a durable ongoing behavior rather than a normal task
+- [ ] If scope changed during implementation, the Beads title/notes were updated
+      before closing or deferring it
+- [ ] Parent epics or umbrella items were reviewed so they do not remain `open`
+      merely because no one reconciled the child status
+- [ ] The final slice handoff explicitly states which Beads moved to `closed`,
+      `deferred`, or remain active and why
+
+Common failure modes to avoid:
+
+- finishing implementation but forgetting to close the corresponding Beads item
+- leaving workflow/process items as plain `open` tasks when they are really
+  ongoing behaviors or already-adopted rules
+- leaving outdated task wording in place after the architecture direction has
+  changed
+- allowing CI firefighting or adjacent follow-up work to skip the tracker
+  reconciliation step
+
+The default rule is simple: if a slice is done enough to commit and announce as
+complete, it is done enough to reconcile in Beads during the same slice.
+
 Before marking any backend slice task `Done`, run through this checklist for every domain object or endpoint touched by the slice. This checklist enforces the layer-completeness requirements from `rules/model-change-rules.md` and `rules/service-rules.md` as execution gates, not just reference material.
 
 **Schema & Domain:**
