@@ -98,7 +98,7 @@ export const router = createBrowserRouter([
         element: <RootAdminRouteGuard />,
         children: [
           {
-            path: 'root-admin',
+            path: 'manage',
             element: <RootAdminPage />,
           },
         ],

@@ -13,6 +13,7 @@
 
 Root-admin action in this flow is optional and operational:
 - monitor imports
+- trigger a manual sport sync when imports have not loaded yet
 - retry a broken sync
 - rarely override event timing if a special case requires it
 
@@ -86,7 +87,8 @@ There is no normal user flow in this step:
   operational rerun or repair
 
 First-pass operational visibility should stay thin:
-- read-only sync-run visibility
+- sync-run visibility
+- manual sport sync trigger
 - datetime and status per run
 - retry/rerun controls can be added later after real provider behavior is
   better understood

@@ -107,6 +107,7 @@ These question IDs are intended to stay stable as the discussion evolves.
 - `CEFI-R6` Treat live event updates as latest-truth overwrites from provider
   polling; latest fetched participant/event data replaces prior values in the
   first pass.
-- `CEFI-R7` Keep first-pass feed-health visibility thin and read-only:
-  sync-run list, datetime, and status, with retry/rerun deferred until real
-  provider behavior is better understood.
+- `CEFI-R7` Keep first-pass feed-health visibility thin and operational:
+  sync-run list, datetime, status, and a manual sport sync trigger, with rich
+  retry/rerun controls deferred until real provider behavior is better
+  understood.

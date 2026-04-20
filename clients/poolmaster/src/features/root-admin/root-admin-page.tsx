@@ -1,14 +1,17 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   adminListProviderSyncRuns,
   adminListProviders,
+  syncSportData,
   type AdminListProviderSyncRunsResponses,
   type AdminListProvidersResponses,
+  type SyncSportDataResponses,
 } from '@/lib/api';
 
 type ProviderSyncRun = AdminListProviderSyncRunsResponses[200]['items'][number];
 type ProviderSummary = AdminListProvidersResponses[200]['items'][number];
+type SyncJob = SyncSportDataResponses[200]['job'];
 
 const SPORT_OPTIONS = [
   'GOLF',
@@ -153,9 +156,11 @@ function getStatusClasses(status: ProviderSyncRun['status'] | ProviderSummary['s
 }
 
 export function RootAdminPage() {
+  const queryClient = useQueryClient();
   const [providerFilter, setProviderFilter] = useState('ALL');
   const [sportFilter, setSportFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [syncSport, setSyncSport] = useState<(typeof SPORT_OPTIONS)[number]>('GOLF');
 
   const providersQuery = useQuery({
     queryKey: ['poolmaster', 'root-admin', 'providers'],
@@ -213,6 +218,26 @@ export function RootAdminPage() {
     };
   }, [recentRuns]);
 
+  const syncMutation = useMutation({
+    mutationFn: async (sport: (typeof SPORT_OPTIONS)[number]): Promise<SyncJob> => {
+      const response = await syncSportData({
+        path: { sport },
+      });
+
+      if (!response.data?.job) {
+        throw response.error ?? new Error('Sport sync response is missing the job payload.');
+      }
+
+      return response.data.job;
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'root-admin', 'providers'] }),
+        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'root-admin', 'provider-sync-runs'] }),
+      ]);
+    },
+  });
+
   if (syncRunsQuery.isLoading) {
     return (
       <section className="rounded-[2rem] border border-border bg-card p-8" data-testid="root-admin-page">
@@ -242,8 +267,8 @@ export function RootAdminPage() {
           <div>
             <h2 className="text-3xl font-semibold tracking-tight text-foreground">Provider sync visibility</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Read-only operational visibility into recent provider sync runs. This first pass is intentionally thin:
-              recent run status, provider context, event context, and the payload summary already captured by the backend.
+              Thin operational visibility into provider sync activity. Root admins can manually start a sport sync
+              when imported event or participant data has not loaded yet, then review the resulting sync history below.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
@@ -343,12 +368,62 @@ export function RootAdminPage() {
       </section>
 
       <section className="rounded-[2rem] border border-border bg-card p-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div>
-            <h3 className="text-xl font-semibold text-foreground">Recent sync runs</h3>
+            <h3 className="text-xl font-semibold text-foreground">Sync history</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Most recent runs are shown first. Payload summaries are intentionally concise and derived from the saved payload.
+              Most recent runs are shown first. Use manual sync only when automatic ingestion has not populated contest-ready
+              data yet or when operational troubleshooting is needed.
             </p>
+          </div>
+          <div className="rounded-[1.5rem] border border-border bg-background p-4 xl:min-w-[24rem]">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Manual event sync</p>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+              <label className="flex-1 text-sm text-muted-foreground">
+                <span className="mb-2 block font-medium text-foreground">Sport</span>
+                <select
+                  className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground"
+                  data-testid="root-admin-sync-sport"
+                  disabled={syncMutation.isPending}
+                  onChange={(event) => setSyncSport(event.target.value as (typeof SPORT_OPTIONS)[number])}
+                  value={syncSport}
+                >
+                  {SPORT_OPTIONS.map((sport) => (
+                    <option key={sport} value={sport}>
+                      {sport}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="rounded-2xl bg-foreground px-5 py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:self-end"
+                data-testid="root-admin-sync-now"
+                disabled={syncMutation.isPending}
+                onClick={() => syncMutation.mutate(syncSport)}
+                type="button"
+              >
+                {syncMutation.isPending ? 'Syncing...' : 'Sync events now'}
+              </button>
+            </div>
+
+            {syncMutation.isError ? (
+              <p className="mt-3 text-sm text-rose-700">
+                {extractErrorMessage(syncMutation.error)}
+              </p>
+            ) : null}
+
+            {syncMutation.isSuccess ? (
+              <p className="mt-3 text-sm text-emerald-700" data-testid="root-admin-sync-success">
+                Started
+                {' '}
+                {syncMutation.data.sport}
+                {' '}
+                sync with
+                {' '}
+                {syncMutation.data.providerId}
+                .
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -357,50 +432,46 @@ export function RootAdminPage() {
             No sync runs matched the current filters.
           </div>
         ) : (
-          <div className="mt-5 grid gap-4">
-            {recentRuns.map((run) => (
-              <article
-                className="rounded-[1.5rem] border border-border bg-background p-5"
-                data-testid={`root-admin-sync-run-${run.id}`}
-                key={run.id}
-              >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h4 className="text-lg font-semibold text-foreground">
-                        {getProviderName(run.providerId, providersQuery.data)}
-                      </h4>
-                      <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${getStatusClasses(run.status)}`}>
-                        {run.status}
-                      </span>
-                      <span className="rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                        {run.sport}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm text-muted-foreground">{buildPayloadSummary(run.payload)}</p>
-                  </div>
-
-                  <dl className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 lg:min-w-[22rem]">
-                    <div>
-                      <dt className="font-medium text-foreground">Started</dt>
-                      <dd>{formatDateTimeDisplay(run.startedAt ?? run.createdAt)}</dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-foreground">Completed</dt>
-                      <dd>{formatDateTimeDisplay(run.completedAt)}</dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-foreground">Event</dt>
-                      <dd>{formatEventValue(run.eventId)}</dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-foreground">Provider ID</dt>
-                      <dd>{run.providerId}</dd>
-                    </div>
-                  </dl>
-                </div>
-              </article>
-            ))}
+          <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-border bg-background">
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-collapse text-left text-sm" data-testid="root-admin-sync-history-table">
+                <thead className="bg-card/70 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Started</th>
+                    <th className="px-4 py-3 font-medium">Completed</th>
+                    <th className="px-4 py-3 font-medium">Provider</th>
+                    <th className="px-4 py-3 font-medium">Sport</th>
+                    <th className="px-4 py-3 font-medium">Event</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium">Summary</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentRuns.map((run) => (
+                    <tr
+                      className="border-t border-border align-top"
+                      data-testid={`root-admin-sync-run-${run.id}`}
+                      key={run.id}
+                    >
+                      <td className="px-4 py-4 text-foreground">{formatDateTimeDisplay(run.startedAt ?? run.createdAt)}</td>
+                      <td className="px-4 py-4 text-muted-foreground">{formatDateTimeDisplay(run.completedAt)}</td>
+                      <td className="px-4 py-4">
+                        <div className="font-medium text-foreground">{getProviderName(run.providerId, providersQuery.data)}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">{run.providerId}</div>
+                      </td>
+                      <td className="px-4 py-4 text-foreground">{run.sport}</td>
+                      <td className="px-4 py-4 text-muted-foreground">{formatEventValue(run.eventId)}</td>
+                      <td className="px-4 py-4">
+                        <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${getStatusClasses(run.status)}`}>
+                          {run.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-muted-foreground">{buildPayloadSummary(run.payload)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </section>

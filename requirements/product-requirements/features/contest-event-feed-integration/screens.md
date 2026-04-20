@@ -7,6 +7,7 @@ Purpose:
 
 Primary actions:
 - choose sport/provider
+- trigger `Sync events now`
 - sync or refresh an event
 - inspect event readiness and sync outcome
 
@@ -17,6 +18,10 @@ Major states:
 - event imported but not contest-ready
 - event contest-eligible
 - sync failed / needs attention
+
+Notes:
+- this can remain a direct guarded `/manage` route without menu wiring in first
+  pass
 
 ## Commissioner Contest Create / Configure
 

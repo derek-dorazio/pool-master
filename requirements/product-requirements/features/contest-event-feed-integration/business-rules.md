@@ -91,10 +91,15 @@
   as latest-truth overwrites for the affected event and participants.
 - `BR-213` `(Confirmed)` PoolMaster does not need first-pass audit logging for
   every stat change before accepting repeated live provider updates.
-- `BR-214` `(Confirmed)` The first-pass admin feed-health surface should be
-  read-only and focused on sync-run visibility such as datetime and status.
-- `BR-215` `(Confirmed)` Retry/rerun controls for sync runs may be deferred
-  until real provider delta/latest-data behavior is better understood.
+- `BR-214` `(Confirmed)` The first-pass admin feed-health surface should stay
+  thin and operational: sync-run visibility plus a manual sport-level sync
+  trigger for exceptional unblock/testing needs.
+- `BR-215` `(Confirmed)` Rich retry/rerun controls for historical sync runs
+  may still be deferred until real provider delta/latest-data behavior is
+  better understood.
+- `BR-215A` `(Confirmed)` A root admin may manually trigger a sport sync when
+  imported event/participant data has not loaded yet and operational unblock is
+  needed for testing or troubleshooting.
 - `BR-216` `(Confirmed)` The leaderboard is the primary member-visible live
   event view.
 - `BR-217` `(Confirmed)` The default leaderboard presentation should emphasize

@@ -32,3 +32,5 @@ streak-centric.
   most ongoing play behavior
 - specialized admin-only routes should stay focused on exceptional operational
   concerns such as provider or sync issues
+- a dedicated direct root-admin route is acceptable for those operational
+  concerns even if it is not part of the normal menu structure

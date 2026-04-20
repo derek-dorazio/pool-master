@@ -33,6 +33,7 @@ compare it with the current route surface.
 ### 1. Root Admin Event Operations
 
 Recommended operations:
+- trigger a sport-level provider sync/import manually
 - list provider-discovered/synced events for a sport
 - sync/import a specific provider event
 - refresh a synced event
@@ -45,6 +46,8 @@ Notes:
 - this does not require broad member-facing event discovery
 - sync-run records may use a simple JSON payload field in first pass so the
   operational surface can ship without over-modeling provider-specific details
+- first implementation should reuse the existing manual sport-sync endpoint
+  rather than inventing a second backend action just for the webapp
 
 ### 2. Event Readiness Contract
 
@@ -159,5 +162,6 @@ Mismatches:
 - advanced schema metadata source is intentionally global rather than
   contest-specific, but the precise read surface still needs to be clarified
 - leaderboard/history read models are not yet explicit contracts
-- sync-run visibility is not yet explicit as a lightweight operational contract
+- sync-run visibility exists, but the root-admin web surface does not yet
+  expose the existing manual sport-sync action needed for testing/unblock
 - mock provider is usable but still shaped as a generic contest-feed simulator

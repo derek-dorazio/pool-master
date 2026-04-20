@@ -337,7 +337,7 @@ Trigger:
 - root admin opens feed-health or sync history visibility
 
 Main flow:
-1. PoolMaster shows a read-only list of sync runs.
+1. PoolMaster shows a list of sync runs.
 2. PoolMaster shows at least datetime and status for each run.
 3. Root admin uses that visibility to understand whether imports are healthy.
 
@@ -345,3 +345,32 @@ Expected outcomes:
 - first-pass operations stay lightweight
 - admins can inspect sync health without becoming part of the normal runtime
   flow
+
+## AE-004: Root admin triggers a manual event sync
+
+Actor:
+- Root Admin
+
+Preconditions:
+- event/provider data is missing, stale, or not yet loaded enough for contest
+  setup/testing
+
+Trigger:
+- root admin opens the operational sync surface and presses `Sync events now`
+
+Main flow:
+1. PoolMaster lets the root admin choose the sport scope to synchronize.
+2. Root admin starts the sync manually.
+3. PoolMaster calls the existing operational sync endpoint and records the
+   requested job.
+4. PoolMaster refreshes provider health/sync-run visibility so the operator can
+   see that work has started or completed.
+5. Commissioner contest creation becomes unblocked once the imported event and
+   participant data are available.
+
+Expected outcomes:
+- the system remains primarily automatic, but manual sync exists for
+  exceptional operational unblock
+- admins do not manually author events or participant fields
+- this action helps QA/manual testing without requiring hidden scripts or DB
+  intervention

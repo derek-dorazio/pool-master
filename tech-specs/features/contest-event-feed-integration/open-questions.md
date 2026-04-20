@@ -125,7 +125,7 @@ Start with:
   step
 - entry-selection persistence aligned to frozen contest selection groups
 - leaderboard/history read contracts as explicit first-pass surfaces
-- thin read-only sync-run visibility for operations
+- thin sync-run visibility plus a manual sport-sync trigger for operations
 - mock-provider evolution around golf-first tournament data
 
 Then split implementation into parallel slices once those contracts are settled.
