@@ -102,7 +102,7 @@ export function buildApp() {
   app.register(historyModule, { prefix: '/api/v1' });
   app.register(accountModule, { prefix: '/api/v1/account' });
   app.register(accountConsentModule, { prefix: '/api/v1/account' });
-  app.register(adminModule, { prefix: '/api/v1/admin' });
+  app.register(adminModule, { prefix: '/api/v1/admin', providerRegistry: registry });
   app.register(configModule, { prefix: '/api/v1/config' });
 
   // =========================================================================

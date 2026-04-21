@@ -42,6 +42,7 @@ import {
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import adminAuth from '../../plugins/admin-auth';
 import { getAppPrisma } from '../../core/prisma-context';
+import type { ProviderRegistry } from '../ingestion/core/provider-registry';
 
 function withAdminErrorResponses(
   successResponses: Record<number, unknown>,
@@ -62,6 +63,7 @@ function withAdminErrorResponses(
 
 export interface AdminModuleOptions {
   providerService?: ProviderService;
+  providerRegistry?: ProviderRegistry;
 }
 
 export async function adminModule(
@@ -81,7 +83,7 @@ export async function adminModule(
   // --- Services ---
   const userService = new UserService(prisma);
   const healthService = new HealthService(prisma);
-  const providerService = opts.providerService ?? new ProviderService(prisma);
+  const providerService = opts.providerService ?? new ProviderService(prisma, opts.providerRegistry);
   const pollConfigService = new PollConfigService();
   const ingestionConfigService = new IngestionConfigService();
 
