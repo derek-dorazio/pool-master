@@ -1,5 +1,5 @@
 #!/bin/bash
-# dev-start.sh — starts all Docker infrastructure, runs migrations, seeds, and launches services.
+# dev-start.sh — starts all Docker infrastructure, runs migrations, and launches services.
 # Usage: npm run dev:start  (or ./scripts/dev-start.sh)
 
 set -e
@@ -23,14 +23,14 @@ echo ""
 
 # --- 1. Copy .env if not present ---
 if [ ! -f "$PROJECT_ROOT/.env" ]; then
-  echo -e "${CYAN}[1/5]${RESET} Creating .env from .env.example..."
+  echo -e "${CYAN}[1/4]${RESET} Creating .env from .env.example..."
   cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
 else
-  echo -e "${CYAN}[1/5]${RESET} .env exists ${DIM}(skipping)${RESET}"
+  echo -e "${CYAN}[1/4]${RESET} .env exists ${DIM}(skipping)${RESET}"
 fi
 
 # --- 2. Start Docker containers ---
-echo -e "${CYAN}[2/5]${RESET} Starting Docker containers..."
+echo -e "${CYAN}[2/4]${RESET} Starting Docker containers..."
 docker compose -f "$COMPOSE_FILE" up -d postgres dynamodb mailpit 2>&1 | tail -3
 echo -n "       Waiting for PostgreSQL..."
 until docker exec docker-postgres-1 pg_isready -U postgres -q 2>/dev/null; do
@@ -39,20 +39,14 @@ done
 echo -e " ${GREEN}ready${RESET}"
 
 # --- 3. Generate Prisma client + run migrations ---
-echo -e "${CYAN}[3/5]${RESET} Running Prisma migrations..."
+echo -e "${CYAN}[3/4]${RESET} Running Prisma migrations..."
 cd "$PROJECT_ROOT/packages/core-api"
 npx prisma generate --schema=prisma/schema.prisma 2>/dev/null
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma migrate dev --skip-generate 2>&1 | grep -E "applied|already in sync|Your database" | head -1
 cd "$PROJECT_ROOT"
 
-# --- 4. Seed database ---
-echo -e "${CYAN}[4/5]${RESET} Seeding database..."
-cd "$PROJECT_ROOT/packages/core-api"
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma db seed 2>&1 | tail -1
-cd "$PROJECT_ROOT"
-
-# --- 5. Print endpoints and start services ---
-echo -e "${CYAN}[5/5]${RESET} Launching services..."
+# --- 4. Print endpoints and start services ---
+echo -e "${CYAN}[4/4]${RESET} Launching services..."
 echo ""
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════════╗${RESET}"
 echo -e "${BOLD}║  SERVICES                                                   ║${RESET}"

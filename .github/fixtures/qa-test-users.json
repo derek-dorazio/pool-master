@@ -1,0 +1,10 @@
+[
+  {
+    "email": "derek.dorazio+qa-admin@gmail.com",
+    "username": "poolmaster-admin",
+    "password": "poolmaster",
+    "firstName": "poolmaster",
+    "lastName": "administrator",
+    "isRootAdmin": true
+  }
+]

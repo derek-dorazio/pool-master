@@ -1,0 +1,135 @@
+name: Create Test Users (QA)
+
+on:
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-2
+  CLUSTER: poolmaster-qa-cluster
+  TASK_DEFINITION: poolmaster-qa-migrate
+  CONTAINER_NAME: migrate
+  FIXTURE_PATH: .github/fixtures/qa-test-users.json
+
+jobs:
+  create-test-users:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate fixture file
+        run: |
+          if [ ! -f "$FIXTURE_PATH" ]; then
+            echo "::error::Fixture file not found at $FIXTURE_PATH"
+            exit 1
+          fi
+          jq -e 'type == "array" and length > 0' "$FIXTURE_PATH" > /dev/null \
+            || { echo "::error::Fixture must be a non-empty JSON array"; exit 1; }
+          echo "Fixture contains $(jq 'length' "$FIXTURE_PATH") user(s)."
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run bootstrap-users ECS task
+        id: run-task
+        run: |
+          SUBNETS="${{ secrets.QA_PRIVATE_SUBNETS }}"
+          SG="${{ secrets.QA_ECS_SECURITY_GROUP }}"
+
+          if [ -z "$SUBNETS" ] || [ -z "$SG" ]; then
+            echo "::error::QA_PRIVATE_SUBNETS or QA_ECS_SECURITY_GROUP secret not set"
+            exit 1
+          fi
+
+          TASK_DEF_ARN=$(aws ecs describe-task-definition \
+            --task-definition "$TASK_DEFINITION" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          if [ -z "$TASK_DEF_ARN" ] || [ "$TASK_DEF_ARN" = "None" ]; then
+            echo "::error::Task definition $TASK_DEFINITION not found — run terraform apply first"
+            exit 1
+          fi
+
+          FIXTURE_JSON=$(cat "$FIXTURE_PATH")
+          OVERRIDES=$(jq -n \
+            --arg container "$CONTAINER_NAME" \
+            --arg fixture "$FIXTURE_JSON" \
+            '{
+              containerOverrides: [{
+                name: $container,
+                command: ["node", "scripts/bootstrap-users.mjs"],
+                environment: [{ name: "FIXTURE_JSON", value: $fixture }]
+              }]
+            }')
+
+          echo "Starting bootstrap-users task on $CLUSTER..."
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "$CLUSTER" \
+            --task-definition "$TASK_DEF_ARN" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SG}],assignPublicIp=DISABLED}" \
+            --overrides "$OVERRIDES" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          if [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; then
+            echo "::error::Failed to start ECS task"
+            exit 1
+          fi
+
+          echo "task_arn=${TASK_ARN}" >> $GITHUB_OUTPUT
+          echo "Task started: ${TASK_ARN}"
+
+      - name: Wait for task completion
+        id: wait
+        run: |
+          TASK_ARN="${{ steps.run-task.outputs.task_arn }}"
+
+          for i in $(seq 1 40); do
+            STATUS=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" \
+              --query 'tasks[0].lastStatus' --output text)
+            echo "  Status: $STATUS (attempt $i/40)"
+
+            if [ "$STATUS" = "STOPPED" ]; then
+              EXIT_CODE=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" \
+                --query 'tasks[0].containers[0].exitCode' --output text)
+              REASON=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" \
+                --query 'tasks[0].containers[0].reason' --output text 2>/dev/null || echo "")
+
+              echo "exit_code=${EXIT_CODE}" >> $GITHUB_OUTPUT
+              echo "stop_reason=${REASON}" >> $GITHUB_OUTPUT
+
+              if [ "$EXIT_CODE" != "0" ]; then
+                echo "::error::bootstrap-users task exited with code ${EXIT_CODE}: ${REASON}"
+                exit 1
+              fi
+
+              echo "bootstrap-users completed successfully"
+              exit 0
+            fi
+
+            sleep 15
+          done
+
+          echo "::error::Task did not complete within timeout"
+          exit 1
+
+      - name: Print task logs
+        if: always() && steps.run-task.outputs.task_arn != ''
+        run: |
+          TASK_ARN="${{ steps.run-task.outputs.task_arn }}"
+          TASK_ID="${TASK_ARN##*/}"
+          LOG_GROUP="/ecs/poolmaster-qa/migrate"
+          LOG_STREAM="ecs/${CONTAINER_NAME}/${TASK_ID}"
+
+          echo "Fetching logs from ${LOG_GROUP}/${LOG_STREAM}..."
+          aws logs get-log-events \
+            --log-group-name "$LOG_GROUP" \
+            --log-stream-name "$LOG_STREAM" \
+            --query 'events[*].message' \
+            --output text 2>/dev/null || echo "(logs not yet available)"

@@ -150,7 +150,6 @@ npm run dev:infra:all      # Start all containers (+ Mailpit, LocalStack, Push M
 npm run dev:infra:stop     # Stop all containers
 
 npm run db:migrate         # Run Prisma migrations
-npm run db:seed            # Run minimal bootstrap seed step (root admin bootstrap only)
 npm run db:reset           # Reset database (drops all data)
 npm run db:test:migrate    # Apply migrations to disposable test DB
 npm run db:test:reset      # Reset disposable test DB and reapply migrations
