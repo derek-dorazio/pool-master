@@ -58,6 +58,25 @@ The 80% changed-file expectation exists to pressure slices toward writing tests,
 but it does not replace use-case coverage. A slice with acceptable percentage
 coverage but missing core positive/negative use-case proof is still incomplete.
 
+### Logging and Branch-Proof Rule
+
+When a slice is instrumenting logging or auditing branch behavior, the testing
+goal is still behavioral proof, not log-string proof.
+
+- Do not assert log message strings or snapshot raw log output as the primary
+  test evidence.
+- Tests must assert the natural outcome of the branch under test:
+  - typed exceptions
+  - normalized error envelopes/codes
+  - returned values
+  - state transitions
+  - persistence/query results
+- If branch logic is not testable without asserting logs, refactor the code so
+  the branch behavior becomes testable directly.
+- Logging/backfill slices are incomplete until the newly instrumented positive
+  and negative branches are also covered by truthful automated tests at the
+  appropriate lower layer.
+
 ---
 
 ## 2. Test Layers

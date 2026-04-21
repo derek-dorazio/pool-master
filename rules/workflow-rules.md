@@ -166,6 +166,14 @@ Before marking any backend slice task `Done`, run through this checklist for eve
       appropriate automated layer
 - [ ] Negative/error/permission use cases affected by the slice are covered at
       an appropriate automated layer
+- [ ] If the slice instruments logging or branches, each identified positive
+      and negative branch is covered by a truthful automated test at the
+      appropriate layer
+- [ ] Logging/branch slices assert branch outcomes, not log message strings
+- [ ] Branches that were not testable at the start of the slice were refactored
+      or isolated enough to make their logic testable
+- [ ] Misshaped or untyped errors discovered during branch coverage work were
+      normalized to architectural standards in the same slice
 - [ ] Every required local gate for the slice was actually run; targeted checks
       were not used as a substitute for the broader required suite
 

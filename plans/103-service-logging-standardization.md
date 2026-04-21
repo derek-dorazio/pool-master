@@ -25,6 +25,8 @@ codebase.
 - ensure request and background-job logs carry useful context
 - backfill missing logging across the backend after the platform foundation is
   in place
+- ensure every meaningful positive and negative branch in the service tier is
+  both logged and proven by automated tests at the correct lower layer
 
 ## Non-Goals
 
@@ -40,6 +42,55 @@ codebase.
   and [flows](/Users/DDorazio/development/Github-Personal/pool-master/tech-specs/features/platform-logging-observability/flows.md).
 - Platform changes come first. Full backend backfill starts only after the base
   logger pattern, request bindings, redaction, and global error logging exist.
+- This rollout is a `log + prove` initiative, not a logging-only pass. Every
+  worker slice must:
+  - inventory the positive and negative branches in its owned code
+  - add `debug`, `info`, `warn`, `error`, and `fatal` logs according to the
+    severity rules below
+  - verify that each branch is covered by a truthful unit or DB-backed
+    integration test
+  - add missing tests, refactor for testability where needed, and repair
+    misshaped/untyped errors encountered during the pass
+- Do not assert log message strings in automated tests. Tests must assert the
+  natural branch outcomes:
+  - typed exceptions
+  - specific API error envelopes/codes
+  - specific return values/state transitions
+  - persistence-layer results
+- Branch coverage work is expected across:
+  - route/handler layer
+  - mapping/translation layer
+  - business/service layer
+  - persistence/repository/query layer
+- Local and QA development will typically run at `INFO`, occasionally `DEBUG`
+  during defect investigation. Staging and production should assume `WARN` as
+  the normal deployed floor, so `info` and `debug` must still be semantically
+  correct even if often suppressed there.
+
+## Severity Policy
+
+- `debug`
+  - function/service entry and exit points
+  - parameter bindings and decision checkpoints
+  - verbose step-by-step diagnostics that are useful only when troubleshooting
+- `info`
+  - successful happy-path milestones and completed business operations
+- `warn`
+  - expected negative branches:
+    - validation failures
+    - permission denials
+    - not-found outcomes
+    - invalid business-state transitions
+    - recoverable degraded conditions
+- `error`
+  - unexpected exceptions
+  - failed request handling
+  - failed job execution where the process continues
+- `fatal`
+  - unrecoverable startup failures
+  - process-ending failures
+  - daemon/scheduler conditions where service health cannot be maintained and
+    termination/restart is the correct response
 
 ## Action Plan
 
@@ -54,17 +105,53 @@ codebase.
 | 103-007 | 2 | Instrument auth, account, and league membership flows with policy-compliant logs | Not Started | Success at `info`, parameter tracing at `debug`, expected denials/errors at `warn`/`error`. |
 | 103-008 | 2 | Instrument contest management, contest creation, entry, and event-readiness flows | Not Started | Cover the main commissioner/member lifecycle and contest unblocking paths. |
 | 103-009 | 2 | Instrument root-admin, ingestion, scheduler, provider sync, and scoring flows | Not Started | High-value operational area after the shared platform logger exists. |
-| 103-010 | 3 | Backfill remaining backend services with missing logs that adhere to the policy | Not Started | Explicit service-wide logging backfill lane after platform and high-value modules are done. |
-| 103-011 | 3 | Add lower-layer test coverage for critical negative-path logging behavior where feasible | Not Started | Focus on proving warn/error behavior for important failure classes, not snapshotting every log line. |
-| 103-012 | 3 | Review CloudWatch searchability and document operational query patterns for QA/prod debugging | Not Started | Close the loop so operators know how to use the logs being emitted. |
+| 103-010 | 2 | Build a branch inventory and use-case-to-test matrix for each owned service slice | Not Started | Each worker lane must identify positive branches plus warn/error/fatal branches across routes, mappers, services, and persistence. |
+| 103-011 | 2 | Add or refactor lower-layer tests so every identified branch has truthful proof | Not Started | Add unit or DB-backed integration coverage; refactor code if branch logic is not currently testable. |
+| 103-012 | 2 | Normalize misshaped/untyped errors discovered during branch coverage work | Not Started | Improve thrown/returned errors to match architectural standards when tests expose drift. |
+| 103-013 | 3 | Backfill remaining backend services with missing logs that adhere to the policy | Not Started | Explicit service-wide logging backfill lane after platform and high-value modules are done. |
+| 103-014 | 3 | Review CloudWatch searchability and document operational query patterns for QA/prod debugging | Not Started | Close the loop so operators know how to use the logs being emitted. |
+
+## Worker Slice Strategy
+
+Use parallel workers only with disjoint ownership and the same required
+workflow in every slice.
+
+Recommended slice ownership:
+
+- `103-A`
+  auth, account, consent, and session-related routes/services/mappers/tests
+- `103-B`
+  leagues, invitations, squads, member/owner flows, permissions, and tests
+- `103-C`
+  contest management, contests, drafts, standings/history-facing lifecycle
+  services, mappers, and tests
+- `103-D`
+  events, participants, event readiness, and contest-ready field/persistence
+  support
+- `103-E`
+  root-admin, ingestion, scheduler, provider sync, scoring, notifications, and
+  operational services/tests
+- `103-F`
+  final repo-wide sweep for unmapped remaining modules, error normalization,
+  CloudWatch/query documentation, and gap closure
+
+Every worker slice must:
+
+- inventory branches before changing code
+- instrument each branch with the correct log level
+- add or repair tests for each branch
+- run the owned test classes after instrumentation/refactor work
+- run the full required local repo gates before commit/push
+- close or update the matching Beads item during slice closeout
 
 ## Recommended Slice Order
 
 1. `103-001` through `103-006`
-2. `103-009`
-3. `103-008`
-4. `103-007`
-5. `103-010` through `103-012`
+2. `103-010` through `103-012` as branch-inventory/test-proof scaffolding
+3. `103-009`
+4. `103-008`
+5. `103-007`
+6. `103-013` through `103-014`
 
 ## Acceptance Criteria
 
@@ -73,6 +160,16 @@ codebase.
   returned
 - expected negative paths are logged at `warn`
 - unexpected failures are logged at `error`
+- unrecoverable startup/process failures use `fatal` where appropriate
 - high-value service areas use the shared logging policy
-- a follow-on explicit backfill lane exists and is tracked until the remaining
+- routes, mappers, business logic, and persistence logic all have branch-aware
+  logging instrumentation
+- each identified positive and negative branch is covered by a truthful unit or
+  DB-backed integration test
+- tests assert natural branch outcomes rather than log strings
+- branches that were not testable at the start of the pass have been refactored
+  or isolated enough to make their logic testable
+- misshaped or untyped errors discovered during the pass are normalized to the
+  repo's architectural error standards
+- a follow-on explicit backfill lane remains tracked until the remaining
   backend codebase is covered
