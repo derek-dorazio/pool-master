@@ -25,6 +25,9 @@ changes.
   path requires very little manual configuration.
 - `PRD-007` Live scoring and results updates should happen automatically in the
   backend without normal commissioner/member/admin interaction.
+- `PRD-008` The platform must be operationally supportable: backend services
+  should emit structured, searchable logs with consistent request, user, and
+  execution context so defects can be diagnosed quickly in QA and production.
 
 ## First Pass Product Loop
 

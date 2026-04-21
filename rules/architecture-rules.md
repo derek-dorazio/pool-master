@@ -79,7 +79,7 @@ The go-forward web frontend is a single role-based application: `clients/poolmas
 | Containers | Docker | consistent local and CI environments |
 | IaC | Terraform | reproducible infrastructure |
 | CI/CD | GitHub Actions | build, typecheck, test, deploy |
-| Monitoring | Sentry + cloud metrics/logging | operational visibility |
+| Monitoring | Pino-structured service logs + cloud metrics/logging, with richer error telemetry added when needed | operational visibility |
 | Monorepo | npm workspaces + Turborepo | shared packages and fast pipelines |
 
 ---

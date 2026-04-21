@@ -16,6 +16,8 @@ The product is designed around a few durable principles:
   handling occasional league administration
 - commissioners are also members and should use the same team and entry tools
   that members use, with broader league-scoped authority when needed
+- backend services must be operationally diagnosable through consistent
+  structured logging rather than ad hoc console output or silent failures
 
 The first end-to-end product loop is:
 
