@@ -101,6 +101,13 @@ Notes:
 
 - The precursor to the CI-baseline rule is local truthfulness: if the relevant
   required local suites for a slice are failing, the slice is not finished.
+- Focused or nearby test runs are useful for iteration speed, but they are
+  additive only. They never replace the required local gate set before commit
+  or push.
+- A slice that passes only targeted tests but skips a required broader gate is
+  still unvalidated. If CI later finds a stale unit/integration/functional
+  failure that the required local gate would have caught, that is a workflow
+  failure, not a CI-only surprise.
 - DB-backed integration tests may need to run outside the Codex sandbox/container when they depend on a developer-local Postgres instance such as `localhost:5432`.
 - In those cases, ask for permission and run the exact integration command outside the sandbox rather than treating the failure as an application defect.
 - If a DB-backed integration command fails with a local connection error in the sandbox but local database commands such as `prisma migrate deploy` or `psql` succeed, retry the exact test command outside the sandbox before assuming the failure is in application code.
@@ -110,6 +117,10 @@ Notes:
 - Backend work must not be pushed with required test gates intentionally
   skipped. CI is confirmation, not the first place we discover missing local
   validation.
+- "I ran the tests closest to the code I changed" is not sufficient when the
+  repo rules require broader gates. Shared-model, shared-contract, or shared
+  service changes must still clear the full required local suites because stale
+  assertions often live outside the immediately touched files.
 - Failing automated tests indicate either:
   - a real defect that must be fixed immediately, or
   - a test that is no longer truthful and must be corrected or removed in the

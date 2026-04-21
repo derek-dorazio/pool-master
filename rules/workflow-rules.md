@@ -94,6 +94,12 @@ When finishing work:
   slice is still failing.
 - "Implementation complete" without green relevant local validation is still
   `In Progress`, not `Done`.
+- Targeted validation does not override the required repo gate set. When the
+  rules call for full unit, functional, coverage, typecheck, or lint gates,
+  those gates must be run even if focused nearby tests already passed.
+- If a slice is pushed after only focused validation and CI then fails in a
+  required gate that was skipped locally, treat that as a workflow miss in the
+  slice closeout, not as an acceptable CI discovery pattern.
 - If code cleanup resolves a previously logged plan finding, reconcile that plan
   finding in the same or immediately following slice. Do not leave active plans
   implying drift that no longer exists in the codebase.
@@ -160,6 +166,8 @@ Before marking any backend slice task `Done`, run through this checklist for eve
       appropriate automated layer
 - [ ] Negative/error/permission use cases affected by the slice are covered at
       an appropriate automated layer
+- [ ] Every required local gate for the slice was actually run; targeted checks
+      were not used as a substitute for the broader required suite
 
 **OpenAPI:**
 - [ ] `npm run api:refresh` succeeds
