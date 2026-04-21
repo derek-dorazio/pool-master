@@ -1,9 +1,11 @@
 import {
   changeAccountPassword,
+  createLeague,
   deleteAccount,
   getCurrentUser,
   inactivateAccount,
   loginUser,
+  reactivateAccount,
   refreshToken,
   updateAccountPreferences,
   updateAccountProfile,
@@ -160,7 +162,7 @@ describe('SDK Functional: Account Lifecycle', () => {
       client: user.client,
     });
 
-    expectFunctionalError(meAfterDelete, {
+  expectFunctionalError(meAfterDelete, {
       status: 404,
       code: 'USER_NOT_FOUND',
     });
@@ -177,5 +179,52 @@ describe('SDK Functional: Account Lifecycle', () => {
       status: 401,
       code: 'INVALID_CREDENTIALS',
     });
+  });
+
+  it('reactivates an inactive account and blocks permanent delete while league-scoped dependencies remain', async () => {
+    const user = await buildRegisteredUser({
+      displayName: 'Account Reactivation User',
+    });
+    const cookieClient = createCookieSessionClient(user.login.tokens);
+
+    const createLeagueResponse = await createLeague({
+      client: cookieClient,
+      body: {
+        name: 'Account Dependency League',
+        leagueCode: `ACCT${user.userId.replace(/-/g, '').slice(0, 6).toUpperCase()}`,
+      },
+    });
+
+    expect(createLeagueResponse.data?.league.id).toBeTruthy();
+
+    const inactivateResponse = await inactivateAccount({
+      client: cookieClient,
+    });
+
+    expect(inactivateResponse.data?.user.isActive).toBe(false);
+
+    const blockedDeleteResponse = await deleteAccount({
+      client: user.client,
+      body: {
+        email: user.email,
+      },
+    });
+
+    expectFunctionalError(blockedDeleteResponse, {
+      status: 409,
+      code: 'ACCOUNT_DELETE_DEPENDENCIES_EXIST',
+    });
+
+    const reactivateResponse = await reactivateAccount({
+      client: user.client,
+    });
+
+    expect(reactivateResponse.data?.user.isActive).toBe(true);
+
+    const refreshedProfile = await getCurrentUser({
+      client: user.client,
+    });
+
+    expect(refreshedProfile.data?.user.isActive).toBe(true);
   });
 });

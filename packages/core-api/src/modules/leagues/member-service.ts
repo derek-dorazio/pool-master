@@ -3,6 +3,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
   SquadMembershipRepository,
@@ -24,18 +25,42 @@ export class MemberService {
     private readonly prisma: PrismaClient,
     private readonly squadRepo?: SquadRepository,
     private readonly squadMembershipRepo?: SquadMembershipRepository,
+    private readonly logger?: FastifyBaseLogger,
   ) {}
 
   /** Changes a member's role. */
   async changeRole(input: ChangeRoleInput): Promise<LeagueMembership> {
+    this.logger?.debug({
+      action: 'leagueMember.changeRole.enter',
+      data: {
+        leagueId: input.leagueId,
+        targetUserId: input.targetUserId,
+        newRole: input.newRole,
+      },
+    }, 'Changing league member role');
     const membership = await this.membershipRepo.findByLeagueAndUser(
       input.leagueId,
       input.targetUserId,
     );
     if (!membership) {
+      this.logger?.warn({
+        action: 'leagueMember.changeRole.notFound',
+        data: {
+          leagueId: input.leagueId,
+          targetUserId: input.targetUserId,
+        },
+      }, 'Cannot change role for missing league member');
       throw new MemberNotFoundError(input.targetUserId, input.leagueId);
     }
     if (membership.status !== LeagueMembershipStatus.ACTIVE) {
+      this.logger?.warn({
+        action: 'leagueMember.changeRole.inactive',
+        data: {
+          leagueId: input.leagueId,
+          targetUserId: input.targetUserId,
+          status: membership.status,
+        },
+      }, 'Cannot change role for inactive league member');
       throw new MemberOperationError(
         'Cannot change the role of an inactive league member',
         'LEAGUE_MEMBER_INACTIVE',
@@ -50,16 +75,37 @@ export class MemberService {
     const updates: Partial<LeagueMembership> = {
       role: input.newRole,
     };
-    return this.membershipRepo.update(membership.id, updates);
+    const updatedMembership = await this.membershipRepo.update(membership.id, updates);
+    this.logger?.info({
+      action: 'leagueMember.changeRole.success',
+      data: {
+        leagueId: input.leagueId,
+        targetUserId: input.targetUserId,
+        newRole: input.newRole,
+      },
+    }, 'Changed league member role');
+    return updatedMembership;
   }
 
   /** Removes a member from the league by inactivating the membership. */
   async removeMember(leagueId: string, userId: string): Promise<void> {
+    this.logger?.debug({
+      action: 'leagueMember.remove.enter',
+      data: { leagueId, userId },
+    }, 'Removing league member');
     const membership = await this.membershipRepo.findByLeagueAndUser(leagueId, userId);
     if (!membership) {
+      this.logger?.warn({
+        action: 'leagueMember.remove.notFound',
+        data: { leagueId, userId },
+      }, 'Cannot remove missing league member');
       throw new MemberNotFoundError(userId, leagueId);
     }
     if (membership.status !== LeagueMembershipStatus.ACTIVE) {
+      this.logger?.warn({
+        action: 'leagueMember.remove.alreadyInactive',
+        data: { leagueId, userId, status: membership.status },
+      }, 'Cannot remove inactive league member');
       throw new MemberOperationError('Member is already inactive', 'LEAGUE_MEMBER_ALREADY_INACTIVE');
     }
     if (membership.role === LeagueRole.COMMISSIONER) {
@@ -72,7 +118,12 @@ export class MemberService {
       prisma: this.prisma,
       squadRepo: this.squadRepo,
       squadMembershipRepo: this.squadMembershipRepo,
+      logger: this.logger,
     });
+    this.logger?.info({
+      action: 'leagueMember.remove.success',
+      data: { leagueId, userId },
+    }, 'Removed league member');
   }
 
   private async ensureAnotherActiveCommissioner(
@@ -88,6 +139,10 @@ export class MemberService {
     );
 
     if (remainingActiveCommissioners.length === 0) {
+      this.logger?.warn({
+        action: 'leagueMember.ensureCommissioner.missingReplacement',
+        data: { leagueId, targetUserId },
+      }, 'Rejected operation because it would remove the last active commissioner');
       throw new MemberOperationError(
         'Appoint another active commissioner before removing or demoting the last commissioner.',
         'LEAGUE_LAST_COMMISSIONER_REQUIRED',

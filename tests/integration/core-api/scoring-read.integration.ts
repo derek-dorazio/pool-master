@@ -23,6 +23,50 @@ afterAll(async () => {
 });
 
 describe('Scoring Read Integration', () => {
+  it('validates scoring configs and exposes scoring service health', async () => {
+    const user = await createTestUser({ displayName: 'Scoring Config User' });
+
+    const invalidValidationRes = await getApp().inject({
+      method: 'POST',
+      url: '/api/v1/scoring/config/validate',
+      headers: user.headers,
+      payload: {
+        sport: 'GOLF',
+        scoring_type: 'STROKE_PLAY',
+        stat_rules: [
+          {
+            stat_key: 'unknown_metric',
+            points_per_unit: 1,
+          },
+        ],
+        counting_method: 'BEST_N',
+        lower_is_better: true,
+      },
+    });
+    expect(invalidValidationRes.statusCode).toBe(200);
+    expect(invalidValidationRes.json()).toEqual(
+      expect.objectContaining({
+        valid: false,
+        warnings: expect.any(Array),
+      }),
+    );
+
+    const healthRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/scoring/health',
+      headers: user.headers,
+    });
+    expect(healthRes.statusCode).toBe(200);
+    expect(healthRes.json()).toEqual(
+      expect.objectContaining({
+        status: 'ok',
+        service: 'scoring-service',
+        rollupRunning: expect.any(Boolean),
+        activeContests: expect.any(Number),
+      }),
+    );
+  });
+
   it('serves leaderboard, entry breakdown, participant history, and rollup from persisted score tables', async () => {
     const owner = await createTestUser({ displayName: 'Scoring Read Owner' });
     const challenger = await createTestUser({

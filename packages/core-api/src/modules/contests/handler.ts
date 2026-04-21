@@ -21,6 +21,7 @@ import {
   toMyContestEntryResponse,
   toContestResponse,
 } from '../../mappers/contests.mapper';
+import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
 import type { ContestService } from './service';
 import type { CreateContestInput } from './service';
@@ -119,11 +120,19 @@ export function createContestHandlers(contestService: ContestService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
+    const logger = createRequestContextLogger(request);
     const userId = request.authUser?.userId;
     if (!userId) {
+      logger.warn({ leagueId: request.params.id }, 'contest create route missing auth session');
       return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
     const body = CreateContestBodySchema.parse(request.body);
+    logger.debug({
+      leagueId: request.params.id,
+      userId,
+      contestType: body.contestType,
+      selectionType: body.selectionType,
+    }, 'contest create route start');
     try {
       validateCreateContestBody(body);
       const result = await contestService.createContest({
@@ -142,11 +151,14 @@ export function createContestHandlers(contestService: ContestService) {
         scoringStopsOnElimination: body.scoringStopsOnElimination,
       });
 
+      logger.info({ contestId: result.contest.id, leagueId: request.params.id, userId }, 'contest create route completed');
       return reply.status(201).send(toContestResponse(result.contest, result.contestConfiguration));
     } catch (err) {
       if (err instanceof ContestOperationError) {
+        logger.warn({ leagueId: request.params.id, userId, code: err.code }, 'contest create route rejected');
         return sendError(reply, 400, err.code, err.message);
       }
+      logger.error({ leagueId: request.params.id, userId, err }, 'contest create route failed');
       throw err;
     }
   }
@@ -155,7 +167,10 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { id: string } }>,
     _reply: FastifyReply,
   ): Promise<{ contests: unknown[] }> {
+    const logger = createRequestContextLogger(request);
+    logger.debug({ leagueId: request.params.id }, 'contest list route start');
     const contests = await contestService.listByLeague(request.params.id);
+    logger.info({ leagueId: request.params.id, contestCount: contests.length }, 'contest list route completed');
     return toContestListResponse(contests);
   }
 
@@ -163,10 +178,14 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
+    const logger = createRequestContextLogger(request);
+    logger.debug({ contestId: request.params.contestId }, 'contest get route start');
     const result = await contestService.getContest(request.params.contestId);
     if (!result) {
+      logger.warn({ contestId: request.params.contestId }, 'contest get route missing contest');
       return sendError(reply, 404, 'CONTEST_NOT_FOUND', 'Contest not found');
     }
+    logger.info({ contestId: request.params.contestId }, 'contest get route completed');
     return reply.send(toContestResponse(result.contest, result.contestConfiguration));
   }
 
@@ -174,9 +193,17 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
+    const logger = createRequestContextLogger(request);
     const userId = request.authUser?.userId as string;
+    logger.debug({ contestId: request.params.contestId, userId }, 'contest entries list route start');
     try {
       const result = await contestService.listEntries(request.params.contestId, userId);
+      logger.info({
+        contestId: request.params.contestId,
+        userId,
+        entryCount: result.entries.length,
+        isJoined: result.isJoined,
+      }, 'contest entries list route completed');
       return reply.send(toContestEntryListResponse({
         contestId: request.params.contestId,
         entries: result.entries,
@@ -186,11 +213,14 @@ export function createContestHandlers(contestService: ContestService) {
       }));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
+        logger.warn({ contestId: request.params.contestId, userId }, 'contest entries list route missing contest');
         return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       if (err instanceof ContestEntryOperationError) {
+        logger.warn({ contestId: request.params.contestId, userId, code: err.code }, 'contest entries list route rejected');
         return sendError(reply, 400, err.code, err.message);
       }
+      logger.error({ contestId: request.params.contestId, userId, err }, 'contest entries list route failed');
       throw err;
     }
   }
@@ -199,21 +229,26 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string; entryId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
+    const logger = createRequestContextLogger(request);
     try {
       const entry = await contestService.getEntryDetail(
         request.params.contestId,
         request.params.entryId,
       );
+      logger.info({ contestId: request.params.contestId, entryId: request.params.entryId }, 'contest entry detail route completed');
       return reply.send(
         toContestEntryDetailResponse(request.params.contestId, entry),
       );
     } catch (err) {
       if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
+        logger.warn({ contestId: request.params.contestId, entryId: request.params.entryId }, 'contest entry detail route missing entry');
         return sendError(reply, 404, 'CONTEST_ENTRY_NOT_FOUND', err.message);
       }
       if (err instanceof ContestEntryOperationError) {
+        logger.warn({ contestId: request.params.contestId, entryId: request.params.entryId, code: err.code }, 'contest entry detail route rejected');
         return sendError(reply, 400, err.code, err.message);
       }
+      logger.error({ contestId: request.params.contestId, entryId: request.params.entryId, err }, 'contest entry detail route failed');
       throw err;
     }
   }
@@ -222,17 +257,23 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
+    const logger = createRequestContextLogger(request);
     const userId = request.authUser?.userId as string;
+    logger.debug({ contestId: request.params.contestId, userId }, 'contest my-entry route start');
     try {
       const entry = await contestService.getMyEntry(request.params.contestId, userId);
+      logger.info({ contestId: request.params.contestId, userId, hasEntry: entry !== null }, 'contest my-entry route completed');
       return reply.send(toMyContestEntryResponse(request.params.contestId, entry));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
+        logger.warn({ contestId: request.params.contestId, userId }, 'contest my-entry route missing contest');
         return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       if (err instanceof ContestEntryOperationError) {
+        logger.warn({ contestId: request.params.contestId, userId, code: err.code }, 'contest my-entry route rejected');
         return sendError(reply, 400, err.code, err.message);
       }
+      logger.error({ contestId: request.params.contestId, userId, err }, 'contest my-entry route failed');
       throw err;
     }
   }
@@ -241,19 +282,30 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
+    const logger = createRequestContextLogger(request);
     const userId = request.authUser?.userId as string;
+    logger.debug({ contestId: request.params.contestId, userId }, 'contest create entry route start');
     try {
       const result = await contestService.createEntry(request.params.contestId, userId);
+      logger.info({
+        contestId: request.params.contestId,
+        userId,
+        entryId: result.entry.id,
+        created: result.created,
+      }, 'contest create entry route completed');
       return reply.status(result.created ? 201 : 200).send(
         toContestEntryResponse(request.params.contestId, result.entry),
       );
     } catch (err) {
       if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
+        logger.warn({ contestId: request.params.contestId, userId }, 'contest create entry route missing contest');
         return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       if (err instanceof ContestEntryOperationError) {
+        logger.warn({ contestId: request.params.contestId, userId, code: err.code }, 'contest create entry route rejected');
         return sendError(reply, 400, err.code, err.message);
       }
+      logger.error({ contestId: request.params.contestId, userId, err }, 'contest create entry route failed');
       throw err;
     }
   }
@@ -262,20 +314,26 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
+    const logger = createRequestContextLogger(request);
     const userId = request.authUser?.userId as string;
+    logger.debug({ contestId: request.params.contestId, userId }, 'contest delete entry route start');
     try {
       await contestService.deleteMyEntry(request.params.contestId, userId);
+      logger.info({ contestId: request.params.contestId, userId }, 'contest delete entry route completed');
       return reply.send({
         contestId: request.params.contestId,
         deleted: true as const,
       });
     } catch (err) {
       if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
+        logger.warn({ contestId: request.params.contestId, userId }, 'contest delete entry route missing contest or entry');
         return sendError(reply, 404, 'CONTEST_ENTRY_NOT_FOUND', err.message);
       }
       if (err instanceof ContestEntryOperationError) {
+        logger.warn({ contestId: request.params.contestId, userId, code: err.code }, 'contest delete entry route rejected');
         return sendError(reply, 400, err.code, err.message);
       }
+      logger.error({ contestId: request.params.contestId, userId, err }, 'contest delete entry route failed');
       throw err;
     }
   }
@@ -287,7 +345,9 @@ export function createContestHandlers(contestService: ContestService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
+    const logger = createRequestContextLogger(request);
     const userId = request.authUser?.userId as string;
+    logger.debug({ contestId: request.params.contestId, entryId: request.params.entryId, userId }, 'contest update entry route start');
     try {
       const body = UpdateContestEntryRequestSchema.parse(request.body);
       const entry = await contestService.updateEntry(
@@ -299,14 +359,18 @@ export function createContestHandlers(contestService: ContestService) {
           tiebreakerValue: body.tiebreakerValue,
         },
       );
+      logger.info({ contestId: request.params.contestId, entryId: request.params.entryId, userId }, 'contest update entry route completed');
       return reply.send(toContestEntryResponse(request.params.contestId, entry));
     } catch (err) {
       if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
+        logger.warn({ contestId: request.params.contestId, entryId: request.params.entryId, userId }, 'contest update entry route missing contest or entry');
         return sendError(reply, 404, 'CONTEST_ENTRY_NOT_FOUND', err.message);
       }
       if (err instanceof ContestEntryOperationError) {
+        logger.warn({ contestId: request.params.contestId, entryId: request.params.entryId, userId, code: err.code }, 'contest update entry route rejected');
         return sendError(reply, 400, err.code, err.message);
       }
+      logger.error({ contestId: request.params.contestId, entryId: request.params.entryId, userId, err }, 'contest update entry route failed');
       throw err;
     }
   }
@@ -318,6 +382,8 @@ export function createContestHandlers(contestService: ContestService) {
     }>,
     reply: FastifyReply,
   ): Promise<void> {
+    const logger = createRequestContextLogger(request);
+    logger.debug({ contestId: request.params.contestId }, 'contest update route start');
     try {
       const body = UpdateContestBodySchema.parse(request.body);
       const contest = await contestService.updateContest(
@@ -330,14 +396,18 @@ export function createContestHandlers(contestService: ContestService) {
           isExclusive: body.isExclusive,
         },
       );
+      logger.info({ contestId: request.params.contestId }, 'contest update route completed');
       return reply.send(toContestResponse(contest, null));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
+        logger.warn({ contestId: request.params.contestId }, 'contest update route missing contest');
         return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       if (err instanceof ContestOperationError) {
+        logger.warn({ contestId: request.params.contestId, code: err.code }, 'contest update route rejected');
         return sendError(reply, 400, err.code, err.message);
       }
+      logger.error({ contestId: request.params.contestId, err }, 'contest update route failed');
       throw err;
     }
   }
@@ -346,16 +416,22 @@ export function createContestHandlers(contestService: ContestService) {
     request: FastifyRequest<{ Params: { contestId: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
+    const logger = createRequestContextLogger(request);
+    logger.debug({ contestId: request.params.contestId }, 'contest delete route start');
     try {
       await contestService.deleteContest(request.params.contestId);
+      logger.info({ contestId: request.params.contestId }, 'contest delete route completed');
       return reply.status(204).send();
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
+        logger.warn({ contestId: request.params.contestId }, 'contest delete route missing contest');
         return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
       }
       if (err instanceof ContestOperationError) {
+        logger.warn({ contestId: request.params.contestId, code: err.code }, 'contest delete route rejected');
         return sendError(reply, 400, err.code, err.message);
       }
+      logger.error({ contestId: request.params.contestId, err }, 'contest delete route failed');
       throw err;
     }
   }

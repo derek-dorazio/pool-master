@@ -91,9 +91,14 @@ export async function scoringRoutes(
       },
     },
     handler: async (request, reply) => {
+      const logger = request.contextLogger ?? request.log;
+      logger.debug('Validating scoring configuration');
       const parseResult = ScoringConfigSchema.safeParse(request.body);
 
       if (!parseResult.success) {
+        logger.warn({
+          issueCount: parseResult.error.issues.length,
+        }, 'Scoring configuration validation failed schema parsing');
         return sendWithStatus(reply, 400, {
           valid: false,
           errors: parseResult.error.issues,
@@ -101,6 +106,11 @@ export async function scoringRoutes(
       }
 
       const statErrors = validateStatKeys(parseResult.data);
+      if (statErrors.length > 0) {
+        logger.warn({ warningCount: statErrors.length }, 'Scoring configuration validation returned warnings');
+      } else {
+        logger.info('Scoring configuration validation succeeded without warnings');
+      }
 
       return {
         valid: statErrors.length === 0,

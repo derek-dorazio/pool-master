@@ -31,7 +31,13 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const squadOwnerInvitationRepo = new PrismaSquadOwnerInvitationRepository(prisma);
   const leagueMembershipRepo = new PrismaLeagueMembershipRepository(prisma);
-  const service = new SquadService(squadRepo, squadMembershipRepo, leagueMembershipRepo, prisma);
+  const service = new SquadService(
+    squadRepo,
+    squadMembershipRepo,
+    leagueMembershipRepo,
+    prisma,
+    fastify.log,
+  );
   const handler = createSquadHandlers(service);
   const ownerInvitationService = new SquadOwnerInvitationService(
     squadOwnerInvitationRepo,

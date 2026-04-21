@@ -7,6 +7,7 @@
  */
 
 import { PrismaClient, Prisma } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import { Sport } from '@poolmaster/shared/domain';
 import { logAdminAction } from './admin-audit-service';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
@@ -218,6 +219,7 @@ export class ProviderService {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly registry: ProviderRegistry = buildProviderRegistry(),
+    private readonly logger?: FastifyBaseLogger,
   ) {
     this.ingestionPersistence = new IngestionPersistence(prisma);
   }
@@ -541,6 +543,7 @@ export class ProviderService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<ProviderHealthCheck> {
+    this.logger?.debug({ providerId }, 'Triggering manual provider health check');
     const provider = this.getProviderOrThrow(providerId);
     const health = await provider.healthCheck();
     const checkedAt = new Date();
@@ -578,6 +581,11 @@ export class ProviderService {
       afterState: result as unknown as Record<string, unknown>,
     });
 
+    this.logger?.info({
+      providerId,
+      status: result.status,
+      checkedAt: checkedAt.toISOString(),
+    }, 'Completed manual provider health check');
     return result;
   }
 
@@ -586,8 +594,10 @@ export class ProviderService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<ProviderSportSyncPreparationResult> {
+    this.logger?.debug({ sport }, 'Preparing manual sport sync');
     const providers = this.registry.getProvidersForSport(sport);
     if (providers.length === 0) {
+      this.logger?.warn({ sport }, 'No providers registered for sport sync');
       throw new SportProviderNotFoundError(sport);
     }
 
@@ -599,6 +609,10 @@ export class ProviderService {
     let rankingRecordsSynced = 0;
 
     for (const provider of providers) {
+      this.logger?.debug({
+        sport,
+        providerId: provider.providerId,
+      }, 'Starting provider sport sync preparation');
       providerIds.push(provider.providerId);
       const startedAt = new Date();
       const syncRun = await this.prisma.providerSyncRun.create({
@@ -619,17 +633,36 @@ export class ProviderService {
         const from = new Date();
         const to = new Date(from.getTime() + 14 * 24 * 60 * 60 * 1000);
         const events = await provider.getUpcomingEvents(sport, { from, to });
+        this.logger?.debug({
+          sport,
+          providerId: provider.providerId,
+          eventsDiscovered: events.length,
+        }, 'Fetched upcoming events for sport sync');
         eventsDiscovered += events.length;
         await this.ingestionPersistence.persistEvents(events);
 
         const participants = await provider.getParticipants(sport);
         participantRecordsSynced += await this.ingestionPersistence.persistParticipants(participants);
+        this.logger?.debug({
+          sport,
+          providerId: provider.providerId,
+          participantRecordsSynced,
+        }, 'Persisted provider participants for sport sync');
 
         try {
           const rankings = await provider.getRankings(sport, sport === Sport.GOLF ? 'OWGR' : 'default');
           rankingRecordsSynced += await this.ingestionPersistence.persistRankings(rankings);
+          this.logger?.debug({
+            sport,
+            providerId: provider.providerId,
+            rankingRecordsSynced,
+          }, 'Persisted provider rankings for sport sync');
         } catch {
           // Ranking support varies by provider; keep the manual sync resilient.
+          this.logger?.warn({
+            sport,
+            providerId: provider.providerId,
+          }, 'Provider rankings unavailable during manual sport sync');
         }
 
         for (const event of events) {
@@ -670,7 +703,20 @@ export class ProviderService {
           createdAt: updatedSyncRun.createdAt,
           payload: normalizeSyncRunPayload(updatedSyncRun.payloadJson),
         });
+        this.logger?.info({
+          sport,
+          providerId: provider.providerId,
+          eventsDiscovered,
+          eventsHydrated,
+          participantRecordsSynced,
+          rankingRecordsSynced,
+        }, 'Completed provider sport sync preparation');
       } catch (error) {
+        this.logger?.error({
+          sport,
+          providerId: provider.providerId,
+          error,
+        }, 'Provider sport sync preparation failed');
         const completedAt = new Date();
         const failedSyncRun = await this.prisma.providerSyncRun.update({
           where: { id: syncRun.id },
@@ -721,6 +767,14 @@ export class ProviderService {
       },
     });
 
+    this.logger?.info({
+      sport,
+      providerIds,
+      eventsDiscovered,
+      eventsHydrated,
+      participantRecordsSynced,
+      rankingRecordsSynced,
+    }, 'Prepared sport sync across providers');
     return {
       sport,
       providerIds,
@@ -786,9 +840,11 @@ export class ProviderService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<IngestionJob> {
+    this.logger?.debug({ providerId, eventId }, 'Starting manual provider event re-ingest');
     const provider = this.getProviderOrThrow(providerId);
     const sport = provider.sportsCovered[0];
     if (!sport) {
+      this.logger?.warn({ providerId, eventId }, 'Provider has no declared sport coverage for re-ingest');
       throw new ProviderSportCoverageError(providerId);
     }
     const job = await this.prisma.ingestionJob.create({
@@ -807,6 +863,7 @@ export class ProviderService {
 
     const detail = await provider.getEventDetails(eventId);
     if (!detail) {
+      this.logger?.warn({ providerId, eventId }, 'Provider did not return event detail for re-ingest');
       await this.prisma.ingestionJob.update({
         where: { id: job.id },
         data: {
@@ -853,6 +910,12 @@ export class ProviderService {
       afterState: { jobId: completed.id, eventId },
     });
 
+    this.logger?.info({
+      providerId,
+      eventId,
+      recordsProcessed: completed.recordsProcessed,
+      sport: completed.sport,
+    }, 'Completed manual provider event re-ingest');
     return this.mapJob(completed);
   }
 

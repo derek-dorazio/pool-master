@@ -71,6 +71,25 @@ describe('AccountService', () => {
     } satisfies Partial<AccountLifecycleError>);
   });
 
+  it('rejects mutable account actions when the user does not exist', async () => {
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
+    } as any;
+
+    const service = new AccountService(prisma);
+
+    await expect(
+      service.updateOwnPreferences('missing-user', {
+        timezone: 'America/New_York',
+      }),
+    ).rejects.toMatchObject({
+      code: 'USER_NOT_FOUND',
+      statusCode: 404,
+    } satisfies Partial<AccountLifecycleError>);
+  });
+
   it('updates account preferences and allows clearing values', async () => {
     const updatedUser = {
       id: 'user-1',
@@ -195,6 +214,98 @@ describe('AccountService', () => {
     } satisfies Partial<AccountLifecycleError>);
   });
 
+  it('rejects password change when the account does not have a password hash', async () => {
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          passwordHash: null,
+          isActive: true,
+        }),
+      },
+    } as any;
+
+    const service = new AccountService(prisma);
+
+    await expect(
+      service.changeOwnPassword('user-1', {
+        currentPassword: 'CurrentPass123!',
+        newPassword: 'NewPass456!',
+        confirmNewPassword: 'NewPass456!',
+      }),
+    ).rejects.toMatchObject({
+      code: 'ACCOUNT_PASSWORD_UNAVAILABLE',
+      statusCode: 409,
+    } satisfies Partial<AccountLifecycleError>);
+  });
+
+  it('rejects password change when the confirmation does not match', async () => {
+    const existingPasswordHash = await bcrypt.hash('CurrentPass123!', 10);
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          passwordHash: existingPasswordHash,
+          isActive: true,
+        }),
+      },
+    } as any;
+
+    const service = new AccountService(prisma);
+
+    await expect(
+      service.changeOwnPassword('user-1', {
+        currentPassword: 'CurrentPass123!',
+        newPassword: 'NewPass456!',
+        confirmNewPassword: 'Mismatch456!',
+      }),
+    ).rejects.toMatchObject({
+      code: 'PASSWORD_CONFIRMATION_MISMATCH',
+      statusCode: 400,
+    } satisfies Partial<AccountLifecycleError>);
+  });
+
+  it('changes the password and revokes every active refresh session when no current token is supplied', async () => {
+    const existingPasswordHash = await bcrypt.hash('CurrentPass123!', 10);
+    const tx = {
+      user: {
+        update: jest.fn().mockResolvedValue(undefined),
+      },
+      refreshToken: {
+        updateMany: jest.fn().mockResolvedValue({ count: 3 }),
+      },
+    };
+
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          passwordHash: existingPasswordHash,
+          isActive: true,
+        }),
+      },
+      $transaction: jest.fn().mockImplementation(async (callback) => callback(tx)),
+    } as any;
+
+    const service = new AccountService(prisma);
+
+    await expect(
+      service.changeOwnPassword('user-1', {
+        currentPassword: 'CurrentPass123!',
+        newPassword: 'NewPass456!',
+        confirmNewPassword: 'NewPass456!',
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(tx.refreshToken.updateMany).toHaveBeenCalledWith({
+      where: {
+        userId: 'user-1',
+        revokedAt: null,
+      },
+      data: { revokedAt: expect.any(Date) },
+    });
+  });
+
   it('inactivates an active account and revokes refresh tokens', async () => {
     const updatedUser = {
       id: 'user-1',
@@ -255,6 +366,45 @@ describe('AccountService', () => {
 
     await expect(service.inactivateOwnAccount('user-1')).rejects.toMatchObject({
       code: 'ACCOUNT_ALREADY_INACTIVE',
+      statusCode: 409,
+    } satisfies Partial<AccountLifecycleError>);
+  });
+
+  it('reactivates an inactive account and rejects an already active one', async () => {
+    const prisma = {
+      user: {
+        findUnique: jest.fn()
+          .mockResolvedValueOnce({
+            id: 'user-1',
+            isActive: false,
+          })
+          .mockResolvedValueOnce({
+            id: 'user-1',
+            isActive: true,
+          }),
+        update: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          email: 'user@example.com',
+          firstName: 'User',
+          lastName: 'Example',
+          isActive: true,
+          isRootAdmin: false,
+          authProvider: 'EMAIL',
+          timezone: null,
+          locale: null,
+          createdAt: new Date('2026-04-13T00:00:00.000Z'),
+        }),
+      },
+    } as any;
+
+    const service = new AccountService(prisma);
+
+    await expect(service.reactivateOwnAccount('user-1')).resolves.toMatchObject({
+      id: 'user-1',
+      isActive: true,
+    });
+    await expect(service.reactivateOwnAccount('user-1')).rejects.toMatchObject({
+      code: 'ACCOUNT_ALREADY_ACTIVE',
       statusCode: 409,
     } satisfies Partial<AccountLifecycleError>);
   });

@@ -23,7 +23,7 @@ import { getAppPrisma } from '../../core/prisma-context';
 
 export async function standingsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
-  const standingsService = new StandingsService(prisma);
+  const standingsService = new StandingsService(prisma, fastify.log);
   const handlers = createStandingsHandlers(standingsService);
 
   // --- Full Leaderboard ---

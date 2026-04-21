@@ -24,6 +24,40 @@ afterAll(async () => {
 });
 
 describe('History Read Fallback Integration', () => {
+  it('returns 404 envelopes for missing contest summary and missing roster history', async () => {
+    const owner = await createTestUser({ displayName: 'History Missing Owner' });
+    const missingContestId = '00000000-0000-0000-0000-000000000001';
+    const missingEntryId = '00000000-0000-0000-0000-000000000002';
+
+    const summaryRes = await getApp().inject({
+      method: 'GET',
+      url: `/api/v1/contests/${missingContestId}/history/summary`,
+      headers: owner.headers,
+    });
+    expect(summaryRes.statusCode).toBe(404);
+    expect(summaryRes.json()).toEqual(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          code: 'CONTEST_HISTORY_NOT_FOUND',
+        }),
+      }),
+    );
+
+    const rosterRes = await getApp().inject({
+      method: 'GET',
+      url: `/api/v1/contests/${missingContestId}/history/roster/${missingEntryId}`,
+      headers: owner.headers,
+    });
+    expect(rosterRes.statusCode).toBe(404);
+    expect(rosterRes.json()).toEqual(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          code: 'ROSTER_HISTORY_NOT_FOUND',
+        }),
+      }),
+    );
+  });
+
   it('serves completed contest history from contest entries and prize awards when legacy snapshots do not exist', async () => {
     const owner = await createTestUser({ displayName: 'History Fallback Owner' });
     const challenger = await createTestUser({

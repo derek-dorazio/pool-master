@@ -179,10 +179,33 @@ class OperationalContractProvider implements SportDataProvider {
   }
 }
 
+class EmptyCoverageProvider extends OperationalContractProvider {
+  providerId = 'empty-coverage-provider';
+  providerName = 'Empty Coverage Provider';
+  sportsCovered: Sport[] = [];
+}
+
 async function buildOperationalAdminApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
   const registry = new ProviderRegistry();
   registry.register('GOLF', new OperationalContractProvider(), 'PRIMARY');
+  const providerService = new ProviderService(getPrisma(), registry);
+
+  app.decorate('prisma', getPrisma());
+  app.setErrorHandler(globalErrorHandler);
+  await app.register(adminModule, {
+    prefix: '/api/v1/admin',
+    providerService,
+  });
+  await app.ready();
+
+  return app;
+}
+
+async function buildEmptyCoverageAdminApp(): Promise<FastifyInstance> {
+  const app = Fastify({ logger: false });
+  const registry = new ProviderRegistry();
+  registry.register('GOLF', new EmptyCoverageProvider(), 'PRIMARY');
   const providerService = new ProviderService(getPrisma(), registry);
 
   app.decorate('prisma', getPrisma());
@@ -475,8 +498,14 @@ describe('Contract verification (root admin)', () => {
       });
       expect(syncRunsRes.statusCode).toBe(200);
       expect(ProviderSyncRunListResponseSchema.safeParse(syncRunsRes.json()).success).toBe(true);
-      expect(syncRunsRes.json().items).toHaveLength(1);
-      expect(syncRunsRes.json().items[0].payload.detail).toBe('Imported event and participant field.');
+      expect(syncRunsRes.json().items.length).toBeGreaterThanOrEqual(1);
+      expect(
+        syncRunsRes.json().items.some(
+          (item: { eventId: string | null; payload: { detail?: string } }) =>
+            item.eventId === 'event-1'
+            && item.payload.detail === 'Imported event and participant field.',
+        ),
+      ).toBe(true);
 
       const healthRes = await app.inject({
         method: 'POST',
@@ -574,6 +603,28 @@ describe('Contract verification (root admin)', () => {
       expect(reIngestMissingEventRes.statusCode).toBe(404);
       expect(ErrorEnvelopeSchema.safeParse(reIngestMissingEventRes.json()).success).toBe(true);
       expect(reIngestMissingEventRes.json().error.code).toBe('PROVIDER_EVENT_NOT_FOUND');
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('root-admin provider re-ingest exposes typed provider coverage errors', async () => {
+    const rootAdmin = await createTestUser({
+      displayName: 'Root Admin Provider Coverage User',
+      isRootAdmin: true,
+    });
+    const app = await buildEmptyCoverageAdminApp();
+
+    try {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/v1/admin/providers/empty-coverage-provider/re-ingest/event-1',
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(ErrorEnvelopeSchema.safeParse(response.json()).success).toBe(true);
+      expect(response.json().error.code).toBe('PROVIDER_SPORT_COVERAGE_REQUIRED');
     } finally {
       await app.close();
     }

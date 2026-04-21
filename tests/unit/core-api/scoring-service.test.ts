@@ -1,6 +1,44 @@
 import { ScoringService } from '../../../packages/core-api/src/modules/scoring/service';
 
 describe('ScoringService', () => {
+  it('returns an empty entry breakdown when the entry is missing or belongs to another contest', async () => {
+    const standingsRollup = {
+      rollupContest: jest.fn(),
+      isRunning: jest.fn().mockReturnValue(false),
+      getActiveContestIds: jest.fn().mockReturnValue(new Set()),
+    };
+    const prisma = {
+      contestEntry: {
+        findUnique: jest.fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce({
+            id: 'entry-2',
+            contestId: 'other-contest',
+            totalScore: 22,
+          }),
+      },
+    } as any;
+
+    const service = new ScoringService({
+      standingsRollup: standingsRollup as any,
+      prisma,
+    });
+
+    await expect(service.getEntryScore('contest-1', 'missing-entry')).resolves.toEqual({
+      entryId: 'missing-entry',
+      contestId: 'contest-1',
+      totalScore: 0,
+      timeline: [],
+    });
+
+    await expect(service.getEntryScore('contest-1', 'entry-2')).resolves.toEqual({
+      entryId: 'entry-2',
+      contestId: 'contest-1',
+      totalScore: 0,
+      timeline: [],
+    });
+  });
+
   it('reads persisted entry scoring events from the participant score ledger', async () => {
     const standingsRollup = {
       rollupContest: jest.fn(),
@@ -123,5 +161,58 @@ describe('ScoringService', () => {
         finalScore: 3,
       }),
     });
+  });
+
+  it('returns empty participant history when no score events exist', async () => {
+    const service = new ScoringService({
+      standingsRollup: {
+        rollupContest: jest.fn(),
+        isRunning: jest.fn().mockReturnValue(false),
+        getActiveContestIds: jest.fn().mockReturnValue(new Set()),
+      } as any,
+      prisma: {
+        contestEntryParticipantScoreEvent: {
+          findMany: jest.fn().mockResolvedValue([]),
+        },
+      } as any,
+    });
+
+    await expect(service.getParticipantScoreHistory('contest-1', 'participant-1')).resolves.toEqual({
+      participantId: 'participant-1',
+      contestId: 'contest-1',
+      scores: [],
+      totalPoints: 0,
+    });
+  });
+
+  it('proxies manual rollup requests and health state', async () => {
+    const standingsRollup = {
+      rollupContest: jest.fn().mockResolvedValue({
+        contestId: 'contest-1',
+        entriesUpdated: 3,
+        leaderboardChanged: true,
+      }),
+      isRunning: jest.fn().mockReturnValue(true),
+      getActiveContestIds: jest.fn().mockReturnValue(new Set(['contest-1', 'contest-2'])),
+    };
+    const service = new ScoringService({
+      standingsRollup: standingsRollup as any,
+      prisma: {} as any,
+    });
+
+    await expect(service.triggerRollup('contest-1')).resolves.toEqual({
+      contestId: 'contest-1',
+      entriesUpdated: 3,
+      leaderboardChanged: true,
+    });
+    expect(standingsRollup.rollupContest).toHaveBeenCalledWith('contest-1');
+    expect(service.getHealth()).toEqual(
+      expect.objectContaining({
+        status: 'ok',
+        service: 'scoring-service',
+        rollupRunning: true,
+        activeContests: 2,
+      }),
+    );
   });
 });

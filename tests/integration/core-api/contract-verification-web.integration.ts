@@ -14,6 +14,7 @@ import {
   AccountDeleteResponseSchema,
   AccountResponseSchema,
   ContestConfigTemplateListResponseSchema,
+  ConsentHistoryResponseSchema,
   ContestManagementResponseSchema,
   ConsentRecordResponseSchema,
   DraftStateResponseSchema,
@@ -442,6 +443,14 @@ describe('Contract verification (web)', () => {
     expect(consentRes.statusCode).toBe(201);
     expect(ConsentRecordResponseSchema.safeParse(consentRes.json()).success).toBe(true);
 
+    const consentHistoryRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.account.consent,
+      headers: user.headers,
+    });
+    expect(consentHistoryRes.statusCode).toBe(200);
+    expect(ConsentHistoryResponseSchema.safeParse(consentHistoryRes.json()).success).toBe(true);
+
     const scoringRes = await getApp().inject({
       method: 'POST',
       url: '/api/v1/scoring/config/validate',
@@ -520,6 +529,24 @@ describe('Contract verification (web)', () => {
 
     expect(inactivateRes.statusCode).toBe(200);
     expect(AccountResponseSchema.safeParse(inactivateRes.json()).success).toBe(true);
+
+    const reactivateRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.account.reactivate,
+      headers: withoutJsonBodyHeaders(user.headers),
+    });
+
+    expect(reactivateRes.statusCode).toBe(200);
+    expect(AccountResponseSchema.safeParse(reactivateRes.json()).success).toBe(true);
+
+    const secondInactivateRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.account.inactivate,
+      headers: withoutJsonBodyHeaders(user.headers),
+    });
+
+    expect(secondInactivateRes.statusCode).toBe(200);
+    expect(AccountResponseSchema.safeParse(secondInactivateRes.json()).success).toBe(true);
 
     const deleteRes = await getApp().inject({
       method: 'DELETE',

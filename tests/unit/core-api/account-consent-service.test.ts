@@ -65,4 +65,28 @@ describe('AccountConsentService', () => {
 
     await expect(service.hasActiveConsent('user-1', 'terms_of_service')).resolves.toBe(false);
   });
+
+  it('returns false when no consent record exists for the requested type', async () => {
+    const prisma = {
+      consentRecord: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+    } as any;
+
+    const service = new AccountConsentService(prisma);
+
+    await expect(service.hasActiveConsent('user-1', 'privacy_policy')).resolves.toBe(false);
+  });
+
+  it('returns true when the latest consent record is granted', async () => {
+    const prisma = {
+      consentRecord: {
+        findFirst: jest.fn().mockResolvedValue({ granted: true }),
+      },
+    } as any;
+
+    const service = new AccountConsentService(prisma);
+
+    await expect(service.hasActiveConsent('user-1', 'privacy_policy')).resolves.toBe(true);
+  });
 });

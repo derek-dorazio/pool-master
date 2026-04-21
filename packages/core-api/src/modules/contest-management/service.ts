@@ -1,3 +1,4 @@
+import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
@@ -34,6 +35,19 @@ interface CreateContestManagementContext {
   leagueId: string;
 }
 
+type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
+
+function createNoopLogger(): LifecycleLogger {
+  const noop = () => undefined;
+  return {
+    debug: noop,
+    info: noop,
+    warn: noop,
+    error: noop,
+    fatal: noop,
+  };
+}
+
 export class ContestManagementService {
   constructor(
     private readonly contestCoreRepo: ContestCoreRepository,
@@ -45,12 +59,19 @@ export class ContestManagementService {
     private readonly sportEventParticipantRepo: SportEventParticipantRepository,
     private readonly sportEventParticipantSourceDataRepo: SportEventParticipantSourceDataRepository,
     private readonly sportEventParticipantValuationRepo: SportEventParticipantValuationRepository,
+    private readonly logger: LifecycleLogger = createNoopLogger(),
   ) {}
 
   async createContest(
     context: CreateContestManagementContext,
     input: CreateContestManagementRequest,
   ): Promise<ContestManagementDetailDto> {
+    this.logger.debug({
+      leagueId: context.leagueId,
+      sportEventId: input.sportEventId,
+      contestType: input.contestType,
+      hasTemplate: 'templateId' in input,
+    }, 'contest management create contest start');
     const resolvedConfiguration = await resolveCreateConfiguration(
       input,
       this.contestConfigTemplateRepo,
@@ -94,12 +115,25 @@ export class ContestManagementService {
       this.contestEntryAggregationRuleRepo,
     );
 
+    this.logger.info({
+      contestId: contest.id,
+      leagueId: context.leagueId,
+      selectionType,
+      configMode: resolvedConfiguration.configuration.mode,
+      templateId: resolvedConfiguration.template?.id ?? null,
+    }, 'contest management create contest completed');
+
     return buildContestManagementDetail(contest, configuration);
   }
 
   async listTemplates(
     input: ListContestConfigTemplatesQuery,
   ): Promise<ContestConfigTemplateDto[]> {
+    this.logger.debug({
+      sport: input.sport,
+      contestType: input.contestType,
+      eventType: input.eventType ?? null,
+    }, 'contest management list templates start');
     const templates =
       await this.contestConfigTemplateRepo.listBySportAndContestType({
         sport: input.sport as ContestConfigTemplate['sport'],
@@ -107,12 +141,20 @@ export class ContestManagementService {
         eventType: input.eventType,
       });
 
+    this.logger.info({
+      sport: input.sport,
+      contestType: input.contestType,
+      templateCount: templates.length,
+    }, 'contest management list templates completed');
+
     return templates.map(mapContestConfigTemplateDto);
   }
 
   async getContest(contestId: string): Promise<ContestManagementDetailDto> {
+    this.logger.debug({ contestId }, 'contest management get contest start');
     const contest = await this.contestCoreRepo.findById(contestId);
     if (!contest) {
+      this.logger.warn({ contestId }, 'contest management get contest missing contest');
       throw new ContestManagementError('Contest not found');
     }
 
@@ -120,9 +162,15 @@ export class ContestManagementService {
       contestId,
     );
     if (!configuration) {
+      this.logger.warn({ contestId }, 'contest management get contest missing configuration');
       throw new ContestManagementError('Contest configuration not found');
     }
 
+    this.logger.info({
+      contestId,
+      configMode: configuration.configMode ?? null,
+      templateId: configuration.templateId ?? null,
+    }, 'contest management get contest completed');
     return buildContestManagementDetail(contest, configuration);
   }
 
@@ -130,16 +178,23 @@ export class ContestManagementService {
     contestId: string,
     input: UpdateContestConfigurationRequest,
   ): Promise<ContestManagementDetailDto> {
+    this.logger.debug({
+      contestId,
+      configMode: input.mode,
+      hasLockAt: Boolean(input.locksAt),
+    }, 'contest management update configuration start');
     const configuration = await this.contestConfigurationRepo.findByContest(
       contestId,
     );
     if (!configuration) {
+      this.logger.warn({ contestId }, 'contest management update configuration missing configuration');
       throw new ContestManagementError('Contest configuration not found');
     }
 
     const selectionType = mapSelectionType(input);
     const contest = await this.contestCoreRepo.findById(contestId);
     if (!contest) {
+      this.logger.warn({ contestId }, 'contest management update configuration missing contest');
       throw new ContestManagementError('Contest not found');
     }
 
@@ -162,6 +217,7 @@ export class ContestManagementService {
     const refreshedConfiguration =
       await this.contestConfigurationRepo.findByContest(contestId);
     if (!refreshedConfiguration) {
+      this.logger.error({ contestId }, 'contest management update configuration refresh missing configuration');
       throw new ContestManagementError('Contest configuration not found');
     }
 
@@ -171,6 +227,11 @@ export class ContestManagementService {
       this.contestEntryAggregationRuleRepo,
     );
 
+    this.logger.info({
+      contestId,
+      selectionType,
+      configMode: refreshedConfiguration.configMode ?? null,
+    }, 'contest management update configuration completed');
     return buildContestManagementDetail(contest, refreshedConfiguration);
   }
 }

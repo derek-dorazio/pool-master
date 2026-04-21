@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
   SquadMembershipRepository,
@@ -6,6 +7,7 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   LeagueMembershipStatus,
+  LeagueRole,
   SquadMembershipStatus,
   SquadStatus,
   TeamIconKey,
@@ -31,22 +33,45 @@ export class SquadService {
     private readonly squadMembershipRepo: SquadMembershipRepository,
     private readonly leagueMembershipRepo: LeagueMembershipRepository,
     private readonly prisma: PrismaClient,
+    private readonly logger?: FastifyBaseLogger,
   ) {}
 
   async listSquads(leagueId: string, userId: string): Promise<SquadDto[]> {
+    this.logger?.debug({
+      action: 'squad.list.enter',
+      data: { leagueId, userId },
+    }, 'Listing squads');
     await this.requireActiveLeagueMembership(leagueId, userId);
 
     const squads = await this.squadRepo.findByLeague(leagueId, true);
-    return Promise.all(squads.map(async (squad) => this.loadSquadDto(squad.id)));
+    const result = await Promise.all(squads.map(async (squad) => this.loadSquadDto(squad.id)));
+    this.logger?.info({
+      action: 'squad.list.success',
+      data: { leagueId, userId, squadCount: result.length },
+    }, 'Listed squads');
+    return result;
   }
 
   async getSquad(leagueId: string, squadId: string, userId: string): Promise<SquadDto> {
+    this.logger?.debug({
+      action: 'squad.get.enter',
+      data: { leagueId, squadId, userId },
+    }, 'Loading squad');
     await this.requireActiveLeagueMembership(leagueId, userId);
     await this.requireLeagueScopedSquad(leagueId, squadId);
-    return this.loadSquadDto(squadId);
+    const squad = await this.loadSquadDto(squadId);
+    this.logger?.info({
+      action: 'squad.get.success',
+      data: { leagueId, squadId, userId },
+    }, 'Loaded squad');
+    return squad;
   }
 
   async createSquad(leagueId: string, userId: string, input: CreateSquadInput): Promise<SquadDto> {
+    this.logger?.debug({
+      action: 'squad.create.enter',
+      data: { leagueId, userId, hasName: Boolean(input.name?.trim()), iconKey: input.iconKey ?? null },
+    }, 'Creating squad');
     await this.requireActiveLeagueMembership(leagueId, userId);
     await this.ensureUserCanJoinLeagueSquad(leagueId, userId);
 
@@ -67,7 +92,12 @@ export class SquadService {
       joinedAt: new Date(),
     });
 
-    return this.loadSquadDto(squad.id);
+    const squadDto = await this.loadSquadDto(squad.id);
+    this.logger?.info({
+      action: 'squad.create.success',
+      data: { leagueId, squadId: squad.id, userId },
+    }, 'Created squad');
+    return squadDto;
   }
 
   async updateSquad(
@@ -76,12 +106,29 @@ export class SquadService {
     userId: string,
     input: UpdateSquadInput,
   ): Promise<SquadDto> {
+    this.logger?.debug({
+      action: 'squad.update.enter',
+      data: {
+        leagueId,
+        squadId,
+        userId,
+        updates: {
+          nameChanged: input.name !== undefined,
+          iconChanged: input.iconKey !== undefined,
+        },
+      },
+    }, 'Updating squad');
     await this.requireSquadManager(leagueId, squadId, userId);
     await this.squadRepo.update(squadId, {
       ...(input.name !== undefined ? { name: input.name.trim() } : {}),
       ...(input.iconKey !== undefined ? { iconKey: input.iconKey } : {}),
     });
-    return this.loadSquadDto(squadId);
+    const squad = await this.loadSquadDto(squadId);
+    this.logger?.info({
+      action: 'squad.update.success',
+      data: { leagueId, squadId, userId },
+    }, 'Updated squad');
+    return squad;
   }
 
   async inactivateSquad(
@@ -89,9 +136,17 @@ export class SquadService {
     squadId: string,
     userId: string,
   ): Promise<SquadDto> {
+    this.logger?.debug({
+      action: 'squad.inactivate.enter',
+      data: { leagueId, squadId, userId },
+    }, 'Inactivating squad');
     await this.requireSquadManager(leagueId, squadId, userId);
     const squad = await this.requireLeagueScopedSquad(leagueId, squadId);
     if (squad.status === SquadStatus.INACTIVE) {
+      this.logger?.warn({
+        action: 'squad.inactivate.alreadyInactive',
+        data: { leagueId, squadId, userId },
+      }, 'Squad already inactive');
       return this.loadSquadDto(squadId);
     }
 
@@ -106,6 +161,7 @@ export class SquadService {
           prisma: this.prisma,
           squadRepo: this.squadRepo,
           squadMembershipRepo: this.squadMembershipRepo,
+          logger: this.logger,
         })),
     );
 
@@ -114,7 +170,12 @@ export class SquadService {
       await this.squadRepo.update(squadId, { status: SquadStatus.INACTIVE });
     }
 
-    return this.loadSquadDto(squadId);
+    const squadDto = await this.loadSquadDto(squadId);
+    this.logger?.info({
+      action: 'squad.inactivate.success',
+      data: { leagueId, squadId, userId },
+    }, 'Inactivated squad');
+    return squadDto;
   }
 
   async addOwner(
@@ -123,6 +184,10 @@ export class SquadService {
     actorUserId: string,
     targetUserId: string,
   ): Promise<SquadMembershipDto> {
+    this.logger?.debug({
+      action: 'squad.addOwner.enter',
+      data: { leagueId, squadId, actorUserId, targetUserId },
+    }, 'Adding squad owner');
     const squad = await this.requireLeagueScopedSquad(leagueId, squadId);
     await this.requireSquadManager(leagueId, squadId, actorUserId);
     await this.requireActiveLeagueMembership(leagueId, targetUserId);
@@ -130,6 +195,10 @@ export class SquadService {
     const existingLeagueMembership = await this.squadMembershipRepo.findByLeagueAndUser(leagueId, targetUserId);
     if (existingLeagueMembership) {
       if (existingLeagueMembership.squadId !== squadId) {
+        this.logger?.warn({
+          action: 'squad.addOwner.conflict',
+          data: { leagueId, squadId, actorUserId, targetUserId, existingSquadId: existingLeagueMembership.squadId },
+        }, 'Cannot add owner who already belongs to another squad');
         throw new SquadOperationError(
           'User already belongs to another squad in this league',
           'SQUAD_MEMBERSHIP_CONFLICT',
@@ -137,6 +206,10 @@ export class SquadService {
       }
 
       if (existingLeagueMembership.status === SquadMembershipStatus.ACTIVE) {
+        this.logger?.info({
+          action: 'squad.addOwner.alreadyActive',
+          data: { leagueId, squadId, actorUserId, targetUserId },
+        }, 'Owner already active in squad');
         return this.loadSquadMembershipDto(existingLeagueMembership);
       }
 
@@ -147,6 +220,10 @@ export class SquadService {
       if (squad.status !== SquadStatus.ACTIVE) {
         await this.squadRepo.update(squadId, { status: SquadStatus.ACTIVE });
       }
+      this.logger?.info({
+        action: 'squad.addOwner.reactivated',
+        data: { leagueId, squadId, actorUserId, targetUserId },
+      }, 'Reactivated historical squad owner');
       return this.loadSquadMembershipDto(reactivated);
     }
 
@@ -157,7 +234,12 @@ export class SquadService {
       status: SquadMembershipStatus.ACTIVE,
       joinedAt: new Date(),
     });
-    return this.loadSquadMembershipDto(created);
+    const membershipDto = await this.loadSquadMembershipDto(created);
+    this.logger?.info({
+      action: 'squad.addOwner.success',
+      data: { leagueId, squadId, actorUserId, targetUserId },
+    }, 'Added squad owner');
+    return membershipDto;
   }
 
   async removeOwner(
@@ -166,9 +248,17 @@ export class SquadService {
     actorUserId: string,
     targetUserId: string,
   ): Promise<SquadMembershipDto> {
+    this.logger?.debug({
+      action: 'squad.removeOwner.enter',
+      data: { leagueId, squadId, actorUserId, targetUserId },
+    }, 'Removing squad owner');
     await this.requireSquadManager(leagueId, squadId, actorUserId);
     const membership = await this.squadMembershipRepo.findBySquadAndUser(squadId, targetUserId);
     if (!membership || membership.status !== SquadMembershipStatus.ACTIVE) {
+      this.logger?.warn({
+        action: 'squad.removeOwner.notFound',
+        data: { leagueId, squadId, actorUserId, targetUserId },
+      }, 'Cannot remove missing active squad owner');
       throw new SquadNotFoundError(`Active squad membership not found for user ${targetUserId}`);
     }
 
@@ -181,7 +271,12 @@ export class SquadService {
       await this.squadRepo.update(squadId, { status: SquadStatus.INACTIVE });
     }
 
-    return this.loadSquadMembershipDto(updated);
+    const membershipDto = await this.loadSquadMembershipDto(updated);
+    this.logger?.info({
+      action: 'squad.removeOwner.success',
+      data: { leagueId, squadId, actorUserId, targetUserId, squadInactivated: remaining.length === 0 },
+    }, 'Removed squad owner');
+    return membershipDto;
   }
 
   private async loadSquadDto(squadId: Promise<string> | string): Promise<SquadDto> {
@@ -228,6 +323,10 @@ export class SquadService {
   private async requireLeagueScopedSquad(leagueId: string, squadId: string) {
     const squad = await this.squadRepo.findById(squadId);
     if (!squad || squad.leagueId !== leagueId) {
+      this.logger?.warn({
+        action: 'squad.requireScoped.notFound',
+        data: { leagueId, squadId },
+      }, 'Requested squad was not found in league scope');
       throw new SquadNotFoundError(`Squad not found: ${squadId}`);
     }
     return squad;
@@ -236,6 +335,14 @@ export class SquadService {
   private async requireActiveLeagueMembership(leagueId: string, userId: string) {
     const membership = await this.leagueMembershipRepo.findByLeagueAndUser(leagueId, userId);
     if (!membership || membership.status !== LeagueMembershipStatus.ACTIVE) {
+      this.logger?.warn({
+        action: 'squad.requireLeagueMembership.missing',
+        data: {
+          leagueId,
+          userId,
+          reason: membership ? `status:${membership.status}` : 'membership_missing',
+        },
+      }, 'Rejected squad action for non-active league member');
       throw new SquadOperationError(
         'You must be an active league member to manage squads',
         'LEAGUE_MEMBERSHIP_REQUIRED',
@@ -248,12 +355,25 @@ export class SquadService {
     await this.requireLeagueScopedSquad(leagueId, squadId);
     const membership = await this.squadMembershipRepo.findBySquadAndUser(squadId, userId);
     if (!membership || membership.status !== SquadMembershipStatus.ACTIVE) {
+      this.logger?.warn({
+        action: 'squad.requireOwner.missing',
+        data: {
+          leagueId,
+          squadId,
+          userId,
+          reason: membership ? `status:${membership.status}` : 'membership_missing',
+        },
+      }, 'Rejected squad action for non-owner');
       throw new SquadOperationError(
         'You must be an active team owner to perform this action',
         'SQUAD_OWNER_REQUIRED',
       );
     }
     if (membership.leagueId !== leagueId) {
+      this.logger?.warn({
+        action: 'squad.requireOwner.leagueMismatch',
+        data: { leagueId, squadId, userId, membershipLeagueId: membership.leagueId },
+      }, 'Rejected squad action due to league mismatch');
       throw new SquadOperationError(
         'Squad membership does not match the requested league',
         'SQUAD_LEAGUE_MISMATCH',
@@ -264,8 +384,12 @@ export class SquadService {
 
   private async requireSquadManager(leagueId: string, squadId: string, userId: string) {
     const leagueMembership = await this.requireActiveLeagueMembership(leagueId, userId);
-    if (leagueMembership.role === 'COMMISSIONER') {
+    if (leagueMembership.role === LeagueRole.COMMISSIONER) {
       await this.requireLeagueScopedSquad(leagueId, squadId);
+      this.logger?.debug({
+        action: 'squad.requireManager.commissionerBypass',
+        data: { leagueId, squadId, userId },
+      }, 'Commissioner managing squad');
       return leagueMembership;
     }
 
@@ -275,12 +399,20 @@ export class SquadService {
   private async ensureUserCanJoinLeagueSquad(leagueId: string, userId: string): Promise<void> {
     const existing = await this.squadMembershipRepo.findByLeagueAndUser(leagueId, userId);
     if (existing && existing.status === SquadMembershipStatus.ACTIVE) {
+      this.logger?.warn({
+        action: 'squad.ensureJoinable.activeConflict',
+        data: { leagueId, userId, squadId: existing.squadId },
+      }, 'Rejected squad creation because user already belongs to an active squad');
       throw new SquadOperationError(
         'User already belongs to a squad in this league',
         'SQUAD_MEMBERSHIP_CONFLICT',
       );
     }
     if (existing && existing.status === SquadMembershipStatus.INACTIVE) {
+      this.logger?.warn({
+        action: 'squad.ensureJoinable.historyExists',
+        data: { leagueId, userId, squadId: existing.squadId },
+      }, 'Rejected squad creation because user already has squad history');
       throw new SquadOperationError(
         'User already has a squad history in this league',
         'SQUAD_HISTORY_EXISTS',
@@ -294,6 +426,10 @@ export class SquadService {
       select: { id: true, firstName: true, lastName: true },
     });
     if (!user) {
+      this.logger?.warn({
+        action: 'squad.requireUser.notFound',
+        data: { userId },
+      }, 'Cannot resolve squad owner user');
       throw new SquadOperationError(`User not found: ${userId}`, 'USER_NOT_FOUND');
     }
     return user;

@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
   SquadMembershipRepository,
@@ -14,13 +15,26 @@ interface InactivateLeagueMemberUnitInput {
   prisma: PrismaClient;
   squadRepo?: SquadRepository;
   squadMembershipRepo?: SquadMembershipRepository;
+  logger?: FastifyBaseLogger;
 }
 
 export async function inactivateLeagueMemberUnit(
   input: InactivateLeagueMemberUnitInput,
 ): Promise<void> {
+  input.logger?.debug({
+    action: 'leagueMemberLifecycle.inactivate.enter',
+    data: { leagueId: input.leagueId, userId: input.userId },
+  }, 'Inactivating league member unit');
   const membership = await input.membershipRepo.findByLeagueAndUser(input.leagueId, input.userId);
   if (!membership || membership.status !== LeagueMembershipStatus.ACTIVE) {
+    input.logger?.warn({
+      action: 'leagueMemberLifecycle.inactivate.skipped',
+      data: {
+        leagueId: input.leagueId,
+        userId: input.userId,
+        reason: membership ? `status:${membership.status}` : 'membership_missing',
+      },
+    }, 'Skipped league member inactivation');
     return;
   }
 
@@ -34,11 +48,20 @@ export async function inactivateLeagueMemberUnit(
       userId: input.userId,
       squadRepo: input.squadRepo,
       squadMembershipRepo: input.squadMembershipRepo,
+      logger: input.logger,
     });
   }
 
   const remainingActiveLeagueMemberships = await input.membershipRepo.findByUser(input.userId);
   if (remainingActiveLeagueMemberships.length > 0) {
+    input.logger?.info({
+      action: 'leagueMemberLifecycle.inactivate.membershipOnly',
+      data: {
+        leagueId: input.leagueId,
+        userId: input.userId,
+        remainingActiveLeagueMemberships: remainingActiveLeagueMemberships.length,
+      },
+    }, 'Inactivated league membership but preserved active user account');
     return;
   }
 
@@ -48,6 +71,14 @@ export async function inactivateLeagueMemberUnit(
   });
 
   if (!user || !user.isActive || user.isRootAdmin) {
+    input.logger?.info({
+      action: 'leagueMemberLifecycle.inactivate.userPreserved',
+      data: {
+        leagueId: input.leagueId,
+        userId: input.userId,
+        reason: !user ? 'user_missing' : user.isRootAdmin ? 'root_admin' : 'already_inactive',
+      },
+    }, 'Preserved user account after league member inactivation');
     return;
   }
 
@@ -62,4 +93,8 @@ export async function inactivateLeagueMemberUnit(
       data: { revokedAt: new Date() },
     });
   });
+  input.logger?.info({
+    action: 'leagueMemberLifecycle.inactivate.userDeactivated',
+    data: { leagueId: input.leagueId, userId: input.userId },
+  }, 'Deactivated user account after final active league membership ended');
 }

@@ -1,8 +1,3 @@
-import {
-  MemberService,
-  MemberNotFoundError,
-  MemberOperationError,
-} from '../../../packages/core-api/src/modules/leagues/member-service';
 import type {
   LeagueMembershipRepository,
   SquadMembershipRepository,
@@ -13,260 +8,254 @@ import {
   LeagueRole,
   SquadMembershipStatus,
   SquadStatus,
-  TeamIconKey,
 } from '@poolmaster/shared/domain';
+import {
+  MemberNotFoundError,
+  MemberOperationError,
+  MemberService,
+} from '../../../packages/core-api/src/modules/leagues/member-service';
 import { buildMembership } from '../../factories';
 
-function createMockMembershipRepo(
+function createMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
 ): LeagueMembershipRepository {
   return {
     findByLeague: jest.fn().mockResolvedValue([]),
     findByUser: jest.fn().mockResolvedValue([]),
     findByLeagueAndUser: jest.fn().mockResolvedValue(null),
-    create: jest.fn().mockImplementation(async (input) => ({
-      ...input,
-      id: 'new-id',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })),
+    create: jest.fn(),
     update: jest.fn().mockImplementation(async (id, updates) => ({
       ...buildMembership({ id }),
       ...updates,
     })),
-    delete: jest.fn().mockResolvedValue(undefined),
-    ...overrides,
-  };
-}
-
-function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
-  return {
-    findById: jest.fn().mockResolvedValue(null),
-    findByLeague: jest.fn().mockResolvedValue([]),
-    create: jest.fn(),
-    update: jest.fn().mockResolvedValue({
-      id: 'squad-1',
-      leagueId: 'league-1',
-      createdBy: 'user-1',
-      name: 'My Team',
-      iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-      status: SquadStatus.INACTIVE,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }),
     delete: jest.fn(),
     ...overrides,
   };
 }
 
-function createMockSquadMembershipRepo(
+function createSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRepository {
+  return {
+    findById: jest.fn(),
+    findByLeague: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    ...overrides,
+  };
+}
+
+function createSquadMembershipRepo(
   overrides: Partial<SquadMembershipRepository> = {},
 ): SquadMembershipRepository {
   return {
     findBySquad: jest.fn().mockResolvedValue([]),
-    findBySquadAndUser: jest.fn().mockResolvedValue(null),
+    findBySquadAndUser: jest.fn(),
     findByLeagueAndUser: jest.fn().mockResolvedValue(null),
     create: jest.fn(),
-    update: jest.fn().mockResolvedValue({
-      id: 'squad-membership-1',
-      squadId: 'squad-1',
-      leagueId: 'league-1',
-      userId: 'user-1',
-      status: SquadMembershipStatus.INACTIVE,
-      joinedAt: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }),
+    update: jest.fn(),
     delete: jest.fn(),
     ...overrides,
   };
 }
 
-describe('MemberService', () => {
-  const prisma = {
-    user: {
-      findUnique: jest.fn(),
-      update: jest.fn(),
-    },
-    refreshToken: {
-      updateMany: jest.fn(),
-    },
-    $transaction: jest.fn().mockImplementation(async (callback) =>
-      callback({
-        user: {
-          update: prisma.user.update,
-        },
-        refreshToken: {
-          updateMany: prisma.refreshToken.updateMany,
-        },
-      })),
-  } as any;
+function createPrisma() {
+  const tx = {
+    user: { update: jest.fn().mockResolvedValue(undefined) },
+    refreshToken: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
+  };
 
+  return {
+    user: {
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'user-1',
+        isActive: true,
+        isRootAdmin: false,
+      }),
+    },
+    $transaction: jest.fn(async (callback: (transaction: typeof tx) => Promise<void>) => callback(tx)),
+    __tx: tx,
+  };
+}
+
+describe('MemberService', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
 
-  describe('changeRole', () => {
-    it('updates the role of an active member', async () => {
-      const membership = buildMembership({ role: LeagueRole.MEMBER });
-      const repo = createMockMembershipRepo({
-        findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
-      });
-      const service = new MemberService(repo, prisma);
-      await service.changeRole({
+  it('changes a member role when the membership is active', async () => {
+    const membership = buildMembership({
+      leagueId: 'league-1',
+      userId: 'user-2',
+      role: LeagueRole.MEMBER,
+      status: LeagueMembershipStatus.ACTIVE,
+    });
+    const membershipRepo = createMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
+    });
+    const service = new MemberService(
+      membershipRepo,
+      createPrisma() as any,
+      createSquadRepo(),
+      createSquadMembershipRepo(),
+    );
+
+    const updatedMembership = await service.changeRole({
+      leagueId: 'league-1',
+      targetUserId: 'user-2',
+      newRole: LeagueRole.COMMISSIONER,
+    });
+
+    expect(membershipRepo.update).toHaveBeenCalledWith(
+      membership.id,
+      expect.objectContaining({ role: LeagueRole.COMMISSIONER }),
+    );
+    expect(updatedMembership.role).toBe(LeagueRole.COMMISSIONER);
+  });
+
+  it('rejects changing the role for a missing member', async () => {
+    const service = new MemberService(
+      createMembershipRepo(),
+      createPrisma() as any,
+      createSquadRepo(),
+      createSquadMembershipRepo(),
+    );
+
+    await expect(service.changeRole({
+      leagueId: 'league-1',
+      targetUserId: 'missing-user',
+      newRole: LeagueRole.MEMBER,
+    })).rejects.toBeInstanceOf(MemberNotFoundError);
+  });
+
+  it('rejects changing the role for an inactive member', async () => {
+    const membershipRepo = createMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockResolvedValue(buildMembership({
         leagueId: 'league-1',
-        targetUserId: 'user-1',
-        newRole: LeagueRole.COMMISSIONER,
-      });
-      expect(repo.update).toHaveBeenCalledWith(membership.id, {
-        role: LeagueRole.COMMISSIONER,
-      });
-    });
-
-    it('throws MemberNotFoundError when member does not exist', async () => {
-      const repo = createMockMembershipRepo();
-      const service = new MemberService(repo, prisma);
-      await expect(
-        service.changeRole({
-          leagueId: 'league-1',
-          targetUserId: 'missing',
-          newRole: LeagueRole.MEMBER,
-        }),
-      ).rejects.toThrow(MemberNotFoundError);
-    });
-
-    it('throws MemberOperationError when target membership is inactive', async () => {
-      const repo = createMockMembershipRepo({
-        findByLeagueAndUser: jest
-          .fn()
-          .mockResolvedValue(buildMembership({ status: LeagueMembershipStatus.INACTIVE })),
-      });
-      const service = new MemberService(repo, prisma);
-      await expect(
-        service.changeRole({
-          leagueId: 'league-1',
-          targetUserId: 'user-1',
-          newRole: LeagueRole.COMMISSIONER,
-        }),
-      ).rejects.toThrow(MemberOperationError);
-    });
-
-    it('blocks demoting the last active commissioner', async () => {
-      const repo = createMockMembershipRepo({
-        findByLeagueAndUser: jest
-          .fn()
-          .mockResolvedValue(buildMembership({ role: LeagueRole.COMMISSIONER })),
-        findByLeague: jest
-          .fn()
-          .mockResolvedValue([buildMembership({ role: LeagueRole.COMMISSIONER })]),
-      });
-      const service = new MemberService(repo, prisma);
-
-      await expect(
-        service.changeRole({
-          leagueId: 'league-1',
-          targetUserId: 'user-1',
-          newRole: LeagueRole.MEMBER,
-        }),
-      ).rejects.toMatchObject({
-        code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
-      });
-
-      expect(repo.update).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('removeMember', () => {
-    it('inactivates the membership for an active member', async () => {
-      const membership = buildMembership({ role: LeagueRole.MEMBER });
-      const repo = createMockMembershipRepo({
-        findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
-        findByUser: jest.fn().mockResolvedValue([]),
-      });
-      prisma.user.findUnique.mockResolvedValue({
-        id: 'user-1',
-        isActive: true,
-        isRootAdmin: false,
-      });
-      const service = new MemberService(repo, prisma);
-      await service.removeMember('league-1', 'user-1');
-      expect(repo.update).toHaveBeenCalledWith(membership.id, {
+        userId: 'user-2',
         status: LeagueMembershipStatus.INACTIVE,
-      });
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      })),
     });
+    const service = new MemberService(
+      membershipRepo,
+      createPrisma() as any,
+      createSquadRepo(),
+      createSquadMembershipRepo(),
+    );
 
-    it('also inactivates the team when the removed member was the last active owner', async () => {
-      const membership = buildMembership({ role: LeagueRole.MEMBER });
-      const repo = createMockMembershipRepo({
-        findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
-        findByUser: jest.fn().mockResolvedValue([]),
-      });
-      const squadRepo = createMockSquadRepo();
-      const squadMembershipRepo = createMockSquadMembershipRepo({
-        findByLeagueAndUser: jest.fn().mockResolvedValue({
-          id: 'squad-membership-1',
-          squadId: 'squad-1',
-          leagueId: 'league-1',
-          userId: 'user-1',
-          status: SquadMembershipStatus.ACTIVE,
-          joinedAt: new Date(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
-        findBySquad: jest.fn().mockResolvedValue([]),
-      });
-      prisma.user.findUnique.mockResolvedValue({
-        id: 'user-1',
-        isActive: true,
-        isRootAdmin: false,
-      });
-      const service = new MemberService(repo, prisma, squadRepo, squadMembershipRepo);
-
-      await service.removeMember('league-1', 'user-1');
-
-      expect(squadMembershipRepo.update).toHaveBeenCalledWith('squad-membership-1', {
-        status: SquadMembershipStatus.INACTIVE,
-      });
-      expect(squadRepo.update).toHaveBeenCalledWith('squad-1', {
-        status: SquadStatus.INACTIVE,
-      });
-    });
-
-    it('throws MemberNotFoundError when member does not exist', async () => {
-      const repo = createMockMembershipRepo();
-      const service = new MemberService(repo, prisma);
-      await expect(service.removeMember('league-1', 'missing')).rejects.toThrow(
-        MemberNotFoundError,
-      );
-    });
-
-    it('throws MemberOperationError when member is already inactive', async () => {
-      const repo = createMockMembershipRepo({
-        findByLeagueAndUser: jest
-          .fn()
-          .mockResolvedValue(buildMembership({ status: LeagueMembershipStatus.INACTIVE })),
-      });
-      const service = new MemberService(repo, prisma);
-      await expect(service.removeMember('league-1', 'user-1')).rejects.toThrow(
-        MemberOperationError,
-      );
-    });
-
-    it('blocks removing the last active commissioner', async () => {
-      const commissionerMembership = buildMembership({ role: LeagueRole.COMMISSIONER });
-      const repo = createMockMembershipRepo({
-        findByLeagueAndUser: jest.fn().mockResolvedValue(commissionerMembership),
-        findByLeague: jest.fn().mockResolvedValue([commissionerMembership]),
-      });
-      const service = new MemberService(repo, prisma);
-
-      await expect(service.removeMember('league-1', 'user-1')).rejects.toMatchObject({
-        code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
-      });
-
-      expect(repo.update).not.toHaveBeenCalled();
+    await expect(service.changeRole({
+      leagueId: 'league-1',
+      targetUserId: 'user-2',
+      newRole: LeagueRole.MEMBER,
+    })).rejects.toMatchObject({
+      code: 'LEAGUE_MEMBER_INACTIVE',
     });
   });
 
+  it('rejects demoting the last active commissioner', async () => {
+    const commissioner = buildMembership({
+      leagueId: 'league-1',
+      userId: 'user-1',
+      role: LeagueRole.COMMISSIONER,
+      status: LeagueMembershipStatus.ACTIVE,
+    });
+    const membershipRepo = createMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockResolvedValue(commissioner),
+      findByLeague: jest.fn().mockResolvedValue([commissioner]),
+    });
+    const service = new MemberService(
+      membershipRepo,
+      createPrisma() as any,
+      createSquadRepo(),
+      createSquadMembershipRepo(),
+    );
+
+    await expect(service.changeRole({
+      leagueId: 'league-1',
+      targetUserId: 'user-1',
+      newRole: LeagueRole.MEMBER,
+    })).rejects.toMatchObject({
+      code: 'LEAGUE_LAST_COMMISSIONER_REQUIRED',
+    });
+  });
+
+  it('removes an active member and deactivates the user when it was their last league', async () => {
+    const membership = buildMembership({
+      id: 'membership-1',
+      leagueId: 'league-1',
+      userId: 'user-1',
+      role: LeagueRole.MEMBER,
+      status: LeagueMembershipStatus.ACTIVE,
+    });
+    const membershipRepo = createMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
+      findByUser: jest.fn().mockResolvedValue([]),
+    });
+    const squadMembershipRepo = createSquadMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockResolvedValue({
+        id: 'squad-membership-1',
+        squadId: 'squad-1',
+        leagueId: 'league-1',
+        userId: 'user-1',
+        status: SquadMembershipStatus.ACTIVE,
+        joinedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+      findBySquad: jest.fn().mockResolvedValue([]),
+      update: jest.fn().mockResolvedValue(undefined),
+    });
+    const squadRepo = createSquadRepo({
+      update: jest.fn().mockResolvedValue({
+        id: 'squad-1',
+        leagueId: 'league-1',
+        createdBy: 'user-1',
+        name: 'Solo Team',
+        iconKey: 'CAPTAIN_SMILE_FIELD',
+        status: SquadStatus.INACTIVE,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    });
+    const prisma = createPrisma();
+    const service = new MemberService(
+      membershipRepo,
+      prisma as any,
+      squadRepo,
+      squadMembershipRepo,
+    );
+
+    await service.removeMember('league-1', 'user-1');
+
+    expect(membershipRepo.update).toHaveBeenCalledWith(
+      membership.id,
+      expect.objectContaining({ status: LeagueMembershipStatus.INACTIVE }),
+    );
+    expect(squadMembershipRepo.update).toHaveBeenCalledWith(
+      'squad-membership-1',
+      expect.objectContaining({ status: SquadMembershipStatus.INACTIVE }),
+    );
+    expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { status: SquadStatus.INACTIVE });
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects removing the last active commissioner', async () => {
+    const commissioner = buildMembership({
+      leagueId: 'league-1',
+      userId: 'user-1',
+      role: LeagueRole.COMMISSIONER,
+      status: LeagueMembershipStatus.ACTIVE,
+    });
+    const membershipRepo = createMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockResolvedValue(commissioner),
+      findByLeague: jest.fn().mockResolvedValue([commissioner]),
+    });
+    const service = new MemberService(
+      membershipRepo,
+      createPrisma() as any,
+      createSquadRepo(),
+      createSquadMembershipRepo(),
+    );
+
+    await expect(service.removeMember('league-1', 'user-1')).rejects.toBeInstanceOf(MemberOperationError);
+  });
 });

@@ -84,7 +84,7 @@ export async function adminModule(
   // --- Services ---
   const userService = new UserService(prisma);
   const healthService = new HealthService(prisma);
-  const providerService = opts.providerService ?? new ProviderService(prisma, opts.providerRegistry);
+  const providerService = opts.providerService ?? new ProviderService(prisma, opts.providerRegistry, fastify.log);
   const pollConfigService = new PollConfigService();
   const ingestionConfigService = new IngestionConfigService();
 
@@ -307,7 +307,7 @@ export async function adminModule(
       summary: 'Re-ingest event data from a provider',
       description: 'Triggers on-demand event-data re-ingestion for a provider and event identifier.',
       operationId: 'adminReIngestEvent',
-      response: withAdminErrorResponses({ 201: zodToJsonSchema(ProviderIngestionJobDtoSchema) }, [404]),
+      response: withAdminErrorResponses({ 201: zodToJsonSchema(ProviderIngestionJobDtoSchema) }, [404, 422]),
     },
     handler: provider.reIngestEvent,
   });

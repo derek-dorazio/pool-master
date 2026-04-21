@@ -12,12 +12,13 @@ import {
 } from '@poolmaster/shared/dto/history.dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { HistoryService } from './history-service';
+import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
 import { getAppPrisma } from '../../core/prisma-context';
 
 export async function historyModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
-  const historyService = new HistoryService(prisma);
+  const historyService = new HistoryService(prisma, fastify.log);
 
   fastify.get<{ Params: { id: string } }>(
     '/contests/:id/history/summary',
@@ -35,8 +36,11 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply) => {
+      const logger = createRequestContextLogger(request);
+      logger.debug({ contestId: request.params.id }, 'history summary route start');
       const summary = await historyService.getContestSummary(request.params.id);
       if (!summary) {
+        logger.warn({ contestId: request.params.id }, 'history summary route missing history');
         return sendError(
           reply,
           404,
@@ -44,6 +48,7 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
           'No history exists for this contest',
         );
       }
+      logger.info({ contestId: request.params.id }, 'history summary route completed');
       return reply.send(summary);
     },
   );
@@ -61,7 +66,10 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
       },
     },
     async (request) => {
+      const logger = createRequestContextLogger(request);
+      logger.debug({ contestId: request.params.id }, 'history standings route start');
       const standings = await historyService.getContestStandings(request.params.id);
+      logger.info({ contestId: request.params.id, standingCount: standings.length }, 'history standings route completed');
       return { standings };
     },
   );
@@ -82,13 +90,17 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply) => {
+      const logger = createRequestContextLogger(request);
+      logger.debug({ contestId: request.params.id, entryId: request.params.entryId }, 'history roster route start');
       const roster = await historyService.getRosterHistory(
         request.params.id,
         request.params.entryId,
       );
       if (!roster) {
+        logger.warn({ contestId: request.params.id, entryId: request.params.entryId }, 'history roster route missing roster');
         return sendError(reply, 404, 'ROSTER_HISTORY_NOT_FOUND', 'Roster history not found');
       }
+      logger.info({ contestId: request.params.id, entryId: request.params.entryId }, 'history roster route completed');
       return reply.send({ rosterHistory: roster });
     },
   );
@@ -106,7 +118,10 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
       },
     },
     async (request) => {
+      const logger = createRequestContextLogger(request);
+      logger.debug({ contestId: request.params.id }, 'history payouts route start');
       const payouts = await historyService.getContestPayouts(request.params.id);
+      logger.info({ contestId: request.params.id, payoutCount: payouts.length }, 'history payouts route completed');
       return { payouts };
     },
   );
@@ -124,7 +139,10 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
       },
     },
     async (request) => {
+      const logger = createRequestContextLogger(request);
+      logger.debug({ leagueId: request.params.id }, 'history league results route start');
       const results = await historyService.getLeagueResults(request.params.id);
+      logger.info({ leagueId: request.params.id, resultCount: results.length }, 'history league results route completed');
       return { results };
     },
   );
@@ -142,7 +160,10 @@ export async function historyModule(fastify: FastifyInstance): Promise<void> {
       },
     },
     async (request) => {
+      const logger = createRequestContextLogger(request);
+      logger.debug({ leagueId: request.params.id, leagueMembershipId: request.params.mid }, 'history member results route start');
       const results = await historyService.getMemberResults(request.params.mid);
+      logger.info({ leagueId: request.params.id, leagueMembershipId: request.params.mid, resultCount: results.length }, 'history member results route completed');
       return { results };
     },
   );

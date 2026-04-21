@@ -4,6 +4,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import type { RollupResult, StandingsRollup } from './rollup/standings-rollup';
 import { assignRanks } from './rollup/standings-rollup';
 
@@ -74,6 +75,7 @@ export interface HealthDetail {
 export interface ScoringServiceDeps {
   standingsRollup: StandingsRollup;
   prisma: PrismaClient;
+  logger?: FastifyBaseLogger;
 }
 
 export class ScoringService {
@@ -83,18 +85,25 @@ export class ScoringService {
   constructor(deps: ScoringServiceDeps) {
     this.standingsRollup = deps.standingsRollup;
     this.prisma = deps.prisma;
+    this.logger = deps.logger;
   }
 
+  private readonly logger?: FastifyBaseLogger;
+
   async getLeaderboard(contestId: string): Promise<LeaderboardEntry[]> {
+    this.logger?.debug({ contestId }, 'Reading scoring leaderboard');
     const entries = await this.prisma.contestEntry.findMany({
       where: { contestId },
       orderBy: [{ totalScore: 'desc' }, { id: 'asc' }],
       select: { id: true, totalScore: true },
     });
-    return assignRanks(entries.map((entry) => ({ entryId: entry.id, total: entry.totalScore })));
+    const leaderboard = assignRanks(entries.map((entry) => ({ entryId: entry.id, total: entry.totalScore })));
+    this.logger?.info({ contestId, entryCount: leaderboard.length }, 'Read scoring leaderboard');
+    return leaderboard;
   }
 
   async getEntryScore(contestId: string, entryId: string): Promise<EntryScoreDetail> {
+    this.logger?.debug({ contestId, entryId }, 'Reading scoring entry breakdown');
     const entry = await this.prisma.contestEntry.findUnique({
       where: { id: entryId },
       select: {
@@ -104,6 +113,7 @@ export class ScoringService {
       },
     });
     if (!entry || entry.contestId !== contestId) {
+      this.logger?.warn({ contestId, entryId }, 'Scoring entry breakdown requested for missing or mismatched entry');
       return {
         entryId,
         contestId,
@@ -141,7 +151,7 @@ export class ScoringService {
     const contextByParticipantId = await this.getBreakdownContext(contestId, entryId);
 
     let runningTotal = 0;
-    return {
+    const detail = {
       entryId,
       contestId,
       totalScore: entry.totalScore,
@@ -167,6 +177,12 @@ export class ScoringService {
         };
       }),
     };
+    this.logger?.info({
+      contestId,
+      entryId,
+      scoreEventCount: detail.timeline.length,
+    }, 'Read scoring entry breakdown');
+    return detail;
   }
 
   private async getBreakdownContext(
@@ -180,6 +196,7 @@ export class ScoringService {
     contestId: string,
     participantId: string,
   ): Promise<ParticipantScoreHistory> {
+    this.logger?.debug({ contestId, participantId }, 'Reading participant score history');
     const scoreEvents = await this.prisma.contestEntryParticipantScoreEvent.findMany({
       where: {
         participantScore: {
@@ -224,26 +241,47 @@ export class ScoringService {
       ),
     }));
 
-    return {
+    const history = {
       participantId,
       contestId,
       scores,
       totalPoints: scores.reduce((sum, score) => sum + score.points, 0),
     };
+    if (history.scores.length === 0) {
+      this.logger?.warn({ contestId, participantId }, 'Participant score history requested with no persisted scoring events');
+    } else {
+      this.logger?.info({
+        contestId,
+        participantId,
+        scoreEventCount: history.scores.length,
+      }, 'Read participant score history');
+    }
+    return history;
   }
 
   async triggerRollup(contestId: string): Promise<RollupResult> {
-    return this.standingsRollup.rollupContest(contestId);
+    this.logger?.debug({ contestId }, 'Triggering scoring standings rollup');
+    const result = await this.standingsRollup.rollupContest(contestId);
+    this.logger?.info({
+      contestId,
+      entriesUpdated: result.entriesUpdated,
+    }, 'Completed scoring standings rollup');
+    return result;
   }
 
   getHealth(): HealthDetail {
-    return {
+    const detail: HealthDetail = {
       status: 'ok',
       service: 'scoring-service',
       rollupRunning: this.standingsRollup.isRunning(),
       activeContests: this.standingsRollup.getActiveContestIds().size,
       timestamp: new Date().toISOString(),
     };
+    this.logger?.debug({
+      rollupRunning: detail.rollupRunning,
+      activeContests: detail.activeContests,
+    }, 'Read scoring service health');
+    return detail;
   }
 }
 

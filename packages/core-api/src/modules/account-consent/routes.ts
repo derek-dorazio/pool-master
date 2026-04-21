@@ -27,7 +27,19 @@ export async function accountConsentModule(fastify: FastifyInstance): Promise<vo
       },
     },
     async (request, reply) => {
+      const logger = request.contextLogger ?? request.log;
       const userId = request.authUser?.userId as string;
+      logger.debug({
+        action: 'account.consent.record.request',
+        data: {
+          userId,
+          consentType: request.body.consentType,
+          granted: request.body.granted,
+          version: request.body.version,
+          minimumAgeThreshold: request.body.minimumAgeThreshold ?? null,
+          ageAffirmed: request.body.ageAffirmed ?? null,
+        },
+      }, 'Handling account consent record request');
       const consent = await consentService.recordConsent({
         userId,
         consentType: request.body.consentType,
@@ -38,6 +50,14 @@ export async function accountConsentModule(fastify: FastifyInstance): Promise<vo
         ipAddress: request.ip,
         userAgent: request.headers['user-agent'],
       });
+      logger.info({
+        action: 'account.consent.record.succeeded',
+        data: {
+          userId,
+          consentType: request.body.consentType,
+          granted: request.body.granted,
+        },
+      }, 'Recorded account consent');
       return reply.status(201).send({
         consent: mapConsentRecordToDto(consent as Record<string, unknown>),
       });
@@ -54,8 +74,22 @@ export async function accountConsentModule(fastify: FastifyInstance): Promise<vo
       response: { 200: zodToJsonSchema(ConsentHistoryResponseSchema) },
     },
     handler: async (request) => {
+      const logger = request.contextLogger ?? request.log;
       const userId = request.authUser?.userId as string;
+      logger.debug({
+        action: 'account.consent.history.request',
+        data: {
+          userId,
+        },
+      }, 'Handling account consent history request');
       const history = await consentService.getConsentHistory(userId);
+      logger.info({
+        action: 'account.consent.history.succeeded',
+        data: {
+          userId,
+          recordCount: history.length,
+        },
+      }, 'Loaded account consent history');
       return { consents: history.map((record) => mapConsentRecordToDto(record as Record<string, unknown>)) };
     },
   });

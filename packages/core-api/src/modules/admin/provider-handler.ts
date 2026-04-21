@@ -13,6 +13,7 @@ import {
   ProviderConfigUnsupportedError,
   ProviderEventNotFoundError,
   ProviderNotFoundError,
+  ProviderSportCoverageError,
   SportProviderNotFoundError,
 } from './provider-service';
 import { sendError } from '../../core/error-handler';
@@ -39,10 +40,13 @@ export function createProviderHandlers(providerService: ProviderService) {
   // --- List providers (health dashboard) ---
 
   async function listProviders(
-    _request: FastifyRequest,
+    request: FastifyRequest,
     _reply: FastifyReply,
   ) {
+    const logger = request.contextLogger ?? request.log;
+    logger.debug('Listing provider health summaries');
     const providers = await providerService.listProviders();
+    logger.info({ count: providers.length }, 'Listed provider health summaries');
     return { items: providers };
   }
 
@@ -57,6 +61,13 @@ export function createProviderHandlers(providerService: ProviderService) {
     }>,
     _reply: FastifyReply,
   ) {
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({
+      providerId: request.query.providerId ?? null,
+      sport: request.query.sport ?? null,
+      status: request.query.status ?? null,
+      limit: request.query.limit ?? null,
+    }, 'Listing provider sync runs');
     const syncRuns = await providerService.listSyncRuns({
       providerId: request.query.providerId,
       sport: request.query.sport,
@@ -85,11 +96,15 @@ export function createProviderHandlers(providerService: ProviderService) {
     request: FastifyRequest<{ Params: { providerId: string } }>,
     reply: FastifyReply,
   ) {
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({ providerId: request.params.providerId }, 'Reading provider detail');
     try {
       const detail = await providerService.getProviderDetail(request.params.providerId);
+      logger.info({ providerId: detail.providerId }, 'Read provider detail');
       return reply.send(detail);
     } catch (err) {
       if (err instanceof ProviderNotFoundError) {
+        logger.warn({ providerId: request.params.providerId }, 'Provider detail not found');
         return sendError(reply, 404, 'PROVIDER_NOT_FOUND', err.message);
       }
       throw err;
@@ -107,6 +122,8 @@ export function createProviderHandlers(providerService: ProviderService) {
   ) {
     const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { providerId } = request.params;
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({ providerId }, 'Updating provider configuration');
 
     try {
       const config = await providerService.updateProviderConfig(
@@ -115,12 +132,15 @@ export function createProviderHandlers(providerService: ProviderService) {
         rootAdminUserId,
         rootAdminEmail,
       );
+      logger.info({ providerId }, 'Updated provider configuration');
       return reply.send(config);
     } catch (err) {
       if (err instanceof ProviderNotFoundError) {
+        logger.warn({ providerId }, 'Provider configuration update failed because provider was not found');
         return sendError(reply, 404, 'PROVIDER_NOT_FOUND', err.message);
       }
       if (err instanceof ProviderConfigUnsupportedError) {
+        logger.warn({ providerId }, 'Provider configuration update unavailable for provider');
         return sendError(reply, 501, 'CONFIG_UNAVAILABLE', err.message);
       }
       throw err;
@@ -135,6 +155,8 @@ export function createProviderHandlers(providerService: ProviderService) {
   ) {
     const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { providerId } = request.params;
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({ providerId }, 'Triggering provider health check');
 
     try {
       const result = await providerService.triggerHealthCheck(
@@ -142,9 +164,11 @@ export function createProviderHandlers(providerService: ProviderService) {
         rootAdminUserId,
         rootAdminEmail,
       );
+      logger.info({ providerId, status: result.status }, 'Triggered provider health check');
       return reply.send(result);
     } catch (err) {
       if (err instanceof ProviderNotFoundError) {
+        logger.warn({ providerId }, 'Provider health check failed because provider was not found');
         return sendError(reply, 404, 'PROVIDER_NOT_FOUND', err.message);
       }
       throw err;
@@ -156,6 +180,8 @@ export function createProviderHandlers(providerService: ProviderService) {
     reply: FastifyReply,
   ) {
     const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({ sport: request.params.sport }, 'Preparing sport sync');
 
     try {
       const result = await providerService.prepareSportSync(
@@ -184,6 +210,7 @@ export function createProviderHandlers(providerService: ProviderService) {
       });
     } catch (err) {
       if (err instanceof SportProviderNotFoundError) {
+        logger.warn({ sport: request.params.sport }, 'Sport sync preparation failed because no providers were registered');
         return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
       }
       throw err;
@@ -193,10 +220,16 @@ export function createProviderHandlers(providerService: ProviderService) {
   // --- Ingestion monitoring dashboard ---
 
   async function getIngestionDashboard(
-    _request: FastifyRequest,
+    request: FastifyRequest,
     _reply: FastifyReply,
   ) {
+    const logger = request.contextLogger ?? request.log;
+    logger.debug('Reading ingestion dashboard');
     const dashboard = await providerService.getIngestionDashboard();
+    logger.info({
+      activeJobs: dashboard.activeJobs.length,
+      recentErrors: dashboard.recentErrors.length,
+    }, 'Read ingestion dashboard');
     return dashboard;
   }
 
@@ -210,6 +243,8 @@ export function createProviderHandlers(providerService: ProviderService) {
   ) {
     const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { providerId, eventId } = request.params;
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({ providerId, eventId }, 'Re-ingesting provider event');
 
     try {
       const job = await providerService.reIngestEvent(
@@ -218,13 +253,24 @@ export function createProviderHandlers(providerService: ProviderService) {
         rootAdminUserId,
         rootAdminEmail,
       );
+      logger.info({
+        providerId,
+        eventId,
+        status: job.status,
+      }, 'Re-ingested provider event');
       return reply.status(201).send(job);
     } catch (err) {
       if (err instanceof ProviderEventNotFoundError) {
+        logger.warn({ providerId, eventId }, 'Provider event re-ingest failed because event detail was not found');
         return sendError(reply, 404, 'PROVIDER_EVENT_NOT_FOUND', err.message);
       }
       if (err instanceof ProviderNotFoundError) {
+        logger.warn({ providerId, eventId }, 'Provider event re-ingest failed because provider was not found');
         return sendError(reply, 404, 'PROVIDER_NOT_FOUND', err.message);
+      }
+      if (err instanceof ProviderSportCoverageError) {
+        logger.warn({ providerId, eventId }, 'Provider event re-ingest failed because provider has no sport coverage');
+        return sendError(reply, 422, 'PROVIDER_SPORT_COVERAGE_REQUIRED', err.message);
       }
       throw err;
     }
@@ -233,10 +279,13 @@ export function createProviderHandlers(providerService: ProviderService) {
   // --- Unmapped participants ---
 
   async function getUnmappedParticipants(
-    _request: FastifyRequest,
+    request: FastifyRequest,
     _reply: FastifyReply,
   ) {
+    const logger = request.contextLogger ?? request.log;
+    logger.debug('Listing unmapped provider participants');
     const unmapped = await providerService.getUnmappedParticipants();
+    logger.info({ count: unmapped.length }, 'Listed unmapped provider participants');
     return unmapped;
   }
 
@@ -250,6 +299,8 @@ export function createProviderHandlers(providerService: ProviderService) {
   ) {
     const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const { providerId, externalId, internalId } = request.body;
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({ providerId, externalId, internalId }, 'Mapping provider participant');
 
     await providerService.mapParticipant(
       providerId,
@@ -258,6 +309,7 @@ export function createProviderHandlers(providerService: ProviderService) {
       rootAdminUserId,
       rootAdminEmail,
     );
+    logger.info({ providerId, externalId, internalId }, 'Mapped provider participant');
     return reply.status(204).send();
   }
 }

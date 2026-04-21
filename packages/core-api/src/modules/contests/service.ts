@@ -5,6 +5,7 @@
  * scoring rules, payout structure, and scheduling.
  */
 
+import type { FastifyBaseLogger } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
 import type {
   ContestConfigurationRepository,
@@ -56,6 +57,19 @@ export interface UpdateContestInput {
   isExclusive?: boolean;
 }
 
+type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
+
+function createNoopLogger(): LifecycleLogger {
+  const noop = () => undefined;
+  return {
+    debug: noop,
+    info: noop,
+    warn: noop,
+    error: noop,
+    fatal: noop,
+  };
+}
+
 export class ContestService {
   constructor(
     private readonly contestRepo: ContestRepository,
@@ -66,14 +80,22 @@ export class ContestService {
     private readonly squadMembershipRepo?: SquadMembershipRepository,
     private readonly entryRepo?: ContestEntryRepository,
     private readonly prisma?: PrismaClient,
+    private readonly logger: LifecycleLogger = createNoopLogger(),
   ) {}
 
   /** Creates a contest and its selection configuration atomically. */
   async createContest(
     input: CreateContestInput,
   ): Promise<{ contest: Contest; contestConfiguration: ContestConfiguration }> {
+    this.logger.debug({
+      leagueId: input.leagueId,
+      sportEventId: input.sportEventId ?? null,
+      contestType: input.contestType,
+      selectionType: input.selectionType,
+    }, 'contest create start');
     const league = await this.leagueRepo.findById(input.leagueId);
     if (!league) {
+      this.logger.warn({ leagueId: input.leagueId }, 'contest create missing league');
       throw new ContestOperationError('League not found', 'LEAGUE_NOT_FOUND');
     }
     const contest = await this.contestRepo.create({
@@ -99,17 +121,28 @@ export class ContestService {
           ?? false,
       ...input.contestConfiguration,
     } as Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>);
+    this.logger.info({
+      contestId: contest.id,
+      leagueId: input.leagueId,
+      selectionType: input.selectionType,
+    }, 'contest create completed');
     return { contest, contestConfiguration };
   }
 
   async getContest(
     contestId: string,
   ): Promise<{ contest: Contest; contestConfiguration: ContestConfiguration | null } | null> {
+    this.logger.debug({ contestId }, 'contest get start');
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
+      this.logger.warn({ contestId }, 'contest get missing contest');
       return null;
     }
     const contestConfiguration = await this.contestConfigurationRepo.findByContest(contestId);
+    this.logger.info({
+      contestId,
+      hasConfiguration: contestConfiguration !== null,
+    }, 'contest get completed');
     return { contest, contestConfiguration };
   }
 
@@ -122,32 +155,41 @@ export class ContestService {
     contestId: string,
     updates: UpdateContestInput,
   ): Promise<Contest> {
+    this.logger.debug({ contestId, updates }, 'contest update start');
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
+      this.logger.warn({ contestId }, 'contest update missing contest');
       throw new ContestNotFoundError(contestId);
     }
     if (contest.status !== ContestStatus.DRAFT) {
+      this.logger.warn({ contestId, status: contest.status }, 'contest update invalid status');
       throw new ContestOperationError(
         'Contest can only be edited in DRAFT status',
         'CONTEST_EDIT_STATUS_INVALID',
       );
     }
-    return this.contestRepo.update(contestId, updates as Partial<Contest>);
+    const updatedContest = await this.contestRepo.update(contestId, updates as Partial<Contest>);
+    this.logger.info({ contestId }, 'contest update completed');
+    return updatedContest;
   }
 
   /** Deletes a contest. Only allowed when status is DRAFT. */
   async deleteContest(contestId: string): Promise<void> {
+    this.logger.debug({ contestId }, 'contest delete start');
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
+      this.logger.warn({ contestId }, 'contest delete missing contest');
       throw new ContestNotFoundError(contestId);
     }
     if (contest.status !== ContestStatus.DRAFT) {
+      this.logger.warn({ contestId, status: contest.status }, 'contest delete invalid status');
       throw new ContestOperationError(
         'Contest can only be deleted in DRAFT status',
         'CONTEST_DELETE_STATUS_INVALID',
       );
     }
     await this.contestRepo.delete(contestId);
+    this.logger.info({ contestId }, 'contest delete completed');
   }
 
   async listEntries(
@@ -254,15 +296,18 @@ export class ContestService {
     contestId: string,
     userId: string,
   ): Promise<{ entry: ContestEntryDto; created: boolean }> {
+    this.logger.debug({ contestId, userId }, 'contest entry create start');
     const context = await this.getEntryContext(contestId, userId);
     const membership = context.membership;
     if (!membership) {
+      this.logger.warn({ contestId, userId }, 'contest entry create missing membership');
       throw new ContestEntryOperationError(
         'You must be an active league member to enter this contest',
         'LEAGUE_MEMBERSHIP_REQUIRED',
       );
     }
     if (!isContestJoinable(context.contest.status)) {
+      this.logger.warn({ contestId, userId, status: context.contest.status }, 'contest entry create locked contest');
       throw new ContestEntryOperationError(
         'Contest entries can only be changed before the contest starts',
         'CONTEST_ENTRY_LOCKED',
@@ -279,8 +324,20 @@ export class ContestService {
     if (existingEntries.length >= maxEntriesPerSquad) {
       if (maxEntriesPerSquad === 1 && existingEntries[0]) {
         const dto = await this.loadEntryDtoById(existingEntries[0].id);
+        this.logger.info({
+          contestId,
+          userId,
+          entryId: dto.id,
+        }, 'contest entry create returned existing primary entry');
         return { entry: dto, created: false };
       }
+      this.logger.warn({
+        contestId,
+        userId,
+        squadId: squad.id,
+        existingEntryCount: existingEntries.length,
+        maxEntriesPerSquad,
+      }, 'contest entry create entry limit reached');
       throw new ContestEntryOperationError(
         'This squad has already reached the entry limit for the contest',
         'CONTEST_ENTRY_LIMIT_REACHED',
@@ -299,6 +356,13 @@ export class ContestService {
       isEliminated: false,
     });
     const dto = await this.loadEntryDtoById(created.id);
+    this.logger.info({
+      contestId,
+      userId,
+      squadId: squad.id,
+      entryId: dto.id,
+      entryNumber: nextEntryNumber,
+    }, 'contest entry create completed');
     return { entry: dto, created: true };
   }
 
@@ -306,21 +370,25 @@ export class ContestService {
     contestId: string,
     userId: string,
   ): Promise<void> {
+    this.logger.debug({ contestId, userId }, 'contest entry delete start');
     const context = await this.getEntryContext(contestId, userId);
     const membership = context.membership;
     if (!membership) {
+      this.logger.warn({ contestId, userId }, 'contest entry delete missing membership');
       throw new ContestEntryOperationError(
         'You must be an active league member to leave this contest',
         'LEAGUE_MEMBERSHIP_REQUIRED',
       );
     }
     if (!isContestJoinable(context.contest.status)) {
+      this.logger.warn({ contestId, userId, status: context.contest.status }, 'contest entry delete locked contest');
       throw new ContestEntryOperationError(
         'Contest entries can only be changed before the contest starts',
         'CONTEST_ENTRY_LOCKED',
       );
     }
     if (!context.squadMembership) {
+      this.logger.warn({ contestId, userId }, 'contest entry delete missing squad manager');
       throw new ContestEntryOperationError(
         'You do not manage a squad in this league',
         'SQUAD_MANAGER_REQUIRED',
@@ -329,11 +397,13 @@ export class ContestService {
 
     const existing = await this.findPrimaryEntryBySquad(contestId, context.squadMembership.squadId);
     if (!existing) {
+      this.logger.warn({ contestId, userId, squadId: context.squadMembership.squadId }, 'contest entry delete missing entry');
       throw new ContestEntryNotFoundError(contestId, context.squadMembership.squadId);
     }
 
     const hasSelections = await this.entryHasSelections(existing.id);
     if (hasSelections) {
+      this.logger.warn({ contestId, userId, entryId: existing.id }, 'contest entry delete blocked by selections');
       throw new ContestEntryOperationError(
         'Cannot leave a contest after making picks or draft selections',
         'CONTEST_ENTRY_SELECTIONS_EXIST',
@@ -341,6 +411,7 @@ export class ContestService {
     }
 
     await this.requireEntryRepo().delete(existing.id);
+    this.logger.info({ contestId, userId, entryId: existing.id }, 'contest entry delete completed');
   }
 
   async updateEntry(
@@ -349,21 +420,30 @@ export class ContestService {
     userId: string,
     updates: { name?: string; tiebreakerValue?: number | null },
   ): Promise<ContestEntryDto> {
+    this.logger.debug({
+      contestId,
+      entryId,
+      userId,
+      updateKeys: Object.keys(updates),
+    }, 'contest entry update start');
     const context = await this.getEntryContext(contestId, userId);
     const membership = context.membership;
     if (!membership) {
+      this.logger.warn({ contestId, entryId, userId }, 'contest entry update missing membership');
       throw new ContestEntryOperationError(
         'You must be an active league member to rename this contest entry',
         'LEAGUE_MEMBERSHIP_REQUIRED',
       );
     }
     if (!isContestJoinable(context.contest.status)) {
+      this.logger.warn({ contestId, entryId, userId, status: context.contest.status }, 'contest entry update locked contest');
       throw new ContestEntryOperationError(
         'Contest entries can only be changed before the contest starts',
         'CONTEST_ENTRY_LOCKED',
       );
     }
     if (!context.squadMembership) {
+      this.logger.warn({ contestId, entryId, userId }, 'contest entry update missing squad manager');
       throw new ContestEntryOperationError(
         'You do not manage a squad in this league',
         'SQUAD_MANAGER_REQUIRED',
@@ -373,6 +453,7 @@ export class ContestService {
     const entries = await this.findEntriesBySquad(contestId, context.squadMembership.squadId);
     const existing = entries.find((entry) => entry.id === entryId);
     if (!existing) {
+      this.logger.warn({ contestId, entryId, userId }, 'contest entry update missing owned entry');
       throw new ContestEntryNotFoundError(contestId, context.squadMembership.squadId);
     }
 
@@ -381,6 +462,7 @@ export class ContestService {
     if (updates.name !== undefined) {
       const sanitizedName = updates.name.trim();
       if (!sanitizedName) {
+        this.logger.warn({ contestId, entryId, userId }, 'contest entry update missing name');
         throw new ContestEntryOperationError(
           'Contest entry name is required',
           'CONTEST_ENTRY_NAME_REQUIRED',
@@ -392,6 +474,7 @@ export class ContestService {
         (entry) => entry.id !== entryId && entry.name.trim().toLocaleLowerCase() === normalizedName,
       );
       if (duplicateEntry) {
+        this.logger.warn({ contestId, entryId, userId, duplicateEntryId: duplicateEntry.id }, 'contest entry update duplicate name');
         throw new ContestEntryOperationError(
           'This team already has another entry with that name in the contest',
           'CONTEST_ENTRY_NAME_DUPLICATE',
@@ -406,7 +489,9 @@ export class ContestService {
     }
 
     await this.requireEntryRepo().update(entryId, pendingUpdates);
-    return this.loadEntryDtoById(entryId);
+    const dto = await this.loadEntryDtoById(entryId);
+    this.logger.info({ contestId, entryId, userId }, 'contest entry update completed');
+    return dto;
   }
 
   private async getEntryContext(
@@ -419,6 +504,7 @@ export class ContestService {
   }> {
     const contest = await this.contestRepo.findById(contestId);
     if (!contest) {
+      this.logger.warn({ contestId, userId }, 'contest entry context missing contest');
       throw new ContestNotFoundError(contestId);
     }
     const membership = await this.membershipRepo.findByLeagueAndUser(contest.leagueId, userId);

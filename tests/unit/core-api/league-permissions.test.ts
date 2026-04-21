@@ -58,6 +58,15 @@ function expectReplyError(
   });
 }
 
+function createLogger() {
+  return {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+}
+
 describe('league permissions', () => {
   it('allows any member through requireLeagueMembership', async () => {
     const membership = buildMembership({ role: LeagueRole.MEMBER });
@@ -71,6 +80,7 @@ describe('league permissions', () => {
       {
         authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
+        log: createLogger(),
       } as never,
       reply as never,
       jest.fn(),
@@ -90,6 +100,7 @@ describe('league permissions', () => {
       {
         authUser: { userId: 'outsider', email: 'outsider@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
+        log: createLogger(),
       } as never,
       reply as never,
       jest.fn(),
@@ -115,6 +126,7 @@ describe('league permissions', () => {
       {
         authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
+        log: createLogger(),
       } as never,
       reply as never,
       jest.fn(),
@@ -132,6 +144,7 @@ describe('league permissions', () => {
       {
         headers: {},
         params: { id: 'league-1' },
+        log: createLogger(),
       } as never,
       reply as never,
       jest.fn(),
@@ -149,6 +162,7 @@ describe('league permissions', () => {
       {
         authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: {},
+        log: createLogger(),
       } as never,
       reply as never,
       jest.fn(),
@@ -171,6 +185,7 @@ describe('league permissions', () => {
       {
         authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
+        log: createLogger(),
       } as never,
       reply as never,
       jest.fn(),
@@ -191,6 +206,7 @@ describe('league permissions', () => {
       {
         authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
+        log: createLogger(),
       } as never,
       reply as never,
       jest.fn(),

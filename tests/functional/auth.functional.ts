@@ -12,6 +12,7 @@ import {
   disconnectFunctionalPrisma,
   expectFunctionalError,
   getFunctionalPrisma,
+  getSdkClient,
 } from './setup';
 
 afterEach(async () => {
@@ -156,5 +157,24 @@ describe('SDK Functional: Auth', () => {
       status: 401,
       code: 'INVALID_REFRESH_TOKEN',
     });
+  });
+
+  it('rejects refresh without a body token or cookie session and treats logout without a refresh token as success', async () => {
+    const anonymousClient = getSdkClient();
+
+    const refreshResponse = await refreshToken({
+      client: anonymousClient,
+    });
+
+    expectFunctionalError(refreshResponse, {
+      status: 401,
+      code: 'INVALID_REFRESH_TOKEN',
+    });
+
+    const logoutResponse = await logoutUser({
+      client: anonymousClient,
+    });
+
+    expect(logoutResponse.data?.success).toBe(true);
   });
 });

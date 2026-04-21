@@ -65,6 +65,7 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
     squadMembershipRepo,
     undefined,
     prisma,
+    fastify.log,
   );
   const handlers = createContestHandlers(contestService);
 
@@ -126,6 +127,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     squadMembershipRepo,
     entryRepo,
     prisma,
+    fastify.log,
   );
   const overrideService = new OverrideService(
     contestRepo,

@@ -10,7 +10,10 @@ import type {
   SportEventParticipantSourceDataRepository,
   SportEventParticipantValuationRepository,
 } from '@poolmaster/shared/db';
-import { ContestManagementService } from '../../../packages/core-api/src/modules/contest-management/service';
+import {
+  ContestManagementError,
+  ContestManagementService,
+} from '../../../packages/core-api/src/modules/contest-management/service';
 
 function createContestCoreRepo(): ContestCoreRepository {
   return {
@@ -604,5 +607,67 @@ describe('ContestManagementService', () => {
     );
     expect(result.templateId).toBe('11111111-1111-4111-8111-111111111111');
     expect(result.templateVersion).toBe(1);
+  });
+
+  it('throws when a seeded template cannot be found', async () => {
+    const contestConfigTemplateRepo = createContestConfigTemplateRepo();
+    (contestConfigTemplateRepo.findById as jest.Mock).mockResolvedValueOnce(null);
+
+    const service = new ContestManagementService(
+      createContestCoreRepo(),
+      contestConfigTemplateRepo,
+      createContestConfigurationRepo(),
+      createParticipantScoringRuleRepo(),
+      createAggregationRuleRepo(),
+      createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantSourceDataRepo(),
+      createSportEventParticipantValuationRepo(),
+    );
+
+    let thrown: unknown;
+    try {
+      await service.createContest(
+        { leagueId: 'league-1' },
+        {
+          name: 'Missing Template Contest',
+          sportEventId: '11111111-1111-1111-1111-111111111111',
+          contestType: 'SINGLE_EVENT',
+          templateId: 'missing-template-id',
+        },
+      );
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(ContestManagementError);
+    expect((thrown as Error).message).toBe('Contest configuration template not found');
+  });
+
+  it('throws when contest configuration is missing for an existing contest', async () => {
+    const contestConfigurationRepo = createContestConfigurationRepo();
+    (contestConfigurationRepo.findByContest as jest.Mock).mockResolvedValueOnce(null);
+
+    const service = new ContestManagementService(
+      createContestCoreRepo(),
+      createContestConfigTemplateRepo(),
+      contestConfigurationRepo,
+      createParticipantScoringRuleRepo(),
+      createAggregationRuleRepo(),
+      createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantSourceDataRepo(),
+      createSportEventParticipantValuationRepo(),
+    );
+
+    let thrown: unknown;
+    try {
+      await service.getContest('contest-1');
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(ContestManagementError);
+    expect((thrown as Error).message).toBe('Contest configuration not found');
   });
 });

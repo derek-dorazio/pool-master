@@ -3,6 +3,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestHistorySummary,
   ContestHighlights,
@@ -11,14 +12,34 @@ import type {
 } from '@poolmaster/shared/domain';
 import { ContestStatus, LeagueMembershipStatus, SquadMembershipStatus } from '@poolmaster/shared/domain';
 
+type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
+
+function createNoopLogger(): LifecycleLogger {
+  const noop = () => undefined;
+  return {
+    debug: noop,
+    info: noop,
+    warn: noop,
+    error: noop,
+    fatal: noop,
+  };
+}
+
 export class HistoryService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly logger: LifecycleLogger = createNoopLogger(),
+  ) {}
 
   /** Returns a full contest history summary for a completed contest. */
   async getContestSummary(contestId: string): Promise<ContestHistorySummary | null> {
+    this.logger.debug({ contestId }, 'history get contest summary start');
     const results = await this.getCompletedContestResults(contestId);
 
-    if (results.length === 0) return null;
+    if (results.length === 0) {
+      this.logger.warn({ contestId }, 'history get contest summary missing history');
+      return null;
+    }
 
     const first = results[0];
 
@@ -31,7 +52,7 @@ export class HistoryService {
 
     const highlights = buildHighlights(results, entryNameMap);
 
-    return {
+    const summary = {
       contestId,
       contestName: first.contestName ?? '',
       sport: first.sport ?? '',
@@ -43,20 +64,31 @@ export class HistoryService {
       payouts,
       highlights,
     };
+    this.logger.info({
+      contestId,
+      finalStandingCount: results.length,
+      payoutCount: payouts.length,
+    }, 'history get contest summary completed');
+    return summary;
   }
 
   /** Returns final standings for a contest. */
   async getContestStandings(contestId: string): Promise<ContestHistoryResult[]> {
-    return this.getCompletedContestResults(contestId);
+    this.logger.debug({ contestId }, 'history get contest standings start');
+    const standings = await this.getCompletedContestResults(contestId);
+    this.logger.info({ contestId, standingCount: standings.length }, 'history get contest standings completed');
+    return standings;
   }
 
   /** Returns all contest results for a league member across all contests. */
   async getMemberResults(leagueMembershipId: string): Promise<ContestHistoryResult[]> {
+    this.logger.debug({ leagueMembershipId }, 'history get member results start');
     const membership = await this.prisma.leagueMembership.findUnique({
       where: { id: leagueMembershipId },
       select: { leagueId: true, userId: true },
     });
     if (!membership) {
+      this.logger.warn({ leagueMembershipId }, 'history get member results missing membership');
       return [];
     }
 
@@ -64,16 +96,22 @@ export class HistoryService {
       leagueId: membership.leagueId,
       userId: membership.userId,
     });
-    return results.filter((result) => result.leagueMembershipId === leagueMembershipId);
+    const filtered = results.filter((result) => result.leagueMembershipId === leagueMembershipId);
+    this.logger.info({ leagueMembershipId, resultCount: filtered.length }, 'history get member results completed');
+    return filtered;
   }
 
   /** Returns all contest results for a league. */
   async getLeagueResults(leagueId: string): Promise<ContestHistoryResult[]> {
-    return this.buildFallbackResults({ leagueId });
+    this.logger.debug({ leagueId }, 'history get league results start');
+    const results = await this.buildFallbackResults({ leagueId });
+    this.logger.info({ leagueId, resultCount: results.length }, 'history get league results completed');
+    return results;
   }
 
   /** Returns roster history snapshot for an entry. */
   async getRosterHistory(contestId: string, entryId: string) {
+    this.logger.debug({ contestId, entryId }, 'history get roster history start');
     const entry = await this.prisma.contestEntry.findFirst({
       where: { id: entryId, contestId },
       include: {
@@ -93,10 +131,11 @@ export class HistoryService {
       },
     });
     if (!entry) {
+      this.logger.warn({ contestId, entryId }, 'history get roster history missing entry');
       return null;
     }
 
-    return {
+    const rosterHistory = {
       contestId,
       entryId,
       entryName: entry.name,
@@ -115,10 +154,13 @@ export class HistoryService {
           pick.sportEventParticipant.sourceData[0]?.normalizedData ?? {},
       })),
     };
+    this.logger.info({ contestId, entryId, rosterPickCount: rosterHistory.rosterPicks.length }, 'history get roster history completed');
+    return rosterHistory;
   }
 
   /** Returns payout history for a contest. */
   async getContestPayouts(contestId: string): Promise<ContestHistoryPayout[]> {
+    this.logger.debug({ contestId }, 'history get contest payouts start');
     const awards = await this.prisma.contestEntryPrizeAward.findMany({
       where: { entry: { contestId } },
       include: {
@@ -139,6 +181,7 @@ export class HistoryService {
     });
 
     if (awards.length === 0) {
+      this.logger.warn({ contestId }, 'history get contest payouts no awards');
       return [];
     }
 
@@ -156,7 +199,7 @@ export class HistoryService {
       leagueMemberships.map((membership) => [membership.userId, membership.id]),
     );
 
-    return awards.map((award, index) => ({
+    const payouts: ContestHistoryPayout[] = awards.map((award, index) => ({
       id: award.id,
       contestId: award.entry.contestId,
       leagueId: award.entry.squad.leagueId,
@@ -173,10 +216,15 @@ export class HistoryService {
       acknowledgedByMember: false,
       createdAt: award.createdAt,
     }));
+    this.logger.info({ contestId, payoutCount: payouts.length }, 'history get contest payouts completed');
+    return payouts;
   }
 
   private async getCompletedContestResults(contestId: string): Promise<ContestHistoryResult[]> {
-    return this.buildFallbackResults({ contestId });
+    this.logger.debug({ contestId }, 'history get completed contest results start');
+    const results = await this.buildFallbackResults({ contestId });
+    this.logger.info({ contestId, resultCount: results.length }, 'history get completed contest results completed');
+    return results;
   }
 
   private async buildFallbackResults(filters: {
@@ -184,6 +232,11 @@ export class HistoryService {
     leagueId?: string;
     userId?: string;
   }): Promise<ContestHistoryResult[]> {
+    this.logger.debug({
+      contestId: filters.contestId ?? null,
+      leagueId: filters.leagueId ?? null,
+      userId: filters.userId ?? null,
+    }, 'history build fallback results start');
     const contests = await this.prisma.contest.findMany({
       where: {
         ...(filters.contestId && { id: filters.contestId }),
@@ -218,6 +271,11 @@ export class HistoryService {
     });
 
     if (contests.length === 0) {
+      this.logger.warn({
+        contestId: filters.contestId ?? null,
+        leagueId: filters.leagueId ?? null,
+        userId: filters.userId ?? null,
+      }, 'history build fallback results no completed contests');
       return [];
     }
 
@@ -251,7 +309,7 @@ export class HistoryService {
       ]),
     );
 
-    return contests.flatMap((contest) => {
+    const results = contests.flatMap((contest) => {
       const numEntries = contest.entries.length;
       const winnerScore = contest.entries[0]?.totalScore ?? 0;
 
@@ -299,6 +357,14 @@ export class HistoryService {
           } satisfies ContestHistoryResult;
         });
     });
+    this.logger.info({
+      contestId: filters.contestId ?? null,
+      leagueId: filters.leagueId ?? null,
+      userId: filters.userId ?? null,
+      resultCount: results.length,
+      contestCount: contests.length,
+    }, 'history build fallback results completed');
+    return results;
   }
 }
 

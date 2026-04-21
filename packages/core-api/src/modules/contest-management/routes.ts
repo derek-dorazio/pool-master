@@ -40,6 +40,7 @@ export async function contestManagementModule(
     new PrismaSportEventParticipantRepository(prisma),
     new PrismaSportEventParticipantSourceDataRepository(prisma),
     new PrismaSportEventParticipantValuationRepository(prisma),
+    fastify.log,
   );
   const handlers = createContestManagementHandlers(contestManagementService);
 

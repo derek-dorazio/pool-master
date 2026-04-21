@@ -68,7 +68,7 @@ export function buildApp() {
   // --- Scoring subsystem (Prisma-backed) ---
   const contestLookup = new ContestLookup(prisma);
   const standingsRollup = new StandingsRollup({ eventBus, prisma, logger: app.log });
-  const scoringService = new ScoringService({ standingsRollup, prisma });
+  const scoringService = new ScoringService({ standingsRollup, prisma, logger: app.log });
   const contestScoringRecalculationService = new ContestScoringRecalculationService(prisma);
 
   // =========================================================================
@@ -164,7 +164,7 @@ export function buildApp() {
     },
   };
 
-  const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks);
+  const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log);
 
   app.register(ingestionModule, {
     prefix: '/api/v1/ingestion',

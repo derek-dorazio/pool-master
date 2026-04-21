@@ -89,6 +89,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
   const scoringService = new ScoringService({
     standingsRollup,
     prisma,
+    logger: testApp.log,
   });
   testApp.register(scoringRoutes, { prefix: '/api/v1', scoringService });
   testApp.register(accountModule, { prefix: '/api/v1/account' });

@@ -32,6 +32,7 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
     participantRepo,
     seasonRecordRepo,
     providerMappingRepo,
+    fastify.log.child({ module: 'participants.service' }),
   );
 
   const handler = createParticipantHandlers(participantService);

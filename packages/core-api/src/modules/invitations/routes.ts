@@ -38,6 +38,7 @@ export async function invitationsModule(fastify: FastifyInstance): Promise<void>
     squadRepo,
     squadMembershipRepo,
     prisma,
+    fastify.log,
   );
   const handlers = createInvitationHandlers(invitationService);
 

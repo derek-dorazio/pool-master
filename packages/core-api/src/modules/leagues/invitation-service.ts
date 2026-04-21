@@ -11,6 +11,7 @@ import type {
 } from '@poolmaster/shared/db';
 import type { LeagueInvitation, LeagueMembership } from '@poolmaster/shared/domain';
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import {
   InvitationStatus,
   InviteType,
@@ -60,10 +61,19 @@ export class InvitationService {
     private readonly squadRepo?: SquadRepository,
     private readonly squadMembershipRepo?: SquadMembershipRepository,
     private readonly prisma?: PrismaClient,
+    private readonly logger?: FastifyBaseLogger,
   ) {}
 
   /** Creates email invitations, skipping existing members and pending duplicates. */
   async sendEmailInvitations(input: SendInvitationsInput): Promise<SendInvitationsResult> {
+    this.logger?.debug({
+      action: 'leagueInvitation.sendEmail.enter',
+      data: {
+        leagueId: input.leagueId,
+        invitedBy: input.invitedBy,
+        emailCount: input.emails.length,
+      },
+    }, 'Sending league email invitations');
     await this.membershipRepo.findByLeague(input.leagueId);
     const memberEmails = new Set<string>();
     // Note: we don't have email on membership directly; this is a simplification.
@@ -74,11 +84,19 @@ export class InvitationService {
     for (const email of input.emails) {
       const normalised = email.toLowerCase().trim();
       if (memberEmails.has(normalised)) {
+        this.logger?.warn({
+          action: 'leagueInvitation.sendEmail.skippedMember',
+          data: { leagueId: input.leagueId, invitedBy: input.invitedBy },
+        }, 'Skipped invitation for existing member email');
         skippedMembers.push(normalised);
         continue;
       }
       const existing = await this.invitationRepo.findByEmail(input.leagueId, normalised);
       if (existing) {
+        this.logger?.warn({
+          action: 'leagueInvitation.sendEmail.skippedDuplicate',
+          data: { leagueId: input.leagueId, invitedBy: input.invitedBy },
+        }, 'Skipped duplicate pending invitation');
         skippedDuplicates.push(normalised);
         continue;
       }
@@ -97,11 +115,30 @@ export class InvitationService {
       });
       sent.push(invitation);
     }
+    this.logger?.info({
+      action: 'leagueInvitation.sendEmail.success',
+      data: {
+        leagueId: input.leagueId,
+        invitedBy: input.invitedBy,
+        sentCount: sent.length,
+        skippedMemberCount: skippedMembers.length,
+        skippedDuplicateCount: skippedDuplicates.length,
+      },
+    }, 'Processed league email invitations');
     return { sent, skippedMembers, skippedDuplicates };
   }
 
   /** Generates a shareable invite link for the league. */
   async generateInviteLink(input: GenerateInviteLinkInput): Promise<LeagueInvitation> {
+    this.logger?.debug({
+      action: 'leagueInvitation.generateLink.enter',
+      data: {
+        leagueId: input.leagueId,
+        invitedBy: input.invitedBy,
+        expiresInDays: input.expiresInDays ?? null,
+        maxUses: input.maxUses ?? 0,
+      },
+    }, 'Generating league invite link');
     const expiresAt = input.expiresInDays
       ? (() => {
           const d = new Date();
@@ -109,7 +146,7 @@ export class InvitationService {
           return d;
         })()
       : undefined;
-    return this.invitationRepo.create({
+    const invitation = await this.invitationRepo.create({
       leagueId: input.leagueId,
       inviteCode: generateInviteCode(),
       inviteType: InviteType.LINK,
@@ -119,26 +156,63 @@ export class InvitationService {
       invitedBy: input.invitedBy,
       expiresAt,
     });
+    this.logger?.info({
+      action: 'leagueInvitation.generateLink.success',
+      data: {
+        invitationId: invitation.id,
+        leagueId: input.leagueId,
+        maxUses: invitation.maxUses,
+      },
+    }, 'Generated league invite link');
+    return invitation;
   }
 
   /** Revokes an existing invite link. */
   async revokeInviteLink(leagueId: string, inviteCode: string): Promise<void> {
+    this.logger?.debug({
+      action: 'leagueInvitation.revoke.enter',
+      data: { leagueId, inviteCodeLength: inviteCode.length },
+    }, 'Revoking league invite link');
     const invitation = await this.invitationRepo.findByCode(inviteCode);
     if (!invitation || invitation.leagueId !== leagueId) {
+      this.logger?.warn({
+        action: 'leagueInvitation.revoke.notFound',
+        data: { leagueId, inviteCodeLength: inviteCode.length },
+      }, 'Cannot revoke missing league invite link');
       throw new InvitationNotFoundError(inviteCode);
     }
     await this.invitationRepo.update(invitation.id, {
       status: InvitationStatus.REVOKED,
     });
+    this.logger?.info({
+      action: 'leagueInvitation.revoke.success',
+      data: { leagueId, invitationId: invitation.id },
+    }, 'Revoked league invite link');
   }
 
   /** Accepts an invitation by code, creating or reactivating a MEMBER membership. */
   async acceptInvitation(inviteCode: string, userId: string): Promise<LeagueMembership> {
+    this.logger?.debug({
+      action: 'leagueInvitation.accept.enter',
+      data: { userId, inviteCodeLength: inviteCode.length },
+    }, 'Accepting league invitation');
     const invitation = await this.invitationRepo.findByCode(inviteCode);
     if (!invitation) {
+      this.logger?.warn({
+        action: 'leagueInvitation.accept.notFound',
+        data: { userId, inviteCodeLength: inviteCode.length },
+      }, 'Cannot accept missing invitation');
       throw new InvitationNotFoundError(inviteCode);
     }
     if (invitation.status !== InvitationStatus.PENDING) {
+      this.logger?.warn({
+        action: 'leagueInvitation.accept.invalidStatus',
+        data: {
+          userId,
+          invitationId: invitation.id,
+          status: invitation.status,
+        },
+      }, 'Cannot accept invitation in non-pending status');
       throw new InvitationInvalidError(
         `Invitation is ${invitation.status.toLowerCase()}`,
         mapInvitationStatusCode(invitation.status),
@@ -146,9 +220,17 @@ export class InvitationService {
     }
     if (invitation.expiresAt && new Date() > invitation.expiresAt) {
       await this.invitationRepo.update(invitation.id, { status: InvitationStatus.EXPIRED });
+      this.logger?.warn({
+        action: 'leagueInvitation.accept.expired',
+        data: { userId, invitationId: invitation.id },
+      }, 'Cannot accept expired invitation');
       throw new InvitationInvalidError('Invitation has expired', 'LEAGUE_INVITATION_EXPIRED');
     }
     if (invitation.maxUses > 0 && invitation.currentUses >= invitation.maxUses) {
+      this.logger?.warn({
+        action: 'leagueInvitation.accept.exhausted',
+        data: { userId, invitationId: invitation.id },
+      }, 'Cannot accept exhausted invitation');
       throw new InvitationInvalidError(
         'Invitation has reached maximum uses',
         'LEAGUE_INVITATION_EXHAUSTED',
@@ -160,6 +242,10 @@ export class InvitationService {
     );
     if (existingMembership) {
       if (existingMembership.status === LeagueMembershipStatus.ACTIVE) {
+        this.logger?.warn({
+          action: 'leagueInvitation.accept.alreadyMember',
+          data: { userId, invitationId: invitation.id, leagueId: invitation.leagueId },
+        }, 'Cannot accept invitation for existing active member');
         throw new InvitationInvalidError(
           'You are already a member of this league',
           'LEAGUE_ALREADY_MEMBER',
@@ -168,6 +254,10 @@ export class InvitationService {
     }
     const league = await this.leagueRepo.findById(invitation.leagueId);
     if (!league) {
+      this.logger?.warn({
+        action: 'leagueInvitation.accept.leagueMissing',
+        data: { userId, invitationId: invitation.id, leagueId: invitation.leagueId },
+      }, 'Cannot accept invitation for missing league');
       throw new InvitationInvalidError('League no longer exists', 'LEAGUE_NOT_FOUND');
     }
     const membership = existingMembership
@@ -194,11 +284,26 @@ export class InvitationService {
       acceptedBy: userId,
       ...(isFullyUsed && { status: InvitationStatus.ACCEPTED }),
     });
+    this.logger?.info({
+      action: 'leagueInvitation.accept.success',
+      data: {
+        userId,
+        invitationId: invitation.id,
+        leagueId: invitation.leagueId,
+        membershipId: membership.id,
+        currentUses: newUses,
+        markedAccepted: isFullyUsed,
+      },
+    }, 'Accepted league invitation');
     return membership;
   }
 
   private async ensureDefaultSquad(leagueId: string, userId: string): Promise<void> {
     if (!this.squadRepo || !this.squadMembershipRepo || !this.prisma) {
+      this.logger?.debug({
+        action: 'leagueInvitation.ensureDefaultSquad.skipped',
+        data: { leagueId, userId },
+      }, 'Skipped default squad provisioning because dependencies are unavailable');
       return;
     }
 
@@ -208,21 +313,34 @@ export class InvitationService {
       squadRepo: this.squadRepo,
       squadMembershipRepo: this.squadMembershipRepo,
       prisma: this.prisma,
+      logger: this.logger,
     });
   }
 
   async getInvitationPreview(inviteCode: string): Promise<InvitationPreview> {
+    this.logger?.debug({
+      action: 'leagueInvitation.preview.enter',
+      data: { inviteCodeLength: inviteCode.length },
+    }, 'Loading league invitation preview');
     const invitation = await this.invitationRepo.findByCode(inviteCode);
     if (!invitation) {
+      this.logger?.warn({
+        action: 'leagueInvitation.preview.notFound',
+        data: { inviteCodeLength: inviteCode.length },
+      }, 'Cannot preview missing invitation');
       throw new InvitationNotFoundError(inviteCode);
     }
 
     const league = await this.leagueRepo.findById(invitation.leagueId);
     if (!league) {
+      this.logger?.warn({
+        action: 'leagueInvitation.preview.leagueMissing',
+        data: { invitationId: invitation.id, leagueId: invitation.leagueId },
+      }, 'Cannot preview invitation for missing league');
       throw new InvitationInvalidError('League no longer exists', 'LEAGUE_NOT_FOUND');
     }
 
-    return {
+    const preview = {
       inviteCode: invitation.inviteCode,
       status: invitation.status,
       league: {
@@ -231,6 +349,11 @@ export class InvitationService {
         name: league.name,
       },
     };
+    this.logger?.info({
+      action: 'leagueInvitation.preview.success',
+      data: { invitationId: invitation.id, leagueId: league.id, status: invitation.status },
+    }, 'Loaded league invitation preview');
+    return preview;
   }
 }
 

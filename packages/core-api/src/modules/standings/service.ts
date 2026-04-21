@@ -5,6 +5,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import { formatUserFullName } from '../../core/user-name';
 import { SquadMembershipStatus } from '@poolmaster/shared/domain';
 
@@ -62,12 +63,28 @@ export class StandingsError extends Error {
   }
 }
 
+type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
+
+function createNoopLogger(): LifecycleLogger {
+  const noop = () => undefined;
+  return {
+    debug: noop,
+    info: noop,
+    warn: noop,
+    error: noop,
+    fatal: noop,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
 
 export class StandingsService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly logger: LifecycleLogger = createNoopLogger(),
+  ) {}
 
   /**
    * Returns a paginated leaderboard for a contest.
@@ -76,6 +93,12 @@ export class StandingsService {
     contestId: string,
     options: { page?: number; pageSize?: number; sortBy?: SortField } = {},
   ): Promise<StandingsPage> {
+    this.logger.debug({
+      contestId,
+      page: options.page ?? null,
+      pageSize: options.pageSize ?? null,
+      sortBy: options.sortBy ?? 'rank',
+    }, 'standings get standings start');
     const page = Math.max(1, options.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 25));
     const sortBy = options.sortBy ?? 'rank';
@@ -86,6 +109,14 @@ export class StandingsService {
     const start = (page - 1) * pageSize;
     const pageEntries = sorted.slice(start, start + pageSize);
 
+    this.logger.info({
+      contestId,
+      page,
+      pageSize,
+      returnedCount: pageEntries.length,
+      total,
+      sortBy,
+    }, 'standings get standings completed');
     return { standings: pageEntries, total, page, pageSize, contestId };
   }
 
@@ -93,9 +124,16 @@ export class StandingsService {
    * Returns the top N entries for a dashboard summary widget.
    */
   async getSummary(contestId: string, topN: number = 5): Promise<StandingsSummary> {
+    this.logger.debug({ contestId, topN }, 'standings get summary start');
     const entries = await this.fetchEnrichedStandings(contestId);
     const sorted = sortEntries(entries, 'rank');
 
+    this.logger.info({
+      contestId,
+      topN,
+      totalEntries: sorted.length,
+      returnedCount: Math.min(sorted.length, topN),
+    }, 'standings get summary completed');
     return {
       topEntries: sorted.slice(0, topN),
       totalEntries: sorted.length,
@@ -107,10 +145,12 @@ export class StandingsService {
    * Returns the current user's entry with rank context.
    */
   async getMyEntry(contestId: string, userId: string): Promise<MyEntryResult> {
+    this.logger.debug({ contestId, userId }, 'standings get my-entry start');
     const entries = await this.fetchEnrichedStandings(contestId);
 
     const myEntry = entries.find((e) => e.ownerId === userId);
     if (!myEntry) {
+      this.logger.warn({ contestId, userId }, 'standings get my-entry missing entry');
       throw new StandingsError(
         'You do not have an entry in this contest',
         'ENTRY_NOT_FOUND',
@@ -118,6 +158,12 @@ export class StandingsService {
       );
     }
 
+    this.logger.info({
+      contestId,
+      userId,
+      entryId: myEntry.entryId,
+      totalEntries: entries.length,
+    }, 'standings get my-entry completed');
     return {
       entry: myEntry,
       totalEntries: entries.length,
@@ -130,6 +176,7 @@ export class StandingsService {
   // -------------------------------------------------------------------------
 
   private async fetchEnrichedStandings(contestId: string): Promise<StandingEntry[]> {
+    this.logger.debug({ contestId }, 'standings fetch enriched standings start');
     const entries = await this.prisma.contestEntry.findMany({
       where: { contestId },
       include: {
@@ -151,6 +198,7 @@ export class StandingsService {
     });
 
     if (entries.length === 0) {
+      this.logger.warn({ contestId }, 'standings unavailable for contest');
       throw new StandingsError(
         'Standings have not been generated for this contest yet',
         'STANDINGS_UNAVAILABLE',
@@ -160,7 +208,7 @@ export class StandingsService {
 
     const rankedEntries = assignRanksFromEntries(entries);
 
-    return rankedEntries.map(({ entry, rank }) => {
+    const standings = rankedEntries.map(({ entry, rank }) => {
       const ownerMembership = entry.squad.memberships[0];
       return {
         rank,
@@ -178,6 +226,9 @@ export class StandingsService {
         lastUpdatedAt: entry.updatedAt,
       };
     });
+
+    this.logger.info({ contestId, entryCount: standings.length }, 'standings fetch enriched standings completed');
+    return standings;
   }
 
 }
