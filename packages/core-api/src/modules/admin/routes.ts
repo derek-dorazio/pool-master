@@ -6,7 +6,7 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { setAuditPrisma } from './admin-audit-service';
+import { setAuditLogger, setAuditPrisma } from './admin-audit-service';
 import { setAuditQueryPrisma } from './audit-query-service';
 import { UserService } from './user-service';
 import { createUserHandlers } from './user-handler';
@@ -78,6 +78,7 @@ export async function adminModule(
   // Initialise the audit service's Prisma reference so that the module-level
   // logAdminAction() helper can persist audit entries to the database.
   setAuditPrisma(prisma);
+  setAuditLogger(fastify.log);
   setAuditQueryPrisma(prisma);
 
   // --- Services ---

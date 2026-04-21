@@ -9,7 +9,9 @@ import { swaggerPlugin } from './plugins/swagger';
 import { authGuard } from './plugins/auth-guard';
 import { etagPlugin } from './plugins/etag-support';
 import { pollConfigPlugin } from './plugins/poll-config';
+import { requestLoggingContext } from './plugins/request-logging-context';
 import { globalErrorHandler } from './core/error-handler';
+import { createFastifyLoggerOptions } from './core/logger';
 
 // Domain modules (core-api)
 import { authModule } from './modules/auth/routes';
@@ -52,7 +54,7 @@ import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 
 export function buildApp() {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: createFastifyLoggerOptions('core-api') });
   const prisma = new PrismaClient();
   const isOpenApiExport = process.env.OPENAPI_EXPORT === 'true';
 
@@ -65,7 +67,7 @@ export function buildApp() {
 
   // --- Scoring subsystem (Prisma-backed) ---
   const contestLookup = new ContestLookup(prisma);
-  const standingsRollup = new StandingsRollup({ eventBus, prisma });
+  const standingsRollup = new StandingsRollup({ eventBus, prisma, logger: app.log });
   const scoringService = new ScoringService({ standingsRollup, prisma });
   const contestScoringRecalculationService = new ContestScoringRecalculationService(prisma);
 
@@ -77,6 +79,7 @@ export function buildApp() {
   app.register(etagPlugin);
   app.register(pollConfigPlugin);
   app.register(authGuard);
+  app.register(requestLoggingContext);
   app.setErrorHandler(globalErrorHandler);
 
   // =========================================================================

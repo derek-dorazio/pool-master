@@ -4,6 +4,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import type { EventBus } from '@poolmaster/shared/events/event-bus';
 
 // --- Types ---
@@ -25,6 +26,7 @@ export interface StandingEntry {
 export interface StandingsRollupDeps {
   eventBus: EventBus;
   prisma: PrismaClient;
+  logger?: FastifyBaseLogger;
 }
 
 // --- Rollup Class ---
@@ -38,10 +40,12 @@ export class StandingsRollup {
   private previousRanks: Map<string, Map<string, number>> = new Map();
   private readonly eventBus: EventBus;
   private readonly prisma: PrismaClient;
+  private readonly logger?: FastifyBaseLogger;
 
   constructor(deps: StandingsRollupDeps) {
     this.eventBus = deps.eventBus;
     this.prisma = deps.prisma;
+    this.logger = deps.logger;
   }
 
   /** Register a contest for periodic rollup. */
@@ -97,7 +101,13 @@ export class StandingsRollup {
     if (this.intervalHandle) return;
     this.intervalHandle = setInterval(() => {
       this.rollupAll().catch((err) => {
-        console.error('[StandingsRollup] periodic rollup failed:', err);
+        this.logger?.error({
+          action: 'scoring.standings_rollup.periodic_failed',
+          err,
+          data: {
+            activeContestCount: this.activeContestIds.size,
+          },
+        }, 'Periodic standings rollup failed');
       });
     }, intervalMs);
   }

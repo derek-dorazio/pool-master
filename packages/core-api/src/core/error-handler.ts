@@ -1,5 +1,6 @@
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import type { ErrorEnvelope } from '@poolmaster/shared/dto/errors.dto';
+import { buildRequestLogBindings } from './logger';
 
 type ErrorLike = Error & {
   code?: string;
@@ -109,9 +110,30 @@ export function sendError(
 
 export function globalErrorHandler(
   error: FastifyError,
-  _request: FastifyRequest,
+  request: FastifyRequest,
   reply: FastifyReply,
 ): void {
   const statusCode = inferStatusCode(error);
+  const errorCode = inferErrorCode(error, statusCode);
+  const logger = request.contextLogger ?? request.log;
+  const logPayload = {
+    action: statusCode >= 500 ? 'http.request.failed.unexpected' : 'http.request.failed.expected',
+    statusCode,
+    errorCode,
+    err: error,
+    data: {
+      ...buildRequestLogBindings(request),
+      ...(statusCode === 400 && error.validation !== undefined
+        ? { validation: error.validation }
+        : {}),
+    },
+  };
+
+  if (statusCode >= 500) {
+    logger.error(logPayload, 'Unhandled request error');
+  } else {
+    logger.warn(logPayload, 'Request completed with expected error');
+  }
+
   reply.status(statusCode).send(createErrorEnvelopeFromError(error));
 }

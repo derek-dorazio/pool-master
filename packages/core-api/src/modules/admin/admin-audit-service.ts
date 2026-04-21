@@ -8,6 +8,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 
 export interface AuditLogParams {
   actorUserId: string;
@@ -44,12 +45,17 @@ export interface AdminAuditEntry {
 // ---------------------------------------------------------------------------
 
 let _prisma: PrismaClient | null = null;
+let _logger: FastifyBaseLogger | null = null;
 
 /**
  * Sets the shared PrismaClient used by the module-level logAdminAction helper.
  */
 export function setAuditPrisma(prisma: PrismaClient): void {
   _prisma = prisma;
+}
+
+export function setAuditLogger(logger: FastifyBaseLogger): void {
+  _logger = logger;
 }
 
 /**
@@ -60,17 +66,17 @@ export function setAuditPrisma(prisma: PrismaClient): void {
  */
 export async function logAdminAction(params: AuditLogParams): Promise<void> {
   if (!_prisma) {
-    // Fallback to console if Prisma not initialised yet (e.g. during tests)
-    console.warn('[ADMIN_AUDIT] PrismaClient not set — logging to console only');
-    console.info('[ADMIN_AUDIT]', {
-      action: params.action,
-      resourceType: params.resourceType,
-      resourceId: params.resourceId,
-      actorEmail: params.actorEmail,
-      description: params.description,
-      reason: params.reason,
-      timestamp: new Date().toISOString(),
-    });
+    _logger?.warn({
+      action: 'admin.audit.persistence_unavailable',
+      data: {
+        auditAction: params.action,
+        resourceType: params.resourceType,
+        resourceId: params.resourceId,
+        actorEmail: params.actorEmail,
+        description: params.description,
+        reason: params.reason ?? null,
+      },
+    }, 'Admin audit persistence unavailable');
     return;
   }
 

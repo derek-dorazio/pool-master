@@ -45,12 +45,12 @@ codebase.
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 103-001 | 1 | Add shared Pino/Fastify logger configuration for local, test, QA, and production | Not Started | Establish JSON logs in deployed environments and optional pretty local formatting without changing service behavior. |
-| 103-002 | 1 | Add request-context logging bindings (`reqId`, `sessionId`, `userId`, `isRootAdmin`, `ip`, route metadata) | Not Started | Use request-scoped child loggers so handlers/services can log with consistent envelope fields. |
-| 103-003 | 1 | Add redaction and serializers for error/header/token safety | Not Started | Redact auth/cookie/token/password fields and keep `err` serialization consistent. |
-| 103-004 | 1 | Log handled and unhandled errors in the global error handler using `warn`/`error` policy | Not Started | `4xx` expected negative paths should log at `warn`; unexpected `5xx` should log at `error`. |
-| 103-005 | 1 | Replace stray backend `console.*` usage with structured logger calls | Not Started | Keep the surface small and truthful; do not backfill every module yet. |
-| 103-006 | 1 | Add focused tests for logger configuration, request-context bindings, and error-handler severity behavior | Not Started | Prove the foundation works before backfill begins. |
+| 103-001 | 1 | Add shared Pino/Fastify logger configuration for local, test, QA, and production | Completed | Shared logger config now sets structured JSON envelope metadata and level formatting for `core-api`; local pretty transport remains deferred until explicitly needed. |
+| 103-002 | 1 | Add request-context logging bindings (`reqId`, `sessionId`, `userId`, `isRootAdmin`, `ip`, route metadata) | Completed | Request-scoped child loggers now bind truthful request/user/admin context; `sessionId` is intentionally `null` until a safe non-secret session identifier exists. |
+| 103-003 | 1 | Add redaction and serializers for error/header/token safety | Completed | Core logger foundation now redacts auth, cookie, token, and password fields before logs leave the service. |
+| 103-004 | 1 | Log handled and unhandled errors in the global error handler using `warn`/`error` policy | Completed | Global error handler now logs expected `4xx` paths at `warn` and unexpected `5xx` failures at `error` before sending the error envelope. |
+| 103-005 | 1 | Replace stray backend `console.*` usage with structured logger calls | Completed | Known backend `console.*` drift in admin audit fallback and standings rollup was removed in favor of shared structured logging. |
+| 103-006 | 1 | Add focused tests for logger configuration, request-context bindings, and error-handler severity behavior | Completed | Added unit coverage that proves logger config metadata/redaction presence plus `warn`/`error` severity behavior in the global error path. |
 | 103-007 | 2 | Instrument auth, account, and league membership flows with policy-compliant logs | Not Started | Success at `info`, parameter tracing at `debug`, expected denials/errors at `warn`/`error`. |
 | 103-008 | 2 | Instrument contest management, contest creation, entry, and event-readiness flows | Not Started | Cover the main commissioner/member lifecycle and contest unblocking paths. |
 | 103-009 | 2 | Instrument root-admin, ingestion, scheduler, provider sync, and scoring flows | Not Started | High-value operational area after the shared platform logger exists. |
