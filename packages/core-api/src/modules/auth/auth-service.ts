@@ -27,6 +27,7 @@ export interface JwtPayload {
   sub: string;
   email: string;
   isRootAdmin: boolean;
+  sid?: string;
   iat: number;
   exp: number;
 }
@@ -180,7 +181,12 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
 
-    return this.issueTokens(stored.user.id, stored.user.email, stored.user.isRootAdmin);
+    return this.issueTokens(
+      stored.user.id,
+      stored.user.email,
+      stored.user.isRootAdmin,
+      stored.sessionId,
+    );
   }
 
   /**
@@ -235,11 +241,16 @@ export class AuthService {
   // Private helpers
   // -------------------------------------------------------------------------
 
-  private async issueTokens(userId: string, email: string, isRootAdmin: boolean): Promise<TokenPair> {
+  private async issueTokens(
+    userId: string,
+    email: string,
+    isRootAdmin: boolean,
+    sessionId: string = uuidv4(),
+  ): Promise<TokenPair> {
     const now = Math.floor(Date.now() / 1000);
 
     const accessToken = jwt.sign(
-      { sub: userId, email, isRootAdmin, iat: now, exp: now + ACCESS_TOKEN_EXPIRY },
+      { sub: userId, email, isRootAdmin, sid: sessionId, iat: now, exp: now + ACCESS_TOKEN_EXPIRY },
       this.jwtSecret,
     );
 
@@ -249,6 +260,7 @@ export class AuthService {
     await this.prisma.refreshToken.create({
       data: {
         token: refreshTokenValue,
+        sessionId,
         userId,
         expiresAt,
       },

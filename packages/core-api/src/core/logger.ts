@@ -87,7 +87,7 @@ export function buildRequestLogBindings(request: FastifyRequest): RequestLogBind
 
   return {
     reqId: request.id,
-    sessionId: null,
+    sessionId: authUser?.sessionId ?? null,
     userId: authUser?.userId ?? rootAdminUser?.id ?? null,
     isRootAdmin: authUser?.isRootAdmin === true || rootAdminUser?.isRootAdmin === true,
     ip: request.ip ?? null,

@@ -24,6 +24,7 @@ export interface AuthUser {
   userId: string;
   email: string;
   isRootAdmin: boolean;
+  sessionId: string | null;
 }
 
 // Extend Fastify request to carry auth context
@@ -83,6 +84,7 @@ async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
         sub: string;
         email: string;
         isRootAdmin?: boolean;
+        sid?: string;
       };
 
       const usingCookieSession = !authHeader?.startsWith('Bearer ');
@@ -98,6 +100,7 @@ async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
         userId: payload.sub,
         email: payload.email,
         isRootAdmin: payload.isRootAdmin === true,
+        sessionId: payload.sid ?? null,
       };
 
     } catch {

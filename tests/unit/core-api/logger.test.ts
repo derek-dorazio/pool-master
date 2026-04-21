@@ -45,12 +45,13 @@ describe('core-api logging foundation', () => {
           userId: 'user-123',
           email: 'member@example.com',
           isRootAdmin: false,
+          sessionId: 'session-123',
         },
       } as unknown as FastifyRequest;
 
       expect(buildRequestLogBindings(request)).toEqual({
         reqId: 'req-123',
-        sessionId: null,
+        sessionId: 'session-123',
         userId: 'user-123',
         isRootAdmin: false,
         ip: '127.0.0.1',

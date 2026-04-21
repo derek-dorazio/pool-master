@@ -97,7 +97,7 @@ codebase.
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
 | 103-001 | 1 | Add shared Pino/Fastify logger configuration for local, test, QA, and production | Completed | Shared logger config now sets structured JSON envelope metadata and level formatting for `core-api`; local pretty transport remains deferred until explicitly needed. |
-| 103-002 | 1 | Add request-context logging bindings (`reqId`, `sessionId`, `userId`, `isRootAdmin`, `ip`, route metadata) | Completed | Request-scoped child loggers now bind truthful request/user/admin context; `sessionId` is intentionally `null` until a safe non-secret session identifier exists. |
+| 103-002 | 1 | Add request-context logging bindings (`reqId`, `sessionId`, `userId`, `isRootAdmin`, `ip`, route metadata) | Completed | Request-scoped child loggers now bind truthful request/user/admin context. `sessionId` now comes from a first-class persisted auth session identifier carried in the access-token `sid` claim, not from secret token material. |
 | 103-003 | 1 | Add redaction and serializers for error/header/token safety | Completed | Core logger foundation now redacts auth, cookie, token, and password fields before logs leave the service. |
 | 103-004 | 1 | Log handled and unhandled errors in the global error handler using `warn`/`error` policy | Completed | Global error handler now logs expected `4xx` paths at `warn` and unexpected `5xx` failures at `error` before sending the error envelope. |
 | 103-005 | 1 | Replace stray backend `console.*` usage with structured logger calls | Completed | Known backend `console.*` drift in admin audit fallback and standings rollup was removed in favor of shared structured logging. |

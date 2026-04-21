@@ -69,7 +69,7 @@ describe('league permissions', () => {
     await hook.call(
       {} as never,
       {
-        authUser: { userId: 'user-1', email: 'user-1@integration.test' },
+        authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
       } as never,
       reply as never,
@@ -88,7 +88,7 @@ describe('league permissions', () => {
     await hook.call(
       {} as never,
       {
-        authUser: { userId: 'outsider', email: 'outsider@integration.test' },
+        authUser: { userId: 'outsider', email: 'outsider@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
       } as never,
       reply as never,
@@ -113,7 +113,7 @@ describe('league permissions', () => {
     await hook.call(
       {} as never,
       {
-        authUser: { userId: 'user-1', email: 'user-1@integration.test' },
+        authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
       } as never,
       reply as never,
@@ -147,7 +147,7 @@ describe('league permissions', () => {
     await hook.call(
       {} as never,
       {
-        authUser: { userId: 'user-1', email: 'user-1@integration.test' },
+        authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: {},
       } as never,
       reply as never,
@@ -169,7 +169,7 @@ describe('league permissions', () => {
     await hook.call(
       {} as never,
       {
-        authUser: { userId: 'user-1', email: 'user-1@integration.test' },
+        authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
       } as never,
       reply as never,
@@ -189,7 +189,7 @@ describe('league permissions', () => {
     await hook.call(
       {} as never,
       {
-        authUser: { userId: 'user-1', email: 'user-1@integration.test' },
+        authUser: { userId: 'user-1', email: 'user-1@integration.test', isRootAdmin: false, sessionId: null },
         params: { id: 'league-1' },
       } as never,
       reply as never,

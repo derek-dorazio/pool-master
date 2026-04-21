@@ -11,6 +11,7 @@ import {
   createCookieSessionClient,
   disconnectFunctionalPrisma,
   expectFunctionalError,
+  getFunctionalPrisma,
 } from './setup';
 
 afterEach(async () => {
@@ -49,8 +50,16 @@ describe('SDK Functional: Auth', () => {
     const user = await buildRegisteredUser({
       displayName: 'Cookie Session User',
     });
+    const prisma = getFunctionalPrisma();
 
     const cookieClient = createCookieSessionClient(user.login.tokens);
+    const originalRefreshToken = await prisma.refreshToken.findUniqueOrThrow({
+      where: { token: user.login.tokens.refreshToken },
+      select: {
+        sessionId: true,
+        revokedAt: true,
+      },
+    });
 
     const currentUser = await getCurrentUser({
       client: cookieClient,
@@ -69,6 +78,27 @@ describe('SDK Functional: Auth', () => {
     expect(refreshResponse.data?.refreshToken).toBeTruthy();
     expect(refreshResponse.data?.csrfToken).toBeTruthy();
     expect(refreshResponse.data?.refreshToken).not.toBe(user.login.tokens.refreshToken);
+
+    const rotatedOriginalRefreshToken = await prisma.refreshToken.findUniqueOrThrow({
+      where: { token: user.login.tokens.refreshToken },
+      select: {
+        sessionId: true,
+        revokedAt: true,
+      },
+    });
+    const rotatedRefreshToken = await prisma.refreshToken.findUniqueOrThrow({
+      where: { token: refreshResponse.data!.refreshToken },
+      select: {
+        sessionId: true,
+        revokedAt: true,
+      },
+    });
+
+    expect(originalRefreshToken.sessionId).toBeTruthy();
+    expect(rotatedOriginalRefreshToken.sessionId).toBe(originalRefreshToken.sessionId);
+    expect(rotatedOriginalRefreshToken.revokedAt).toBeTruthy();
+    expect(rotatedRefreshToken.sessionId).toBe(originalRefreshToken.sessionId);
+    expect(rotatedRefreshToken.revokedAt).toBeNull();
   });
 
   it('requires a matching CSRF header for cookie-session state-changing requests', async () => {
