@@ -177,8 +177,3 @@ stats count(*) as occurrences by action, route, msg
 ## Current Completion Status
 
 The service-wide logging rollout is complete for runtime backend services.
-Future work, if needed, should be additive:
-
-- external observability platforms
-- dashboards/alerts built on top of CloudWatch
-- script logging cleanup outside runtime service scope
