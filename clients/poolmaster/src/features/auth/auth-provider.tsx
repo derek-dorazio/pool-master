@@ -1,6 +1,7 @@
 import { ReactNode, createContext, useContext, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser, logoutUser, refreshToken } from '@/lib/api';
+import { useLogger } from '@/lib/logger';
 import { useSessionStore } from './session-store';
 
 type AuthContextValue = {
@@ -14,6 +15,9 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const logger = useLogger().child({
+    feature: 'auth-provider',
+  });
   const user = useSessionStore((state) => state.user);
   const setSession = useSessionStore((state) => state.setSession);
   const setSessionId = useSessionStore((state) => state.setSessionId);
@@ -23,6 +27,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const meQuery = useQuery({
     queryKey: ['poolmaster', 'auth', 'me'],
     queryFn: async () => {
+      logger.debug(
+        {
+          action: 'auth.me.started',
+        },
+        'Loading current auth user',
+      );
+
       const response = await getCurrentUser();
       if (!response.data?.user) {
         throw new Error('Current user profile is missing from the auth response.');
@@ -35,6 +46,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshQuery = useQuery({
     queryKey: ['poolmaster', 'auth', 'refresh'],
     queryFn: async () => {
+      logger.debug(
+        {
+          action: 'auth.refresh.started',
+        },
+        'Refreshing auth session',
+      );
+
       const response = await refreshToken();
       return response.data ?? null;
     },
@@ -49,6 +67,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     attemptedRefreshRef.current = false;
     setSession(meQuery.data);
+    logger.info(
+      {
+        action: 'auth.me.succeeded',
+        data: {
+          userId: meQuery.data.id,
+          isRootAdmin: meQuery.data.isRootAdmin,
+        },
+      },
+      'Hydrated authenticated user session',
+    );
   }, [meQuery.data, setSession]);
 
   useEffect(() => {
@@ -63,6 +91,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     attemptedRefreshRef.current = true;
     let cancelled = false;
 
+    logger.warn(
+      {
+        action: 'auth.me.failed',
+        err: meQuery.error,
+      },
+      'Current auth user lookup failed; attempting refresh',
+    );
+
     void refreshQuery
       .refetch()
       .then(async (result) => {
@@ -71,6 +107,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (!result.data) {
+          logger.warn(
+            {
+              action: 'auth.refresh.missingSession',
+            },
+            'Refresh did not return session data',
+          );
           clearSessionState();
           return;
         }
@@ -83,11 +125,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (!meResult.data) {
+          logger.warn(
+            {
+              action: 'auth.refresh.refetchMissingUser',
+              data: {
+                sessionId: result.data.sessionId,
+              },
+            },
+            'Refresh succeeded but current user reload returned no user',
+          );
           clearSessionState();
+          return;
         }
+
+        logger.info(
+          {
+            action: 'auth.refresh.succeeded',
+            data: {
+              sessionId: result.data.sessionId,
+              userId: meResult.data.id,
+            },
+          },
+          'Recovered authenticated session from refresh',
+        );
       })
-      .catch(() => {
+      .catch((error) => {
         if (!cancelled) {
+          logger.warn(
+            {
+              action: 'auth.refresh.failed',
+              err: error,
+            },
+            'Refresh failed; clearing auth session',
+          );
           clearSessionState();
         }
       });
@@ -103,8 +173,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isRootAdmin: user?.isRootAdmin ?? false,
     user,
     clearSession: async () => {
-      await logoutUser().catch(() => undefined);
+      logger.debug(
+        {
+          action: 'auth.logout.started',
+          data: {
+            userId: user?.id ?? null,
+          },
+        },
+        'Clearing authenticated session',
+      );
+
+      await logoutUser().catch((error) => {
+        logger.warn(
+          {
+            action: 'auth.logout.failed',
+            err: error,
+          },
+          'Logout request failed; clearing local session anyway',
+        );
+      });
       clearSessionState();
+      logger.info(
+        {
+          action: 'auth.logout.completed',
+          data: {
+            userId: user?.id ?? null,
+          },
+        },
+        'Cleared authenticated session',
+      );
     },
   };
 

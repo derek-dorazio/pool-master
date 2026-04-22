@@ -16,6 +16,7 @@ import {
   getTeamOwnerInvitationPreviewQueryKey,
 } from '@/features/teams/team-owner-invitation-preview';
 import { parseRouteState } from '@/routes/route-state';
+import { useLogger } from '@/lib/logger';
 import { useSessionStore } from './session-store';
 
 const loginFormSchema = LoginRequestSchema.extend({
@@ -76,7 +77,14 @@ function extractErrorMessage(error: unknown): string {
   return 'Something went wrong. Please try again.';
 }
 
+function isUnexpectedAuthError(error: unknown): boolean {
+  return error instanceof Error;
+}
+
 export function AuthHomePage() {
+  const logger = useLogger().child({
+    feature: 'auth-home-page',
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const routeState = useMemo(() => parseRouteState(location.state), [location.state]);
@@ -137,8 +145,60 @@ export function AuthHomePage() {
     });
   }, [hasEditedUsername, registerForm, watchedEmail]);
 
+  useEffect(() => {
+    if (!inviteCode || !invitePreviewQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'auth.leagueInvitePreview.failed',
+        data: {
+          destination,
+          inviteCode,
+        },
+        err: invitePreviewQuery.error,
+      },
+      'League invitation preview failed to load on the auth page',
+    );
+  }, [destination, inviteCode, invitePreviewQuery.error, invitePreviewQuery.isError, logger]);
+
+  useEffect(() => {
+    if (!teamInviteCode || !teamInvitePreviewQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'auth.teamInvitePreview.failed',
+        data: {
+          destination,
+          inviteCode: teamInviteCode,
+        },
+        err: teamInvitePreviewQuery.error,
+      },
+      'Team invitation preview failed to load on the auth page',
+    );
+  }, [
+    destination,
+    logger,
+    teamInviteCode,
+    teamInvitePreviewQuery.error,
+    teamInvitePreviewQuery.isError,
+  ]);
+
   async function handleLogin(values: LoginFormValues) {
     setServerError(null);
+    logger.debug(
+      {
+        action: 'auth.login.started',
+        data: {
+          destination,
+          hasInvitation: Boolean(inviteCode || teamInviteCode),
+        },
+      },
+      'Submitting login request',
+    );
 
     try {
       const response = await loginUser({
@@ -150,14 +210,49 @@ export function AuthHomePage() {
       }
 
       setSession(response.data.user);
+      logger.info(
+        {
+          action: 'auth.login.succeeded',
+          data: {
+            destination,
+            userId: response.data.user.id,
+            hasInvitation: Boolean(inviteCode || teamInviteCode),
+          },
+        },
+        'Completed login flow',
+      );
       navigate(destination, { replace: true });
     } catch (error) {
+      const logPayload = {
+        action: 'auth.login.failed',
+        data: {
+          destination,
+          hasInvitation: Boolean(inviteCode || teamInviteCode),
+        },
+        err: error,
+      };
+
+      if (isUnexpectedAuthError(error)) {
+        logger.error(logPayload, 'Login failed unexpectedly');
+      } else {
+        logger.warn(logPayload, 'Login request was rejected');
+      }
       setServerError(extractErrorMessage(error));
     }
   }
 
   async function handleRegister(values: RegisterFormValues) {
     setServerError(null);
+    logger.debug(
+      {
+        action: 'auth.register.started',
+        data: {
+          destination,
+          hasInvitation: Boolean(inviteCode || teamInviteCode),
+        },
+      },
+      'Submitting registration request',
+    );
 
     try {
       const response = await registerUser({
@@ -175,8 +270,33 @@ export function AuthHomePage() {
       }
 
       setSession(response.data.user);
+      logger.info(
+        {
+          action: 'auth.register.succeeded',
+          data: {
+            destination,
+            userId: response.data.user.id,
+            hasInvitation: Boolean(inviteCode || teamInviteCode),
+          },
+        },
+        'Completed registration flow',
+      );
       navigate(destination, { replace: true });
     } catch (error) {
+      const logPayload = {
+        action: 'auth.register.failed',
+        data: {
+          destination,
+          hasInvitation: Boolean(inviteCode || teamInviteCode),
+        },
+        err: error,
+      };
+
+      if (isUnexpectedAuthError(error)) {
+        logger.error(logPayload, 'Registration failed unexpectedly');
+      } else {
+        logger.warn(logPayload, 'Registration request was rejected');
+      }
       setServerError(extractErrorMessage(error));
     }
   }

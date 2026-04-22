@@ -6,6 +6,7 @@ import type {
   UpdateAccountPreferencesResponses,
   UpdateAccountProfileResponses,
 } from '@/lib/api';
+import { logger } from '@/lib/logger';
 
 export type PoolmasterSessionUser = GetCurrentUserResponses[200]['user'];
 export type StoredPoolmasterSessionUser =
@@ -34,6 +35,19 @@ export const useSessionStore = create<SessionState>()((set) => ({
     set((state) => {
       const resolvedSessionId = user.sessionId ?? state.sessionId ?? null;
 
+      logger.debug(
+        {
+          action: 'auth.session.set',
+          data: {
+            userId: user.id,
+            hasIncomingSessionId: Boolean(user.sessionId),
+            hasExistingSessionId: Boolean(state.sessionId),
+            hasResolvedSessionId: Boolean(resolvedSessionId),
+          },
+        },
+        'Updated auth session state',
+      );
+
       return {
         user: {
           ...user,
@@ -43,18 +57,44 @@ export const useSessionStore = create<SessionState>()((set) => ({
       };
     }),
   setSessionId: (sessionId) =>
-    set((state) => ({
-      sessionId,
-      user: state.user
-        ? {
-          ...state.user,
-          sessionId: sessionId ?? state.user.sessionId,
-        }
-        : null,
-    })),
+    set((state) => {
+      logger.debug(
+        {
+          action: 'auth.session.sessionIdUpdated',
+          data: {
+            hasSessionId: Boolean(sessionId),
+            hasUser: Boolean(state.user),
+          },
+        },
+        'Updated auth session id',
+      );
+
+      return {
+        sessionId,
+        user: state.user
+          ? {
+            ...state.user,
+            sessionId: sessionId ?? state.user.sessionId,
+          }
+          : null,
+      };
+    }),
   clearSession: () =>
-    set({
-      user: null,
-      sessionId: null,
+    set((state) => {
+      logger.info(
+        {
+          action: 'auth.session.cleared',
+          data: {
+            hadUser: Boolean(state.user),
+            hadSessionId: Boolean(state.sessionId),
+          },
+        },
+        'Cleared auth session state',
+      );
+
+      return {
+        user: null,
+        sessionId: null,
+      };
     }),
 }));
