@@ -109,7 +109,7 @@ export function MyAccountPage() {
     });
   }, [user]);
 
-  const applyUserToSession = async (updatedUser: NonNullable<typeof user>) => {
+  const applyUserToSession = async (updatedUser: Parameters<typeof setSession>[0]) => {
     setSession(updatedUser);
     queryClient.setQueryData(['poolmaster', 'auth', 'me'], updatedUser);
     await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'auth', 'me'] });

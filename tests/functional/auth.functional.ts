@@ -45,6 +45,7 @@ describe('SDK Functional: Auth', () => {
     expect(currentUser?.user.username).toBe(user.username);
     expect(currentUser?.user.firstName).toBe(user.firstName);
     expect(currentUser?.user.lastName).toBe(user.lastName);
+    expect(currentUser?.user.sessionId).toBeTruthy();
   });
 
   it('supports cookie-session auth for reads and refresh rotation through the SDK', async () => {
@@ -69,6 +70,7 @@ describe('SDK Functional: Auth', () => {
     expect(currentUser.data?.user.id).toBe(user.userId);
     expect(currentUser.data?.user.email).toBe(user.email);
     expect(currentUser.data?.user.username).toBe(user.username);
+    expect(currentUser.data?.user.sessionId).toBe(originalRefreshToken.sessionId);
 
     const refreshResponse = await refreshToken({
       client: cookieClient,
@@ -78,6 +80,7 @@ describe('SDK Functional: Auth', () => {
     expect(refreshResponse.data?.accessToken).toBeTruthy();
     expect(refreshResponse.data?.refreshToken).toBeTruthy();
     expect(refreshResponse.data?.csrfToken).toBeTruthy();
+    expect(refreshResponse.data?.sessionId).toBe(originalRefreshToken.sessionId);
     expect(refreshResponse.data?.refreshToken).not.toBe(user.login.tokens.refreshToken);
 
     const rotatedOriginalRefreshToken = await prisma.refreshToken.findUniqueOrThrow({

@@ -16,6 +16,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const user = useSessionStore((state) => state.user);
   const setSession = useSessionStore((state) => state.setSession);
+  const setSessionId = useSessionStore((state) => state.setSessionId);
   const clearSessionState = useSessionStore((state) => state.clearSession);
   const attemptedRefreshRef = useRef(false);
 
@@ -74,6 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        setSessionId(result.data.sessionId);
+
         const meResult = await meQuery.refetch();
         if (cancelled) {
           return;
@@ -92,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [clearSessionState, meQuery.error, meQuery.refetch, refreshQuery.refetch]);
+  }, [clearSessionState, meQuery.error, meQuery.refetch, refreshQuery.refetch, setSessionId]);
 
   const value: AuthContextValue = {
     isAuthenticated: Boolean(user),

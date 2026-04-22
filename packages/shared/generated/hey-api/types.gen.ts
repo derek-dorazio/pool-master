@@ -104,7 +104,7 @@ export type RegisterUserResponses = {
      */
     201: {
         /**
-         * Frontend-facing user profile summary derived from the authenticated account.
+         * Authenticated user profile summary enriched with the safe session correlation identifier.
          */
         user: {
             /**
@@ -159,6 +159,10 @@ export type RegisterUserResponses = {
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
+            /**
+             * Safe non-secret session correlation identifier for the authenticated browser session.
+             */
+            sessionId: string;
         };
         /**
          * Authentication token bundle returned after login or registration.
@@ -260,7 +264,7 @@ export type LoginUserResponses = {
      */
     200: {
         /**
-         * Frontend-facing user profile summary derived from the authenticated account.
+         * Authenticated user profile summary enriched with the safe session correlation identifier.
          */
         user: {
             /**
@@ -315,6 +319,10 @@ export type LoginUserResponses = {
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
+            /**
+             * Safe non-secret session correlation identifier for the authenticated browser session.
+             */
+            sessionId: string;
         };
         /**
          * Authentication token bundle returned after login or registration.
@@ -378,7 +386,7 @@ export type RefreshTokenError = RefreshTokenErrors[keyof RefreshTokenErrors];
 
 export type RefreshTokenResponses = {
     /**
-     * Authentication token bundle returned after login or registration.
+     * Token refresh response including the stable session correlation identifier.
      */
     200: {
         /**
@@ -397,6 +405,10 @@ export type RefreshTokenResponses = {
          * Access-token lifetime in seconds from the time it was issued.
          */
         expiresIn: number;
+        /**
+         * Safe non-secret session correlation identifier that remains stable across refresh rotation.
+         */
+        sessionId: string;
     };
 };
 
@@ -490,7 +502,7 @@ export type GetCurrentUserResponses = {
      */
     200: {
         /**
-         * Frontend-facing user profile summary derived from the authenticated account.
+         * Authenticated user profile summary enriched with the safe session correlation identifier.
          */
         user: {
             /**
@@ -545,6 +557,10 @@ export type GetCurrentUserResponses = {
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
+            /**
+             * Safe non-secret session correlation identifier for the authenticated browser session.
+             */
+            sessionId: string;
         };
     };
 };
@@ -9375,7 +9391,7 @@ export type ReactivateAccountResponses = {
      */
     200: {
         /**
-         * Frontend-facing user profile summary derived from the authenticated account.
+         * Authenticated user profile summary enriched with the safe session correlation identifier.
          */
         user: {
             /**
@@ -9430,6 +9446,10 @@ export type ReactivateAccountResponses = {
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
+            /**
+             * Safe non-secret session correlation identifier for the authenticated browser session.
+             */
+            sessionId: string;
         };
     };
 };
@@ -9532,7 +9552,7 @@ export type UpdateAccountProfileResponses = {
      */
     200: {
         /**
-         * Frontend-facing user profile summary derived from the authenticated account.
+         * Authenticated user profile summary enriched with the safe session correlation identifier.
          */
         user: {
             /**
@@ -9587,6 +9607,10 @@ export type UpdateAccountProfileResponses = {
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
+            /**
+             * Safe non-secret session correlation identifier for the authenticated browser session.
+             */
+            sessionId: string;
         };
     };
 };
@@ -9697,7 +9721,7 @@ export type UpdateAccountPreferencesResponses = {
      */
     200: {
         /**
-         * Frontend-facing user profile summary derived from the authenticated account.
+         * Authenticated user profile summary enriched with the safe session correlation identifier.
          */
         user: {
             /**
@@ -9752,6 +9776,10 @@ export type UpdateAccountPreferencesResponses = {
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
+            /**
+             * Safe non-secret session correlation identifier for the authenticated browser session.
+             */
+            sessionId: string;
         };
     };
 };
@@ -9972,7 +10000,7 @@ export type InactivateAccountResponses = {
      */
     200: {
         /**
-         * Frontend-facing user profile summary derived from the authenticated account.
+         * Authenticated user profile summary enriched with the safe session correlation identifier.
          */
         user: {
             /**
@@ -10027,6 +10055,10 @@ export type InactivateAccountResponses = {
              * Account creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
+            /**
+             * Safe non-secret session correlation identifier for the authenticated browser session.
+             */
+            sessionId: string;
         };
     };
 };
@@ -11492,6 +11524,28 @@ export type AdminReIngestEventErrors = {
      * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
         /**
          * Error payload object.
          */

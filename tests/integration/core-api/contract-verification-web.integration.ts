@@ -13,6 +13,7 @@ import {
   AccountPasswordChangeResponseSchema,
   AccountDeleteResponseSchema,
   AccountResponseSchema,
+  AuthResponseSchema,
   ContestConfigTemplateListResponseSchema,
   ConsentHistoryResponseSchema,
   ContestManagementResponseSchema,
@@ -23,11 +24,13 @@ import {
   GenerateInviteLinkResponseSchema,
   LeagueDashboardResponseSchema,
   LeagueResponseSchema,
+  MeResponseSchema,
   ScoringConfigValidationResponseSchema,
   SendLeagueInvitationsResponseSchema,
   SquadListResponseSchema,
   SquadResponseSchema,
   SuccessSchema,
+  TokenRefreshResponseSchema,
 } from '@poolmaster/shared/dto';
 import {
   ContestType,
@@ -44,6 +47,55 @@ afterAll(async () => {
 });
 
 describe('Contract verification (web)', () => {
+  it('auth happy-path routes match the shared auth response DTOs', async () => {
+    const uniqueSuffix = randomUUID().slice(0, 8);
+    const email = `contract-auth-${uniqueSuffix}@integration.test`;
+    const username = `contractauth${uniqueSuffix}`;
+    const password = 'ContractAuth123!';
+
+    const registerRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.auth.register,
+      payload: {
+        username,
+        email,
+        password,
+        firstName: 'Contract',
+        lastName: 'Auth',
+      },
+    });
+
+    expect(registerRes.statusCode).toBe(201);
+    expect(AuthResponseSchema.safeParse(registerRes.json()).success).toBe(true);
+
+    const sessionCookie = registerRes.headers['set-cookie'];
+    const cookieHeader = Array.isArray(sessionCookie)
+      ? sessionCookie.map((value) => value.split(';')[0]).join('; ')
+      : sessionCookie?.split(';')[0] ?? '';
+
+    const meRes = await getApp().inject({
+      method: 'GET',
+      url: API_ROUTES.auth.me,
+      headers: {
+        cookie: cookieHeader,
+      },
+    });
+
+    expect(meRes.statusCode).toBe(200);
+    expect(MeResponseSchema.safeParse(meRes.json()).success).toBe(true);
+
+    const refreshRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.auth.refresh,
+      headers: {
+        cookie: cookieHeader,
+      },
+    });
+
+    expect(refreshRes.statusCode).toBe(200);
+    expect(TokenRefreshResponseSchema.safeParse(refreshRes.json()).success).toBe(true);
+  });
+
   it('auth routes expose the shared error envelope on negative responses', async () => {
     const loginRes = await getApp().inject({
       method: 'POST',

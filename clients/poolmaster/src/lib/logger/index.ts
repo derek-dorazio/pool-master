@@ -4,11 +4,11 @@ import { consoleSink } from './console-sink';
 import { createLogger, resolveDefaultLogLevel } from './logger';
 
 function getLoggerContext() {
-  const user = useSessionStore.getState().user;
+  const { sessionId, user } = useSessionStore.getState();
 
   return {
     route: typeof window !== 'undefined' ? window.location.pathname : undefined,
-    sessionId: null,
+    sessionId,
     userId: user?.id ?? null,
     webappVersion: getEmbeddedVersionInfo().webapp.version,
   };

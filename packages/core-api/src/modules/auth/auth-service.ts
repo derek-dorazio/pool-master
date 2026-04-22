@@ -22,6 +22,7 @@ export interface TokenPair {
   refreshToken: string;
   csrfToken: string;
   expiresIn: number;
+  sessionId: string;
 }
 
 export interface JwtPayload {
@@ -47,6 +48,7 @@ export interface UserProfile {
   timeFormat?: TimeFormat | null;
   dateFormat?: DateFormat | null;
   createdAt: Date;
+  sessionId?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -131,7 +133,10 @@ export class AuthService {
     }, 'Registered user account');
 
     return {
-      user: mapUserProfile(user),
+      user: {
+        ...mapUserProfile(user),
+        sessionId: tokens.sessionId,
+      },
       tokens,
     };
   }
@@ -202,7 +207,10 @@ export class AuthService {
     }, 'Authenticated user');
 
     return {
-      user: mapUserProfile(user),
+      user: {
+        ...mapUserProfile(user),
+        sessionId: tokens.sessionId,
+      },
       tokens,
     };
   }
@@ -307,7 +315,7 @@ export class AuthService {
   /**
    * Returns the user profile for a given user ID.
    */
-  async getProfile(userId: string): Promise<UserProfile> {
+  async getProfile(userId: string, sessionId?: string | null): Promise<UserProfile> {
     this.logger?.debug({
       action: 'authService.getProfile.start',
       data: { userId },
@@ -324,7 +332,10 @@ export class AuthService {
       action: 'authService.getProfile.success',
       data: { userId },
     }, 'Loaded authenticated user profile');
-    return mapUserProfile(user);
+    return {
+      ...mapUserProfile(user),
+      sessionId: sessionId ?? null,
+    };
   }
 
   async issueSessionForUser(userId: string): Promise<TokenPair> {
@@ -409,6 +420,7 @@ export class AuthService {
       refreshToken: refreshTokenValue,
       csrfToken: uuidv4(),
       expiresIn: ACCESS_TOKEN_EXPIRY,
+      sessionId,
     };
   }
 

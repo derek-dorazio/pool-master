@@ -166,6 +166,12 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Account creation timestamp in ISO 8601 format."
+                        },
+                        "sessionId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true,
+                          "description": "Safe non-secret session correlation identifier for the authenticated browser session."
                         }
                       },
                       "required": [
@@ -175,10 +181,11 @@
                         "firstName",
                         "lastName",
                         "isActive",
-                        "isRootAdmin"
+                        "isRootAdmin",
+                        "sessionId"
                       ],
                       "additionalProperties": false,
-                      "description": "Frontend-facing user profile summary derived from the authenticated account."
+                      "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
                     },
                     "tokens": {
                       "type": "object",
@@ -415,6 +422,12 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Account creation timestamp in ISO 8601 format."
+                        },
+                        "sessionId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true,
+                          "description": "Safe non-secret session correlation identifier for the authenticated browser session."
                         }
                       },
                       "required": [
@@ -424,10 +437,11 @@
                         "firstName",
                         "lastName",
                         "isActive",
-                        "isRootAdmin"
+                        "isRootAdmin",
+                        "sessionId"
                       ],
                       "additionalProperties": false,
-                      "description": "Frontend-facing user profile summary derived from the authenticated account."
+                      "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
                     },
                     "tokens": {
                       "type": "object",
@@ -560,7 +574,7 @@
         "description": "Rotates the refresh-token session forward and returns a new token bundle. Browser clients normally rely on the refresh cookie rather than sending a body payload.",
         "responses": {
           "200": {
-            "description": "Authentication token bundle returned after login or registration.",
+            "description": "Token refresh response including the stable session correlation identifier.",
             "content": {
               "application/json": {
                 "schema": {
@@ -581,16 +595,22 @@
                     "expiresIn": {
                       "type": "number",
                       "description": "Access-token lifetime in seconds from the time it was issued."
+                    },
+                    "sessionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Safe non-secret session correlation identifier that remains stable across refresh rotation."
                     }
                   },
                   "required": [
                     "accessToken",
                     "refreshToken",
                     "csrfToken",
-                    "expiresIn"
+                    "expiresIn",
+                    "sessionId"
                   ],
                   "additionalProperties": false,
-                  "description": "Authentication token bundle returned after login or registration."
+                  "description": "Token refresh response including the stable session correlation identifier."
                 }
               }
             }
@@ -797,6 +817,12 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Account creation timestamp in ISO 8601 format."
+                        },
+                        "sessionId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true,
+                          "description": "Safe non-secret session correlation identifier for the authenticated browser session."
                         }
                       },
                       "required": [
@@ -806,10 +832,11 @@
                         "firstName",
                         "lastName",
                         "isActive",
-                        "isRootAdmin"
+                        "isRootAdmin",
+                        "sessionId"
                       ],
                       "additionalProperties": false,
-                      "description": "Frontend-facing user profile summary derived from the authenticated account."
+                      "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
                     }
                   },
                   "required": [
@@ -19713,6 +19740,12 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Account creation timestamp in ISO 8601 format."
+                        },
+                        "sessionId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true,
+                          "description": "Safe non-secret session correlation identifier for the authenticated browser session."
                         }
                       },
                       "required": [
@@ -19722,10 +19755,11 @@
                         "firstName",
                         "lastName",
                         "isActive",
-                        "isRootAdmin"
+                        "isRootAdmin",
+                        "sessionId"
                       ],
                       "additionalProperties": false,
-                      "description": "Frontend-facing user profile summary derived from the authenticated account."
+                      "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
                     }
                   },
                   "required": [
@@ -19973,6 +20007,12 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Account creation timestamp in ISO 8601 format."
+                        },
+                        "sessionId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true,
+                          "description": "Safe non-secret session correlation identifier for the authenticated browser session."
                         }
                       },
                       "required": [
@@ -19982,10 +20022,11 @@
                         "firstName",
                         "lastName",
                         "isActive",
-                        "isRootAdmin"
+                        "isRootAdmin",
+                        "sessionId"
                       ],
                       "additionalProperties": false,
-                      "description": "Frontend-facing user profile summary derived from the authenticated account."
+                      "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
                     }
                   },
                   "required": [
@@ -20250,6 +20291,12 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Account creation timestamp in ISO 8601 format."
+                        },
+                        "sessionId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true,
+                          "description": "Safe non-secret session correlation identifier for the authenticated browser session."
                         }
                       },
                       "required": [
@@ -20259,10 +20306,11 @@
                         "firstName",
                         "lastName",
                         "isActive",
-                        "isRootAdmin"
+                        "isRootAdmin",
+                        "sessionId"
                       ],
                       "additionalProperties": false,
-                      "description": "Frontend-facing user profile summary derived from the authenticated account."
+                      "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
                     }
                   },
                   "required": [
@@ -20709,6 +20757,12 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Account creation timestamp in ISO 8601 format."
+                        },
+                        "sessionId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true,
+                          "description": "Safe non-secret session correlation identifier for the authenticated browser session."
                         }
                       },
                       "required": [
@@ -20718,10 +20772,11 @@
                         "firstName",
                         "lastName",
                         "isActive",
-                        "isRootAdmin"
+                        "isRootAdmin",
+                        "sessionId"
                       ],
                       "additionalProperties": false,
-                      "description": "Frontend-facing user profile summary derived from the authenticated account."
+                      "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
                     }
                   },
                   "required": [
@@ -24153,6 +24208,45 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "422": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

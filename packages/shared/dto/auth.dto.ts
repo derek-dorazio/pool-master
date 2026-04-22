@@ -99,21 +99,35 @@ export const UserProfileDtoSchema = z.object({
 }).describe('Frontend-facing user profile summary derived from the authenticated account.');
 export type UserProfileDto = z.infer<typeof UserProfileDtoSchema>;
 
+export const AuthenticatedSessionUserDtoSchema = UserProfileDtoSchema.extend({
+  sessionId: z
+    .string()
+    .uuid()
+    .nullable()
+    .describe('Safe non-secret session correlation identifier for the authenticated browser session.'),
+}).describe('Authenticated user profile summary enriched with the safe session correlation identifier.');
+export type AuthenticatedSessionUserDto = z.infer<typeof AuthenticatedSessionUserDtoSchema>;
+
 // --- Responses ---
 
 export const AuthResponseSchema = z.object({
-  user: UserProfileDtoSchema,
+  user: AuthenticatedSessionUserDtoSchema,
   tokens: AuthTokensDtoSchema,
 }).describe('Successful authentication response returned after registration or login.');
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
 
 export const MeResponseSchema = z.object({
-  user: UserProfileDtoSchema,
+  user: AuthenticatedSessionUserDtoSchema,
 }).describe('Authenticated current-user profile response.');
 export type MeResponse = z.infer<typeof MeResponseSchema>;
 
-export const TokenRefreshResponseSchema = AuthTokensDtoSchema;
-export type TokenRefreshResponse = AuthTokensDto;
+export const TokenRefreshResponseSchema = AuthTokensDtoSchema.extend({
+  sessionId: z
+    .string()
+    .uuid()
+    .describe('Safe non-secret session correlation identifier that remains stable across refresh rotation.'),
+}).describe('Token refresh response including the stable session correlation identifier.');
+export type TokenRefreshResponse = z.infer<typeof TokenRefreshResponseSchema>;
 
 export const LogoutResponseSchema = SuccessSchema;
 export type LogoutResponse = z.infer<typeof LogoutResponseSchema>;

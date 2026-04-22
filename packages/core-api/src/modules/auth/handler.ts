@@ -244,7 +244,10 @@ export function createAuthHandlers(authService: AuthService) {
         }, 'Current-user request rejected');
         return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
       }
-      const profile = await authService.getProfile(request.authUser.userId);
+      const profile = await authService.getProfile(
+        request.authUser.userId,
+        request.authUser.sessionId,
+      );
       logger.info({
         action: 'auth.me.succeeded',
         data: {

@@ -1,7 +1,13 @@
 /**
  * Auth mappers — convert internal domain/Prisma objects to DTOs.
  */
-import type { AuthResponse, UserProfileDto, MeResponse } from '@poolmaster/shared/dto';
+import type {
+  AuthResponse,
+  AuthenticatedSessionUserDto,
+  MeResponse,
+  TokenRefreshResponse,
+  UserProfileDto,
+} from '@poolmaster/shared/dto';
 import type { DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 
 interface UserRow {
@@ -24,6 +30,7 @@ interface TokenPair {
   refreshToken: string;
   csrfToken: string;
   expiresIn: number;
+  sessionId: string;
 }
 
 export function toUserProfileDto(user: UserRow): UserProfileDto {
@@ -43,9 +50,19 @@ export function toUserProfileDto(user: UserRow): UserProfileDto {
   };
 }
 
+export function toAuthenticatedSessionUserDto(
+  user: UserRow,
+  sessionId: string,
+): AuthenticatedSessionUserDto {
+  return {
+    ...toUserProfileDto(user),
+    sessionId,
+  };
+}
+
 export function toAuthResponse(user: UserRow, tokens: TokenPair): AuthResponse {
   return {
-    user: toUserProfileDto(user),
+    user: toAuthenticatedSessionUserDto(user, tokens.sessionId),
     tokens: {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
@@ -55,8 +72,18 @@ export function toAuthResponse(user: UserRow, tokens: TokenPair): AuthResponse {
   };
 }
 
-export function toMeResponse(user: UserRow): MeResponse {
+export function toMeResponse(user: UserRow, sessionId: string): MeResponse {
   return {
-    user: toUserProfileDto(user),
+    user: toAuthenticatedSessionUserDto(user, sessionId),
+  };
+}
+
+export function toTokenRefreshResponse(tokens: TokenPair): TokenRefreshResponse {
+  return {
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    csrfToken: tokens.csrfToken,
+    expiresIn: tokens.expiresIn,
+    sessionId: tokens.sessionId,
   };
 }

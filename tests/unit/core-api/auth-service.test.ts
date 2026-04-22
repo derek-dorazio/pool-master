@@ -61,6 +61,8 @@ describe('AuthService', () => {
     expect(prisma.refreshToken.create).toHaveBeenCalled();
     expect(result.user.email).toBe('new@example.com');
     expect(result.user.username).toBe('newuser');
+    expect(result.user.sessionId).toBeTruthy();
+    expect(result.user.sessionId).toBe(result.tokens.sessionId);
     expect(result.tokens.accessToken).toBeTruthy();
   });
 
@@ -182,6 +184,7 @@ describe('AuthService', () => {
         sessionId: 'session-1',
       }),
     });
+    expect(result.sessionId).toBe('session-1');
     expect(result.refreshToken).toBeTruthy();
     expect(result.accessToken).toBeTruthy();
   });

@@ -3,7 +3,7 @@ import {
   UserDateFormat as PrismaUserDateFormat,
   UserTimeFormat as PrismaUserTimeFormat,
 } from '@prisma/client';
-import type { AccountResponse, UserProfileDto } from '@poolmaster/shared/dto';
+import type { AccountResponse, AuthenticatedSessionUserDto, UserProfileDto } from '@poolmaster/shared/dto';
 import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 
 interface UserRow {
@@ -60,8 +60,18 @@ export function mapAccountUserToDto(user: UserRow): UserProfileDto {
   };
 }
 
-export function mapAccountResponse(user: UserRow): AccountResponse {
+export function mapAuthenticatedAccountUserToDto(
+  user: UserRow,
+  sessionId: string | null,
+): AuthenticatedSessionUserDto {
   return {
-    user: mapAccountUserToDto(user),
+    ...mapAccountUserToDto(user),
+    sessionId,
+  };
+}
+
+export function mapAccountResponse(user: UserRow, sessionId: string | null): AccountResponse {
+  return {
+    user: mapAuthenticatedAccountUserToDto(user, sessionId),
   };
 }
