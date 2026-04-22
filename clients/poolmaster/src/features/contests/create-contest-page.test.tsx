@@ -4,14 +4,40 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CreateContestPage } from './create-contest-page';
 
-const createManagedContestMock = vi.fn();
-const deleteContestMock = vi.fn();
-const getLeagueByCodeMock = vi.fn();
-const getManagedContestMock = vi.fn();
-const listManagedContestTemplatesMock = vi.fn();
-const listEventsMock = vi.fn();
-const updateContestMock = vi.fn();
-const updateManagedContestConfigurationMock = vi.fn();
+const {
+  createManagedContestMock,
+  deleteContestMock,
+  getLeagueByCodeMock,
+  getManagedContestMock,
+  listManagedContestTemplatesMock,
+  listEventsMock,
+  mockLogger,
+  updateContestMock,
+  updateManagedContestConfigurationMock,
+} = vi.hoisted(() => {
+  const logger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    child: vi.fn(),
+  };
+
+  logger.child.mockImplementation(() => logger);
+
+  return {
+    createManagedContestMock: vi.fn(),
+    deleteContestMock: vi.fn(),
+    getLeagueByCodeMock: vi.fn(),
+    getManagedContestMock: vi.fn(),
+    listManagedContestTemplatesMock: vi.fn(),
+    listEventsMock: vi.fn(),
+    mockLogger: logger,
+    updateContestMock: vi.fn(),
+    updateManagedContestConfigurationMock: vi.fn(),
+  };
+});
 
 vi.mock('@/lib/api', () => ({
   createManagedContest: (...args: unknown[]) => createManagedContestMock(...args),
@@ -42,6 +68,11 @@ vi.mock('@/features/auth/auth-provider', () => ({
     },
     clearSession: vi.fn(),
   }),
+}));
+
+vi.mock('@/lib/logger', () => ({
+  logger: mockLogger,
+  useLogger: () => mockLogger,
 }));
 
 function renderCreateContestPage() {
@@ -185,6 +216,10 @@ describe('CreateContestPage', () => {
     listEventsMock.mockReset();
     updateContestMock.mockReset();
     updateManagedContestConfigurationMock.mockReset();
+    mockLogger.debug.mockReset();
+    mockLogger.info.mockReset();
+    mockLogger.warn.mockReset();
+    mockLogger.error.mockReset();
   });
 
   it('submits the commissioner golf tiered contest payload', async () => {
@@ -246,6 +281,15 @@ describe('CreateContestPage', () => {
         }),
       }),
     );
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'contest.create.succeeded',
+        data: expect.objectContaining({
+          contestId: 'contest-1',
+        }),
+      }),
+      expect.any(String),
+    );
   });
 
   it('keeps category picks unavailable in the first-pass create flow', async () => {
@@ -257,6 +301,31 @@ describe('CreateContestPage', () => {
     expect(screen.queryByTestId('contest-template-golf-category-picks')).not.toBeInTheDocument();
     expect(screen.getByText(/tiered-only for this first pass/i)).toBeInTheDocument();
     expect(createManagedContestMock).not.toHaveBeenCalled();
+  });
+
+  it('shows the rejection message when contest creation is rejected with an expected payload', async () => {
+    primeCommonMocks();
+    createManagedContestMock.mockResolvedValue({
+      error: {
+        message: 'Contest name is already in use.',
+      },
+    });
+
+    renderCreateContestPage();
+
+    await screen.findByTestId('contest-name');
+    fireEvent.change(screen.getByTestId('contest-name'), {
+      target: { value: 'Masters Pick 6' },
+    });
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    await screen.findByText('Contest name is already in use.');
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'contest.create.failed',
+      }),
+      expect.any(String),
+    );
   });
 
   it('still allows category-picks configuration to be viewed from the manage flow', async () => {

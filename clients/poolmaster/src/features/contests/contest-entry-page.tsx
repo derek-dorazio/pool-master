@@ -16,6 +16,7 @@ import {
   buildLeaguePath,
   buildLeagueTeamPath,
 } from '@/features/leagues/league-routing';
+import { useLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 
 type ContestDetail = GetContestResponses[200]['contest'];
@@ -273,6 +274,9 @@ function LockedSelectionGroup({
 }
 
 export function ContestEntryPage() {
+  const logger = useLogger().child({
+    feature: 'contest-entry-page',
+  });
   const { contestId = '', entryId = '' } = useParams<{ contestId: string; entryId: string }>();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -369,6 +373,57 @@ export function ContestEntryPage() {
     });
   }, [draftStateQuery.data?.selectionGroups]);
 
+  useEffect(() => {
+    if (
+      !contestQuery.isError
+      && !draftStateQuery.isError
+      && !contestEntriesQuery.isError
+    ) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'contestEntry.load.failed',
+        data: {
+          contestId,
+          entryId,
+        },
+        err: contestQuery.error ?? draftStateQuery.error ?? contestEntriesQuery.error,
+      },
+      'Contest entry page failed to load required data',
+    );
+  }, [
+    contestEntriesQuery.error,
+    contestEntriesQuery.isError,
+    contestId,
+    contestQuery.error,
+    contestQuery.isError,
+    draftStateQuery.error,
+    draftStateQuery.isError,
+    entryId,
+    logger,
+  ]);
+
+  useEffect(() => {
+    if (!contestQuery.data || !draftStateQuery.data || !contestEntriesQuery.data) {
+      return;
+    }
+
+    logger.info(
+      {
+        action: 'contestEntry.page.loaded',
+        data: {
+          contestId,
+          entryId,
+          status: contestQuery.data.status,
+          selectionGroupCount: draftStateQuery.data.selectionGroups?.length ?? 0,
+        },
+      },
+      'Contest entry page loaded',
+    );
+  }, [contestEntriesQuery.data, contestId, contestQuery.data, draftStateQuery.data, entryId, logger]);
+
   const saveEntryDetailsMutation = useMutation({
     mutationFn: async () => {
       const trimmedName = entryNameDraft.trim();
@@ -410,12 +465,50 @@ export function ContestEntryPage() {
 
       return response.data.entry;
     },
+    onMutate: () => {
+      logger.debug(
+        {
+          action: 'contestEntry.saveDetails.started',
+          data: {
+            contestId,
+            entryId,
+          },
+        },
+        'Starting contest entry detail save',
+      );
+    },
     onSuccess: async () => {
+      logger.info(
+        {
+          action: 'contestEntry.saveDetails.succeeded',
+          data: {
+            contestId,
+            entryId,
+          },
+        },
+        'Saved contest entry details',
+      );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'draft-state', contestId, entryId] }),
       ]);
+    },
+    onError: (error) => {
+      const payload = {
+        action: 'contestEntry.saveDetails.failed',
+        data: {
+          contestId,
+          entryId,
+        },
+        err: error,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Contest entry detail save failed unexpectedly');
+      } else {
+        logger.warn(payload, 'Contest entry detail save was rejected');
+      }
     },
   });
 
@@ -435,12 +528,52 @@ export function ContestEntryPage() {
 
       return response.data;
     },
+    onMutate: (participantId) => {
+      logger.debug(
+        {
+          action: 'contestEntry.selection.started',
+          data: {
+            contestId,
+            entryId,
+            participantId,
+          },
+        },
+        'Starting contest selection submission',
+      );
+    },
     onSuccess: async () => {
+      logger.info(
+        {
+          action: 'contestEntry.selection.succeeded',
+          data: {
+            contestId,
+            entryId,
+          },
+        },
+        'Submitted contest selection successfully',
+      );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'draft-state', contestId, entryId] }),
       ]);
+    },
+    onError: (error, participantId) => {
+      const payload = {
+        action: 'contestEntry.selection.failed',
+        data: {
+          contestId,
+          entryId,
+          participantId,
+        },
+        err: error,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Contest selection failed unexpectedly');
+      } else {
+        logger.warn(payload, 'Contest selection was rejected');
+      }
     },
   });
 

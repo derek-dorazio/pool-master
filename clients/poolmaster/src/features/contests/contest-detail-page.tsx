@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   enterContest,
@@ -22,6 +22,7 @@ import {
   buildLeaguePath,
   buildLeagueTeamPath,
 } from '@/features/leagues/league-routing';
+import { useLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 
 type ContestDetail = GetContestResponses[200]['contest'];
@@ -301,6 +302,9 @@ function ContestLeaderboardEntryDetail({
 }
 
 export function ContestDetailPage() {
+  const logger = useLogger().child({
+    feature: 'contest-detail-page',
+  });
   const { contestId = '' } = useParams<{ contestId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -398,6 +402,51 @@ export function ContestDetailPage() {
       ? buildLeagueTeamPath(hintedLeagueCode ?? leagueCodeQuery.data!.leagueCode)
       : null;
 
+  useEffect(() => {
+    if (!contestQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'contestDetail.contest.failed',
+        data: {
+          contestId,
+          leagueCode: hintedLeagueCode ?? null,
+        },
+        err: contestQuery.error,
+      },
+      'Contest detail failed to load contest data',
+    );
+  }, [contestId, contestQuery.error, contestQuery.isError, hintedLeagueCode, logger]);
+
+  useEffect(() => {
+    if (!contestQuery.data || !contestEntriesQuery.data) {
+      return;
+    }
+
+    logger.info(
+      {
+        action: 'contestDetail.page.loaded',
+        data: {
+          contestId,
+          leagueCode: hintedLeagueCode ?? leagueCodeQuery.data?.leagueCode ?? null,
+          status: contestQuery.data.status,
+          entryCount: contestEntriesQuery.data.entries.length,
+          isJoined: contestEntriesQuery.data.isJoined,
+        },
+      },
+      'Contest detail page loaded',
+    );
+  }, [
+    contestEntriesQuery.data,
+    contestId,
+    contestQuery.data,
+    hintedLeagueCode,
+    leagueCodeQuery.data?.leagueCode,
+    logger,
+  ]);
+
   const enterContestMutation = useMutation({
     mutationFn: async () => {
       const response = await enterContest({ path: { contestId } });
@@ -408,7 +457,26 @@ export function ContestDetailPage() {
 
       return response.data.entry;
     },
+    onMutate: () => {
+      logger.debug(
+        {
+          action: 'contestDetail.enter.started',
+          data: { contestId },
+        },
+        'Starting contest entry creation from detail page',
+      );
+    },
     onSuccess: async (entry) => {
+      logger.info(
+        {
+          action: 'contestDetail.enter.succeeded',
+          data: {
+            contestId,
+            entryId: entry.id,
+          },
+        },
+        'Created contest entry from detail page',
+      );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] }),
@@ -417,6 +485,19 @@ export function ContestDetailPage() {
       navigate(buildContestEntryPath(contestId, entry.id), {
         state: { leagueCode: hintedLeagueCode ?? leagueCodeQuery.data?.leagueCode ?? null },
       });
+    },
+    onError: (error) => {
+      const payload = {
+        action: 'contestDetail.enter.failed',
+        data: { contestId },
+        err: error,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Contest entry creation failed unexpectedly');
+      } else {
+        logger.warn(payload, 'Contest entry creation was rejected');
+      }
     },
   });
 
@@ -430,12 +511,41 @@ export function ContestDetailPage() {
 
       return response.data;
     },
+    onMutate: () => {
+      logger.debug(
+        {
+          action: 'contestDetail.leave.started',
+          data: { contestId },
+        },
+        'Starting contest leave flow',
+      );
+    },
     onSuccess: async () => {
+      logger.info(
+        {
+          action: 'contestDetail.leave.succeeded',
+          data: { contestId },
+        },
+        'Left contest successfully',
+      );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-standings', contestId] }),
       ]);
+    },
+    onError: (error) => {
+      const payload = {
+        action: 'contestDetail.leave.failed',
+        data: { contestId },
+        err: error,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Contest leave failed unexpectedly');
+      } else {
+        logger.warn(payload, 'Contest leave was rejected');
+      }
     },
   });
 
@@ -452,7 +562,26 @@ export function ContestDetailPage() {
 
       return response.data.entry;
     },
+    onMutate: ({ entryId }) => {
+      logger.debug(
+        {
+          action: 'contestDetail.rename.started',
+          data: {
+            contestId,
+            entryId,
+          },
+        },
+        'Starting contest entry rename',
+      );
+    },
     onSuccess: async () => {
+      logger.info(
+        {
+          action: 'contestDetail.rename.succeeded',
+          data: { contestId },
+        },
+        'Renamed contest entry successfully',
+      );
       setEditingEntryId(null);
       setEntryNameDraft('');
       await Promise.all([
@@ -460,6 +589,22 @@ export function ContestDetailPage() {
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-standings', contestId] }),
       ]);
+    },
+    onError: (error, variables) => {
+      const payload = {
+        action: 'contestDetail.rename.failed',
+        data: {
+          contestId,
+          entryId: variables.entryId,
+        },
+        err: error,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Contest entry rename failed unexpectedly');
+      } else {
+        logger.warn(payload, 'Contest entry rename was rejected');
+      }
     },
   });
 

@@ -19,6 +19,7 @@ import {
   updateManagedContestConfiguration,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
+import { useLogger } from '@/lib/logger';
 import {
   buildLeaguePath,
   buildLeagueTeamPath,
@@ -239,6 +240,9 @@ function buildCategoryDefinitions(
 }
 
 export function CreateContestPage() {
+  const logger = useLogger().child({
+    feature: 'create-contest-page',
+  });
   const { leagueCode = '', contestId } = useParams<{ leagueCode: string; contestId?: string }>();
   const auth = useAuth();
   const navigate = useNavigate();
@@ -565,6 +569,58 @@ export function CreateContestPage() {
     }
   }, [mode]);
 
+  useEffect(() => {
+    if (leagueQuery.isError) {
+      logger.warn(
+        {
+          action: 'contestCreate.league.failed',
+          data: {
+            leagueCode,
+            isEditMode,
+          },
+          err: leagueQuery.error,
+        },
+        'Contest create page failed to load league detail',
+      );
+    }
+  }, [isEditMode, leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
+
+  useEffect(() => {
+    if (eventsQuery.isError) {
+      logger.warn(
+        {
+          action: 'contestCreate.events.failed',
+          data: {
+            leagueCode,
+            isEditMode,
+          },
+          err: eventsQuery.error,
+        },
+        'Contest create page failed to load events',
+      );
+    }
+  }, [eventsQuery.error, eventsQuery.isError, isEditMode, leagueCode, logger]);
+
+  useEffect(() => {
+    if (!leagueQuery.data || !eventsQuery.data) {
+      return;
+    }
+
+    logger.info(
+      {
+        action: 'contestCreate.page.loaded',
+        data: {
+          leagueCode,
+          leagueId: leagueQuery.data.id,
+          eventCount: eventsQuery.data.length,
+          templateCount: visibleTemplates.length,
+          isEditMode,
+        },
+      },
+      'Contest create page loaded',
+    );
+  }, [eventsQuery.data, isEditMode, leagueCode, leagueQuery.data, logger, visibleTemplates.length]);
+
   const saveContestMutation = useMutation({
     mutationFn: async () => {
       if (!leagueQuery.data?.id) {
@@ -748,7 +804,33 @@ export function CreateContestPage() {
 
       return configurationResponse.data.contest.id;
     },
+    onMutate: () => {
+      logger.debug(
+        {
+          action: isEditMode ? 'contest.save.started' : 'contest.create.started',
+          data: {
+            leagueCode,
+            contestId: contestId ?? null,
+            sportEventId,
+            mode,
+          },
+        },
+        isEditMode ? 'Starting contest update flow' : 'Starting contest create flow',
+      );
+    },
     onSuccess: async (savedContestId: string) => {
+      logger.info(
+        {
+          action: isEditMode ? 'contest.save.succeeded' : 'contest.create.succeeded',
+          data: {
+            leagueCode,
+            contestId: savedContestId,
+            sportEventId,
+            mode,
+          },
+        },
+        isEditMode ? 'Saved contest successfully' : 'Created contest successfully',
+      );
       await queryClient.invalidateQueries({
         queryKey: ['poolmaster', 'league-contests', leagueQuery.data?.id],
       });
@@ -763,6 +845,22 @@ export function CreateContestPage() {
       });
     },
     onError: (error) => {
+      const payload = {
+        action: isEditMode ? 'contest.save.failed' : 'contest.create.failed',
+        data: {
+          leagueCode,
+          contestId: contestId ?? null,
+          sportEventId,
+          mode,
+        },
+        err: error,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, isEditMode ? 'Contest update failed unexpectedly' : 'Contest create failed unexpectedly');
+      } else {
+        logger.warn(payload, isEditMode ? 'Contest update was rejected' : 'Contest create was rejected');
+      }
       setFormError(extractErrorMessage(error));
     },
   });
@@ -781,13 +879,49 @@ export function CreateContestPage() {
         throw response.error;
       }
     },
+    onMutate: () => {
+      logger.debug(
+        {
+          action: 'contest.delete.started',
+          data: {
+            leagueCode,
+            contestId: contestId ?? null,
+          },
+        },
+        'Starting contest delete flow',
+      );
+    },
     onSuccess: async () => {
+      logger.info(
+        {
+          action: 'contest.delete.succeeded',
+          data: {
+            leagueCode,
+            contestId: contestId ?? null,
+          },
+        },
+        'Deleted contest successfully',
+      );
       await queryClient.invalidateQueries({
         queryKey: ['poolmaster', 'league-contests', leagueQuery.data?.id],
       });
       navigate(buildLeaguePath(leagueCode));
     },
     onError: (error) => {
+      const payload = {
+        action: 'contest.delete.failed',
+        data: {
+          leagueCode,
+          contestId: contestId ?? null,
+        },
+        err: error,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Contest delete failed unexpectedly');
+      } else {
+        logger.warn(payload, 'Contest delete was rejected');
+      }
       setFormError(extractErrorMessage(error));
     },
   });
@@ -1430,7 +1564,7 @@ export function CreateContestPage() {
                   }
                   onClick={() => {
                     setFormError(null);
-                    void saveContestMutation.mutateAsync();
+                    void saveContestMutation.mutateAsync().catch(() => undefined);
                   }}
                   type="button"
                 >
@@ -1446,7 +1580,7 @@ export function CreateContestPage() {
                   disabled={deleteContestMutation.isPending}
                   onClick={() => {
                     setFormError(null);
-                    void deleteContestMutation.mutateAsync();
+                    void deleteContestMutation.mutateAsync().catch(() => undefined);
                   }}
                   type="button"
                 >

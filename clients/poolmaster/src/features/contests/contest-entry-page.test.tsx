@@ -4,12 +4,36 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ContestEntryPage } from './contest-entry-page';
 
-const getContestMock = vi.fn();
-const getDraftStateMock = vi.fn();
-const getLeagueMock = vi.fn();
-const listContestEntriesMock = vi.fn();
-const submitContestSelectionMock = vi.fn();
-const updateContestEntryMock = vi.fn();
+const {
+  getContestMock,
+  getDraftStateMock,
+  getLeagueMock,
+  listContestEntriesMock,
+  mockLogger,
+  submitContestSelectionMock,
+  updateContestEntryMock,
+} = vi.hoisted(() => {
+  const logger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    child: vi.fn(),
+  };
+
+  logger.child.mockImplementation(() => logger);
+
+  return {
+    getContestMock: vi.fn(),
+    getDraftStateMock: vi.fn(),
+    getLeagueMock: vi.fn(),
+    listContestEntriesMock: vi.fn(),
+    mockLogger: logger,
+    submitContestSelectionMock: vi.fn(),
+    updateContestEntryMock: vi.fn(),
+  };
+});
 
 vi.mock('@/lib/api', () => ({
   getContest: (...args: unknown[]) => getContestMock(...args),
@@ -18,6 +42,11 @@ vi.mock('@/lib/api', () => ({
   listContestEntries: (...args: unknown[]) => listContestEntriesMock(...args),
   submitContestSelection: (...args: unknown[]) => submitContestSelectionMock(...args),
   updateContestEntry: (...args: unknown[]) => updateContestEntryMock(...args),
+}));
+
+vi.mock('@/lib/logger', () => ({
+  logger: mockLogger,
+  useLogger: () => mockLogger,
 }));
 
 function renderContestEntryPage() {
@@ -115,6 +144,10 @@ describe('ContestEntryPage', () => {
     listContestEntriesMock.mockReset();
     submitContestSelectionMock.mockReset();
     updateContestEntryMock.mockReset();
+    mockLogger.debug.mockReset();
+    mockLogger.info.mockReset();
+    mockLogger.warn.mockReset();
+    mockLogger.error.mockReset();
   });
 
   it('renders tiered selection groups and saves entry details while open', async () => {
@@ -273,6 +306,12 @@ describe('ContestEntryPage', () => {
         },
       }),
     );
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'contestEntry.selection.succeeded',
+      }),
+      expect.any(String),
+    );
   });
 
   it('shows read-only entry detail once the contest is locked', async () => {
@@ -348,5 +387,20 @@ describe('ContestEntryPage', () => {
     );
     expect(screen.queryByTestId('contest-entry-save-details')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-participant-sep-1')).not.toBeInTheDocument();
+  });
+
+  it('shows the entry load failure state when the draft-state query fails', async () => {
+    primeCommonMocks();
+    getDraftStateMock.mockRejectedValue(new Error('Draft state unavailable'));
+
+    renderContestEntryPage();
+
+    await screen.findByText("We couldn't load this contest entry.");
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'contestEntry.load.failed',
+      }),
+      expect.any(String),
+    );
   });
 });

@@ -4,14 +4,40 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ContestDetailPage } from './contest-detail-page';
 
-const enterContestMock = vi.fn();
-const getContestMock = vi.fn();
-const getContestEntryMock = vi.fn();
-const getLeagueMock = vi.fn();
-const getStandingsMock = vi.fn();
-const leaveContestMock = vi.fn();
-const listContestEntriesMock = vi.fn();
-const updateContestEntryMock = vi.fn();
+const {
+  enterContestMock,
+  getContestMock,
+  getContestEntryMock,
+  getLeagueMock,
+  getStandingsMock,
+  leaveContestMock,
+  listContestEntriesMock,
+  mockLogger,
+  updateContestEntryMock,
+} = vi.hoisted(() => {
+  const logger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    child: vi.fn(),
+  };
+
+  logger.child.mockImplementation(() => logger);
+
+  return {
+    enterContestMock: vi.fn(),
+    getContestMock: vi.fn(),
+    getContestEntryMock: vi.fn(),
+    getLeagueMock: vi.fn(),
+    getStandingsMock: vi.fn(),
+    leaveContestMock: vi.fn(),
+    listContestEntriesMock: vi.fn(),
+    mockLogger: logger,
+    updateContestEntryMock: vi.fn(),
+  };
+});
 
 vi.mock('@/lib/api', () => ({
   enterContest: (...args: unknown[]) => enterContestMock(...args),
@@ -41,6 +67,11 @@ vi.mock('@/features/auth/auth-provider', () => ({
     },
     clearSession: vi.fn(),
   }),
+}));
+
+vi.mock('@/lib/logger', () => ({
+  logger: mockLogger,
+  useLogger: () => mockLogger,
 }));
 
 function renderContestDetailPage() {
@@ -180,6 +211,10 @@ describe('ContestDetailPage', () => {
     leaveContestMock.mockReset();
     listContestEntriesMock.mockReset();
     updateContestEntryMock.mockReset();
+    mockLogger.debug.mockReset();
+    mockLogger.info.mockReset();
+    mockLogger.warn.mockReset();
+    mockLogger.error.mockReset();
   });
 
   it('creates a first entry from the contest detail when the contest is open', async () => {
@@ -225,6 +260,44 @@ describe('ContestDetailPage', () => {
     );
 
     expect(await screen.findByTestId('contest-entry-page')).toBeInTheDocument();
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'contestDetail.enter.succeeded',
+      }),
+      expect.any(String),
+    );
+  });
+
+  it('shows the contest load failure state when the contest query fails', async () => {
+    getContestMock.mockRejectedValue(new Error('Contest missing'));
+    listContestEntriesMock.mockResolvedValue({
+      data: {
+        contestId: 'contest-1',
+        total: 0,
+        isJoined: false,
+        myEntryId: '',
+        entries: [],
+      },
+    });
+    getStandingsMock.mockResolvedValue({
+      data: {
+        standings: [],
+        total: 0,
+        page: 1,
+        pageSize: 50,
+        contestId: 'contest-1',
+      },
+    });
+
+    renderContestDetailPage();
+
+    await screen.findByText("We couldn't load this contest.");
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'contestDetail.contest.failed',
+      }),
+      expect.any(String),
+    );
   });
 
   it('highlights the current team entries in the list and supports multiple entries while open', async () => {
