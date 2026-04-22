@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { TeamIconKey } from '@poolmaster/shared/domain';
 import { acceptInvitation, listLeagueSquads, updateLeagueSquad } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
+import { useLogger } from '@/lib/logger';
 import { InvitationContextCard } from './invitation-context-card';
 import {
   buildInvitePath,
@@ -40,6 +41,9 @@ function getErrorMessage(error: unknown) {
 }
 
 export function JoinLeaguePage() {
+  const logger = useLogger().child({
+    feature: 'join-league-page',
+  });
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -52,6 +56,42 @@ export function JoinLeaguePage() {
     enabled: Boolean(inviteCode),
     retry: false,
   });
+
+  useEffect(() => {
+    if (!invitationQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'leagueInvite.preview.failed',
+        data: {
+          inviteCode,
+        },
+        err: invitationQuery.error,
+      },
+      'League invitation preview failed to load',
+    );
+  }, [inviteCode, invitationQuery.error, invitationQuery.isError, logger]);
+
+  useEffect(() => {
+    if (!invitationQuery.data) {
+      return;
+    }
+
+    logger.info(
+      {
+        action: 'leagueInvite.preview.loaded',
+        data: {
+          inviteCode,
+          leagueId: invitationQuery.data.league.id,
+          leagueCode: invitationQuery.data.league.leagueCode,
+          isAuthenticated,
+        },
+      },
+      'League invitation preview loaded',
+    );
+  }, [inviteCode, invitationQuery.data, isAuthenticated, logger]);
 
   useEffect(() => {
     setTeamName(buildDefaultTeamName(user?.firstName, user?.lastName));
@@ -98,12 +138,52 @@ export function JoinLeaguePage() {
         leagueCode,
       };
     },
+    onMutate: () => {
+      logger.debug(
+        {
+          action: 'leagueInvite.accept.started',
+          data: {
+            inviteCode,
+            hasTeamName: Boolean(teamName.trim()),
+            selectedIconKey,
+          },
+        },
+        'Starting league invitation acceptance',
+      );
+    },
     onSuccess: ({ leagueCode }) => {
+      logger.info(
+        {
+          action: 'leagueInvite.accept.succeeded',
+          data: {
+            inviteCode,
+            leagueCode: leagueCode ?? null,
+            selectedIconKey,
+          },
+        },
+        'Accepted league invitation',
+      );
       if (leagueCode) {
         void queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
         void queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams'] });
         setRecentLeagueCode(leagueCode);
         navigate(buildLeaguePath(leagueCode));
+      }
+    },
+    onError: (error) => {
+      const payload = {
+        action: 'leagueInvite.accept.failed',
+        data: {
+          inviteCode,
+          selectedIconKey,
+        },
+        err: error,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'League invitation acceptance failed unexpectedly');
+      } else {
+        logger.warn(payload, 'League invitation acceptance was rejected');
       }
     },
   });

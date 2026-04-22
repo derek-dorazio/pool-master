@@ -7,13 +7,43 @@ import { AuthProvider } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
 import { JoinLeaguePage } from './join-league-page';
 
-const acceptInvitationMock = vi.fn();
-const getCurrentUserMock = vi.fn();
-const getInvitationPreviewMock = vi.fn();
-const listLeagueSquadsMock = vi.fn();
-const logoutUserMock = vi.fn();
-const refreshTokenMock = vi.fn();
-const updateLeagueSquadMock = vi.fn();
+const {
+  acceptInvitationMock,
+  getCurrentUserMock,
+  getInvitationPreviewMock,
+  listLeagueSquadsMock,
+  logoutUserMock,
+  mockLogger,
+  refreshTokenMock,
+  updateLeagueSquadMock,
+} = vi.hoisted(() => {
+  const logger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    child: vi.fn(),
+  };
+
+  logger.child.mockImplementation(() => logger);
+
+  return {
+    acceptInvitationMock: vi.fn(),
+    getCurrentUserMock: vi.fn(),
+    getInvitationPreviewMock: vi.fn(),
+    listLeagueSquadsMock: vi.fn(),
+    logoutUserMock: vi.fn(),
+    mockLogger: logger,
+    refreshTokenMock: vi.fn(),
+    updateLeagueSquadMock: vi.fn(),
+  };
+});
+
+vi.mock('@/lib/logger', () => ({
+  logger: mockLogger,
+  useLogger: () => mockLogger,
+}));
 
 vi.mock('@/lib/api', () => ({
   acceptInvitation: (...args: unknown[]) => acceptInvitationMock(...args),
@@ -57,6 +87,10 @@ describe('JoinLeaguePage', () => {
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
     updateLeagueSquadMock.mockReset();
+    mockLogger.debug.mockReset();
+    mockLogger.info.mockReset();
+    mockLogger.warn.mockReset();
+    mockLogger.error.mockReset();
     useSessionStore.getState().clearSession();
   });
 
@@ -163,5 +197,62 @@ describe('JoinLeaguePage', () => {
       }),
     );
     await screen.findByTestId('league-destination');
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'leagueInvite.accept.succeeded',
+        data: expect.objectContaining({
+          leagueCode: 'BIGDAWGS',
+        }),
+      }),
+      expect.any(String),
+    );
+  });
+
+  it('shows the rejection message when accepting the invitation fails with an expected error payload', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-16T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getInvitationPreviewMock.mockResolvedValue({
+      data: {
+        invitation: {
+          inviteCode: 'LEAGUE123',
+          status: 'PENDING',
+          league: {
+            id: 'league-1',
+            leagueCode: 'BIGDAWGS',
+            name: 'Big Dawgs',
+          },
+        },
+      },
+    });
+    acceptInvitationMock.mockResolvedValue({
+      error: {
+        message: 'This invitation has already been accepted.',
+      },
+    });
+
+    renderJoinLeaguePage();
+
+    await screen.findByTestId('join-league-page');
+    fireEvent.click(screen.getByTestId('invite-accept'));
+
+    await screen.findByText('This invitation has already been accepted.');
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'leagueInvite.accept.failed',
+      }),
+      expect.any(String),
+    );
   });
 });

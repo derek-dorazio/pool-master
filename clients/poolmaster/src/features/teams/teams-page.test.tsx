@@ -7,13 +7,43 @@ import { AuthProvider } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
 import { TeamsPage } from './teams-page';
 
-const getCurrentUserMock = vi.fn();
-const getLeagueByCodeMock = vi.fn();
-const listLeagueSquadsMock = vi.fn();
-const listSquadOwnerInvitationsMock = vi.fn();
-const logoutUserMock = vi.fn();
-const refreshTokenMock = vi.fn();
-const revokeSquadOwnerInvitationMock = vi.fn();
+const {
+  getCurrentUserMock,
+  getLeagueByCodeMock,
+  listLeagueSquadsMock,
+  listSquadOwnerInvitationsMock,
+  logoutUserMock,
+  mockLogger,
+  refreshTokenMock,
+  revokeSquadOwnerInvitationMock,
+} = vi.hoisted(() => {
+  const logger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    child: vi.fn(),
+  };
+
+  logger.child.mockImplementation(() => logger);
+
+  return {
+    getCurrentUserMock: vi.fn(),
+    getLeagueByCodeMock: vi.fn(),
+    listLeagueSquadsMock: vi.fn(),
+    listSquadOwnerInvitationsMock: vi.fn(),
+    logoutUserMock: vi.fn(),
+    mockLogger: logger,
+    refreshTokenMock: vi.fn(),
+    revokeSquadOwnerInvitationMock: vi.fn(),
+  };
+});
+
+vi.mock('@/lib/logger', () => ({
+  logger: mockLogger,
+  useLogger: () => mockLogger,
+}));
 
 vi.mock('@/lib/api', () => ({
   getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
@@ -56,6 +86,10 @@ describe('TeamsPage', () => {
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
     revokeSquadOwnerInvitationMock.mockReset();
+    mockLogger.debug.mockReset();
+    mockLogger.info.mockReset();
+    mockLogger.warn.mockReset();
+    mockLogger.error.mockReset();
     useSessionStore.getState().clearSession();
   });
 
@@ -180,6 +214,40 @@ describe('TeamsPage', () => {
       expect(revokeSquadOwnerInvitationMock).toHaveBeenCalledWith({
         path: { id: 'league-1', invitationId: 'invite-1' },
       }),
+    );
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'teams.ownerInvitation.revoke.succeeded',
+      }),
+      expect.any(String),
+    );
+  });
+
+  it('shows the load failure state when the league detail cannot be loaded', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-16T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getLeagueByCodeMock.mockRejectedValue(new Error('League missing'));
+
+    renderTeamsPage();
+
+    await screen.findByText("We couldn't load this league.");
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'teams.league.failed',
+      }),
+      expect.any(String),
     );
   });
 });

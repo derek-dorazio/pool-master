@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createLeague } from '@/lib/api';
+import { useLogger } from '@/lib/logger';
 import { buildLeaguePath, setRecentLeagueCode } from './league-routing';
 
 const LEAGUE_CODE_PATTERN = /^[A-Z0-9]{3,16}$/;
@@ -69,6 +70,9 @@ type CreateLeagueModalProps = {
 };
 
 export function CreateLeagueModal({ isOpen, onClose, onCreated }: CreateLeagueModalProps) {
+  const logger = useLogger().child({
+    feature: 'create-league-modal',
+  });
   const queryClient = useQueryClient();
   const [step, setStep] = useState<typeof WIZARD_STEP_DETAILS | typeof WIZARD_STEP_REVIEW>(
     WIZARD_STEP_DETAILS,
@@ -118,13 +122,50 @@ export function CreateLeagueModal({ isOpen, onClose, onCreated }: CreateLeagueMo
 
       return response.data.league;
     },
+    onMutate: (values) => {
+      logger.debug(
+        {
+          action: 'league.create.started',
+          data: {
+            leagueCode: values.leagueCode,
+            hasDescription: Boolean(values.description?.trim()),
+          },
+        },
+        'Starting league creation flow',
+      );
+    },
     onSuccess: async (league) => {
+      logger.info(
+        {
+          action: 'league.create.succeeded',
+          data: {
+            leagueCode: league.leagueCode,
+          },
+        },
+        'Created league successfully',
+      );
       await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
       setRecentLeagueCode(league.leagueCode);
       hasEditedLeagueCodeRef.current = false;
       setStep(WIZARD_STEP_DETAILS);
       form.reset();
       onCreated(league.leagueCode);
+    },
+    onError: (error, values) => {
+      const payload = {
+        action: 'league.create.failed',
+        data: {
+          leagueCode: values.leagueCode,
+          hasDescription: Boolean(values.description?.trim()),
+        },
+        err: error,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'League creation failed unexpectedly');
+      } else {
+        logger.warn(payload, 'League creation was rejected');
+      }
     },
   });
 
@@ -144,12 +185,38 @@ export function CreateLeagueModal({ isOpen, onClose, onCreated }: CreateLeagueMo
     seedLeagueCodeFromName(form.getValues('name'));
     const isValid = await form.trigger(['name', 'leagueCode', 'description']);
     if (isValid) {
+      logger.info(
+        {
+          action: 'league.create.reviewReady',
+          data: {
+            leagueCode: form.getValues('leagueCode'),
+            hasDescription: Boolean(form.getValues('description')?.trim()),
+          },
+        },
+        'League create flow advanced to review step',
+      );
       setStep(WIZARD_STEP_REVIEW);
+    } else {
+      logger.warn(
+        {
+          action: 'league.create.reviewBlocked',
+          data: {
+            hasNameError: Boolean(form.formState.errors.name),
+            hasLeagueCodeError: Boolean(form.formState.errors.leagueCode),
+            hasDescriptionError: Boolean(form.formState.errors.description),
+          },
+        },
+        'League create flow could not advance to review',
+      );
     }
   }
 
   async function handleSubmit(values: CreateLeagueFormValues) {
-    await createLeagueMutation.mutateAsync(values);
+    try {
+      await createLeagueMutation.mutateAsync(values);
+    } catch {
+      // Mutation state drives the error UI for expected create failures.
+    }
   }
 
   if (!isOpen) {

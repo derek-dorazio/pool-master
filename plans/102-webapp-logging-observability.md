@@ -15,7 +15,7 @@ existing CloudWatch-backed service logs.
 | WLO-002 | 2 | Correlation headers and backend request bindings | Done | Added browser request headers in `clients/poolmaster/src/lib/api.ts`, bound them into backend request logs in `packages/core-api/src/core/logger.ts`, and added unit + webapp proof for header propagation. |
 | WLO-003 | 3 | Client log ingestion endpoint and transport | Done | Added shared client-log DTOs, the public `/api/v1/client-logs` operational endpoint with optional auth binding and rate-limit/oversize handling, browser batching transport, functional/unit proof, and refreshed generated OpenAPI artifacts. |
 | WLO-004 | 3 | Global browser failure capture and fallback UX | Done | Added a top-level React error boundary, global `error` and `unhandledrejection` listeners, fallback reload UX, and behavioral proof for render-failure capture plus browser-global fatal logging. |
-| WLO-005 | 4 | Feature-level logging backfill and branch proof | In Progress | Auth/session flow logging and proof are complete in the webapp (`auth-provider`, `auth-home-page`, `session-store`); leagues, contests, account, root-admin, routes, and app-shell remain. |
+| WLO-005 | 4 | Feature-level logging backfill and branch proof | In Progress | Auth/session flow plus first-pass league/team workflow logging and proof are complete (`auth-provider`, `auth-home-page`, `session-store`, `join-league-page`, `join-team-owner-page`, `create-league-modal`, `teams-page`); contests, account, root-admin, routes, and app-shell remain. |
 | WLO-006 | 5 | Docs and final gap sweep | Not Started | Add operational query guidance and final observability gap audit. |
 
 ## Research Summary

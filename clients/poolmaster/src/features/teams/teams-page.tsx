@@ -13,6 +13,7 @@ import {
 import { useAuth } from '@/features/auth/auth-provider';
 import { formatUserName } from '@/features/account/user-name';
 import { buildLeaguePath, buildLeagueTeamPath, setRecentLeagueCode } from '@/features/leagues/league-routing';
+import { useLogger } from '@/lib/logger';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
 
@@ -38,6 +39,9 @@ function formatDate(value: string | undefined) {
 }
 
 export function TeamsPage() {
+  const logger = useLogger().child({
+    feature: 'teams-page',
+  });
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -61,6 +65,23 @@ export function TeamsPage() {
       setRecentLeagueCode(leagueQuery.data.leagueCode);
     }
   }, [leagueQuery.data?.leagueCode]);
+
+  useEffect(() => {
+    if (!leagueQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'teams.league.failed',
+        data: {
+          leagueCode,
+        },
+        err: leagueQuery.error,
+      },
+      'Teams page failed to load league detail',
+    );
+  }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   const leagueId = leagueQuery.data?.id ?? '';
   const isCommissioner = leagueQuery.data?.role === 'COMMISSIONER';
@@ -119,6 +140,44 @@ export function TeamsPage() {
     return ownerInvitationsQuery.data.filter((invitation) => invitation.squadId === myTeam.id);
   }, [isCommissioner, myTeam, ownerInvitationsQuery.data]);
 
+  useEffect(() => {
+    if (!leagueQuery.data || !teamsQuery.data) {
+      return;
+    }
+
+    logger.info(
+      {
+        action: 'teams.page.loaded',
+        data: {
+          leagueCode: leagueQuery.data.leagueCode,
+          teamCount: teamsQuery.data.length,
+          invitationCount: visibleInvitations.length,
+          isCommissioner,
+          hasMyTeam: Boolean(myTeam),
+        },
+      },
+      'Teams page loaded',
+    );
+  }, [isCommissioner, leagueQuery.data, logger, myTeam, teamsQuery.data, visibleInvitations.length]);
+
+  useEffect(() => {
+    if (!ownerInvitationsQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'teams.ownerInvitations.failed',
+        data: {
+          leagueCode,
+          leagueId,
+        },
+        err: ownerInvitationsQuery.error,
+      },
+      'Teams page failed to load owner invitations',
+    );
+  }, [leagueCode, leagueId, logger, ownerInvitationsQuery.error, ownerInvitationsQuery.isError]);
+
   const revokeInvitationMutation = useMutation({
     mutationFn: async (invitationId: string) => {
       const response = await revokeSquadOwnerInvitation({
@@ -130,8 +189,45 @@ export function TeamsPage() {
 
       return response.data.invitation;
     },
+    onMutate: (invitationId) => {
+      logger.debug(
+        {
+          action: 'teams.ownerInvitation.revoke.started',
+          data: {
+            leagueId,
+            invitationId,
+          },
+        },
+        'Revoking team-owner invitation',
+      );
+    },
     onSuccess: async () => {
+      logger.info(
+        {
+          action: 'teams.ownerInvitation.revoke.succeeded',
+          data: {
+            leagueId,
+          },
+        },
+        'Revoked team-owner invitation',
+      );
       await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-team-owner-invitations', leagueId] });
+    },
+    onError: (error, invitationId) => {
+      const payload = {
+        action: 'teams.ownerInvitation.revoke.failed',
+        data: {
+          leagueId,
+          invitationId,
+        },
+        err: error,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Team-owner invitation revoke failed unexpectedly');
+      } else {
+        logger.warn(payload, 'Team-owner invitation revoke was rejected');
+      }
     },
   });
 

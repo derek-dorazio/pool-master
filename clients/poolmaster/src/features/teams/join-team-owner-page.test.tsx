@@ -6,11 +6,39 @@ import { AuthProvider } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
 import { JoinTeamOwnerPage } from './join-team-owner-page';
 
-const acceptTeamOwnerInvitationMock = vi.fn();
-const getCurrentUserMock = vi.fn();
-const getTeamOwnerInvitationPreviewMock = vi.fn();
-const logoutUserMock = vi.fn();
-const refreshTokenMock = vi.fn();
+const {
+  acceptTeamOwnerInvitationMock,
+  getCurrentUserMock,
+  getTeamOwnerInvitationPreviewMock,
+  logoutUserMock,
+  mockLogger,
+  refreshTokenMock,
+} = vi.hoisted(() => {
+  const logger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    child: vi.fn(),
+  };
+
+  logger.child.mockImplementation(() => logger);
+
+  return {
+    acceptTeamOwnerInvitationMock: vi.fn(),
+    getCurrentUserMock: vi.fn(),
+    getTeamOwnerInvitationPreviewMock: vi.fn(),
+    logoutUserMock: vi.fn(),
+    mockLogger: logger,
+    refreshTokenMock: vi.fn(),
+  };
+});
+
+vi.mock('@/lib/logger', () => ({
+  logger: mockLogger,
+  useLogger: () => mockLogger,
+}));
 
 vi.mock('@/lib/api', () => ({
   acceptTeamOwnerInvitation: (...args: unknown[]) => acceptTeamOwnerInvitationMock(...args),
@@ -50,6 +78,10 @@ describe('JoinTeamOwnerPage', () => {
     getTeamOwnerInvitationPreviewMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
+    mockLogger.debug.mockReset();
+    mockLogger.info.mockReset();
+    mockLogger.warn.mockReset();
+    mockLogger.error.mockReset();
     useSessionStore.getState().clearSession();
   });
 
@@ -84,6 +116,12 @@ describe('JoinTeamOwnerPage', () => {
       expect(getTeamOwnerInvitationPreviewMock).toHaveBeenCalledWith({
         path: { inviteCode: 'TEAM123' },
       }),
+    );
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'teamInvite.preview.loaded',
+      }),
+      expect.any(String),
     );
   });
 
@@ -155,5 +193,65 @@ describe('JoinTeamOwnerPage', () => {
       }),
     );
     await screen.findByTestId('team-destination');
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'teamInvite.accept.succeeded',
+      }),
+      expect.any(String),
+    );
+  });
+
+  it('shows the rejection message when team-owner invitation acceptance fails with an expected error payload', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-16T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getTeamOwnerInvitationPreviewMock.mockResolvedValue({
+      data: {
+        invitation: {
+          inviteCode: 'TEAM123',
+          status: 'PENDING',
+          league: {
+            id: 'league-1',
+            leagueCode: 'BIGDAWGS',
+            name: 'Big Dawgs',
+          },
+          team: {
+            id: 'team-1',
+            name: 'Beer Bellies',
+            iconKey: 'CAPTAIN_SMILE_FIELD',
+          },
+          roleAfterAccept: 'MEMBER',
+        },
+      },
+    });
+    acceptTeamOwnerInvitationMock.mockResolvedValue({
+      error: {
+        message: 'This team invitation is no longer active.',
+      },
+    });
+
+    renderJoinTeamOwnerPage();
+
+    await screen.findByTestId('team-owner-invite-page');
+    fireEvent.click(screen.getByTestId('team-invite-accept'));
+
+    await screen.findByText('This team invitation is no longer active.');
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'teamInvite.accept.failed',
+      }),
+      expect.any(String),
+    );
   });
 });

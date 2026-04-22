@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { acceptTeamOwnerInvitation } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
+import { useLogger } from '@/lib/logger';
 import {
   buildLeaguePath,
   buildLeagueTeamPath,
@@ -39,6 +40,9 @@ function getErrorMessage(error: unknown) {
 }
 
 export function JoinTeamOwnerPage() {
+  const logger = useLogger().child({
+    feature: 'join-team-owner-page',
+  });
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -50,6 +54,42 @@ export function JoinTeamOwnerPage() {
     retry: false,
   });
 
+  useEffect(() => {
+    if (!invitationQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'teamInvite.preview.failed',
+        data: {
+          inviteCode,
+        },
+        err: invitationQuery.error,
+      },
+      'Team-owner invitation preview failed to load',
+    );
+  }, [inviteCode, invitationQuery.error, invitationQuery.isError, logger]);
+
+  useEffect(() => {
+    if (!invitationQuery.data) {
+      return;
+    }
+
+    logger.info(
+      {
+        action: 'teamInvite.preview.loaded',
+        data: {
+          inviteCode,
+          leagueCode: invitationQuery.data.league.leagueCode,
+          teamId: invitationQuery.data.team.id,
+          isAuthenticated,
+        },
+      },
+      'Team-owner invitation preview loaded',
+    );
+  }, [inviteCode, invitationQuery.data, isAuthenticated, logger]);
+
   const acceptMutation = useMutation({
     mutationFn: async () => {
       const response = await acceptTeamOwnerInvitation({ body: { inviteCode } });
@@ -59,13 +99,50 @@ export function JoinTeamOwnerPage() {
 
       return response.data.invitation;
     },
+    onMutate: () => {
+      logger.debug(
+        {
+          action: 'teamInvite.accept.started',
+          data: {
+            inviteCode,
+          },
+        },
+        'Starting team-owner invitation acceptance',
+      );
+    },
     onSuccess: async () => {
+      logger.info(
+        {
+          action: 'teamInvite.accept.succeeded',
+          data: {
+            inviteCode,
+            leagueCode: invitationQuery.data?.league.leagueCode ?? null,
+            teamId: invitationQuery.data?.team.id ?? null,
+          },
+        },
+        'Accepted team-owner invitation',
+      );
       const leagueCode = invitationQuery.data?.league.leagueCode;
       if (leagueCode) {
         void queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
         void queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams'] });
         setRecentLeagueCode(leagueCode);
         navigate(buildLeagueTeamPath(leagueCode));
+      }
+    },
+    onError: (error) => {
+      const payload = {
+        action: 'teamInvite.accept.failed',
+        data: {
+          inviteCode,
+        },
+        err: error,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Team-owner invitation acceptance failed unexpectedly');
+      } else {
+        logger.warn(payload, 'Team-owner invitation acceptance was rejected');
       }
     },
   });
