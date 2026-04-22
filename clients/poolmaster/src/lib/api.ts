@@ -2,6 +2,7 @@ import { createConfig } from '@poolmaster/shared/generated/hey-api/client';
 import type { ClientOptions } from '@poolmaster/shared/generated/hey-api';
 import { client } from '@poolmaster/shared/generated/hey-api/client.gen';
 import { readCookie } from './cookies';
+import { getOrCreateClientTraceId } from './logger';
 
 const resolvedBaseUrl =
   typeof window !== 'undefined' && window.location?.origin !== 'null'
@@ -16,6 +17,9 @@ client.setConfig(
 );
 
 client.interceptors.request.use((request: Request) => {
+  request.headers.set('X-Client-Trace-Id', getOrCreateClientTraceId());
+  request.headers.set('X-Client-Request-Id', crypto.randomUUID());
+
   if (
     typeof document !== 'undefined'
     && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method.toUpperCase())

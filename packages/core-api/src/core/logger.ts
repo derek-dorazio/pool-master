@@ -28,6 +28,8 @@ export interface RequestLogBindings {
   sessionId: string | null;
   userId: string | null;
   isRootAdmin: boolean;
+  clientTraceId: string | null;
+  clientRequestId: string | null;
   ip: string | null;
   method: string;
   route: string;
@@ -89,12 +91,15 @@ export function createFastifyLoggerOptions(
 export function buildRequestLogBindings(request: FastifyRequest): RequestLogBindings {
   const authUser = request.authUser;
   const rootAdminUser = request.rootAdminContext?.rootAdminUser;
+  const headers = request.headers ?? {};
 
   return {
     reqId: request.id,
     sessionId: authUser?.sessionId ?? null,
     userId: authUser?.userId ?? rootAdminUser?.id ?? null,
     isRootAdmin: authUser?.isRootAdmin === true || rootAdminUser?.isRootAdmin === true,
+    clientTraceId: headers['x-client-trace-id']?.toString() ?? null,
+    clientRequestId: headers['x-client-request-id']?.toString() ?? null,
     ip: request.ip ?? null,
     method: request.method,
     route: resolveRoute(request),

@@ -40,6 +40,10 @@ describe('core-api logging foundation', () => {
         method: 'POST',
         url: '/api/v1/leagues/league-1/contests?draft=true',
         ip: '127.0.0.1',
+        headers: {
+          'x-client-trace-id': 'trace-123',
+          'x-client-request-id': 'client-request-123',
+        },
         routeOptions: { url: '/api/v1/leagues/:id/contests' },
         authUser: {
           userId: 'user-123',
@@ -54,6 +58,8 @@ describe('core-api logging foundation', () => {
         sessionId: 'session-123',
         userId: 'user-123',
         isRootAdmin: false,
+        clientTraceId: 'trace-123',
+        clientRequestId: 'client-request-123',
         ip: '127.0.0.1',
         method: 'POST',
         route: '/api/v1/leagues/:id/contests',
@@ -66,6 +72,7 @@ describe('core-api logging foundation', () => {
         method: 'POST',
         url: '/api/v1/admin/providers/sync/GOLF',
         ip: '10.0.0.10',
+        headers: {},
         routeOptions: { url: '/api/v1/admin/providers/sync/:sport' },
         rootAdminContext: {
           rootAdminUser: {
@@ -82,6 +89,8 @@ describe('core-api logging foundation', () => {
         sessionId: null,
         userId: 'admin-1',
         isRootAdmin: true,
+        clientTraceId: null,
+        clientRequestId: null,
         ip: '10.0.0.10',
         method: 'POST',
         route: '/api/v1/admin/providers/sync/:sport',
