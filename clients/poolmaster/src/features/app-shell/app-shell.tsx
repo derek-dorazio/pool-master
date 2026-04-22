@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/auth-provider';
 import { listLeagues } from '@/lib/api';
+import { useLogger } from '@/lib/logger';
 import { AccountMenu } from '@/features/account/account-menu';
 import { formatUserName } from '@/features/account/user-name';
 import {
@@ -20,6 +21,9 @@ export function AppShell() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const auth = useAuth();
+  const logger = useLogger().child({
+    feature: 'app-shell',
+  });
   const leaguesQuery = useQuery({
     queryKey: ['poolmaster', 'leagues'],
     queryFn: async () => {
@@ -39,16 +43,69 @@ export function AppShell() {
   const isCreateLeagueOpen = searchParams.get('createLeague') === '1';
 
   function openCreateLeague() {
+    logger.info(
+      {
+        action: 'appShell.createLeagueModal.opened',
+        data: {
+          from: location.pathname,
+        },
+      },
+      'Opened create-league modal from app shell',
+    );
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set('createLeague', '1');
     setSearchParams(nextParams, { replace: true });
   }
 
   function closeCreateLeague() {
+    logger.debug(
+      {
+        action: 'appShell.createLeagueModal.closed',
+        data: {
+          from: location.pathname,
+        },
+      },
+      'Closed create-league modal from app shell',
+    );
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete('createLeague');
     setSearchParams(nextParams, { replace: true });
   }
+
+  useEffect(() => {
+    if (!auth.isAuthenticated || !leaguesQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'appShell.leagues.failed',
+        err: leaguesQuery.error instanceof Error ? leaguesQuery.error : undefined,
+        data: {
+          path: location.pathname,
+        },
+      },
+      'App shell failed to load leagues for the authenticated user',
+    );
+  }, [auth.isAuthenticated, leaguesQuery.error, leaguesQuery.isError, location.pathname, logger]);
+
+  useEffect(() => {
+    if (!auth.isAuthenticated || !leaguesQuery.data) {
+      return;
+    }
+
+    logger.info(
+      {
+        action: 'appShell.loaded',
+        data: {
+          path: location.pathname,
+          activeLeagueCode,
+          leagueCount: leaguesQuery.data.length,
+        },
+      },
+      'Loaded authenticated app shell state',
+    );
+  }, [activeLeagueCode, auth.isAuthenticated, leaguesQuery.data, location.pathname, logger]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -67,7 +124,19 @@ export function AppShell() {
                 activeLeagueCode={activeLeagueCode}
                 leagues={leaguesQuery.data ?? []}
                 onCreateLeague={openCreateLeague}
-                onNavigate={(path) => navigate(path)}
+                onNavigate={(path) => {
+                  logger.info(
+                    {
+                      action: 'appShell.league.navigate',
+                      data: {
+                        from: location.pathname,
+                        to: path,
+                      },
+                    },
+                    'Navigating to selected league from app shell',
+                  );
+                  navigate(path);
+                }}
               />
             ) : null}
           </div>
@@ -94,7 +163,29 @@ export function AppShell() {
                 </button>
                 <AccountMenu
                   userName={formatUserName(auth.user?.firstName, auth.user?.lastName)}
-                  onLogout={() => auth.clearSession().then(() => navigate('/', { replace: true }))}
+                  onLogout={async () => {
+                    logger.info(
+                      {
+                        action: 'appShell.logout.started',
+                        data: {
+                          userId: auth.user?.id ?? null,
+                        },
+                      },
+                      'Started logout from the app shell',
+                    );
+
+                    await auth.clearSession();
+                    navigate('/', { replace: true });
+                    logger.info(
+                      {
+                        action: 'appShell.logout.completed',
+                        data: {
+                          userId: auth.user?.id ?? null,
+                        },
+                      },
+                      'Completed logout from the app shell',
+                    );
+                  }}
                 />
               </>
             ) : (
@@ -186,6 +277,15 @@ export function AppShell() {
           onClose={closeCreateLeague}
           onCreated={(leagueCode) => {
             closeCreateLeague();
+            logger.info(
+              {
+                action: 'appShell.createLeagueModal.completed',
+                data: {
+                  leagueCode,
+                },
+              },
+              'Created a league from the app shell modal',
+            );
             navigate(buildCreateLeagueDestination(leagueCode), { replace: true });
           }}
         />

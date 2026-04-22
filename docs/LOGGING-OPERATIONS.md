@@ -1,15 +1,21 @@
 # Logging Operations
 
-PoolMaster backend services emit structured JSON logs to `stdout` through
-Fastify/Pino. ECS ships those logs to CloudWatch Logs. This document is the
-operator-facing quick guide for using that data in QA, staging, and production.
+PoolMaster runtime services emit structured JSON logs to `stdout` through
+Fastify/Pino. The active PoolMaster webapp also emits structured browser logs
+through the `/api/v1/client-logs` transport, and those browser events are
+re-emitted into the same backend CloudWatch stream with `data.source: "client"`.
+ECS ships the runtime logs to CloudWatch Logs. This document is the
+operator-facing quick guide for using those backend and browser-correlated
+signals in QA, staging, and production.
 
 ## Runtime Scope
 
-This logging contract applies to runtime backend services:
+This logging contract applies to runtime services and operational browser
+signals:
 
 - `packages/core-api/src/**`
 - `packages/mock-contest-feed-provider/src/**`
+- `clients/poolmaster/src/**` via `/api/v1/client-logs`
 
 It does not treat one-off scripts or archived frontend code as part of the
 runtime logging surface. Remaining `console.*` usage in scripts is intentional
@@ -62,6 +68,19 @@ Key fields:
 - `data`
   structured branch-specific context
 
+Additional fields for browser-correlated events:
+
+- `clientTraceId`
+  browser tab/session correlation id generated in the PoolMaster webapp
+- `clientRequestId`
+  per-request browser correlation id propagated to backend request logs
+
+Browser-originated events are re-emitted through `core-api` with:
+
+- `data.source = "client"`
+- the original browser `action`
+- the active `sessionId` and `userId` when the request was authenticated
+
 ## Severity Policy
 
 - `DEBUG`
@@ -100,6 +119,8 @@ Recommended workflow:
 2. filter on `level`, `action`, `route`, `reqId`, `sessionId`, or `userId`
 3. pivot from a failing request log into the surrounding branch logs using
    `reqId`
+4. when tracing browser issues, pivot on `clientTraceId` first and then narrow
+   to a specific `clientRequestId` or backend `reqId`
 
 ## Logs Insights Queries
 
@@ -125,6 +146,31 @@ fields @timestamp, level, reqId, action, route, msg, data
 ```sql
 fields @timestamp, level, sessionId, userId, action, route, msg
 | filter sessionId = "ff012e7f-e1d9-4697-91b3-930f2690d523"
+| sort @timestamp asc
+```
+
+### Follow one browser tab/session
+
+```sql
+fields @timestamp, level, service, clientTraceId, clientRequestId, action, route, msg, data.source
+| filter clientTraceId = "CLIENT_TRACE_ID_HERE"
+| sort @timestamp asc
+```
+
+### Browser-originated events only
+
+```sql
+fields @timestamp, level, action, route, msg, clientTraceId, clientRequestId, sessionId, userId
+| filter data.source = "client"
+| sort @timestamp desc
+| limit 100
+```
+
+### Correlate one frontend API call through the backend
+
+```sql
+fields @timestamp, level, reqId, clientRequestId, clientTraceId, action, route, msg
+| filter clientRequestId = "CLIENT_REQUEST_ID_HERE"
 | sort @timestamp asc
 ```
 
@@ -169,11 +215,19 @@ stats count(*) as occurrences by action, route, msg
 - Start with `WARN` and `ERROR`; only widen to `INFO` or `DEBUG` when the
   timeline is unclear.
 - Use `reqId` for one request and `sessionId` for multi-request user journeys.
+- Use `clientTraceId` for one browser tab/session and `clientRequestId` for one
+  specific frontend API call.
 - Use `action` over raw message text whenever possible; `action` is designed to
   stay stable even when message wording evolves.
 - Prefer `data.*` fields for business identifiers like `contestId`,
   `providerId`, `sport`, or `entryId`.
+- Filter `data.source = "client"` when you want browser-originated events only;
+  remove that filter when you need the joined browser + backend timeline.
 
 ## Current Completion Status
 
-The service-wide logging rollout is complete for runtime backend services.
+The runtime logging rollout is complete for:
+
+- backend runtime services
+- mock-provider runtime services
+- active PoolMaster webapp browser observability through the client-log transport

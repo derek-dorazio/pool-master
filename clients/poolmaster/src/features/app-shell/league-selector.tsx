@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ListLeaguesResponses } from '@/lib/api';
+import { useLogger } from '@/lib/logger';
 import {
   buildLeaguePath,
   getLeagueSelectorOptions,
@@ -22,6 +23,9 @@ export function LeagueSelector({
   onCreateLeague,
   onNavigate,
 }: LeagueSelectorProps) {
+  const logger = useLogger().child({
+    feature: 'league-selector',
+  });
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const activeLeague = leagues.find((league) => league.leagueCode === activeLeagueCode) ?? null;
@@ -92,6 +96,15 @@ export function LeagueSelector({
                 onClick={() => {
                   setRecentLeagueCode(league.leagueCode);
                   setIsOpen(false);
+                  logger.info(
+                    {
+                      action: 'leagueSelector.navigate',
+                      data: {
+                        leagueCode: league.leagueCode,
+                      },
+                    },
+                    'Selected league from the league selector',
+                  );
                   onNavigate(buildLeaguePath(league.leagueCode));
                 }}
                 type="button"
@@ -113,6 +126,12 @@ export function LeagueSelector({
               data-testid="league-selector-create"
               onClick={() => {
                 setIsOpen(false);
+                logger.info(
+                  {
+                    action: 'leagueSelector.createRequested',
+                  },
+                  'Requested league creation from the selector',
+                );
                 onCreateLeague();
               }}
               type="button"

@@ -1,6 +1,21 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useLogger } from '@/lib/logger';
 
 export function NotFoundPage() {
+  const logger = useLogger().child({
+    feature: 'not-found-page',
+  });
+
+  useEffect(() => {
+    logger.info(
+      {
+        action: 'route.notFound.loaded',
+      },
+      'Rendered not-found route',
+    );
+  }, [logger]);
+
   return (
     <section className="rounded-[2rem] border border-border bg-card p-8 shadow-sm">
       <span className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">

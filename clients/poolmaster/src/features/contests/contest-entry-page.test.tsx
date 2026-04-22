@@ -267,14 +267,14 @@ describe('ContestEntryPage', () => {
     renderContestEntryPage();
 
     expect(await screen.findByText('Build your lineup')).toBeInTheDocument();
-    expect(screen.getByText('World rank #1')).toBeInTheDocument();
     expect(screen.getAllByText('0/2')).toHaveLength(2);
-    expect(screen.getByText('Saved')).toBeInTheDocument();
+    expect(screen.getByText('Winning score 271')).toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toBeInTheDocument();
     expect(screen.queryByText('Rory McIlroy')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('contest-entry-group-toggle-tier-2'));
     expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
+    expect(screen.getByText('World rank #2')).toBeInTheDocument();
 
     fireEvent.change(screen.getByTestId('contest-entry-name-input'), {
       target: { value: 'Sunday Charge' },
