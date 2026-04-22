@@ -7,7 +7,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { setAuditLogger, setAuditPrisma } from './admin-audit-service';
-import { setAuditQueryPrisma } from './audit-query-service';
+import { setAuditQueryLogger, setAuditQueryPrisma } from './audit-query-service';
 import { UserService } from './user-service';
 import { createUserHandlers } from './user-handler';
 import { HealthService } from './health-service';
@@ -80,13 +80,14 @@ export async function adminModule(
   setAuditPrisma(prisma);
   setAuditLogger(fastify.log);
   setAuditQueryPrisma(prisma);
+  setAuditQueryLogger(fastify.log);
 
   // --- Services ---
-  const userService = new UserService(prisma);
-  const healthService = new HealthService(prisma);
+  const userService = new UserService(prisma, fastify.log);
+  const healthService = new HealthService(prisma, fastify.log);
   const providerService = opts.providerService ?? new ProviderService(prisma, opts.providerRegistry, fastify.log);
-  const pollConfigService = new PollConfigService();
-  const ingestionConfigService = new IngestionConfigService();
+  const pollConfigService = new PollConfigService(fastify.log);
+  const ingestionConfigService = new IngestionConfigService(fastify.log);
 
   // --- Handlers ---
   const user = createUserHandlers(userService);

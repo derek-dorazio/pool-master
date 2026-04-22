@@ -7,6 +7,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 
 export type ServiceStatus = 'UP' | 'DEGRADED' | 'DOWN';
 
@@ -152,9 +153,15 @@ function version(): string {
 }
 
 export class HealthService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly logger?: FastifyBaseLogger,
+  ) {}
 
   async getServiceHealth(): Promise<ServiceHealth[]> {
+    this.logger?.debug({
+      action: 'adminHealthService.serviceHealth.start',
+    }, 'Computing service health');
     const checkedAt = new Date();
     let postgresStatus: ServiceStatus = 'UP';
     let postgresLatencyMs = 0;
@@ -166,9 +173,13 @@ export class HealthService {
     } catch {
       postgresStatus = 'DOWN';
       postgresLatencyMs = Date.now() - started;
+      this.logger?.warn({
+        action: 'adminHealthService.serviceHealth.postgresDown',
+        data: { latencyMs: postgresLatencyMs },
+      }, 'Postgres health probe failed');
     }
 
-    return [
+    const health: ServiceHealth[] = [
       {
         name: 'core-api',
         status: postgresStatus === 'DOWN' ? 'DEGRADED' : 'UP',
@@ -187,20 +198,34 @@ export class HealthService {
         ],
       },
     ];
+    this.logger?.info({
+      action: 'adminHealthService.serviceHealth.success',
+      data: {
+        serviceCount: health.length,
+        postgresStatus,
+      },
+    }, 'Computed service health');
+    return health;
   }
 
   async getInfrastructureMetrics(): Promise<InfrastructureMetrics> {
+    this.logger?.debug({
+      action: 'adminHealthService.infrastructure.start',
+    }, 'Computing infrastructure metrics');
     const checkedAt = new Date();
     let postgresStatus: ServiceStatus = 'UP';
     try {
       await this.prisma.$queryRaw`SELECT 1`;
     } catch {
       postgresStatus = 'DOWN';
+      this.logger?.warn({
+        action: 'adminHealthService.infrastructure.postgresDown',
+      }, 'Postgres infrastructure probe failed');
     }
 
     const heapUsedGb = Number((process.memoryUsage().heapUsed / 1024 / 1024 / 1024).toFixed(3));
 
-    return {
+    const metrics: InfrastructureMetrics = {
       postgres: {
         status: postgresStatus,
         cpuPercent: 0,
@@ -227,9 +252,19 @@ export class HealthService {
       },
       checkedAt,
     };
+    this.logger?.info({
+      action: 'adminHealthService.infrastructure.success',
+      data: {
+        postgresStatus,
+      },
+    }, 'Computed infrastructure metrics');
+    return metrics;
   }
 
   async getBusinessMetrics(): Promise<BusinessMetrics> {
+    this.logger?.debug({
+      action: 'adminHealthService.business.start',
+    }, 'Computing business metrics');
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const [activeUsersLast24h, activeContests, liveDrafts] = await Promise.all([
       this.prisma.user.count({
@@ -249,7 +284,7 @@ export class HealthService {
       }),
     ]);
 
-    return {
+    const metrics = {
       activeUsersLast24h,
       websocketConnectionsCurrent: 0,
       apiRequestsLast24h: 0,
@@ -260,9 +295,25 @@ export class HealthService {
       liveDrafts,
       checkedAt: new Date(),
     };
+    this.logger?.info({
+      action: 'adminHealthService.business.success',
+      data: {
+        activeUsersLast24h,
+        activeContests,
+        liveDrafts,
+      },
+    }, 'Computed business metrics');
+    return metrics;
   }
 
   async searchErrors(_query: ErrorLogQuery): Promise<{ items: ErrorLogEntry[]; total: number }> {
+    this.logger?.debug({
+      action: 'adminHealthService.searchErrors.start',
+    }, 'Searching error logs');
+    this.logger?.info({
+      action: 'adminHealthService.searchErrors.success',
+      data: { total: 0 },
+    }, 'Searched error logs');
     return {
       items: [],
       total: 0,
@@ -270,22 +321,45 @@ export class HealthService {
   }
 
   async getErrorDetail(errorId: string): Promise<ErrorLogDetail> {
+    this.logger?.warn({
+      action: 'adminHealthService.errorDetail.notFound',
+      data: { errorId },
+    }, 'Error detail requested for unknown error entry');
     throw new ErrorLogEntryNotFoundError(errorId);
   }
 
   async getAlertRules(): Promise<AlertRule[]> {
+    this.logger?.debug({
+      action: 'adminHealthService.alertRules.start',
+    }, 'Loading alert rules');
+    this.logger?.info({
+      action: 'adminHealthService.alertRules.success',
+      data: { count: 0 },
+    }, 'Loaded alert rules');
     return [];
   }
 
   async updateAlertRule(alertId: string, _update: AlertRuleUpdate): Promise<AlertRule> {
+    this.logger?.warn({
+      action: 'adminHealthService.alertRule.update.notFound',
+      data: { alertId },
+    }, 'Cannot update unknown alert rule');
     throw new AlertRuleNotFoundError(alertId);
   }
 
   async muteAlert(alertId: string, _durationMinutes: number): Promise<AlertRule> {
+    this.logger?.warn({
+      action: 'adminHealthService.alertRule.mute.notFound',
+      data: { alertId },
+    }, 'Cannot mute unknown alert rule');
     throw new AlertRuleNotFoundError(alertId);
   }
 
   async unmuteAlert(alertId: string): Promise<AlertRule> {
+    this.logger?.warn({
+      action: 'adminHealthService.alertRule.unmute.notFound',
+      data: { alertId },
+    }, 'Cannot unmute unknown alert rule');
     throw new AlertRuleNotFoundError(alertId);
   }
 }

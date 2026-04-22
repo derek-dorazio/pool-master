@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { UserAuthProvider as PrismaUserAuthProvider, UserDateFormat as PrismaUserDateFormat, UserTimeFormat as PrismaUserTimeFormat } from '@prisma/client';
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 
 // ---------------------------------------------------------------------------
@@ -78,7 +79,10 @@ export class AuthError extends Error {
 export class AuthService {
   private readonly jwtSecret: string;
 
-  constructor(private readonly prisma: PrismaClient) {
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly logger?: FastifyBaseLogger,
+  ) {
     this.jwtSecret = process.env.JWT_SECRET ?? 'poolmaster-dev-secret-change-in-production';
   }
 
@@ -94,6 +98,13 @@ export class AuthService {
   ): Promise<{ user: UserProfile; tokens: TokenPair }> {
     const normalizedUsername = normalizeUsername(username);
     const normalizedEmail = normalizeEmail(email);
+    this.logger?.debug({
+      action: 'authService.register.start',
+      data: {
+        username: normalizedUsername,
+        email: normalizedEmail,
+      },
+    }, 'Registering user account');
 
     await this.assertIdentifierAvailability(normalizedUsername, normalizedEmail);
 
@@ -111,6 +122,13 @@ export class AuthService {
     });
 
     const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin);
+    this.logger?.info({
+      action: 'authService.register.success',
+      data: {
+        userId: user.id,
+        isRootAdmin: user.isRootAdmin,
+      },
+    }, 'Registered user account');
 
     return {
       user: mapUserProfile(user),
@@ -123,6 +141,13 @@ export class AuthService {
    */
   async login(identifier: string, password: string): Promise<{ user: UserProfile; tokens: TokenPair }> {
     const normalizedIdentifier = normalizeIdentifier(identifier);
+    const identifierType = normalizedIdentifier.includes('@') ? 'email' : 'username';
+    this.logger?.debug({
+      action: 'authService.login.start',
+      data: {
+        identifierType,
+      },
+    }, 'Authenticating user');
     const user = await this.prisma.user.findFirst({
       where: {
         OR: [
@@ -132,9 +157,22 @@ export class AuthService {
       },
     });
     if (!user || !user.passwordHash) {
+      this.logger?.warn({
+        action: 'authService.login.invalidCredentials',
+        data: {
+          identifierType,
+        },
+      }, 'Rejected login for missing or passwordless user');
       throw new AuthError('Invalid username, email, or password', 'INVALID_CREDENTIALS');
     }
     if (!user.isActive) {
+      this.logger?.warn({
+        action: 'authService.login.inactiveAccount',
+        data: {
+          userId: user.id,
+          identifierType,
+        },
+      }, 'Rejected login for inactive account');
       throw new AuthError(
         'This account is inactive. Sign in is unavailable until the account is reactivated or deleted.',
         'ACCOUNT_INACTIVE',
@@ -144,10 +182,24 @@ export class AuthService {
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
+      this.logger?.warn({
+        action: 'authService.login.invalidCredentials',
+        data: {
+          userId: user.id,
+          identifierType,
+        },
+      }, 'Rejected login for invalid password');
       throw new AuthError('Invalid username, email, or password', 'INVALID_CREDENTIALS');
     }
 
     const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin);
+    this.logger?.info({
+      action: 'authService.login.success',
+      data: {
+        userId: user.id,
+        isRootAdmin: user.isRootAdmin,
+      },
+    }, 'Authenticated user');
 
     return {
       user: mapUserProfile(user),
@@ -159,15 +211,28 @@ export class AuthService {
    * Validates a refresh token and issues a new access token.
    */
   async refresh(refreshTokenValue: string): Promise<TokenPair> {
+    this.logger?.debug({
+      action: 'authService.refresh.start',
+    }, 'Refreshing session');
     const stored = await this.prisma.refreshToken.findUnique({
       where: { token: refreshTokenValue },
       include: { user: true },
     });
 
     if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
+      this.logger?.warn({
+        action: 'authService.refresh.invalidToken',
+      }, 'Rejected refresh for invalid or expired token');
       throw new AuthError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
     }
     if (!stored.user.isActive) {
+      this.logger?.warn({
+        action: 'authService.refresh.inactiveAccount',
+        data: {
+          userId: stored.user.id,
+          sessionId: stored.sessionId,
+        },
+      }, 'Rejected refresh for inactive account');
       throw new AuthError(
         'This account is inactive. Session refresh is unavailable.',
         'ACCOUNT_INACTIVE',
@@ -181,22 +246,39 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
 
-    return this.issueTokens(
+    const tokens = await this.issueTokens(
       stored.user.id,
       stored.user.email,
       stored.user.isRootAdmin,
       stored.sessionId,
     );
+    this.logger?.info({
+      action: 'authService.refresh.success',
+      data: {
+        userId: stored.user.id,
+        sessionId: stored.sessionId,
+      },
+    }, 'Refreshed session');
+    return tokens;
   }
 
   /**
    * Revokes a refresh token (logout).
    */
   async logout(refreshTokenValue: string): Promise<void> {
-    await this.prisma.refreshToken.updateMany({
+    this.logger?.debug({
+      action: 'authService.logout.start',
+    }, 'Revoking refresh token');
+    const result = await this.prisma.refreshToken.updateMany({
       where: { token: refreshTokenValue, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+    this.logger?.info({
+      action: 'authService.logout.success',
+      data: {
+        revokedCount: result.count,
+      },
+    }, 'Revoked refresh token');
   }
 
   /**
@@ -204,8 +286,20 @@ export class AuthService {
    */
   verifyAccessToken(token: string): JwtPayload {
     try {
-      return jwt.verify(token, this.jwtSecret) as JwtPayload;
-    } catch {
+      const payload = jwt.verify(token, this.jwtSecret) as JwtPayload;
+      this.logger?.debug({
+        action: 'authService.verifyAccessToken.success',
+        data: {
+          userId: payload.sub,
+          sessionId: payload.sid ?? null,
+        },
+      }, 'Verified access token');
+      return payload;
+    } catch (error) {
+      this.logger?.warn({
+        action: 'authService.verifyAccessToken.invalid',
+        err: error,
+      }, 'Rejected invalid access token');
       throw new AuthError('Invalid or expired access token', 'INVALID_TOKEN');
     }
   }
@@ -214,19 +308,43 @@ export class AuthService {
    * Returns the user profile for a given user ID.
    */
   async getProfile(userId: string): Promise<UserProfile> {
+    this.logger?.debug({
+      action: 'authService.getProfile.start',
+      data: { userId },
+    }, 'Loading authenticated user profile');
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
+      this.logger?.warn({
+        action: 'authService.getProfile.notFound',
+        data: { userId },
+      }, 'Authenticated user profile was not found');
       throw new AuthError('User not found', 'USER_NOT_FOUND', 404);
     }
+    this.logger?.info({
+      action: 'authService.getProfile.success',
+      data: { userId },
+    }, 'Loaded authenticated user profile');
     return mapUserProfile(user);
   }
 
   async issueSessionForUser(userId: string): Promise<TokenPair> {
+    this.logger?.debug({
+      action: 'authService.issueSession.start',
+      data: { userId },
+    }, 'Issuing session for existing user');
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
+      this.logger?.warn({
+        action: 'authService.issueSession.notFound',
+        data: { userId },
+      }, 'Cannot issue session for missing user');
       throw new AuthError('User not found', 'USER_NOT_FOUND', 404);
     }
     if (!user.isActive) {
+      this.logger?.warn({
+        action: 'authService.issueSession.inactiveAccount',
+        data: { userId },
+      }, 'Cannot issue session for inactive account');
       throw new AuthError(
         'This account is inactive. Session refresh is unavailable.',
         'ACCOUNT_INACTIVE',
@@ -234,7 +352,12 @@ export class AuthService {
       );
     }
 
-    return this.issueTokens(user.id, user.email, user.isRootAdmin);
+    const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin);
+    this.logger?.info({
+      action: 'authService.issueSession.success',
+      data: { userId: user.id },
+    }, 'Issued session for existing user');
+    return tokens;
   }
 
   // -------------------------------------------------------------------------
@@ -247,6 +370,14 @@ export class AuthService {
     isRootAdmin: boolean,
     sessionId: string = uuidv4(),
   ): Promise<TokenPair> {
+    this.logger?.debug({
+      action: 'authService.issueTokens.start',
+      data: {
+        userId,
+        sessionId,
+        isRootAdmin,
+      },
+    }, 'Issuing auth tokens');
     const now = Math.floor(Date.now() / 1000);
 
     const accessToken = jwt.sign(
@@ -265,6 +396,13 @@ export class AuthService {
         expiresAt,
       },
     });
+    this.logger?.info({
+      action: 'authService.issueTokens.success',
+      data: {
+        userId,
+        sessionId,
+      },
+    }, 'Issued auth tokens');
 
     return {
       accessToken,
@@ -288,6 +426,13 @@ export class AuthService {
     });
 
     if (emailCollision) {
+      this.logger?.warn({
+        action: 'authService.assertIdentifierAvailability.emailCollision',
+        data: {
+          email: normalizedEmail,
+          conflictingUserId: emailCollision.id,
+        },
+      }, 'Rejected registration for duplicate email');
       throw new AuthError('Email is already in use', 'EMAIL_EXISTS', 409);
     }
 
@@ -305,6 +450,13 @@ export class AuthService {
     });
 
     if (usernameCollision) {
+      this.logger?.warn({
+        action: 'authService.assertIdentifierAvailability.usernameCollision',
+        data: {
+          username: normalizedUsername,
+          conflictingUserId: usernameCollision.id,
+        },
+      }, 'Rejected registration for duplicate username');
       throw new AuthError('Username is already in use', 'USERNAME_EXISTS', 409);
     }
   }

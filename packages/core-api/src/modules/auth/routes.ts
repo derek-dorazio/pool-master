@@ -26,7 +26,7 @@ import {
 
 export async function authModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
-  const authService = new AuthService(prisma);
+  const authService = new AuthService(prisma, fastify.log);
   const handlers = createAuthHandlers(authService);
 
   // --- Registration ---

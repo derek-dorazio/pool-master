@@ -17,8 +17,8 @@ import { AuthService } from '../auth/auth-service';
 
 export async function accountModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
-  const service = new AccountService(prisma);
-  const authService = new AuthService(prisma);
+  const service = new AccountService(prisma, fastify.log);
+  const authService = new AuthService(prisma, fastify.log);
   const handlers = createAccountHandlers(service, authService);
 
   fastify.post('/reactivate', {

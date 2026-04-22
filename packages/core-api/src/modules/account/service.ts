@@ -5,6 +5,7 @@ import {
   UserTimeFormat as PrismaUserTimeFormat,
 } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import type { FastifyBaseLogger } from 'fastify';
 import { DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 
 const BCRYPT_ROUNDS = 12;
@@ -37,21 +38,33 @@ export class AccountLifecycleError extends Error {
 }
 
 export class AccountService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly logger?: FastifyBaseLogger,
+  ) {}
 
   async updateOwnProfile(
     userId: string,
     updates: { firstName: string; lastName: string },
   ): Promise<AccountUserRow> {
+    this.logger?.debug({
+      action: 'accountService.updateProfile.start',
+      data: { userId },
+    }, 'Updating account profile');
     const user = await this.requireUserForMutableAccountAction(userId);
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id: user.id },
       data: {
         firstName: updates.firstName.trim(),
         lastName: updates.lastName.trim(),
       },
     });
+    this.logger?.info({
+      action: 'accountService.updateProfile.success',
+      data: { userId: updatedUser.id },
+    }, 'Updated account profile');
+    return updatedUser;
   }
 
   async updateOwnPreferences(
@@ -63,9 +76,13 @@ export class AccountService {
       dateFormat?: DateFormat | null;
     },
   ): Promise<AccountUserRow> {
+    this.logger?.debug({
+      action: 'accountService.updatePreferences.start',
+      data: { userId },
+    }, 'Updating account preferences');
     const user = await this.requireUserForMutableAccountAction(userId);
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id: user.id },
       data: {
         ...(updates.timezone !== undefined && { timezone: normalizeOptionalString(updates.timezone) }),
@@ -78,6 +95,11 @@ export class AccountService {
         }),
       },
     });
+    this.logger?.info({
+      action: 'accountService.updatePreferences.success',
+      data: { userId: updatedUser.id },
+    }, 'Updated account preferences');
+    return updatedUser;
   }
 
   async changeOwnPassword(
@@ -89,9 +111,20 @@ export class AccountService {
       currentRefreshToken?: string | null;
     },
   ): Promise<void> {
+    this.logger?.debug({
+      action: 'accountService.changePassword.start',
+      data: {
+        userId,
+        retainsCurrentRefreshToken: Boolean(request.currentRefreshToken),
+      },
+    }, 'Changing account password');
     const user = await this.requireUserForMutableAccountAction(userId);
 
     if (!user.passwordHash) {
+      this.logger?.warn({
+        action: 'accountService.changePassword.unavailable',
+        data: { userId },
+      }, 'Rejected password change for passwordless account');
       throw new AccountLifecycleError(
         'Password change is unavailable for this account.',
         'ACCOUNT_PASSWORD_UNAVAILABLE',
@@ -100,6 +133,10 @@ export class AccountService {
     }
 
     if (request.newPassword !== request.confirmNewPassword) {
+      this.logger?.warn({
+        action: 'accountService.changePassword.confirmationMismatch',
+        data: { userId },
+      }, 'Rejected password change due to confirmation mismatch');
       throw new AccountLifecycleError(
         'New password confirmation does not match.',
         'PASSWORD_CONFIRMATION_MISMATCH',
@@ -109,6 +146,10 @@ export class AccountService {
 
     const currentMatches = await bcrypt.compare(request.currentPassword, user.passwordHash);
     if (!currentMatches) {
+      this.logger?.warn({
+        action: 'accountService.changePassword.invalidCurrentPassword',
+        data: { userId },
+      }, 'Rejected password change due to invalid current password');
       throw new AccountLifecycleError(
         'Current password is incorrect.',
         'INVALID_CURRENT_PASSWORD',
@@ -135,18 +176,34 @@ export class AccountService {
         data: { revokedAt: new Date() },
       });
     });
+    this.logger?.info({
+      action: 'accountService.changePassword.success',
+      data: { userId },
+    }, 'Changed account password');
   }
 
   async reactivateOwnAccount(userId: string): Promise<AccountUserRow> {
+    this.logger?.debug({
+      action: 'accountService.reactivate.start',
+      data: { userId },
+    }, 'Reactivating account');
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
     if (!user) {
+      this.logger?.warn({
+        action: 'accountService.reactivate.notFound',
+        data: { userId },
+      }, 'Cannot reactivate missing account');
       throw new AccountLifecycleError('User not found', 'USER_NOT_FOUND', 404);
     }
 
     if (user.isActive) {
+      this.logger?.warn({
+        action: 'accountService.reactivate.alreadyActive',
+        data: { userId },
+      }, 'Cannot reactivate account that is already active');
       throw new AccountLifecycleError(
         'Account is already active',
         'ACCOUNT_ALREADY_ACTIVE',
@@ -154,22 +211,39 @@ export class AccountService {
       );
     }
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id: userId },
       data: { isActive: true },
     });
+    this.logger?.info({
+      action: 'accountService.reactivate.success',
+      data: { userId: updatedUser.id },
+    }, 'Reactivated account');
+    return updatedUser;
   }
 
   async inactivateOwnAccount(userId: string): Promise<AccountUserRow> {
+    this.logger?.debug({
+      action: 'accountService.inactivate.start',
+      data: { userId },
+    }, 'Inactivating account');
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
     if (!user) {
+      this.logger?.warn({
+        action: 'accountService.inactivate.notFound',
+        data: { userId },
+      }, 'Cannot inactivate missing account');
       throw new AccountLifecycleError('User not found', 'USER_NOT_FOUND', 404);
     }
 
     if (!user.isActive) {
+      this.logger?.warn({
+        action: 'accountService.inactivate.alreadyInactive',
+        data: { userId },
+      }, 'Cannot inactivate account that is already inactive');
       throw new AccountLifecycleError(
         'Account is already inactive',
         'ACCOUNT_ALREADY_INACTIVE',
@@ -191,19 +265,35 @@ export class AccountService {
       return nextUser;
     });
 
+    this.logger?.info({
+      action: 'accountService.inactivate.success',
+      data: { userId: updatedUser.id },
+    }, 'Inactivated account');
     return updatedUser;
   }
 
   async deleteOwnInactiveAccount(userId: string, confirmationEmail: string): Promise<void> {
+    this.logger?.debug({
+      action: 'accountService.delete.start',
+      data: { userId },
+    }, 'Deleting inactive account');
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
     if (!user) {
+      this.logger?.warn({
+        action: 'accountService.delete.notFound',
+        data: { userId },
+      }, 'Cannot delete missing account');
       throw new AccountLifecycleError('User not found', 'USER_NOT_FOUND', 404);
     }
 
     if (user.isActive) {
+      this.logger?.warn({
+        action: 'accountService.delete.requiresInactive',
+        data: { userId },
+      }, 'Rejected account delete for active account');
       throw new AccountLifecycleError(
         'Account must be inactive before it can be permanently deleted',
         'ACCOUNT_DELETE_REQUIRES_INACTIVE',
@@ -212,6 +302,10 @@ export class AccountService {
     }
 
     if (user.email !== confirmationEmail) {
+      this.logger?.warn({
+        action: 'accountService.delete.confirmationMismatch',
+        data: { userId },
+      }, 'Rejected account delete due to confirmation mismatch');
       throw new AccountLifecycleError(
         'Delete confirmation email must match the account email exactly',
         'ACCOUNT_DELETE_CONFIRMATION_MISMATCH',
@@ -228,6 +322,16 @@ export class AccountService {
       ]);
 
     if (leagueCount > 0 || squadMembershipCount > 0 || createdLeagueCount > 0 || createdSquadCount > 0) {
+      this.logger?.warn({
+        action: 'accountService.delete.dependenciesExist',
+        data: {
+          userId,
+          leagueCount,
+          squadMembershipCount,
+          createdLeagueCount,
+          createdSquadCount,
+        },
+      }, 'Rejected account delete due to remaining dependencies');
       throw new AccountLifecycleError(
         'Account still owns or belongs to league-scoped data. Remove those relationships before deleting the account.',
         'ACCOUNT_DELETE_DEPENDENCIES_EXIST',
@@ -249,6 +353,10 @@ export class AccountService {
       await tx.migrationRun.deleteMany({ where: { startedById: userId } });
       await tx.user.delete({ where: { id: userId } });
     });
+    this.logger?.info({
+      action: 'accountService.delete.success',
+      data: { userId },
+    }, 'Deleted inactive account');
   }
 
   private async requireUserForMutableAccountAction(userId: string): Promise<{
@@ -256,6 +364,10 @@ export class AccountService {
     passwordHash: string | null;
     isActive: boolean;
   }> {
+    this.logger?.debug({
+      action: 'accountService.requireMutable.start',
+      data: { userId },
+    }, 'Checking mutable-account preconditions');
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -266,10 +378,18 @@ export class AccountService {
     });
 
     if (!user) {
+      this.logger?.warn({
+        action: 'accountService.requireMutable.notFound',
+        data: { userId },
+      }, 'Mutable account action rejected because user was not found');
       throw new AccountLifecycleError('User not found', 'USER_NOT_FOUND', 404);
     }
 
     if (!user.isActive) {
+      this.logger?.warn({
+        action: 'accountService.requireMutable.inactive',
+        data: { userId },
+      }, 'Mutable account action rejected for inactive account');
       throw new AccountLifecycleError(
         'Inactive accounts are read-only. Reactivate the account before editing profile, preferences, or password.',
         'ACCOUNT_INACTIVE_READ_ONLY',
@@ -277,6 +397,10 @@ export class AccountService {
       );
     }
 
+    this.logger?.debug({
+      action: 'accountService.requireMutable.success',
+      data: { userId },
+    }, 'Mutable-account preconditions satisfied');
     return user;
   }
 }

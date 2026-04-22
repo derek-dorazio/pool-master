@@ -7,6 +7,7 @@
  */
 
 import { logAdminAction } from './admin-audit-service';
+import type { FastifyBaseLogger } from 'fastify';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -43,10 +44,17 @@ let currentConfig: PollIntervalConfig = { ...DEFAULT_POLL_CONFIG };
 // ---------------------------------------------------------------------------
 
 export class PollConfigService {
+  constructor(private readonly logger?: FastifyBaseLogger) {}
   /**
    * Returns the current poll interval configuration.
    */
   async getConfig(): Promise<PollIntervalConfig> {
+    this.logger?.debug({
+      action: 'adminPollConfig.get.start',
+    }, 'Loading poll interval config');
+    this.logger?.info({
+      action: 'adminPollConfig.get.success',
+    }, 'Loaded poll interval config');
     return { ...currentConfig };
   }
 
@@ -58,6 +66,12 @@ export class PollConfigService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<PollIntervalConfig> {
+    this.logger?.debug({
+      action: 'adminPollConfig.update.start',
+      data: {
+        keys: Object.keys(partial),
+      },
+    }, 'Updating poll interval config');
     const before = { ...currentConfig };
     currentConfig = { ...currentConfig, ...partial };
 
@@ -72,6 +86,12 @@ export class PollConfigService {
       afterState: currentConfig as unknown as Record<string, unknown>,
     });
 
+    this.logger?.info({
+      action: 'adminPollConfig.update.success',
+      data: {
+        keys: Object.keys(partial),
+      },
+    }, 'Updated poll interval config');
     return { ...currentConfig };
   }
 
@@ -82,6 +102,9 @@ export class PollConfigService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<PollIntervalConfig> {
+    this.logger?.debug({
+      action: 'adminPollConfig.reset.start',
+    }, 'Resetting poll interval config');
     const before = { ...currentConfig };
     currentConfig = { ...DEFAULT_POLL_CONFIG };
 
@@ -96,6 +119,9 @@ export class PollConfigService {
       afterState: currentConfig as unknown as Record<string, unknown>,
     });
 
+    this.logger?.info({
+      action: 'adminPollConfig.reset.success',
+    }, 'Reset poll interval config');
     return { ...currentConfig };
   }
 }

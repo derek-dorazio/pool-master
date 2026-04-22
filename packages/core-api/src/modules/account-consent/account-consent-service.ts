@@ -1,7 +1,11 @@
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 
 export class AccountConsentService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly logger?: FastifyBaseLogger,
+  ) {}
 
   async recordConsent(params: {
     userId: string;
@@ -13,7 +17,16 @@ export class AccountConsentService {
     ipAddress?: string;
     userAgent?: string;
   }) {
-    return this.prisma.consentRecord.create({
+    this.logger?.debug({
+      action: 'accountConsentService.record.start',
+      data: {
+        userId: params.userId,
+        consentType: params.consentType,
+        granted: params.granted,
+        version: params.version,
+      },
+    }, 'Recording consent');
+    const record = await this.prisma.consentRecord.create({
       data: {
         userId: params.userId,
         consentType: params.consentType,
@@ -25,20 +38,50 @@ export class AccountConsentService {
         userAgent: params.userAgent,
       },
     });
+    this.logger?.info({
+      action: 'accountConsentService.record.success',
+      data: {
+        userId: params.userId,
+        consentType: params.consentType,
+        granted: params.granted,
+      },
+    }, 'Recorded consent');
+    return record;
   }
 
   async getConsentHistory(userId: string): Promise<unknown[]> {
-    return this.prisma.consentRecord.findMany({
+    this.logger?.debug({
+      action: 'accountConsentService.history.start',
+      data: { userId },
+    }, 'Loading consent history');
+    const history = await this.prisma.consentRecord.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
+    this.logger?.info({
+      action: 'accountConsentService.history.success',
+      data: {
+        userId,
+        recordCount: history.length,
+      },
+    }, 'Loaded consent history');
+    return history;
   }
 
   async hasActiveConsent(userId: string, consentType: string): Promise<boolean> {
+    this.logger?.debug({
+      action: 'accountConsentService.hasActive.start',
+      data: { userId, consentType },
+    }, 'Checking active consent state');
     const latest = await this.prisma.consentRecord.findFirst({
       where: { userId, consentType },
       orderBy: { createdAt: 'desc' },
     });
-    return latest?.granted ?? false;
+    const granted = latest?.granted ?? false;
+    this.logger?.info({
+      action: 'accountConsentService.hasActive.success',
+      data: { userId, consentType, granted },
+    }, 'Resolved active consent state');
+    return granted;
   }
 }

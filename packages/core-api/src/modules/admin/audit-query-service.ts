@@ -6,6 +6,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import { formatUserFullName } from '../../core/user-name';
 
 export interface AuditListQuery {
@@ -45,9 +46,14 @@ const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
 
 let prisma: PrismaClient | null = null;
+let logger: FastifyBaseLogger | null = null;
 
 export function setAuditQueryPrisma(client: PrismaClient): void {
   prisma = client;
+}
+
+export function setAuditQueryLogger(nextLogger: FastifyBaseLogger): void {
+  logger = nextLogger;
 }
 
 function requirePrisma(): PrismaClient {
@@ -88,6 +94,18 @@ function toAuditEntryView(row: {
 
 export async function queryAuditLog(query: AuditListQuery): Promise<AuditListResult> {
   const db = requirePrisma();
+  logger?.debug({
+    action: 'adminAuditQuery.search.start',
+    data: {
+      actorUserId: query.actorUserId ?? null,
+      actionName: query.action ?? null,
+      resourceType: query.resourceType ?? null,
+      resourceId: query.resourceId ?? null,
+      hasSearch: Boolean(query.search),
+      page: query.page ?? 1,
+      pageSize: query.pageSize ?? DEFAULT_PAGE_SIZE,
+    },
+  }, 'Querying admin audit log');
   const page = Math.max(query.page ?? 1, 1);
   const pageSize = Math.min(Math.max(query.pageSize ?? DEFAULT_PAGE_SIZE, 1), MAX_PAGE_SIZE);
   const skip = (page - 1) * pageSize;
@@ -127,6 +145,15 @@ export async function queryAuditLog(query: AuditListQuery): Promise<AuditListRes
     db.adminAuditEntry.count({ where }),
   ]);
 
+  logger?.info({
+    action: 'adminAuditQuery.search.success',
+    data: {
+      total,
+      count: rows.length,
+      page,
+      pageSize,
+    },
+  }, 'Queried admin audit log');
   return {
     items: rows.map(toAuditEntryView),
     total,
@@ -137,6 +164,10 @@ export async function queryAuditLog(query: AuditListQuery): Promise<AuditListRes
 
 export async function getAuditEntryById(entryId: string): Promise<AuditEntryView | null> {
   const db = requirePrisma();
+  logger?.debug({
+    action: 'adminAuditQuery.detail.start',
+    data: { entryId },
+  }, 'Loading admin audit entry');
   const row = await db.adminAuditEntry.findUnique({
     where: { id: entryId },
     include: {
@@ -146,10 +177,31 @@ export async function getAuditEntryById(entryId: string): Promise<AuditEntryView
     },
   });
 
-  return row ? toAuditEntryView(row) : null;
+  if (!row) {
+    logger?.warn({
+      action: 'adminAuditQuery.detail.notFound',
+      data: { entryId },
+    }, 'Admin audit entry not found');
+    return null;
+  }
+  logger?.info({
+    action: 'adminAuditQuery.detail.success',
+    data: { entryId },
+  }, 'Loaded admin audit entry');
+  return toAuditEntryView(row);
 }
 
 export async function exportAuditLogCsv(query: AuditListQuery): Promise<string> {
+  logger?.debug({
+    action: 'adminAuditQuery.export.start',
+    data: {
+      actorUserId: query.actorUserId ?? null,
+      actionName: query.action ?? null,
+      resourceType: query.resourceType ?? null,
+      resourceId: query.resourceId ?? null,
+      hasSearch: Boolean(query.search),
+    },
+  }, 'Exporting admin audit log');
   const result = await queryAuditLog({
     ...query,
     page: 1,
@@ -185,5 +237,12 @@ export async function exportAuditLogCsv(query: AuditListQuery): Promise<string> 
     item.hasStateChanges ? 'true' : 'false',
   ]);
 
-  return [header, ...rows].map((row) => row.map((value) => escapeCsv(String(value))).join(',')).join('\n');
+  const csv = [header, ...rows].map((row) => row.map((value) => escapeCsv(String(value))).join(',')).join('\n');
+  logger?.info({
+    action: 'adminAuditQuery.export.success',
+    data: {
+      count: result.items.length,
+    },
+  }, 'Exported admin audit log');
+  return csv;
 }

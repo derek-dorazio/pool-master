@@ -11,7 +11,7 @@ import { getAppPrisma } from '../../core/prisma-context';
 
 export async function accountConsentModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
-  const consentService = new AccountConsentService(prisma);
+  const consentService = new AccountConsentService(prisma, fastify.log);
 
   fastify.post<{ Body: { consentType: string; granted: boolean; version: string; minimumAgeThreshold?: number | null; ageAffirmed?: boolean | null } }>(
     '/consent',

@@ -208,6 +208,34 @@ describe('AuthService', () => {
     } satisfies Partial<AuthError>);
   });
 
+  it('rejects refresh when the token is missing or expired', async () => {
+    const prisma = {
+      refreshToken: {
+        findUnique: jest.fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce({
+            id: 'refresh-1',
+            token: 'expired-token',
+            sessionId: 'session-1',
+            revokedAt: null,
+            expiresAt: new Date(Date.now() - 60_000),
+            user: createUser(),
+          }),
+      },
+    } as any;
+
+    const service = new AuthService(prisma);
+
+    await expect(service.refresh('missing-token')).rejects.toMatchObject({
+      code: 'INVALID_REFRESH_TOKEN',
+      statusCode: 401,
+    } satisfies Partial<AuthError>);
+    await expect(service.refresh('expired-token')).rejects.toMatchObject({
+      code: 'INVALID_REFRESH_TOKEN',
+      statusCode: 401,
+    } satisfies Partial<AuthError>);
+  });
+
   it('issues a session for an active user and rejects inactive users', async () => {
     const prisma = {
       user: {
@@ -231,6 +259,28 @@ describe('AuthService', () => {
     await expect(service.issueSessionForUser('user-1')).rejects.toMatchObject({
       code: 'ACCOUNT_INACTIVE',
       statusCode: 403,
+    } satisfies Partial<AuthError>);
+  });
+
+  it('rejects session issuance and profile reads for missing users', async () => {
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
+      refreshToken: {
+        create: jest.fn().mockResolvedValue({}),
+      },
+    } as any;
+
+    const service = new AuthService(prisma);
+
+    await expect(service.issueSessionForUser('missing-user')).rejects.toMatchObject({
+      code: 'USER_NOT_FOUND',
+      statusCode: 404,
+    } satisfies Partial<AuthError>);
+    await expect(service.getProfile('missing-user')).rejects.toMatchObject({
+      code: 'USER_NOT_FOUND',
+      statusCode: 404,
     } satisfies Partial<AuthError>);
   });
 

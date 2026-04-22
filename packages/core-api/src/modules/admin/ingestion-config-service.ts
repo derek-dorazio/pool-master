@@ -7,6 +7,7 @@
  */
 
 import { logAdminAction } from './admin-audit-service';
+import type { FastifyBaseLogger } from 'fastify';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,10 +49,17 @@ let currentConfig: IngestionScheduleConfig = {
 // ---------------------------------------------------------------------------
 
 export class IngestionConfigService {
+  constructor(private readonly logger?: FastifyBaseLogger) {}
   /**
    * Returns the current ingestion schedule configuration.
    */
   async getConfig(): Promise<IngestionScheduleConfig> {
+    this.logger?.debug({
+      action: 'adminIngestionConfig.get.start',
+    }, 'Loading ingestion config');
+    this.logger?.info({
+      action: 'adminIngestionConfig.get.success',
+    }, 'Loaded ingestion config');
     return deepCopy(currentConfig);
   }
 
@@ -64,6 +72,12 @@ export class IngestionConfigService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<IngestionScheduleConfig> {
+    this.logger?.debug({
+      action: 'adminIngestionConfig.update.start',
+      data: {
+        keys: Object.keys(partial),
+      },
+    }, 'Updating ingestion config');
     const before = deepCopy(currentConfig);
     const { ...updates } = partial;
     currentConfig = { ...currentConfig, ...updates };
@@ -79,6 +93,12 @@ export class IngestionConfigService {
       afterState: currentConfig as unknown as Record<string, unknown>,
     });
 
+    this.logger?.info({
+      action: 'adminIngestionConfig.update.success',
+      data: {
+        keys: Object.keys(partial),
+      },
+    }, 'Updated ingestion config');
     return deepCopy(currentConfig);
   }
 
@@ -87,14 +107,27 @@ export class IngestionConfigService {
    * config with any sport-specific overrides.
    */
   async getPerSportConfig(sport: string): Promise<IngestionScheduleConfig> {
+    this.logger?.debug({
+      action: 'adminIngestionConfig.getPerSport.start',
+      data: { sport },
+    }, 'Loading per-sport ingestion config');
     const override = currentConfig.perSportOverrides?.[sport];
     if (!override) {
+      this.logger?.info({
+        action: 'adminIngestionConfig.getPerSport.globalFallback',
+        data: { sport },
+      }, 'No per-sport override found; returning global ingestion config');
       return deepCopy(currentConfig);
     }
-    return {
+    const config = {
       ...deepCopy(currentConfig),
       ...override,
     };
+    this.logger?.info({
+      action: 'adminIngestionConfig.getPerSport.success',
+      data: { sport },
+    }, 'Loaded per-sport ingestion config');
+    return config;
   }
 
   /**
@@ -107,6 +140,13 @@ export class IngestionConfigService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<IngestionScheduleConfig> {
+    this.logger?.debug({
+      action: 'adminIngestionConfig.setOverride.start',
+      data: {
+        sport,
+        keys: Object.keys(config),
+      },
+    }, 'Setting per-sport ingestion override');
     const before = deepCopy(currentConfig);
     if (!currentConfig.perSportOverrides) {
       currentConfig.perSportOverrides = {};
@@ -127,6 +167,13 @@ export class IngestionConfigService {
       afterState: currentConfig as unknown as Record<string, unknown>,
     });
 
+    this.logger?.info({
+      action: 'adminIngestionConfig.setOverride.success',
+      data: {
+        sport,
+        keys: Object.keys(config),
+      },
+    }, 'Set per-sport ingestion override');
     return deepCopy(currentConfig);
   }
 
@@ -137,6 +184,9 @@ export class IngestionConfigService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<IngestionScheduleConfig> {
+    this.logger?.debug({
+      action: 'adminIngestionConfig.reset.start',
+    }, 'Resetting ingestion config');
     const before = deepCopy(currentConfig);
     currentConfig = {
       ...DEFAULT_INGESTION_CONFIG,
@@ -154,6 +204,9 @@ export class IngestionConfigService {
       afterState: currentConfig as unknown as Record<string, unknown>,
     });
 
+    this.logger?.info({
+      action: 'adminIngestionConfig.reset.success',
+    }, 'Reset ingestion config');
     return deepCopy(currentConfig);
   }
 }

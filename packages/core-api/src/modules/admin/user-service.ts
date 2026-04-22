@@ -11,6 +11,7 @@ import type {
   UserDateFormat as PrismaUserDateFormat,
   UserTimeFormat as PrismaUserTimeFormat,
 } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
 import { logAdminAction } from './admin-audit-service';
 
@@ -61,11 +62,23 @@ export class UserNotFoundError extends Error {
 }
 
 export class UserService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly logger?: FastifyBaseLogger,
+  ) {}
 
   async searchUsers(
     query: UserSearchQuery,
   ): Promise<{ items: UserListItem[]; total: number }> {
+    this.logger?.debug({
+      action: 'adminUserService.search.start',
+      data: {
+        hasSearch: Boolean(query.search),
+        isActive: query.isActive ?? null,
+        page: query.page ?? 1,
+        pageSize: query.pageSize ?? 25,
+      },
+    }, 'Searching users');
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 25;
     const skip = (page - 1) * pageSize;
@@ -109,16 +122,37 @@ export class UserService {
       createdAt: row.createdAt,
     }));
 
+    this.logger?.info({
+      action: 'adminUserService.search.success',
+      data: {
+        total,
+        count: items.length,
+        page,
+        pageSize,
+      },
+    }, 'Searched users');
     return { items, total };
   }
 
   async getUserDetail(userId: string): Promise<UserDetailView> {
+    this.logger?.debug({
+      action: 'adminUserService.detail.start',
+      data: { userId },
+    }, 'Loading admin user detail');
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
+      this.logger?.warn({
+        action: 'adminUserService.detail.notFound',
+        data: { userId },
+      }, 'Admin user detail not found');
       throw new UserNotFoundError(userId);
     }
 
+    this.logger?.info({
+      action: 'adminUserService.detail.success',
+      data: { userId },
+    }, 'Loaded admin user detail');
     return {
       id: user.id,
       email: user.email,
@@ -141,10 +175,20 @@ export class UserService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<void> {
+    this.logger?.debug({
+      action: 'adminUserService.forceLogout.start',
+      data: { userId },
+    }, 'Force-logging out user');
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new UserNotFoundError(userId);
+    if (!user) {
+      this.logger?.warn({
+        action: 'adminUserService.forceLogout.notFound',
+        data: { userId },
+      }, 'Cannot force logout missing user');
+      throw new UserNotFoundError(userId);
+    }
 
-    await this.prisma.refreshToken.updateMany({
+    const result = await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
@@ -157,6 +201,13 @@ export class UserService {
       resourceId: userId,
       description: `Force-logged out all sessions for user ${userId}`,
     });
+    this.logger?.info({
+      action: 'adminUserService.forceLogout.success',
+      data: {
+        userId,
+        revokedCount: result.count,
+      },
+    }, 'Force-logged out user');
   }
 
   async disableUser(
@@ -165,8 +216,18 @@ export class UserService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<void> {
+    this.logger?.debug({
+      action: 'adminUserService.disable.start',
+      data: { userId },
+    }, 'Disabling user');
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new UserNotFoundError(userId);
+    if (!user) {
+      this.logger?.warn({
+        action: 'adminUserService.disable.notFound',
+        data: { userId },
+      }, 'Cannot disable missing user');
+      throw new UserNotFoundError(userId);
+    }
 
     await this.prisma.user.update({
       where: { id: userId },
@@ -188,6 +249,10 @@ export class UserService {
       afterState: { isActive: false },
       reason,
     });
+    this.logger?.info({
+      action: 'adminUserService.disable.success',
+      data: { userId, reason },
+    }, 'Disabled user');
   }
 
   async enableUser(
@@ -195,8 +260,18 @@ export class UserService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<void> {
+    this.logger?.debug({
+      action: 'adminUserService.enable.start',
+      data: { userId },
+    }, 'Enabling user');
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new UserNotFoundError(userId);
+    if (!user) {
+      this.logger?.warn({
+        action: 'adminUserService.enable.notFound',
+        data: { userId },
+      }, 'Cannot enable missing user');
+      throw new UserNotFoundError(userId);
+    }
 
     await this.prisma.user.update({
       where: { id: userId },
@@ -212,6 +287,10 @@ export class UserService {
       description: `Re-enabled user ${userId}`,
       afterState: { isActive: true },
     });
+    this.logger?.info({
+      action: 'adminUserService.enable.success',
+      data: { userId },
+    }, 'Enabled user');
   }
 }
 

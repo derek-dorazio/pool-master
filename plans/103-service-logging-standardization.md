@@ -108,8 +108,8 @@ codebase.
 | 103-010 | 2 | Build a branch inventory and use-case-to-test matrix for each owned service slice | Completed | Worker-owned slices reviewed route, mapper/translation, service, and persistence branches directly in-code; the resulting branch inventory is expressed through the added logging coverage and owned test additions rather than a separate standalone matrix artifact. |
 | 103-011 | 2 | Add or refactor lower-layer tests so every identified branch has truthful proof | Completed | Added/refined unit, integration, contract, and functional coverage across the owned slices until the full repo gate set passed with the new branch instrumentation in place. |
 | 103-012 | 2 | Normalize misshaped/untyped errors discovered during branch coverage work | Completed | The pass corrected stale/stubbed tests, fixed history typing drift, and normalized route/service error handling where branch-proof work exposed shape inconsistencies. |
-| 103-013 | 3 | Backfill remaining backend services with missing logs that adhere to the policy | Not Started | Explicit service-wide logging backfill lane after platform and high-value modules are done. |
-| 103-014 | 3 | Review CloudWatch searchability and document operational query patterns for QA/prod debugging | Not Started | Close the loop so operators know how to use the logs being emitted. |
+| 103-013 | 3 | Backfill remaining backend services with missing logs that adhere to the policy | In Progress | Final sweep is split into explicit child slices: `me8.5.2` admin support + auth/account services is complete; remaining child slices are `me8.5.3` contest-scoring + participant valuation helpers and `me8.5.4` draft/scoring engines + mock-provider operational flows. |
+| 103-014 | 3 | Review CloudWatch searchability and document operational query patterns for QA/prod debugging | Not Started | Tracked as `me8.5.5` after the final code backfill slices land. |
 
 ## Worker Slice Strategy
 
