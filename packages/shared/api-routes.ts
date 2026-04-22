@@ -123,6 +123,10 @@ export const API_ROUTES = {
     pollIntervals: '/api/v1/config/poll-intervals',
   },
 
+  observability: {
+    clientLogs: '/api/v1/client-logs',
+  },
+
   // Notifications
   notifications: {
     list: '/api/v1/notifications',

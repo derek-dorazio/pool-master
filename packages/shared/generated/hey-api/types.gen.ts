@@ -12940,6 +12940,112 @@ export type GetPollIntervalsResponses = {
 
 export type GetPollIntervalsResponse = GetPollIntervalsResponses[keyof GetPollIntervalsResponses];
 
+export type IngestClientLogsData = {
+    body: {
+        schemaVersion: 1;
+        clientTraceId: string;
+        webappVersion: string;
+        userAgent: string;
+        entries: Array<{
+            level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+            action: string;
+            msg?: string;
+            ts: string;
+            route?: string;
+            sessionId?: string;
+            userId?: string;
+            clientRequestId?: string;
+            data?: {
+                [key: string]: unknown;
+            };
+            err?: unknown;
+        }>;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/client-logs/';
+};
+
+export type IngestClientLogsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    413: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    429: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type IngestClientLogsError = IngestClientLogsErrors[keyof IngestClientLogsErrors];
+
+export type IngestClientLogsResponses = {
+    /**
+     * Default Response
+     */
+    204: void;
+};
+
+export type IngestClientLogsResponse = IngestClientLogsResponses[keyof IngestClientLogsResponses];
+
 export type GetDraftStateData = {
     body?: never;
     path: {

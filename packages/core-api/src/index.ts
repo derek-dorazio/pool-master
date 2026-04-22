@@ -29,6 +29,7 @@ import { accountConsentModule } from './modules/account-consent/routes';
 import { accountModule } from './modules/account/routes';
 import { adminModule } from './modules/admin/routes';
 import { configModule } from './modules/config/routes';
+import { clientLogsModule } from './modules/client-logs/routes';
 
 // Draft module
 import { draftsModule } from './modules/drafts/routes';
@@ -107,6 +108,7 @@ export function buildApp() {
   app.register(accountConsentModule, { prefix: '/api/v1/account' });
   app.register(adminModule, { prefix: '/api/v1/admin', providerRegistry: registry });
   app.register(configModule, { prefix: '/api/v1/config' });
+  app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
 
   // =========================================================================
   // Draft module

@@ -43,10 +43,15 @@ const PUBLIC_ROUTES = new Set([
   'POST /api/v1/auth/login',
   'POST /api/v1/auth/refresh',
   'POST /api/v1/auth/logout',
+  'POST /api/v1/client-logs',
 ]);
 
 const PUBLIC_ROUTE_PATTERNS = [
   /^GET \/api\/v1\/invitations\/[^/?#]+$/,
+];
+
+const PUBLIC_ROUTE_OPTIONAL_AUTH_PATTERNS = [
+  /^POST \/api\/v1\/client-logs\/?$/,
 ];
 
 function isPublicRoute(method: string, url: string): boolean {
@@ -66,8 +71,42 @@ async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
 
   fastify.decorateRequest('authUser', undefined);
 
+  function tryAttachOptionalAuthUser(request: FastifyRequest) {
+    const authHeader = request.headers.authorization;
+    const accessToken = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : readAccessCookie(request.headers.cookie);
+
+    if (!accessToken) {
+      return;
+    }
+
+    try {
+      const payload = jwt.verify(accessToken, jwtSecret) as {
+        sub: string;
+        email: string;
+        isRootAdmin?: boolean;
+        sid?: string;
+      };
+
+      request.authUser = {
+        userId: payload.sub,
+        email: payload.email,
+        isRootAdmin: payload.isRootAdmin === true,
+        sessionId: payload.sid ?? null,
+      };
+    } catch {
+      // Optional auth binding should never block a public route.
+    }
+  }
+
   fastify.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
+    const signature = `${request.method.toUpperCase()} ${request.url.split('?')[0] ?? request.url}`;
+
     if (isPublicRoute(request.method, request.url)) {
+      if (PUBLIC_ROUTE_OPTIONAL_AUTH_PATTERNS.some((pattern) => pattern.test(signature))) {
+        tryAttachOptionalAuthUser(request);
+      }
       return;
     }
 

@@ -13,7 +13,7 @@ existing CloudWatch-backed service logs.
 | WLO-001 | 1 | Logger foundation in the webapp | Done | Added shared logger types, redaction, trace id helper, console sink, singleton hook, bootstrap wiring, test logger helper, and unit proof under `clients/poolmaster/src/lib/logger/`. |
 | WLO-001A | 1 | Expose safe sessionId in the webapp auth/session model | Done | Added safe `sessionId` to auth/session DTOs, authenticated account self-service responses, generated SDK types, and the frontend session store/logger context, with unit/contract/functional proof. |
 | WLO-002 | 2 | Correlation headers and backend request bindings | Done | Added browser request headers in `clients/poolmaster/src/lib/api.ts`, bound them into backend request logs in `packages/core-api/src/core/logger.ts`, and added unit + webapp proof for header propagation. |
-| WLO-003 | 3 | Client log ingestion endpoint and transport | Not Started | Add backend client-log endpoint plus browser batching transport. |
+| WLO-003 | 3 | Client log ingestion endpoint and transport | Done | Added shared client-log DTOs, the public `/api/v1/client-logs` operational endpoint with optional auth binding and rate-limit/oversize handling, browser batching transport, functional/unit proof, and refreshed generated OpenAPI artifacts. |
 | WLO-004 | 3 | Global browser failure capture and fallback UX | Not Started | Add error boundary plus `error` and `unhandledrejection` capture. |
 | WLO-005 | 4 | Feature-level logging backfill and branch proof | Not Started | Instrument auth, leagues, contests, account, root-admin, routes, and app-shell with behavioral test proof. |
 | WLO-006 | 5 | Docs and final gap sweep | Not Started | Add operational query guidance and final observability gap audit. |
