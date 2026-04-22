@@ -84,6 +84,16 @@ test('ScenarioStore rejects new contestants in deltas unless they include a name
   }
 });
 
+test('ScenarioStore throws for missing scenarios and events', () => {
+  const store = new ScenarioStore(scenarioDir);
+
+  assert.throws(() => store.getScenario('missing-scenario'), /Scenario not found/);
+  assert.throws(
+    () => store.getEvent('golf-major-2026', 'missing-event'),
+    /Event not found/,
+  );
+});
+
 test('routes expose detail and field endpoints', async () => {
   const previousScenarioDir = process.env.SCENARIO_DIR;
   process.env.SCENARIO_DIR = scenarioDir;

@@ -3,6 +3,7 @@
  * and cross-provider participant resolution.
  */
 
+import type { FastifyBaseLogger } from 'fastify';
 import type { Participant } from '@poolmaster/shared/domain';
 
 export interface MatchCandidate {
@@ -76,7 +77,16 @@ export function findMatches(
   sport: string,
   nationality: string | undefined,
   existingParticipants: Participant[],
+  logger?: FastifyBaseLogger,
 ): DeduplicationResult {
+  logger?.debug({
+    action: 'participantDedup.findMatches.start',
+    data: {
+      sport,
+      nationality: nationality ?? null,
+      existingParticipantCount: existingParticipants.length,
+    },
+  }, 'Finding participant deduplication matches');
   const candidates: MatchCandidate[] = [];
 
   // Only compare within the same sport
@@ -125,28 +135,61 @@ export function findMatches(
 
   // Determine result
   if (candidates.length > 0 && candidates[0].confidence === 'EXACT') {
-    return {
+    const result = {
       canonicalParticipantId: candidates[0].participant.id,
       candidates,
       needsManualReview: false,
     };
+    logger?.info({
+      action: 'participantDedup.findMatches.exact',
+      data: {
+        sport,
+        candidateCount: candidates.length,
+        canonicalParticipantId: result.canonicalParticipantId,
+      },
+    }, 'Resolved exact participant deduplication match');
+    return result;
   }
 
   if (candidates.length > 0 && candidates[0].confidence === 'HIGH') {
-    return {
+    const result = {
       canonicalParticipantId: candidates[0].participant.id,
       candidates,
       needsManualReview: false,
     };
+    logger?.info({
+      action: 'participantDedup.findMatches.highConfidence',
+      data: {
+        sport,
+        candidateCount: candidates.length,
+        canonicalParticipantId: result.canonicalParticipantId,
+      },
+    }, 'Resolved high-confidence participant deduplication match');
+    return result;
   }
 
   if (candidates.length > 0) {
-    return {
+    const result = {
       candidates,
       needsManualReview: true,
     };
+    logger?.warn({
+      action: 'participantDedup.findMatches.manualReview',
+      data: {
+        sport,
+        candidateCount: candidates.length,
+      },
+    }, 'Participant deduplication requires manual review');
+    return result;
   }
 
+  logger?.info({
+    action: 'participantDedup.findMatches.none',
+    data: {
+      sport,
+      candidateCount: 0,
+    },
+  }, 'No participant deduplication matches found');
   return { candidates: [], needsManualReview: false };
 }
 

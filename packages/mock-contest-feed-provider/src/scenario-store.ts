@@ -1,3 +1,4 @@
+import type { FastifyBaseLogger } from 'fastify';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -513,7 +514,10 @@ function loadJsonFile(filePath: string): ContestFeedScenarioRecord {
 export class ScenarioStore {
   private readonly scenarios: readonly ContestFeedScenarioRecord[];
 
-  public constructor(scenarioDir: string) {
+  public constructor(
+    scenarioDir: string,
+    private readonly logger?: FastifyBaseLogger,
+  ) {
     const entries = readdirSync(scenarioDir, { withFileTypes: true })
       .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
       .map((entry) => loadJsonFile(join(scenarioDir, entry.name)));
@@ -524,10 +528,17 @@ export class ScenarioStore {
     );
 
     this.scenarios = entries.sort((left, right) => left.scenarioId.localeCompare(right.scenarioId));
+    this.logger?.info(
+      {
+        action: 'mockScenarioStore.load.success',
+        data: { scenarioDir, scenarioCount: this.scenarios.length, eventCount: this.getEventCount() },
+      },
+      'Loaded mock contest-feed scenarios',
+    );
   }
 
   public listScenarios(): readonly ScenarioSummary[] {
-    return this.scenarios.map((scenario) => ({
+    const scenarios = this.scenarios.map((scenario) => ({
       scenarioId: scenario.scenarioId,
       sport: scenario.sport,
       provider: scenario.provider,
@@ -537,19 +548,32 @@ export class ScenarioStore {
       seasonYear: scenario.season.year,
       eventCount: scenario.events.length,
     }));
+    this.logger?.debug(
+      { action: 'mockScenarioStore.listScenarios', data: { scenarioCount: scenarios.length } },
+      'Listed mock contest-feed scenarios',
+    );
+    return scenarios;
   }
 
   public getScenario(scenarioId: string): ContestFeedScenarioRecord {
     const scenario = this.scenarios.find((item) => item.scenarioId === scenarioId);
     if (!scenario) {
+      this.logger?.warn(
+        { action: 'mockScenarioStore.getScenario.notFound', data: { scenarioId } },
+        'Mock contest-feed scenario was not found',
+      );
       throw new Error(`Scenario not found: ${scenarioId}`);
     }
+    this.logger?.debug(
+      { action: 'mockScenarioStore.getScenario.success', data: { scenarioId } },
+      'Loaded mock contest-feed scenario',
+    );
     return scenario;
   }
 
   public listEvents(scenarioId: string): readonly EventSummary[] {
     const scenario = this.getScenario(scenarioId);
-    return [...scenario.events]
+    const events = [...scenario.events]
       .sort(
         (left, right) =>
           left.schedule.startsAt.localeCompare(right.schedule.startsAt) || left.eventId.localeCompare(right.eventId),
@@ -566,20 +590,33 @@ export class ScenarioStore {
         fieldStatus: event.field.status,
         contestantCount: event.field.contestants.length,
       }));
+    this.logger?.info(
+      { action: 'mockScenarioStore.listEvents', data: { scenarioId, eventCount: events.length } },
+      'Listed mock contest-feed scenario events',
+    );
+    return events;
   }
 
   public getEvent(scenarioId: string, eventId: string): ContestFeedEventRecord {
     const scenario = this.getScenario(scenarioId);
     const event = scenario.events.find((item) => item.eventId === eventId);
     if (!event) {
+      this.logger?.warn(
+        { action: 'mockScenarioStore.getEvent.notFound', data: { scenarioId, eventId } },
+        'Mock contest-feed event was not found',
+      );
       throw new Error(`Event not found: ${scenarioId}/${eventId}`);
     }
+    this.logger?.debug(
+      { action: 'mockScenarioStore.getEvent.success', data: { scenarioId, eventId } },
+      'Loaded mock contest-feed event',
+    );
     return event;
   }
 
   public getEventResponse(scenarioId: string, eventId: string): ContestFeedEventResponse {
     const scenario = this.getScenario(scenarioId);
-    return {
+    const response = {
       scenarioId,
       sport: scenario.sport,
       provider: scenario.provider,
@@ -587,13 +624,18 @@ export class ScenarioStore {
       season: scenario.season,
       event: this.getEvent(scenarioId, eventId),
     };
+    this.logger?.info(
+      { action: 'mockScenarioStore.getEventResponse', data: { scenarioId, eventId } },
+      'Built mock contest-feed event detail response',
+    );
+    return response;
   }
 
   public getSnapshot(scenarioId: string, eventId: string, feedKind: FeedKind): ContestFeedSnapshotResponse {
     const event = this.getEvent(scenarioId, eventId);
 
     if (feedKind === 'field') {
-      return {
+      const fieldSnapshot = {
         scenarioId,
         eventId,
         eventName: event.name,
@@ -602,12 +644,17 @@ export class ScenarioStore {
         note: event.field.note,
         contestants: event.field.contestants,
       };
+      this.logger?.info(
+        { action: 'mockScenarioStore.getSnapshot.field', data: { scenarioId, eventId, contestantCount: fieldSnapshot.contestants.length } },
+        'Built mock field snapshot response',
+      );
+      return fieldSnapshot;
     }
 
     const feed = event.feeds[feedKind];
     const contestants = mergeContestants(event.field.contestants, feed.contestants);
 
-    return {
+    const snapshot = {
       scenarioId,
       eventId,
       eventName: event.name,
@@ -616,11 +663,16 @@ export class ScenarioStore {
       note: feed.note,
       contestants,
     };
+    this.logger?.info(
+      { action: 'mockScenarioStore.getSnapshot.feed', data: { scenarioId, eventId, feedKind, contestantCount: contestants.length } },
+      'Built mock feed snapshot response',
+    );
+    return snapshot;
   }
 
   public getUpdates(scenarioId: string, eventId: string): ContestFeedUpdateResponse {
     const event = this.getEvent(scenarioId, eventId);
-    return {
+    const response = {
       scenarioId,
       eventId,
       eventName: event.name,
@@ -629,6 +681,11 @@ export class ScenarioStore {
         contestants: mergeContestants(event.field.contestants, update.contestants),
       })),
     };
+    this.logger?.info(
+      { action: 'mockScenarioStore.getUpdates', data: { scenarioId, eventId, updateCount: response.updates.length } },
+      'Built mock contest-feed updates response',
+    );
+    return response;
   }
 
   public getScenarioCount(): number {

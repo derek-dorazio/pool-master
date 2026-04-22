@@ -33,6 +33,11 @@ export interface RequestLogBindings {
   route: string;
 }
 
+export type ServiceLogger = Pick<
+  FastifyBaseLogger,
+  'debug' | 'info' | 'warn' | 'error' | 'fatal'
+>;
+
 function resolveServiceVersion(): string | undefined {
   return process.env.RELEASE_VERSION
     ?? process.env.APP_VERSION

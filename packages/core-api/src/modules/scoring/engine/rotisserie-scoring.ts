@@ -38,9 +38,16 @@ export interface RotisserieEntryResult {
 export function scoreRotisserie(
   config: RotisserieConfig,
   entries: RotisserieEntryStats[],
+  logger?: ServiceLogger,
 ): RotisserieEntryResult[] {
   const numEntries = entries.length;
-  if (numEntries === 0) return [];
+  if (numEntries === 0) {
+    logger?.warn(
+      { action: 'rotisserie.score.noEntries', data: { categoryCount: config.categories.length } },
+      'Rotisserie scoring received no entries',
+    );
+    return [];
+  }
 
   const lowerIsBetter = new Set(config.lower_is_better_categories ?? []);
 
@@ -93,7 +100,7 @@ export function scoreRotisserie(
     }
   }
 
-  return entries.map((entry) => {
+  const resultsList = entries.map((entry) => {
     const result = results.get(entry.entryId)!;
     return {
       entryId: entry.entryId,
@@ -101,4 +108,10 @@ export function scoreRotisserie(
       totalRotoPoints: result.total,
     };
   });
+  logger?.info(
+    { action: 'rotisserie.score.success', data: { entryCount: entries.length, categoryCount: config.categories.length } },
+    'Scored rotisserie standings',
+  );
+  return resultsList;
 }
+import type { ServiceLogger } from '../../../core/logger';

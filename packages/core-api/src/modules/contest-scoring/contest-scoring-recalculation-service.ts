@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import type {
   AggregationDefinitionId,
   ContestEntryPrizeAward,
@@ -35,13 +36,20 @@ export interface ContestScoringRecalculationResult {
 export class ContestScoringRecalculationService {
   private readonly entryScoringResultService: ContestEntryScoringResultService;
 
-  constructor(private readonly prisma: PrismaClient) {
-    this.entryScoringResultService = new ContestEntryScoringResultService(prisma);
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly logger?: FastifyBaseLogger,
+  ) {
+    this.entryScoringResultService = new ContestEntryScoringResultService(prisma, logger);
   }
 
   async recalculateContest(
     contestId: string,
   ): Promise<ContestScoringRecalculationResult> {
+    this.logger?.debug({
+      action: 'contestScoringRecalculation.start',
+      data: { contestId },
+    }, 'Recalculating contest scoring');
     const contest = await this.prisma.contest.findUnique({
       where: { id: contestId },
       include: {
@@ -78,12 +86,24 @@ export class ContestScoringRecalculationService {
     });
 
     if (!contest) {
+      this.logger?.warn({
+        action: 'contestScoringRecalculation.missingContest',
+        data: { contestId },
+      }, 'Cannot recalculate missing contest');
       throw new Error(`Contest ${contestId} not found`);
     }
     if (!contest.configuration) {
+      this.logger?.error({
+        action: 'contestScoringRecalculation.missingConfiguration',
+        data: { contestId },
+      }, 'Contest is missing scoring configuration');
       throw new Error(`Contest ${contestId} is missing ContestConfiguration`);
     }
     if (!contest.configuration.entryAggregationRule) {
+      this.logger?.error({
+        action: 'contestScoringRecalculation.missingAggregationRule',
+        data: { contestId },
+      }, 'Contest is missing entry aggregation rule');
       throw new Error(
         `Contest ${contestId} is missing ContestEntryAggregationRule`,
       );
@@ -123,7 +143,7 @@ export class ContestScoringRecalculationService {
         }),
         scoringRules,
         aggregationRule,
-      });
+      }, this.logger);
 
       return {
         entryId: entry.id,
@@ -144,6 +164,13 @@ export class ContestScoringRecalculationService {
     for (const scoredEntry of scoredEntries) {
       const ranking = rankedEntries.find((entry) => entry.entryId === scoredEntry.entryId);
       if (!ranking) {
+        this.logger?.error({
+          action: 'contestScoringRecalculation.missingRanking',
+          data: {
+            contestId,
+            entryId: scoredEntry.entryId,
+          },
+        }, 'Missing ranking for scored contest entry');
         throw new Error(`Missing ranking for entry ${scoredEntry.entryId}`);
       }
 
@@ -181,12 +208,22 @@ export class ContestScoringRecalculationService {
       })
       .filter((change): change is ContestScoringRecalculationChange => Boolean(change));
 
-    return {
+    const recalculationResult = {
       contestId,
       teamsAffected: changes.length,
       standingsChanged: changes.length > 0,
       changes,
     };
+    this.logger?.info({
+      action: 'contestScoringRecalculation.success',
+      data: {
+        contestId,
+        entryCount: scoredEntries.length,
+        teamsAffected: recalculationResult.teamsAffected,
+        standingsChanged: recalculationResult.standingsChanged,
+      },
+    }, 'Recalculated contest scoring');
+    return recalculationResult;
   }
 }
 

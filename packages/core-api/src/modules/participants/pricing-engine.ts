@@ -5,6 +5,7 @@
  * No database access — the service layer fetches data and calls these.
  */
 
+import type { FastifyBaseLogger } from 'fastify';
 import type { PricingConfig, PriceOverride } from '@poolmaster/shared/domain';
 
 export interface ParticipantPricingInput {
@@ -35,8 +36,24 @@ export interface ParticipantPrice {
 export function calculatePrices(
   participants: ParticipantPricingInput[],
   config: PricingConfig,
+  logger?: FastifyBaseLogger,
 ): ParticipantPrice[] {
-  if (participants.length === 0) return [];
+  logger?.debug({
+    action: 'participantPricing.calculate.start',
+    data: {
+      participantCount: participants.length,
+      overrideCount: config.manualOverrides.length,
+    },
+  }, 'Calculating participant prices');
+  if (participants.length === 0) {
+    logger?.info({
+      action: 'participantPricing.calculate.empty',
+      data: {
+        participantCount: 0,
+      },
+    }, 'No participants available for pricing');
+    return [];
+  }
 
   const overrideMap = buildOverrideMap(config.manualOverrides);
 
@@ -53,9 +70,16 @@ export function calculatePrices(
   const scoreRange = maxScore - minScore || 1; // avoid div by zero
 
   // Step 3-4: Map to price range and round
-  return scored.map((s) => {
+  const prices = scored.map((s) => {
     const override = overrideMap.get(s.participantId);
     if (override) {
+      logger?.debug({
+        action: 'participantPricing.calculate.override',
+        data: {
+          participantId: s.participantId,
+          overridePrice: override.overridePrice,
+        },
+      }, 'Applied manual price override');
       return {
         participantId: s.participantId,
         price: override.overridePrice,
@@ -75,6 +99,14 @@ export function calculatePrices(
       isOverride: false,
     };
   });
+  logger?.info({
+    action: 'participantPricing.calculate.success',
+    data: {
+      participantCount: prices.length,
+      overrideCount: prices.filter((price) => price.isOverride).length,
+    },
+  }, 'Calculated participant prices');
+  return prices;
 }
 
 /**

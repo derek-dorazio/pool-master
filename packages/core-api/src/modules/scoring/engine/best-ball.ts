@@ -33,8 +33,13 @@ export function applyBestBall(
   participantScores: BestBallInput[],
   bestBallN: number,
   lowerIsBetter: boolean = true,
+  logger?: ServiceLogger,
 ): BestBallResult {
   if (participantScores.length === 0) {
+    logger?.warn(
+      { action: 'bestBall.apply.noParticipants', data: { bestBallN, lowerIsBetter } },
+      'Best-ball scoring received no participant scores',
+    );
     return { countingParticipantIds: [], droppedParticipantIds: [], totalScore: 0 };
   }
 
@@ -49,9 +54,15 @@ export function applyBestBall(
   const counting = sorted.slice(0, n);
   const dropped = sorted.slice(n);
 
-  return {
+  const result = {
     countingParticipantIds: counting.map((p) => p.participantId),
     droppedParticipantIds: dropped.map((p) => p.participantId),
     totalScore: counting.reduce((sum, p) => sum + p.score, 0),
   };
+  logger?.info(
+    { action: 'bestBall.apply.success', data: { participantCount: participantScores.length, bestBallN, countingParticipantCount: result.countingParticipantIds.length, droppedParticipantCount: result.droppedParticipantIds.length, totalScore: result.totalScore } },
+    'Applied best-ball scoring',
+  );
+  return result;
 }
+import type { ServiceLogger } from '../../../core/logger';

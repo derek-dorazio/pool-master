@@ -41,6 +41,8 @@ export interface BudgetPickValidation {
 }
 
 export class BudgetPickEngine {
+  public constructor(private readonly logger?: ServiceLogger) {}
+
   /**
    * Validate a proposed budget pick.
    */
@@ -49,8 +51,16 @@ export class BudgetPickEngine {
     entryId: string,
     participantId: string,
   ): BudgetPickValidation {
+    this.logger?.debug(
+      { action: 'draftBudgetEngine.validatePick.start', data: { contestId: state.contestId, entryId, participantId } },
+      'Validating budget pick',
+    );
     const participant = state.participants.find((p) => p.participantId === participantId);
     if (!participant) {
+      this.logger?.warn(
+        { action: 'draftBudgetEngine.validatePick.invalidParticipant', data: { contestId: state.contestId, entryId, participantId } },
+        'Rejected budget pick for participant outside contest pool',
+      );
       return { valid: false, reason: `Participant ${participantId} is not in the pool` };
     }
 
@@ -59,15 +69,27 @@ export class BudgetPickEngine {
     const totalSpent = entry?.totalSpent ?? 0;
 
     if (currentPicks.length >= state.rosterSize) {
+      this.logger?.warn(
+        { action: 'draftBudgetEngine.validatePick.rosterFull', data: { contestId: state.contestId, entryId, rosterSize: state.rosterSize } },
+        'Rejected budget pick because roster is already full',
+      );
       return { valid: false, reason: `Roster is full (${state.rosterSize} picks)` };
     }
 
     if (currentPicks.some((p) => p.participantId === participantId)) {
+      this.logger?.warn(
+        { action: 'draftBudgetEngine.validatePick.duplicate', data: { contestId: state.contestId, entryId, participantId } },
+        'Rejected budget pick because participant is already on the roster',
+      );
       return { valid: false, reason: `Participant ${participantId} is already on your roster` };
     }
 
     const remaining = state.budget - totalSpent;
     if (participant.cost > remaining) {
+      this.logger?.warn(
+        { action: 'draftBudgetEngine.validatePick.overBudget', data: { contestId: state.contestId, entryId, participantId, participantCost: participant.cost, remainingBudget: remaining } },
+        'Rejected budget pick because participant cost exceeds remaining budget',
+      );
       return {
         valid: false,
         reason: `Cost ${participant.cost} exceeds remaining budget ${remaining}`,
@@ -82,6 +104,20 @@ export class BudgetPickEngine {
       const budgetAfterPick = remaining - participant.cost;
 
       if (budgetAfterPick < minToFillRemaining) {
+        this.logger?.warn(
+          {
+            action: 'draftBudgetEngine.validatePick.unfillableRoster',
+            data: {
+              contestId: state.contestId,
+              entryId,
+              participantId,
+              budgetAfterPick,
+              slotsAfterPick,
+              minimumRequiredBudget: minToFillRemaining,
+            },
+          },
+          'Rejected budget pick because remaining roster slots would become unfillable',
+        );
         return {
           valid: false,
           reason: `Picking this leaves ${budgetAfterPick} for ${slotsAfterPick} slots (need at least ${minToFillRemaining})`,
@@ -90,6 +126,10 @@ export class BudgetPickEngine {
       }
     }
 
+    this.logger?.info(
+      { action: 'draftBudgetEngine.validatePick.success', data: { contestId: state.contestId, entryId, participantId, remainingBudget: remaining - participant.cost } },
+      'Validated budget pick',
+    );
     return { valid: true, remainingBudget: remaining - participant.cost };
   }
 
@@ -101,6 +141,10 @@ export class BudgetPickEngine {
     entryId: string,
     participantId: string,
   ): BudgetPickState {
+    this.logger?.debug(
+      { action: 'draftBudgetEngine.applyPick.start', data: { contestId: state.contestId, entryId, participantId } },
+      'Applying budget pick',
+    );
     const participant = state.participants.find((p) => p.participantId === participantId)!;
     const newPick: BudgetPick = {
       participantId,
@@ -127,7 +171,20 @@ export class BudgetPickEngine {
       });
     }
 
-    return { ...state, entries: updatedEntries };
+    const updatedState = { ...state, entries: updatedEntries };
+    this.logger?.info(
+      {
+        action: 'draftBudgetEngine.applyPick.success',
+        data: {
+          contestId: state.contestId,
+          entryId,
+          participantId,
+          entryExists: updatedEntries.some((entry) => entry.entryId === entryId),
+        },
+      },
+      'Applied budget pick',
+    );
+    return updatedState;
   }
 
   /**
@@ -135,7 +192,12 @@ export class BudgetPickEngine {
    */
   getRemainingBudget(state: BudgetPickState, entryId: string): number {
     const entry = state.entries.find((e) => e.entryId === entryId);
-    return state.budget - (entry?.totalSpent ?? 0);
+    const remaining = state.budget - (entry?.totalSpent ?? 0);
+    this.logger?.debug(
+      { action: 'draftBudgetEngine.getRemainingBudget', data: { contestId: state.contestId, entryId, remainingBudget: remaining } },
+      'Calculated remaining budget',
+    );
+    return remaining;
   }
 
   /**
@@ -149,9 +211,17 @@ export class BudgetPickEngine {
     const remaining = this.getRemainingBudget(state, entryId);
     const pickedIds = new Set(entry?.picks.map((p) => p.participantId) ?? []);
 
-    return state.participants.filter(
+    const affordable = state.participants.filter(
       (p) => p.cost <= remaining && !pickedIds.has(p.participantId),
     );
+    this.logger?.info(
+      {
+        action: 'draftBudgetEngine.getAffordableParticipants',
+        data: { contestId: state.contestId, entryId, affordableCount: affordable.length, remainingBudget: remaining },
+      },
+      'Calculated affordable participants for budget entry',
+    );
+    return affordable;
   }
 
   private getCheapestAvailable(
@@ -168,3 +238,4 @@ export class BudgetPickEngine {
     return Math.min(...available.map((p) => p.cost));
   }
 }
+import type { ServiceLogger } from '../../../core/logger';

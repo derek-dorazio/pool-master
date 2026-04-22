@@ -69,7 +69,7 @@ export function buildApp() {
   const contestLookup = new ContestLookup(prisma);
   const standingsRollup = new StandingsRollup({ eventBus, prisma, logger: app.log });
   const scoringService = new ScoringService({ standingsRollup, prisma, logger: app.log });
-  const contestScoringRecalculationService = new ContestScoringRecalculationService(prisma);
+  const contestScoringRecalculationService = new ContestScoringRecalculationService(prisma, app.log);
 
   // =========================================================================
   // Core plugins

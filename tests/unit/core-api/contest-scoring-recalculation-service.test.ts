@@ -132,4 +132,41 @@ describe('ContestScoringRecalculationService', () => {
       }),
     );
   });
+
+  it('rejects missing contest and missing scoring configuration', async () => {
+    const missingContestPrisma = {
+      contest: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
+    } as any;
+    const missingConfigPrisma = {
+      contest: {
+        findUnique: jest.fn()
+          .mockResolvedValueOnce({
+            id: 'contest-1',
+            configuration: null,
+            entries: [],
+          })
+          .mockResolvedValueOnce({
+            id: 'contest-1',
+            configuration: {
+              participantScoringRules: [],
+              entryAggregationRule: null,
+              prizeDefinitions: [],
+            },
+            entries: [],
+          }),
+      },
+    } as any;
+
+    await expect(
+      new ContestScoringRecalculationService(missingContestPrisma).recalculateContest('contest-1'),
+    ).rejects.toThrow('Contest contest-1 not found');
+    await expect(
+      new ContestScoringRecalculationService(missingConfigPrisma).recalculateContest('contest-1'),
+    ).rejects.toThrow('Contest contest-1 is missing ContestConfiguration');
+    await expect(
+      new ContestScoringRecalculationService(missingConfigPrisma).recalculateContest('contest-1'),
+    ).rejects.toThrow('Contest contest-1 is missing ContestEntryAggregationRule');
+  });
 });

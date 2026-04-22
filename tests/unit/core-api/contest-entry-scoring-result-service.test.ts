@@ -116,4 +116,59 @@ describe('ContestEntryScoringResultService', () => {
       },
     });
   });
+
+  it('throws when a score event references a roster pick without a participant score row', async () => {
+    const tx = {
+      contestEntryParticipantScore: {
+        findMany: jest.fn().mockResolvedValue([]),
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        create: jest.fn().mockResolvedValue({
+          id: 'score-new',
+        }),
+      },
+      contestEntryParticipantScoreEvent: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        createMany: jest.fn(),
+      },
+      contestEntryPrizeAward: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        createMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
+      contestEntry: {
+        update: jest.fn().mockResolvedValue({ id: 'entry-1' }),
+      },
+    };
+
+    const prisma = {
+      $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<void>) =>
+        callback(tx),
+      ),
+    } as any;
+
+    const service = new ContestEntryScoringResultService(prisma);
+
+    await expect(
+      service.replaceEntryScoringResult({
+        entryId: 'entry-1',
+        totalScore: 16,
+        scoreResult: {
+          totalScore: 16,
+          participantScores: [
+            {
+              rosterPickId: 'pick-1',
+              pointsEarned: 16,
+            },
+          ],
+          scoreEvents: [
+            {
+              rosterPickId: 'pick-missing',
+              participantContestScoringRuleId: 'rule-1',
+              points: 16,
+              detailsJson: { round: 2 },
+            },
+          ],
+        },
+      }),
+    ).rejects.toThrow('Missing participant score row for roster pick pick-missing');
+  });
 });

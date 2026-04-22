@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestEntryPrizeAward,
 } from '@poolmaster/shared/domain';
@@ -16,11 +17,23 @@ export interface ReplaceContestEntryScoringResultInput {
 }
 
 export class ContestEntryScoringResultService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly logger?: FastifyBaseLogger,
+  ) {}
 
   async replaceEntryScoringResult(
     input: ReplaceContestEntryScoringResultInput,
   ): Promise<void> {
+    this.logger?.debug({
+      action: 'contestEntryScoringResult.replace.start',
+      data: {
+        entryId: input.entryId,
+        participantScoreCount: input.scoreResult.participantScores.length,
+        scoreEventCount: input.scoreResult.scoreEvents.length,
+        prizeAwardCount: input.prizeAwards?.length ?? 0,
+      },
+    }, 'Replacing contest entry scoring result');
     await this.prisma.$transaction(async (transactionClient) => {
       const tx = transactionClient as unknown as PrismaClient;
       const existingScores = await tx.contestEntryParticipantScore.findMany({
@@ -67,6 +80,13 @@ export class ContestEntryScoringResultService {
               event.rosterPickId,
             );
             if (!contestEntryParticipantScoreId) {
+              this.logger?.error({
+                action: 'contestEntryScoringResult.replace.missingParticipantScore',
+                data: {
+                  entryId: input.entryId,
+                  rosterPickId: event.rosterPickId,
+                },
+              }, 'Missing participant score row for score event');
               throw new Error(
                 `Missing participant score row for roster pick ${event.rosterPickId}`,
               );
@@ -108,5 +128,13 @@ export class ContestEntryScoringResultService {
         },
       });
     });
+    this.logger?.info({
+      action: 'contestEntryScoringResult.replace.success',
+      data: {
+        entryId: input.entryId,
+        totalScore: input.totalScore,
+        standingsPosition: input.standingsPosition ?? null,
+      },
+    }, 'Replaced contest entry scoring result');
   }
 }

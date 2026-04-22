@@ -13,13 +13,13 @@ import {
 } from './contracts';
 import { ScenarioStore } from './scenario-store';
 
-function buildScenarioStore(): ScenarioStore {
+function buildScenarioStore(fastify: FastifyInstance): ScenarioStore {
   const scenarioDir = process.env.SCENARIO_DIR ?? resolve(__dirname, '../contest-feed-scenarios');
-  return new ScenarioStore(scenarioDir);
+  return new ScenarioStore(scenarioDir, fastify.log);
 }
 
 export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<void> {
-  const store = buildScenarioStore();
+  const store = buildScenarioStore(fastify);
 
   fastify.get(
     '/health',
@@ -44,13 +44,20 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         },
       },
     },
-    async () => ({
-      status: 'ok',
-      service: mockFeedProviderId,
-      scenarioCount: store.getScenarioCount(),
-      eventCount: store.getEventCount(),
-      feedKinds,
-    }),
+    async () => {
+      const payload = {
+        status: 'ok',
+        service: mockFeedProviderId,
+        scenarioCount: store.getScenarioCount(),
+        eventCount: store.getEventCount(),
+        feedKinds,
+      };
+      fastify.log.info(
+        { action: 'mockFeedRoute.health', data: { scenarioCount: payload.scenarioCount, eventCount: payload.eventCount } },
+        'Served mock contest-feed health response',
+      );
+      return payload;
+    },
   );
 
   fastify.get(
@@ -72,7 +79,14 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         },
       },
     },
-    async () => ({ scenarios: store.listScenarios() }),
+    async () => {
+      const scenarios = store.listScenarios();
+      fastify.log.info(
+        { action: 'mockFeedRoute.listScenarios', data: { scenarioCount: scenarios.length } },
+        'Served mock contest-feed scenario list',
+      );
+      return { scenarios };
+    },
   );
 
   fastify.get<{ Params: { scenarioId: string } }>(
@@ -101,9 +115,15 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         },
       },
     },
-    async (request) => ({
-      scenario: store.getScenario(request.params.scenarioId),
-    }),
+    async (request) => {
+      fastify.log.debug(
+        { action: 'mockFeedRoute.getScenario.start', data: request.params },
+        'Serving mock contest-feed scenario detail',
+      );
+      return {
+        scenario: store.getScenario(request.params.scenarioId),
+      };
+    },
   );
 
   fastify.get<{ Params: { scenarioId: string } }>(
@@ -133,10 +153,17 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         },
       },
     },
-    async (request) => ({
-      scenarioId: request.params.scenarioId,
-      events: store.listEvents(request.params.scenarioId),
-    }),
+    async (request) => {
+      const events = store.listEvents(request.params.scenarioId);
+      fastify.log.info(
+        { action: 'mockFeedRoute.listEvents', data: { scenarioId: request.params.scenarioId, eventCount: events.length } },
+        'Served mock contest-feed event list',
+      );
+      return {
+        scenarioId: request.params.scenarioId,
+        events,
+      };
+    },
   );
 
   fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
@@ -166,9 +193,15 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         },
       },
     },
-    async (request) => ({
-      event: store.getEvent(request.params.scenarioId, request.params.eventId),
-    }),
+    async (request) => {
+      fastify.log.debug(
+        { action: 'mockFeedRoute.getEvent.start', data: request.params },
+        'Serving mock contest-feed event detail',
+      );
+      return {
+        event: store.getEvent(request.params.scenarioId, request.params.eventId),
+      };
+    },
   );
 
   fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
@@ -191,7 +224,13 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         },
       },
     },
-    async (request) => store.getEventResponse(request.params.scenarioId, request.params.eventId),
+    async (request) => {
+      fastify.log.debug(
+        { action: 'mockFeedRoute.getEventDetail.start', data: request.params },
+        'Serving mock contest-feed event detail with season context',
+      );
+      return store.getEventResponse(request.params.scenarioId, request.params.eventId);
+    },
   );
 
   for (const feedKind of ['field', 'odds', 'rankings', 'results'] as const) {
@@ -224,7 +263,13 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
           },
         },
       },
-      async (request) => store.getSnapshot(request.params.scenarioId, request.params.eventId, feedKind),
+      async (request) => {
+        fastify.log.debug(
+          { action: 'mockFeedRoute.getSnapshot.start', data: { ...request.params, feedKind } },
+          'Serving mock contest-feed snapshot',
+        );
+        return store.getSnapshot(request.params.scenarioId, request.params.eventId, feedKind);
+      },
     );
   }
 
@@ -248,6 +293,12 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         },
       },
     },
-    async (request) => store.getUpdates(request.params.scenarioId, request.params.eventId),
+    async (request) => {
+      fastify.log.debug(
+        { action: 'mockFeedRoute.getUpdates.start', data: request.params },
+        'Serving mock contest-feed event updates',
+      );
+      return store.getUpdates(request.params.scenarioId, request.params.eventId);
+    },
   );
 }

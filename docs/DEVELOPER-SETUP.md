@@ -295,6 +295,9 @@ terraform apply -var-file=envs/qa.tfvars
 
 This creates: ECS Fargate (1 backend service), RDS PostgreSQL, ALB, S3 + CloudFront (PoolMaster web), ECR repository, CloudWatch alarms.
 
+For runtime backend log usage and CloudWatch query patterns, see
+[Logging Operations](/Users/DDorazio/development/Github-Personal/pool-master/docs/LOGGING-OPERATIONS.md).
+
 After `terraform apply`, run migrations:
 ```bash
 DATABASE_URL=$(terraform output -raw database_url) npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma

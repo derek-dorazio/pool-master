@@ -42,6 +42,8 @@ export interface TieredPickValidation {
 }
 
 export class TieredPickEngine {
+  public constructor(private readonly logger?: ServiceLogger) {}
+
   /**
    * Validate a proposed tiered pick.
    */
@@ -51,12 +53,24 @@ export class TieredPickEngine {
     tierId: string,
     participantId: string,
   ): TieredPickValidation {
+    this.logger?.debug(
+      { action: 'draftTieredEngine.validatePick.start', data: { contestId: state.contestId, entryId, tierId, participantId } },
+      'Validating tiered pick',
+    );
     const tier = state.tiers.find((t) => t.tierId === tierId);
     if (!tier) {
+      this.logger?.warn(
+        { action: 'draftTieredEngine.validatePick.missingTier', data: { contestId: state.contestId, entryId, tierId, participantId } },
+        'Rejected tiered pick because tier was not found',
+      );
       return { valid: false, reason: `Tier ${tierId} does not exist` };
     }
 
     if (!tier.participantIds.includes(participantId)) {
+      this.logger?.warn(
+        { action: 'draftTieredEngine.validatePick.invalidParticipant', data: { contestId: state.contestId, entryId, tierId, participantId } },
+        'Rejected tiered pick because participant is not assigned to the tier',
+      );
       return { valid: false, reason: `Participant ${participantId} is not in tier ${tierId}` };
     }
 
@@ -64,12 +78,29 @@ export class TieredPickEngine {
     const existingPicksInTier = entry?.picks.filter((p) => p.tierId === tierId) ?? [];
 
     if (existingPicksInTier.length >= tier.picksRequired) {
+      this.logger?.warn(
+        {
+          action: 'draftTieredEngine.validatePick.tierFull',
+          data: {
+            contestId: state.contestId,
+            entryId,
+            tierId,
+            picksRequired: tier.picksRequired,
+            existingPicks: existingPicksInTier.length,
+          },
+        },
+        'Rejected tiered pick because the tier quota is already filled',
+      );
       return {
         valid: false,
         reason: `Already picked ${existingPicksInTier.length}/${tier.picksRequired} from tier ${tier.tierName}`,
       };
     }
 
+    this.logger?.info(
+      { action: 'draftTieredEngine.validatePick.success', data: { contestId: state.contestId, entryId, tierId, participantId } },
+      'Validated tiered pick',
+    );
     return { valid: true };
   }
 
@@ -82,6 +113,10 @@ export class TieredPickEngine {
     tierId: string,
     participantId: string,
   ): TieredPickState {
+    this.logger?.debug(
+      { action: 'draftTieredEngine.applyPick.start', data: { contestId: state.contestId, entryId, tierId, participantId } },
+      'Applying tiered pick',
+    );
     const newPick: TieredPick = { tierId, participantId, pickedAt: new Date() };
 
     const updatedEntries = state.entries.map((entry) => {
@@ -99,17 +134,36 @@ export class TieredPickEngine {
       updatedEntries.push({ entryId, picks: [newPick], isComplete });
     }
 
-    return { ...state, entries: updatedEntries };
+    const updatedState = { ...state, entries: updatedEntries };
+    this.logger?.info(
+      {
+        action: 'draftTieredEngine.applyPick.success',
+        data: {
+          contestId: state.contestId,
+          entryId,
+          tierId,
+          participantId,
+          isComplete: updatedEntries.find((entry) => entry.entryId === entryId)?.isComplete ?? false,
+        },
+      },
+      'Applied tiered pick',
+    );
+    return updatedState;
   }
 
   /**
    * Check if an entry has completed all tier picks.
    */
   isEntryComplete(tiers: TierDefinition[], picks: TieredPick[]): boolean {
-    return tiers.every((tier) => {
+    const complete = tiers.every((tier) => {
       const tierPicks = picks.filter((p) => p.tierId === tier.tierId);
       return tierPicks.length >= tier.picksRequired;
     });
+    this.logger?.debug(
+      { action: 'draftTieredEngine.isEntryComplete', data: { tierCount: tiers.length, pickCount: picks.length, complete } },
+      'Evaluated tiered entry completeness',
+    );
+    return complete;
   }
 
   /**
@@ -119,16 +173,27 @@ export class TieredPickEngine {
     const entry = state.entries.find((e) => e.entryId === entryId);
     const picks = entry?.picks ?? [];
 
-    return state.tiers.filter((tier) => {
+    const remaining = state.tiers.filter((tier) => {
       const tierPicks = picks.filter((p) => p.tierId === tier.tierId);
       return tierPicks.length < tier.picksRequired;
     });
+    this.logger?.info(
+      { action: 'draftTieredEngine.getRemainingTiers', data: { contestId: state.contestId, entryId, remainingTierCount: remaining.length } },
+      'Calculated remaining tiers for entry',
+    );
+    return remaining;
   }
 
   /**
    * Get the total roster size (sum of picksRequired across all tiers).
    */
   getTotalRosterSize(tiers: TierDefinition[]): number {
-    return tiers.reduce((sum, tier) => sum + tier.picksRequired, 0);
+    const rosterSize = tiers.reduce((sum, tier) => sum + tier.picksRequired, 0);
+    this.logger?.debug(
+      { action: 'draftTieredEngine.getTotalRosterSize', data: { tierCount: tiers.length, rosterSize } },
+      'Calculated total roster size for tiered draft',
+    );
+    return rosterSize;
   }
 }
+import type { ServiceLogger } from '../../../core/logger';

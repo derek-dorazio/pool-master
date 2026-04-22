@@ -42,8 +42,6 @@ import type { SessionState } from './engine/draft-session-manager';
 import { draftStore } from './storage/draft-store';
 import { draftQueue } from './engine/draft-queue';
 
-const engine = new SnakeDraftEngine();
-
 type ContestConfigurationRecord = Awaited<ReturnType<PrismaClient['contestConfiguration']['findUnique']>>;
 interface ContestRecord {
   id: string;
@@ -209,6 +207,7 @@ function rewindSnakeDraftState(state: DraftState): DraftState {
 }
 
 function skipSnakeDraftPick(state: DraftState): DraftState {
+  const engine = new SnakeDraftEngine();
   const position = engine.getCurrentPickPosition(state);
   const totalPicks = state.entryIds.length * state.rounds;
   const skippedPick = {
@@ -526,6 +525,7 @@ async function buildSnakeDraftResponse(
   availableParticipantIds: string[],
   requestUserId?: string,
 ) {
+  const engine = new SnakeDraftEngine();
   const takenIds = engine.getTakenParticipantIds(state);
   const remaining = availableParticipantIds.filter((id) => !takenIds.includes(id));
   const contestEntryRepo = new PrismaContestEntryRepository(prisma);
@@ -835,6 +835,7 @@ async function buildDraftStateResponse(
 
 export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
+  const engine = new SnakeDraftEngine(fastify.log);
 
   fastify.get('/:contestId', {
     schema: {
@@ -915,7 +916,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         timePerPickSeconds,
       };
 
-      const liveSession = startSession(pendingSession);
+      const liveSession = startSession(pendingSession, fastify.log);
 
       const initialState: DraftState = {
         contestId,
@@ -1010,7 +1011,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
 
         const available = await draftStore.getAvailableParticipants(contestId);
 
-        if (isPickExpired(session)) {
+        if (isPickExpired(session, fastify.log)) {
           const currentEntryId = engine.getCurrentEntryId(state);
           const queueEntries = draftQueue.getQueue(currentEntryId);
           const autoPickId = engine.resolveAutoPick(state, {
@@ -1265,7 +1266,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       }
       const available = await draftStore.getAvailableParticipants(contestId);
 
-      const pausedSession = pauseSession(session);
+      const pausedSession = pauseSession(session, fastify.log);
       const pausedState = { ...state, status: DraftStatus.PAUSED };
       await draftStore.setSession(contestId, pausedSession);
       await draftStore.setState(contestId, pausedState);
@@ -1322,7 +1323,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       }
       const available = await draftStore.getAvailableParticipants(contestId);
 
-      const resumedSession = resumeSession(session);
+      const resumedSession = resumeSession(session, fastify.log);
       const resumedState = { ...state, status: DraftStatus.LIVE };
       await draftStore.setSession(contestId, resumedSession);
       await draftStore.setState(contestId, resumedState);
@@ -1381,7 +1382,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       }
       const available = await draftStore.getAvailableParticipants(contestId);
 
-      const extendedSession = extendCurrentTurn(session, additionalSeconds);
+      const extendedSession = extendCurrentTurn(session, additionalSeconds, fastify.log);
       await draftStore.setSession(contestId, extendedSession);
 
       return buildSnakeDraftResponse(prisma, context, extendedSession, state, available, requestUserId);

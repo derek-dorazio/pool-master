@@ -46,6 +46,7 @@ export interface H2HRecord {
 export function evaluateMatchup(
   matchup: Matchup,
   periodScores: PeriodScores,
+  logger?: ServiceLogger,
 ): MatchupResult {
   const scoreA = periodScores.scores[matchup.entryIdA] ?? 0;
   const scoreB = periodScores.scores[matchup.entryIdB] ?? 0;
@@ -54,7 +55,7 @@ export function evaluateMatchup(
   if (scoreA > scoreB) winnerId = matchup.entryIdA;
   else if (scoreB > scoreA) winnerId = matchup.entryIdB;
 
-  return {
+  const result = {
     period: matchup.period,
     entryIdA: matchup.entryIdA,
     entryIdB: matchup.entryIdB,
@@ -62,6 +63,11 @@ export function evaluateMatchup(
     scoreB,
     winnerId,
   };
+  logger?.info(
+    { action: 'headToHead.evaluateMatchup', data: { period: matchup.period, entryIdA: matchup.entryIdA, entryIdB: matchup.entryIdB, winnerId } },
+    'Evaluated head-to-head matchup',
+  );
+  return result;
 }
 
 /**
@@ -70,6 +76,7 @@ export function evaluateMatchup(
 export function calculateRecords(
   matchupResults: MatchupResult[],
   entryIds: string[],
+  logger?: ServiceLogger,
 ): H2HRecord[] {
   const records = new Map<string, H2HRecord>();
 
@@ -112,11 +119,16 @@ export function calculateRecords(
     rec.winPct = totalGames > 0 ? (rec.wins + rec.ties * 0.5) / totalGames : 0;
   }
 
-  return [...records.values()].sort((a, b) => {
+  const standings = [...records.values()].sort((a, b) => {
     // Sort by win%, then points for as tiebreaker
     if (a.winPct !== b.winPct) return b.winPct - a.winPct;
     return b.pointsFor - a.pointsFor;
   });
+  logger?.info(
+    { action: 'headToHead.calculateRecords', data: { matchupCount: matchupResults.length, entryCount: entryIds.length } },
+    'Calculated head-to-head season records',
+  );
+  return standings;
 }
 
 /**
@@ -129,6 +141,7 @@ export function scoreHeadToHead(
   matchups: Matchup[],
   periodScoresArray: PeriodScores[],
   entryIds: string[],
+  logger?: ServiceLogger,
 ): { matchupResults: MatchupResult[]; standings: H2HRecord[] } {
   // Index period scores by period number
   const periodMap = new Map<number, PeriodScores>();
@@ -140,11 +153,22 @@ export function scoreHeadToHead(
   const matchupResults: MatchupResult[] = [];
   for (const matchup of matchups) {
     const periodScores = periodMap.get(matchup.period);
-    if (!periodScores) continue;
-    matchupResults.push(evaluateMatchup(matchup, periodScores));
+    if (!periodScores) {
+      logger?.warn(
+        { action: 'headToHead.score.missingPeriodScores', data: { period: matchup.period, entryIdA: matchup.entryIdA, entryIdB: matchup.entryIdB } },
+        'Skipped head-to-head matchup because period scores were missing',
+      );
+      continue;
+    }
+    matchupResults.push(evaluateMatchup(matchup, periodScores, logger));
   }
 
-  const standings = calculateRecords(matchupResults, entryIds);
+  const standings = calculateRecords(matchupResults, entryIds, logger);
 
+  logger?.info(
+    { action: 'headToHead.score.success', data: { matchupCount: matchupResults.length, standingsCount: standings.length } },
+    'Scored full head-to-head season',
+  );
   return { matchupResults, standings };
 }
+import type { ServiceLogger } from '../../../core/logger';

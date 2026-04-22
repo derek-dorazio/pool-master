@@ -4,6 +4,7 @@
  * Pure functions: no I/O, no side effects. Takes config + data, returns scores.
  */
 
+import type { ServiceLogger } from '../../../core/logger';
 import type {
   BonusRule,
   MultiplierRule,
@@ -51,35 +52,56 @@ export interface EntryScoreResult {
 
 // --- Condition Evaluation ---
 
-export function evaluateCondition(condition: RuleCondition, value: number): boolean {
+export function evaluateCondition(
+  condition: RuleCondition,
+  value: number,
+  logger?: ServiceLogger,
+): boolean {
+  let matches: boolean;
   switch (condition.operator) {
     case 'eq':
-      return value === condition.value;
+      matches = value === condition.value;
+      break;
     case 'gt':
-      return value > condition.value;
+      matches = value > condition.value;
+      break;
     case 'gte':
-      return value >= condition.value;
+      matches = value >= condition.value;
+      break;
     case 'lt':
-      return value < condition.value;
+      matches = value < condition.value;
+      break;
     case 'lte':
-      return value <= condition.value;
+      matches = value <= condition.value;
+      break;
     case 'between':
-      return value >= condition.value && value <= (condition.value2 ?? condition.value);
+      matches = value >= condition.value && value <= (condition.value2 ?? condition.value);
+      break;
     default:
-      return false;
+      matches = false;
+      break;
   }
+  logger?.debug(
+    { action: 'scoringEngine.evaluateCondition', data: { operator: condition.operator, value, threshold: condition.value, threshold2: condition.value2, matches } },
+    'Evaluated scoring rule condition',
+  );
+  return matches;
 }
 
 // --- 03-002: Stat Rules ---
 
-export function evaluateStatRules(rules: StatRule[], stats: StatDeltas): number {
+export function evaluateStatRules(
+  rules: StatRule[],
+  stats: StatDeltas,
+  logger?: ServiceLogger,
+): number {
   let points = 0;
 
   for (const rule of rules) {
     const statValue = stats[rule.stat_key];
     if (statValue === undefined) continue;
 
-    if (rule.condition && !evaluateCondition(rule.condition, statValue)) {
+    if (rule.condition && !evaluateCondition(rule.condition, statValue, logger)) {
       continue;
     }
 
@@ -87,6 +109,10 @@ export function evaluateStatRules(rules: StatRule[], stats: StatDeltas): number 
     points += Math.floor(statValue / unitSize) * rule.points_per_unit * unitSize;
   }
 
+  logger?.info(
+    { action: 'scoringEngine.evaluateStatRules', data: { ruleCount: rules.length, statCount: Object.keys(stats).length, points } },
+    'Evaluated scoring stat rules',
+  );
   return points;
 }
 
@@ -96,19 +122,34 @@ export function evaluatePositionRules(
   rules: PositionRule[],
   position: number | undefined,
   totalPositions?: number,
+  logger?: ServiceLogger,
 ): number {
-  if (position === undefined) return 0;
+  if (position === undefined) {
+    logger?.debug(
+      { action: 'scoringEngine.evaluatePositionRules.noPosition', data: { ruleCount: rules.length, totalPositions } },
+      'Skipped position rule evaluation because no position was provided',
+    );
+    return 0;
+  }
 
   for (const rule of rules) {
     // Exact position match
     if (rule.position !== undefined) {
       if (rule.position === 'LAST' && totalPositions !== undefined && position === totalPositions) {
+        logger?.info(
+          { action: 'scoringEngine.evaluatePositionRules.lastPlace', data: { position, totalPositions, points: rule.points } },
+          'Matched last-place scoring rule',
+        );
         return rule.points;
       }
       if (rule.position === 'CUT') {
         continue; // CUT handled by DNF logic
       }
       if (typeof rule.position === 'number' && position === rule.position) {
+        logger?.info(
+          { action: 'scoringEngine.evaluatePositionRules.exact', data: { position, points: rule.points } },
+          'Matched exact-position scoring rule',
+        );
         return rule.points;
       }
     }
@@ -117,28 +158,44 @@ export function evaluatePositionRules(
     if (rule.position_range) {
       const [low, high] = rule.position_range;
       if (position >= low && position <= high) {
+        logger?.info(
+          { action: 'scoringEngine.evaluatePositionRules.range', data: { position, range: rule.position_range, points: rule.points } },
+          'Matched position-range scoring rule',
+        );
         return rule.points;
       }
     }
   }
 
+  logger?.debug(
+    { action: 'scoringEngine.evaluatePositionRules.noMatch', data: { position, totalPositions, ruleCount: rules.length } },
+    'No position scoring rule matched',
+  );
   return 0;
 }
 
 // --- 03-004: Bonus Rules ---
 
-export function evaluateBonusRules(rules: BonusRule[], stats: StatDeltas): number {
+export function evaluateBonusRules(
+  rules: BonusRule[],
+  stats: StatDeltas,
+  logger?: ServiceLogger,
+): number {
   let points = 0;
 
   for (const rule of rules) {
     const statValue = stats[rule.trigger.stat_key];
     if (statValue === undefined) continue;
 
-    if (evaluateCondition(rule.trigger.condition, statValue)) {
+    if (evaluateCondition(rule.trigger.condition, statValue, logger)) {
       points += rule.points;
     }
   }
 
+  logger?.info(
+    { action: 'scoringEngine.evaluateBonusRules', data: { ruleCount: rules.length, statCount: Object.keys(stats).length, points } },
+    'Evaluated scoring bonus rules',
+  );
   return points;
 }
 
@@ -147,6 +204,7 @@ export function evaluateBonusRules(rules: BonusRule[], stats: StatDeltas): numbe
 export function evaluatePenaltyRules(
   rules: PenaltyRule[],
   stats: StatDeltas,
+  logger?: ServiceLogger,
 ): number {
   let points = 0;
 
@@ -157,6 +215,10 @@ export function evaluatePenaltyRules(
     }
   }
 
+  logger?.info(
+    { action: 'scoringEngine.evaluatePenaltyRules', data: { ruleCount: rules.length, statCount: Object.keys(stats).length, points } },
+    'Evaluated scoring penalty rules',
+  );
   return points;
 }
 
@@ -167,6 +229,7 @@ export function applyMultiplierRules(
   breakdown: { statPoints: number; positionPoints: number },
   slotId?: string,
   stats?: StatDeltas,
+  logger?: ServiceLogger,
 ): number {
   let total = breakdown.statPoints + breakdown.positionPoints;
 
@@ -196,6 +259,10 @@ export function applyMultiplierRules(
     }
   }
 
+  logger?.info(
+    { action: 'scoringEngine.applyMultiplierRules', data: { ruleCount: rules.length, slotId: slotId ?? null, total } },
+    'Applied scoring multiplier rules',
+  );
   return total;
 }
 
@@ -206,34 +273,61 @@ export function handleDNF(
   participant: ParticipantScoringData,
   rawScore: number,
   totalPositions?: number,
+  logger?: ServiceLogger,
 ): { score: number; excluded: boolean } {
   if (!participant.isDNF && !participant.isMissedCut) {
+    logger?.debug(
+      { action: 'scoringEngine.handleDNF.noAdjustment', data: { participantId: participant.participantId, rawScore } },
+      'DNF handling skipped because participant completed normally',
+    );
     return { score: rawScore, excluded: false };
   }
 
+  let result: { score: number; excluded: boolean };
   switch (config.dnf_handling) {
     case 'ZERO':
-      return { score: 0, excluded: false };
+      result = { score: 0, excluded: false };
+      break;
 
     case 'EXCLUDE':
-      return { score: 0, excluded: true };
+      result = { score: 0, excluded: true };
+      break;
 
     case 'LAST_PLACE': {
       const lastPlacePoints = totalPositions !== undefined
-        ? evaluatePositionRules(config.position_rules, totalPositions, totalPositions)
+        ? evaluatePositionRules(config.position_rules, totalPositions, totalPositions, logger)
         : 0;
-      return { score: lastPlacePoints, excluded: false };
+      result = { score: lastPlacePoints, excluded: false };
+      break;
     }
 
     case 'PENALTY':
-      return { score: config.missed_event_points ?? 0, excluded: false };
+      result = { score: config.missed_event_points ?? 0, excluded: false };
+      break;
 
     case 'MISSED_CUT_SCORE':
-      return { score: config.missed_event_score ?? 0, excluded: false };
+      result = { score: config.missed_event_score ?? 0, excluded: false };
+      break;
 
     default:
-      return { score: 0, excluded: false };
+      result = { score: 0, excluded: false };
+      break;
   }
+  logger?.warn(
+    {
+      action: 'scoringEngine.handleDNF.adjusted',
+      data: {
+        participantId: participant.participantId,
+        isDNF: participant.isDNF,
+        isMissedCut: participant.isMissedCut === true,
+        dnfHandling: config.dnf_handling,
+        adjustedScore: result.score,
+        excluded: result.excluded,
+      },
+    },
+    'Applied DNF or missed-cut scoring adjustment',
+  );
+  return result;
 }
 
 // --- 03-007: Counting Methods ---
@@ -241,11 +335,16 @@ export function handleDNF(
 export function applyCountingMethod(
   config: ScoringConfig,
   scores: Array<{ participantId: string; score: number; excluded: boolean }>,
+  logger?: ServiceLogger,
 ): { totalScore: number; countingIds: string[] } {
   // Filter out excluded participants (DNF with EXCLUDE policy)
   const eligible = scores.filter((s) => !s.excluded);
 
   if (eligible.length === 0) {
+    logger?.warn(
+      { action: 'scoringEngine.applyCountingMethod.noEligibleScores', data: { countingMethod: config.counting_method, scoreCount: scores.length } },
+      'No eligible participant scores were available for counting',
+    );
     return { totalScore: 0, countingIds: [] };
   }
 
@@ -293,15 +392,21 @@ export function applyCountingMethod(
 export function scoreParticipant(
   config: ScoringConfig,
   participant: ParticipantScoringData,
+  logger?: ServiceLogger,
 ): ScoreBreakdown {
-  const statPoints = evaluateStatRules(config.stat_rules, participant.stats);
+  logger?.debug(
+    { action: 'scoringEngine.scoreParticipant.start', data: { participantId: participant.participantId, statCount: Object.keys(participant.stats).length, isDNF: participant.isDNF, isMissedCut: participant.isMissedCut === true } },
+    'Scoring participant',
+  );
+  const statPoints = evaluateStatRules(config.stat_rules, participant.stats, logger);
   const positionPoints = evaluatePositionRules(
     config.position_rules,
     participant.position,
     participant.totalPositions,
+    logger,
   );
-  const bonusPoints = evaluateBonusRules(config.bonus_rules, participant.stats);
-  const penaltyPoints = evaluatePenaltyRules(config.penalty_rules, participant.stats);
+  const bonusPoints = evaluateBonusRules(config.bonus_rules, participant.stats, logger);
+  const penaltyPoints = evaluatePenaltyRules(config.penalty_rules, participant.stats, logger);
 
   const baseTotal = statPoints + positionPoints + bonusPoints + penaltyPoints;
 
@@ -312,6 +417,7 @@ export function scoreParticipant(
           { statPoints: statPoints + bonusPoints + penaltyPoints, positionPoints },
           participant.slotId,
           participant.stats,
+          logger,
         )
       : baseTotal;
 
@@ -320,13 +426,14 @@ export function scoreParticipant(
     participant,
     multipliedTotal,
     participant.totalPositions,
+    logger,
   );
 
   const dnfAdjustment = (participant.isDNF || participant.isMissedCut)
     ? dnfScore - multipliedTotal
     : 0;
 
-  return {
+  const breakdown = {
     participantId: participant.participantId,
     statPoints,
     positionPoints,
@@ -336,14 +443,24 @@ export function scoreParticipant(
     dnfAdjustment,
     finalScore: participant.isDNF || participant.isMissedCut ? dnfScore : multipliedTotal,
   };
+  logger?.info(
+    { action: 'scoringEngine.scoreParticipant.success', data: { participantId: participant.participantId, finalScore: breakdown.finalScore, statPoints, positionPoints, bonusPoints, penaltyPoints } },
+    'Scored participant',
+  );
+  return breakdown;
 }
 
 /** Score a full entry (roster of participants) with counting method applied. */
 export function scoreEntry(
   config: ScoringConfig,
   participants: ParticipantScoringData[],
+  logger?: ServiceLogger,
 ): EntryScoreResult {
-  const breakdowns = participants.map((p) => scoreParticipant(config, p));
+  logger?.debug(
+    { action: 'scoringEngine.scoreEntry.start', data: { participantCount: participants.length, countingMethod: config.counting_method } },
+    'Scoring entry',
+  );
+  const breakdowns = participants.map((p) => scoreParticipant(config, p, logger));
 
   const scoredParticipants = breakdowns.map((b, i) => ({
     participantId: b.participantId,
@@ -353,11 +470,16 @@ export function scoreEntry(
       config.dnf_handling === 'EXCLUDE',
   }));
 
-  const { totalScore, countingIds } = applyCountingMethod(config, scoredParticipants);
+  const { totalScore, countingIds } = applyCountingMethod(config, scoredParticipants, logger);
 
-  return {
+  const result = {
     totalScore,
     participantBreakdowns: breakdowns,
     countingParticipantIds: countingIds,
   };
+  logger?.info(
+    { action: 'scoringEngine.scoreEntry.success', data: { participantCount: participants.length, totalScore, countingParticipantCount: countingIds.length } },
+    'Scored entry',
+  );
+  return result;
 }

@@ -5,6 +5,7 @@
  * and MANUAL assignment modes.
  */
 
+import type { FastifyBaseLogger } from 'fastify';
 import type { TierConfig, TierDefinition } from '@poolmaster/shared/domain';
 
 export interface TierableParticipant {
@@ -31,19 +32,43 @@ export interface TierAssignment {
 export function assignTiers(
   participants: TierableParticipant[],
   config: TierConfig,
+  logger?: FastifyBaseLogger,
 ): TierAssignment[] {
+  logger?.debug({
+    action: 'participantTier.assign.start',
+    data: {
+      participantCount: participants.length,
+      tierCount: config.tiers.length,
+      assignmentMode: config.assignmentMode,
+    },
+  }, 'Assigning participant tiers');
+  let assignments: TierAssignment[];
   switch (config.assignmentMode) {
     case 'AUTO_RANKING':
-      return assignByRanking(participants, config.tiers);
+      assignments = assignByRanking(participants, config.tiers);
+      break;
     case 'AUTO_PRICE':
-      return assignByPrice(participants, config.tiers);
+      assignments = assignByPrice(participants, config.tiers);
+      break;
     case 'AUTO_ODDS':
-      return assignByOdds(participants, config.tiers);
+      assignments = assignByOdds(participants, config.tiers);
+      break;
     case 'AUTO_SEED':
-      return assignBySeed(participants, config.tiers);
+      assignments = assignBySeed(participants, config.tiers);
+      break;
     case 'MANUAL':
-      return assignManual(config.tiers);
+      assignments = assignManual(config.tiers);
+      break;
   }
+  logger?.info({
+    action: 'participantTier.assign.success',
+    data: {
+      participantCount: participants.length,
+      assignmentCount: assignments.length,
+      assignmentMode: config.assignmentMode,
+    },
+  }, 'Assigned participant tiers');
+  return assignments;
 }
 
 function assignByRanking(

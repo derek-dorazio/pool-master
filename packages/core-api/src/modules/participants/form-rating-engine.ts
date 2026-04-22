@@ -6,6 +6,7 @@
  * Higher = better recent form.
  */
 
+import type { FastifyBaseLogger } from 'fastify';
 import type { FormTrend } from '@poolmaster/shared/domain';
 
 export interface EventResult {
@@ -41,8 +42,20 @@ const TREND_THRESHOLD = 5;
  * 4. Compute weighted average
  * 5. Determine trend by comparing first half vs second half of window
  */
-export function calculateFormRating(results: EventResult[]): FormRatingResult {
+export function calculateFormRating(results: EventResult[], logger?: FastifyBaseLogger): FormRatingResult {
+  logger?.debug({
+    action: 'participantForm.calculate.start',
+    data: {
+      resultCount: results.length,
+    },
+  }, 'Calculating participant form rating');
   if (results.length === 0) {
+    logger?.info({
+      action: 'participantForm.calculate.empty',
+      data: {
+        resultCount: 0,
+      },
+    }, 'No results available for form rating');
     return { formRating: 50, formTrend: 'STABLE', eventsConsidered: 0 };
   }
 
@@ -77,11 +90,21 @@ export function calculateFormRating(results: EventResult[]): FormRatingResult {
   // Determine trend: compare first half (recent) vs second half (older)
   const formTrend = calculateTrend(percentiles.map((p) => p.percentile));
 
-  return {
+  const result = {
     formRating: Math.max(0, Math.min(100, formRating)),
     formTrend,
     eventsConsidered: sorted.length,
   };
+  logger?.info({
+    action: 'participantForm.calculate.success',
+    data: {
+      resultCount: results.length,
+      formRating: result.formRating,
+      formTrend: result.formTrend,
+      eventsConsidered: result.eventsConsidered,
+    },
+  }, 'Calculated participant form rating');
+  return result;
 }
 
 function calculateTrend(percentiles: number[]): FormTrend {

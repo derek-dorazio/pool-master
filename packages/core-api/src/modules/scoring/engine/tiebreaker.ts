@@ -3,6 +3,7 @@
  * by walking the primary → secondary → tertiary tiebreaker chain.
  */
 
+import type { ServiceLogger } from '../../../core/logger';
 import type { TiebreakerConfig } from '@poolmaster/shared/domain/scoring-config';
 
 /** Data required to evaluate tiebreakers for an entry. */
@@ -27,6 +28,7 @@ function compareSingle(
   a: TiebreakerData,
   b: TiebreakerData,
   actualValue?: number,
+  logger?: ServiceLogger,
 ): TiebreakerResult {
   switch (method) {
     case 'CHAMPIONSHIP_SCORE_PREDICTION': {
@@ -97,13 +99,25 @@ function compareSingle(
 
     case 'COIN_FLIP':
       // Random — deterministic in tests via seed, but here just random
+      logger?.warn(
+        { action: 'tiebreaker.compareSingle.coinFlipFallback', data: { entryIdA: a.entryId, entryIdB: b.entryId } },
+        'Coin-flip tiebreaker cannot be resolved programmatically in deterministic service logic',
+      );
       return 0;
 
     case 'COMMISSIONER_DECISION':
       // Cannot be resolved programmatically
+      logger?.warn(
+        { action: 'tiebreaker.compareSingle.commissionerDecisionFallback', data: { entryIdA: a.entryId, entryIdB: b.entryId } },
+        'Commissioner-decision tiebreaker requires external resolution',
+      );
       return 0;
 
     default:
+      logger?.warn(
+        { action: 'tiebreaker.compareSingle.unknownMethod', data: { method, entryIdA: a.entryId, entryIdB: b.entryId } },
+        'Unknown tiebreaker method resolved to no decision',
+      );
       return 0;
   }
 }
@@ -119,16 +133,21 @@ export function evaluateTiebreaker(
   a: TiebreakerData,
   b: TiebreakerData,
   actualValue?: number,
+  logger?: ServiceLogger,
 ): TiebreakerResult {
   const methods = [config.primary, config.secondary, config.tertiary].filter(
     (m) => m !== undefined,
   ) as string[];
 
   for (const method of methods) {
-    const result = compareSingle(method, a, b, actualValue);
+    const result = compareSingle(method, a, b, actualValue, logger);
     if (result !== 0) return result;
   }
 
+  logger?.info(
+    { action: 'tiebreaker.evaluate.unresolved', data: { entryIdA: a.entryId, entryIdB: b.entryId, methodCount: methods.length } },
+    'Tiebreaker chain did not resolve the tie',
+  );
   return 0;
 }
 
@@ -140,8 +159,9 @@ export function rankWithTiebreakers(
   entries: TiebreakerData[],
   config: TiebreakerConfig | undefined,
   actualValue?: number,
+  logger?: ServiceLogger,
 ): TiebreakerData[] {
-  return [...entries].sort((a, b) => {
+  const rankedEntries = [...entries].sort((a, b) => {
     // Primary sort: total score descending
     if (a.totalScore !== b.totalScore) {
       return b.totalScore - a.totalScore;
@@ -149,9 +169,14 @@ export function rankWithTiebreakers(
 
     // Tiebreaker chain
     if (config) {
-      return evaluateTiebreaker(config, a, b, actualValue);
+      return evaluateTiebreaker(config, a, b, actualValue, logger);
     }
 
     return 0;
   });
+  logger?.info(
+    { action: 'tiebreaker.rank.success', data: { entryCount: entries.length, usedConfig: Boolean(config) } },
+    'Ranked entries with tiebreaker chain',
+  );
+  return rankedEntries;
 }

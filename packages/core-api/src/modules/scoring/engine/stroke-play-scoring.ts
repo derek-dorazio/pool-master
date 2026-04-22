@@ -6,6 +6,7 @@
  * Best-N counting: "Pick 6, Use 4" — only the best N scores count.
  */
 
+import type { ServiceLogger } from '../../../core/logger';
 import type { ScoringConfig } from '@poolmaster/shared/domain/scoring-config';
 import { DNFHandling, CountingMethod } from '@poolmaster/shared/domain/scoring-config';
 
@@ -42,6 +43,7 @@ export function scoreStrokePlayParticipant(
   participant: StrokePlayParticipant,
   missedCutScore: number,
   dnfHandling: string,
+  logger?: ServiceLogger,
 ): StrokePlayResult {
   const roundStrokes = [...participant.roundStrokes];
   let missedCutRounds = 0;
@@ -57,6 +59,10 @@ export function scoreStrokePlayParticipant(
         roundStrokes.push(missedCutScore);
       }
     } else if (dnfHandling === DNFHandling.enum.EXCLUDE) {
+      logger?.warn(
+        { action: 'strokePlay.scoreParticipant.excluded', data: { participantId: participant.participantId, roundsPlayed, roundsMissed } },
+        'Excluded stroke-play participant because they did not finish and the config excludes DNF entries',
+      );
       return {
         participantId: participant.participantId,
         roundStrokes,
@@ -70,13 +76,18 @@ export function scoreStrokePlayParticipant(
 
   const totalStrokes = roundStrokes.reduce((sum, s) => sum + s, 0);
 
-  return {
+  const result = {
     participantId: participant.participantId,
     roundStrokes,
     totalStrokes,
     missedCutRounds,
     excluded: false,
   };
+  logger?.info(
+    { action: 'strokePlay.scoreParticipant.success', data: { participantId: participant.participantId, totalStrokes, missedCutRounds, excluded: result.excluded } },
+    'Scored stroke-play participant',
+  );
+  return result;
 }
 
 /**
@@ -85,11 +96,12 @@ export function scoreStrokePlayParticipant(
 export function scoreStrokePlayEntry(
   config: ScoringConfig,
   participants: StrokePlayParticipant[],
+  logger?: ServiceLogger,
 ): StrokePlayEntryResult {
   const missedCutScore = config.missed_event_score ?? 80;
 
   const allResults = participants.map((p) =>
-    scoreStrokePlayParticipant(p, missedCutScore, config.dnf_handling),
+    scoreStrokePlayParticipant(p, missedCutScore, config.dnf_handling, logger),
   );
 
   // Filter excluded
@@ -111,9 +123,14 @@ export function scoreStrokePlayEntry(
 
   const totalStrokes = counting.reduce((sum, r) => sum + r.totalStrokes, 0);
 
-  return {
+  const result = {
     totalStrokes,
     countingParticipants: counting,
     allParticipants: allResults,
   };
+  logger?.info(
+    { action: 'strokePlay.scoreEntry.success', data: { participantCount: participants.length, eligibleCount: eligible.length, totalStrokes } },
+    'Scored stroke-play entry',
+  );
+  return result;
 }

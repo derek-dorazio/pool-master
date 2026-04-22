@@ -123,6 +123,12 @@ describe('extendCurrentTurn', () => {
       extendCurrentTurn(createSession({ status: 'PAUSED' }), 30),
     ).toThrow();
   });
+
+  it('throws when there is no current turn start time', () => {
+    expect(() =>
+      extendCurrentTurn(createSession({ status: 'LIVE', currentTurnStartedAt: null }), 30),
+    ).toThrow('No current turn start time to extend');
+  });
 });
 
 describe('isPickExpired', () => {

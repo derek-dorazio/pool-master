@@ -133,7 +133,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     contestRepo,
     draftSessionRepo,
     entryRepo,
-    new ContestScoringRecalculationService(prisma),
+    new ContestScoringRecalculationService(prisma, fastify.log),
   );
   const handlers = createContestHandlers(contestService);
   const overrides = createOverrideHandlers(overrideService);
