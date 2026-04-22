@@ -4,14 +4,39 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RootAdminPage } from './root-admin-page';
 
-const adminListProviderSyncRunsMock = vi.fn();
-const adminListProvidersMock = vi.fn();
-const adminPrepareSportSyncMock = vi.fn();
+const {
+  adminListProviderSyncRunsMock,
+  adminListProvidersMock,
+  adminPrepareSportSyncMock,
+  mockLogger,
+} = vi.hoisted(() => {
+  const mockLogger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    child: vi.fn(),
+  };
+  mockLogger.child.mockReturnValue(mockLogger);
+
+  return {
+    adminListProviderSyncRunsMock: vi.fn(),
+    adminListProvidersMock: vi.fn(),
+    adminPrepareSportSyncMock: vi.fn(),
+    mockLogger,
+  };
+});
 
 vi.mock('@/lib/api', () => ({
   adminListProviderSyncRuns: (...args: unknown[]) => adminListProviderSyncRunsMock(...args),
   adminListProviders: (...args: unknown[]) => adminListProvidersMock(...args),
   adminPrepareSportSync: (...args: unknown[]) => adminPrepareSportSyncMock(...args),
+}));
+
+vi.mock('@/lib/logger', () => ({
+  logger: mockLogger,
+  useLogger: () => mockLogger,
 }));
 
 function renderRootAdminPage() {
@@ -37,6 +62,12 @@ describe('RootAdminPage', () => {
     adminListProviderSyncRunsMock.mockReset();
     adminListProvidersMock.mockReset();
     adminPrepareSportSyncMock.mockReset();
+    mockLogger.debug.mockReset();
+    mockLogger.info.mockReset();
+    mockLogger.warn.mockReset();
+    mockLogger.error.mockReset();
+    mockLogger.fatal.mockReset();
+    mockLogger.child.mockClear();
   });
 
   it('renders recent provider sync runs in the sync history table', async () => {
@@ -87,6 +118,12 @@ describe('RootAdminPage', () => {
     expect(within(syncRunCard).getByText('Imported event field and odds snapshot.')).toBeInTheDocument();
     expect(within(syncRunCard).getByText('masters-2026')).toBeInTheDocument();
     expect(within(syncRunCard).getByText('COMPLETED')).toBeInTheDocument();
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'rootAdmin.page.loaded',
+      }),
+      expect.any(String),
+    );
   });
 
   it('refetches sync runs when filters change', async () => {
@@ -214,6 +251,31 @@ describe('RootAdminPage', () => {
 
     expect(await screen.findByTestId('root-admin-sync-success')).toHaveTextContent(
       'Prepared GOLF event data across 1 provider with 2 hydrated events.',
+    );
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'rootAdmin.sync.succeeded',
+      }),
+      expect.any(String),
+    );
+  });
+
+  it('shows the sync-runs load failure state and logs the warning branch', async () => {
+    adminListProvidersMock.mockResolvedValue({
+      data: {
+        items: [],
+      },
+    });
+    adminListProviderSyncRunsMock.mockRejectedValue(new Error('Sync history unavailable'));
+
+    renderRootAdminPage();
+
+    expect(await screen.findByText('Sync history unavailable')).toBeInTheDocument();
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'rootAdmin.syncRuns.failed',
+      }),
+      expect.any(String),
     );
   });
 });

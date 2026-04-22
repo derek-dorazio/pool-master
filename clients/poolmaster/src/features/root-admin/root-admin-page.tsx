@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   adminPrepareSportSync,
@@ -8,6 +8,7 @@ import {
   type AdminListProviderSyncRunsResponses,
   type AdminListProvidersResponses,
 } from '@/lib/api';
+import { useLogger } from '@/lib/logger';
 
 type ProviderSyncRun = AdminListProviderSyncRunsResponses[200]['items'][number];
 type ProviderSummary = AdminListProvidersResponses[200]['items'][number];
@@ -156,6 +157,9 @@ function getStatusClasses(status: ProviderSyncRun['status'] | ProviderSummary['s
 }
 
 export function RootAdminPage() {
+  const logger = useLogger().child({
+    feature: 'root-admin-page',
+  });
   const queryClient = useQueryClient();
   const [providerFilter, setProviderFilter] = useState('ALL');
   const [sportFilter, setSportFilter] = useState('ALL');
@@ -230,13 +234,105 @@ export function RootAdminPage() {
 
       return response.data;
     },
-    onSuccess: async () => {
+    onMutate: (sport) => {
+      logger.debug(
+        {
+          action: 'rootAdmin.sync.started',
+          data: {
+            sport,
+          },
+        },
+        'Starting manual provider sync preparation',
+      );
+    },
+    onSuccess: async (preparation) => {
+      logger.info(
+        {
+          action: 'rootAdmin.sync.succeeded',
+          data: {
+            sport: preparation.sport,
+            providerCount: preparation.providerIds.length,
+            eventsHydrated: preparation.eventsHydrated,
+          },
+        },
+        'Prepared contest-ready sync data',
+      );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'root-admin', 'providers'] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'root-admin', 'provider-sync-runs'] }),
       ]);
     },
+    onError: (error) => {
+      if (error instanceof Error) {
+        logger.error(
+          {
+            action: 'rootAdmin.sync.failed',
+            data: {
+              sport: syncSport,
+            },
+            err: error,
+          },
+          'Manual provider sync preparation failed unexpectedly',
+        );
+        return;
+      }
+
+      logger.warn(
+        {
+          action: 'rootAdmin.sync.failed',
+          data: {
+            sport: syncSport,
+          },
+        },
+        'Manual provider sync preparation failed',
+      );
+    },
   });
+
+  useEffect(() => {
+    if (!providersQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'rootAdmin.providers.failed',
+        err: providersQuery.error instanceof Error ? providersQuery.error : undefined,
+      },
+      'Provider health summary failed to load',
+    );
+  }, [logger, providersQuery.error, providersQuery.isError]);
+
+  useEffect(() => {
+    if (!syncRunsQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'rootAdmin.syncRuns.failed',
+        err: syncRunsQuery.error instanceof Error ? syncRunsQuery.error : undefined,
+      },
+      'Provider sync runs failed to load',
+    );
+  }, [logger, syncRunsQuery.error, syncRunsQuery.isError]);
+
+  useEffect(() => {
+    if (!providersQuery.data || !syncRunsQuery.data) {
+      return;
+    }
+
+    logger.info(
+      {
+        action: 'rootAdmin.page.loaded',
+        data: {
+          providerCount: providersQuery.data.length,
+          syncRunCount: syncRunsQuery.data.length,
+        },
+      },
+      'Loaded root-admin sync visibility page',
+    );
+  }, [logger, providersQuery.data, syncRunsQuery.data]);
 
   if (syncRunsQuery.isLoading) {
     return (

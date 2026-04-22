@@ -11,6 +11,7 @@ import {
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
+import { useLogger } from '@/lib/logger';
 import { formatUserName } from './user-name';
 
 type AccountPreferencesFormState = {
@@ -68,6 +69,9 @@ function formatMemberSince(createdAt?: string, dateFormat?: 'MDY' | 'DMY' | 'YMD
 
 export function MyAccountPage() {
   const auth = useAuth();
+  const logger = useLogger().child({
+    feature: 'my-account-page',
+  });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const setSession = useSessionStore((state) => state.setSession);
@@ -107,7 +111,18 @@ export function MyAccountPage() {
       timeFormat: user.timeFormat ?? '',
       dateFormat: user.dateFormat ?? '',
     });
-  }, [user]);
+    logger.info(
+      {
+        action: 'account.page.loaded',
+        data: {
+          userId: user?.id ?? null,
+          isActive: user.isActive !== false,
+          isRootAdmin: user.isRootAdmin,
+        },
+      },
+      'Loaded my-account page state',
+    );
+  }, [logger, user]);
 
   const applyUserToSession = async (updatedUser: Parameters<typeof setSession>[0]) => {
     setSession(updatedUser);
@@ -128,8 +143,44 @@ export function MyAccountPage() {
       }
       return response.data.user;
     },
+    onMutate: () => {
+      logger.debug(
+        {
+          action: 'account.profile.started',
+          data: {
+            userId: user?.id ?? null,
+          },
+        },
+        'Submitting account profile update',
+      );
+    },
     onSuccess: async (updatedUser) => {
       await applyUserToSession(updatedUser);
+      logger.info(
+        {
+          action: 'account.profile.succeeded',
+          data: {
+            userId: updatedUser.id,
+          },
+        },
+        'Updated account profile',
+      );
+    },
+    onError: (error) => {
+      const payload = {
+        action: 'account.profile.failed',
+        data: {
+          userId: user?.id ?? null,
+        },
+        err: error instanceof Error ? error : undefined,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Account profile update failed unexpectedly');
+        return;
+      }
+
+      logger.warn(payload, 'Account profile update failed');
     },
   });
 
@@ -148,8 +199,44 @@ export function MyAccountPage() {
       }
       return response.data.user;
     },
+    onMutate: () => {
+      logger.debug(
+        {
+          action: 'account.preferences.started',
+          data: {
+            userId: user?.id ?? null,
+          },
+        },
+        'Submitting account preferences update',
+      );
+    },
     onSuccess: async (updatedUser) => {
       await applyUserToSession(updatedUser);
+      logger.info(
+        {
+          action: 'account.preferences.succeeded',
+          data: {
+            userId: updatedUser.id,
+          },
+        },
+        'Updated account preferences',
+      );
+    },
+    onError: (error) => {
+      const payload = {
+        action: 'account.preferences.failed',
+        data: {
+          userId: user?.id ?? null,
+        },
+        err: error instanceof Error ? error : undefined,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Account preferences update failed unexpectedly');
+        return;
+      }
+
+      logger.warn(payload, 'Account preferences update failed');
     },
   });
 
@@ -167,12 +254,48 @@ export function MyAccountPage() {
       }
       return response.data;
     },
+    onMutate: () => {
+      logger.debug(
+        {
+          action: 'account.password.started',
+          data: {
+            userId: user?.id ?? null,
+          },
+        },
+        'Submitting account password change',
+      );
+    },
     onSuccess: () => {
       setPasswordForm({
         currentPassword: '',
         newPassword: '',
         confirmNewPassword: '',
       });
+      logger.info(
+        {
+          action: 'account.password.succeeded',
+          data: {
+            userId: user?.id ?? null,
+          },
+        },
+        'Changed account password',
+      );
+    },
+    onError: (error) => {
+      const payload = {
+        action: 'account.password.failed',
+        data: {
+          userId: user?.id ?? null,
+        },
+        err: error instanceof Error ? error : undefined,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Account password change failed unexpectedly');
+        return;
+      }
+
+      logger.warn(payload, 'Account password change failed');
     },
   });
 
@@ -184,10 +307,46 @@ export function MyAccountPage() {
       }
       return response.data.user;
     },
+    onMutate: () => {
+      logger.debug(
+        {
+          action: 'account.reactivate.started',
+          data: {
+            userId: user?.id ?? null,
+          },
+        },
+        'Submitting account reactivation',
+      );
+    },
     onSuccess: async (updatedUser) => {
       await applyUserToSession(updatedUser);
       setIsDeleteFlowOpen(false);
       setEmailConfirmation('');
+      logger.info(
+        {
+          action: 'account.reactivate.succeeded',
+          data: {
+            userId: updatedUser.id,
+          },
+        },
+        'Reactivated account',
+      );
+    },
+    onError: (error) => {
+      const payload = {
+        action: 'account.reactivate.failed',
+        data: {
+          userId: user?.id ?? null,
+        },
+        err: error instanceof Error ? error : undefined,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Account reactivation failed unexpectedly');
+        return;
+      }
+
+      logger.warn(payload, 'Account reactivation failed');
     },
   });
 
@@ -199,8 +358,44 @@ export function MyAccountPage() {
       }
       return response.data.user;
     },
+    onMutate: () => {
+      logger.debug(
+        {
+          action: 'account.inactivate.started',
+          data: {
+            userId: user?.id ?? null,
+          },
+        },
+        'Submitting account inactivation',
+      );
+    },
     onSuccess: async (updatedUser) => {
       await applyUserToSession(updatedUser);
+      logger.info(
+        {
+          action: 'account.inactivate.succeeded',
+          data: {
+            userId: updatedUser.id,
+          },
+        },
+        'Inactivated account',
+      );
+    },
+    onError: (error) => {
+      const payload = {
+        action: 'account.inactivate.failed',
+        data: {
+          userId: user?.id ?? null,
+        },
+        err: error instanceof Error ? error : undefined,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Account inactivation failed unexpectedly');
+        return;
+      }
+
+      logger.warn(payload, 'Account inactivation failed');
     },
   });
 
@@ -218,8 +413,44 @@ export function MyAccountPage() {
 
       return response.data;
     },
+    onMutate: () => {
+      logger.debug(
+        {
+          action: 'account.delete.started',
+          data: {
+            userId: user?.id ?? null,
+          },
+        },
+        'Submitting account deletion',
+      );
+    },
     onSuccess: () => {
       setDeleteSuccess(true);
+      logger.info(
+        {
+          action: 'account.delete.succeeded',
+          data: {
+            userId: user?.id ?? null,
+          },
+        },
+        'Deleted account',
+      );
+    },
+    onError: (error) => {
+      const payload = {
+        action: 'account.delete.failed',
+        data: {
+          userId: user?.id ?? null,
+        },
+        err: error instanceof Error ? error : undefined,
+      };
+
+      if (error instanceof Error) {
+        logger.error(payload, 'Account deletion failed unexpectedly');
+        return;
+      }
+
+      logger.warn(payload, 'Account deletion failed');
     },
   });
 
@@ -361,7 +592,7 @@ export function MyAccountPage() {
                   || profileForm.firstName.trim().length === 0
                   || profileForm.lastName.trim().length === 0
                 }
-                onClick={() => void profileMutation.mutateAsync()}
+                onClick={() => void profileMutation.mutateAsync().catch(() => undefined)}
                 type="button"
               >
                 {profileMutation.isPending ? 'Saving...' : 'Save profile'}
@@ -472,7 +703,7 @@ export function MyAccountPage() {
                 className="rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                 data-testid="my-account-save-preferences"
                 disabled={disablePreferencesEditing}
-                onClick={() => void preferencesMutation.mutateAsync()}
+                onClick={() => void preferencesMutation.mutateAsync().catch(() => undefined)}
                 type="button"
               >
                 {preferencesMutation.isPending ? 'Saving...' : 'Save preferences'}
@@ -571,7 +802,7 @@ export function MyAccountPage() {
                   || passwordForm.newPassword.length < 8
                   || passwordForm.confirmNewPassword.length < 8
                 }
-                onClick={() => void passwordMutation.mutateAsync()}
+                onClick={() => void passwordMutation.mutateAsync().catch(() => undefined)}
                 type="button"
               >
                 {passwordMutation.isPending ? 'Saving...' : 'Change password'}
@@ -606,7 +837,7 @@ export function MyAccountPage() {
                     className="rounded-2xl border border-primary/30 bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                     data-testid="my-account-reactivate"
                     disabled={reactivateMutation.isPending || deleteMutation.isPending}
-                    onClick={() => void reactivateMutation.mutateAsync()}
+                    onClick={() => void reactivateMutation.mutateAsync().catch(() => undefined)}
                     type="button"
                   >
                     {reactivateMutation.isPending ? 'Reactivating...' : 'Reactivate account'}
@@ -616,7 +847,7 @@ export function MyAccountPage() {
                     className="rounded-2xl border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
                     data-testid="my-account-inactivate"
                     disabled={inactivateMutation.isPending || deleteMutation.isPending}
-                    onClick={() => void inactivateMutation.mutateAsync()}
+                    onClick={() => void inactivateMutation.mutateAsync().catch(() => undefined)}
                     type="button"
                   >
                     {inactivateMutation.isPending ? 'Inactivating...' : 'Inactivate account'}
@@ -731,7 +962,7 @@ export function MyAccountPage() {
                           className="rounded-2xl bg-destructive px-4 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                           data-testid="my-account-delete-submit"
                           disabled={!confirmationMatches || deleteMutation.isPending}
-                          onClick={() => void deleteMutation.mutateAsync(user.email)}
+                          onClick={() => void deleteMutation.mutateAsync(user.email).catch(() => undefined)}
                           type="button"
                         >
                           {deleteMutation.isPending ? 'Deleting...' : 'DELETE'}
