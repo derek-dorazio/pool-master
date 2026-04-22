@@ -6,6 +6,17 @@ signals, but the rollout also introduces backend correlation/header handling
 and a backend operational ingestion route so browser events can join the
 existing CloudWatch-backed service logs.
 
+## Action Plan
+
+| ID | Phase | Task | Status | Notes |
+|---|---|---|---|---|
+| WLO-001 | 1 | Logger foundation in the webapp | Done | Added shared logger types, redaction, trace id helper, console sink, singleton hook, bootstrap wiring, test logger helper, and unit proof under `clients/poolmaster/src/lib/logger/`. |
+| WLO-002 | 2 | Correlation headers and backend request bindings | Not Started | Add `X-Client-Trace-Id` and `X-Client-Request-Id` on outbound requests and bind them into backend request logs. |
+| WLO-003 | 3 | Client log ingestion endpoint and transport | Not Started | Add backend client-log endpoint plus browser batching transport. |
+| WLO-004 | 3 | Global browser failure capture and fallback UX | Not Started | Add error boundary plus `error` and `unhandledrejection` capture. |
+| WLO-005 | 4 | Feature-level logging backfill and branch proof | Not Started | Instrument auth, leagues, contests, account, root-admin, routes, and app-shell with behavioral test proof. |
+| WLO-006 | 5 | Docs and final gap sweep | Not Started | Add operational query guidance and final observability gap audit. |
+
 ## Research Summary
 
 ### 1. Backend logging baseline (what we're mirroring)
