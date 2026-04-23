@@ -10,7 +10,7 @@ import {
 import { sendError } from '../../core/error-handler';
 import type { CreateLeagueInput, LeagueService } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
-import { LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
+import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 
 export function createLeagueHandlers(leagueService: LeagueService) {
   return {
