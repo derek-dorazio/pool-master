@@ -38,11 +38,6 @@ export interface UserLeagueView {
   membership: LeagueMembership;
 }
 
-export interface RootAdminLeagueView {
-  league: League;
-  role: LeagueRole;
-}
-
 const DEFAULT_JOIN_POLICY = JoinPolicy.COMMISSIONER_ONLY;
 
 export class LeagueService {
@@ -153,14 +148,6 @@ export class LeagueService {
       },
     }, 'Listed leagues for user');
     return result;
-  }
-
-  async findAllForRootAdmin(): Promise<RootAdminLeagueView[]> {
-    const leagues = await this.leagueRepo.findAll();
-    return leagues.map((league) => ({
-      league,
-      role: LeagueRole.COMMISSIONER,
-    }));
   }
 
   async inactivateLeague(leagueId: string): Promise<League> {

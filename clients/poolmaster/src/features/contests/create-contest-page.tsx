@@ -20,6 +20,7 @@ import {
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useLogger } from '@/lib/logger';
+import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   buildLeaguePath,
   buildLeagueTeamPath,
@@ -984,14 +985,15 @@ export function CreateContestPage() {
     || managedContestQuery.isError
     || templatesQuery.isError
   ) {
+    const copy = getLeagueLoadErrorCopy(leagueQuery.error);
     return (
       <section
         className="rounded-[2rem] border border-border bg-card p-8"
         data-testid="create-contest-page-error"
       >
-        <h2 className="text-2xl font-semibold">We couldn&apos;t load this league.</h2>
+        <h2 className="text-2xl font-semibold">{copy.title}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Head back to your league home and try contest setup again.
+          {copy.body}
         </p>
       </section>
     );

@@ -32,6 +32,8 @@ import {
   buildLeagueTeamsPath,
   setRecentLeagueCode,
 } from './league-routing';
+import { getLeagueLoadErrorCopy } from './league-load-error';
+import { useLogger } from '@/lib/logger';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
@@ -104,6 +106,9 @@ export function LeagueDetailPage() {
   const auth = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const logger = useLogger().child({
+    feature: 'league-detail-page',
+  });
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLink, setInviteLink] = useState('');
   const [memberActionError, setMemberActionError] = useState<string | null>(null);
@@ -129,6 +134,23 @@ export function LeagueDetailPage() {
       setRecentLeagueCode(leagueQuery.data.leagueCode);
     }
   }, [leagueQuery.data?.leagueCode]);
+
+  useEffect(() => {
+    if (!leagueQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'leagueDetail.league.failed',
+        data: {
+          leagueCode,
+        },
+        err: leagueQuery.error,
+      },
+      'League detail page failed to load league context',
+    );
+  }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   const leagueId = leagueQuery.data?.id ?? '';
 
@@ -452,12 +474,12 @@ export function LeagueDetailPage() {
   }
 
   if (leagueQuery.isError || !leagueQuery.data) {
+    const copy = getLeagueLoadErrorCopy(leagueQuery.error);
     return (
       <section className="rounded-[2rem] border border-border bg-card p-8">
-        <h2 className="text-2xl font-semibold">We couldn&apos;t load this league.</h2>
+        <h2 className="text-2xl font-semibold">{copy.title}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Use the league selector in the header to switch to one of your active leagues, or return
-          to your welcome page and try again.
+          {copy.body}
         </p>
         <Link className="mt-4 inline-flex text-sm font-medium text-primary hover:underline" to="/welcome">
           Back to welcome

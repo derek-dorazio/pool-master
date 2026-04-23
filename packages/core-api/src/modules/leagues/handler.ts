@@ -10,7 +10,7 @@ import {
 import { sendError } from '../../core/error-handler';
 import type { CreateLeagueInput, LeagueService } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
-import { LeagueRole } from '@poolmaster/shared/domain';
+import { LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 
 export function createLeagueHandlers(leagueService: LeagueService) {
   return {
@@ -43,16 +43,14 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       }, 'Rejected list leagues request without authenticated session');
       return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
-    const leagues = request.authUser?.isRootAdmin
-      ? await leagueService.findAllForRootAdmin()
-      : await leagueService.findByUser(userId);
+    const leagues = await leagueService.findByUser(userId);
     logger.info({
       action: 'leagueRoute.list.success',
       data: { userId, isRootAdmin: request.authUser?.isRootAdmin === true, leagueCount: leagues.length },
     }, 'Listed leagues');
     return {
       leagues: leagues.map((item) => toLeagueSummaryDto(item.league, {
-        role: 'role' in item ? item.role : item.membership.role,
+        role: item.membership.role,
       })),
     };
   }
@@ -114,6 +112,13 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       data: { leagueId: request.params.id, userId: request.authUser?.userId ?? null },
     }, 'Handling get league request');
     const userId = request.authUser?.userId;
+    if (!userId) {
+      logger.warn({
+        action: 'leagueRoute.get.unauthenticated',
+        data: { leagueId: request.params.id },
+      }, 'Rejected league request without authenticated session');
+      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
+    }
     const result = await leagueService.getLeagueWithMembers(request.params.id);
     if (!result) {
       logger.warn({
@@ -122,9 +127,31 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       }, 'League not found');
       return sendError(reply, 404, 'LEAGUE_NOT_FOUND', 'League not found');
     }
-    const membership = userId
-      ? result.members.find((member) => member.userId === userId)
-      : undefined;
+    const membership = result.members.find((member) => member.userId === userId);
+    if (!membership) {
+      logger.warn({
+        action: 'leagueRoute.get.membershipMissing',
+        data: { leagueId: request.params.id, userId },
+      }, 'Rejected league request for non-member');
+      return sendError(
+        reply,
+        403,
+        'LEAGUE_MEMBERSHIP_REQUIRED',
+        'You must be an active member of this league to view it',
+      );
+    }
+    if (membership.status !== LeagueMembershipStatus.ACTIVE) {
+      logger.warn({
+        action: 'leagueRoute.get.membershipInactive',
+        data: { leagueId: request.params.id, userId, status: membership.status },
+      }, 'Rejected league request for inactive membership');
+      return sendError(
+        reply,
+        403,
+        'LEAGUE_MEMBERSHIP_INACTIVE',
+        'Your membership in this league is inactive',
+      );
+    }
     logger.info({
       action: 'leagueRoute.get.success',
       data: { leagueId: request.params.id, memberCount: result.members.length },
@@ -133,7 +160,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       league: toLeagueDetailDto(result.league, {
         memberCount: result.members.length,
         activeContestCount: 0,
-        role: request.authUser?.isRootAdmin ? LeagueRole.COMMISSIONER : membership?.role,
+        role: membership.role,
       }),
     });
   }
@@ -148,6 +175,13 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       data: { leagueCode: request.params.leagueCode, userId: request.authUser?.userId ?? null },
     }, 'Handling get league by code request');
     const userId = request.authUser?.userId;
+    if (!userId) {
+      logger.warn({
+        action: 'leagueRoute.getByCode.unauthenticated',
+        data: { leagueCode: request.params.leagueCode },
+      }, 'Rejected league-by-code request without authenticated session');
+      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
+    }
     const result = await leagueService.getLeagueWithMembersByCode(request.params.leagueCode);
     if (!result) {
       logger.warn({
@@ -156,9 +190,36 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       }, 'League not found by code');
       return sendError(reply, 404, 'LEAGUE_NOT_FOUND', 'League not found');
     }
-    const membership = userId
-      ? result.members.find((member) => member.userId === userId)
-      : undefined;
+    const membership = result.members.find((member) => member.userId === userId);
+    if (!membership) {
+      logger.warn({
+        action: 'leagueRoute.getByCode.membershipMissing',
+        data: { leagueCode: request.params.leagueCode, leagueId: result.league.id, userId },
+      }, 'Rejected league-by-code request for non-member');
+      return sendError(
+        reply,
+        403,
+        'LEAGUE_MEMBERSHIP_REQUIRED',
+        'You must be an active member of this league to view it',
+      );
+    }
+    if (membership.status !== LeagueMembershipStatus.ACTIVE) {
+      logger.warn({
+        action: 'leagueRoute.getByCode.membershipInactive',
+        data: {
+          leagueCode: request.params.leagueCode,
+          leagueId: result.league.id,
+          userId,
+          status: membership.status,
+        },
+      }, 'Rejected league-by-code request for inactive membership');
+      return sendError(
+        reply,
+        403,
+        'LEAGUE_MEMBERSHIP_INACTIVE',
+        'Your membership in this league is inactive',
+      );
+    }
     logger.info({
       action: 'leagueRoute.getByCode.success',
       data: { leagueId: result.league.id, leagueCode: result.league.leagueCode, memberCount: result.members.length },
@@ -167,7 +228,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       league: toLeagueDetailDto(result.league, {
         memberCount: result.members.length,
         activeContestCount: 0,
-        role: request.authUser?.isRootAdmin ? LeagueRole.COMMISSIONER : membership?.role,
+        role: membership.role,
       }),
     });
   }

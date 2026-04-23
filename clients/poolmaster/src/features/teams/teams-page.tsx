@@ -12,6 +12,7 @@ import {
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { formatUserName } from '@/features/account/user-name';
+import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import { buildLeaguePath, buildLeagueTeamPath, setRecentLeagueCode } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
 import { getTeamIconOption } from './team-icon-catalog';
@@ -240,11 +241,12 @@ export function TeamsPage() {
   }
 
   if (leagueQuery.isError || !leagueQuery.data) {
+    const copy = getLeagueLoadErrorCopy(leagueQuery.error);
     return (
       <section className="rounded-[2rem] border border-border bg-card p-8">
-        <h2 className="text-2xl font-semibold">We couldn&apos;t load this league.</h2>
+        <h2 className="text-2xl font-semibold">{copy.title}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Return to the league home page and try again.
+          {copy.body}
         </p>
         <Link className="mt-4 inline-flex text-sm font-medium text-primary hover:underline" to="/welcome">
           Back to welcome

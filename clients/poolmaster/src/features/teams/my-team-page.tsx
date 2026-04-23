@@ -26,7 +26,9 @@ import {
 import { useAuth } from '@/features/auth/auth-provider';
 import { buildContestEntryPath } from '@/features/contests/contest-entry-page';
 import { formatUserName } from '@/features/account/user-name';
+import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import { buildLeaguePath, setRecentLeagueCode } from '@/features/leagues/league-routing';
+import { useLogger } from '@/lib/logger';
 import { getTeamIconOption, TEAM_ICON_OPTIONS } from './team-icon-catalog';
 import { buildDefaultTeamName } from './team-defaults';
 import { TeamIcon } from './team-icon';
@@ -68,6 +70,9 @@ export function MyTeamPage() {
   const [searchParams] = useSearchParams();
   const auth = useAuth();
   const queryClient = useQueryClient();
+  const logger = useLogger().child({
+    feature: 'my-team-page',
+  });
   const [teamName, setTeamName] = useState('');
   const [selectedIconKey, setSelectedIconKey] = useState<TeamIconKey>(TeamIconKey.CAPTAIN_SMILE_FIELD);
   const [coOwnerEmail, setCoOwnerEmail] = useState('');
@@ -97,6 +102,23 @@ export function MyTeamPage() {
       setRecentLeagueCode(leagueQuery.data.leagueCode);
     }
   }, [leagueQuery.data?.leagueCode]);
+
+  useEffect(() => {
+    if (!leagueQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'team.league.failed',
+        data: {
+          leagueCode,
+        },
+        err: leagueQuery.error,
+      },
+      'My team page failed to load league context',
+    );
+  }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   const leagueId = leagueQuery.data?.id ?? '';
 
@@ -454,11 +476,12 @@ export function MyTeamPage() {
   }
 
   if (leagueQuery.isError || !leagueQuery.data) {
+    const copy = getLeagueLoadErrorCopy(leagueQuery.error);
     return (
       <section className="rounded-[2rem] border border-border bg-card p-8">
-        <h2 className="text-2xl font-semibold">We couldn&apos;t load this league.</h2>
+        <h2 className="text-2xl font-semibold">{copy.title}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Return to the league home page and try again.
+          {copy.body}
         </p>
         <Link
           className="mt-4 inline-flex text-sm font-medium text-primary hover:underline"

@@ -20,22 +20,6 @@ async function loadMembership(
 ) {
   const logger = request.contextLogger ?? request.log;
   const { userId, leagueId } = extractLeagueContext(request);
-  if (request.authUser?.isRootAdmin) {
-    logger.debug({
-      action: 'leaguePermission.loadMembership.rootAdminBypass',
-      data: { leagueId: leagueId ?? null, userId: userId ?? null },
-    }, 'Bypassed league membership check for root admin');
-    return {
-      id: 'root-admin-commissioner-bypass',
-      leagueId: leagueId ?? '',
-      userId: userId ?? '',
-      role: LeagueRole.COMMISSIONER,
-      status: LeagueMembershipStatus.ACTIVE,
-      joinedAt: new Date(0),
-      createdAt: new Date(0),
-      updatedAt: new Date(0),
-    };
-  }
   if (!userId) {
     logger.warn({
       action: 'leaguePermission.loadMembership.unauthenticated',

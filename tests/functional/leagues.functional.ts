@@ -6,6 +6,7 @@ import {
   generateInviteLink,
   getInvitationPreview,
   getLeagueDashboard,
+  getLeagueByCode,
   getLeague,
   inactivateLeague,
   leaveLeague,
@@ -906,6 +907,68 @@ describe('SDK Functional: Leagues', () => {
     expectFunctionalError(deletedLeagueResponse, {
       status: 404,
       code: 'LEAGUE_NOT_FOUND',
+    });
+  });
+
+  it('reads league detail by code for active members and rejects outsiders', async () => {
+    const commissioner = await buildRegisteredUser({
+      displayName: 'League By Code Commissioner',
+    });
+    const member = await buildRegisteredUser({
+      displayName: 'League By Code Member',
+    });
+    const outsider = await buildRegisteredUser({
+      displayName: 'League By Code Outsider',
+    });
+
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: buildCreateLeagueBody('League By Code Flow'),
+    });
+
+    const leagueId = createResponse.data?.league.id as string;
+    const leagueCode = createResponse.data?.league.leagueCode as string;
+
+    const invitationResponse = await generateInviteLink({
+      client: commissioner.client,
+      path: { id: leagueId },
+      body: { maxUses: 1 },
+    });
+
+    await acceptInvitation({
+      client: member.client,
+      body: {
+        inviteCode: invitationResponse.data?.invitation.inviteCode as string,
+      },
+    });
+
+    const memberLeagueResponse = await getLeagueByCode({
+      client: member.client,
+      path: { leagueCode },
+    });
+
+    expect(memberLeagueResponse.data?.league.id).toBe(leagueId);
+    expect(memberLeagueResponse.data?.league.leagueCode).toBe(leagueCode);
+    expect(memberLeagueResponse.data?.league.role).toBe('MEMBER');
+
+    const outsiderLeagueResponse = await getLeagueByCode({
+      client: outsider.client,
+      path: { leagueCode },
+    });
+
+    expectFunctionalError(outsiderLeagueResponse, {
+      status: 403,
+      code: 'LEAGUE_MEMBERSHIP_REQUIRED',
+    });
+
+    const outsiderLeagueByIdResponse = await getLeague({
+      client: outsider.client,
+      path: { id: leagueId },
+    });
+
+    expectFunctionalError(outsiderLeagueByIdResponse, {
+      status: 403,
+      code: 'LEAGUE_MEMBERSHIP_REQUIRED',
     });
   });
 });
