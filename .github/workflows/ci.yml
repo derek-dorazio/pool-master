@@ -396,7 +396,7 @@ jobs:
 
           aws ecs describe-task-definition \
             --task-definition "$CORE_SERVICE_TASK_DEF" \
-            --query 'taskDefinition.containerDefinitions[?name==`core-api`][0].environment' \
+            --query 'taskDefinition.containerDefinitions[0].environment' \
             --output json > /tmp/qa-core-api-env.json
 
           jq -e '
