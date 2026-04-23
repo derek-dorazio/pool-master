@@ -126,6 +126,10 @@ async function seedImportedGolfEvent(options: {
   providerId?: string;
 }) {
   const prisma = getFunctionalPrisma();
+  const now = new Date();
+  const releaseAt = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const fieldLocksAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const startDate = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
   const sport = await prisma.sport.create({
     data: {
       name: `ManagedContestSport-${randomUUID().slice(0, 8)}`,
@@ -141,9 +145,9 @@ async function seedImportedGolfEvent(options: {
       providerId: options.providerId ?? 'functional-test',
       sport: Sport.GOLF,
       name: options.eventName,
-      startDate: new Date('2026-04-10T12:00:00.000Z'),
-      releaseAt: new Date('2026-04-07T16:00:00.000Z'),
-      fieldLocksAt: new Date('2026-04-09T16:00:00.000Z'),
+      startDate,
+      releaseAt,
+      fieldLocksAt,
       status: 'SCHEDULED',
     },
   });

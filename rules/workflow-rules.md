@@ -100,6 +100,10 @@ When finishing work:
 - If a slice is pushed after only focused validation and CI then fails in a
   required gate that was skipped locally, treat that as a workflow miss in the
   slice closeout, not as an acceptable CI discovery pattern.
+- Do not bypass required local database validation by making manual non-migration
+  schema changes directly in the database. If a migration does not apply
+  locally, fix the migration path or the local test-database state before
+  treating the slice as validated.
 - If code cleanup resolves a previously logged plan finding, reconcile that plan
   finding in the same or immediately following slice. Do not leave active plans
   implying drift that no longer exists in the codebase.

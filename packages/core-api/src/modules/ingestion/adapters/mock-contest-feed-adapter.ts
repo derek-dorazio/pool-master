@@ -81,16 +81,13 @@ interface EventDetailResponse {
 }
 
 interface FeedSnapshotResponse {
+  readonly scenarioId?: string;
+  readonly eventId?: string;
+  readonly eventName?: string;
+  readonly feedKind?: 'field' | 'odds' | 'rankings' | 'results';
+  readonly asOf?: string;
+  readonly note?: string;
   readonly contestants: ContestantRecord[];
-}
-
-interface UpdatesResponse {
-  readonly updates: Array<{
-    readonly asOf: string;
-    readonly feedKind: 'field' | 'odds' | 'rankings' | 'results';
-    readonly updateType: 'refresh' | 'correction' | 'live' | 'final';
-    readonly contestants: ContestantDelta[];
-  }>;
 }
 
 interface FeedSnapshot {
@@ -136,7 +133,10 @@ export class MockContestFeedAdapter implements SportDataProvider {
   async getUpcomingEvents(sport: Sport, dateRange: DateRange): Promise<SportEvent[]> {
     const entries = await this.listScenarioEvents(sport);
     return entries
-      .map(({ detail }) => toSportEvent(this.providerId, detail))
+      .map(({ detail }) => {
+        const fieldContestants = resolveParticipants(detail);
+        return toSportEvent(this.providerId, detail, fieldContestants.length);
+      })
       .filter(
         (event) =>
           event.startDate.getTime() >= dateRange.from.getTime()
@@ -151,12 +151,13 @@ export class MockContestFeedAdapter implements SportDataProvider {
     }
 
     const detail = await this.fetchJson<EventDetailResponse>(
-      `/v1/scenarios/${match.scenarioId}/events/${eventId}/detail`,
+      `/v1/pre-event/scenarios/${match.scenarioId}/events/${eventId}/detail`,
     );
+    const participants = resolveParticipants(detail);
 
     return {
-      ...toSportEvent(this.providerId, detail),
-      participants: detail.event.field.contestants.map((contestant) =>
+      ...toSportEvent(this.providerId, detail, participants.length),
+      participants: participants.map((contestant) =>
         toProviderParticipant(this.providerId, detail.sport, contestant),
       ),
     };
@@ -167,7 +168,7 @@ export class MockContestFeedAdapter implements SportDataProvider {
     const seen = new Map<string, ProviderParticipant>();
 
     for (const { detail } of entries) {
-      for (const contestant of detail.event.field.contestants) {
+      for (const contestant of resolveParticipants(detail)) {
         seen.set(
           contestant.contestantId,
           toProviderParticipant(this.providerId, detail.sport, contestant),
@@ -207,19 +208,12 @@ export class MockContestFeedAdapter implements SportDataProvider {
       return [];
     }
 
-    const [detail, updates] = await Promise.all([
-      this.fetchJson<EventDetailResponse>(
-        `/v1/scenarios/${match.scenarioId}/events/${eventId}/detail`,
-      ),
-      this.fetchJson<UpdatesResponse>(
-        `/v1/scenarios/${match.scenarioId}/events/${eventId}/updates`,
-      ),
-    ]);
+    const liveScores = await this.fetchJson<FeedSnapshotResponse>(
+      `/v1/live/scenarios/${match.scenarioId}/events/${eventId}/scores`,
+    );
+    const timestamp = liveScores.asOf ? new Date(liveScores.asOf) : new Date();
 
-    const scores = overlayScoreState(detail, updates);
-    const timestamp = resolveLatestScoreTimestamp(detail, updates);
-
-    return Array.from(scores.values())
+    return liveScores.contestants
       .filter((contestant) => typeof contestant.score === 'number')
       .map((contestant) => ({
         id: `${eventId}-${contestant.contestantId}-total-score`,
@@ -240,14 +234,14 @@ export class MockContestFeedAdapter implements SportDataProvider {
     }
 
     const detail = await this.fetchJson<EventDetailResponse>(
-      `/v1/scenarios/${match.scenarioId}/events/${eventId}/detail`,
+      `/v1/pre-event/scenarios/${match.scenarioId}/events/${eventId}/detail`,
     );
     const resultsSnapshot = await this.fetchJson<FeedSnapshotResponse>(
-      `/v1/scenarios/${match.scenarioId}/events/${eventId}/results`,
+      `/v1/live/scenarios/${match.scenarioId}/events/${eventId}/results`,
     );
 
     const merged = new Map<string, ContestantRecord>();
-    for (const contestant of detail.event.field.contestants) {
+    for (const contestant of resolveParticipants(detail)) {
       merged.set(contestant.contestantId, { ...contestant });
     }
     for (const contestant of resultsSnapshot.contestants) {
@@ -324,7 +318,7 @@ export class MockContestFeedAdapter implements SportDataProvider {
         events.map(async (event) => ({
           scenarioId,
           detail: await this.fetchJson<EventDetailResponse>(
-            `/v1/scenarios/${scenarioId}/events/${event.eventId}/detail`,
+            `/v1/pre-event/scenarios/${scenarioId}/events/${event.eventId}/detail`,
           ),
         })),
       ),
@@ -403,7 +397,11 @@ function toProviderParticipant(
   };
 }
 
-function toSportEvent(providerId: string, detail: EventDetailResponse): SportEvent {
+function toSportEvent(
+  providerId: string,
+  detail: EventDetailResponse,
+  participantCount: number,
+): SportEvent {
   return {
     externalId: detail.event.metadata?.externalEventId ?? detail.event.eventId,
     providerId,
@@ -415,7 +413,7 @@ function toSportEvent(providerId: string, detail: EventDetailResponse): SportEve
     startDate: new Date(detail.event.schedule.startsAt),
     endDate: detail.event.schedule.endsAt ? new Date(detail.event.schedule.endsAt) : undefined,
     status: mapEventStatus(detail.event.status),
-    participantCount: detail.event.field.contestants.length,
+    participantCount,
     fieldLocked:
       detail.event.field.status === 'locked'
       || detail.event.field.status === 'final'
@@ -434,6 +432,17 @@ function toSportEvent(providerId: string, detail: EventDetailResponse): SportEve
   };
 }
 
+function resolveParticipants(detail: EventDetailResponse): ContestantRecord[] {
+  if (detail.sport === 'GOLF') {
+    return mergeContestantView(
+      detail.event.field.contestants,
+      detail.event.feeds.odds.contestants,
+    );
+  }
+
+  return detail.event.field.contestants;
+}
+
 function mapEventStatus(
   status: EventDetailResponse['event']['status'],
 ): SportEvent['status'] {
@@ -447,46 +456,6 @@ function mapEventStatus(
     case 'corrected':
       return 'COMPLETED';
   }
-}
-
-function overlayScoreState(
-  detail: EventDetailResponse,
-  updates: UpdatesResponse,
-): Map<string, ContestantRecord> {
-  const merged = new Map<string, ContestantRecord>();
-  for (const contestant of detail.event.field.contestants) {
-    merged.set(contestant.contestantId, { ...contestant });
-  }
-
-  for (const contestant of detail.event.feeds.results.contestants) {
-    const current = merged.get(contestant.contestantId);
-    merged.set(contestant.contestantId, { ...current, ...contestant } as ContestantRecord);
-  }
-
-  for (const update of updates.updates.filter((candidate) => candidate.feedKind === 'results')) {
-    for (const contestant of update.contestants) {
-      const current = merged.get(contestant.contestantId);
-      merged.set(contestant.contestantId, { ...current, ...contestant } as ContestantRecord);
-    }
-  }
-
-  return merged;
-}
-
-function resolveLatestScoreTimestamp(
-  detail: EventDetailResponse,
-  updates: UpdatesResponse,
-): Date {
-  const candidates = [
-    detail.event.feeds.results.asOf,
-    ...updates.updates
-      .filter((candidate) => candidate.feedKind === 'results')
-      .map((candidate) => candidate.asOf),
-  ];
-
-  return new Date(
-    candidates.sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0],
-  );
 }
 
 function compareContestantsForResults(left: ContestantRecord, right: ContestantRecord): number {
@@ -515,4 +484,30 @@ function buildResultStats(contestant: ContestantRecord): Record<string, number> 
   }
 
   return stats;
+}
+
+function mergeContestantView(
+  baseline: readonly ContestantRecord[],
+  overrides: readonly ContestantDelta[],
+): ContestantRecord[] {
+  const merged = new Map<string, ContestantRecord>();
+
+  for (const contestant of baseline) {
+    merged.set(contestant.contestantId, { ...contestant });
+  }
+
+  for (const override of overrides) {
+    const current = merged.get(override.contestantId) ?? {
+      contestantId: override.contestantId,
+      name: override.name ?? override.contestantId,
+    };
+    merged.set(override.contestantId, {
+      ...current,
+      ...override,
+      contestantId: override.contestantId,
+      name: override.name ?? current.name,
+    });
+  }
+
+  return Array.from(merged.values());
 }

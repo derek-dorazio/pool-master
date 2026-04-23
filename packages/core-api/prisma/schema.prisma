@@ -1125,6 +1125,17 @@ model AdminAuditEntry {
   @@map("admin_audit_log")
 }
 
+model PlatformRuntimeConfig {
+  id          String   @id @default(uuid()) @db.Uuid
+  configKey   String   @unique @map("config_key") @db.VarChar(100)
+  configJson  Json     @map("config_json")
+  updatedById String?  @map("updated_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("platform_runtime_configs")
+}
+
 model MigrationRun {
   id          String    @id @default(uuid()) @db.Uuid
   migrationId String    @map("migration_id") @db.VarChar(255)

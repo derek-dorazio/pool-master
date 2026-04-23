@@ -8,6 +8,8 @@
 
 import { logAdminAction } from './admin-audit-service';
 import type { FastifyBaseLogger } from 'fastify';
+import { PollIntervalConfigSchema } from '@poolmaster/shared/dto';
+import type { PrismaPlatformRuntimeConfigRepository } from './platform-runtime-config-repository';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,16 +41,39 @@ const DEFAULT_POLL_CONFIG: PollIntervalConfig = {
 
 let currentConfig: PollIntervalConfig = { ...DEFAULT_POLL_CONFIG };
 
+const POLL_RUNTIME_CONFIG_KEY = 'POLL_INTERVAL_CONFIG';
+
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
 
 export class PollConfigService {
-  constructor(private readonly logger?: FastifyBaseLogger) {}
+  private initialized = false;
+  private readonly repository?: PrismaPlatformRuntimeConfigRepository;
+  private readonly logger?: FastifyBaseLogger;
+
+  constructor(
+    repositoryOrLogger?: PrismaPlatformRuntimeConfigRepository | FastifyBaseLogger,
+    logger?: FastifyBaseLogger,
+  ) {
+    if (repositoryOrLogger && 'findByKey' in repositoryOrLogger) {
+      this.repository = repositoryOrLogger;
+      this.logger = logger;
+      return;
+    }
+
+    this.repository = undefined;
+    this.logger = repositoryOrLogger as FastifyBaseLogger | undefined;
+  }
+
+  async bootstrap(): Promise<void> {
+    await this.ensureLoaded();
+  }
   /**
    * Returns the current poll interval configuration.
    */
   async getConfig(): Promise<PollIntervalConfig> {
+    await this.ensureLoaded();
     this.logger?.debug({
       action: 'adminPollConfig.get.start',
     }, 'Loading poll interval config');
@@ -66,6 +91,7 @@ export class PollConfigService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<PollIntervalConfig> {
+    await this.ensureLoaded();
     this.logger?.debug({
       action: 'adminPollConfig.update.start',
       data: {
@@ -74,6 +100,7 @@ export class PollConfigService {
     }, 'Updating poll interval config');
     const before = { ...currentConfig };
     currentConfig = { ...currentConfig, ...partial };
+    await this.persist(rootAdminUserId);
 
     await logAdminAction({
       actorUserId: rootAdminUserId,
@@ -102,11 +129,13 @@ export class PollConfigService {
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<PollIntervalConfig> {
+    await this.ensureLoaded();
     this.logger?.debug({
       action: 'adminPollConfig.reset.start',
     }, 'Resetting poll interval config');
     const before = { ...currentConfig };
     currentConfig = { ...DEFAULT_POLL_CONFIG };
+    await this.persist(rootAdminUserId);
 
     await logAdminAction({
       actorUserId: rootAdminUserId,
@@ -123,6 +152,59 @@ export class PollConfigService {
       action: 'adminPollConfig.reset.success',
     }, 'Reset poll interval config');
     return { ...currentConfig };
+  }
+
+  private async ensureLoaded(): Promise<void> {
+    if (this.initialized) {
+      return;
+    }
+
+    if (!this.repository) {
+      this.initialized = true;
+      return;
+    }
+
+    const existing = await this.repository.findByKey(POLL_RUNTIME_CONFIG_KEY);
+    if (!existing) {
+      await this.repository.create({
+        configKey: POLL_RUNTIME_CONFIG_KEY,
+        configJson: DEFAULT_POLL_CONFIG,
+      });
+      currentConfig = { ...DEFAULT_POLL_CONFIG };
+      this.initialized = true;
+      return;
+    }
+
+    const parsed = PollIntervalConfigSchema.safeParse(existing.configJson);
+    if (!parsed.success) {
+      this.logger?.warn({
+        action: 'adminPollConfig.bootstrap.invalidPersistedConfig',
+        issues: parsed.error.issues,
+      }, 'Persisted poll interval config was invalid; reverting to defaults');
+      currentConfig = { ...DEFAULT_POLL_CONFIG };
+      await this.repository.update({
+        configKey: POLL_RUNTIME_CONFIG_KEY,
+        configJson: currentConfig,
+        updatedById: existing.updatedById,
+      });
+      this.initialized = true;
+      return;
+    }
+
+    currentConfig = { ...parsed.data };
+    this.initialized = true;
+  }
+
+  private async persist(updatedById?: string): Promise<void> {
+    if (!this.repository) {
+      return;
+    }
+
+    await this.repository.update({
+      configKey: POLL_RUNTIME_CONFIG_KEY,
+      configJson: currentConfig,
+      updatedById: updatedById ?? null,
+    });
   }
 }
 

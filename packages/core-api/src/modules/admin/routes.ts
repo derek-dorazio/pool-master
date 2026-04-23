@@ -16,13 +16,20 @@ import { ProviderService } from './provider-service';
 import { createProviderHandlers } from './provider-handler';
 import { PollConfigService } from './poll-config-service';
 import { IngestionConfigService } from './ingestion-config-service';
+import { PrismaPlatformRuntimeConfigRepository } from './platform-runtime-config-repository';
 import { registerPlatformConfigRoutes } from './platform-config-routes';
+import { ContestTemplateAdminService } from './contest-template-service';
+import { createContestTemplateAdminHandlers } from './contest-template-handler';
 import { auditRoutes } from './audit-routes';
 import {
+  AdminContestConfigTemplateResponseSchema,
+  AdminListContestConfigTemplatesQuerySchema,
+  AdminUpdateContestConfigTemplateRequestSchema,
+  ContestConfigTemplateListResponseSchema,
   UserListResponseSchema,
   UserDetailResponseSchema,
   ProviderListResponseSchema,
-  ProviderSportSyncPreparationResponseSchema,
+  ProviderSyncRunDtoSchema,
   ProviderSyncRunListResponseSchema,
   ProviderDetailResponseSchema,
   ProviderIngestionDashboardResponseSchema,
@@ -39,10 +46,17 @@ import {
   SuccessSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
+import {
+  EventSyncRequestSchema,
+  IngestionFeedTypeSchema,
+  IngestionJobRecordDtoSchema,
+  SportSyncRequestSchema,
+} from '@poolmaster/shared/dto/ingestion.dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import adminAuth from '../../plugins/admin-auth';
 import { getAppPrisma } from '../../core/prisma-context';
 import type { ProviderRegistry } from '../ingestion/core/provider-registry';
+import { PrismaContestConfigTemplateRepository } from '../../adapters';
 
 function withAdminErrorResponses(
   successResponses: Record<number, unknown>,
@@ -64,6 +78,8 @@ function withAdminErrorResponses(
 export interface AdminModuleOptions {
   providerService?: ProviderService;
   providerRegistry?: ProviderRegistry;
+  ingestionConfigService?: IngestionConfigService;
+  pollConfigService?: PollConfigService;
 }
 
 export async function adminModule(
@@ -85,14 +101,20 @@ export async function adminModule(
   // --- Services ---
   const userService = new UserService(prisma, fastify.log);
   const healthService = new HealthService(prisma, fastify.log);
-  const providerService = opts.providerService ?? new ProviderService(prisma, opts.providerRegistry, fastify.log);
-  const pollConfigService = new PollConfigService(fastify.log);
-  const ingestionConfigService = new IngestionConfigService(fastify.log);
+  const providerService = opts.providerService ?? new ProviderService(prisma, opts.providerRegistry, undefined, fastify.log);
+  const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
+  const pollConfigService = opts.pollConfigService ?? new PollConfigService(runtimeConfigRepository, fastify.log);
+  const ingestionConfigService = opts.ingestionConfigService ?? new IngestionConfigService(runtimeConfigRepository, fastify.log);
+  const contestTemplateAdminService = new ContestTemplateAdminService(
+    new PrismaContestConfigTemplateRepository(prisma),
+    fastify.log,
+  );
 
   // --- Handlers ---
   const user = createUserHandlers(userService);
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService);
+  const contestTemplates = createContestTemplateAdminHandlers(contestTemplateAdminService);
 
   // --- User Management Routes ---
 
@@ -204,12 +226,77 @@ export async function adminModule(
   fastify.post('/providers/sync/:sport', {
     schema: {
       tags: ['Admin'],
-      summary: 'Prepare contest-ready sport data',
-      description: 'Triggers manual provider sync plus event-detail hydration for the requested sport so root-admins can unblock contest-ready event data.',
+      summary: 'Run explicit manual sport sync feeds',
+      description: 'Triggers feed-aware manual sync for the requested sport so root-admins can run event schedule, participant, or ranking work intentionally.',
       operationId: 'adminPrepareSportSync',
-      response: withAdminErrorResponses({ 201: zodToJsonSchema(ProviderSportSyncPreparationResponseSchema) }, [404]),
+      body: zodToJsonSchema(SportSyncRequestSchema),
+      response: withAdminErrorResponses({
+        200: {
+          type: 'object',
+          properties: {
+            sport: { type: 'string', enum: ['GOLF', 'NFL', 'NBA', 'F1', 'NASCAR', 'NCAA_BASKETBALL', 'NCAA_HOCKEY', 'NCAA_FOOTBALL', 'TENNIS', 'HORSE_RACING', 'SOCCER', 'NHL', 'MLB', 'UFC'] },
+            eventId: { type: 'string', nullable: true },
+            requestedFeeds: { type: 'array', items: zodToJsonSchema(IngestionFeedTypeSchema) },
+            jobs: zodToJsonSchema(IngestionJobRecordDtoSchema.array()),
+            syncRuns: zodToJsonSchema(ProviderSyncRunDtoSchema.array()),
+          },
+          required: ['sport', 'eventId', 'requestedFeeds', 'jobs', 'syncRuns'],
+        },
+      }, [404]),
     },
     handler: provider.prepareSportSync,
+  });
+
+  fastify.post('/providers/events/:sport/:eventId/sync', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Run explicit manual event sync feeds',
+      description: 'Triggers feed-aware manual sync for a single event so root-admins can refresh participants, live scores, or final results intentionally.',
+      operationId: 'adminSyncProviderEventData',
+      body: zodToJsonSchema(EventSyncRequestSchema),
+      response: withAdminErrorResponses({
+        200: {
+          type: 'object',
+          properties: {
+            sport: { type: 'string', enum: ['GOLF', 'NFL', 'NBA', 'F1', 'NASCAR', 'NCAA_BASKETBALL', 'NCAA_HOCKEY', 'NCAA_FOOTBALL', 'TENNIS', 'HORSE_RACING', 'SOCCER', 'NHL', 'MLB', 'UFC'] },
+            eventId: { type: 'string', nullable: true },
+            requestedFeeds: { type: 'array', items: zodToJsonSchema(IngestionFeedTypeSchema) },
+            jobs: zodToJsonSchema(IngestionJobRecordDtoSchema.array()),
+            syncRuns: zodToJsonSchema(ProviderSyncRunDtoSchema.array()),
+          },
+          required: ['sport', 'eventId', 'requestedFeeds', 'jobs', 'syncRuns'],
+        },
+      }, [404]),
+    },
+    handler: provider.syncEventData,
+  });
+
+  fastify.get('/contest-config-templates', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List persisted contest configuration templates',
+      description: 'Returns the persisted commissioner contest configuration templates that root-admins can manage from the /manage page.',
+      operationId: 'adminListContestConfigTemplates',
+      querystring: zodToJsonSchema(AdminListContestConfigTemplatesQuerySchema),
+      response: withAdminErrorResponses({
+        200: zodToJsonSchema(ContestConfigTemplateListResponseSchema),
+      }),
+    },
+    handler: contestTemplates.listTemplates,
+  });
+
+  fastify.put('/contest-config-templates/:templateId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Update a persisted contest configuration template',
+      description: 'Updates the persisted commissioner contest template used as a global default for future contest create flows.',
+      operationId: 'adminUpdateContestConfigTemplate',
+      body: zodToJsonSchema(AdminUpdateContestConfigTemplateRequestSchema),
+      response: withAdminErrorResponses({
+        200: zodToJsonSchema(AdminContestConfigTemplateResponseSchema),
+      }, [400, 404]),
+    },
+    handler: contestTemplates.updateTemplate,
   });
 
   fastify.get('/providers/ingestion', {

@@ -136,6 +136,19 @@ layers are still shaped like the old model, the slice remains `In Progress`.
 - Prefer a clean target schema over preserving obsolete table structures.
 - Do not contort the schema to preserve legacy naming or associations when the product model has clearly changed.
 - Keep migration files, ORM models, DTOs, and route contracts consistent with the new domain model names in the same slice.
+- Never work around a migration problem by applying manual non-migration
+  database changes to a local, shared, CI, QA, or production database in order
+  to unblock tests or validation.
+- Do not create tables, columns, indexes, constraints, or seed-like rows by
+  hand as a substitute for getting the checked-in migration path working.
+- If a schema change is required, validate it through the migration itself or a
+  checked-in repair/migration script that is part of the repo's normal database
+  upgrade path.
+- Manual SQL inspection for diagnosis is acceptable. Manual SQL mutation as a
+  workaround is not.
+- If local validation is blocked because the migration will not apply cleanly,
+  stop and fix the migration or test-database state rather than bypassing the
+  migration and deferring the risk to CI.
 - For risky data migrations and repair scripts, add explicit verification of the
   intended end state before marking the migration applied in metadata.
 - If a migration fix fails twice in a real environment, stop incremental

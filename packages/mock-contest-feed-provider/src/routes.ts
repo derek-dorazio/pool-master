@@ -233,6 +233,29 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
     },
   );
 
+  fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
+    '/v1/pre-event/scenarios/:scenarioId/events/:eventId/detail',
+    {
+      schema: {
+        tags: ['Pre-Event'],
+        summary: 'Get pre-event event detail with season context and baseline feeds',
+        operationId: 'getMockContestFeedPreEventDetail',
+        params: {
+          type: 'object',
+          required: ['scenarioId', 'eventId'],
+          properties: {
+            scenarioId: { type: 'string' },
+            eventId: { type: 'string' },
+          },
+        },
+        response: {
+          200: eventResponseSchema,
+        },
+      },
+    },
+    async (request) => store.getEventResponse(request.params.scenarioId, request.params.eventId),
+  );
+
   for (const feedKind of ['field', 'odds', 'rankings', 'results'] as const) {
     const operationId =
       feedKind === 'field'
@@ -272,6 +295,95 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
       },
     );
   }
+
+  for (const feedKind of ['field', 'odds', 'rankings'] as const) {
+    const operationId =
+      feedKind === 'field'
+        ? 'getMockContestFeedPreEventFieldSnapshot'
+        : feedKind === 'odds'
+          ? 'getMockContestFeedPreEventOddsSnapshot'
+          : 'getMockContestFeedPreEventRankingsSnapshot';
+
+    fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
+      `/v1/pre-event/scenarios/:scenarioId/events/:eventId/${feedKind}`,
+      {
+        schema: {
+          tags: ['Pre-Event'],
+          summary: `Get pre-event ${feedKind} snapshot for an event`,
+          operationId,
+          params: {
+            type: 'object',
+            required: ['scenarioId', 'eventId'],
+            properties: {
+              scenarioId: { type: 'string' },
+              eventId: { type: 'string' },
+            },
+          },
+          response: {
+            200: snapshotResponseSchema,
+          },
+        },
+      },
+      async (request) => store.getSnapshot(request.params.scenarioId, request.params.eventId, feedKind),
+    );
+  }
+
+  fastify.get<{ Params: { scenarioId: string; eventId: string }; Querystring: { tick?: number } }>(
+    '/v1/live/scenarios/:scenarioId/events/:eventId/scores',
+    {
+      schema: {
+        tags: ['Live'],
+        summary: 'Get live scoring snapshot for an event',
+        operationId: 'getMockContestFeedLiveScores',
+        params: {
+          type: 'object',
+          required: ['scenarioId', 'eventId'],
+          properties: {
+            scenarioId: { type: 'string' },
+            eventId: { type: 'string' },
+          },
+        },
+        querystring: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            tick: { type: 'integer', minimum: 1 },
+          },
+        },
+        response: {
+          200: snapshotResponseSchema,
+        },
+      },
+    },
+    async (request) => store.getLiveScores(
+      request.params.scenarioId,
+      request.params.eventId,
+      request.query.tick,
+    ),
+  );
+
+  fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
+    '/v1/live/scenarios/:scenarioId/events/:eventId/results',
+    {
+      schema: {
+        tags: ['Live'],
+        summary: 'Get final results snapshot for an event',
+        operationId: 'getMockContestFeedLiveResults',
+        params: {
+          type: 'object',
+          required: ['scenarioId', 'eventId'],
+          properties: {
+            scenarioId: { type: 'string' },
+            eventId: { type: 'string' },
+          },
+        },
+        response: {
+          200: snapshotResponseSchema,
+        },
+      },
+    },
+    async (request) => store.getSnapshot(request.params.scenarioId, request.params.eventId, 'results'),
+  );
 
   fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
     '/v1/scenarios/:scenarioId/events/:eventId/updates',

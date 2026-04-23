@@ -10912,7 +10912,23 @@ export type AdminListProviderSyncRunsResponses = {
 export type AdminListProviderSyncRunsResponse = AdminListProviderSyncRunsResponses[keyof AdminListProviderSyncRunsResponses];
 
 export type AdminPrepareSportSyncData = {
-    body?: never;
+    /**
+     * Feed-aware sport sync request.
+     */
+    body: {
+        /**
+         * Feed types to run for a sport-level sync request.
+         */
+        feeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS'>;
+        /**
+         * Optional lower bound for sport-level event discovery.
+         */
+        from?: string;
+        /**
+         * Optional lower bound for sport-level event discovery.
+         */
+        to?: string;
+    };
     path: {
         sport: string;
     };
@@ -10971,15 +10987,53 @@ export type AdminPrepareSportSyncError = AdminPrepareSportSyncErrors[keyof Admin
 
 export type AdminPrepareSportSyncResponses = {
     /**
-     * Manual root-admin sport sync result that prepares contest-ready event data for the requested sport.
+     * Default Response
      */
-    201: {
+    200: {
         sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-        providerIds: Array<string>;
-        eventsDiscovered: number;
-        eventsHydrated: number;
-        participantRecordsSynced: number;
-        rankingRecordsSynced: number;
+        eventId: string;
+        requestedFeeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+        jobs: Array<{
+            jobType: 'EVENT_SCHEDULE_SYNC' | 'EVENT_PARTICIPANTS_SYNC' | 'PARTICIPANT_RANKINGS_SYNC' | 'EVENT_LIVE_SCORES_SYNC' | 'EVENT_RESULTS_SYNC' | 'HEALTH_CHECK';
+            /**
+             * Provider that owns the ingestion job.
+             */
+            providerId: string;
+            /**
+             * Sport being synchronized.
+             */
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+            /**
+             * Provider event identifier when the job targets a single event.
+             */
+            eventExternalId?: string;
+            /**
+             * Current ingestion job lifecycle state.
+             */
+            status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            /**
+             * When the job began processing.
+             */
+            startedAt?: string;
+            /**
+             * When the job began processing.
+             */
+            completedAt?: string;
+            /**
+             * How many records the job successfully processed.
+             */
+            recordsProcessed: number;
+            /**
+             * How many processing errors occurred during the job.
+             */
+            errors: number;
+            /**
+             * Opaque error payloads returned for diagnostics and admin tooling.
+             */
+            errorLog: Array<{
+                [key: string]: unknown;
+            }>;
+        }>;
         syncRuns: Array<{
             id: string;
             providerId: string;
@@ -11000,6 +11054,768 @@ export type AdminPrepareSportSyncResponses = {
 };
 
 export type AdminPrepareSportSyncResponse = AdminPrepareSportSyncResponses[keyof AdminPrepareSportSyncResponses];
+
+export type AdminSyncProviderEventDataData = {
+    /**
+     * Feed-aware event sync request.
+     */
+    body: {
+        /**
+         * Feed types to run for a specific event sync request.
+         */
+        feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+    };
+    path: {
+        sport: string;
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/providers/events/{sport}/{eventId}/sync';
+};
+
+export type AdminSyncProviderEventDataErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminSyncProviderEventDataError = AdminSyncProviderEventDataErrors[keyof AdminSyncProviderEventDataErrors];
+
+export type AdminSyncProviderEventDataResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        eventId: string;
+        requestedFeeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+        jobs: Array<{
+            jobType: 'EVENT_SCHEDULE_SYNC' | 'EVENT_PARTICIPANTS_SYNC' | 'PARTICIPANT_RANKINGS_SYNC' | 'EVENT_LIVE_SCORES_SYNC' | 'EVENT_RESULTS_SYNC' | 'HEALTH_CHECK';
+            /**
+             * Provider that owns the ingestion job.
+             */
+            providerId: string;
+            /**
+             * Sport being synchronized.
+             */
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+            /**
+             * Provider event identifier when the job targets a single event.
+             */
+            eventExternalId?: string;
+            /**
+             * Current ingestion job lifecycle state.
+             */
+            status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            /**
+             * When the job began processing.
+             */
+            startedAt?: string;
+            /**
+             * When the job began processing.
+             */
+            completedAt?: string;
+            /**
+             * How many records the job successfully processed.
+             */
+            recordsProcessed: number;
+            /**
+             * How many processing errors occurred during the job.
+             */
+            errors: number;
+            /**
+             * Opaque error payloads returned for diagnostics and admin tooling.
+             */
+            errorLog: Array<{
+                [key: string]: unknown;
+            }>;
+        }>;
+        syncRuns: Array<{
+            id: string;
+            providerId: string;
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+            eventId: string;
+            status: 'RUNNING' | 'COMPLETED' | 'FAILED';
+            startedAt: string;
+            completedAt: string;
+            createdAt: string;
+            /**
+             * Opaque provider sync payload retained for thin admin operational detail surfaces.
+             */
+            payload: {
+                [key: string]: unknown;
+            };
+        }>;
+    };
+};
+
+export type AdminSyncProviderEventDataResponse = AdminSyncProviderEventDataResponses[keyof AdminSyncProviderEventDataResponses];
+
+export type AdminListContestConfigTemplatesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Optional sport filter for root-admin contest template management.
+         */
+        sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        /**
+         * Optional contest-type filter for root-admin contest template management.
+         */
+        contestType?: 'SINGLE_EVENT';
+        /**
+         * Optional active-state filter for root-admin contest template management.
+         */
+        active?: boolean;
+    };
+    url: '/api/v1/admin/contest-config-templates';
+};
+
+export type AdminListContestConfigTemplatesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminListContestConfigTemplatesError = AdminListContestConfigTemplatesErrors[keyof AdminListContestConfigTemplatesErrors];
+
+export type AdminListContestConfigTemplatesResponses = {
+    /**
+     * Available seeded contest templates for commissioner create flow.
+     */
+    200: {
+        templates: Array<{
+            /**
+             * Seeded contest template identifier.
+             */
+            id: string;
+            /**
+             * Sport this template applies to.
+             */
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+            /**
+             * Optional event-type scope for the template.
+             */
+            eventType?: string;
+            /**
+             * Contest type that may use the template.
+             */
+            contestType: 'SINGLE_EVENT';
+            /**
+             * Configuration mode seeded by the template.
+             */
+            configMode: 'GOLF_TIERED' | 'GOLF_CATEGORY_PICKS';
+            /**
+             * Stable machine key for the template.
+             */
+            templateKey: string;
+            /**
+             * Commissioner-facing template label.
+             */
+            name: string;
+            /**
+             * Commissioner-facing template description.
+             */
+            description: string;
+            /**
+             * Display order for template selection.
+             */
+            sortOrder: number;
+            /**
+             * Whether the template should be preselected in the create flow.
+             */
+            isDefault: boolean;
+            /**
+             * Whether the template is currently selectable.
+             */
+            active: boolean;
+            /**
+             * Version of the configuration schema metadata expected by the template.
+             */
+            schemaVersion: number;
+            /**
+             * Seeded configuration payload copied into a contest instance when the template is chosen.
+             */
+            configuration: {
+                mode: 'GOLF_TIERED';
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number;
+                /**
+                 * How many golfers each Team entry must pick.
+                 */
+                rosterSize: number;
+                /**
+                 * How many golfer scores count toward the Team total.
+                 */
+                countedScores: number;
+                /**
+                 * Single tier source used to generate all tiers.
+                 */
+                tierSource: 'ODDS' | 'WORLD_RANK';
+                tierGeneration: {
+                    /**
+                     * Basic mode tier size used to seed the tier list.
+                     */
+                    defaultTierSize: number;
+                };
+                /**
+                 * Persisted tier boundaries and pick counts after seeding or advanced editing.
+                 */
+                tiers: Array<{
+                    /**
+                     * Stable tier key such as A, B, or C.
+                     */
+                    tierKey: string;
+                    /**
+                     * Commissioner-facing tier label.
+                     */
+                    label: string;
+                    /**
+                     * How many golfers must be picked from the tier.
+                     */
+                    pickCount: number;
+                    /**
+                     * Starting resolved rank/odds position for the tier.
+                     */
+                    startPosition: number;
+                    /**
+                     * Ending resolved rank/odds position for the tier. Null means remainder of field.
+                     */
+                    endPosition: number;
+                }>;
+                /**
+                 * Golf cut rule for first-pass contests.
+                 */
+                cutRule: {
+                    type: 'FIXED_SCORE';
+                    /**
+                     * Fallback score assigned when a golfer misses the cut.
+                     */
+                    fixedScore: number;
+                };
+                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+                displayScoring: 'TO_PAR';
+                /**
+                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
+                 */
+                tiebreaker: {
+                    type: 'PREDICT_WINNING_SCORE';
+                };
+            } | {
+                mode: 'GOLF_CATEGORY_PICKS';
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number;
+                /**
+                 * Enabled category slots for the contest.
+                 */
+                categories: Array<{
+                    categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
+                    /**
+                     * Commissioner-facing category label.
+                     */
+                    label: string;
+                    /**
+                     * How many golfers must be picked for the category.
+                     */
+                    pickCount: number;
+                }>;
+                /**
+                 * Golf cut rule for first-pass contests.
+                 */
+                cutRule: {
+                    type: 'FIXED_SCORE';
+                    /**
+                     * Fallback score assigned when a golfer misses the cut.
+                     */
+                    fixedScore: number;
+                };
+                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+                displayScoring: 'TO_PAR';
+                /**
+                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
+                 */
+                tiebreaker: {
+                    type: 'PREDICT_WINNING_SCORE';
+                };
+            };
+        }>;
+    };
+};
+
+export type AdminListContestConfigTemplatesResponse = AdminListContestConfigTemplatesResponses[keyof AdminListContestConfigTemplatesResponses];
+
+export type AdminUpdateContestConfigTemplateData = {
+    /**
+     * Root-admin contest template update payload.
+     */
+    body: {
+        /**
+         * Updated root-admin template display name.
+         */
+        name?: string;
+        /**
+         * Updated root-admin template description.
+         */
+        description?: string;
+        /**
+         * Updated sort order for the template within its create-flow group.
+         */
+        sortOrder?: number;
+        /**
+         * Whether this template should be the default choice for future create flows in its scope.
+         */
+        isDefault?: boolean;
+        /**
+         * Whether commissioners can select this template in future create flows.
+         */
+        active?: boolean;
+        /**
+         * Updated persisted configuration payload copied into future contests when this template is selected.
+         */
+        configuration?: {
+            mode: 'GOLF_TIERED';
+            /**
+             * Contest entry lock timestamp.
+             */
+            locksAt?: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number;
+            /**
+             * How many golfers each Team entry must pick.
+             */
+            rosterSize: number;
+            /**
+             * How many golfer scores count toward the Team total.
+             */
+            countedScores: number;
+            /**
+             * Single tier source used to generate all tiers.
+             */
+            tierSource: 'ODDS' | 'WORLD_RANK';
+            tierGeneration: {
+                /**
+                 * Basic mode tier size used to seed the tier list.
+                 */
+                defaultTierSize: number;
+            };
+            /**
+             * Persisted tier boundaries and pick counts after seeding or advanced editing.
+             */
+            tiers: Array<{
+                /**
+                 * Stable tier key such as A, B, or C.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked from the tier.
+                 */
+                pickCount: number;
+                /**
+                 * Starting resolved rank/odds position for the tier.
+                 */
+                startPosition: number;
+                /**
+                 * Ending resolved rank/odds position for the tier. Null means remainder of field.
+                 */
+                endPosition: number;
+            }>;
+            /**
+             * Golf cut rule for first-pass contests.
+             */
+            cutRule: {
+                type: 'FIXED_SCORE';
+                /**
+                 * Fallback score assigned when a golfer misses the cut.
+                 */
+                fixedScore: number;
+            };
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+            displayScoring: 'TO_PAR';
+            /**
+             * Golf tiebreaker configuration. Teams predict the winning to-par score.
+             */
+            tiebreaker: {
+                type: 'PREDICT_WINNING_SCORE';
+            };
+        } | {
+            mode: 'GOLF_CATEGORY_PICKS';
+            /**
+             * Contest entry lock timestamp.
+             */
+            locksAt?: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number;
+            /**
+             * Enabled category slots for the contest.
+             */
+            categories: Array<{
+                categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
+                /**
+                 * Commissioner-facing category label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked for the category.
+                 */
+                pickCount: number;
+            }>;
+            /**
+             * Golf cut rule for first-pass contests.
+             */
+            cutRule: {
+                type: 'FIXED_SCORE';
+                /**
+                 * Fallback score assigned when a golfer misses the cut.
+                 */
+                fixedScore: number;
+            };
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+            displayScoring: 'TO_PAR';
+            /**
+             * Golf tiebreaker configuration. Teams predict the winning to-par score.
+             */
+            tiebreaker: {
+                type: 'PREDICT_WINNING_SCORE';
+            };
+        };
+    };
+    path: {
+        templateId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/contest-config-templates/{templateId}';
+};
+
+export type AdminUpdateContestConfigTemplateErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminUpdateContestConfigTemplateError = AdminUpdateContestConfigTemplateErrors[keyof AdminUpdateContestConfigTemplateErrors];
+
+export type AdminUpdateContestConfigTemplateResponses = {
+    /**
+     * Single root-admin contest template response.
+     */
+    200: {
+        /**
+         * Seeded commissioner-facing contest configuration template.
+         */
+        template: {
+            /**
+             * Seeded contest template identifier.
+             */
+            id: string;
+            /**
+             * Sport this template applies to.
+             */
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+            /**
+             * Optional event-type scope for the template.
+             */
+            eventType?: string;
+            /**
+             * Contest type that may use the template.
+             */
+            contestType: 'SINGLE_EVENT';
+            /**
+             * Configuration mode seeded by the template.
+             */
+            configMode: 'GOLF_TIERED' | 'GOLF_CATEGORY_PICKS';
+            /**
+             * Stable machine key for the template.
+             */
+            templateKey: string;
+            /**
+             * Commissioner-facing template label.
+             */
+            name: string;
+            /**
+             * Commissioner-facing template description.
+             */
+            description: string;
+            /**
+             * Display order for template selection.
+             */
+            sortOrder: number;
+            /**
+             * Whether the template should be preselected in the create flow.
+             */
+            isDefault: boolean;
+            /**
+             * Whether the template is currently selectable.
+             */
+            active: boolean;
+            /**
+             * Version of the configuration schema metadata expected by the template.
+             */
+            schemaVersion: number;
+            /**
+             * Seeded configuration payload copied into a contest instance when the template is chosen.
+             */
+            configuration: {
+                mode: 'GOLF_TIERED';
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number;
+                /**
+                 * How many golfers each Team entry must pick.
+                 */
+                rosterSize: number;
+                /**
+                 * How many golfer scores count toward the Team total.
+                 */
+                countedScores: number;
+                /**
+                 * Single tier source used to generate all tiers.
+                 */
+                tierSource: 'ODDS' | 'WORLD_RANK';
+                tierGeneration: {
+                    /**
+                     * Basic mode tier size used to seed the tier list.
+                     */
+                    defaultTierSize: number;
+                };
+                /**
+                 * Persisted tier boundaries and pick counts after seeding or advanced editing.
+                 */
+                tiers: Array<{
+                    /**
+                     * Stable tier key such as A, B, or C.
+                     */
+                    tierKey: string;
+                    /**
+                     * Commissioner-facing tier label.
+                     */
+                    label: string;
+                    /**
+                     * How many golfers must be picked from the tier.
+                     */
+                    pickCount: number;
+                    /**
+                     * Starting resolved rank/odds position for the tier.
+                     */
+                    startPosition: number;
+                    /**
+                     * Ending resolved rank/odds position for the tier. Null means remainder of field.
+                     */
+                    endPosition: number;
+                }>;
+                /**
+                 * Golf cut rule for first-pass contests.
+                 */
+                cutRule: {
+                    type: 'FIXED_SCORE';
+                    /**
+                     * Fallback score assigned when a golfer misses the cut.
+                     */
+                    fixedScore: number;
+                };
+                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+                displayScoring: 'TO_PAR';
+                /**
+                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
+                 */
+                tiebreaker: {
+                    type: 'PREDICT_WINNING_SCORE';
+                };
+            } | {
+                mode: 'GOLF_CATEGORY_PICKS';
+                /**
+                 * Contest entry lock timestamp.
+                 */
+                locksAt?: string;
+                /**
+                 * Maximum entries a Team may create. Null means unlimited.
+                 */
+                maxEntriesPerSquad?: number;
+                /**
+                 * Enabled category slots for the contest.
+                 */
+                categories: Array<{
+                    categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
+                    /**
+                     * Commissioner-facing category label.
+                     */
+                    label: string;
+                    /**
+                     * How many golfers must be picked for the category.
+                     */
+                    pickCount: number;
+                }>;
+                /**
+                 * Golf cut rule for first-pass contests.
+                 */
+                cutRule: {
+                    type: 'FIXED_SCORE';
+                    /**
+                     * Fallback score assigned when a golfer misses the cut.
+                     */
+                    fixedScore: number;
+                };
+                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
+                displayScoring: 'TO_PAR';
+                /**
+                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
+                 */
+                tiebreaker: {
+                    type: 'PREDICT_WINNING_SCORE';
+                };
+            };
+        };
+    };
+};
+
+export type AdminUpdateContestConfigTemplateResponse = AdminUpdateContestConfigTemplateResponses[keyof AdminUpdateContestConfigTemplateResponses];
 
 export type AdminGetIngestionDashboardData = {
     body?: never;
@@ -12760,25 +13576,476 @@ export type AdminGetIngestionScheduleError = AdminGetIngestionScheduleErrors[key
 
 export type AdminGetIngestionScheduleResponses = {
     /**
-     * Minimal success response envelope.
+     * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
      */
     200: {
         /**
-         * Confirms that the requested operation succeeded.
+         * Scheduling policy for provider health checks.
          */
-        success: true;
+        healthCheck: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for event schedule discovery.
+         */
+        eventSchedule: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for event participant hydration before the event starts.
+         */
+        eventParticipants: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for ranking refreshes.
+         */
+        participantRankings: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for live score polling.
+         */
+        eventLiveScores: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for completed-event result refreshes.
+         */
+        eventResults: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Per-sport scheduling overrides applied on top of the global feed policies.
+         */
+        perSportOverrides: {
+            [key: string]: {
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                healthCheck?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventSchedule?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventParticipants?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                participantRankings?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventLiveScores?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventResults?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+            };
+        };
     };
 };
 
 export type AdminGetIngestionScheduleResponse = AdminGetIngestionScheduleResponses[keyof AdminGetIngestionScheduleResponses];
 
 export type AdminUpdateIngestionScheduleData = {
+    /**
+     * Partial ingestion scheduling override used for global updates and per-sport overrides.
+     */
     body: {
-        healthCheckIntervalMinutes?: number;
-        scheduleSyncIntervalHours?: number;
-        participantSyncIntervalHours?: number;
-        rankingSyncIntervalHours?: number;
-        liveScorePollingIntervalSeconds?: number;
+        /**
+         * Partial feed-scheduling override payload.
+         */
+        healthCheck?: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled?: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Partial feed-scheduling override payload.
+         */
+        eventSchedule?: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled?: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Partial feed-scheduling override payload.
+         */
+        eventParticipants?: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled?: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Partial feed-scheduling override payload.
+         */
+        participantRankings?: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled?: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Partial feed-scheduling override payload.
+         */
+        eventLiveScores?: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled?: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Partial feed-scheduling override payload.
+         */
+        eventResults?: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled?: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
     };
     path?: never;
     query?: never;
@@ -12814,25 +14081,476 @@ export type AdminUpdateIngestionScheduleError = AdminUpdateIngestionScheduleErro
 
 export type AdminUpdateIngestionScheduleResponses = {
     /**
-     * Minimal success response envelope.
+     * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
      */
     200: {
         /**
-         * Confirms that the requested operation succeeded.
+         * Scheduling policy for provider health checks.
          */
-        success: true;
+        healthCheck: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for event schedule discovery.
+         */
+        eventSchedule: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for event participant hydration before the event starts.
+         */
+        eventParticipants: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for ranking refreshes.
+         */
+        participantRankings: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for live score polling.
+         */
+        eventLiveScores: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for completed-event result refreshes.
+         */
+        eventResults: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Per-sport scheduling overrides applied on top of the global feed policies.
+         */
+        perSportOverrides: {
+            [key: string]: {
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                healthCheck?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventSchedule?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventParticipants?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                participantRankings?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventLiveScores?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventResults?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+            };
+        };
     };
 };
 
 export type AdminUpdateIngestionScheduleResponse = AdminUpdateIngestionScheduleResponses[keyof AdminUpdateIngestionScheduleResponses];
 
 export type AdminSetSportIngestionOverrideData = {
+    /**
+     * Partial ingestion scheduling override used for global updates and per-sport overrides.
+     */
     body: {
-        healthCheckIntervalMinutes?: number;
-        scheduleSyncIntervalHours?: number;
-        participantSyncIntervalHours?: number;
-        rankingSyncIntervalHours?: number;
-        liveScorePollingIntervalSeconds?: number;
+        /**
+         * Partial feed-scheduling override payload.
+         */
+        healthCheck?: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled?: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Partial feed-scheduling override payload.
+         */
+        eventSchedule?: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled?: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Partial feed-scheduling override payload.
+         */
+        eventParticipants?: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled?: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Partial feed-scheduling override payload.
+         */
+        participantRankings?: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled?: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Partial feed-scheduling override payload.
+         */
+        eventLiveScores?: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled?: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Partial feed-scheduling override payload.
+         */
+        eventResults?: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled?: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
     };
     path: {
         sport: string;
@@ -12870,17 +14588,673 @@ export type AdminSetSportIngestionOverrideError = AdminSetSportIngestionOverride
 
 export type AdminSetSportIngestionOverrideResponses = {
     /**
-     * Minimal success response envelope.
+     * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
      */
     200: {
         /**
-         * Confirms that the requested operation succeeded.
+         * Scheduling policy for provider health checks.
          */
-        success: true;
+        healthCheck: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for event schedule discovery.
+         */
+        eventSchedule: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for event participant hydration before the event starts.
+         */
+        eventParticipants: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for ranking refreshes.
+         */
+        participantRankings: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for live score polling.
+         */
+        eventLiveScores: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for completed-event result refreshes.
+         */
+        eventResults: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Per-sport scheduling overrides applied on top of the global feed policies.
+         */
+        perSportOverrides: {
+            [key: string]: {
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                healthCheck?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventSchedule?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventParticipants?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                participantRankings?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventLiveScores?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventResults?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+            };
+        };
     };
 };
 
 export type AdminSetSportIngestionOverrideResponse = AdminSetSportIngestionOverrideResponses[keyof AdminSetSportIngestionOverrideResponses];
+
+export type AdminResetSportIngestionOverrideData = {
+    body?: never;
+    path: {
+        sport: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/config/ingestion-schedule/{sport}/reset';
+};
+
+export type AdminResetSportIngestionOverrideErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminResetSportIngestionOverrideError = AdminResetSportIngestionOverrideErrors[keyof AdminResetSportIngestionOverrideErrors];
+
+export type AdminResetSportIngestionOverrideResponses = {
+    /**
+     * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
+     */
+    200: {
+        /**
+         * Scheduling policy for provider health checks.
+         */
+        healthCheck: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for event schedule discovery.
+         */
+        eventSchedule: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for event participant hydration before the event starts.
+         */
+        eventParticipants: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for ranking refreshes.
+         */
+        participantRankings: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for live score polling.
+         */
+        eventLiveScores: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for completed-event result refreshes.
+         */
+        eventResults: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Per-sport scheduling overrides applied on top of the global feed policies.
+         */
+        perSportOverrides: {
+            [key: string]: {
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                healthCheck?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventSchedule?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventParticipants?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                participantRankings?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventLiveScores?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventResults?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+            };
+        };
+    };
+};
+
+export type AdminResetSportIngestionOverrideResponse = AdminResetSportIngestionOverrideResponses[keyof AdminResetSportIngestionOverrideResponses];
 
 export type AdminResetIngestionScheduleData = {
     body?: never;
@@ -12891,13 +15265,316 @@ export type AdminResetIngestionScheduleData = {
 
 export type AdminResetIngestionScheduleResponses = {
     /**
-     * Minimal success response envelope.
+     * Feed-aware ingestion scheduling configuration exposed to root-admin tooling.
      */
     200: {
         /**
-         * Confirms that the requested operation succeeded.
+         * Scheduling policy for provider health checks.
          */
-        success: true;
+        healthCheck: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for event schedule discovery.
+         */
+        eventSchedule: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for event participant hydration before the event starts.
+         */
+        eventParticipants: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for ranking refreshes.
+         */
+        participantRankings: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for live score polling.
+         */
+        eventLiveScores: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Scheduling policy for completed-event result refreshes.
+         */
+        eventResults: {
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
+            /**
+             * How often the feed should run, in minutes, for interval-driven orchestration.
+             */
+            intervalMinutes?: number;
+            /**
+             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+             */
+            intervalSeconds?: number;
+            /**
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             */
+            lookaheadDays?: number;
+            /**
+             * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+             */
+            leadDaysBeforeStart?: number;
+        };
+        /**
+         * Per-sport scheduling overrides applied on top of the global feed policies.
+         */
+        perSportOverrides: {
+            [key: string]: {
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                healthCheck?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventSchedule?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventParticipants?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                participantRankings?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventLiveScores?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+                /**
+                 * Partial feed-scheduling override payload.
+                 */
+                eventResults?: {
+                    /**
+                     * Whether the feed should be scheduled automatically.
+                     */
+                    enabled?: boolean;
+                    /**
+                     * How often the feed should run, in minutes, for interval-driven orchestration.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+                     */
+                    intervalSeconds?: number;
+                    /**
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     */
+                    lookaheadDays?: number;
+                    /**
+                     * How many days before event start a feed becomes eligible to run for that event lifecycle window.
+                     */
+                    leadDaysBeforeStart?: number;
+                };
+            };
+        };
     };
 };
 
@@ -15913,7 +18590,23 @@ export type ListIngestionProvidersResponses = {
 export type ListIngestionProvidersResponse = ListIngestionProvidersResponses[keyof ListIngestionProvidersResponses];
 
 export type SyncSportDataData = {
-    body?: never;
+    /**
+     * Feed-aware sport sync request.
+     */
+    body: {
+        /**
+         * Feed types to run for a sport-level sync request.
+         */
+        feeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS'>;
+        /**
+         * Optional lower bound for sport-level event discovery.
+         */
+        from?: string;
+        /**
+         * Optional lower bound for sport-level event discovery.
+         */
+        to?: string;
+    };
     path: {
         sport: string;
     };
@@ -15950,14 +18643,11 @@ export type SyncSportDataError = SyncSportDataErrors[keyof SyncSportDataErrors];
 
 export type SyncSportDataResponses = {
     /**
-     * Single ingestion-job response.
+     * Multiple ingestion jobs returned for a feed-aware sync request.
      */
     200: {
-        /**
-         * Ingestion job execution record.
-         */
-        job: {
-            jobType: 'SCHEDULE_SYNC' | 'PARTICIPANT_SYNC' | 'RANKING_SYNC' | 'LIVE_SCORES' | 'EVENT_RESULTS' | 'HEALTH_CHECK';
+        jobs: Array<{
+            jobType: 'EVENT_SCHEDULE_SYNC' | 'EVENT_PARTICIPANTS_SYNC' | 'PARTICIPANT_RANKINGS_SYNC' | 'EVENT_LIVE_SCORES_SYNC' | 'EVENT_RESULTS_SYNC' | 'HEALTH_CHECK';
             /**
              * Provider that owns the ingestion job.
              */
@@ -15996,11 +18686,107 @@ export type SyncSportDataResponses = {
             errorLog: Array<{
                 [key: string]: unknown;
             }>;
-        };
+        }>;
     };
 };
 
 export type SyncSportDataResponse = SyncSportDataResponses[keyof SyncSportDataResponses];
+
+export type SyncEventDataData = {
+    /**
+     * Feed-aware event sync request.
+     */
+    body: {
+        /**
+         * Feed types to run for a specific event sync request.
+         */
+        feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+    };
+    path: {
+        sport: string;
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/ingestion/events/{sport}/{eventId}/sync';
+};
+
+export type SyncEventDataErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    500: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type SyncEventDataError = SyncEventDataErrors[keyof SyncEventDataErrors];
+
+export type SyncEventDataResponses = {
+    /**
+     * Multiple ingestion jobs returned for a feed-aware sync request.
+     */
+    200: {
+        jobs: Array<{
+            jobType: 'EVENT_SCHEDULE_SYNC' | 'EVENT_PARTICIPANTS_SYNC' | 'PARTICIPANT_RANKINGS_SYNC' | 'EVENT_LIVE_SCORES_SYNC' | 'EVENT_RESULTS_SYNC' | 'HEALTH_CHECK';
+            /**
+             * Provider that owns the ingestion job.
+             */
+            providerId: string;
+            /**
+             * Sport being synchronized.
+             */
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+            /**
+             * Provider event identifier when the job targets a single event.
+             */
+            eventExternalId?: string;
+            /**
+             * Current ingestion job lifecycle state.
+             */
+            status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+            /**
+             * When the job began processing.
+             */
+            startedAt?: string;
+            /**
+             * When the job began processing.
+             */
+            completedAt?: string;
+            /**
+             * How many records the job successfully processed.
+             */
+            recordsProcessed: number;
+            /**
+             * How many processing errors occurred during the job.
+             */
+            errors: number;
+            /**
+             * Opaque error payloads returned for diagnostics and admin tooling.
+             */
+            errorLog: Array<{
+                [key: string]: unknown;
+            }>;
+        }>;
+    };
+};
+
+export type SyncEventDataResponse = SyncEventDataResponses[keyof SyncEventDataResponses];
 
 export type IngestEventScoresData = {
     body?: never;
@@ -16048,7 +18834,7 @@ export type IngestEventScoresResponses = {
          * Ingestion job execution record.
          */
         job: {
-            jobType: 'SCHEDULE_SYNC' | 'PARTICIPANT_SYNC' | 'RANKING_SYNC' | 'LIVE_SCORES' | 'EVENT_RESULTS' | 'HEALTH_CHECK';
+            jobType: 'EVENT_SCHEDULE_SYNC' | 'EVENT_PARTICIPANTS_SYNC' | 'PARTICIPANT_RANKINGS_SYNC' | 'EVENT_LIVE_SCORES_SYNC' | 'EVENT_RESULTS_SYNC' | 'HEALTH_CHECK';
             /**
              * Provider that owns the ingestion job.
              */
@@ -16139,7 +18925,7 @@ export type IngestEventResultsResponses = {
          * Ingestion job execution record.
          */
         job: {
-            jobType: 'SCHEDULE_SYNC' | 'PARTICIPANT_SYNC' | 'RANKING_SYNC' | 'LIVE_SCORES' | 'EVENT_RESULTS' | 'HEALTH_CHECK';
+            jobType: 'EVENT_SCHEDULE_SYNC' | 'EVENT_PARTICIPANTS_SYNC' | 'PARTICIPANT_RANKINGS_SYNC' | 'EVENT_LIVE_SCORES_SYNC' | 'EVENT_RESULTS_SYNC' | 'HEALTH_CHECK';
             /**
              * Provider that owns the ingestion job.
              */

@@ -28,6 +28,10 @@ import { historyModule } from './modules/history/routes';
 import { accountConsentModule } from './modules/account-consent/routes';
 import { accountModule } from './modules/account/routes';
 import { adminModule } from './modules/admin/routes';
+import { IngestionConfigService } from './modules/admin/ingestion-config-service';
+import { PollConfigService } from './modules/admin/poll-config-service';
+import { PrismaPlatformRuntimeConfigRepository } from './modules/admin/platform-runtime-config-repository';
+import { ProviderService } from './modules/admin/provider-service';
 import { configModule } from './modules/config/routes';
 import { clientLogsModule } from './modules/client-logs/routes';
 
@@ -48,7 +52,7 @@ import { notificationsModule } from './modules/notifications/routes';
 // Ingestion module
 import { ProviderRegistry, IngestionScheduler, publishStatEvents } from './modules/ingestion/core';
 import type { IngestionCallbacks, IngestionJobRecord } from './modules/ingestion/core';
-import type { SportEvent, ProviderParticipant, ProviderRanking, ProviderStatEvent } from './modules/ingestion/core';
+import type { ProviderRanking, ProviderStatEvent, SportEvent, SportEventDetail } from './modules/ingestion/core';
 import { OddsApiAdapter } from './modules/ingestion/adapters';
 import { ingestionModule } from './modules/ingestion/routes';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
@@ -65,6 +69,9 @@ export function buildApp() {
   registerConfiguredProviders(registry);
   const oddsAdapter = new OddsApiAdapter();
   const ingestionPersistence = new IngestionPersistence(prisma);
+  const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
+  const pollConfigService = new PollConfigService(runtimeConfigRepository, app.log);
+  const ingestionConfigService = new IngestionConfigService(runtimeConfigRepository, app.log);
 
   // --- Scoring subsystem (Prisma-backed) ---
   const contestLookup = new ContestLookup(prisma);
@@ -88,6 +95,65 @@ export function buildApp() {
   // =========================================================================
   app.register(authModule, { prefix: '/api/v1/auth' });
 
+  const ingestionCallbacks: IngestionCallbacks = {
+    async onEvents(events: SportEvent[]) {
+      app.log.info({ count: events.length }, 'Ingested events');
+      const persisted = await ingestionPersistence.persistEvents(events);
+      app.log.info({ persisted }, 'Persisted sport events');
+    },
+    async onEventDetail(detail: SportEventDetail) {
+      app.log.info({ eventExternalId: detail.externalId, participantCount: detail.participants.length }, 'Ingested event detail');
+      const persisted = await ingestionPersistence.persistEventDetail(detail);
+      app.log.info({ persisted }, 'Persisted event detail');
+    },
+    async onRankings(rankings: ProviderRanking[]) {
+      app.log.info({ count: rankings.length }, 'Ingested rankings');
+      const persisted = await ingestionPersistence.persistRankings(rankings);
+      app.log.info({ persisted }, 'Persisted rankings');
+    },
+    async onLiveScores(scores: ProviderStatEvent[]) {
+      app.log.info({ count: scores.length }, 'Ingested live scores');
+      await publishStatEvents(scores);
+    },
+    async onJobComplete(job: IngestionJobRecord) {
+      app.log.info({ jobType: job.jobType, provider: job.providerId, status: job.status, records: job.recordsProcessed }, 'Job complete');
+    },
+  };
+
+  const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log, {
+    configReader: ingestionConfigService,
+    eventReader: {
+      async listEventIdsForFeed({ sport, feed, now }) {
+        const rows = await prisma.sportEvent.findMany({
+          where: {
+            sport,
+            externalId: {
+              not: '',
+            },
+            status: {
+              in: feed === 'EVENTLIVESCORES'
+                ? ['IN_PROGRESS']
+                : ['COMPLETED', 'OFFICIAL'],
+            },
+            ...(feed === 'EVENTRESULTS'
+              ? { updatedAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) } }
+              : {}),
+          },
+          select: {
+            externalId: true,
+          },
+        });
+        return rows.map((row) => row.externalId);
+      },
+    },
+  });
+  const providerService = new ProviderService(
+    prisma,
+    registry,
+    ingestionScheduler,
+    app.log,
+  );
+
   // =========================================================================
   // Domain modules (protected by auth-guard)
   // =========================================================================
@@ -106,7 +172,13 @@ export function buildApp() {
   app.register(historyModule, { prefix: '/api/v1' });
   app.register(accountModule, { prefix: '/api/v1/account' });
   app.register(accountConsentModule, { prefix: '/api/v1/account' });
-  app.register(adminModule, { prefix: '/api/v1/admin', providerRegistry: registry });
+  app.register(adminModule, {
+    prefix: '/api/v1/admin',
+    providerRegistry: registry,
+    providerService,
+    pollConfigService,
+    ingestionConfigService,
+  });
   app.register(configModule, { prefix: '/api/v1/config' });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
 
@@ -141,32 +213,6 @@ export function buildApp() {
   // =========================================================================
   // Ingestion module
   // =========================================================================
-  const ingestionCallbacks: IngestionCallbacks = {
-    async onEvents(events: SportEvent[]) {
-      app.log.info({ count: events.length }, 'Ingested events');
-      const persisted = await ingestionPersistence.persistEvents(events);
-      app.log.info({ persisted }, 'Persisted sport events');
-    },
-    async onParticipants(participants: ProviderParticipant[]) {
-      app.log.info({ count: participants.length }, 'Ingested participants');
-      const persisted = await ingestionPersistence.persistParticipants(participants);
-      app.log.info({ persisted }, 'Persisted participants');
-    },
-    async onRankings(rankings: ProviderRanking[]) {
-      app.log.info({ count: rankings.length }, 'Ingested rankings');
-      const persisted = await ingestionPersistence.persistRankings(rankings);
-      app.log.info({ persisted }, 'Persisted rankings');
-    },
-    async onLiveScores(scores: ProviderStatEvent[]) {
-      app.log.info({ count: scores.length }, 'Ingested live scores');
-      await publishStatEvents(scores);
-    },
-    async onJobComplete(job: IngestionJobRecord) {
-      app.log.info({ jobType: job.jobType, provider: job.providerId, status: job.status, records: job.recordsProcessed }, 'Job complete');
-    },
-  };
-
-  const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log);
 
   app.register(ingestionModule, {
     prefix: '/api/v1/ingestion',
@@ -182,6 +228,9 @@ export function buildApp() {
     if (isOpenApiExport) {
       return;
     }
+
+    await pollConfigService.bootstrap();
+    await ingestionConfigService.bootstrap();
 
     // Ingestion
     if (process.env.AUTO_START_SCHEDULER !== 'false') {

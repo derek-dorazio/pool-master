@@ -86,11 +86,21 @@ export interface ContestConfigurationRepository {
 
 export interface ContestConfigTemplateRepository {
   findById(id: string): Promise<ContestConfigTemplate | null>;
+  list(input?: {
+    sport?: ContestConfigTemplate['sport'];
+    contestType?: ContestConfigTemplate['contestType'];
+    eventType?: string | null;
+    active?: boolean;
+  }): Promise<ContestConfigTemplate[]>;
   listBySportAndContestType(input: {
     sport: ContestConfigTemplate['sport'];
     contestType: ContestConfigTemplate['contestType'];
     eventType?: string | null;
   }): Promise<ContestConfigTemplate[]>;
+  update(
+    id: string,
+    updates: Partial<ContestConfigTemplate>,
+  ): Promise<ContestConfigTemplate>;
 }
 
 export interface ParticipantContestScoringRuleRepository {

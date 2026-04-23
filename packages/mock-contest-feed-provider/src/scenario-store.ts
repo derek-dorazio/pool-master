@@ -24,6 +24,11 @@ import {
   type ScenarioSummary,
   type SeasonRecord,
 } from './contracts';
+import {
+  buildMockGolfFieldContestants,
+  buildMockGolfOddsContestants,
+  buildMockGolfRankingContestants,
+} from './golf-player-pool';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -456,6 +461,14 @@ export function validateScenario(record: unknown): ContestFeedScenarioRecord {
     `scenario ${scenarioId} eventId`,
   );
 
+  if (sport === 'GOLF') {
+    for (const event of events) {
+      if (event.feeds.odds.contestants.length === 0) {
+        throw new Error(`Golf event ${event.eventId} must include odds contestants to define the participant field`);
+      }
+    }
+  }
+
   return {
     scenarioId,
     sport,
@@ -464,6 +477,79 @@ export function validateScenario(record: unknown): ContestFeedScenarioRecord {
     season,
     events,
   };
+}
+
+function normalizeScenario(record: ContestFeedScenarioRecord): ContestFeedScenarioRecord {
+  if (record.sport !== 'GOLF') {
+    return record;
+  }
+
+  const normalizedEvents = record.events.map((event) => normalizeGolfEvent(event));
+
+  return {
+    ...record,
+    season: {
+      ...record.season,
+      startsAt: normalizedEvents[0]?.schedule.startsAt ?? record.season.startsAt,
+      endsAt: normalizedEvents.at(-1)?.schedule.endsAt ?? record.season.endsAt,
+    },
+    events: normalizedEvents,
+  };
+}
+
+function normalizeGolfEvent(event: ContestFeedEventRecord): ContestFeedEventRecord {
+  const fieldContestants = buildMockGolfFieldContestants();
+  const oddsContestants = buildMockGolfOddsContestants(event.eventId);
+  const rankingContestants = buildMockGolfRankingContestants();
+  const fieldAsOf = event.schedule.releaseAt
+    ?? new Date(Date.parse(event.schedule.startsAt) - (7 * 24 * 60 * 60 * 1000)).toISOString();
+  const rankingAsOf = new Date(Date.parse(fieldAsOf) + (2 * 60 * 60 * 1000)).toISOString();
+  const resultsAsOf = event.status === 'scheduled' || event.status === 'field_announced'
+    ? fieldAsOf
+    : event.schedule.endsAt
+      ?? new Date(Date.parse(event.schedule.startsAt) + (72 * 60 * 60 * 1000)).toISOString();
+
+  return {
+    ...event,
+    field: {
+      ...event.field,
+      asOf: fieldAsOf,
+      status: normalizeGolfFieldStatus(event.status),
+      contestants: fieldContestants,
+    },
+    feeds: {
+      odds: {
+        ...event.feeds.odds,
+        asOf: fieldAsOf,
+        contestants: oddsContestants,
+      },
+      rankings: {
+        ...event.feeds.rankings,
+        asOf: rankingAsOf,
+        contestants: rankingContestants,
+      },
+      results: {
+        ...event.feeds.results,
+        asOf: resultsAsOf,
+        contestants: buildGolfResultFeed(event, fieldContestants, oddsContestants),
+      },
+    },
+  };
+}
+
+function normalizeGolfFieldStatus(
+  status: ContestFeedEventRecord['status'],
+): FieldSnapshotRecord['status'] {
+  switch (status) {
+    case 'scheduled':
+    case 'field_announced':
+      return 'announced';
+    case 'in_progress':
+      return 'locked';
+    case 'completed':
+    case 'corrected':
+      return 'final';
+  }
 }
 
 function mergeContestants(
@@ -506,13 +592,166 @@ function mergeContestants(
   });
 }
 
+function resolveContestantsForFeed(
+  sport: ContestFeedScenarioRecord['sport'],
+  event: ContestFeedEventRecord,
+): readonly ContestantRecord[] {
+  if (sport === 'GOLF') {
+    return mergeContestants(event.field.contestants, event.feeds.odds.contestants);
+  }
+
+  return event.field.contestants;
+}
+
+function hashUnit(seed: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return (hash >>> 0) / 4294967295;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function normalizeLogOdds(odds: number, minOdds: number, maxOdds: number): number {
+  const safeOdds = Math.max(odds, 1.01);
+  const low = Math.log(Math.max(minOdds, 1.01));
+  const high = Math.log(Math.max(maxOdds, 1.01));
+
+  if (high <= low) {
+    return 0.5;
+  }
+
+  return (Math.log(safeOdds) - low) / (high - low);
+}
+
+function scoreRelativeToPar(input: {
+  eventSeed: string;
+  tick: number;
+  participantId: string;
+  decimalOdds: number;
+  minOdds: number;
+  maxOdds: number;
+}): number {
+  const oddsFactor = normalizeLogOdds(
+    input.decimalOdds,
+    input.minOdds,
+    input.maxOdds,
+  );
+  const strength = 1 - oddsFactor;
+  const baseline = 12 - (24 * strength);
+  const volatility = 3 + (5 * oddsFactor);
+  const fieldDrift = (hashUnit(`${input.eventSeed}:${input.tick}:field`) - 0.5) * 4;
+  const playerNoise =
+    ((hashUnit(`${input.eventSeed}:${input.tick}:${input.participantId}:a`)
+      + hashUnit(`${input.eventSeed}:${input.tick}:${input.participantId}:b`)) - 1)
+    * volatility;
+
+  return clamp(Math.round(baseline + fieldDrift + playerNoise), -20, 20);
+}
+
+function buildLiveGolfScores(
+  scenario: ContestFeedScenarioRecord,
+  event: ContestFeedEventRecord,
+  tick: number,
+): readonly ContestantRecord[] {
+  const contestants = resolveContestantsForFeed(scenario.sport, event);
+  const oddsValues = contestants
+    .map((contestant) => contestant.odds)
+    .filter((odds): odds is number => typeof odds === 'number');
+
+  const minOdds = oddsValues.length > 0 ? Math.min(...oddsValues) : 1.01;
+  const maxOdds = oddsValues.length > 0 ? Math.max(...oddsValues) : 100;
+  const eventSeed = event.metadata?.externalEventId ?? event.eventId;
+
+  return contestants
+    .map((contestant) => ({
+      ...contestant,
+      score: scoreRelativeToPar({
+        eventSeed,
+        tick,
+        participantId: contestant.contestantId,
+        decimalOdds: contestant.odds ?? maxOdds,
+        minOdds,
+        maxOdds,
+      }),
+      result: 'pending' as const,
+    }))
+    .sort((left, right) => {
+      const leftScore = typeof left.score === 'number' ? left.score : Number.POSITIVE_INFINITY;
+      const rightScore = typeof right.score === 'number' ? right.score : Number.POSITIVE_INFINITY;
+      if (leftScore !== rightScore) {
+        return leftScore - rightScore;
+      }
+
+      return left.name.localeCompare(right.name);
+    });
+}
+
+function buildGolfResultFeed(
+  event: ContestFeedEventRecord,
+  fieldContestants: readonly ContestantRecord[],
+  oddsContestants: readonly ContestantDeltaRecord[],
+): readonly ContestantDeltaRecord[] {
+  if (event.status === 'scheduled' || event.status === 'field_announced') {
+    return fieldContestants.map((contestant) => ({
+      contestantId: contestant.contestantId,
+      result: 'pending',
+    }));
+  }
+
+  const oddsByContestantId = new Map(
+    oddsContestants.map((contestant) => [
+      contestant.contestantId,
+      typeof contestant.odds === 'number' ? contestant.odds : 100,
+    ]),
+  );
+  const oddsValues = [...oddsByContestantId.values()];
+  const minOdds = oddsValues.length > 0 ? Math.min(...oddsValues) : 1.01;
+  const maxOdds = oddsValues.length > 0 ? Math.max(...oddsValues) : 100;
+  const terminalTick = event.status === 'in_progress' ? 12 : 72;
+  const eventSeed = event.metadata?.externalEventId ?? event.eventId;
+
+  const scored = fieldContestants
+    .map((contestant) => ({
+      contestantId: contestant.contestantId,
+      score: scoreRelativeToPar({
+        eventSeed,
+        tick: terminalTick,
+        participantId: contestant.contestantId,
+        decimalOdds: oddsByContestantId.get(contestant.contestantId) ?? maxOdds,
+        minOdds,
+        maxOdds,
+      }),
+    }))
+    .sort((left, right) => left.score - right.score || left.contestantId.localeCompare(right.contestantId));
+
+  return scored.map((contestant, index) => ({
+    contestantId: contestant.contestantId,
+    score: contestant.score,
+    result:
+      event.status === 'in_progress'
+        ? 'pending'
+        : index === 0
+          ? 'win'
+          : index >= 70
+            ? 'cut'
+            : 'loss',
+  }));
+}
+
 function loadJsonFile(filePath: string): ContestFeedScenarioRecord {
   const contents = readFileSync(filePath, 'utf8');
-  return validateScenario(JSON.parse(contents) as unknown);
+  return normalizeScenario(validateScenario(JSON.parse(contents) as unknown));
 }
 
 export class ScenarioStore {
   private readonly scenarios: readonly ContestFeedScenarioRecord[];
+  private readonly liveScoreTicks = new Map<string, number>();
 
   public constructor(
     scenarioDir: string,
@@ -588,7 +827,7 @@ export class ScenarioStore {
         fieldLocksAt: event.schedule.fieldLocksAt,
         venueName: event.venue?.name,
         fieldStatus: event.field.status,
-        contestantCount: event.field.contestants.length,
+        contestantCount: resolveContestantsForFeed(scenario.sport, event).length,
       }));
     this.logger?.info(
       { action: 'mockScenarioStore.listEvents', data: { scenarioId, eventCount: events.length } },
@@ -632,9 +871,11 @@ export class ScenarioStore {
   }
 
   public getSnapshot(scenarioId: string, eventId: string, feedKind: FeedKind): ContestFeedSnapshotResponse {
+    const scenario = this.getScenario(scenarioId);
     const event = this.getEvent(scenarioId, eventId);
 
     if (feedKind === 'field') {
+      const contestants = resolveContestantsForFeed(scenario.sport, event);
       const fieldSnapshot = {
         scenarioId,
         eventId,
@@ -642,7 +883,7 @@ export class ScenarioStore {
         feedKind,
         asOf: event.field.asOf,
         note: event.field.note,
-        contestants: event.field.contestants,
+        contestants,
       };
       this.logger?.info(
         { action: 'mockScenarioStore.getSnapshot.field', data: { scenarioId, eventId, contestantCount: fieldSnapshot.contestants.length } },
@@ -652,7 +893,10 @@ export class ScenarioStore {
     }
 
     const feed = event.feeds[feedKind];
-    const contestants = mergeContestants(event.field.contestants, feed.contestants);
+    const contestants = mergeContestants(
+      resolveContestantsForFeed(scenario.sport, event),
+      feed.contestants,
+    );
 
     const snapshot = {
       scenarioId,
@@ -671,14 +915,16 @@ export class ScenarioStore {
   }
 
   public getUpdates(scenarioId: string, eventId: string): ContestFeedUpdateResponse {
+    const scenario = this.getScenario(scenarioId);
     const event = this.getEvent(scenarioId, eventId);
+    const baselineContestants = resolveContestantsForFeed(scenario.sport, event);
     const response = {
       scenarioId,
       eventId,
       eventName: event.name,
       updates: (event.updates ?? []).map((update) => ({
         ...update,
-        contestants: mergeContestants(event.field.contestants, update.contestants),
+        contestants: mergeContestants(baselineContestants, update.contestants),
       })),
     };
     this.logger?.info(
@@ -694,6 +940,38 @@ export class ScenarioStore {
 
   public getEventCount(): number {
     return this.scenarios.reduce((total, scenario) => total + scenario.events.length, 0);
+  }
+
+  public getLiveScores(
+    scenarioId: string,
+    eventId: string,
+    explicitTick?: number,
+  ): ContestFeedSnapshotResponse {
+    const scenario = this.getScenario(scenarioId);
+    const event = this.getEvent(scenarioId, eventId);
+    const tickKey = `${scenarioId}:${eventId}`;
+    const tick = explicitTick ?? ((this.liveScoreTicks.get(tickKey) ?? 0) + 1);
+    if (explicitTick === undefined) {
+      this.liveScoreTicks.set(tickKey, tick);
+    }
+
+    const contestants =
+      scenario.sport === 'GOLF'
+        ? buildLiveGolfScores(scenario, event, tick)
+        : mergeContestants(
+          resolveContestantsForFeed(scenario.sport, event),
+          event.feeds.results.contestants,
+        );
+
+    return {
+      scenarioId,
+      eventId,
+      eventName: event.name,
+      feedKind: 'results',
+      asOf: new Date(Date.parse(event.schedule.startsAt) + tick * 60 * 1000).toISOString(),
+      note: `Live scoring tick ${tick}`,
+      contestants,
+    };
   }
 }
 

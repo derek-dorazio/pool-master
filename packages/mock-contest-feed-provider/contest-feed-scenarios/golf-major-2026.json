@@ -7,19 +7,19 @@
     "seasonId": "golf-2026-majors",
     "name": "Mock Golf Majors 2026",
     "year": 2026,
-    "startsAt": "2026-03-10T11:00:00.000Z",
-    "endsAt": "2026-07-19T21:00:00.000Z"
+    "startsAt": "2026-04-23T11:00:00.000Z",
+    "endsAt": "2026-06-14T20:00:00.000Z"
   },
   "events": [
     {
       "eventId": "golf-players-2026",
       "name": "THE PLAYERS Championship",
-      "status": "completed",
+      "status": "in_progress",
       "schedule": {
-        "startsAt": "2026-03-12T11:00:00.000Z",
-        "endsAt": "2026-03-15T22:00:00.000Z",
-        "releaseAt": "2026-03-02T17:00:00.000Z",
-        "fieldLocksAt": "2026-03-11T17:00:00.000Z"
+        "startsAt": "2026-04-23T11:00:00.000Z",
+        "endsAt": "2026-04-26T22:00:00.000Z",
+        "releaseAt": "2026-04-15T16:00:00.000Z",
+        "fieldLocksAt": "2026-04-22T16:00:00.000Z"
       },
       "venue": {
         "name": "TPC Sawgrass",
@@ -123,12 +123,12 @@
     {
       "eventId": "golf-masters-2026",
       "name": "Masters Tournament",
-      "status": "completed",
+      "status": "field_announced",
       "schedule": {
-        "startsAt": "2026-04-09T12:00:00.000Z",
-        "endsAt": "2026-04-12T22:00:00.000Z",
-        "releaseAt": "2026-04-01T16:00:00.000Z",
-        "fieldLocksAt": "2026-04-09T16:00:00.000Z"
+        "startsAt": "2026-04-30T12:00:00.000Z",
+        "endsAt": "2026-05-03T22:00:00.000Z",
+        "releaseAt": "2026-04-22T16:00:00.000Z",
+        "fieldLocksAt": "2026-04-29T16:00:00.000Z"
       },
       "venue": {
         "name": "Augusta National Golf Club",
@@ -272,12 +272,12 @@
     {
       "eventId": "golf-pga-championship-2026",
       "name": "PGA Championship",
-      "status": "completed",
+      "status": "scheduled",
       "schedule": {
-        "startsAt": "2026-05-14T11:00:00.000Z",
-        "endsAt": "2026-05-17T22:00:00.000Z",
-        "releaseAt": "2026-05-04T16:00:00.000Z",
-        "fieldLocksAt": "2026-05-13T16:00:00.000Z"
+        "startsAt": "2026-05-07T11:00:00.000Z",
+        "endsAt": "2026-05-10T22:00:00.000Z",
+        "releaseAt": "2026-04-29T16:00:00.000Z",
+        "fieldLocksAt": "2026-05-06T16:00:00.000Z"
       },
       "venue": {
         "name": "Aronimink Golf Club",
@@ -297,7 +297,7 @@
         ]
       },
       "field": {
-        "asOf": "2026-05-12T16:00:00.000Z",
+        "asOf": "2026-04-29T16:00:00.000Z",
         "status": "locked",
         "note": "Major field locked after practice-round week.",
         "contestants": [
@@ -383,10 +383,10 @@
       "name": "the Memorial Tournament presented by Workday",
       "status": "field_announced",
       "schedule": {
-        "startsAt": "2026-06-04T11:00:00.000Z",
-        "endsAt": "2026-06-07T22:00:00.000Z",
-        "releaseAt": "2026-05-27T16:00:00.000Z",
-        "fieldLocksAt": "2026-06-03T16:00:00.000Z"
+        "startsAt": "2026-05-14T11:00:00.000Z",
+        "endsAt": "2026-05-17T22:00:00.000Z",
+        "releaseAt": "2026-05-06T16:00:00.000Z",
+        "fieldLocksAt": "2026-05-13T16:00:00.000Z"
       },
       "venue": {
         "name": "Muirfield Village Golf Club",
@@ -406,7 +406,7 @@
         ]
       },
       "field": {
-        "asOf": "2026-06-02T16:00:00.000Z",
+        "asOf": "2026-05-06T16:00:00.000Z",
         "status": "announced",
         "note": "Field announced with one alternate still in contention.",
         "contestants": [
@@ -516,10 +516,10 @@
       "name": "RBC Canadian Open",
       "status": "scheduled",
       "schedule": {
-        "startsAt": "2026-06-11T11:00:00.000Z",
-        "endsAt": "2026-06-14T22:00:00.000Z",
-        "releaseAt": "2026-06-03T16:00:00.000Z",
-        "fieldLocksAt": "2026-06-10T16:00:00.000Z"
+        "startsAt": "2026-05-21T11:00:00.000Z",
+        "endsAt": "2026-05-24T22:00:00.000Z",
+        "releaseAt": "2026-05-13T16:00:00.000Z",
+        "fieldLocksAt": "2026-05-20T16:00:00.000Z"
       },
       "venue": {
         "name": "TPC Toronto at Osprey Valley (North Course)",
@@ -539,7 +539,7 @@
         ]
       },
       "field": {
-        "asOf": "2026-06-09T16:00:00.000Z",
+        "asOf": "2026-05-13T16:00:00.000Z",
         "status": "announced",
         "note": "Canadian Open field announced before Wednesday lock.",
         "contestants": [
@@ -646,10 +646,10 @@
       "name": "U.S. Open",
       "status": "scheduled",
       "schedule": {
-        "startsAt": "2026-06-18T11:00:00.000Z",
-        "endsAt": "2026-06-21T22:00:00.000Z",
-        "releaseAt": "2026-06-10T16:00:00.000Z",
-        "fieldLocksAt": "2026-06-17T16:00:00.000Z"
+        "startsAt": "2026-05-28T11:00:00.000Z",
+        "endsAt": "2026-05-31T22:00:00.000Z",
+        "releaseAt": "2026-05-20T16:00:00.000Z",
+        "fieldLocksAt": "2026-05-27T16:00:00.000Z"
       },
       "venue": {
         "name": "Shinnecock Hills Golf Club",
@@ -669,7 +669,7 @@
         ]
       },
       "field": {
-        "asOf": "2026-06-16T16:00:00.000Z",
+        "asOf": "2026-05-20T16:00:00.000Z",
         "status": "announced",
         "note": "Major field announced with final status checks still pending.",
         "contestants": [
@@ -776,10 +776,10 @@
       "name": "Genesis Scottish Open",
       "status": "scheduled",
       "schedule": {
-        "startsAt": "2026-07-09T11:00:00.000Z",
-        "endsAt": "2026-07-12T20:00:00.000Z",
-        "releaseAt": "2026-07-01T11:00:00.000Z",
-        "fieldLocksAt": "2026-07-08T11:00:00.000Z"
+        "startsAt": "2026-06-04T11:00:00.000Z",
+        "endsAt": "2026-06-07T20:00:00.000Z",
+        "releaseAt": "2026-05-27T11:00:00.000Z",
+        "fieldLocksAt": "2026-06-03T11:00:00.000Z"
       },
       "venue": {
         "name": "The Renaissance Club",
@@ -799,7 +799,7 @@
         ]
       },
       "field": {
-        "asOf": "2026-07-07T11:00:00.000Z",
+        "asOf": "2026-05-27T11:00:00.000Z",
         "status": "announced",
         "note": "Scottish Open field announced in the run-up to Royal Birkdale week.",
         "contestants": [
@@ -907,10 +907,10 @@
       "name": "The Open Championship",
       "status": "scheduled",
       "schedule": {
-        "startsAt": "2026-07-16T10:00:00.000Z",
-        "endsAt": "2026-07-19T20:00:00.000Z",
-        "releaseAt": "2026-07-08T10:00:00.000Z",
-        "fieldLocksAt": "2026-07-15T10:00:00.000Z"
+        "startsAt": "2026-06-11T10:00:00.000Z",
+        "endsAt": "2026-06-14T20:00:00.000Z",
+        "releaseAt": "2026-06-03T10:00:00.000Z",
+        "fieldLocksAt": "2026-06-10T10:00:00.000Z"
       },
       "venue": {
         "name": "Royal Birkdale",
@@ -930,7 +930,7 @@
         ]
       },
       "field": {
-        "asOf": "2026-07-14T10:00:00.000Z",
+        "asOf": "2026-06-03T10:00:00.000Z",
         "status": "announced",
         "note": "Open field announced before the Wednesday lock at Royal Birkdale.",
         "contestants": [

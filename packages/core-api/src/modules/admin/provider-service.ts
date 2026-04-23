@@ -17,6 +17,13 @@ import type {
   ProviderHealthStatus as AdapterHealthStatus,
 } from '../ingestion/core/provider-interface';
 import { IngestionPersistence } from '../ingestion/persistence/ingestion-persistence';
+import type {
+  EventSyncRequest,
+  IngestionFeedType,
+  IngestionJobRecord,
+  IngestionScheduler,
+  SportSyncRequest,
+} from '../ingestion/core/ingestion-scheduler';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -87,6 +94,14 @@ export interface ProviderSportSyncPreparationResult {
   eventsHydrated: number;
   participantRecordsSynced: number;
   rankingRecordsSynced: number;
+  syncRuns: ProviderSyncRun[];
+}
+
+export interface ProviderManualSyncResult {
+  sport: Sport;
+  eventId: string | null;
+  requestedFeeds: IngestionFeedType[];
+  jobs: IngestionJobRecord[];
   syncRuns: ProviderSyncRun[];
 }
 
@@ -162,6 +177,13 @@ export class SportProviderNotFoundError extends Error {
   }
 }
 
+export class ProviderEventParticipantsMissingError extends Error {
+  constructor(providerId: string, eventId: string) {
+    super(`Event ${eventId} returned zero participants from provider ${providerId}`);
+    this.name = 'ProviderEventParticipantsMissingError';
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -209,6 +231,68 @@ function normalizeSyncRunPayload(payload: Prisma.JsonValue): Record<string, unkn
   return payload as Record<string, unknown>;
 }
 
+function mapJobStatusToProviderRunStatus(
+  status: IngestionJobRecord['status'],
+): ProviderSyncRun['status'] {
+  return status === 'RUNNING' || status === 'PENDING'
+    ? 'RUNNING'
+    : status === 'FAILED'
+      ? 'FAILED'
+      : 'COMPLETED';
+}
+
+function mapJobTypeToFeed(jobType: IngestionJobRecord['jobType']): IngestionFeedType {
+  switch (jobType) {
+    case 'EVENT_SCHEDULE_SYNC':
+      return 'EVENTSCHEDULE';
+    case 'EVENT_PARTICIPANTS_SYNC':
+      return 'EVENTPARTICIPANTS';
+    case 'PARTICIPANT_RANKINGS_SYNC':
+      return 'PARTICIPANTRANKINGS';
+    case 'EVENT_LIVE_SCORES_SYNC':
+      return 'EVENTLIVESCORES';
+    case 'EVENT_RESULTS_SYNC':
+      return 'EVENTRESULTS';
+    case 'HEALTH_CHECK':
+      return 'EVENTSCHEDULE';
+  }
+}
+
+function formatFeedLabel(feed: IngestionFeedType): string {
+  switch (feed) {
+    case 'EVENTSCHEDULE':
+      return 'event schedule';
+    case 'EVENTPARTICIPANTS':
+      return 'event participants';
+    case 'PARTICIPANTRANKINGS':
+      return 'participant rankings';
+    case 'EVENTLIVESCORES':
+      return 'event live scores';
+    case 'EVENTRESULTS':
+      return 'event results';
+  }
+}
+
+function buildManualSyncRunDetail(
+  job: IngestionJobRecord,
+  eventId: string | null,
+): string {
+  const target = eventId ?? job.eventExternalId ?? job.sport;
+  const feed = formatFeedLabel(mapJobTypeToFeed(job.jobType));
+  if (job.status === 'FAILED') {
+    const error =
+      typeof job.errorLog[0] === 'object'
+      && job.errorLog[0] !== null
+      && 'error' in job.errorLog[0]
+      && typeof (job.errorLog[0] as { error?: unknown }).error === 'string'
+        ? (job.errorLog[0] as { error: string }).error
+        : 'Unknown ingestion failure';
+    return `Failed ${feed} sync for ${target}: ${error}`;
+  }
+
+  return `Completed ${feed} sync for ${target} (${job.recordsProcessed} records).`;
+}
+
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
@@ -219,6 +303,7 @@ export class ProviderService {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly registry: ProviderRegistry = buildProviderRegistry(),
+    private readonly scheduler?: IngestionScheduler,
     private readonly logger?: FastifyBaseLogger,
   ) {
     this.ingestionPersistence = new IngestionPersistence(prisma);
@@ -590,165 +675,33 @@ export class ProviderService {
   }
 
   async prepareSportSync(
-    sport: Sport,
+    request: SportSyncRequest,
     rootAdminUserId: string,
     rootAdminEmail: string,
-  ): Promise<ProviderSportSyncPreparationResult> {
-    this.logger?.debug({ sport }, 'Preparing manual sport sync');
+  ): Promise<ProviderManualSyncResult> {
+    const { sport } = request;
+    this.logger?.debug({ sport, requestedFeeds: request.feeds }, 'Preparing manual sport sync');
     const providers = this.registry.getProvidersForSport(sport);
     if (providers.length === 0) {
       this.logger?.warn({ sport }, 'No providers registered for sport sync');
       throw new SportProviderNotFoundError(sport);
     }
-
-    const providerIds: string[] = [];
-    const syncRuns: ProviderSyncRun[] = [];
-    let eventsDiscovered = 0;
-    let eventsHydrated = 0;
-    let participantRecordsSynced = 0;
-    let rankingRecordsSynced = 0;
-
-    for (const provider of providers) {
-      this.logger?.debug({
-        sport,
-        providerId: provider.providerId,
-      }, 'Starting provider sport sync preparation');
-      providerIds.push(provider.providerId);
-      const startedAt = new Date();
-      const syncRun = await this.prisma.providerSyncRun.create({
-        data: {
-          providerId: provider.providerId,
-          sport,
-          eventId: null,
-          status: 'RUNNING',
-          startedAt,
-          payloadJson: {
-            runType: 'MANUAL_SPORT_SYNC',
-            detail: `Preparing ${sport} event data for contest setup.`,
-          },
-        },
-      });
-
-      try {
-        const from = new Date();
-        const to = new Date(from.getTime() + 14 * 24 * 60 * 60 * 1000);
-        const events = await provider.getUpcomingEvents(sport, { from, to });
-        this.logger?.debug({
-          sport,
-          providerId: provider.providerId,
-          eventsDiscovered: events.length,
-        }, 'Fetched upcoming events for sport sync');
-        eventsDiscovered += events.length;
-        await this.ingestionPersistence.persistEvents(events);
-
-        const participants = await provider.getParticipants(sport);
-        participantRecordsSynced += await this.ingestionPersistence.persistParticipants(participants);
-        this.logger?.debug({
-          sport,
-          providerId: provider.providerId,
-          participantRecordsSynced,
-        }, 'Persisted provider participants for sport sync');
-
-        try {
-          const rankings = await provider.getRankings(sport, sport === Sport.GOLF ? 'OWGR' : 'default');
-          rankingRecordsSynced += await this.ingestionPersistence.persistRankings(rankings);
-          this.logger?.debug({
-            sport,
-            providerId: provider.providerId,
-            rankingRecordsSynced,
-          }, 'Persisted provider rankings for sport sync');
-        } catch {
-          // Ranking support varies by provider; keep the manual sync resilient.
-          this.logger?.warn({
-            sport,
-            providerId: provider.providerId,
-          }, 'Provider rankings unavailable during manual sport sync');
-        }
-
-        for (const event of events) {
-          const detail = await provider.getEventDetails(event.externalId);
-          if (!detail) {
-            continue;
-          }
-
-          await this.ingestionPersistence.persistEventDetail(detail);
-          eventsHydrated += 1;
-        }
-
-        const completedAt = new Date();
-        const updatedSyncRun = await this.prisma.providerSyncRun.update({
-          where: { id: syncRun.id },
-          data: {
-            status: 'COMPLETED',
-            completedAt,
-            payloadJson: {
-              runType: 'MANUAL_SPORT_SYNC',
-              detail: `Prepared ${eventsHydrated} ${sport} event fields for contest setup.`,
-              eventsDiscovered,
-              eventsHydrated,
-              participantCount: participantRecordsSynced,
-              rankingCount: rankingRecordsSynced,
-            },
-          },
-        });
-
-        syncRuns.push({
-          id: updatedSyncRun.id,
-          providerId: updatedSyncRun.providerId,
-          sport: updatedSyncRun.sport as Sport,
-          eventId: updatedSyncRun.eventId,
-          status: updatedSyncRun.status as ProviderSyncRun['status'],
-          startedAt: updatedSyncRun.startedAt,
-          completedAt: updatedSyncRun.completedAt,
-          createdAt: updatedSyncRun.createdAt,
-          payload: normalizeSyncRunPayload(updatedSyncRun.payloadJson),
-        });
-        this.logger?.info({
-          sport,
-          providerId: provider.providerId,
-          eventsDiscovered,
-          eventsHydrated,
-          participantRecordsSynced,
-          rankingRecordsSynced,
-        }, 'Completed provider sport sync preparation');
-      } catch (error) {
-        this.logger?.error({
-          sport,
-          providerId: provider.providerId,
-          error,
-        }, 'Provider sport sync preparation failed');
-        const completedAt = new Date();
-        const failedSyncRun = await this.prisma.providerSyncRun.update({
-          where: { id: syncRun.id },
-          data: {
-            status: 'FAILED',
-            completedAt,
-            payloadJson: {
-              runType: 'MANUAL_SPORT_SYNC',
-              detail: error instanceof Error ? error.message : String(error),
-              eventsDiscovered,
-              eventsHydrated,
-              participantCount: participantRecordsSynced,
-              rankingCount: rankingRecordsSynced,
-            },
-          },
-        });
-
-        syncRuns.push({
-          id: failedSyncRun.id,
-          providerId: failedSyncRun.providerId,
-          sport: failedSyncRun.sport as Sport,
-          eventId: failedSyncRun.eventId,
-          status: failedSyncRun.status as ProviderSyncRun['status'],
-          startedAt: failedSyncRun.startedAt,
-          completedAt: failedSyncRun.completedAt,
-          createdAt: failedSyncRun.createdAt,
-          payload: normalizeSyncRunPayload(failedSyncRun.payloadJson),
-        });
-
-        throw error;
-      }
+    if (!this.scheduler) {
+      throw new Error('Ingestion scheduler is required for manual sport sync');
     }
+
+    const jobs = await this.scheduler.runSportSync(request);
+    const syncRuns = await this.persistManualSyncRuns({
+      sport,
+      eventId: null,
+      requestedFeeds: request.feeds,
+      jobs,
+      requestContext: {
+        from: request.from?.toISOString() ?? null,
+        to: request.to?.toISOString() ?? null,
+      },
+    });
+    const providerIds = Array.from(new Set(jobs.map((job) => job.providerId)));
 
     await logAdminAction({
       actorUserId: rootAdminUserId,
@@ -756,34 +709,137 @@ export class ProviderService {
       action: 'sportsdata.sync_sport_prepare',
       resourceType: 'SPORT',
       resourceId: sport,
-      description: `Prepared ${sport} event data for contest setup across ${providerIds.length} provider(s)`,
+      description: `Ran ${sport} manual feed sync for ${request.feeds.join(', ')}`,
       afterState: {
         sport,
         providerIds,
-        eventsDiscovered,
-        eventsHydrated,
-        participantRecordsSynced,
-        rankingRecordsSynced,
+        requestedFeeds: request.feeds,
+        jobs: jobs.map((job) => ({
+          providerId: job.providerId,
+          jobType: job.jobType,
+          status: job.status,
+          recordsProcessed: job.recordsProcessed,
+          errors: job.errors,
+        })),
       },
     });
 
     this.logger?.info({
       sport,
       providerIds,
-      eventsDiscovered,
-      eventsHydrated,
-      participantRecordsSynced,
-      rankingRecordsSynced,
+      requestedFeeds: request.feeds,
+      jobCount: jobs.length,
     }, 'Prepared sport sync across providers');
     return {
       sport,
-      providerIds,
-      eventsDiscovered,
-      eventsHydrated,
-      participantRecordsSynced,
-      rankingRecordsSynced,
+      eventId: null,
+      requestedFeeds: request.feeds,
+      jobs,
       syncRuns,
     };
+  }
+
+  async syncEventData(
+    request: EventSyncRequest,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
+  ): Promise<ProviderManualSyncResult> {
+    if (!this.scheduler) {
+      throw new Error('Ingestion scheduler is required for manual event sync');
+    }
+
+    const providers = this.registry.getProvidersForSport(request.sport);
+    if (providers.length === 0) {
+      throw new SportProviderNotFoundError(request.sport);
+    }
+
+    const jobs = await this.scheduler.runEventSync(request);
+    const syncRuns = await this.persistManualSyncRuns({
+      sport: request.sport,
+      eventId: request.eventId,
+      requestedFeeds: request.feeds,
+      jobs,
+      requestContext: {},
+    });
+    const providerIds = Array.from(new Set(jobs.map((job) => job.providerId)));
+
+    await logAdminAction({
+      actorUserId: rootAdminUserId,
+      actorEmail: rootAdminEmail,
+      action: 'sportsdata.sync_event_manual',
+      resourceType: 'SPORT_EVENT',
+      resourceId: `${request.sport}:${request.eventId}`,
+      description: `Ran ${request.sport} manual event sync for ${request.eventId}`,
+      afterState: {
+        sport: request.sport,
+        eventId: request.eventId,
+        providerIds,
+        requestedFeeds: request.feeds,
+      },
+    });
+
+    this.logger?.info({
+      sport: request.sport,
+      eventId: request.eventId,
+      providerIds,
+      requestedFeeds: request.feeds,
+      jobCount: jobs.length,
+    }, 'Completed manual event sync across providers');
+
+    return {
+      sport: request.sport,
+      eventId: request.eventId,
+      requestedFeeds: request.feeds,
+      jobs,
+      syncRuns,
+    };
+  }
+
+  private async persistManualSyncRuns(input: {
+    sport: Sport;
+    eventId: string | null;
+    requestedFeeds: IngestionFeedType[];
+    jobs: IngestionJobRecord[];
+    requestContext: Record<string, unknown>;
+  }): Promise<ProviderSyncRun[]> {
+    const runs = await Promise.all(
+      input.jobs.map(async (job) => {
+        const payloadJson = {
+          runType: input.eventId ? 'MANUAL_EVENT_SYNC' : 'MANUAL_SPORT_SYNC',
+          requestedFeeds: input.requestedFeeds,
+          requestedFeed: mapJobTypeToFeed(job.jobType),
+          recordsProcessed: job.recordsProcessed,
+          errors: job.errors,
+          detail: buildManualSyncRunDetail(job, input.eventId),
+          ...input.requestContext,
+        };
+        const row = await this.prisma.providerSyncRun.create({
+          data: {
+            providerId: job.providerId,
+            sport: input.sport,
+            eventId: input.eventId ?? job.eventExternalId ?? null,
+            status: mapJobStatusToProviderRunStatus(job.status),
+            startedAt: job.startedAt ?? new Date(),
+            completedAt: job.completedAt ?? new Date(),
+            payloadJson,
+          },
+        });
+
+        return {
+          id: row.id,
+          providerId: row.providerId,
+          sport: row.sport as Sport,
+          eventId: row.eventId,
+          status: row.status as ProviderSyncRun['status'],
+          startedAt: row.startedAt,
+          completedAt: row.completedAt,
+          createdAt: row.createdAt,
+          payload: normalizeSyncRunPayload(row.payloadJson),
+        };
+      }),
+    );
+
+    return runs;
   }
 
   async getIngestionDashboard(): Promise<IngestionDashboard> {

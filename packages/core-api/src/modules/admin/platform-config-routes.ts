@@ -9,9 +9,13 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import {
   PollIntervalConfigPatchSchema,
   PollIntervalConfigSchema,
-  SuccessSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
+import {
+  IngestionScheduleConfigOverrideSchema,
+  IngestionScheduleConfigSchema,
+} from '@poolmaster/shared/dto/config.dto';
+import type { IngestionScheduleConfigOverride } from '@poolmaster/shared/dto/config.dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import type { PollConfigService } from './poll-config-service';
 import type { IngestionConfigService } from './ingestion-config-service';
@@ -107,10 +111,10 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Get ingestion schedule configuration',
       description:
-        'Returns the global ingestion scheduling configuration used by operational jobs.',
+        'Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools.',
       operationId: 'adminGetIngestionSchedule',
       response: {
-        200: zodToJsonSchema(SuccessSchema),
+        200: zodToJsonSchema(IngestionScheduleConfigSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
@@ -124,32 +128,17 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Update ingestion schedule configuration',
       description:
-        'Updates the global ingestion scheduling configuration for provider health checks and sync cadence.',
+        'Updates the global feed-aware ingestion scheduling configuration for provider health checks and lifecycle-driven sync cadence.',
       operationId: 'adminUpdateIngestionSchedule',
       response: {
-        200: zodToJsonSchema(SuccessSchema),
+        200: zodToJsonSchema(IngestionScheduleConfigSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
-      body: {
-        type: 'object',
-        properties: {
-          healthCheckIntervalMinutes: { type: 'integer', minimum: 1 },
-          scheduleSyncIntervalHours: { type: 'integer', minimum: 1 },
-          participantSyncIntervalHours: { type: 'integer', minimum: 1 },
-          rankingSyncIntervalHours: { type: 'integer', minimum: 1 },
-          liveScorePollingIntervalSeconds: { type: 'integer', minimum: 5 },
-        },
-      },
+      body: zodToJsonSchema(IngestionScheduleConfigOverrideSchema),
     },
     handler: async (
       request: FastifyRequest<{
-        Body: {
-          healthCheckIntervalMinutes?: number;
-          scheduleSyncIntervalHours?: number;
-          participantSyncIntervalHours?: number;
-          rankingSyncIntervalHours?: number;
-          liveScorePollingIntervalSeconds?: number;
-        };
+        Body: IngestionScheduleConfigOverride;
       }>,
     ) => {
       const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
@@ -162,33 +151,18 @@ export function registerPlatformConfigRoutes(
       tags: ['Admin'],
       summary: 'Set per-sport ingestion schedule override',
       description:
-        'Sets a per-sport ingestion schedule override that differs from the global ingestion cadence.',
+        'Sets a per-sport feed-aware ingestion schedule override that differs from the global ingestion cadence.',
       operationId: 'adminSetSportIngestionOverride',
       response: {
-        200: zodToJsonSchema(SuccessSchema),
+        200: zodToJsonSchema(IngestionScheduleConfigSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
       },
-      body: {
-        type: 'object',
-        properties: {
-          healthCheckIntervalMinutes: { type: 'integer', minimum: 1 },
-          scheduleSyncIntervalHours: { type: 'integer', minimum: 1 },
-          participantSyncIntervalHours: { type: 'integer', minimum: 1 },
-          rankingSyncIntervalHours: { type: 'integer', minimum: 1 },
-          liveScorePollingIntervalSeconds: { type: 'integer', minimum: 5 },
-        },
-      },
+      body: zodToJsonSchema(IngestionScheduleConfigOverrideSchema),
     },
     handler: async (
       request: FastifyRequest<{
         Params: { sport: string };
-        Body: {
-          healthCheckIntervalMinutes?: number;
-          scheduleSyncIntervalHours?: number;
-          participantSyncIntervalHours?: number;
-          rankingSyncIntervalHours?: number;
-          liveScorePollingIntervalSeconds?: number;
-        };
+        Body: IngestionScheduleConfigOverride;
       }>,
     ) => {
       const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
@@ -202,6 +176,33 @@ export function registerPlatformConfigRoutes(
     },
   });
 
+  fastify.post('/config/ingestion-schedule/:sport/reset', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Clear per-sport ingestion schedule override',
+      description:
+        'Removes a persisted per-sport ingestion schedule override so the sport inherits the global runtime configuration again.',
+      operationId: 'adminResetSportIngestionOverride',
+      response: {
+        200: zodToJsonSchema(IngestionScheduleConfigSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: async (
+      request: FastifyRequest<{
+        Params: { sport: string };
+      }>,
+    ) => {
+      const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
+      const { sport } = request.params;
+      return ingestionConfig.clearPerSportOverride(
+        sport,
+        rootAdminUserId,
+        rootAdminEmail,
+      );
+    },
+  });
+
   fastify.post('/config/ingestion-schedule/reset', {
     schema: {
       tags: ['Admin'],
@@ -209,7 +210,7 @@ export function registerPlatformConfigRoutes(
       description:
         'Resets ingestion scheduling back to the platform defaults.',
       operationId: 'adminResetIngestionSchedule',
-      response: { 200: zodToJsonSchema(SuccessSchema) },
+      response: { 200: zodToJsonSchema(IngestionScheduleConfigSchema) },
     },
     handler: async (request: FastifyRequest) => {
       const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);

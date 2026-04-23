@@ -30,12 +30,29 @@ import {
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
+import { mapContestConfigTemplateDto } from '../../mappers/contest-management.mapper';
+import { evaluateEventOperationalState } from '../events/operational-timing';
 
 interface CreateContestManagementContext {
   leagueId: string;
 }
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
+
+interface ContestCreateSportEventState {
+  id: string;
+  releaseAt: Date;
+  fieldLocksAt: Date;
+  fieldLocked: boolean;
+  participantCount: number | null;
+  loadedParticipantCount: number;
+}
+
+interface ContestCreateSportEventReader {
+  findById(
+    sportEventId: string,
+  ): Promise<ContestCreateSportEventState | null>;
+}
 
 function createNoopLogger(): LifecycleLogger {
   const noop = () => undefined;
@@ -60,6 +77,7 @@ export class ContestManagementService {
     private readonly sportEventParticipantSourceDataRepo: SportEventParticipantSourceDataRepository,
     private readonly sportEventParticipantValuationRepo: SportEventParticipantValuationRepository,
     private readonly logger: LifecycleLogger = createNoopLogger(),
+    private readonly sportEventReader?: ContestCreateSportEventReader,
   ) {}
 
   async createContest(
@@ -76,6 +94,7 @@ export class ContestManagementService {
       input,
       this.contestConfigTemplateRepo,
     );
+    await this.assertSportEventContestEligible(input.sportEventId);
     const selectionType = mapSelectionType(resolvedConfiguration.configuration);
     const contest = await this.contestCoreRepo.create({
       leagueId: context.leagueId,
@@ -155,7 +174,7 @@ export class ContestManagementService {
     const contest = await this.contestCoreRepo.findById(contestId);
     if (!contest) {
       this.logger.warn({ contestId }, 'contest management get contest missing contest');
-      throw new ContestManagementError('Contest not found');
+      throw new ContestManagementError('Contest not found', 'CONTEST_NOT_FOUND', 404);
     }
 
     const configuration = await this.contestConfigurationRepo.findByContest(
@@ -163,7 +182,7 @@ export class ContestManagementService {
     );
     if (!configuration) {
       this.logger.warn({ contestId }, 'contest management get contest missing configuration');
-      throw new ContestManagementError('Contest configuration not found');
+      throw new ContestManagementError('Contest configuration not found', 'CONTEST_NOT_FOUND', 404);
     }
 
     this.logger.info({
@@ -188,14 +207,14 @@ export class ContestManagementService {
     );
     if (!configuration) {
       this.logger.warn({ contestId }, 'contest management update configuration missing configuration');
-      throw new ContestManagementError('Contest configuration not found');
+      throw new ContestManagementError('Contest configuration not found', 'CONTEST_NOT_FOUND', 404);
     }
 
     const selectionType = mapSelectionType(input);
     const contest = await this.contestCoreRepo.findById(contestId);
     if (!contest) {
       this.logger.warn({ contestId }, 'contest management update configuration missing contest');
-      throw new ContestManagementError('Contest not found');
+      throw new ContestManagementError('Contest not found', 'CONTEST_NOT_FOUND', 404);
     }
 
     await this.contestConfigurationRepo.update(configuration.id, {
@@ -218,7 +237,7 @@ export class ContestManagementService {
       await this.contestConfigurationRepo.findByContest(contestId);
     if (!refreshedConfiguration) {
       this.logger.error({ contestId }, 'contest management update configuration refresh missing configuration');
-      throw new ContestManagementError('Contest configuration not found');
+      throw new ContestManagementError('Contest configuration not found', 'CONTEST_NOT_FOUND', 404);
     }
 
     await syncDerivedScoring(
@@ -234,9 +253,78 @@ export class ContestManagementService {
     }, 'contest management update configuration completed');
     return buildContestManagementDetail(contest, refreshedConfiguration);
   }
+
+  private async assertSportEventContestEligible(
+    sportEventId: string,
+  ): Promise<void> {
+    if (!this.sportEventReader) {
+      return;
+    }
+
+    const sportEvent = await this.sportEventReader.findById(sportEventId);
+    if (!sportEvent) {
+      this.logger.warn({ sportEventId }, 'contest management create contest missing sport event');
+      throw new ContestManagementError(
+        'Selected sporting event was not found.',
+        'SPORT_EVENT_NOT_FOUND',
+        404,
+      );
+    }
+
+    const operationalState = evaluateEventOperationalState({
+      participantCount: sportEvent.loadedParticipantCount,
+      releaseAt: sportEvent.releaseAt,
+      fieldLocksAt: sportEvent.fieldLocksAt,
+      providerFieldLocked: sportEvent.fieldLocked,
+    });
+
+    if (operationalState.readinessReasons.includes('EVENT_NOT_RELEASED')) {
+      this.logger.warn({
+        sportEventId,
+        releaseAt: sportEvent.releaseAt.toISOString(),
+      }, 'contest management create contest rejected for unreleased sport event');
+      throw new ContestManagementError(
+        'Selected sporting event is not released for contest creation yet.',
+        'SPORT_EVENT_NOT_RELEASED',
+      );
+    }
+
+    if (operationalState.readinessReasons.includes('FIELD_NOT_LOADED')) {
+      this.logger.warn({
+        sportEventId,
+        loadedParticipantCount: sportEvent.loadedParticipantCount,
+        participantCount: sportEvent.participantCount,
+      }, 'contest management create contest rejected for missing sport event field');
+      throw new ContestManagementError(
+        'Selected sporting event field has not loaded yet.',
+        'SPORT_EVENT_FIELD_NOT_LOADED',
+      );
+    }
+
+    if (operationalState.readinessReasons.includes('FIELD_LOCKED')) {
+      this.logger.warn({
+        sportEventId,
+        fieldLocksAt: sportEvent.fieldLocksAt.toISOString(),
+        providerFieldLocked: sportEvent.fieldLocked,
+      }, 'contest management create contest rejected for locked sport event field');
+      throw new ContestManagementError(
+        'Selected sporting event field is already locked for contest creation.',
+        'SPORT_EVENT_FIELD_LOCKED',
+      );
+    }
+  }
 }
 
-export class ContestManagementError extends Error {}
+export class ContestManagementError extends Error {
+  constructor(
+    message: string,
+    readonly code: string = 'CONTEST_CONFIGURATION_INVALID',
+    readonly statusCode: number = 422,
+  ) {
+    super(message);
+    this.name = 'ContestManagementError';
+  }
+}
 
 function mapSelectionType(
   configuration: ContestConfigurationRequest,
@@ -675,25 +763,5 @@ async function resolveCreateConfiguration(
   return {
     template,
     configuration,
-  };
-}
-
-function mapContestConfigTemplateDto(
-  template: ContestConfigTemplate,
-): ContestConfigTemplateDto {
-  return {
-    id: template.id,
-    sport: template.sport,
-    eventType: template.eventType ?? null,
-    contestType: template.contestType,
-    configMode: template.configMode,
-    templateKey: template.templateKey,
-    name: template.name,
-    description: template.description,
-    sortOrder: template.sortOrder,
-    isDefault: template.isDefault,
-    active: template.active,
-    schemaVersion: template.schemaVersion,
-    configuration: template.configJson,
   };
 }

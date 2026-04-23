@@ -339,9 +339,13 @@ export async function cleanupTestData(): Promise<void> {
   // Participants created during tests (name starts with test pattern)
   await prisma.$executeRawUnsafe(`DELETE FROM participant_season_records WHERE participant_id IN (SELECT id FROM participants WHERE name LIKE 'Tiger%' OR name LIKE 'Eldrick%')`).catch(() => {});
   await prisma.$executeRawUnsafe(`DELETE FROM participants WHERE name LIKE 'Tiger%' OR name LIKE 'Eldrick%'`).catch(() => {});
+  await prisma.platformRuntimeConfig.deleteMany().catch(() => {});
   if (userIds.length > 0) {
     await prisma.refreshToken.deleteMany({
       where: { userId: { in: userIds } },
+    }).catch(() => {});
+    await prisma.adminAuditEntry.deleteMany({
+      where: { actorId: { in: userIds } },
     }).catch(() => {});
     await prisma.user.deleteMany({
       where: { id: { in: userIds } },

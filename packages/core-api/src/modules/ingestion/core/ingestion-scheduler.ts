@@ -3,28 +3,36 @@
  *
  * Schedules jobs for:
  * - Event schedule sync (daily)
- * - Participant roster sync (daily)
+ * - Event participant hydration (daily)
  * - Ranking updates (daily)
  * - Live score polling (every 30s during active events)
  * - Provider health checks (every 5 min)
  */
 
 import type { Sport } from '@poolmaster/shared/domain';
+import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
 import type {
-  SportEvent,
-  ProviderParticipant,
   ProviderRanking,
   ProviderStatEvent,
+  SportEvent,
+  SportEventDetail,
 } from './provider-interface';
 
+export type IngestionFeedType =
+  | 'EVENTSCHEDULE'
+  | 'EVENTPARTICIPANTS'
+  | 'PARTICIPANTRANKINGS'
+  | 'EVENTLIVESCORES'
+  | 'EVENTRESULTS';
+
 export type JobType =
-  | 'SCHEDULE_SYNC'
-  | 'PARTICIPANT_SYNC'
-  | 'RANKING_SYNC'
-  | 'LIVE_SCORES'
-  | 'EVENT_RESULTS'
+  | 'EVENT_SCHEDULE_SYNC'
+  | 'EVENT_PARTICIPANTS_SYNC'
+  | 'PARTICIPANT_RANKINGS_SYNC'
+  | 'EVENT_LIVE_SCORES_SYNC'
+  | 'EVENT_RESULTS_SYNC'
   | 'HEALTH_CHECK';
 
 export interface IngestionJobRecord {
@@ -40,12 +48,44 @@ export interface IngestionJobRecord {
   errorLog: unknown[];
 }
 
+export interface SportSyncRequest {
+  sport: Sport;
+  feeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS'>;
+  from?: Date;
+  to?: Date;
+}
+
+export interface EventSyncRequest {
+  sport: Sport;
+  eventId: string;
+  feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+}
+
 export interface IngestionCallbacks {
   onEvents(events: SportEvent[]): Promise<void>;
-  onParticipants(participants: ProviderParticipant[]): Promise<void>;
+  onEventDetail(detail: SportEventDetail): Promise<void>;
   onRankings(rankings: ProviderRanking[]): Promise<void>;
   onLiveScores(scores: ProviderStatEvent[]): Promise<void>;
   onJobComplete(job: IngestionJobRecord): Promise<void>;
+}
+
+export interface IngestionScheduleConfigReader {
+  getConfig(): Promise<IngestionScheduleConfig>;
+  getPerSportConfig(sport: string): Promise<IngestionScheduleConfig>;
+}
+
+export interface IngestionScheduledEventReader {
+  listEventIdsForFeed(input: {
+    sport: Sport;
+    feed: 'EVENTLIVESCORES' | 'EVENTRESULTS';
+    now: Date;
+  }): Promise<string[]>;
+}
+
+export interface IngestionSchedulerOptions {
+  configReader?: IngestionScheduleConfigReader;
+  eventReader?: IngestionScheduledEventReader;
+  now?: () => Date;
 }
 
 export class IngestionScheduler {
@@ -56,6 +96,7 @@ export class IngestionScheduler {
     private readonly registry: ProviderRegistry,
     private readonly callbacks: IngestionCallbacks,
     private readonly logger?: FastifyBaseLogger,
+    private readonly options: IngestionSchedulerOptions = {},
   ) {}
 
   /** Starts all scheduled ingestion jobs. */
@@ -63,24 +104,40 @@ export class IngestionScheduler {
     if (this.running) return;
     this.running = true;
     this.logger?.debug('Starting ingestion scheduler');
+    this.startRecurringLoop(
+      'health checks',
+      async () => this.runHealthChecks(),
+      async () => this.getGlobalDelayMs('healthCheck'),
+    );
 
-    // Health checks every 5 minutes
-    this.timers.push(setInterval(() => this.runHealthChecks(), 5 * 60 * 1000));
+    for (const sport of this.registry.getSupportedSports()) {
+      this.startRecurringLoop(
+        `${sport} schedule sync`,
+        async () => this.runConfiguredSportScheduleSync(sport),
+        async () => this.getSportDelayMs(sport, 'eventSchedule'),
+      );
+      this.startRecurringLoop(
+        `${sport} participant sync`,
+        async () => this.runConfiguredSportFieldSync(sport),
+        async () => this.getSportDelayMs(sport, 'eventParticipants'),
+      );
+      this.startRecurringLoop(
+        `${sport} ranking sync`,
+        async () => this.runConfiguredSportRankingSync(sport),
+        async () => this.getSportDelayMs(sport, 'participantRankings'),
+      );
+      this.startRecurringLoop(
+        `${sport} live score sync`,
+        async () => this.runConfiguredEventSyncSweep(sport, 'EVENTLIVESCORES'),
+        async () => this.getSportDelayMs(sport, 'eventLiveScores'),
+      );
+      this.startRecurringLoop(
+        `${sport} results sync`,
+        async () => this.runConfiguredEventSyncSweep(sport, 'EVENTRESULTS'),
+        async () => this.getSportDelayMs(sport, 'eventResults'),
+      );
+    }
 
-    // Schedule sync every 6 hours
-    this.timers.push(setInterval(() => this.syncAllSchedules(), 6 * 60 * 60 * 1000));
-
-    // Participant sync every 12 hours
-    this.timers.push(setInterval(() => this.syncAllParticipants(), 12 * 60 * 60 * 1000));
-
-    // Ranking sync every 24 hours
-    this.timers.push(setInterval(() => this.syncAllRankings(), 24 * 60 * 60 * 1000));
-
-    // Run initial sync on startup
-    this.runHealthChecks();
-    this.syncAllSchedules();
-    this.syncAllParticipants();
-    this.syncAllRankings();
     this.logger?.info('Ingestion scheduler started');
   }
 
@@ -94,27 +151,51 @@ export class IngestionScheduler {
     this.logger?.info('Ingestion scheduler stopped');
   }
 
-  /** Runs a one-off sync for a specific sport. */
+  /** Backward-compatible wrapper for a schedule-only sport sync. */
   async syncSport(sport: Sport): Promise<IngestionJobRecord> {
-    this.logger?.debug({ sport }, 'Running schedule sync for sport');
-    const provider = this.registry.getProvider(sport);
-    if (!provider) {
-      this.logger?.warn({ sport }, 'No provider registered for schedule sync');
-      return createFailedJob('SCHEDULE_SYNC', 'none', sport, 'No provider registered');
+    return this.runScheduleSync(sport);
+  }
+
+  /** Runs a one-off sport sync for explicit feed types. */
+  async runSportSync(request: SportSyncRequest): Promise<IngestionJobRecord[]> {
+    const jobs: IngestionJobRecord[] = [];
+
+    for (const feed of dedupe(request.feeds)) {
+      if (feed === 'EVENTSCHEDULE') {
+        jobs.push(await this.runScheduleSync(request.sport, request.from, request.to));
+        continue;
+      }
+
+      if (feed === 'EVENTPARTICIPANTS') {
+        jobs.push(await this.runFieldSync(request.sport, request.from, request.to));
+        continue;
+      }
+
+      jobs.push(await this.runRankingSync(request.sport));
     }
 
-    return this.runJob('SCHEDULE_SYNC', provider.providerId, sport, async () => {
-      const now = new Date();
-      const twoWeeksOut = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-      const events = await provider.getUpcomingEvents(sport, { from: now, to: twoWeeksOut });
-      await this.callbacks.onEvents(events);
-      this.logger?.info({
-        sport,
-        providerId: provider.providerId,
-        eventsProcessed: events.length,
-      }, 'Completed schedule sync for sport');
-      return events.length;
-    });
+    return jobs;
+  }
+
+  /** Runs a one-off event sync for explicit feed types. */
+  async runEventSync(request: EventSyncRequest): Promise<IngestionJobRecord[]> {
+    const jobs: IngestionJobRecord[] = [];
+
+    for (const feed of dedupe(request.feeds)) {
+      if (feed === 'EVENTPARTICIPANTS') {
+        jobs.push(await this.runEventFieldSync(request.sport, request.eventId));
+        continue;
+      }
+
+      if (feed === 'EVENTLIVESCORES') {
+        jobs.push(await this.pollLiveScores(request.sport, request.eventId));
+        continue;
+      }
+
+      jobs.push(await this.fetchEventResults(request.sport, request.eventId));
+    }
+
+    return jobs;
   }
 
   /** Polls live scores for a specific event. */
@@ -123,10 +204,10 @@ export class IngestionScheduler {
     const provider = this.registry.getProvider(sport);
     if (!provider) {
       this.logger?.warn({ sport, eventId }, 'No provider registered for live score polling');
-      return createFailedJob('LIVE_SCORES', 'none', sport, 'No provider registered');
+      return createFailedJob('EVENT_LIVE_SCORES_SYNC', 'none', sport, 'No provider registered', eventId);
     }
 
-    return this.runJob('LIVE_SCORES', provider.providerId, sport, async () => {
+    return this.runJob('EVENT_LIVE_SCORES_SYNC', provider.providerId, sport, async () => {
       const scores = await provider.getLiveScores(eventId);
       await this.callbacks.onLiveScores(scores);
       this.logger?.info({
@@ -136,7 +217,7 @@ export class IngestionScheduler {
         scoresProcessed: scores.length,
       }, 'Completed live score poll');
       return scores.length;
-    });
+    }, eventId);
   }
 
   /** Fetches final results for a completed event. */
@@ -145,38 +226,36 @@ export class IngestionScheduler {
     const provider = this.registry.getProvider(sport);
     if (!provider) {
       this.logger?.warn({ sport, eventId }, 'No provider registered for event results fetch');
-      return createFailedJob('EVENT_RESULTS', 'none', sport, 'No provider registered');
+      return createFailedJob('EVENT_RESULTS_SYNC', 'none', sport, 'No provider registered', eventId);
     }
 
-    return this.runJob('EVENT_RESULTS', provider.providerId, sport, async () => {
+    return this.runJob('EVENT_RESULTS_SYNC', provider.providerId, sport, async () => {
       const results = await provider.getEventResults(eventId);
-      if (results) {
-        // Convert results to stat events for scoring
-        const statEvents: ProviderStatEvent[] = results.results.map((r) => ({
-          id: `${eventId}-${r.participantExternalId}-result`,
-          eventExternalId: eventId,
-          participantExternalId: r.participantExternalId,
-          statKey: 'FINISH_POSITION',
-          statValue: r.finishPosition,
-          timestamp: new Date(),
-          isCorrection: false,
-          providerId: provider.providerId,
-        }));
-        await this.callbacks.onLiveScores(statEvents);
-        this.logger?.info({
-          sport,
-          eventId,
-          providerId: provider.providerId,
-          resultsProcessed: results.results.length,
-        }, 'Completed event results fetch');
-        return results.results.length;
+      if (!results) {
+        this.logger?.warn({ sport, eventId, providerId: provider.providerId }, 'Provider returned no event results');
+        return 0;
       }
-      this.logger?.warn({ sport, eventId, providerId: provider.providerId }, 'Provider returned no event results');
-      return 0;
-    });
-  }
 
-  // --- Private scheduling methods ---
+      const statEvents: ProviderStatEvent[] = results.results.map((result) => ({
+        id: `${eventId}-${result.participantExternalId}-result`,
+        eventExternalId: eventId,
+        participantExternalId: result.participantExternalId,
+        statKey: 'FINISH_POSITION',
+        statValue: result.finishPosition,
+        timestamp: new Date(),
+        isCorrection: false,
+        providerId: provider.providerId,
+      }));
+      await this.callbacks.onLiveScores(statEvents);
+      this.logger?.info({
+        sport,
+        eventId,
+        providerId: provider.providerId,
+        resultsProcessed: results.results.length,
+      }, 'Completed event results fetch');
+      return results.results.length;
+    }, eventId);
+  }
 
   private async runHealthChecks(): Promise<void> {
     this.logger?.debug('Running provider health checks');
@@ -207,38 +286,87 @@ export class IngestionScheduler {
     const sports = this.registry.getSupportedSports();
     for (const sport of sports) {
       try {
-        await this.syncSport(sport);
+        await this.runScheduleSync(sport);
       } catch {
-        // Individual sport failures don't block others
         this.logger?.error({ sport }, 'Schedule sync sweep failed for sport');
       }
     }
   }
 
-  private async syncAllParticipants(): Promise<void> {
+  private async runConfiguredSportScheduleSync(sport: Sport): Promise<void> {
+    const config = await this.getSportConfig(sport);
+    if (!config.eventSchedule.enabled) {
+      return;
+    }
+
+    const now = this.getNow();
+    const lookaheadDays = config.eventSchedule.lookaheadDays ?? 30;
+    const from = now;
+    const to = addDays(now, lookaheadDays);
+    await this.runScheduleSync(sport, from, to);
+  }
+
+  private async runConfiguredSportFieldSync(sport: Sport): Promise<void> {
+    const config = await this.getSportConfig(sport);
+    if (!config.eventParticipants.enabled) {
+      return;
+    }
+
+    const now = this.getNow();
+    const leadDays = config.eventParticipants.leadDaysBeforeStart ?? config.eventSchedule.lookaheadDays ?? 7;
+    const from = now;
+    const to = addDays(now, leadDays);
+    await this.runFieldSync(sport, from, to);
+  }
+
+  private async runConfiguredSportRankingSync(sport: Sport): Promise<void> {
+    const config = await this.getSportConfig(sport);
+    if (!config.participantRankings.enabled) {
+      return;
+    }
+
+    await this.runRankingSync(sport);
+  }
+
+  private async runConfiguredEventSyncSweep(
+    sport: Sport,
+    feed: 'EVENTLIVESCORES' | 'EVENTRESULTS',
+  ): Promise<void> {
+    const config = await this.getSportConfig(sport);
+    const policy = feed === 'EVENTLIVESCORES' ? config.eventLiveScores : config.eventResults;
+    if (!policy.enabled) {
+      return;
+    }
+
+    const eventReader = this.options.eventReader;
+    if (!eventReader) {
+      this.logger?.debug({ sport, feed }, 'Skipping scheduled event sync because no event reader is configured');
+      return;
+    }
+
+    const eventIds = await eventReader.listEventIdsForFeed({
+      sport,
+      feed,
+      now: this.getNow(),
+    });
+
+    for (const eventId of eventIds) {
+      if (feed === 'EVENTLIVESCORES') {
+        await this.pollLiveScores(sport, eventId);
+      } else {
+        await this.fetchEventResults(sport, eventId);
+      }
+    }
+  }
+
+  private async syncAllFields(): Promise<void> {
     this.logger?.debug('Running startup/interval participant sync sweep');
     const sports = this.registry.getSupportedSports();
     for (const sport of sports) {
-      const provider = this.registry.getProvider(sport);
-      if (!provider) {
-        this.logger?.warn({ sport }, 'No provider registered for participant sync');
-        continue;
-      }
-
       try {
-        await this.runJob('PARTICIPANT_SYNC', provider.providerId, sport, async () => {
-          const participants = await provider.getParticipants(sport);
-          await this.callbacks.onParticipants(participants);
-          this.logger?.info({
-            sport,
-            providerId: provider.providerId,
-            participantsProcessed: participants.length,
-          }, 'Completed participant sync for sport');
-          return participants.length;
-        });
+        await this.runFieldSync(sport);
       } catch {
-        // Continue with other sports
-        this.logger?.error({ sport, providerId: provider.providerId }, 'Participant sync sweep failed for sport');
+        this.logger?.error({ sport }, 'Participant sync sweep failed for sport');
       }
     }
   }
@@ -247,28 +375,122 @@ export class IngestionScheduler {
     this.logger?.debug('Running startup/interval ranking sync sweep');
     const sports = this.registry.getSupportedSports();
     for (const sport of sports) {
-      const provider = this.registry.getProvider(sport);
-      if (!provider) {
-        this.logger?.warn({ sport }, 'No provider registered for ranking sync');
-        continue;
-      }
-
       try {
-        await this.runJob('RANKING_SYNC', provider.providerId, sport, async () => {
-          const rankings = await provider.getRankings(sport, 'default');
-          await this.callbacks.onRankings(rankings);
-          this.logger?.info({
-            sport,
-            providerId: provider.providerId,
-            rankingsProcessed: rankings.length,
-          }, 'Completed ranking sync for sport');
-          return rankings.length;
-        });
+        await this.runRankingSync(sport);
       } catch {
-        // Continue with other sports
-        this.logger?.error({ sport, providerId: provider.providerId }, 'Ranking sync sweep failed for sport');
+        this.logger?.error({ sport }, 'Ranking sync sweep failed for sport');
       }
     }
+  }
+
+  private async runScheduleSync(
+    sport: Sport,
+    from?: Date,
+    to?: Date,
+  ): Promise<IngestionJobRecord> {
+    this.logger?.debug({ sport }, 'Running schedule sync for sport');
+    const provider = this.registry.getProvider(sport);
+    if (!provider) {
+      this.logger?.warn({ sport }, 'No provider registered for schedule sync');
+      return createFailedJob('EVENT_SCHEDULE_SYNC', 'none', sport, 'No provider registered');
+    }
+
+    return this.runJob('EVENT_SCHEDULE_SYNC', provider.providerId, sport, async () => {
+      const dateRange = resolveDateRange(from, to);
+      const events = await provider.getUpcomingEvents(sport, dateRange);
+      await this.callbacks.onEvents(events);
+      this.logger?.info({
+        sport,
+        providerId: provider.providerId,
+        eventsProcessed: events.length,
+      }, 'Completed schedule sync for sport');
+      return events.length;
+    });
+  }
+
+  private async runFieldSync(
+    sport: Sport,
+    from?: Date,
+    to?: Date,
+  ): Promise<IngestionJobRecord> {
+    this.logger?.debug({ sport }, 'Running participant sync for sport');
+    const provider = this.registry.getProvider(sport);
+    if (!provider) {
+      this.logger?.warn({ sport }, 'No provider registered for participant sync');
+      return createFailedJob('EVENT_PARTICIPANTS_SYNC', 'none', sport, 'No provider registered');
+    }
+
+    return this.runJob('EVENT_PARTICIPANTS_SYNC', provider.providerId, sport, async () => {
+      const dateRange = resolveDateRange(from, to);
+      const events = await provider.getUpcomingEvents(sport, dateRange);
+      let hydratedCount = 0;
+
+      for (const event of events) {
+        const detail = await provider.getEventDetails(event.externalId);
+        if (!detail) {
+          continue;
+        }
+
+        await this.callbacks.onEventDetail(detail);
+        hydratedCount += 1;
+      }
+
+      this.logger?.info({
+        sport,
+        providerId: provider.providerId,
+        eventsDiscovered: events.length,
+        eventsHydrated: hydratedCount,
+      }, 'Completed participant sync for sport');
+      return hydratedCount;
+    });
+  }
+
+  private async runEventFieldSync(
+    sport: Sport,
+    eventId: string,
+  ): Promise<IngestionJobRecord> {
+    this.logger?.debug({ sport, eventId }, 'Running participant sync for event');
+    const provider = this.registry.getProvider(sport);
+    if (!provider) {
+      this.logger?.warn({ sport, eventId }, 'No provider registered for event participant sync');
+      return createFailedJob('EVENT_PARTICIPANTS_SYNC', 'none', sport, 'No provider registered', eventId);
+    }
+
+    return this.runJob('EVENT_PARTICIPANTS_SYNC', provider.providerId, sport, async () => {
+      const detail = await provider.getEventDetails(eventId);
+      if (!detail) {
+        this.logger?.warn({ sport, eventId, providerId: provider.providerId }, 'Provider returned no event detail for participant sync');
+        return 0;
+      }
+
+      await this.callbacks.onEventDetail(detail);
+      this.logger?.info({
+        sport,
+        eventId,
+        providerId: provider.providerId,
+        participantCount: detail.participants.length,
+      }, 'Completed participant sync for event');
+      return detail.participants.length;
+    }, eventId);
+  }
+
+  private async runRankingSync(sport: Sport): Promise<IngestionJobRecord> {
+    const provider = this.registry.getProvider(sport);
+    if (!provider) {
+      this.logger?.warn({ sport }, 'No provider registered for ranking sync');
+      return createFailedJob('PARTICIPANT_RANKINGS_SYNC', 'none', sport, 'No provider registered');
+    }
+
+    return this.runJob('PARTICIPANT_RANKINGS_SYNC', provider.providerId, sport, async () => {
+      const rankings = await provider.getRankings(sport, 'default');
+      await this.callbacks.onRankings(rankings);
+      this.logger?.info({
+        sport,
+        providerId: provider.providerId,
+        rankingsProcessed: rankings.length,
+      }, 'Completed ranking sync for sport');
+      return rankings.length;
+    });
   }
 
   private async runJob(
@@ -276,11 +498,13 @@ export class IngestionScheduler {
     providerId: string,
     sport: Sport,
     work: () => Promise<number>,
+    eventExternalId?: string,
   ): Promise<IngestionJobRecord> {
     const job: IngestionJobRecord = {
       jobType,
       providerId,
       sport,
+      eventExternalId,
       status: 'RUNNING',
       startedAt: new Date(),
       recordsProcessed: 0,
@@ -297,6 +521,7 @@ export class IngestionScheduler {
         jobType,
         providerId,
         sport,
+        eventExternalId,
         error: err,
       }, 'Ingestion job failed');
       job.status = 'FAILED';
@@ -308,6 +533,89 @@ export class IngestionScheduler {
     await this.callbacks.onJobComplete(job);
     return job;
   }
+
+  private startRecurringLoop(
+    label: string,
+    runner: () => Promise<void>,
+    resolveDelayMs: () => Promise<number>,
+  ): void {
+    const tick = async () => {
+      if (!this.running) {
+        return;
+      }
+
+      try {
+        await runner();
+      } catch (error) {
+        this.logger?.error({ error, label }, 'Recurring ingestion loop failed');
+      }
+
+      const delayMs = await this.safeResolveDelayMs(resolveDelayMs);
+      if (!this.running) {
+        return;
+      }
+
+      const timer = setTimeout(() => {
+        void tick();
+      }, delayMs);
+      this.timers.push(timer);
+    };
+
+    void tick();
+  }
+
+  private async getGlobalDelayMs(
+    feed: keyof Pick<IngestionScheduleConfig, 'healthCheck'>,
+  ): Promise<number> {
+    const config = await this.getGlobalConfig();
+    return toDelayMs(config[feed]);
+  }
+
+  private async getSportDelayMs(
+    sport: Sport,
+    feed: keyof Omit<IngestionScheduleConfig, 'perSportOverrides'>,
+  ): Promise<number> {
+    const config = await this.getSportConfig(sport);
+    return toDelayMs(config[feed]);
+  }
+
+  private async getGlobalConfig(): Promise<IngestionScheduleConfig> {
+    if (!this.options.configReader) {
+      return defaultIngestionScheduleConfig();
+    }
+
+    return this.options.configReader.getConfig();
+  }
+
+  private async getSportConfig(sport: Sport): Promise<IngestionScheduleConfig> {
+    if (!this.options.configReader) {
+      return defaultIngestionScheduleConfig();
+    }
+
+    return this.options.configReader.getPerSportConfig(sport);
+  }
+
+  private getNow(): Date {
+    return this.options.now?.() ?? new Date();
+  }
+
+  private async safeResolveDelayMs(resolveDelayMs: () => Promise<number>): Promise<number> {
+    try {
+      return await resolveDelayMs();
+    } catch (error) {
+      this.logger?.error({ error }, 'Falling back to config recheck delay because policy resolution failed');
+      return CONFIG_RECHECK_MS;
+    }
+  }
+}
+
+function resolveDateRange(from?: Date, to?: Date): { from: Date; to: Date } {
+  const resolvedFrom = from ?? new Date();
+  const resolvedTo = to ?? new Date(resolvedFrom.getTime() + 14 * 24 * 60 * 60 * 1000);
+  return {
+    from: resolvedFrom,
+    to: resolvedTo,
+  };
 }
 
 function createFailedJob(
@@ -315,11 +623,13 @@ function createFailedJob(
   providerId: string,
   sport: Sport,
   error: string,
+  eventExternalId?: string,
 ): IngestionJobRecord {
   return {
     jobType,
     providerId,
     sport,
+    eventExternalId,
     status: 'FAILED',
     startedAt: new Date(),
     completedAt: new Date(),
@@ -327,4 +637,62 @@ function createFailedJob(
     errors: 1,
     errorLog: [{ error, at: new Date() }],
   };
+}
+
+function dedupe<T extends string>(items: readonly T[]): T[] {
+  return Array.from(new Set(items));
+}
+
+const CONFIG_RECHECK_MS = 60 * 1000;
+
+function defaultIngestionScheduleConfig(): IngestionScheduleConfig {
+    return {
+      healthCheck: {
+        enabled: true,
+        intervalMinutes: 5,
+      },
+    eventSchedule: {
+        enabled: true,
+        intervalMinutes: 360,
+        lookaheadDays: 30,
+      },
+    eventParticipants: {
+        enabled: true,
+        intervalMinutes: 720,
+        leadDaysBeforeStart: 7,
+      },
+    participantRankings: {
+        enabled: true,
+        intervalMinutes: 1440,
+      },
+    eventLiveScores: {
+        enabled: true,
+        intervalSeconds: 30,
+      },
+    eventResults: {
+        enabled: true,
+        intervalMinutes: 30,
+      },
+    perSportOverrides: {},
+  };
+}
+
+function toDelayMs(policy: IngestionScheduleConfig[keyof Omit<IngestionScheduleConfig, 'perSportOverrides'>]): number {
+  if (!policy.enabled) {
+    return CONFIG_RECHECK_MS;
+  }
+
+  if (policy.intervalSeconds) {
+    return policy.intervalSeconds * 1000;
+  }
+
+  if (policy.intervalMinutes) {
+    return policy.intervalMinutes * 60 * 1000;
+  }
+
+  return CONFIG_RECHECK_MS;
+}
+
+function addDays(base: Date, days: number): Date {
+  return new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
 }

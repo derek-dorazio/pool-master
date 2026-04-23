@@ -26,6 +26,15 @@ export const IngestionProviderSummaryDtoSchema = z.object({
 }).describe('Provider summary used by ingestion-management surfaces.');
 export type IngestionProviderSummaryDto = z.infer<typeof IngestionProviderSummaryDtoSchema>;
 
+export const IngestionFeedTypeSchema = z.enum([
+  'EVENTSCHEDULE',
+  'EVENTPARTICIPANTS',
+  'PARTICIPANTRANKINGS',
+  'EVENTLIVESCORES',
+  'EVENTRESULTS',
+]).describe('Explicit ingestion feed type requested by the caller.');
+export type IngestionFeedType = z.infer<typeof IngestionFeedTypeSchema>;
+
 export const IngestionProvidersResponseSchema = z.object({
   providers: z.array(IngestionProviderSummaryDtoSchema),
 }).describe('List of configured ingestion providers.');
@@ -33,11 +42,11 @@ export type IngestionProvidersResponse = z.infer<typeof IngestionProvidersRespon
 
 export const IngestionJobRecordDtoSchema = z.object({
   jobType: z.enum([
-    'SCHEDULE_SYNC',
-    'PARTICIPANT_SYNC',
-    'RANKING_SYNC',
-    'LIVE_SCORES',
-    'EVENT_RESULTS',
+    'EVENT_SCHEDULE_SYNC',
+    'EVENT_PARTICIPANTS_SYNC',
+    'PARTICIPANT_RANKINGS_SYNC',
+    'EVENT_LIVE_SCORES_SYNC',
+    'EVENT_RESULTS_SYNC',
     'HEALTH_CHECK',
   ]),
   providerId: z.string().describe('Provider that owns the ingestion job.'),
@@ -56,6 +65,27 @@ export const IngestionJobResponseSchema = z.object({
   job: IngestionJobRecordDtoSchema,
 }).describe('Single ingestion-job response.');
 export type IngestionJobResponse = z.infer<typeof IngestionJobResponseSchema>;
+
+export const IngestionJobsResponseSchema = z.object({
+  jobs: z.array(IngestionJobRecordDtoSchema),
+}).describe('Multiple ingestion jobs returned for a feed-aware sync request.');
+export type IngestionJobsResponse = z.infer<typeof IngestionJobsResponseSchema>;
+
+export const SportSyncRequestSchema = z.object({
+  feeds: z.array(z.enum(['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS'])).min(1).describe(
+    'Feed types to run for a sport-level sync request.',
+  ),
+  from: DateTimeSchema.optional().describe('Optional lower bound for sport-level event discovery.'),
+  to: DateTimeSchema.optional().describe('Optional upper bound for sport-level event discovery.'),
+}).describe('Feed-aware sport sync request.');
+export type SportSyncRequest = z.infer<typeof SportSyncRequestSchema>;
+
+export const EventSyncRequestSchema = z.object({
+  feeds: z.array(z.enum(['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTRESULTS'])).min(1).describe(
+    'Feed types to run for a specific event sync request.',
+  ),
+}).describe('Feed-aware event sync request.');
+export type EventSyncRequest = z.infer<typeof EventSyncRequestSchema>;
 
 export const IngestSportOddsResponseSchema = z.object({
   sport: SportSchema.describe('Sport whose odds payload was requested.'),

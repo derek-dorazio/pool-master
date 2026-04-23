@@ -41,6 +41,33 @@ export async function contestManagementModule(
     new PrismaSportEventParticipantSourceDataRepository(prisma),
     new PrismaSportEventParticipantValuationRepository(prisma),
     fastify.log,
+    {
+      findById: async (sportEventId) => {
+        const row = await prisma.sportEvent.findUnique({
+          where: { id: sportEventId },
+          include: {
+            _count: {
+              select: {
+                sportEventParticipants: true,
+              },
+            },
+          },
+        });
+
+        if (!row) {
+          return null;
+        }
+
+        return {
+          id: row.id,
+          releaseAt: row.releaseAt,
+          fieldLocksAt: row.fieldLocksAt,
+          fieldLocked: row.fieldLocked,
+          participantCount: row.participantCount,
+          loadedParticipantCount: row._count.sportEventParticipants,
+        };
+      },
+    },
   );
   const handlers = createContestManagementHandlers(contestManagementService);
 

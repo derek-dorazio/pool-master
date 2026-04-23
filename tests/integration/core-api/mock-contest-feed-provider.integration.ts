@@ -317,8 +317,8 @@ describe('mock contest feed provider event-first verification', () => {
       onEvents: async (events) => {
         await persistence.persistEvents(events);
       },
-      onParticipants: async (participants) => {
-        await persistence.persistParticipants(participants);
+      onEventDetail: async (detail) => {
+        await persistence.persistEventDetail(detail);
       },
       onRankings: async (rankings) => {
         await persistence.persistRankings(rankings);

@@ -44,7 +44,7 @@ export function createContestManagementHandlers(
     } catch (error) {
       if (error instanceof ContestManagementError) {
         logger.warn({ leagueId: request.params.id, error: error.message }, 'contest management create route rejected');
-        return sendError(reply, 422, 'CONTEST_CONFIGURATION_INVALID', error.message);
+        return sendError(reply, error.statusCode, error.code, error.message);
       }
       logger.error({ leagueId: request.params.id, err: error }, 'contest management create route failed');
       throw error;
@@ -79,7 +79,7 @@ export function createContestManagementHandlers(
     } catch (error) {
       if (error instanceof ContestManagementError) {
         logger.warn({ contestId: request.params.contestId, error: error.message }, 'contest management get route rejected');
-        return sendError(reply, 404, 'CONTEST_NOT_FOUND', error.message);
+        return sendError(reply, error.statusCode, error.code, error.message);
       }
       logger.error({ contestId: request.params.contestId, err: error }, 'contest management get route failed');
       throw error;
@@ -104,18 +104,13 @@ export function createContestManagementHandlers(
       return reply.send({ contest });
     } catch (error) {
       if (error instanceof ContestManagementError) {
-        const isNotFound = error.message.includes('not found');
         logger.warn({
           contestId: request.params.contestId,
           error: error.message,
-          isNotFound,
+          code: error.code,
+          statusCode: error.statusCode,
         }, 'contest management update route rejected');
-        return sendError(
-          reply,
-          isNotFound ? 404 : 422,
-          isNotFound ? 'CONTEST_NOT_FOUND' : 'CONTEST_CONFIGURATION_INVALID',
-          error.message,
-        );
+        return sendError(reply, error.statusCode, error.code, error.message);
       }
       logger.error({ contestId: request.params.contestId, err: error }, 'contest management update route failed');
       throw error;

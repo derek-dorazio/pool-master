@@ -266,20 +266,28 @@ describe('admin support services', () => {
       const service = new IngestionConfigService(createLogger() as any);
 
       await expect(
-        service.updateConfig({ liveScorePollingIntervalSeconds: 45 }, 'admin-1', 'admin@example.com'),
-      ).resolves.toEqual(expect.objectContaining({ liveScorePollingIntervalSeconds: 45 }));
+        service.updateConfig({ eventLiveScores: { intervalSeconds: 45 } }, 'admin-1', 'admin@example.com'),
+      ).resolves.toEqual(expect.objectContaining({
+        eventLiveScores: expect.objectContaining({ intervalSeconds: 45 }),
+      }));
       await expect(
-        service.setPerSportOverride('GOLF', { rankingSyncIntervalHours: 6 }, 'admin-1', 'admin@example.com'),
+        service.setPerSportOverride('GOLF', { participantRankings: { intervalMinutes: 360 } }, 'admin-1', 'admin@example.com'),
       ).resolves.toEqual(expect.objectContaining({
         perSportOverrides: expect.objectContaining({
-          GOLF: expect.objectContaining({ rankingSyncIntervalHours: 6 }),
+          GOLF: expect.objectContaining({
+            participantRankings: expect.objectContaining({ intervalMinutes: 360 }),
+          }),
         }),
       }));
       await expect(service.getPerSportConfig('GOLF')).resolves.toEqual(
-        expect.objectContaining({ rankingSyncIntervalHours: 6 }),
+        expect.objectContaining({
+          participantRankings: expect.objectContaining({ intervalMinutes: 360 }),
+        }),
       );
       await expect(service.resetDefaults('admin-1', 'admin@example.com')).resolves.toEqual(
-        expect.objectContaining({ liveScorePollingIntervalSeconds: 30 }),
+        expect.objectContaining({
+          eventLiveScores: expect.objectContaining({ intervalSeconds: 30 }),
+        }),
       );
     });
   });

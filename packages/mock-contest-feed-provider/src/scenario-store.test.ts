@@ -16,11 +16,12 @@ test('ScenarioStore loads event-first scenarios and exposes field snapshots', ()
 
   const golfScenario = store.getScenario('golf-major-2026');
   assert.equal(golfScenario.season.year, 2026);
-  assert.equal(golfScenario.events[0]?.field.status, 'announced');
+  assert.equal(golfScenario.events[0]?.field.status, 'locked');
 
   const fieldSnapshot = store.getSnapshot('golf-major-2026', 'golf-masters-2026', 'field');
   assert.equal(fieldSnapshot.feedKind, 'field');
-  assert.equal(fieldSnapshot.contestants[0]?.name, 'Avery Hart');
+  assert.equal(fieldSnapshot.contestants[0]?.name, 'Scottie Scheffler');
+  assert.equal(fieldSnapshot.contestants.length, 80);
 
   const resultUpdates = store.getUpdates('golf-major-2026', 'golf-masters-2026');
   assert.equal(resultUpdates.updates[0]?.feedKind, 'field');
@@ -84,6 +85,62 @@ test('ScenarioStore rejects new contestants in deltas unless they include a name
   }
 });
 
+test('ScenarioStore rejects golf events that omit odds contestants', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'mock-feed-scenario-'));
+
+  try {
+    writeFileSync(
+      join(tempDir, 'invalid-golf-odds.json'),
+      JSON.stringify({
+        scenarioId: 'invalid-golf-odds',
+        sport: 'GOLF',
+        provider: 'mock-contest-feed',
+        season: {
+          seasonId: 'invalid-2026',
+          name: 'Invalid Season',
+          year: 2026,
+        },
+        events: [
+          {
+            eventId: 'invalid-event',
+            name: 'Invalid Event',
+            status: 'scheduled',
+            schedule: {
+              startsAt: '2026-04-10T15:00:00.000Z',
+            },
+            field: {
+              asOf: '2026-04-01T12:00:00.000Z',
+              status: 'announced',
+              contestants: [{ contestantId: 'golfer-01', name: 'Known Player' }],
+            },
+            feeds: {
+              odds: {
+                asOf: '2026-04-01T12:00:00.000Z',
+                contestants: [],
+              },
+              rankings: {
+                asOf: '2026-04-01T12:00:00.000Z',
+                contestants: [],
+              },
+              results: {
+                asOf: '2026-04-14T12:00:00.000Z',
+                contestants: [],
+              },
+            },
+          },
+        ],
+      }),
+    );
+
+    assert.throws(
+      () => new ScenarioStore(tempDir),
+      /must include odds contestants/,
+    );
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('ScenarioStore throws for missing scenarios and events', () => {
   const store = new ScenarioStore(scenarioDir);
 
@@ -108,7 +165,7 @@ test('routes expose detail and field endpoints', async () => {
     assert.equal(detailResponse.statusCode, 200);
     const detailJson = detailResponse.json();
     assert.equal(detailJson.season.seasonId, 'golf-2026-majors');
-    assert.equal(detailJson.event.schedule.fieldLocksAt, '2026-04-09T16:00:00.000Z');
+    assert.equal(detailJson.event.schedule.fieldLocksAt, '2026-04-29T16:00:00.000Z');
 
     const fieldResponse = await app.inject({
       method: 'GET',
@@ -117,7 +174,17 @@ test('routes expose detail and field endpoints', async () => {
     assert.equal(fieldResponse.statusCode, 200);
     const fieldJson = fieldResponse.json();
     assert.equal(fieldJson.feedKind, 'field');
-    assert.equal(fieldJson.contestants.length, 8);
+    assert.equal(fieldJson.contestants.length, 80);
+
+    const liveScoresResponse = await app.inject({
+      method: 'GET',
+      url: '/v1/live/scenarios/golf-major-2026/events/golf-masters-2026/scores?tick=2',
+    });
+    assert.equal(liveScoresResponse.statusCode, 200);
+    const liveScoresJson = liveScoresResponse.json();
+    assert.equal(liveScoresJson.feedKind, 'results');
+    assert.equal(liveScoresJson.contestants.length, 80);
+    assert.ok(typeof liveScoresJson.contestants[0]?.score === 'number');
   } finally {
     await app.close();
     if (previousScenarioDir === undefined) {

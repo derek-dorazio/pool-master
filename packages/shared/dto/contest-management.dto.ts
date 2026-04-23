@@ -184,6 +184,36 @@ export type ContestConfigTemplateListResponse = z.infer<
   typeof ContestConfigTemplateListResponseSchema
 >;
 
+export const AdminListContestConfigTemplatesQuerySchema = z.object({
+  sport: z.enum(sportValues).optional().describe('Optional sport filter for root-admin contest template management.'),
+  contestType: z.enum(contestTypeValues).optional().describe('Optional contest-type filter for root-admin contest template management.'),
+  active: z.boolean().optional().describe('Optional active-state filter for root-admin contest template management.'),
+}).describe('Query parameters for root-admin contest template management listing.');
+export type AdminListContestConfigTemplatesQuery = z.infer<
+  typeof AdminListContestConfigTemplatesQuerySchema
+>;
+
+export const AdminUpdateContestConfigTemplateRequestSchema = z.object({
+  name: z.string().min(1).max(120).optional().describe('Updated root-admin template display name.'),
+  description: z.string().min(1).max(500).optional().describe('Updated root-admin template description.'),
+  sortOrder: z.number().int().min(0).max(1000).optional().describe('Updated sort order for the template within its create-flow group.'),
+  isDefault: z.boolean().optional().describe('Whether this template should be the default choice for future create flows in its scope.'),
+  active: z.boolean().optional().describe('Whether commissioners can select this template in future create flows.'),
+  configuration: ContestConfigurationRequestSchema.optional().describe('Updated persisted configuration payload copied into future contests when this template is selected.'),
+}).refine((value) => Object.keys(value).length > 0, {
+  message: 'At least one contest template property must be provided.',
+}).describe('Root-admin contest template update payload.');
+export type AdminUpdateContestConfigTemplateRequest = z.infer<
+  typeof AdminUpdateContestConfigTemplateRequestSchema
+>;
+
+export const AdminContestConfigTemplateResponseSchema = z.object({
+  template: ContestConfigTemplateDtoSchema,
+}).describe('Single root-admin contest template response.');
+export type AdminContestConfigTemplateResponse = z.infer<
+  typeof AdminContestConfigTemplateResponseSchema
+>;
+
 export const ContestManagementDetailDtoSchema = z.object({
   id: z.string().describe('Contest identifier.'),
   leagueId: z.string().describe('League that owns the contest.'),

@@ -9,6 +9,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
 import type { ProviderService } from './provider-service';
+import type { EventSyncRequest, SportSyncRequest } from '../ingestion/core/ingestion-scheduler';
 import {
   ProviderConfigUnsupportedError,
   ProviderEventNotFoundError,
@@ -31,6 +32,7 @@ export function createProviderHandlers(providerService: ProviderService) {
     updateProviderConfig,
     triggerHealthCheck,
     prepareSportSync,
+    syncEventData,
     getIngestionDashboard,
     reIngestEvent,
     getUnmappedParticipants,
@@ -176,26 +178,35 @@ export function createProviderHandlers(providerService: ProviderService) {
   }
 
   async function prepareSportSync(
-    request: FastifyRequest<{ Params: { sport: Sport } }>,
+    request: FastifyRequest<{
+      Params: { sport: Sport };
+      Body: SportSyncRequest;
+    }>,
     reply: FastifyReply,
   ) {
     const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
     const logger = request.contextLogger ?? request.log;
-    logger.debug({ sport: request.params.sport }, 'Preparing sport sync');
+    logger.debug({
+      sport: request.params.sport,
+      requestedFeeds: request.body.feeds,
+    }, 'Preparing sport sync');
 
     try {
       const result = await providerService.prepareSportSync(
-        request.params.sport,
+        {
+          sport: request.params.sport,
+          feeds: request.body.feeds,
+          from: request.body.from,
+          to: request.body.to,
+        },
         rootAdminUserId,
         rootAdminEmail,
       );
-      return reply.status(201).send({
+      return reply.send({
         sport: result.sport,
-        providerIds: result.providerIds,
-        eventsDiscovered: result.eventsDiscovered,
-        eventsHydrated: result.eventsHydrated,
-        participantRecordsSynced: result.participantRecordsSynced,
-        rankingRecordsSynced: result.rankingRecordsSynced,
+        eventId: result.eventId,
+        requestedFeeds: result.requestedFeeds,
+        jobs: result.jobs,
         syncRuns: result.syncRuns.map((run) => ({
           id: run.id,
           providerId: run.providerId,
@@ -211,6 +222,57 @@ export function createProviderHandlers(providerService: ProviderService) {
     } catch (err) {
       if (err instanceof SportProviderNotFoundError) {
         logger.warn({ sport: request.params.sport }, 'Sport sync preparation failed because no providers were registered');
+        return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function syncEventData(
+    request: FastifyRequest<{
+      Params: { sport: Sport; eventId: string };
+      Body: EventSyncRequest;
+    }>,
+    reply: FastifyReply,
+  ) {
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({
+      sport: request.params.sport,
+      eventId: request.params.eventId,
+      requestedFeeds: request.body.feeds,
+    }, 'Running manual event sync');
+
+    try {
+      const result = await providerService.syncEventData({
+        sport: request.params.sport,
+        eventId: request.params.eventId,
+        feeds: request.body.feeds,
+      }, rootAdminUserId, rootAdminEmail);
+
+      return reply.send({
+        sport: result.sport,
+        eventId: result.eventId,
+        requestedFeeds: result.requestedFeeds,
+        jobs: result.jobs,
+        syncRuns: result.syncRuns.map((run) => ({
+          id: run.id,
+          providerId: run.providerId,
+          sport: run.sport,
+          eventId: run.eventId,
+          status: run.status,
+          startedAt: run.startedAt?.toISOString() ?? null,
+          completedAt: run.completedAt?.toISOString() ?? null,
+          createdAt: run.createdAt.toISOString(),
+          payload: run.payload,
+        })),
+      });
+    } catch (err) {
+      if (err instanceof SportProviderNotFoundError) {
+        logger.warn({
+          sport: request.params.sport,
+          eventId: request.params.eventId,
+        }, 'Manual event sync failed because no providers were registered');
         return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
       }
       throw err;

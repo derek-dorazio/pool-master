@@ -384,6 +384,30 @@ export class PrismaContestConfigTemplateRepository
     return row ? mapContestConfigTemplate(row) : null;
   }
 
+  async list(input: {
+    sport?: ContestConfigTemplate['sport'];
+    contestType?: ContestConfigTemplate['contestType'];
+    eventType?: string | null;
+    active?: boolean;
+  } = {}): Promise<ContestConfigTemplate[]> {
+    const rows = await this.prisma.contestConfigTemplate.findMany({
+      where: {
+        ...(input.sport !== undefined && { sport: input.sport }),
+        ...(input.contestType !== undefined && { contestType: input.contestType }),
+        ...(input.eventType !== undefined && { eventType: input.eventType }),
+        ...(input.active !== undefined && { active: input.active }),
+      },
+      orderBy: [
+        { sport: 'asc' },
+        { contestType: 'asc' },
+        { sortOrder: 'asc' },
+        { name: 'asc' },
+      ],
+    });
+
+    return rows.map(mapContestConfigTemplate);
+  }
+
   async listBySportAndContestType(input: {
     sport: ContestConfigTemplate['sport'];
     contestType: ContestConfigTemplate['contestType'];
@@ -403,6 +427,26 @@ export class PrismaContestConfigTemplateRepository
     });
 
     return rows.map(mapContestConfigTemplate);
+  }
+
+  async update(
+    id: string,
+    updates: Partial<ContestConfigTemplate>,
+  ): Promise<ContestConfigTemplate> {
+    const row = await this.prisma.contestConfigTemplate.update({
+      where: { id },
+      data: {
+        ...(updates.name !== undefined && { name: updates.name }),
+        ...(updates.description !== undefined && { description: updates.description }),
+        ...(updates.sortOrder !== undefined && { sortOrder: updates.sortOrder }),
+        ...(updates.isDefault !== undefined && { isDefault: updates.isDefault }),
+        ...(updates.active !== undefined && { active: updates.active }),
+        ...(updates.configJson !== undefined && { configJson: updates.configJson as object }),
+        ...(updates.schemaVersion !== undefined && { schemaVersion: updates.schemaVersion }),
+      },
+    });
+
+    return mapContestConfigTemplate(row);
   }
 }
 

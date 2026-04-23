@@ -1,11 +1,18 @@
 import { randomUUID } from 'node:crypto';
 import {
+  adminGetIngestionSchedule,
+  adminGetPollIntervals,
   adminPrepareSportSync,
+  adminListContestConfigTemplates,
   adminListProviderSyncRuns,
   adminReIngestEvent,
+  adminResetSportIngestionOverride,
   adminTriggerHealthCheck,
   adminGetUserDetail,
   adminListUsers,
+  adminUpdateContestConfigTemplate,
+  adminUpdateIngestionSchedule,
+  adminUpdatePollIntervals,
 } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser } from './builders';
 import {
@@ -58,6 +65,9 @@ describe('SDK Functional: Root Admin', () => {
       client: user.client,
       path: {
         sport: 'GOLF',
+      },
+      body: {
+        feeds: ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS'],
       },
     });
 
@@ -137,7 +147,7 @@ describe('SDK Functional: Root Admin', () => {
           startedAt: new Date('2026-04-08T10:00:00.000Z'),
           completedAt: new Date('2026-04-08T10:00:30.000Z'),
           payloadJson: {
-            runType: 'SCHEDULE_SYNC',
+            runType: 'EVENT_SCHEDULE_SYNC',
             detail: 'Transient timeout.',
           },
         },
@@ -195,11 +205,114 @@ describe('SDK Functional: Root Admin', () => {
       path: {
         sport: 'UFC',
       },
+      body: {
+        feeds: ['EVENTSCHEDULE'],
+      },
     });
 
     expectFunctionalError(prepareSyncResponse, {
       status: 404,
       code: 'SPORT_PROVIDER_NOT_FOUND',
     });
+  });
+
+  it('allows a promoted root-admin user to update persisted system configuration', async () => {
+    const user = await buildRegisteredUser({
+      displayName: 'Root Admin Config User',
+    });
+    await promoteToRootAdmin(user.userId);
+
+    const pollResponse = await adminUpdatePollIntervals({
+      client: user.client,
+      body: {
+        standings: 15000,
+      },
+    });
+    expect(pollResponse.data?.standings).toBe(15000);
+
+    const pollRead = await adminGetPollIntervals({
+      client: user.client,
+    });
+    expect(pollRead.data?.standings).toBe(15000);
+
+    const ingestionUpdate = await adminUpdateIngestionSchedule({
+      client: user.client,
+      body: {
+        eventLiveScores: {
+          intervalSeconds: 45,
+        },
+      },
+    });
+    expect(ingestionUpdate.data?.eventLiveScores.intervalSeconds).toBe(45);
+
+    const ingestionRead = await adminGetIngestionSchedule({
+      client: user.client,
+    });
+    expect(ingestionRead.data?.eventLiveScores.intervalSeconds).toBe(45);
+
+    const resetSportOverride = await adminResetSportIngestionOverride({
+      client: user.client,
+      path: {
+        sport: 'GOLF',
+      },
+    });
+    expect(resetSportOverride.data?.perSportOverrides.GOLF).toBeUndefined();
+  });
+
+  it('allows a promoted root-admin user to manage persisted contest templates', async () => {
+    const user = await buildRegisteredUser({
+      displayName: 'Root Admin Contest Template User',
+    });
+    await promoteToRootAdmin(user.userId);
+
+    const listResponse = await adminListContestConfigTemplates({
+      client: user.client,
+      query: {
+        sport: 'GOLF',
+      },
+    });
+
+    const template = listResponse.data?.templates[0];
+    expect(template).toBeDefined();
+    if (!template) {
+      throw new Error('Expected at least one contest template');
+    }
+    const originalTemplate = structuredClone(template);
+
+    try {
+      const updateResponse = await adminUpdateContestConfigTemplate({
+        client: user.client,
+        path: {
+          templateId: template.id,
+        },
+        body: {
+          description: 'Updated from functional root-admin coverage.',
+          configuration: template.configuration.mode === 'GOLF_TIERED'
+            ? {
+                ...template.configuration,
+                countedScores: 5,
+              }
+            : template.configuration,
+        },
+      });
+
+      expect(updateResponse.data?.template.description).toBe('Updated from functional root-admin coverage.');
+      if (updateResponse.data?.template.configuration.mode !== 'GOLF_TIERED') {
+        throw new Error('Expected tiered contest template');
+      }
+      expect(updateResponse.data.template.configuration.countedScores).toBe(5);
+    } finally {
+      await getFunctionalPrisma().contestConfigTemplate.update({
+        where: { id: template.id },
+        data: {
+          name: originalTemplate.name,
+          description: originalTemplate.description,
+          sortOrder: originalTemplate.sortOrder,
+          isDefault: originalTemplate.isDefault,
+          active: originalTemplate.active,
+          configJson: originalTemplate.configuration,
+        },
+      });
+    }
   });
 });

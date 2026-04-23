@@ -8,6 +8,11 @@ import {
   IngestSportOddsResponseSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
+import {
+  EventSyncRequestSchema,
+  IngestionJobsResponseSchema,
+  SportSyncRequestSchema,
+} from '@poolmaster/shared/dto/ingestion.dto';
 import type { ProviderRegistry } from './core/provider-registry';
 import type { IngestionScheduler } from './core/ingestion-scheduler';
 import type { OddsApiAdapter } from './adapters/odds-api-adapter';
@@ -46,23 +51,67 @@ export async function ingestionModule(
     };
   });
 
-  app.post<{ Params: { sport: string } }>('/sync/:sport', {
+  app.post<{
+    Params: { sport: string };
+    Body: {
+      feeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS'>;
+      from?: string;
+      to?: string;
+    };
+  }>('/sync/:sport', {
     schema: {
       tags: ['Admin'],
       summary: 'Trigger data sync for a sport',
       description:
         'Triggers a provider sync for the requested sport so ingestion jobs can be run manually from operational tools.',
       operationId: 'syncSportData',
+      body: zodToJsonSchema(SportSyncRequestSchema),
       response: {
-        200: zodToJsonSchema(IngestionJobResponseSchema),
+        200: zodToJsonSchema(IngestionJobsResponseSchema),
         500: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
   }, async (request) => {
     const sport = request.params.sport as Sport;
-    const job = await scheduler.syncSport(sport);
-    return { job };
+    const jobs = await scheduler.runSportSync({
+      sport,
+      feeds: request.body.feeds,
+      from: request.body.from ? new Date(request.body.from) : undefined,
+      to: request.body.to ? new Date(request.body.to) : undefined,
+    });
+    return { jobs };
   });
+
+  app.post<{
+    Params: { sport: string; eventId: string };
+    Body: {
+      feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+    };
+  }>(
+    '/events/:sport/:eventId/sync',
+    {
+      schema: {
+        tags: ['Admin'],
+        summary: 'Trigger feed-aware sync for a specific sport event',
+        description:
+          'Triggers explicit feed sync work for a single sport event such as participant hydration, live score polling, or final results.',
+        operationId: 'syncEventData',
+        body: zodToJsonSchema(EventSyncRequestSchema),
+        response: {
+          200: zodToJsonSchema(IngestionJobsResponseSchema),
+          500: zodToJsonSchema(ErrorEnvelopeSchema),
+        },
+      },
+    },
+    async (request) => {
+      const jobs = await scheduler.runEventSync({
+        sport: request.params.sport as Sport,
+        eventId: request.params.eventId,
+        feeds: request.body.feeds,
+      });
+      return { jobs };
+    },
+  );
 
   app.post<{ Params: { sport: string; eventId: string } }>(
     '/scores/:sport/:eventId',

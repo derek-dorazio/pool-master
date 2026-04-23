@@ -286,6 +286,14 @@ export async function cleanupFunctionalData(): Promise<void> {
       },
     },
   });
+  await database.adminAuditEntry.deleteMany({
+    where: {
+      actorId: {
+        in: userIds,
+      },
+    },
+  });
+  await database.platformRuntimeConfig.deleteMany();
   await database.user.deleteMany({
     where: {
       id: {

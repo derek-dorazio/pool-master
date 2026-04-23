@@ -108,45 +108,53 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
 }
 
 function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
+  const template = {
+    id: '11111111-1111-4111-8111-111111111111',
+    sport: 'GOLF',
+    contestType: 'SINGLE_EVENT',
+    configMode: 'GOLF_TIERED',
+    templateKey: 'golf-tiered-pick-6',
+    name: 'Select one from each tier, 4 count',
+    description: 'Default golf tiered template',
+    sortOrder: 1,
+    isDefault: true,
+    active: true,
+    configJson: {
+      mode: 'GOLF_TIERED',
+      locksAt: '2026-04-10T12:00:00.000Z',
+      maxEntriesPerSquad: 1,
+      rosterSize: 6,
+      countedScores: 4,
+      tierSource: 'ODDS',
+      tierGeneration: { defaultTierSize: 10 },
+      tiers: [
+        {
+          tierKey: 'A',
+          label: 'Tier A',
+          pickCount: 1,
+          startPosition: 1,
+          endPosition: 10,
+        },
+      ],
+      cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
+      playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+      displayScoring: 'TO_PAR',
+      tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
+    },
+    schemaVersion: 1,
+    createdAt: new Date('2026-04-07T12:00:00.000Z'),
+    updatedAt: new Date('2026-04-07T12:00:00.000Z'),
+  };
+
   return {
-    findById: jest.fn().mockResolvedValue({
-      id: '11111111-1111-4111-8111-111111111111',
-      sport: 'GOLF',
-      contestType: 'SINGLE_EVENT',
-      configMode: 'GOLF_TIERED',
-      templateKey: 'golf-tiered-pick-6',
-      name: 'Select one from each tier, 4 count',
-      description: 'Default golf tiered template',
-      sortOrder: 1,
-      isDefault: true,
-      active: true,
-      configJson: {
-        mode: 'GOLF_TIERED',
-        locksAt: '2026-04-10T12:00:00.000Z',
-        maxEntriesPerSquad: 1,
-        rosterSize: 6,
-        countedScores: 4,
-        tierSource: 'ODDS',
-        tierGeneration: { defaultTierSize: 10 },
-        tiers: [
-          {
-            tierKey: 'A',
-            label: 'Tier A',
-            pickCount: 1,
-            startPosition: 1,
-            endPosition: 10,
-          },
-        ],
-        cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
-        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-        displayScoring: 'TO_PAR',
-        tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
-      },
-      schemaVersion: 1,
-      createdAt: new Date('2026-04-07T12:00:00.000Z'),
-      updatedAt: new Date('2026-04-07T12:00:00.000Z'),
-    }),
+    findById: jest.fn().mockResolvedValue(template),
+    list: jest.fn().mockResolvedValue([template]),
     listBySportAndContestType: jest.fn().mockResolvedValue([]),
+    update: jest.fn().mockImplementation(async (_id, updates) => ({
+      ...template,
+      ...updates,
+      updatedAt: new Date('2026-04-07T12:00:01.000Z'),
+    })),
   };
 }
 
@@ -271,6 +279,27 @@ function createSportEventParticipantValuationRepo(): SportEventParticipantValuat
   };
 }
 
+function createSportEventReader(overrides?: Partial<{
+  releaseAt: Date;
+  fieldLocksAt: Date;
+  fieldLocked: boolean;
+  participantCount: number | null;
+  loadedParticipantCount: number;
+}>): {
+  findById: jest.Mock;
+} {
+  return {
+    findById: jest.fn().mockResolvedValue({
+      id: '11111111-1111-1111-1111-111111111111',
+      releaseAt: overrides?.releaseAt ?? new Date('2026-04-22T12:00:00.000Z'),
+      fieldLocksAt: overrides?.fieldLocksAt ?? new Date('2026-05-10T12:00:00.000Z'),
+      fieldLocked: overrides?.fieldLocked ?? false,
+      participantCount: overrides?.participantCount ?? 72,
+      loadedParticipantCount: overrides?.loadedParticipantCount ?? 72,
+    }),
+  };
+}
+
 describe('ContestManagementService', () => {
   it('creates a golf tiered contest and derives internal scoring rules automatically', async () => {
     const contestCoreRepo = createContestCoreRepo();
@@ -289,6 +318,8 @@ describe('ContestManagementService', () => {
       createSportEventParticipantRepo(),
       createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader(),
     );
 
     const result = await service.createContest(
@@ -388,6 +419,8 @@ describe('ContestManagementService', () => {
       createSportEventParticipantRepo(),
       createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader(),
     );
 
     const result = await service.createContest(
@@ -451,6 +484,8 @@ describe('ContestManagementService', () => {
       createSportEventParticipantRepo(),
       createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader(),
     );
 
     const result = await service.updateContestConfiguration('contest-1', {
@@ -556,6 +591,8 @@ describe('ContestManagementService', () => {
       createSportEventParticipantRepo(),
       createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader(),
     );
 
     const result = await service.getContest('contest-1');
@@ -583,6 +620,8 @@ describe('ContestManagementService', () => {
       createSportEventParticipantRepo(),
       createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader(),
     );
 
     const result = await service.createContest(
@@ -623,6 +662,8 @@ describe('ContestManagementService', () => {
       createSportEventParticipantRepo(),
       createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader(),
     );
 
     let thrown: unknown;
@@ -658,6 +699,8 @@ describe('ContestManagementService', () => {
       createSportEventParticipantRepo(),
       createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader(),
     );
 
     let thrown: unknown;
@@ -669,5 +712,129 @@ describe('ContestManagementService', () => {
 
     expect(thrown).toBeInstanceOf(ContestManagementError);
     expect((thrown as Error).message).toBe('Contest configuration not found');
+  });
+
+  it('rejects contest creation when the sporting event field has not loaded yet', async () => {
+    const contestCoreRepo = createContestCoreRepo();
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      createContestConfigurationRepo(),
+      createParticipantScoringRuleRepo(),
+      createAggregationRuleRepo(),
+      createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantSourceDataRepo(),
+      createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader({
+        participantCount: 72,
+        loadedParticipantCount: 0,
+      }),
+    );
+
+    await expect(service.createContest(
+      { leagueId: 'league-1' },
+      {
+        name: 'Missing Field Contest',
+        sportEventId: '11111111-1111-1111-1111-111111111111',
+        contestType: 'SINGLE_EVENT',
+        configuration: {
+          mode: 'GOLF_TIERED',
+          locksAt: '2026-04-10T12:00:00.000Z',
+          maxEntriesPerSquad: 3,
+          rosterSize: 6,
+          countedScores: 4,
+          tierSource: 'ODDS',
+          tierGeneration: {
+            defaultTierSize: 10,
+          },
+          tiers: [
+            {
+              tierKey: 'A',
+              label: 'Tier A',
+              pickCount: 1,
+              startPosition: 1,
+              endPosition: 10,
+            },
+          ],
+          cutRule: {
+            type: 'FIXED_SCORE',
+            fixedScore: 80,
+          },
+          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+          displayScoring: 'TO_PAR',
+          tiebreaker: {
+            type: 'PREDICT_WINNING_SCORE',
+          },
+        },
+      },
+    )).rejects.toMatchObject({
+      code: 'SPORT_EVENT_FIELD_NOT_LOADED',
+      message: 'Selected sporting event field has not loaded yet.',
+    });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects contest creation when the sporting event is not released yet', async () => {
+    const contestCoreRepo = createContestCoreRepo();
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      createContestConfigurationRepo(),
+      createParticipantScoringRuleRepo(),
+      createAggregationRuleRepo(),
+      createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantSourceDataRepo(),
+      createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader({
+        releaseAt: new Date('2026-05-10T12:00:00.000Z'),
+        loadedParticipantCount: 72,
+      }),
+    );
+
+    await expect(service.createContest(
+      { leagueId: 'league-1' },
+      {
+        name: 'Unreleased Event Contest',
+        sportEventId: '11111111-1111-1111-1111-111111111111',
+        contestType: 'SINGLE_EVENT',
+        configuration: {
+          mode: 'GOLF_TIERED',
+          locksAt: '2026-04-10T12:00:00.000Z',
+          maxEntriesPerSquad: 3,
+          rosterSize: 6,
+          countedScores: 4,
+          tierSource: 'ODDS',
+          tierGeneration: {
+            defaultTierSize: 10,
+          },
+          tiers: [
+            {
+              tierKey: 'A',
+              label: 'Tier A',
+              pickCount: 1,
+              startPosition: 1,
+              endPosition: 10,
+            },
+          ],
+          cutRule: {
+            type: 'FIXED_SCORE',
+            fixedScore: 80,
+          },
+          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+          displayScoring: 'TO_PAR',
+          tiebreaker: {
+            type: 'PREDICT_WINNING_SCORE',
+          },
+        },
+      },
+    )).rejects.toMatchObject({
+      code: 'SPORT_EVENT_NOT_RELEASED',
+      message: 'Selected sporting event is not released for contest creation yet.',
+    });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 });

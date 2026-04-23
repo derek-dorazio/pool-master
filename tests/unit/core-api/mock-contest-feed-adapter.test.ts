@@ -96,19 +96,6 @@ const eventDetailResponse = {
   },
 };
 
-const updatesResponse = {
-  updates: [
-    {
-      asOf: '2026-04-10T22:30:00.000Z',
-      feedKind: 'results',
-      updateType: 'live',
-      contestants: [
-        { contestantId: 'rory-mcilroy', score: -5 },
-      ],
-    },
-  ],
-};
-
 describe('MockContestFeedAdapter', () => {
   const originalFetch = global.fetch;
 
@@ -130,13 +117,19 @@ describe('MockContestFeedAdapter', () => {
       if (url.endsWith('/v1/scenarios/golf-major-2026/events')) {
         return okJson(eventListResponse);
       }
-      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/detail')) {
+      if (url.endsWith('/v1/pre-event/scenarios/golf-major-2026/events/golf-masters-2026/detail')) {
         return okJson(eventDetailResponse);
       }
-      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/updates')) {
-        return okJson(updatesResponse);
+      if (url.endsWith('/v1/live/scenarios/golf-major-2026/events/golf-masters-2026/scores')) {
+        return okJson({
+          asOf: '2026-04-10T22:30:00.000Z',
+          contestants: [
+            { contestantId: 'scottie-scheffler', score: -4 },
+            { contestantId: 'rory-mcilroy', score: -5 },
+          ],
+        });
       }
-      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/results')) {
+      if (url.endsWith('/v1/live/scenarios/golf-major-2026/events/golf-masters-2026/results')) {
         return okJson({
           contestants: [
             { contestantId: 'scottie-scheffler', score: -4 },

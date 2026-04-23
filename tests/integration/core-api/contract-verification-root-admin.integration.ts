@@ -1,13 +1,17 @@
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import {
-  IngestionJobResponseSchema,
+  AdminContestConfigTemplateResponseSchema,
+  ContestConfigTemplateListResponseSchema,
+  IngestionJobsResponseSchema,
+  IngestionJobRecordDtoSchema,
+  IngestionScheduleConfigSchema,
   IngestionProvidersResponseSchema,
   IngestSportOddsResponseSchema,
+  PollIntervalConfigSchema,
   ProviderHealthCheckDtoSchema,
   ProviderIngestionJobDtoSchema,
   ProviderListResponseSchema,
-  ProviderSportSyncPreparationResponseSchema,
   ProviderSyncRunListResponseSchema,
   UserDetailResponseSchema,
   UserListResponseSchema,
@@ -18,6 +22,7 @@ import { ProviderService } from '../../../packages/core-api/src/modules/admin/pr
 import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
 import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
+import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import {
   cleanupTestData,
   createTestUser,
@@ -189,7 +194,16 @@ async function buildOperationalAdminApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
   const registry = new ProviderRegistry();
   registry.register('GOLF', new OperationalContractProvider(), 'PRIMARY');
-  const providerService = new ProviderService(getPrisma(), registry);
+  const scheduler = new IngestionScheduler(registry, {
+    onEvents: async () => undefined,
+    onEventDetail: async () => undefined,
+    onRankings: async () => undefined,
+    onLiveScores: async () => undefined,
+    onJobComplete: async () => undefined,
+  }, undefined, {
+    now: () => new Date('2026-04-05T12:00:00.000Z'),
+  });
+  const providerService = new ProviderService(getPrisma(), registry, scheduler);
 
   app.decorate('prisma', getPrisma());
   app.setErrorHandler(globalErrorHandler);
@@ -206,7 +220,16 @@ async function buildEmptyCoverageAdminApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
   const registry = new ProviderRegistry();
   registry.register('GOLF', new EmptyCoverageProvider(), 'PRIMARY');
-  const providerService = new ProviderService(getPrisma(), registry);
+  const scheduler = new IngestionScheduler(registry, {
+    onEvents: async () => undefined,
+    onEventDetail: async () => undefined,
+    onRankings: async () => undefined,
+    onLiveScores: async () => undefined,
+    onJobComplete: async () => undefined,
+  }, undefined, {
+    now: () => new Date('2026-04-05T12:00:00.000Z'),
+  });
+  const providerService = new ProviderService(getPrisma(), registry, scheduler);
 
   app.decorate('prisma', getPrisma());
   app.setErrorHandler(globalErrorHandler);
@@ -239,9 +262,9 @@ describe('Contract verification (root admin)', () => {
       prefix: '/api/v1/admin/ingestion',
       registry,
       scheduler: {
-        async syncSport() {
-          return {
-            jobType: 'SCHEDULE_SYNC',
+        async runSportSync() {
+          return [{
+            jobType: 'EVENT_SCHEDULE_SYNC',
             providerId: 'contract-provider',
             sport: 'GOLF',
             status: 'COMPLETED',
@@ -250,11 +273,25 @@ describe('Contract verification (root admin)', () => {
             recordsProcessed: 2,
             errors: 0,
             errorLog: [],
-          };
+          }];
+        },
+        async runEventSync() {
+          return [{
+            jobType: 'EVENT_LIVE_SCORES_SYNC',
+            providerId: 'contract-provider',
+            sport: 'GOLF',
+            eventExternalId: 'event-1',
+            status: 'COMPLETED',
+            startedAt: new Date('2026-04-09T10:00:00.000Z'),
+            completedAt: new Date('2026-04-09T10:00:01.000Z'),
+            recordsProcessed: 1,
+            errors: 0,
+            errorLog: [],
+          }];
         },
         async pollLiveScores() {
           return {
-            jobType: 'LIVE_SCORES',
+            jobType: 'EVENT_LIVE_SCORES_SYNC',
             providerId: 'contract-provider',
             sport: 'GOLF',
             eventExternalId: 'event-1',
@@ -268,7 +305,7 @@ describe('Contract verification (root admin)', () => {
         },
         async fetchEventResults() {
           return {
-            jobType: 'EVENT_RESULTS',
+            jobType: 'EVENT_RESULTS_SYNC',
             providerId: 'contract-provider',
             sport: 'GOLF',
             eventExternalId: 'event-1',
@@ -307,9 +344,12 @@ describe('Contract verification (root admin)', () => {
     const syncRes = await app.inject({
       method: 'POST',
       url: '/api/v1/admin/ingestion/sync/GOLF',
+      payload: {
+        feeds: ['EVENTSCHEDULE'],
+      },
     });
     expect(syncRes.statusCode).toBe(200);
-    expect(IngestionJobResponseSchema.safeParse(syncRes.json()).success).toBe(true);
+    expect(IngestionJobsResponseSchema.safeParse(syncRes.json()).success).toBe(true);
 
     const oddsRes = await app.inject({
       method: 'POST',
@@ -363,7 +403,7 @@ describe('Contract verification (root admin)', () => {
           startedAt: new Date('2026-04-08T10:00:00.000Z'),
           completedAt: new Date('2026-04-08T10:00:30.000Z'),
           payloadJson: {
-            runType: 'SCHEDULE_SYNC',
+            runType: 'EVENT_SCHEDULE_SYNC',
             errorCount: 1,
             detail: 'Transient provider timeout',
           },
@@ -397,6 +437,95 @@ describe('Contract verification (root admin)', () => {
     expect(syncRunsRes.json().items).toHaveLength(2);
     expect(syncRunsRes.json().items[0].providerId).toBe('integration-test');
     expect(syncRunsRes.json().items[0].payload.runType).toBeDefined();
+  });
+
+  it('root-admin platform-config and contest-template routes match their DTOs on happy paths', async () => {
+    const rootAdmin = await createTestUser({
+      displayName: 'Root Admin Config Contract User',
+      isRootAdmin: true,
+    });
+
+    const pollReadRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/admin/config/poll-intervals',
+      headers: rootAdmin.headers,
+    });
+    expect(pollReadRes.statusCode).toBe(200);
+    expect(PollIntervalConfigSchema.safeParse(pollReadRes.json()).success).toBe(true);
+
+    const pollUpdateRes = await getApp().inject({
+      method: 'PUT',
+      url: '/api/v1/admin/config/poll-intervals',
+      headers: rootAdmin.headers,
+      payload: {
+        standings: 15000,
+      },
+    });
+    expect(pollUpdateRes.statusCode).toBe(200);
+    expect(PollIntervalConfigSchema.safeParse(pollUpdateRes.json()).success).toBe(true);
+    expect(pollUpdateRes.json().standings).toBe(15000);
+
+    const ingestionReadRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/admin/config/ingestion-schedule',
+      headers: rootAdmin.headers,
+    });
+    expect(ingestionReadRes.statusCode).toBe(200);
+    expect(IngestionScheduleConfigSchema.safeParse(ingestionReadRes.json()).success).toBe(true);
+
+    const ingestionUpdateRes = await getApp().inject({
+      method: 'PUT',
+      url: '/api/v1/admin/config/ingestion-schedule',
+      headers: rootAdmin.headers,
+      payload: {
+        eventLiveScores: {
+          intervalSeconds: 45,
+        },
+      },
+    });
+    expect(ingestionUpdateRes.statusCode).toBe(200);
+    expect(IngestionScheduleConfigSchema.safeParse(ingestionUpdateRes.json()).success).toBe(true);
+    expect(ingestionUpdateRes.json().eventLiveScores.intervalSeconds).toBe(45);
+
+    const templateListRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/admin/contest-config-templates?sport=GOLF',
+      headers: rootAdmin.headers,
+    });
+    expect(templateListRes.statusCode).toBe(200);
+    expect(ContestConfigTemplateListResponseSchema.safeParse(templateListRes.json()).success).toBe(true);
+    const template = templateListRes.json().templates[0];
+    const templateId = template?.id;
+    expect(templateId).toBeDefined();
+    if (!templateId || !template) {
+      throw new Error('Expected at least one contest template');
+    }
+
+    try {
+      const templateUpdateRes = await getApp().inject({
+        method: 'PUT',
+        url: `/api/v1/admin/contest-config-templates/${templateId}`,
+        headers: rootAdmin.headers,
+        payload: {
+          description: 'Updated through contract verification.',
+        },
+      });
+      expect(templateUpdateRes.statusCode).toBe(200);
+      expect(AdminContestConfigTemplateResponseSchema.safeParse(templateUpdateRes.json()).success).toBe(true);
+      expect(templateUpdateRes.json().template.description).toBe('Updated through contract verification.');
+    } finally {
+      await getPrisma().contestConfigTemplate.update({
+        where: { id: templateId },
+        data: {
+          name: template.name,
+          description: template.description,
+          sortOrder: template.sortOrder,
+          isDefault: template.isDefault,
+          active: template.active,
+          configJson: template.configuration,
+        },
+      });
+    }
   });
 
   it('root-admin provider operational routes match their DTOs on happy paths', async () => {
@@ -478,6 +607,14 @@ describe('Contract verification (root admin)', () => {
         },
       },
     });
+    await getPrisma().providerSyncRun.deleteMany({
+      where: {
+        providerId: 'contract-provider',
+        id: {
+          not: '33333333-3333-3333-3333-333333333333',
+        },
+      },
+    });
 
     const app = await buildOperationalAdminApp();
 
@@ -520,12 +657,15 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/admin/providers/sync/GOLF',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
+        payload: {
+          feeds: ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS'],
+        },
       });
-      expect(prepareSyncRes.statusCode).toBe(201);
-      expect(ProviderSportSyncPreparationResponseSchema.safeParse(prepareSyncRes.json()).success).toBe(true);
+      expect(prepareSyncRes.statusCode).toBe(200);
       expect(prepareSyncRes.json().sport).toBe('GOLF');
-      expect(prepareSyncRes.json().eventsHydrated).toBe(1);
-      expect(prepareSyncRes.json().providerIds).toContain('contract-provider');
+      expect(prepareSyncRes.json().requestedFeeds).toEqual(['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS']);
+      expect(IngestionJobRecordDtoSchema.array().safeParse(prepareSyncRes.json().jobs).success).toBe(true);
+      expect(prepareSyncRes.json().syncRuns.length).toBeGreaterThanOrEqual(1);
 
       const reIngestRes = await app.inject({
         method: 'POST',
@@ -590,6 +730,9 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/admin/providers/sync/UFC',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
+        payload: {
+          feeds: ['EVENTSCHEDULE'],
+        },
       });
       expect(missingSportProviderRes.statusCode).toBe(404);
       expect(ErrorEnvelopeSchema.safeParse(missingSportProviderRes.json()).success).toBe(true);
