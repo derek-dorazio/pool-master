@@ -366,6 +366,48 @@ jobs:
           echo "core_api_exists=${CORE_API_EXISTS}" >> $GITHUB_OUTPUT
           echo "mock_provider_exists=${MOCK_PROVIDER_EXISTS}" >> $GITHUB_OUTPUT
 
+      - name: Validate QA ECS infrastructure contract
+        if: steps.ecr-check.outputs.core_api_exists == 'true' || steps.ecr-check.outputs.mock_provider_exists == 'true'
+        run: |
+          CLUSTER="poolmaster-qa-cluster"
+          CORE_SERVICE="poolmaster-qa-core-api"
+          MOCK_PROVIDER_SERVICE="poolmaster-qa-mock-contest-feed-provider"
+
+          if ! aws ecs describe-clusters --clusters "$CLUSTER" --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
+            echo "::error::QA cluster ${CLUSTER} is missing. Run terraform apply for QA before deploying."
+            exit 1
+          fi
+
+          if ! aws ecs describe-services --cluster "$CLUSTER" --services "$CORE_SERVICE" --query 'services[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
+            echo "::error::QA core-api service ${CORE_SERVICE} is missing. Run terraform apply for QA before deploying."
+            exit 1
+          fi
+
+          if ! aws ecs describe-services --cluster "$CLUSTER" --services "$MOCK_PROVIDER_SERVICE" --query 'services[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
+            echo "::error::QA mock provider service ${MOCK_PROVIDER_SERVICE} is missing. Run terraform apply for QA before deploying."
+            exit 1
+          fi
+
+          CORE_SERVICE_TASK_DEF=$(aws ecs describe-services \
+            --cluster "$CLUSTER" \
+            --services "$CORE_SERVICE" \
+            --query 'services[0].taskDefinition' \
+            --output text)
+
+          aws ecs describe-task-definition \
+            --task-definition "$CORE_SERVICE_TASK_DEF" \
+            --query 'taskDefinition.containerDefinitions[?name==`core-api`][0].environment' \
+            --output json > /tmp/qa-core-api-env.json
+
+          jq -e '
+            any(.[]; .name == "SPORT_DATA_DEFAULT_PROVIDER" and .value == "mock-contest-feed")
+            and any(.[]; .name == "SPORT_DATA_PROVIDER_BINDINGS_JSON" and (.value | contains("mock-contest-feed-provider")))
+          ' /tmp/qa-core-api-env.json > /dev/null || {
+            echo "::error::QA core-api task definition is missing the required mock provider environment contract. Re-run terraform apply for QA before deploying."
+            cat /tmp/qa-core-api-env.json
+            exit 1
+          }
+
       - name: Build & push core-api
         id: build-core-api
         if: steps.ecr-check.outputs.core_api_exists == 'true'

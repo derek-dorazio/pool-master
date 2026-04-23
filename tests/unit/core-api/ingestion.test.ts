@@ -108,7 +108,7 @@ describe('ProviderRegistry', () => {
   it('getHealthReport returns health for all unique providers', () => {
     const provider = createMockProvider({ providerId: 'espn' });
     registry.register('GOLF' as Sport, provider, 'PRIMARY');
-    registry.register('NFL' as Sport, provider, 'FALLBACK');
+    registry.register('NFL' as Sport, provider, 'PRIMARY');
 
     const report = registry.getHealthReport();
     // Same provider registered twice — should appear once
@@ -117,14 +117,11 @@ describe('ProviderRegistry', () => {
     expect(report[0].status).toBe('HEALTHY');
   });
 
-  it('falls back to FALLBACK provider when PRIMARY is DOWN', () => {
+  it('still returns the explicitly configured provider when it is degraded or down', () => {
     const primary = createMockProvider({ providerId: 'primary-api' });
-    const fallback = createMockProvider({ providerId: 'fallback-api' });
 
     registry.register('GOLF' as Sport, primary, 'PRIMARY');
-    registry.register('GOLF' as Sport, fallback, 'FALLBACK');
 
-    // Mark primary as DOWN
     registry.updateHealth('primary-api', {
       providerId: 'primary-api',
       status: 'DOWN',
@@ -132,31 +129,6 @@ describe('ProviderRegistry', () => {
       latencyMsP95: 0,
     });
 
-    const result = registry.getProvider('GOLF' as Sport);
-    expect(result).toBe(fallback);
-  });
-
-  it('returns primary when both providers are DOWN (still returns something)', () => {
-    const primary = createMockProvider({ providerId: 'primary-api' });
-    const fallback = createMockProvider({ providerId: 'fallback-api' });
-
-    registry.register('GOLF' as Sport, primary, 'PRIMARY');
-    registry.register('GOLF' as Sport, fallback, 'FALLBACK');
-
-    registry.updateHealth('primary-api', {
-      providerId: 'primary-api',
-      status: 'DOWN',
-      errorRateLastHour: 1,
-      latencyMsP95: 0,
-    });
-    registry.updateHealth('fallback-api', {
-      providerId: 'fallback-api',
-      status: 'DOWN',
-      errorRateLastHour: 1,
-      latencyMsP95: 0,
-    });
-
-    // Both down — falls through to return primary
     const result = registry.getProvider('GOLF' as Sport);
     expect(result).toBe(primary);
   });
@@ -169,7 +141,7 @@ describe('ProviderRegistry', () => {
 
     // Register the same provider for two sports — should appear once in results
     registry.register('GOLF' as Sport, sharedProvider, 'PRIMARY');
-    registry.register('NFL' as Sport, sharedProvider, 'FALLBACK');
+    registry.register('NFL' as Sport, sharedProvider, 'PRIMARY');
     registry.register('NFL' as Sport, nflProvider, 'PRIMARY');
 
     const all = registry.getAllProviders();
@@ -214,25 +186,21 @@ describe('ProviderRegistry', () => {
     expect(registry.getProviderById('nonexistent')).toBeNull();
   });
 
-  it('getProvidersForSport returns PRIMARY and FALLBACK providers for a sport', () => {
+  it('getProvidersForSport returns the explicitly configured provider for a sport', () => {
     const primary = createMockProvider({ providerId: 'primary-golf' });
-    const fallback = createMockProvider({ providerId: 'fallback-golf' });
 
     registry.register('GOLF' as Sport, primary, 'PRIMARY');
-    registry.register('GOLF' as Sport, fallback, 'FALLBACK');
 
     const providers = registry.getProvidersForSport('GOLF' as Sport);
-    expect(providers).toHaveLength(2);
+    expect(providers).toHaveLength(1);
     expect(providers[0]).toBe(primary);
-    expect(providers[1]).toBe(fallback);
   });
 
   it('getSupportedSports returns unique sport list across all registrations', () => {
     const sharedProvider = createMockProvider({ providerId: 'multi-sport-api' });
 
-    // Same provider registered for multiple sports, plus duplicates
+    // Same provider registered for multiple sports.
     registry.register('GOLF' as Sport, sharedProvider, 'PRIMARY');
-    registry.register('GOLF' as Sport, sharedProvider, 'FALLBACK');
     registry.register('NFL' as Sport, sharedProvider, 'PRIMARY');
     registry.register('NBA' as Sport, sharedProvider, 'PRIMARY');
 

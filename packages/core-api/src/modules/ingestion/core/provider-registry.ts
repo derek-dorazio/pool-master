@@ -1,14 +1,16 @@
 /**
- * ProviderRegistry — manages adapter registration, lookup, and health reporting.
+ * ProviderRegistry — manages explicit provider registration, lookup, and health
+ * reporting.
  *
- * Each sport can have a PRIMARY and FALLBACK provider. The registry
- * automatically routes to the fallback when the primary is DOWN.
+ * The active service tier must only call explicitly configured external data
+ * providers. Hidden in-process fallback providers are not allowed because they
+ * mask real configuration and ingestion defects.
  */
 
 import type { Sport } from '@poolmaster/shared/domain';
 import type { SportDataProvider, ProviderHealthStatus } from './provider-interface';
 
-type Priority = 'PRIMARY' | 'FALLBACK';
+type Priority = 'PRIMARY';
 
 interface RegisteredProvider {
   provider: SportDataProvider;
@@ -36,23 +38,10 @@ export class ProviderRegistry {
     });
   }
 
-  /**
-   * Gets the active provider for a sport.
-   * Tries primary first; falls back if primary is DOWN.
-   */
+  /** Gets the explicitly configured provider for a sport. */
   getProvider(sport: Sport): SportDataProvider | null {
     const primary = this.providers.get(`${sport}:PRIMARY`);
-    if (primary && primary.health.status !== 'DOWN') {
-      return primary.provider;
-    }
-
-    const fallback = this.providers.get(`${sport}:FALLBACK`);
-    if (fallback && fallback.health.status !== 'DOWN') {
-      return fallback.provider;
-    }
-
-    // Both down or no provider registered — return primary if it exists
-    return primary?.provider ?? fallback?.provider ?? null;
+    return primary?.provider ?? null;
   }
 
   /** Gets a specific provider by ID. */
@@ -69,9 +58,7 @@ export class ProviderRegistry {
   getProvidersForSport(sport: Sport): SportDataProvider[] {
     const result: SportDataProvider[] = [];
     const primary = this.providers.get(`${sport}:PRIMARY`);
-    const fallback = this.providers.get(`${sport}:FALLBACK`);
     if (primary) result.push(primary.provider);
-    if (fallback) result.push(fallback.provider);
     return result;
   }
 

@@ -315,6 +315,10 @@ terraform apply -var-file=envs/qa.tfvars
 
 This creates: ECS Fargate (1 backend service), RDS PostgreSQL, ALB, S3 + CloudFront (PoolMaster web), ECR repository, CloudWatch alarms.
 
+If QA intentionally needs direct operator DB access, model it in `envs/qa.tfvars` instead of making manual AWS changes:
+- `db_publicly_accessible = true`
+- `db_allowed_cidr_blocks = ["YOUR_PUBLIC_IP/32"]`
+
 For runtime backend log usage and CloudWatch query patterns, see
 [Logging Operations](./LOGGING-OPERATIONS.md).
 

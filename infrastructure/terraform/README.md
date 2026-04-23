@@ -53,3 +53,11 @@ Recommended usage:
 - QA points to the internal mock provider.
 - Staging and prod bind explicitly to approved real providers later.
 - Do not use these variables to introduce silent fallback from real providers to the mock provider.
+
+## Direct QA Database Access
+
+Terraform can also model intentionally approved direct PostgreSQL access when QA operators need it.
+
+- `db_publicly_accessible` controls whether the RDS instance should expose a public endpoint.
+- `db_allowed_cidr_blocks` is the allow-list of approved direct client CIDRs for PostgreSQL access.
+- Keep both disabled by default and only enable them explicitly in local `envs/*.tfvars` files for environments where that access is truly intended.

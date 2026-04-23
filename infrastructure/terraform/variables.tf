@@ -78,6 +78,18 @@ variable "db_password" {
   sensitive   = true
 }
 
+variable "db_publicly_accessible" {
+  description = "Whether the RDS instance should expose a public endpoint. Keep false by default; only enable intentionally for environments that require direct operator access."
+  type        = bool
+  default     = false
+}
+
+variable "db_allowed_cidr_blocks" {
+  description = "Additional direct-ingress CIDR blocks allowed to reach PostgreSQL. Use for explicitly approved operator IPs only."
+  type        = list(string)
+  default     = []
+}
+
 # --- ECS ---
 
 variable "ecs_cpu" {

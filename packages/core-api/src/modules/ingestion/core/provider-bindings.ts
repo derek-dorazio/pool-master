@@ -1,6 +1,7 @@
 import { Sport } from '@poolmaster/shared/domain';
+import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
-import { EspnAdapter, MockContestFeedAdapter, OpenF1Adapter, PgaTourAdapter } from '../adapters';
+import { MockContestFeedAdapter } from '../adapters';
 
 export interface ProviderBinding {
   readonly baseUrl: string;
@@ -13,6 +14,11 @@ export interface ProviderBindingsConfig {
 
 interface ProviderBindingsEnvelope {
   readonly providers?: Record<string, ProviderBinding>;
+}
+
+function isStrictRuntimeEnvironment(env: NodeJS.ProcessEnv): boolean {
+  const runtime = (env.ENVIRONMENT ?? env.NODE_ENV ?? '').trim().toLowerCase();
+  return runtime === 'qa' || runtime === 'staging' || runtime === 'prod' || runtime === 'production';
 }
 
 export function loadProviderBindingsFromEnv(
@@ -45,25 +51,57 @@ export function loadProviderBindingsFromEnv(
 export function registerConfiguredProviders(
   registry: ProviderRegistry,
   env: NodeJS.ProcessEnv = process.env,
+  logger?: FastifyBaseLogger,
 ): void {
   const bindings = loadProviderBindingsFromEnv(env);
-  const mockBinding = bindings.providers['mock-contest-feed'];
-  const useMockAsPrimary = bindings.defaultProviderId === 'mock-contest-feed' && mockBinding;
-  const mockProvider = mockBinding ? new MockContestFeedAdapter(mockBinding.baseUrl) : null;
 
-  if (useMockAsPrimary && mockProvider) {
-    registry.register(Sport.GOLF, mockProvider, 'PRIMARY');
-    registry.register(Sport.TENNIS, mockProvider, 'PRIMARY');
-    registry.register(Sport.NCAA_BASKETBALL, mockProvider, 'PRIMARY');
-  } else {
-    registry.register(Sport.GOLF, new PgaTourAdapter(), 'PRIMARY');
-    registry.register(Sport.TENNIS, new EspnAdapter(), 'PRIMARY');
-    registry.register(Sport.NCAA_BASKETBALL, new EspnAdapter(), 'PRIMARY');
+  if (!bindings.defaultProviderId) {
+    logger?.error(
+      {
+        action: 'ingestion.providers.unconfigured',
+        strictRuntime: isStrictRuntimeEnvironment(env),
+      },
+      'No sport data provider is configured. Ingestion will remain disabled until a provider binding is supplied.',
+    );
+    return;
   }
 
-  registry.register(Sport.F1, new OpenF1Adapter(), 'PRIMARY');
-  registry.register(Sport.NFL, new EspnAdapter(), 'PRIMARY');
-  registry.register(Sport.NBA, new EspnAdapter(), 'PRIMARY');
-  registry.register(Sport.MLB, new EspnAdapter(), 'PRIMARY');
-  registry.register(Sport.NHL, new EspnAdapter(), 'PRIMARY');
+  const binding = bindings.providers[bindings.defaultProviderId];
+  if (!binding) {
+    const message = `Configured default provider "${bindings.defaultProviderId}" is missing from SPORT_DATA_PROVIDER_BINDINGS_JSON.`;
+    logger?.error(
+      {
+        action: 'ingestion.providers.bindingMissing',
+        providerId: bindings.defaultProviderId,
+      },
+      message,
+    );
+    throw new Error(message);
+  }
+
+  if (bindings.defaultProviderId !== 'mock-contest-feed') {
+    const message = `Unsupported sport data provider "${bindings.defaultProviderId}" configured for this service runtime.`;
+    logger?.error(
+      {
+        action: 'ingestion.providers.unsupported',
+        providerId: bindings.defaultProviderId,
+      },
+      message,
+    );
+    throw new Error(message);
+  }
+
+  const provider = new MockContestFeedAdapter(binding.baseUrl);
+  for (const sport of provider.sportsCovered) {
+    registry.register(sport as Sport, provider, 'PRIMARY');
+  }
+
+  logger?.info(
+    {
+      action: 'ingestion.providers.registered',
+      providerId: provider.providerId,
+      sportsCovered: provider.sportsCovered,
+    },
+    'Registered configured sport data provider.',
+  );
 }

@@ -4,7 +4,6 @@ import {
   AdminContestConfigTemplateResponseSchema,
   ContestConfigTemplateListResponseSchema,
   IngestionJobsResponseSchema,
-  IngestionJobRecordDtoSchema,
   IngestionScheduleConfigSchema,
   IngestionProvidersResponseSchema,
   IngestSportOddsResponseSchema,
@@ -661,11 +660,12 @@ describe('Contract verification (root admin)', () => {
           feeds: ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS'],
         },
       });
-      expect(prepareSyncRes.statusCode).toBe(200);
+      expect(prepareSyncRes.statusCode).toBe(202);
       expect(prepareSyncRes.json().sport).toBe('GOLF');
       expect(prepareSyncRes.json().requestedFeeds).toEqual(['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS']);
-      expect(IngestionJobRecordDtoSchema.array().safeParse(prepareSyncRes.json().jobs).success).toBe(true);
+      expect(typeof prepareSyncRes.json().submittedAt).toBe('string');
       expect(prepareSyncRes.json().syncRuns.length).toBeGreaterThanOrEqual(1);
+      expect(prepareSyncRes.json().syncRuns[0]?.status).toBe('SUBMITTED');
 
       const reIngestRes = await app.inject({
         method: 'POST',

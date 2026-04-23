@@ -26,10 +26,10 @@ import {
   AdminListContestConfigTemplatesQuerySchema,
   AdminUpdateContestConfigTemplateRequestSchema,
   ContestConfigTemplateListResponseSchema,
+  ProviderManualSyncSubmissionResponseSchema,
   UserListResponseSchema,
   UserDetailResponseSchema,
   ProviderListResponseSchema,
-  ProviderSyncRunDtoSchema,
   ProviderSyncRunListResponseSchema,
   ProviderDetailResponseSchema,
   ProviderIngestionDashboardResponseSchema,
@@ -48,8 +48,6 @@ import {
 } from '@poolmaster/shared/dto';
 import {
   EventSyncRequestSchema,
-  IngestionFeedTypeSchema,
-  IngestionJobRecordDtoSchema,
   SportSyncRequestSchema,
 } from '@poolmaster/shared/dto/ingestion.dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
@@ -215,7 +213,7 @@ export async function adminModule(
         properties: {
           providerId: { type: 'string' },
           sport: { type: 'string', enum: ['GOLF', 'NFL', 'NBA', 'F1', 'NASCAR', 'NCAA_BASKETBALL', 'NCAA_HOCKEY', 'NCAA_FOOTBALL', 'TENNIS', 'HORSE_RACING', 'SOCCER', 'NHL', 'MLB', 'UFC'] },
-          status: { type: 'string', enum: ['RUNNING', 'COMPLETED', 'FAILED'] },
+          status: { type: 'string', enum: ['SUBMITTED', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CANCELLED'] },
           limit: { type: 'integer', minimum: 1, maximum: 100 },
         },
       },
@@ -227,21 +225,11 @@ export async function adminModule(
     schema: {
       tags: ['Admin'],
       summary: 'Run explicit manual sport sync feeds',
-      description: 'Triggers feed-aware manual sync for the requested sport so root-admins can run event schedule, participant, or ranking work intentionally.',
+      description: 'Submits feed-aware manual sync for the requested sport. The workflow runs asynchronously after acceptance.',
       operationId: 'adminPrepareSportSync',
       body: zodToJsonSchema(SportSyncRequestSchema),
       response: withAdminErrorResponses({
-        200: {
-          type: 'object',
-          properties: {
-            sport: { type: 'string', enum: ['GOLF', 'NFL', 'NBA', 'F1', 'NASCAR', 'NCAA_BASKETBALL', 'NCAA_HOCKEY', 'NCAA_FOOTBALL', 'TENNIS', 'HORSE_RACING', 'SOCCER', 'NHL', 'MLB', 'UFC'] },
-            eventId: { type: 'string', nullable: true },
-            requestedFeeds: { type: 'array', items: zodToJsonSchema(IngestionFeedTypeSchema) },
-            jobs: zodToJsonSchema(IngestionJobRecordDtoSchema.array()),
-            syncRuns: zodToJsonSchema(ProviderSyncRunDtoSchema.array()),
-          },
-          required: ['sport', 'eventId', 'requestedFeeds', 'jobs', 'syncRuns'],
-        },
+        202: zodToJsonSchema(ProviderManualSyncSubmissionResponseSchema),
       }, [404]),
     },
     handler: provider.prepareSportSync,
@@ -251,21 +239,11 @@ export async function adminModule(
     schema: {
       tags: ['Admin'],
       summary: 'Run explicit manual event sync feeds',
-      description: 'Triggers feed-aware manual sync for a single event so root-admins can refresh participants, live scores, or final results intentionally.',
+      description: 'Submits feed-aware manual sync for a single event. The workflow runs asynchronously after acceptance.',
       operationId: 'adminSyncProviderEventData',
       body: zodToJsonSchema(EventSyncRequestSchema),
       response: withAdminErrorResponses({
-        200: {
-          type: 'object',
-          properties: {
-            sport: { type: 'string', enum: ['GOLF', 'NFL', 'NBA', 'F1', 'NASCAR', 'NCAA_BASKETBALL', 'NCAA_HOCKEY', 'NCAA_FOOTBALL', 'TENNIS', 'HORSE_RACING', 'SOCCER', 'NHL', 'MLB', 'UFC'] },
-            eventId: { type: 'string', nullable: true },
-            requestedFeeds: { type: 'array', items: zodToJsonSchema(IngestionFeedTypeSchema) },
-            jobs: zodToJsonSchema(IngestionJobRecordDtoSchema.array()),
-            syncRuns: zodToJsonSchema(ProviderSyncRunDtoSchema.array()),
-          },
-          required: ['sport', 'eventId', 'requestedFeeds', 'jobs', 'syncRuns'],
-        },
+        202: zodToJsonSchema(ProviderManualSyncSubmissionResponseSchema),
       }, [404]),
     },
     handler: provider.syncEventData,

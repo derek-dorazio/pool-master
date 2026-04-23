@@ -7,6 +7,8 @@ region      = "us-east-2"
 db_instance_class    = "db.t3.micro"
 db_allocated_storage = 20
 db_password          = "CHANGE_ME_qa_password"
+db_publicly_accessible = true
+db_allowed_cidr_blocks = ["YOUR_PUBLIC_IP/32"]
 
 # ECS
 ecs_cpu    = 256

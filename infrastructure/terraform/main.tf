@@ -228,6 +228,18 @@ resource "aws_security_group" "database" {
     security_groups = [aws_security_group.ecs_tasks.id]
   }
 
+  dynamic "ingress" {
+    for_each = toset(var.db_allowed_cidr_blocks)
+
+    content {
+      from_port   = 5432
+      to_port     = 5432
+      protocol    = "tcp"
+      cidr_blocks = [ingress.value]
+      description = "Approved direct PostgreSQL access"
+    }
+  }
+
   tags = { Name = "${local.name_prefix}-db-sg" }
 }
 
@@ -306,6 +318,7 @@ resource "aws_db_instance" "postgres" {
 
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.database.id]
+  publicly_accessible    = var.db_publicly_accessible
 
   multi_az            = var.environment == "prod"
   skip_final_snapshot = var.environment != "prod"

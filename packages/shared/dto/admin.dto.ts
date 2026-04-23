@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { Sport } from '@poolmaster/shared/domain';
 import { JsonObjectSchema, PaginatedSchema } from './common.dto';
 import { UserProfileDtoSchema } from './auth.dto';
+import { IngestionFeedTypeSchema } from './ingestion.dto';
 
 const SportSchema = z.enum([
   Sport.GOLF,
@@ -171,7 +172,7 @@ export const ProviderIngestionJobDtoSchema = z.object({
 }).describe('Recent or active provider ingestion job.');
 export type ProviderIngestionJobDto = z.infer<typeof ProviderIngestionJobDtoSchema>;
 
-export const ProviderSyncRunStatusSchema = z.enum(['RUNNING', 'COMPLETED', 'FAILED']);
+export const ProviderSyncRunStatusSchema = z.enum(['SUBMITTED', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CANCELLED']);
 export type ProviderSyncRunStatus = z.infer<typeof ProviderSyncRunStatusSchema>;
 
 export const ProviderSyncRunDtoSchema = z.object({
@@ -192,16 +193,14 @@ export const ProviderSyncRunListResponseSchema = z.object({
 }).describe('Recent provider sync runs returned for root-admin operational visibility.');
 export type ProviderSyncRunListResponse = z.infer<typeof ProviderSyncRunListResponseSchema>;
 
-export const ProviderSportSyncPreparationResponseSchema = z.object({
+export const ProviderManualSyncSubmissionResponseSchema = z.object({
   sport: SportSchema,
-  providerIds: z.array(z.string()),
-  eventsDiscovered: z.number(),
-  eventsHydrated: z.number(),
-  participantRecordsSynced: z.number(),
-  rankingRecordsSynced: z.number(),
+  eventId: z.string().nullable(),
+  requestedFeeds: z.array(IngestionFeedTypeSchema),
+  submittedAt: z.string().datetime(),
   syncRuns: z.array(ProviderSyncRunDtoSchema),
-}).describe('Manual root-admin sport sync result that prepares contest-ready event data for the requested sport.');
-export type ProviderSportSyncPreparationResponse = z.infer<typeof ProviderSportSyncPreparationResponseSchema>;
+}).describe('Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted.');
+export type ProviderManualSyncSubmissionResponse = z.infer<typeof ProviderManualSyncSubmissionResponseSchema>;
 
 export const ProviderUnmappedParticipantDtoSchema = z.object({
   providerId: z.string(),

@@ -10852,7 +10852,7 @@ export type AdminListProviderSyncRunsData = {
     query?: {
         providerId?: string;
         sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-        status?: 'RUNNING' | 'COMPLETED' | 'FAILED';
+        status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
         limit?: number;
     };
     url: '/api/v1/admin/providers/sync-runs';
@@ -10895,7 +10895,7 @@ export type AdminListProviderSyncRunsResponses = {
             providerId: string;
             sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             eventId: string;
-            status: 'RUNNING' | 'COMPLETED' | 'FAILED';
+            status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
             startedAt: string;
             completedAt: string;
             createdAt: string;
@@ -10987,59 +10987,19 @@ export type AdminPrepareSportSyncError = AdminPrepareSportSyncErrors[keyof Admin
 
 export type AdminPrepareSportSyncResponses = {
     /**
-     * Default Response
+     * Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted.
      */
-    200: {
+    202: {
         sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
         eventId: string;
         requestedFeeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
-        jobs: Array<{
-            jobType: 'EVENT_SCHEDULE_SYNC' | 'EVENT_PARTICIPANTS_SYNC' | 'PARTICIPANT_RANKINGS_SYNC' | 'EVENT_LIVE_SCORES_SYNC' | 'EVENT_RESULTS_SYNC' | 'HEALTH_CHECK';
-            /**
-             * Provider that owns the ingestion job.
-             */
-            providerId: string;
-            /**
-             * Sport being synchronized.
-             */
-            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            /**
-             * Provider event identifier when the job targets a single event.
-             */
-            eventExternalId?: string;
-            /**
-             * Current ingestion job lifecycle state.
-             */
-            status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
-            /**
-             * When the job began processing.
-             */
-            startedAt?: string;
-            /**
-             * When the job began processing.
-             */
-            completedAt?: string;
-            /**
-             * How many records the job successfully processed.
-             */
-            recordsProcessed: number;
-            /**
-             * How many processing errors occurred during the job.
-             */
-            errors: number;
-            /**
-             * Opaque error payloads returned for diagnostics and admin tooling.
-             */
-            errorLog: Array<{
-                [key: string]: unknown;
-            }>;
-        }>;
+        submittedAt: string;
         syncRuns: Array<{
             id: string;
             providerId: string;
             sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             eventId: string;
-            status: 'RUNNING' | 'COMPLETED' | 'FAILED';
+            status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
             startedAt: string;
             completedAt: string;
             createdAt: string;
@@ -11124,59 +11084,19 @@ export type AdminSyncProviderEventDataError = AdminSyncProviderEventDataErrors[k
 
 export type AdminSyncProviderEventDataResponses = {
     /**
-     * Default Response
+     * Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted.
      */
-    200: {
+    202: {
         sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
         eventId: string;
         requestedFeeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
-        jobs: Array<{
-            jobType: 'EVENT_SCHEDULE_SYNC' | 'EVENT_PARTICIPANTS_SYNC' | 'PARTICIPANT_RANKINGS_SYNC' | 'EVENT_LIVE_SCORES_SYNC' | 'EVENT_RESULTS_SYNC' | 'HEALTH_CHECK';
-            /**
-             * Provider that owns the ingestion job.
-             */
-            providerId: string;
-            /**
-             * Sport being synchronized.
-             */
-            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            /**
-             * Provider event identifier when the job targets a single event.
-             */
-            eventExternalId?: string;
-            /**
-             * Current ingestion job lifecycle state.
-             */
-            status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
-            /**
-             * When the job began processing.
-             */
-            startedAt?: string;
-            /**
-             * When the job began processing.
-             */
-            completedAt?: string;
-            /**
-             * How many records the job successfully processed.
-             */
-            recordsProcessed: number;
-            /**
-             * How many processing errors occurred during the job.
-             */
-            errors: number;
-            /**
-             * Opaque error payloads returned for diagnostics and admin tooling.
-             */
-            errorLog: Array<{
-                [key: string]: unknown;
-            }>;
-        }>;
+        submittedAt: string;
         syncRuns: Array<{
             id: string;
             providerId: string;
             sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
             eventId: string;
-            status: 'RUNNING' | 'COMPLETED' | 'FAILED';
+            status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
             startedAt: string;
             completedAt: string;
             createdAt: string;

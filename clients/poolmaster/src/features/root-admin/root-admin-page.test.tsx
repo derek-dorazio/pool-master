@@ -419,48 +419,21 @@ describe('RootAdminPage', () => {
         sport: 'GOLF',
         eventId: null,
         requestedFeeds: ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS'],
-        jobs: [
-          {
-            jobType: 'EVENT_SCHEDULE_SYNC',
-            providerId: 'mock-golf-provider',
-            sport: 'GOLF',
-            status: 'COMPLETED',
-            recordsProcessed: 2,
-            errors: 0,
-            errorLog: [],
-          },
-          {
-            jobType: 'EVENT_PARTICIPANTS_SYNC',
-            providerId: 'mock-golf-provider',
-            sport: 'GOLF',
-            status: 'COMPLETED',
-            recordsProcessed: 2,
-            errors: 0,
-            errorLog: [],
-          },
-          {
-            jobType: 'PARTICIPANT_RANKINGS_SYNC',
-            providerId: 'mock-golf-provider',
-            sport: 'GOLF',
-            status: 'COMPLETED',
-            recordsProcessed: 144,
-            errors: 0,
-            errorLog: [],
-          },
-        ],
+        submittedAt: '2026-04-19T16:05:00.000Z',
         syncRuns: [
           {
             id: 'run-2',
             providerId: 'mock-golf-provider',
             sport: 'GOLF',
             eventId: null,
-            status: 'COMPLETED',
-            startedAt: '2026-04-19T16:05:00.000Z',
-            completedAt: '2026-04-19T16:06:00.000Z',
+            status: 'SUBMITTED',
+            startedAt: null,
+            completedAt: null,
             createdAt: '2026-04-19T16:05:00.000Z',
             payload: {
               runType: 'MANUAL_SPORT_SYNC',
-              detail: 'Prepared 2 GOLF event fields for contest setup.',
+              requestedFeeds: ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS'],
+              detail: 'Submitted event schedule sync for GOLF.',
             },
           },
         ],
@@ -484,12 +457,10 @@ describe('RootAdminPage', () => {
       }),
     );
 
-    expect(await screen.findByTestId('root-admin-sport-sync-success')).toHaveTextContent(
-      'Completed Prepare event data for GOLF. 3 feed jobs completed.',
-    );
+    expect(await screen.findByTestId('root-admin-sport-sync-response')).toHaveTextContent('"status": "SUBMITTED"');
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
-        action: 'rootAdmin.sync.succeeded',
+        action: 'rootAdmin.sync.submitted',
       }),
       expect.any(String),
     );
@@ -571,19 +542,24 @@ describe('RootAdminPage', () => {
         sport: 'GOLF',
         eventId: 'masters-2026',
         requestedFeeds: ['EVENTLIVESCORES'],
-        jobs: [
+        submittedAt: '2026-04-19T16:07:00.000Z',
+        syncRuns: [
           {
-            jobType: 'EVENT_LIVE_SCORES_SYNC',
+            id: 'run-3',
             providerId: 'mock-golf-provider',
             sport: 'GOLF',
-            eventExternalId: 'masters-2026',
-            status: 'COMPLETED',
-            recordsProcessed: 18,
-            errors: 0,
-            errorLog: [],
+            eventId: 'masters-2026',
+            status: 'SUBMITTED',
+            startedAt: null,
+            completedAt: null,
+            createdAt: '2026-04-19T16:07:00.000Z',
+            payload: {
+              runType: 'MANUAL_EVENT_SYNC',
+              requestedFeeds: ['EVENTLIVESCORES'],
+              detail: 'Submitted event live scores sync for masters-2026.',
+            },
           },
         ],
-        syncRuns: [],
       },
     });
 
@@ -608,9 +584,7 @@ describe('RootAdminPage', () => {
       }),
     );
 
-    expect(await screen.findByTestId('root-admin-event-sync-success')).toHaveTextContent(
-      'Completed Refresh live scores for masters-2026. 1 feed job completed.',
-    );
+    expect(await screen.findByTestId('root-admin-event-sync-response')).toHaveTextContent('"eventId": "masters-2026"');
   });
 
   it('shows the sync-runs load failure state and logs the warning branch', async () => {

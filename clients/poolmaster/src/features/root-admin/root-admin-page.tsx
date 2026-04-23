@@ -31,8 +31,8 @@ type IngestionScheduleConfig = AdminGetIngestionScheduleResponses[200];
 type ContestConfigTemplate = AdminListContestConfigTemplatesResponses[200]['templates'][number];
 type ProviderSyncRun = AdminListProviderSyncRunsResponses[200]['items'][number];
 type ProviderSummary = AdminListProvidersResponses[200]['items'][number];
-type SportSyncPreparation = AdminPrepareSportSyncResponses[200];
-type EventSyncResult = AdminSyncProviderEventDataResponses[200];
+type SportSyncSubmission = AdminPrepareSportSyncResponses[202];
+type EventSyncSubmission = AdminSyncProviderEventDataResponses[202];
 type ContestConfigTemplateUpdateResult = AdminUpdateContestConfigTemplateResponses[200]['template'];
 
 const ALL_SYNC_SPORT_OPTIONS = [
@@ -53,7 +53,7 @@ const ALL_SYNC_SPORT_OPTIONS = [
 ] as const;
 type SyncSport = (typeof ALL_SYNC_SPORT_OPTIONS)[number];
 
-const SYNC_STATUS_OPTIONS = ['RUNNING', 'COMPLETED', 'FAILED'] as const;
+const SYNC_STATUS_OPTIONS = ['SUBMITTED', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CANCELLED'] as const;
 
 const SPORT_SYNC_PRESETS = [
   {
@@ -249,20 +249,29 @@ function buildPayloadSummary(payload: Record<string, unknown>) {
   return fallbackEntries[0] ?? 'Payload captured for operational review.';
 }
 
-function getStatusClasses(status: ProviderSyncRun['status'] | ProviderSummary['status']) {
+function getProviderStatusClasses(status: ProviderSummary['status']) {
   switch (status) {
-    case 'COMPLETED':
     case 'HEALTHY':
       return 'border-emerald-300 bg-emerald-50 text-emerald-900';
-    case 'RUNNING':
-      return 'border-sky-300 bg-sky-50 text-sky-900';
-    case 'FAILED':
     case 'DOWN':
       return 'border-rose-300 bg-rose-50 text-rose-900';
     case 'DEGRADED':
       return 'border-amber-300 bg-amber-50 text-amber-900';
-    default:
-      return 'border-border bg-background text-foreground';
+  }
+}
+
+function getSyncRunStatusClasses(status: ProviderSyncRun['status']) {
+  switch (status) {
+    case 'SUBMITTED':
+      return 'border-sky-300 bg-sky-50 text-sky-900';
+    case 'IN_PROGRESS':
+      return 'border-indigo-300 bg-indigo-50 text-indigo-900';
+    case 'FAILED':
+      return 'border-rose-300 bg-rose-50 text-rose-900';
+    case 'CANCELLED':
+      return 'border-amber-300 bg-amber-50 text-amber-900';
+    case 'COMPLETED':
+      return 'border-slate-300 bg-slate-50 text-slate-900';
   }
 }
 
@@ -274,13 +283,8 @@ function getEventSyncPreset(presetId: EventSyncPresetId) {
   return EVENT_SYNC_PRESETS.find((preset) => preset.id === presetId) ?? EVENT_SYNC_PRESETS[0];
 }
 
-function buildJobSummary(jobs: Array<{ status: string }>) {
-  const failedJobs = jobs.filter((job) => job.status === 'FAILED').length;
-  if (failedJobs > 0) {
-    return `${jobs.length} feed jobs finished with ${failedJobs} failure${failedJobs === 1 ? '' : 's'}.`;
-  }
-
-  return `${jobs.length} feed job${jobs.length === 1 ? '' : 's'} completed.`;
+function formatJsonPayload(payload: unknown) {
+  return JSON.stringify(payload, null, 2);
 }
 
 function clonePollConfig(config: PollIntervalConfig): PollIntervalConfig {
@@ -494,10 +498,12 @@ export function RootAdminPage() {
   }, [providersQuery.data]);
 
   const summary = useMemo(() => {
-    const running = recentRuns.filter((run) => run.status === 'RUNNING').length;
+    const submitted = recentRuns.filter((run) => run.status === 'SUBMITTED').length;
+    const running = recentRuns.filter((run) => run.status === 'IN_PROGRESS').length;
     const failed = recentRuns.filter((run) => run.status === 'FAILED').length;
     const completed = recentRuns.filter((run) => run.status === 'COMPLETED').length;
     return {
+      submitted,
       running,
       failed,
       completed,
@@ -661,7 +667,7 @@ export function RootAdminPage() {
     mutationFn: async (input: {
       sport: SyncSport;
       presetId: SportSyncPresetId;
-    }): Promise<SportSyncPreparation> => {
+    }): Promise<SportSyncSubmission> => {
       const preset = getSportSyncPreset(input.presetId);
       const response = await adminPrepareSportSync({
         path: { sport: input.sport },
@@ -692,14 +698,14 @@ export function RootAdminPage() {
     onSuccess: async (preparation) => {
       logger.info(
         {
-          action: 'rootAdmin.sync.succeeded',
+          action: 'rootAdmin.sync.submitted',
           data: {
             sport: preparation.sport,
             requestedFeeds: preparation.requestedFeeds,
-            jobCount: preparation.jobs.length,
+            syncRunCount: preparation.syncRuns.length,
           },
         },
-        'Completed manual provider sport sync',
+        'Submitted manual provider sport sync',
       );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'root-admin', 'providers'] }),
@@ -738,7 +744,7 @@ export function RootAdminPage() {
       sport: SyncSport;
       eventId: string;
       presetId: EventSyncPresetId;
-    }): Promise<EventSyncResult> => {
+    }): Promise<EventSyncSubmission> => {
       const preset = getEventSyncPreset(input.presetId);
       const response = await adminSyncProviderEventData({
         path: {
@@ -773,15 +779,15 @@ export function RootAdminPage() {
     onSuccess: async (result) => {
       logger.info(
         {
-          action: 'rootAdmin.eventSync.succeeded',
+          action: 'rootAdmin.eventSync.submitted',
           data: {
             sport: result.sport,
             eventId: result.eventId,
             requestedFeeds: result.requestedFeeds,
-            jobCount: result.jobs.length,
+            syncRunCount: result.syncRuns.length,
           },
         },
-        'Completed manual provider event sync',
+        'Submitted manual provider event sync',
       );
       await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'root-admin', 'provider-sync-runs'] });
     },
@@ -1124,11 +1130,15 @@ export function RootAdminPage() {
             <p className="mt-2 text-3xl font-semibold text-foreground">{recentRuns.length}</p>
           </div>
           <div className="rounded-[1.5rem] border border-border bg-background p-4">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Submitted</p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">{summary.submitted}</p>
+          </div>
+          <div className="rounded-[1.5rem] border border-border bg-background p-4">
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Completed</p>
             <p className="mt-2 text-3xl font-semibold text-foreground">{summary.completed}</p>
           </div>
           <div className="rounded-[1.5rem] border border-border bg-background p-4">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Running</p>
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">In progress</p>
             <p className="mt-2 text-3xl font-semibold text-foreground">{summary.running}</p>
           </div>
           <div className="rounded-[1.5rem] border border-border bg-background p-4">
@@ -1145,7 +1155,7 @@ export function RootAdminPage() {
                 key={provider.providerId}
               >
                 <span className="font-medium text-foreground">{provider.providerName}</span>
-                <span className={`ml-2 inline-flex rounded-full border px-2 py-0.5 ${getStatusClasses(provider.status)}`}>
+                <span className={`ml-2 inline-flex rounded-full border px-2 py-0.5 ${getProviderStatusClasses(provider.status)}`}>
                   {provider.status}
                 </span>
               </div>
@@ -1638,17 +1648,10 @@ export function RootAdminPage() {
               ) : null}
 
               {syncMutation.isSuccess ? (
-                <p className="mt-3 text-sm text-emerald-700" data-testid="root-admin-sport-sync-success">
-                  Completed
-                  {' '}
-                  {getSportSyncPreset(sportSyncPresetId).label}
-                  {' '}
-                  for
-                  {' '}
-                  {syncMutation.data.sport}
-                  .{' '}
-                  {buildJobSummary(syncMutation.data.jobs)}
-                </p>
+                <div className="mt-3 rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground" data-testid="root-admin-sport-sync-response">
+                  <p className="font-medium text-foreground">Latest API payload</p>
+                  <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words text-xs">{formatJsonPayload(syncMutation.data)}</pre>
+                </div>
               ) : null}
             </div>
 
@@ -1720,17 +1723,10 @@ export function RootAdminPage() {
               ) : null}
 
               {eventSyncMutation.isSuccess ? (
-                <p className="mt-3 text-sm text-emerald-700" data-testid="root-admin-event-sync-success">
-                  Completed
-                  {' '}
-                  {getEventSyncPreset(eventSyncPresetId).label}
-                  {' '}
-                  for
-                  {' '}
-                  {eventSyncMutation.data.eventId}
-                  .{' '}
-                  {buildJobSummary(eventSyncMutation.data.jobs)}
-                </p>
+                <div className="mt-3 rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground" data-testid="root-admin-event-sync-response">
+                  <p className="font-medium text-foreground">Latest API payload</p>
+                  <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words text-xs">{formatJsonPayload(eventSyncMutation.data)}</pre>
+                </div>
               ) : null}
             </div>
           </div>
@@ -1771,11 +1767,17 @@ export function RootAdminPage() {
                       <td className="px-4 py-4 text-foreground">{run.sport}</td>
                       <td className="px-4 py-4 text-muted-foreground">{formatEventValue(run.eventId)}</td>
                       <td className="px-4 py-4">
-                        <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${getStatusClasses(run.status)}`}>
+                        <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${getSyncRunStatusClasses(run.status)}`}>
                           {run.status}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-muted-foreground">{buildPayloadSummary(run.payload)}</td>
+                      <td className="px-4 py-4 text-muted-foreground">
+                        <div>{buildPayloadSummary(run.payload)}</div>
+                        <details className="mt-2 text-xs">
+                          <summary className="cursor-pointer text-foreground">Payload</summary>
+                          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-card p-3">{formatJsonPayload(run.payload)}</pre>
+                        </details>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

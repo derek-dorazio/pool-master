@@ -41,6 +41,14 @@ describe('provider bindings', () => {
     expect(registry.getProvider(Sport.GOLF)?.providerId).toBe('mock-contest-feed');
     expect(registry.getProvider(Sport.TENNIS)?.providerId).toBe('mock-contest-feed');
     expect(registry.getProvider(Sport.NCAA_BASKETBALL)?.providerId).toBe('mock-contest-feed');
-    expect(registry.getProvider(Sport.NFL)?.providerId).toBe('espn');
+    expect(registry.getProvider(Sport.NFL)).toBeNull();
+  });
+
+  it('does not silently register hidden providers when the environment is unconfigured', () => {
+    const registry = new ProviderRegistry();
+
+    registerConfiguredProviders(registry, {});
+
+    expect(registry.getSupportedSports()).toEqual([]);
   });
 });

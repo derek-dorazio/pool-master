@@ -57,7 +57,7 @@ export function createProviderHandlers(providerService: ProviderService) {
       Querystring: {
         providerId?: string;
         sport?: Sport;
-        status?: 'RUNNING' | 'COMPLETED' | 'FAILED';
+        status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
         limit?: number;
       };
     }>,
@@ -202,11 +202,11 @@ export function createProviderHandlers(providerService: ProviderService) {
         rootAdminUserId,
         rootAdminEmail,
       );
-      return reply.send({
+      return reply.code(202).send({
         sport: result.sport,
         eventId: result.eventId,
         requestedFeeds: result.requestedFeeds,
-        jobs: result.jobs,
+        submittedAt: result.submittedAt.toISOString(),
         syncRuns: result.syncRuns.map((run) => ({
           id: run.id,
           providerId: run.providerId,
@@ -250,11 +250,11 @@ export function createProviderHandlers(providerService: ProviderService) {
         feeds: request.body.feeds,
       }, rootAdminUserId, rootAdminEmail);
 
-      return reply.send({
+      return reply.code(202).send({
         sport: result.sport,
         eventId: result.eventId,
         requestedFeeds: result.requestedFeeds,
-        jobs: result.jobs,
+        submittedAt: result.submittedAt.toISOString(),
         syncRuns: result.syncRuns.map((run) => ({
           id: run.id,
           providerId: run.providerId,

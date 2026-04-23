@@ -66,7 +66,7 @@ export function buildApp() {
   app.decorate('prisma', prisma);
 
   const registry = new ProviderRegistry();
-  registerConfiguredProviders(registry);
+  registerConfiguredProviders(registry, process.env, app.log);
   const oddsAdapter = new OddsApiAdapter();
   const ingestionPersistence = new IngestionPersistence(prisma);
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);

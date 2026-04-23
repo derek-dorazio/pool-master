@@ -22323,9 +22323,11 @@
             "schema": {
               "type": "string",
               "enum": [
-                "RUNNING",
+                "SUBMITTED",
+                "IN_PROGRESS",
                 "COMPLETED",
-                "FAILED"
+                "FAILED",
+                "CANCELLED"
               ]
             },
             "in": "query",
@@ -22388,9 +22390,11 @@
                           "status": {
                             "type": "string",
                             "enum": [
-                              "RUNNING",
+                              "SUBMITTED",
+                              "IN_PROGRESS",
                               "COMPLETED",
-                              "FAILED"
+                              "FAILED",
+                              "CANCELLED"
                             ]
                           },
                           "startedAt": {
@@ -22487,7 +22491,7 @@
         "tags": [
           "Admin"
         ],
-        "description": "Triggers feed-aware manual sync for the requested sport so root-admins can run event schedule, participant, or ranking work intentionally.",
+        "description": "Submits feed-aware manual sync for the requested sport. The workflow runs asynchronously after acceptance.",
         "requestBody": {
           "required": true,
           "content": {
@@ -22540,8 +22544,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response",
+          "202": {
+            "description": "Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22584,100 +22588,9 @@
                         "description": "Explicit ingestion feed type requested by the caller."
                       }
                     },
-                    "jobs": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "jobType": {
-                            "type": "string",
-                            "enum": [
-                              "EVENT_SCHEDULE_SYNC",
-                              "EVENT_PARTICIPANTS_SYNC",
-                              "PARTICIPANT_RANKINGS_SYNC",
-                              "EVENT_LIVE_SCORES_SYNC",
-                              "EVENT_RESULTS_SYNC",
-                              "HEALTH_CHECK"
-                            ]
-                          },
-                          "providerId": {
-                            "type": "string",
-                            "description": "Provider that owns the ingestion job."
-                          },
-                          "sport": {
-                            "type": "string",
-                            "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
-                            ],
-                            "description": "Sport being synchronized."
-                          },
-                          "eventExternalId": {
-                            "type": "string",
-                            "description": "Provider event identifier when the job targets a single event."
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "PENDING",
-                              "RUNNING",
-                              "COMPLETED",
-                              "FAILED"
-                            ],
-                            "description": "Current ingestion job lifecycle state."
-                          },
-                          "startedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the job began processing."
-                          },
-                          "completedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the job began processing."
-                          },
-                          "recordsProcessed": {
-                            "type": "number",
-                            "description": "How many records the job successfully processed."
-                          },
-                          "errors": {
-                            "type": "number",
-                            "description": "How many processing errors occurred during the job."
-                          },
-                          "errorLog": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "additionalProperties": {},
-                              "description": "Arbitrary JSON object payload."
-                            },
-                            "description": "Opaque error payloads returned for diagnostics and admin tooling."
-                          }
-                        },
-                        "required": [
-                          "jobType",
-                          "providerId",
-                          "sport",
-                          "status",
-                          "recordsProcessed",
-                          "errors",
-                          "errorLog"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Ingestion job execution record."
-                      }
+                    "submittedAt": {
+                      "type": "string",
+                      "format": "date-time"
                     },
                     "syncRuns": {
                       "type": "array",
@@ -22716,9 +22629,11 @@
                           "status": {
                             "type": "string",
                             "enum": [
-                              "RUNNING",
+                              "SUBMITTED",
+                              "IN_PROGRESS",
                               "COMPLETED",
-                              "FAILED"
+                              "FAILED",
+                              "CANCELLED"
                             ]
                           },
                           "startedAt": {
@@ -22761,9 +22676,11 @@
                     "sport",
                     "eventId",
                     "requestedFeeds",
-                    "jobs",
+                    "submittedAt",
                     "syncRuns"
-                  ]
+                  ],
+                  "additionalProperties": false,
+                  "description": "Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted."
                 }
               }
             }
@@ -22856,7 +22773,7 @@
         "tags": [
           "Admin"
         ],
-        "description": "Triggers feed-aware manual sync for a single event so root-admins can refresh participants, live scores, or final results intentionally.",
+        "description": "Submits feed-aware manual sync for a single event. The workflow runs asynchronously after acceptance.",
         "requestBody": {
           "required": true,
           "content": {
@@ -22907,8 +22824,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response",
+          "202": {
+            "description": "Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22951,100 +22868,9 @@
                         "description": "Explicit ingestion feed type requested by the caller."
                       }
                     },
-                    "jobs": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "jobType": {
-                            "type": "string",
-                            "enum": [
-                              "EVENT_SCHEDULE_SYNC",
-                              "EVENT_PARTICIPANTS_SYNC",
-                              "PARTICIPANT_RANKINGS_SYNC",
-                              "EVENT_LIVE_SCORES_SYNC",
-                              "EVENT_RESULTS_SYNC",
-                              "HEALTH_CHECK"
-                            ]
-                          },
-                          "providerId": {
-                            "type": "string",
-                            "description": "Provider that owns the ingestion job."
-                          },
-                          "sport": {
-                            "type": "string",
-                            "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
-                            ],
-                            "description": "Sport being synchronized."
-                          },
-                          "eventExternalId": {
-                            "type": "string",
-                            "description": "Provider event identifier when the job targets a single event."
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "PENDING",
-                              "RUNNING",
-                              "COMPLETED",
-                              "FAILED"
-                            ],
-                            "description": "Current ingestion job lifecycle state."
-                          },
-                          "startedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the job began processing."
-                          },
-                          "completedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the job began processing."
-                          },
-                          "recordsProcessed": {
-                            "type": "number",
-                            "description": "How many records the job successfully processed."
-                          },
-                          "errors": {
-                            "type": "number",
-                            "description": "How many processing errors occurred during the job."
-                          },
-                          "errorLog": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "additionalProperties": {},
-                              "description": "Arbitrary JSON object payload."
-                            },
-                            "description": "Opaque error payloads returned for diagnostics and admin tooling."
-                          }
-                        },
-                        "required": [
-                          "jobType",
-                          "providerId",
-                          "sport",
-                          "status",
-                          "recordsProcessed",
-                          "errors",
-                          "errorLog"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Ingestion job execution record."
-                      }
+                    "submittedAt": {
+                      "type": "string",
+                      "format": "date-time"
                     },
                     "syncRuns": {
                       "type": "array",
@@ -23083,9 +22909,11 @@
                           "status": {
                             "type": "string",
                             "enum": [
-                              "RUNNING",
+                              "SUBMITTED",
+                              "IN_PROGRESS",
                               "COMPLETED",
-                              "FAILED"
+                              "FAILED",
+                              "CANCELLED"
                             ]
                           },
                           "startedAt": {
@@ -23128,9 +22956,11 @@
                     "sport",
                     "eventId",
                     "requestedFeeds",
-                    "jobs",
+                    "submittedAt",
                     "syncRuns"
-                  ]
+                  ],
+                  "additionalProperties": false,
+                  "description": "Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted."
                 }
               }
             }

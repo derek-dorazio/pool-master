@@ -1261,7 +1261,7 @@ export const adminListProviderSyncRuns = <ThrowOnError extends boolean = false>(
 /**
  * Run explicit manual sport sync feeds
  *
- * Triggers feed-aware manual sync for the requested sport so root-admins can run event schedule, participant, or ranking work intentionally.
+ * Submits feed-aware manual sync for the requested sport. The workflow runs asynchronously after acceptance.
  */
 export const adminPrepareSportSync = <ThrowOnError extends boolean = false>(options: Options<AdminPrepareSportSyncData, ThrowOnError>) => (options.client ?? client).post<AdminPrepareSportSyncResponses, AdminPrepareSportSyncErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1276,7 +1276,7 @@ export const adminPrepareSportSync = <ThrowOnError extends boolean = false>(opti
 /**
  * Run explicit manual event sync feeds
  *
- * Triggers feed-aware manual sync for a single event so root-admins can refresh participants, live scores, or final results intentionally.
+ * Submits feed-aware manual sync for a single event. The workflow runs asynchronously after acceptance.
  */
 export const adminSyncProviderEventData = <ThrowOnError extends boolean = false>(options: Options<AdminSyncProviderEventDataData, ThrowOnError>) => (options.client ?? client).post<AdminSyncProviderEventDataResponses, AdminSyncProviderEventDataErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
