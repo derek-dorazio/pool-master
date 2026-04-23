@@ -47,7 +47,7 @@ This is intentionally a **current-state** document. It describes what the code d
 
 ### 1. Public auth routes
 
-Defined in [packages/core-api/src/modules/auth/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/routes.ts):
+Defined in [packages/core-api/src/modules/auth/routes.ts](../packages/core-api/src/modules/auth/routes.ts):
 
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/login`
@@ -61,7 +61,7 @@ These routes are exempt from the global JWT guard.
 
 ### 2. Shared JWT auth guard
 
-Defined in [packages/core-api/src/plugins/auth-guard.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/auth-guard.ts).
+Defined in [packages/core-api/src/plugins/auth-guard.ts](../packages/core-api/src/plugins/auth-guard.ts).
 
 It:
 
@@ -75,7 +75,7 @@ It:
 
 ### 3. Tenant context plugin
 
-Defined in [packages/core-api/src/core/tenant-context.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/tenant-context.ts).
+Defined in [packages/core-api/src/core/tenant-context.ts](../packages/core-api/src/core/tenant-context.ts).
 
 It resolves tenant identity in this order:
 
@@ -88,7 +88,7 @@ If neither exists for a protected route, the request is rejected with `401`.
 
 ### Login flow
 
-The active login page lives at [auth-home-page.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/features/auth/auth-home-page.tsx).
+The active login page lives at [auth-home-page.tsx](../clients/poolmaster/src/features/auth/auth-home-page.tsx).
 
 It:
 
@@ -98,13 +98,13 @@ It:
 - stores the user in the Zustand auth store
 - navigates to `/dashboard` or the requested redirect target
 
-The active web API client is configured in [api.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/lib/api.ts).
+The active web API client is configured in [api.ts](../clients/poolmaster/src/lib/api.ts).
 
 It automatically attaches:
 
 - `Authorization: Bearer <access_token>`
 
-The active session store is in [session-store.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/features/auth/session-store.ts).
+The active session store is in [session-store.ts](../clients/poolmaster/src/features/auth/session-store.ts).
 
 It hydrates from:
 
@@ -152,9 +152,9 @@ For league and contest operations, PoolMaster adds league membership and commiss
 
 Core permission logic:
 
-- [packages/core-api/src/core/permissions.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/permissions.ts)
-- [packages/core-api/src/core/require-permission.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/require-permission.ts)
-- [packages/core-api/src/modules/leagues/permissions.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/leagues/permissions.ts)
+- [packages/core-api/src/core/permissions.ts](../packages/core-api/src/core/permissions.ts)
+- [packages/core-api/src/core/require-permission.ts](../packages/core-api/src/core/require-permission.ts)
+- [packages/core-api/src/modules/leagues/permissions.ts](../packages/core-api/src/modules/leagues/permissions.ts)
 
 Important rules:
 
@@ -211,13 +211,13 @@ sequenceDiagram
 
 Negative-path coverage exists in:
 
-- [tests/integration/core-api/permission-negative.integration.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/tests/integration/core-api/permission-negative.integration.ts)
+- [tests/integration/core-api/permission-negative.integration.ts](../tests/integration/core-api/permission-negative.integration.ts)
 
 ## Token Lifecycle
 
 ### Access token
 
-Issued by [packages/core-api/src/modules/auth/auth-service.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/auth-service.ts).
+Issued by [packages/core-api/src/modules/auth/auth-service.ts](../packages/core-api/src/modules/auth/auth-service.ts).
 
 Current behavior:
 
@@ -270,7 +270,7 @@ Admin/backend authorization details below remain relevant for server-side root-a
 
 ### Backend design in production code
 
-There is a dedicated admin auth plugin at [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts).
+There is a dedicated admin auth plugin at [packages/core-api/src/plugins/admin-auth.ts](../packages/core-api/src/plugins/admin-auth.ts).
 
 That plugin currently:
 
@@ -297,7 +297,7 @@ The broader admin permission model already exists and includes:
 
 ### Actual runtime admin authorization today
 
-The live admin module in [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts) **does** register the dedicated root-admin auth plugin.
+The live admin module in [packages/core-api/src/modules/admin/routes.ts](../packages/core-api/src/modules/admin/routes.ts) **does** register the dedicated root-admin auth plugin.
 
 Current runtime admin authorization is therefore:
 
@@ -558,7 +558,7 @@ That means:
 
 #### 3. Grow root-admin authorization from the existing live plugin
 
-Use [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts) as the runtime root-admin gate and layer any future permission model on top of that live foundation.
+Use [packages/core-api/src/plugins/admin-auth.ts](../packages/core-api/src/plugins/admin-auth.ts) as the runtime root-admin gate and layer any future permission model on top of that live foundation.
 
 #### 4. Decide on one principal model
 
@@ -639,20 +639,20 @@ If you are reviewing this architecture, the most important questions are:
 
 ### Backend
 
-- [packages/core-api/src/index.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/index.ts)
-- [packages/core-api/src/plugins/auth-guard.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/auth-guard.ts)
-- [packages/core-api/src/core/tenant-context.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/tenant-context.ts)
-- [packages/core-api/src/modules/auth/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/routes.ts)
-- [packages/core-api/src/modules/auth/handler.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/handler.ts)
-- [packages/core-api/src/modules/auth/auth-service.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/auth-service.ts)
-- [packages/core-api/src/core/permissions.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/permissions.ts)
-- [packages/core-api/src/core/require-permission.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/require-permission.ts)
-- [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts)
-- [packages/core-api/src/core/admin-permissions.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/core/admin-permissions.ts)
-- [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts)
+- [packages/core-api/src/index.ts](../packages/core-api/src/index.ts)
+- [packages/core-api/src/plugins/auth-guard.ts](../packages/core-api/src/plugins/auth-guard.ts)
+- [packages/core-api/src/core/tenant-context.ts](../packages/core-api/src/core/tenant-context.ts)
+- [packages/core-api/src/modules/auth/routes.ts](../packages/core-api/src/modules/auth/routes.ts)
+- [packages/core-api/src/modules/auth/handler.ts](../packages/core-api/src/modules/auth/handler.ts)
+- [packages/core-api/src/modules/auth/auth-service.ts](../packages/core-api/src/modules/auth/auth-service.ts)
+- [packages/core-api/src/core/permissions.ts](../packages/core-api/src/core/permissions.ts)
+- [packages/core-api/src/core/require-permission.ts](../packages/core-api/src/core/require-permission.ts)
+- [packages/core-api/src/plugins/admin-auth.ts](../packages/core-api/src/plugins/admin-auth.ts)
+- [packages/core-api/src/core/admin-permissions.ts](../packages/core-api/src/core/admin-permissions.ts)
+- [packages/core-api/src/modules/admin/routes.ts](../packages/core-api/src/modules/admin/routes.ts)
 
 ### Frontend
 
-- [api.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/lib/api.ts)
-- [session-store.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/features/auth/session-store.ts)
-- [auth-home-page.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/features/auth/auth-home-page.tsx)
+- [api.ts](../clients/poolmaster/src/lib/api.ts)
+- [session-store.ts](../clients/poolmaster/src/features/auth/session-store.ts)
+- [auth-home-page.tsx](../clients/poolmaster/src/features/auth/auth-home-page.tsx)

@@ -146,5 +146,5 @@ This is the eventual cleanup path for browser-created users:
   - password change
   - first-pass personal preferences
 - That follow-on work is now tracked separately in
-  [Plan 93](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/93-my-account-profile-password-and-preferences-execution.md)
+  [Plan 93](./93-my-account-profile-password-and-preferences-execution.md)
   so the lifecycle slice does not need to be rediscovered later.

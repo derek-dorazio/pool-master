@@ -10,10 +10,10 @@ This file is execution context only.
 
 Current product and technical source of truth lives in:
 
-- [requirements/product-requirements/features/contest-event-feed-integration/overview.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/overview.md)
-- [requirements/product-requirements/features/contest-event-feed-integration/use-cases.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/use-cases.md)
-- [requirements/product-requirements/features/contest-event-feed-integration/business-rules.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/business-rules.md)
-- [tech-specs/features/contest-event-feed-integration/flows.md](/Users/DDorazio/development/Github-Personal/pool-master/tech-specs/features/contest-event-feed-integration/flows.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/overview.md](../requirements/product-requirements/features/contest-event-feed-integration/overview.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/use-cases.md](../requirements/product-requirements/features/contest-event-feed-integration/use-cases.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/business-rules.md](../requirements/product-requirements/features/contest-event-feed-integration/business-rules.md)
+- [tech-specs/features/contest-event-feed-integration/flows.md](../tech-specs/features/contest-event-feed-integration/flows.md)
 
 Do not use older plan prose to reopen product questions. Use requirements for
 product truth, tech specs for implementation truth, and Beads for live status.

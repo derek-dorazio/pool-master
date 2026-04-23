@@ -5,7 +5,7 @@
 Persist the feed-aware ingestion schedule configuration so root-admin changes
 survive service restarts and deployments in QA and production.
 
-This closes the current gap where [packages/core-api/src/modules/admin/ingestion-config-service.ts](/Users/DDorazio/development/Github-Personal/pool-master/packages/core-api/src/modules/admin/ingestion-config-service.ts)
+This closes the current gap where [packages/core-api/src/modules/admin/ingestion-config-service.ts](../packages/core-api/src/modules/admin/ingestion-config-service.ts)
 stores the active schedule only in memory.
 
 ## Problem Statement
@@ -231,7 +231,7 @@ We can revisit cron later if we truly need exact wall-clock control.
 
 ## Service Changes
 
-Update [packages/core-api/src/modules/admin/ingestion-config-service.ts](/Users/DDorazio/development/Github-Personal/pool-master/packages/core-api/src/modules/admin/ingestion-config-service.ts)
+Update [packages/core-api/src/modules/admin/ingestion-config-service.ts](../packages/core-api/src/modules/admin/ingestion-config-service.ts)
 to:
 
 - load persisted config from Prisma on first access

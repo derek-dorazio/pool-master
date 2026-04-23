@@ -26,9 +26,9 @@ For launch, the product only needs:
 
 Those are covered by:
 
-- [plans/38-contest-entry-and-squad-alignment-review-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/38-contest-entry-and-squad-alignment-review-user-cases.md)
-- [plans/41-contest-history-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/41-contest-history-user-cases.md)
-- [plans/53-commissioner-tools-contest-management-use-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/53-commissioner-tools-contest-management-use-cases.md)
+- [plans/38-contest-entry-and-squad-alignment-review-user-cases.md](./38-contest-entry-and-squad-alignment-review-user-cases.md)
+- [plans/41-contest-history-user-cases.md](./41-contest-history-user-cases.md)
+- [plans/53-commissioner-tools-contest-management-use-cases.md](./53-commissioner-tools-contest-management-use-cases.md)
 
 ## What Should Be Removed
 

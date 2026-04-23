@@ -10,12 +10,12 @@ This file is execution context only.
 
 Current product and technical source of truth lives in:
 
-- [requirements/product-requirements/features/contest-event-feed-integration/overview.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/overview.md)
-- [requirements/product-requirements/features/contest-event-feed-integration/use-cases.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/use-cases.md)
-- [requirements/product-requirements/features/contest-event-feed-integration/business-rules.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/business-rules.md)
-- [tech-specs/features/contest-event-feed-integration/domain-model.md](/Users/DDorazio/development/Github-Personal/pool-master/tech-specs/features/contest-event-feed-integration/domain-model.md)
-- [tech-specs/features/contest-event-feed-integration/api-surface.md](/Users/DDorazio/development/Github-Personal/pool-master/tech-specs/features/contest-event-feed-integration/api-surface.md)
-- [tech-specs/features/contest-event-feed-integration/flows.md](/Users/DDorazio/development/Github-Personal/pool-master/tech-specs/features/contest-event-feed-integration/flows.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/overview.md](../requirements/product-requirements/features/contest-event-feed-integration/overview.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/use-cases.md](../requirements/product-requirements/features/contest-event-feed-integration/use-cases.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/business-rules.md](../requirements/product-requirements/features/contest-event-feed-integration/business-rules.md)
+- [tech-specs/features/contest-event-feed-integration/domain-model.md](../tech-specs/features/contest-event-feed-integration/domain-model.md)
+- [tech-specs/features/contest-event-feed-integration/api-surface.md](../tech-specs/features/contest-event-feed-integration/api-surface.md)
+- [tech-specs/features/contest-event-feed-integration/flows.md](../tech-specs/features/contest-event-feed-integration/flows.md)
 
 Do not use older design prose to reopen product questions. The requirements and
 tech-spec layers now own those answers.

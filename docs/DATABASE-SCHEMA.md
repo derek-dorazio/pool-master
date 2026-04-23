@@ -1,6 +1,6 @@
 # Database Schema
 
-This document describes the current PostgreSQL schema defined in [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma).
+This document describes the current PostgreSQL schema defined in [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma).
 
 It has two goals:
 
@@ -12,14 +12,14 @@ Status note:
 - this document is grounded in the current Prisma schema, but some tables remain
   broader than the first-pass PoolMaster product surface
 - active product/runtime truth should be read alongside:
-  - [rules/architecture-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/architecture-rules.md)
+  - [rules/architecture-rules.md](../rules/architecture-rules.md)
 - there is no active billing subsystem, no separate go-forward admin web app,
   and no current public-league/search-discovery product surface in the PoolMaster
   web app
 
 ## Scope And Conventions
 
-- Source of truth: Prisma schema at [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
+- Source of truth: Prisma schema at [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
 - Database: PostgreSQL
 - Primary key pattern: UUID strings for almost all tables
 - Timestamp convention: UTC `timestamptz` unless otherwise noted

@@ -33,7 +33,7 @@ Scope:
 
 Primary plan:
 
-- [Plan 56](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/56-search-and-discovery-removal.md)
+- [Plan 56](./56-search-and-discovery-removal.md)
 
 ### Slice B: Remove Contest Templates
 
@@ -46,7 +46,7 @@ Scope:
 
 Primary plan:
 
-- [Plan 54](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/54-contest-template-removal.md)
+- [Plan 54](./54-contest-template-removal.md)
 
 ### Slice C: Remove Compliance Except Consent
 
@@ -57,9 +57,9 @@ Scope:
 
 Primary plans:
 
-- [Plan 55](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/55-privacy-and-account-compliance-removal.md)
-- [Plan 57](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/57-privacy-and-account-compliance-deferred.md)
-- [Plan 58](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/58-consent-and-age-affirmation-user-cases.md)
+- [Plan 55](./55-privacy-and-account-compliance-removal.md)
+- [Plan 57](./57-privacy-and-account-compliance-deferred.md)
+- [Plan 58](./58-consent-and-age-affirmation-user-cases.md)
 
 ### Slice D: Reset Top-Level Identity And League Model
 
@@ -71,8 +71,8 @@ Scope:
 
 Primary plans:
 
-- [Plan 36](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/36-authentication-and-authorization-unification.md)
-- [Plan 37](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/37-league-top-level-domain-and-data-simplification.md)
+- [Plan 36](./36-authentication-and-authorization-unification.md)
+- [Plan 37](./37-league-top-level-domain-and-data-simplification.md)
 
 ### Slice E: Rebuild Contest Core
 
@@ -83,10 +83,10 @@ Scope:
 
 Primary plans:
 
-- [Plan 38](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/38-contest-entry-and-squad-alignment-review.md)
-- [Plan 41](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/41-contest-history-user-cases.md)
-- [Plan 42](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/42-history-simplification.md)
-- [Plan 53](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/53-commissioner-tools-contest-management-use-cases.md)
+- [Plan 38](./38-contest-entry-and-squad-alignment-review.md)
+- [Plan 41](./41-contest-history-user-cases.md)
+- [Plan 42](./42-history-simplification.md)
+- [Plan 53](./53-commissioner-tools-contest-management-use-cases.md)
 
 ### Slice F: Rebuild Event Participant And Source Data
 
@@ -98,8 +98,8 @@ Scope:
 
 Primary plans:
 
-- [Plan 39](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/39-sport-event-import-and-status-propagation-user-cases.md)
-- [Plan 51](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/51-scoring-and-participant-data-review.md)
+- [Plan 39](./39-sport-event-import-and-status-propagation-user-cases.md)
+- [Plan 51](./51-scoring-and-participant-data-review.md)
 
 ### Slice G: Rebuild Scoring, Aggregation, And Prizes
 
@@ -112,8 +112,8 @@ Scope:
 
 Primary plans:
 
-- [Plan 51](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/51-scoring-and-participant-data-review.md)
-- [Plan 52](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/52-potential-rules-function-expansion.md)
+- [Plan 51](./51-scoring-and-participant-data-review.md)
+- [Plan 52](./52-potential-rules-function-expansion.md)
 
 ### Slice H: Rebuild Commissioner Contest Operations
 
@@ -125,9 +125,9 @@ Scope:
 
 Primary plans:
 
-- [Plan 44](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/44-league-first-commissioner-administration-user-cases.md)
-- [Plan 45](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/45-league-first-administration-migration.md)
-- [Plan 53](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/53-commissioner-tools-contest-management-use-cases.md)
+- [Plan 44](./44-league-first-commissioner-administration-user-cases.md)
+- [Plan 45](./45-league-first-administration-migration.md)
+- [Plan 53](./53-commissioner-tools-contest-management-use-cases.md)
 
 ### Slice I: Remove Out-Of-Scope Site Admin Features
 
@@ -140,8 +140,8 @@ Scope:
 
 Primary plans:
 
-- [Plan 45](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/45-league-first-administration-migration.md)
-- [Plan 46](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/46-site-administration-user-cases.md)
+- [Plan 45](./45-league-first-administration-migration.md)
+- [Plan 46](./46-site-administration-user-cases.md)
 
 ## Worker Guidance
 

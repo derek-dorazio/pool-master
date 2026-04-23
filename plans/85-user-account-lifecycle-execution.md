@@ -8,7 +8,7 @@ lifecycle:
 
 ## Dependencies
 
-- [84-user-account-lifecycle-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/84-user-account-lifecycle-user-cases.md)
+- [84-user-account-lifecycle-user-cases.md](./84-user-account-lifecycle-user-cases.md)
 - future `My Account` UI planning/work
 
 ## Backend Deliverables
@@ -50,12 +50,12 @@ lifecycle:
 
 - Unlike league lifecycle, user lifecycle cannot be implemented truthfully on the
   current model without a schema change.
-- The current [User model](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
+- The current [User model](../packages/core-api/prisma/schema.prisma)
   has no `isActive`, `status`, or similar lifecycle field. It only stores core
   identity, preferences, and auth metadata.
 - The current auth surface in
-  [auth-service.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/auth-service.ts)
-  and [auth.dto.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/dto/auth.dto.ts)
+  [auth-service.ts](../packages/core-api/src/modules/auth/auth-service.ts)
+  and [auth.dto.ts](../packages/shared/dto/auth.dto.ts)
   also exposes no user lifecycle state, and there is no existing inactive-user
   behavior to reuse.
 - Therefore:

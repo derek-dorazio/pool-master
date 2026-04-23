@@ -2,7 +2,7 @@
 
 For domain-model consistency conventions such as lifecycle-field naming,
 `status` vs `isActive`, and soft-delete defaults, see
-[domain-model-conventions-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/domain-model-conventions-rules.md).
+[domain-model-conventions-rules.md](./domain-model-conventions-rules.md).
 
 These rules govern backend services in `packages/*/src`, especially Fastify modules, Prisma-backed services, DTOs, mappers, and OpenAPI generation.
 

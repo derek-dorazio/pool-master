@@ -375,7 +375,7 @@ Required workflow:
    begins.
    When those implications suggest a true model change, route them through the
    data-modeler and have the review explicitly check
-   [domain-model-conventions-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/domain-model-conventions-rules.md)
+   [domain-model-conventions-rules.md](./domain-model-conventions-rules.md)
    before backend implementation begins.
 6. If the current contract appears to expose retired, stale, or no-longer-valid
    fields for the feature, do not design around them silently. Call out the

@@ -52,9 +52,9 @@ Examples of supported intents:
 
 Current harness entry points:
 
-- [packages/core-api/src/modules/ingestion/core/ingestion-scheduler.ts](/Users/DDorazio/development/Github-Personal/pool-master/packages/core-api/src/modules/ingestion/core/ingestion-scheduler.ts)
-- [packages/core-api/src/modules/ingestion/routes.ts](/Users/DDorazio/development/Github-Personal/pool-master/packages/core-api/src/modules/ingestion/routes.ts)
-- [packages/core-api/src/modules/admin/ingestion-config-service.ts](/Users/DDorazio/development/Github-Personal/pool-master/packages/core-api/src/modules/admin/ingestion-config-service.ts)
+- [packages/core-api/src/modules/ingestion/core/ingestion-scheduler.ts](../packages/core-api/src/modules/ingestion/core/ingestion-scheduler.ts)
+- [packages/core-api/src/modules/ingestion/routes.ts](../packages/core-api/src/modules/ingestion/routes.ts)
+- [packages/core-api/src/modules/admin/ingestion-config-service.ts](../packages/core-api/src/modules/admin/ingestion-config-service.ts)
 
 Current limitations:
 

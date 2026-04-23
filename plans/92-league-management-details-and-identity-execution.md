@@ -8,8 +8,8 @@ Implement the next commissioner-managed league features beyond lifecycle:
 
 ## Dependencies
 
-- [82-league-lifecycle-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/82-league-lifecycle-user-cases.md)
-- [83-league-lifecycle-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/83-league-lifecycle-execution.md)
+- [82-league-lifecycle-user-cases.md](./82-league-lifecycle-user-cases.md)
+- [83-league-lifecycle-execution.md](./83-league-lifecycle-execution.md)
 
 ## Planning Notes
 

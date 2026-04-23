@@ -8,8 +8,8 @@ Implement the next self-service `My Account` features beyond lifecycle:
 
 ## Dependencies
 
-- [84-user-account-lifecycle-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/84-user-account-lifecycle-user-cases.md)
-- [85-user-account-lifecycle-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/85-user-account-lifecycle-execution.md)
+- [84-user-account-lifecycle-user-cases.md](./84-user-account-lifecycle-user-cases.md)
+- [85-user-account-lifecycle-execution.md](./85-user-account-lifecycle-execution.md)
 
 ## Planning Notes
 

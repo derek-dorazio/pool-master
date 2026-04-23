@@ -28,9 +28,9 @@ These are the current measured totals and should be used as the initial threshol
 
 In scope:
 
-- [tests/jest.config.js](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/tests/jest.config.js)
-- [clients/web/vitest.config.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/vitest.config.ts)
-- [clients/admin/vitest.config.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/vitest.config.ts)
+- [tests/jest.config.js](../../tests/jest.config.js)
+- [clients/web/vitest.config.ts](../../clients/web/vitest.config.ts)
+- [clients/admin/vitest.config.ts](../../clients/admin/vitest.config.ts)
 - CI coverage reporting and artifact visibility
 - follow-up plan increments to raise thresholds over time
 
@@ -56,7 +56,7 @@ Out of scope:
 Backend likely needs cleanup before the thresholds are practical:
 
 - exclude generated client files from Jest coverage collection
-- exclude tool/config files such as [openapi-ts.config.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/openapi-ts.config.ts) from backend coverage collection
+- exclude tool/config files such as [openapi-ts.config.ts](../../packages/shared/openapi-ts.config.ts) from backend coverage collection
 - restore a clean summary JSON output path so coverage totals are easy to inspect and enforce
 
 ## Ratchet Strategy
@@ -84,12 +84,12 @@ Example ratchet style:
 
 | ID | Area | Task | Status | Notes |
 |---|---|---|---|---|
-| CTR-001 | Backend | Clean Jest coverage collection so generated/config files do not break or distort backend coverage | Done | [tests/jest.config.js](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/tests/jest.config.js) and [tests/jest.config.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/tests/jest.config.ts) now exclude `packages/shared/generated/**`, `packages/shared/dist/**`, and `packages/shared/openapi-ts.config.ts`. After the later user-approved deletion of deferred-feature draft-engine tests, the real backend baseline settled at 23.42 / 13.91 / 20.30 / 23.93. |
-| CTR-002 | Thresholds | Add backend coverage thresholds to [tests/jest.config.js](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/tests/jest.config.js) using the current baseline | In Progress | Thresholds were ratcheted again on 2026-04-04 after the second worker wave and wrapper cleanup. The latest validated baseline is statements 24.00, branches 14.20, functions 21.15, lines 24.53. Confirm in the next normal CI loop before marking done. |
-| CTR-003 | Thresholds | Add web coverage thresholds to [clients/web/vitest.config.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/web/vitest.config.ts) using the current baseline | In Progress | Thresholds were first ratcheted too tightly to one local run, then recalibrated to CI-stable floors while the active-surface worker wave still increased the real local baseline to 57.33 / 48.65 / 56.79 / 60.24. Confirm in the next normal CI loop before raising again. |
-| CTR-004 | Thresholds | Add admin coverage thresholds to [clients/admin/vitest.config.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/admin/vitest.config.ts) using the current baseline | In Progress | Thresholds were ratcheted again on 2026-04-04 after the active-surface worker wave. The latest validated local baseline is statements 26.96, branches 21.55, functions 20.75, lines 28.33. Confirm in the next normal CI loop before marking done. |
+| CTR-001 | Backend | Clean Jest coverage collection so generated/config files do not break or distort backend coverage | Done | [tests/jest.config.js](../../tests/jest.config.js) and [tests/jest.config.ts](../../tests/jest.config.ts) now exclude `packages/shared/generated/**`, `packages/shared/dist/**`, and `packages/shared/openapi-ts.config.ts`. After the later user-approved deletion of deferred-feature draft-engine tests, the real backend baseline settled at 23.42 / 13.91 / 20.30 / 23.93. |
+| CTR-002 | Thresholds | Add backend coverage thresholds to [tests/jest.config.js](../../tests/jest.config.js) using the current baseline | In Progress | Thresholds were ratcheted again on 2026-04-04 after the second worker wave and wrapper cleanup. The latest validated baseline is statements 24.00, branches 14.20, functions 21.15, lines 24.53. Confirm in the next normal CI loop before marking done. |
+| CTR-003 | Thresholds | Add web coverage thresholds to [clients/web/vitest.config.ts](../../clients/web/vitest.config.ts) using the current baseline | In Progress | Thresholds were first ratcheted too tightly to one local run, then recalibrated to CI-stable floors while the active-surface worker wave still increased the real local baseline to 57.33 / 48.65 / 56.79 / 60.24. Confirm in the next normal CI loop before raising again. |
+| CTR-004 | Thresholds | Add admin coverage thresholds to [clients/admin/vitest.config.ts](../../clients/admin/vitest.config.ts) using the current baseline | In Progress | Thresholds were ratcheted again on 2026-04-04 after the active-surface worker wave. The latest validated local baseline is statements 26.96, branches 21.55, functions 20.75, lines 28.33. Confirm in the next normal CI loop before marking done. |
 | CTR-005 | CI Visibility | Upload coverage artifacts and print actual totals to logs in CI | Done | Successful CI run `23989110624` confirmed `backend-coverage`, `webapp-coverage`, and `admin-coverage` artifacts are visible in GitHub UI and that the summary/log steps execute in the corresponding jobs. |
-| CTR-006 | Policy | Update rules/docs so local and CI coverage thresholds are treated as required quality gates | In Progress | [rules/workflow-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/workflow-rules.md) now requires local coverage runs before push. Remaining work is to keep CI expectations aligned once this threshold batch is proven stable. |
+| CTR-006 | Policy | Update rules/docs so local and CI coverage thresholds are treated as required quality gates | In Progress | [rules/workflow-rules.md](../../rules/workflow-rules.md) now requires local coverage runs before push. Remaining work is to keep CI expectations aligned once this threshold batch is proven stable. |
 | CTR-007 | Ratchet | Define the first threshold increase after the baseline gate is stable | Not Started | Do not raise until the initial enforced baseline is proven stable |
 | CTR-008 | Rollout | Dry-run the threshold configuration locally before enabling branch-protection expectations in GitHub | Not Started | Avoid turning on a permanent gate until the baseline values are confirmed after collector cleanup |
 

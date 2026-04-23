@@ -93,7 +93,7 @@ Direction:
 
 ## Relationship To Active Plans
 
-- [plans/76-league-home-and-league-context-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/76-league-home-and-league-context-user-cases.md)
+- [plans/76-league-home-and-league-context-user-cases.md](./76-league-home-and-league-context-user-cases.md)
   owns the current active/inactive league-home behavior
 - this plan owns future billing, renewal, reactivation, archive, and paid-league
   lifecycle behavior once that product area becomes active

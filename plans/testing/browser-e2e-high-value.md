@@ -1,6 +1,11 @@
 # Browser E2E High-Value Rebuild
 
 > **Planning Note (2026-04-09):** This is the deferred browser-E2E rebuild note for the new `clients/poolmaster` app. Re-analyze the deployed QA behavior, auth flow, and available stable test data before implementing this plan. Do not reintroduce brittle multi-step browser journeys into the CI deploy gate until they are proven stable outside that gate.
+>
+> **Update (2026-04-23):** The preferred rebuild strategy is now reusable QA
+> fixture accounts plus a self-healing shared `QA-TEST-LEAGUE`, not per-run
+> random durable users and leagues. See
+> [105-test-data-hygiene-and-shared-qa-browser-fixtures.md](../105-test-data-hygiene-and-shared-qa-browser-fixtures.md).
 
 ## Purpose
 
@@ -72,14 +77,16 @@ integration, contract, or functional suites first.
 ## Acceptance Criteria
 
 - The rebuilt browser suite exercises real MVP product value, not just public page render
-- The suite does not depend on ambient seed fixtures
+- The suite does not depend on one-off ambient residue. Reusable QA fixtures
+  are acceptable only when the harness truthfully verifies or repairs the
+  prerequisite state it needs.
 - The suite is deterministic enough to run repeatedly without frequent manual repair
 - Only stable journeys are promoted into required CI
 
 ## Follow-Up
 
 - This file is the deferred richer suite for the rebuilt PoolMaster web app.
-- Use [plans/69-poolmaster-webapp-rebuild.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/69-poolmaster-webapp-rebuild.md) as the product-side prerequisite for when this suite should be resumed.
+- Use [plans/69-poolmaster-webapp-rebuild.md](../69-poolmaster-webapp-rebuild.md) as the product-side prerequisite for when this suite should be resumed.
 
 ## Execution Notes
 

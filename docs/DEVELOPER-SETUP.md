@@ -172,6 +172,8 @@ Recommended rule:
 - do not preserve manual development state in `poolmaster_test`
 - if test migrations drift or a validation run wedges the schema, run
   `npm run db:test:reset`
+- if a DB-backed suite was interrupted or you suspect leftover residue, prefer a
+  `:fresh` script instead of debugging against a dirty `poolmaster_test`
 
 ### Run the Development Server
 
@@ -207,15 +209,33 @@ npm run test:unit
 # Integration tests only
 npm run test:integration
 
+# Same run, but first recreate the disposable test DB
+npm run test:service:integration:fresh
+
 # Service functional API tests
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:functional-api
 
 # Same run, but first recreate the disposable test DB
 npm run test:service:functional-api:fresh
 
+# Merged backend coverage against a freshly reset disposable test DB
+npm run test:coverage:service:fresh
+
 # Specific test file
 npx jest tests/unit/core-api/permissions.test.ts
 ```
+
+### DB-Backed Test Recovery
+
+When a local DB-backed test command fails, use this order:
+
+1. confirm local Postgres is actually running
+2. if it was down, start/restart it and rerun the exact command
+3. if `poolmaster_test` still looks dirty or wedged, run `npm run db:test:reset`
+   or use the matching `:fresh` test script
+
+Do not preserve manual working state in `poolmaster_test`, and do not try to
+hand-edit the local test schema to “unstick” validation.
 
 Tests use **Jest** with **ts-jest**. All tests live in the top-level `tests/` directory (separate from application code). The `@poolmaster/shared/*` module alias is configured in `tests/jest.config.ts`.
 
@@ -296,7 +316,7 @@ terraform apply -var-file=envs/qa.tfvars
 This creates: ECS Fargate (1 backend service), RDS PostgreSQL, ALB, S3 + CloudFront (PoolMaster web), ECR repository, CloudWatch alarms.
 
 For runtime backend log usage and CloudWatch query patterns, see
-[Logging Operations](/Users/DDorazio/development/Github-Personal/pool-master/docs/LOGGING-OPERATIONS.md).
+[Logging Operations](./LOGGING-OPERATIONS.md).
 
 After `terraform apply`, run migrations:
 ```bash

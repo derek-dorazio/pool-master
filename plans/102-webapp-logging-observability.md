@@ -16,7 +16,7 @@ existing CloudWatch-backed service logs.
 | WLO-003 | 3 | Client log ingestion endpoint and transport | Done | Added shared client-log DTOs, the public `/api/v1/client-logs` operational endpoint with optional auth binding and rate-limit/oversize handling, browser batching transport, functional/unit proof, and refreshed generated OpenAPI artifacts. |
 | WLO-004 | 3 | Global browser failure capture and fallback UX | Done | Added a top-level React error boundary, global `error` and `unhandledrejection` listeners, fallback reload UX, and behavioral proof for render-failure capture plus browser-global fatal logging. |
 | WLO-005 | 4 | Feature-level logging backfill and branch proof | Done | Feature-level logging and branch-proof coverage now span auth/session, league/team workflows, contest workflows, account/root-admin workflows, and the remaining routing/app-shell/navigation surfaces (`app-shell`, `league-selector`, `route-guards`, `not-found-page`). |
-| WLO-006 | 5 | Docs and final gap sweep | Done | Updated [docs/LOGGING-OPERATIONS.md](/Users/DDorazio/development/Github-Personal/pool-master/docs/LOGGING-OPERATIONS.md) with browser/client-log query guidance and completed the final frontend observability gap audit; only intentional out-of-scope surfaces remain (archived frontend, one-off scripts, and static/pure helpers like `route-state.ts`). |
+| WLO-006 | 5 | Docs and final gap sweep | Done | Updated [docs/LOGGING-OPERATIONS.md](../docs/LOGGING-OPERATIONS.md) with browser/client-log query guidance and completed the final frontend observability gap audit; only intentional out-of-scope surfaces remain (archived frontend, one-off scripts, and static/pure helpers like `route-state.ts`). |
 
 ## Research Summary
 

@@ -110,7 +110,7 @@ PoolMaster should keep these layers separate:
 
 Use one primary account record for each person.
 
-For PoolMaster, the current [User model](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma) is the natural starting point, but it should evolve.
+For PoolMaster, the current [User model](../packages/core-api/prisma/schema.prisma) is the natural starting point, but it should evolve.
 
 Recommended account fields:
 

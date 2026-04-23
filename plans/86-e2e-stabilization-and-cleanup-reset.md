@@ -1,3 +1,9 @@
+> **Planning Note (2026-04-23):** This reset plan remains the historical record
+> of the "reduce browser E2E to the minimum truthful smoke" correction. The
+> next phase is now tracked in
+> [105-test-data-hygiene-and-shared-qa-browser-fixtures.md](./105-test-data-hygiene-and-shared-qa-browser-fixtures.md),
+> which supersedes the old future-direction rows below.
+
 ## Objective
 
 Stabilize the current browser E2E lane immediately by reducing it to the minimum
@@ -19,8 +25,8 @@ keep broader browser journeys active in the deploy gate.
 
 ## Future Direction
 
-After [83-league-lifecycle-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/83-league-lifecycle-execution.md)
-and [85-user-account-lifecycle-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/85-user-account-lifecycle-execution.md)
+After [83-league-lifecycle-execution.md](./83-league-lifecycle-execution.md)
+and [85-user-account-lifecycle-execution.md](./85-user-account-lifecycle-execution.md)
 land, expand the single commissioner journey again.
 
 ## QA Backlog Cleanup
@@ -29,7 +35,7 @@ land, expand the single commissioner journey again.
   exist.
 - Prefer the real APIs and user flows for that cleanup.
 - Keep
-  [code-review/008-qa-cleanup.sql](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/code-review/008-qa-cleanup.sql)
+  [code-review/008-qa-cleanup.sql](../code-review/008-qa-cleanup.sql)
   only as a one-time bridge if needed after correction to current schema.
 
 ## Task Table
@@ -39,6 +45,6 @@ land, expand the single commissioner journey again.
 | 86-001 | 1 | Frontend developer: reduce browser E2E to one minimal deploy-gate script | Done | `clients/poolmaster/e2e/authenticated-landing.e2e.ts` now keeps only a real sign-up → `/welcome` assertion. |
 | 86-002 | 1 | Frontend developer: remove stale broader E2E flows from current CI scope | Done | Removed the invite, multi-league, and create-league browser journeys from the active deploy-gate script until cleanup lifecycle exists. |
 | 86-003 | 1 | Update CI/testing plan references to the temporary minimum E2E lane | Done | The active E2E reset plan and testing/workflow rules now explicitly describe the temporary minimum deploy-gate lane and the longer-term commissioner/member lifecycle strategy. |
-| 86-004 | 2 | After league lifecycle lands, expand the commissioner journey again | Not Started | Create league → future commissioner flows → delete league |
-| 86-005 | 2 | After account lifecycle lands, add self-delete cleanup to the browser journey | Not Started | Member then commissioner account cleanup |
-| 86-006 | 2 | Remove existing QA residue after lifecycle flows exist | Not Started | Prefer API/user-flow cleanup, SQL only if still needed |
+| 86-004 | 2 | ~~After league lifecycle lands, expand the commissioner journey again~~ | Removed | Superseded by Plan 105, which replaces one-off league creation with reusable QA fixtures plus a self-healing shared `QA-TEST-LEAGUE` strategy. |
+| 86-005 | 2 | ~~After account lifecycle lands, add self-delete cleanup to the browser journey~~ | Removed | Superseded by Plan 105. Reusable browser fixture users reduce the need for per-run account deletion; self-account delete remains an occasional manual reset tool instead. |
+| 86-006 | 2 | ~~Remove existing QA residue after lifecycle flows exist~~ | Removed | Superseded by Plan 105, which folds one-time QA residue cleanup together with the shared-fixture browser rollout and local DB hygiene work. |

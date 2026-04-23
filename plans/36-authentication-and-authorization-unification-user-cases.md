@@ -3,7 +3,7 @@
 ## Purpose
 
 This companion document captures the user cases and user flows implied by
-[Plan 36](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/36-authentication-and-authorization-unification.md).
+[Plan 36](./36-authentication-and-authorization-unification.md).
 
 It exists to preserve product and UI implications separately from the lower-level
 auth/session implementation plan.

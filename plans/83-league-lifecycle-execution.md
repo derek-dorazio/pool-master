@@ -8,8 +8,8 @@ lifecycle:
 
 ## Dependencies
 
-- [82-league-lifecycle-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/82-league-lifecycle-user-cases.md)
-- [76-league-home-and-league-context-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/76-league-home-and-league-context-user-cases.md)
+- [82-league-lifecycle-user-cases.md](./82-league-lifecycle-user-cases.md)
+- [76-league-home-and-league-context-user-cases.md](./76-league-home-and-league-context-user-cases.md)
 
 ## Backend Deliverables
 

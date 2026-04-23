@@ -13,7 +13,7 @@ The first-time commissioner journey is now:
 
 We intentionally stopped before implementing league creation so the wizard can be designed deliberately instead of growing ad hoc out of the current scaffold.
 
-This plan assumes the broader home-shell and routing model from [plans/76-league-home-and-league-context-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/76-league-home-and-league-context-user-cases.md).
+This plan assumes the broader home-shell and routing model from [plans/76-league-home-and-league-context-user-cases.md](./76-league-home-and-league-context-user-cases.md).
 
 ## Scope
 
@@ -32,7 +32,7 @@ Out of scope:
 - detailed members-page and invite-members flows after league creation
 
 Post-create member-management follow-up lives in
-[plans/79-league-members-and-invitations-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/79-league-members-and-invitations-user-cases.md).
+[plans/79-league-members-and-invitations-user-cases.md](./79-league-members-and-invitations-user-cases.md).
 
 ## Resolved Decisions
 
@@ -61,7 +61,7 @@ Post-create member-management follow-up lives in
 14. The review/confirmation step should preview the future join path:
    - `/league/<leagueCode>/join`
    Detailed invitation/member-management follow-up lives in
-   [plans/79-league-members-and-invitations-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/79-league-members-and-invitations-user-cases.md).
+   [plans/79-league-members-and-invitations-user-cases.md](./79-league-members-and-invitations-user-cases.md).
 
 ## First-Release UX Shape
 

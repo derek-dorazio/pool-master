@@ -33,8 +33,8 @@ This app becomes the single go-forward web frontend for PoolMaster.
   - root-admin flows with the current admin-auth model
   - role-aware navigation and session handling inside one app shell
 - Do not keep a separate `clients/shared` frontend package; frontend shared contract/types come from `packages/shared` and the generated SDK only.
-- Treat [plans/76-league-home-and-league-context-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/76-league-home-and-league-context-user-cases.md) as the companion for the authenticated landing/home route, league selector, default-league routing, and invite-entry behavior.
-- Treat [plans/77-paid-leagues-and-renewal-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/77-paid-leagues-and-renewal-user-cases.md) as the deferred companion for future renewal, reactivation, archive, and paid-league lifecycle behavior.
+- Treat [plans/76-league-home-and-league-context-user-cases.md](./76-league-home-and-league-context-user-cases.md) as the companion for the authenticated landing/home route, league selector, default-league routing, and invite-entry behavior.
+- Treat [plans/77-paid-leagues-and-renewal-user-cases.md](./77-paid-leagues-and-renewal-user-cases.md) as the deferred companion for future renewal, reactivation, archive, and paid-league lifecycle behavior.
 
 ## Task List
 

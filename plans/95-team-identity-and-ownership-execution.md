@@ -20,9 +20,9 @@ The first slice should cover:
 
 ## Dependencies
 
-- [94-squad-identity-and-ownership-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/94-squad-identity-and-ownership-user-cases.md)
-- [92-league-management-details-and-identity-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/92-league-management-details-and-identity-execution.md)
-- [93-my-account-profile-password-and-preferences-execution.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/93-my-account-profile-password-and-preferences-execution.md)
+- [94-squad-identity-and-ownership-user-cases.md](./94-squad-identity-and-ownership-user-cases.md)
+- [92-league-management-details-and-identity-execution.md](./92-league-management-details-and-identity-execution.md)
+- [93-my-account-profile-password-and-preferences-execution.md](./93-my-account-profile-password-and-preferences-execution.md)
 
 ## Planning Notes
 

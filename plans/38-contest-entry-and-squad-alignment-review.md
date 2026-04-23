@@ -3,7 +3,7 @@
 ## Purpose
 
 Capture the current contest/configuration/entry model, compare it against the emerging
-league-first and squad-first domain direction in [Plan 37](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/37-league-top-level-domain-and-data-simplification.md),
+league-first and squad-first domain direction in [Plan 37](./37-league-top-level-domain-and-data-simplification.md),
 and surface the design questions that should be resolved before implementation starts.
 
 This is a review-and-decision plan, not an implementation plan yet.

@@ -574,12 +574,12 @@ Why this matters:
 
 ## Relationship To Active Plans
 
-- [plans/69-poolmaster-webapp-rebuild.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/69-poolmaster-webapp-rebuild.md)
+- [plans/69-poolmaster-webapp-rebuild.md](./69-poolmaster-webapp-rebuild.md)
   should treat this as the route/home-context companion for the next webapp
   phase
-- [plans/75-league-creation-wizard-discovery.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/75-league-creation-wizard-discovery.md)
+- [plans/75-league-creation-wizard-discovery.md](./75-league-creation-wizard-discovery.md)
   should treat this as the home-shell context that launches the create-league
   modal
-- [plans/77-paid-leagues-and-renewal-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/77-paid-leagues-and-renewal-user-cases.md)
+- [plans/77-paid-leagues-and-renewal-user-cases.md](./77-paid-leagues-and-renewal-user-cases.md)
   should own the future reactivation, renewal, billing, and inactive-league
   commissioner controls that are intentionally deferred here

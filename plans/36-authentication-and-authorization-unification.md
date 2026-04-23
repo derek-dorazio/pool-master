@@ -8,20 +8,20 @@ Unify PoolMaster authentication and authorization so the web app and admin app u
 - league-scoped commissioner behavior
 - platform-admin behavior
 
-This plan turns the findings in [docs/AUTHENTICATION-AUTHORIZATION.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/docs/AUTHENTICATION-AUTHORIZATION.md) into an execution roadmap.
+This plan turns the findings in [docs/AUTHENTICATION-AUTHORIZATION.md](../docs/AUTHENTICATION-AUTHORIZATION.md) into an execution roadmap.
 
-It should also be read alongside [docs/STANDARD-AUTH-MODEL.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/docs/STANDARD-AUTH-MODEL.md), which captures the recommended conventional consumer-site approach for PoolMaster.
+It should also be read alongside [docs/STANDARD-AUTH-MODEL.md](../docs/STANDARD-AUTH-MODEL.md), which captures the recommended conventional consumer-site approach for PoolMaster.
 
-It is now also explicitly dependent on [Plan 37](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/37-league-top-level-domain-and-data-simplification.md) for the final domain boundary decisions around leagues, users, billing, and event modeling.
+It is now also explicitly dependent on [Plan 37](./37-league-top-level-domain-and-data-simplification.md) for the final domain boundary decisions around leagues, users, billing, and event modeling.
 
 ## Why This Plan Exists
 
 PoolMaster currently has an uneven trust model:
 
-- the web app uses a real JWT-based auth path enforced by [packages/core-api/src/plugins/auth-guard.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/auth-guard.ts)
-- the admin app also obtains a JWT, but live admin routes still rely on a placeholder header-based gate in [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts)
+- the web app uses a real JWT-based auth path enforced by [packages/core-api/src/plugins/auth-guard.ts](../packages/core-api/src/plugins/auth-guard.ts)
+- the admin app also obtains a JWT, but live admin routes still rely on a placeholder header-based gate in [packages/core-api/src/modules/admin/routes.ts](../packages/core-api/src/modules/admin/routes.ts)
 - the admin browser currently sends `x-admin-user-id` and `x-admin-user-email`, which means browser-supplied identity data is still part of the runtime trust boundary
-- the stronger admin plugin in [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts) exists but is not yet the live enforcement path
+- the stronger admin plugin in [packages/core-api/src/plugins/admin-auth.ts](../packages/core-api/src/plugins/admin-auth.ts) exists but is not yet the live enforcement path
 
 That creates avoidable risk:
 
@@ -497,7 +497,7 @@ Build on the existing deployed checks:
 | 36-009 | 1 | Normalize `/api/v1/auth/me` and any adjacent identity reads so verified cookie-backed auth context is reused instead of duplicating token parsing | Not Started | Reduce duplicate token-reading paths before deeper migration |
 | 36-010 | 1 | Define the final admin session-read contract the admin app will trust for authenticated identity hydration | Not Started | Could be `/auth/me`, a scoped admin identity endpoint, or a reshaped shared session payload |
 | 36-011 | 1 | Link admin capability to the core account model cleanly and decide how `AdminUser` relates to `User` going forward | Blocked | Blocked on Plan 37's identity simplification decisions |
-| 36-012 | 2 | Replace the placeholder admin pre-handler in [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts) with the real plugin path rooted in [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts) | Not Started | This is the core runtime trust-boundary change |
+| 36-012 | 2 | Replace the placeholder admin pre-handler in [packages/core-api/src/modules/admin/routes.ts](../packages/core-api/src/modules/admin/routes.ts) with the real plugin path rooted in [packages/core-api/src/plugins/admin-auth.ts](../packages/core-api/src/plugins/admin-auth.ts) | Not Started | This is the core runtime trust-boundary change |
 | 36-013 | 2 | Attach and consume `request.adminContext` consistently on live admin routes and services | Not Started | Replace ad hoc assumptions with one runtime context model |
 | 36-014 | 2 | Apply `requireAdminPermission()` or equivalent permission checks to real admin routes, prioritizing write and high-risk routes first | Not Started | Start with tenant mutation, provider mutation, announcements, migrations, and support actions |
 | 36-015 | 2 | Decide whether a short compatibility bridge is needed and, if so, bound it with explicit removal criteria and telemetry/logging | Not Started | The default should be no bridge unless QA migration forces one |

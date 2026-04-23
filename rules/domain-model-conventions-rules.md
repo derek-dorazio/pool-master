@@ -5,7 +5,7 @@ itself. Use them when proposing, reviewing, or implementing schema/entity/DTO
 shape changes.
 
 This file is intentionally separate from
-[model-change-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/model-change-rules.md):
+[model-change-rules.md](./model-change-rules.md):
 
 - `domain-model-conventions-rules.md` defines **what a consistent model should
   look like**

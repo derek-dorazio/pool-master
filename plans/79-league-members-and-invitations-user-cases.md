@@ -172,9 +172,9 @@ Notes:
 
 ## Relationship To Active Plans
 
-- [plans/75-league-creation-wizard-discovery.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/75-league-creation-wizard-discovery.md)
+- [plans/75-league-creation-wizard-discovery.md](./75-league-creation-wizard-discovery.md)
   should reference this plan for the post-create invite/member next step.
-- [plans/76-league-home-and-league-context-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/76-league-home-and-league-context-user-cases.md)
+- [plans/76-league-home-and-league-context-user-cases.md](./76-league-home-and-league-context-user-cases.md)
   owns the league-scoped shell and route model that this members/invitation
   feature will plug into later.
 

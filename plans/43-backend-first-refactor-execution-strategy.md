@@ -9,11 +9,11 @@ new contracts.
 This plan is intentionally about delivery strategy, not final domain design.
 The target model is defined by:
 
-- [Plan 36](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/36-authentication-and-authorization-unification.md)
-- [Plan 37](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/37-league-top-level-domain-and-data-simplification.md)
-- [Plan 38](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/38-contest-entry-and-squad-alignment-review.md)
-- [Plan 41](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/41-contest-history-user-cases.md)
-- [Plan 42](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/42-history-simplification.md)
+- [Plan 36](./36-authentication-and-authorization-unification.md)
+- [Plan 37](./37-league-top-level-domain-and-data-simplification.md)
+- [Plan 38](./38-contest-entry-and-squad-alignment-review.md)
+- [Plan 41](./41-contest-history-user-cases.md)
+- [Plan 42](./42-history-simplification.md)
 
 ## Recommended Strategy
 
@@ -207,7 +207,7 @@ Not allowed:
 - integration tests create their own DB state
 - smoke and E2E tests create and destroy their own data
 - non-production event/participant feeds should come from
-  [Plan 31](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/31-mock-contest-feed-provider.md),
+  [Plan 31](./31-mock-contest-feed-provider.md),
   not application seeds
 
 ## Implementation Phases

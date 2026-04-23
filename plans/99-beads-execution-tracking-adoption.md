@@ -149,7 +149,7 @@ Before resuming in a new session:
 - As of 2026-04-19, Beads is installed locally via Homebrew and reports
   `bd version 1.0.2 (Homebrew)`.
 - This repo is now initialized for Beads in repo-local embedded mode.
-  `bd where` resolves to `/Users/DDorazio/development/Github-Personal/pool-master/.beads`
+  `bd where` resolves to `../.beads`
   with database path `.beads/embeddeddolt`.
 - `bd init` creates a repo-local `.beads/` directory by default and supports:
   - embedded mode by default

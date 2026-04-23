@@ -10,7 +10,7 @@ Simplify PoolMaster's core domain model so it matches the real product shape:
 - billing/subscriptions move from `tenant` to `league`
 - event/season modeling becomes global and contest-centered instead of tenant-centered
 
-This plan should be completed before the implementation phases of [Plan 36](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/36-authentication-and-authorization-unification.md) that depend on the final identity and authorization boundary.
+This plan should be completed before the implementation phases of [Plan 36](./36-authentication-and-authorization-unification.md) that depend on the final identity and authorization boundary.
 
 ## Why This Plan Exists
 

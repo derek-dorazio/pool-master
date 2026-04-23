@@ -3,7 +3,7 @@
 ## Purpose
 
 This companion document captures the product use cases and user flows implied by
-[Plan 37](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/37-league-top-level-domain-and-data-simplification.md).
+[Plan 37](./37-league-top-level-domain-and-data-simplification.md).
 
 It focuses on what people do in the product so future web/admin planning can build
 on user behavior, not just schema changes.

@@ -9,10 +9,10 @@ This file is intentionally no longer a product-definition document.
 
 ## Current Product Source Of Truth
 
-- [requirements/product-requirements/features/contest-event-feed-integration/overview.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/overview.md)
-- [requirements/product-requirements/features/contest-event-feed-integration/use-cases.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/use-cases.md)
-- [requirements/product-requirements/features/contest-event-feed-integration/business-rules.md](/Users/DDorazio/development/Github-Personal/pool-master/requirements/product-requirements/features/contest-event-feed-integration/business-rules.md)
-- [tech-specs/features/contest-event-feed-integration/flows.md](/Users/DDorazio/development/Github-Personal/pool-master/tech-specs/features/contest-event-feed-integration/flows.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/overview.md](../requirements/product-requirements/features/contest-event-feed-integration/overview.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/use-cases.md](../requirements/product-requirements/features/contest-event-feed-integration/use-cases.md)
+- [requirements/product-requirements/features/contest-event-feed-integration/business-rules.md](../requirements/product-requirements/features/contest-event-feed-integration/business-rules.md)
+- [tech-specs/features/contest-event-feed-integration/flows.md](../tech-specs/features/contest-event-feed-integration/flows.md)
 
 ## Execution Note
 

@@ -7,7 +7,7 @@ items, and leave only true product/reviewer decisions for follow-up review.
 ## Scope
 
 - persistence model consistency against
-  [rules/domain-model-conventions-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/domain-model-conventions-rules.md)
+  [rules/domain-model-conventions-rules.md](../rules/domain-model-conventions-rules.md)
 - DTO/entity/persistence drift
 - stale or orphaned service-stack surface
 - placeholder/scaffolded backend and frontend surfaces that should be either
@@ -41,13 +41,13 @@ Completed in this audit:
 
 Representative files:
 
-- [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
-- [packages/core-api/prisma/migrations/20260414103000_promote_league_membership_invitation_enums/migration.sql](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/migrations/20260414103000_promote_league_membership_invitation_enums/migration.sql)
-- [packages/core-api/src/adapters/prisma-league-repository.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/adapters/prisma-league-repository.ts)
-- [packages/core-api/src/adapters/prisma-league-membership-repository.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/adapters/prisma-league-membership-repository.ts)
-- [packages/core-api/src/adapters/prisma-league-invitation-repository.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/adapters/prisma-league-invitation-repository.ts)
-- [packages/core-api/src/adapters/prisma-squad-repository.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/adapters/prisma-squad-repository.ts)
-- [packages/core-api/src/adapters/prisma-squad-membership-repository.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/adapters/prisma-squad-membership-repository.ts)
+- [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
+- [packages/core-api/prisma/migrations/20260414103000_promote_league_membership_invitation_enums/migration.sql](../packages/core-api/prisma/migrations/20260414103000_promote_league_membership_invitation_enums/migration.sql)
+- [packages/core-api/src/adapters/prisma-league-repository.ts](../packages/core-api/src/adapters/prisma-league-repository.ts)
+- [packages/core-api/src/adapters/prisma-league-membership-repository.ts](../packages/core-api/src/adapters/prisma-league-membership-repository.ts)
+- [packages/core-api/src/adapters/prisma-league-invitation-repository.ts](../packages/core-api/src/adapters/prisma-league-invitation-repository.ts)
+- [packages/core-api/src/adapters/prisma-squad-repository.ts](../packages/core-api/src/adapters/prisma-squad-repository.ts)
+- [packages/core-api/src/adapters/prisma-squad-membership-repository.ts](../packages/core-api/src/adapters/prisma-squad-membership-repository.ts)
 
 Validation passed:
 
@@ -71,7 +71,7 @@ Completed in this audit:
 
 Representative file:
 
-- [docs/AUTHENTICATION-AUTHORIZATION.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/docs/AUTHENTICATION-AUTHORIZATION.md)
+- [docs/AUTHENTICATION-AUTHORIZATION.md](../docs/AUTHENTICATION-AUTHORIZATION.md)
 
 #### Provider ingestion status mismatch cleanup
 
@@ -81,8 +81,8 @@ Completed in this audit:
 
 Representative files:
 
-- [packages/core-api/src/modules/admin/provider-service.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/provider-service.ts)
-- [packages/shared/dto/admin.dto.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/dto/admin.dto.ts)
+- [packages/core-api/src/modules/admin/provider-service.ts](../packages/core-api/src/modules/admin/provider-service.ts)
+- [packages/shared/dto/admin.dto.ts](../packages/shared/dto/admin.dto.ts)
 
 #### Commissioner action item simplification
 
@@ -93,11 +93,11 @@ Completed in this audit:
 
 Representative files:
 
-- [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
-- [packages/core-api/prisma/migrations/20260414111500_drop_action_item_type_and_priority/migration.sql](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/migrations/20260414111500_drop_action_item_type_and_priority/migration.sql)
-- [packages/core-api/src/adapters/prisma-action-item-repository.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/adapters/prisma-action-item-repository.ts)
-- [packages/shared/domain/types.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/domain/types.ts)
-- [packages/shared/dto/leagues.dto.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/dto/leagues.dto.ts)
+- [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
+- [packages/core-api/prisma/migrations/20260414111500_drop_action_item_type_and_priority/migration.sql](../packages/core-api/prisma/migrations/20260414111500_drop_action_item_type_and_priority/migration.sql)
+- [packages/core-api/src/adapters/prisma-action-item-repository.ts](../packages/core-api/src/adapters/prisma-action-item-repository.ts)
+- [packages/shared/domain/types.ts](../packages/shared/domain/types.ts)
+- [packages/shared/dto/leagues.dto.ts](../packages/shared/dto/leagues.dto.ts)
 
 #### Root-admin user surface simplification
 
@@ -109,10 +109,10 @@ Completed in this audit:
 
 Representative files:
 
-- [packages/core-api/src/modules/admin/user-service.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/user-service.ts)
-- [packages/core-api/src/modules/admin/user-handler.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/user-handler.ts)
-- [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts)
-- [packages/shared/dto/admin.dto.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/dto/admin.dto.ts)
+- [packages/core-api/src/modules/admin/user-service.ts](../packages/core-api/src/modules/admin/user-service.ts)
+- [packages/core-api/src/modules/admin/user-handler.ts](../packages/core-api/src/modules/admin/user-handler.ts)
+- [packages/core-api/src/modules/admin/routes.ts](../packages/core-api/src/modules/admin/routes.ts)
+- [packages/shared/dto/admin.dto.ts](../packages/shared/dto/admin.dto.ts)
 
 #### Root-admin contest-surface removal and league-commissioner alignment
 
@@ -131,13 +131,13 @@ Completed in this audit:
 
 Representative files:
 
-- [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts)
-- [packages/core-api/src/modules/leagues/permissions.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/leagues/permissions.ts)
-- [packages/core-api/src/modules/leagues/handler.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/leagues/handler.ts)
-- [packages/core-api/src/modules/leagues/service.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/leagues/service.ts)
-- [packages/core-api/src/plugins/auth-guard.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/auth-guard.ts)
-- [packages/core-api/src/modules/auth/auth-service.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/auth-service.ts)
-- [packages/shared/dto/admin.dto.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/dto/admin.dto.ts)
+- [packages/core-api/src/modules/admin/routes.ts](../packages/core-api/src/modules/admin/routes.ts)
+- [packages/core-api/src/modules/leagues/permissions.ts](../packages/core-api/src/modules/leagues/permissions.ts)
+- [packages/core-api/src/modules/leagues/handler.ts](../packages/core-api/src/modules/leagues/handler.ts)
+- [packages/core-api/src/modules/leagues/service.ts](../packages/core-api/src/modules/leagues/service.ts)
+- [packages/core-api/src/plugins/auth-guard.ts](../packages/core-api/src/plugins/auth-guard.ts)
+- [packages/core-api/src/modules/auth/auth-service.ts](../packages/core-api/src/modules/auth/auth-service.ts)
+- [packages/shared/dto/admin.dto.ts](../packages/shared/dto/admin.dto.ts)
 
 #### League membership role-model simplification
 
@@ -149,12 +149,12 @@ Completed in this audit:
 
 Representative files:
 
-- [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
-- [packages/core-api/prisma/migrations/20260414123000_drop_league_membership_permissions/migration.sql](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/migrations/20260414123000_drop_league_membership_permissions/migration.sql)
-- [packages/core-api/src/modules/leagues/permissions.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/leagues/permissions.ts)
-- [packages/core-api/src/modules/leagues/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/leagues/routes.ts)
-- [packages/core-api/src/modules/contests/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/contests/routes.ts)
-- [packages/core-api/src/modules/contest-management/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/contest-management/routes.ts)
+- [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
+- [packages/core-api/prisma/migrations/20260414123000_drop_league_membership_permissions/migration.sql](../packages/core-api/prisma/migrations/20260414123000_drop_league_membership_permissions/migration.sql)
+- [packages/core-api/src/modules/leagues/permissions.ts](../packages/core-api/src/modules/leagues/permissions.ts)
+- [packages/core-api/src/modules/leagues/routes.ts](../packages/core-api/src/modules/leagues/routes.ts)
+- [packages/core-api/src/modules/contests/routes.ts](../packages/core-api/src/modules/contests/routes.ts)
+- [packages/core-api/src/modules/contest-management/routes.ts](../packages/core-api/src/modules/contest-management/routes.ts)
 
 ### Field-Level Review Table
 
@@ -167,8 +167,8 @@ Representative files:
 | Auth contract | `POST /api/v1/auth/callback` | Removed | Deferred OAuth callback surface exported as if live. |
 | Participants | type/status/form-trend/mapping-confidence/sport fields | Removed | Promoted to persistence enums where the active domain already treated them as stable closed sets. |
 | Root-admin contest surface | admin contest routes, DTOs, and service | Removed | Root-admin no longer carries a parallel contest-ops surface; commissioner paths own contest management for now. |
-| Contest persistence | multiple enum-like fields | Deferred To Feature Design | Review during [Plan 88](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/88-contest-creation-and-configuration-user-cases.md), [Plan 89](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/89-contest-entry-and-member-participation-user-cases.md), and [Plan 90](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/90-contest-lifecycle-and-scoring-propagation-user-cases.md) so active runtime values can be separated from deferred catalog debt. |
-| JSON-heavy persistence | audit snapshots, ingestion payloads, contest config blobs | Deferred To Feature Design | Audit snapshots and provider payloads are acceptable for now; contest and ingestion model review is explicitly deferred to [Plan 88](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/88-contest-creation-and-configuration-user-cases.md), [Plan 90](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/90-contest-lifecycle-and-scoring-propagation-user-cases.md), and [Plan 91](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/91-sport-data-ingestion-and-contest-update-user-cases.md). |
+| Contest persistence | multiple enum-like fields | Deferred To Feature Design | Review during [Plan 88](./88-contest-creation-and-configuration-user-cases.md), [Plan 89](./89-contest-entry-and-member-participation-user-cases.md), and [Plan 90](./90-contest-lifecycle-and-scoring-propagation-user-cases.md) so active runtime values can be separated from deferred catalog debt. |
+| JSON-heavy persistence | audit snapshots, ingestion payloads, contest config blobs | Deferred To Feature Design | Audit snapshots and provider payloads are acceptable for now; contest and ingestion model review is explicitly deferred to [Plan 88](./88-contest-creation-and-configuration-user-cases.md), [Plan 90](./90-contest-lifecycle-and-scoring-propagation-user-cases.md), and [Plan 91](./91-sport-data-ingestion-and-contest-update-user-cases.md). |
 
 ### Clear Remediation Candidates
 
@@ -179,19 +179,19 @@ support or equivalent active semantics, so they are strong candidates for
 cleanup without additional product discovery:
 
 - `League.joinPolicy`
-  - [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
+  - [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
 - `LeagueMembership.role`
-  - [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
+  - [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
 - `LeagueMembership.status`
-  - [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
+  - [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
 - `Squad.status`
-  - [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
+  - [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
 - `SquadMembership.status`
-  - [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
+  - [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
 - `LeagueInvitation.inviteType`
-  - [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
+  - [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
 - `LeagueInvitation.status`
-  - [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
+  - [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
 
 These are the best first remediation slice because:
 
@@ -206,11 +206,11 @@ Status:
 
 #### Documentation drift with stale auth placeholder language
 
-- [docs/AUTHENTICATION-AUTHORIZATION.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/docs/AUTHENTICATION-AUTHORIZATION.md)
+- [docs/AUTHENTICATION-AUTHORIZATION.md](../docs/AUTHENTICATION-AUTHORIZATION.md)
   - still describes admin auth as placeholder header-based behavior, but
-    [packages/core-api/src/modules/admin/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/routes.ts)
+    [packages/core-api/src/modules/admin/routes.ts](../packages/core-api/src/modules/admin/routes.ts)
     now registers the real
-    [packages/core-api/src/plugins/admin-auth.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/plugins/admin-auth.ts)
+    [packages/core-api/src/plugins/admin-auth.ts](../packages/core-api/src/plugins/admin-auth.ts)
     plugin
 
 This is a clear docs cleanup once the audit stabilizes.
@@ -238,11 +238,11 @@ Completed in this audit:
 
 Representative files:
 
-- [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
-- [packages/core-api/prisma/migrations/20260414130000_promote_participant_persistence_enums/migration.sql](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/migrations/20260414130000_promote_participant_persistence_enums/migration.sql)
-- [packages/core-api/src/adapters/prisma-participant-repository.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/adapters/prisma-participant-repository.ts)
-- [packages/core-api/src/adapters/prisma-participant-season-record-repository.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/adapters/prisma-participant-season-record-repository.ts)
-- [packages/core-api/src/adapters/prisma-participant-provider-mapping-repository.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/adapters/prisma-participant-provider-mapping-repository.ts)
+- [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
+- [packages/core-api/prisma/migrations/20260414130000_promote_participant_persistence_enums/migration.sql](../packages/core-api/prisma/migrations/20260414130000_promote_participant_persistence_enums/migration.sql)
+- [packages/core-api/src/adapters/prisma-participant-repository.ts](../packages/core-api/src/adapters/prisma-participant-repository.ts)
+- [packages/core-api/src/adapters/prisma-participant-season-record-repository.ts](../packages/core-api/src/adapters/prisma-participant-season-record-repository.ts)
+- [packages/core-api/src/adapters/prisma-participant-provider-mapping-repository.ts](../packages/core-api/src/adapters/prisma-participant-provider-mapping-repository.ts)
 
 ### Needs Review
 
@@ -263,13 +263,13 @@ This cleanup lane is complete for the active service stack review.
 What was intentionally deferred:
 
 - contest creation/configuration model review:
-  [Plan 88](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/88-contest-creation-and-configuration-user-cases.md)
+  [Plan 88](./88-contest-creation-and-configuration-user-cases.md)
 - contest entry/member participation model review:
-  [Plan 89](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/89-contest-entry-and-member-participation-user-cases.md)
+  [Plan 89](./89-contest-entry-and-member-participation-user-cases.md)
 - contest lifecycle and scoring propagation model review:
-  [Plan 90](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/90-contest-lifecycle-and-scoring-propagation-user-cases.md)
+  [Plan 90](./90-contest-lifecycle-and-scoring-propagation-user-cases.md)
 - sport-data ingestion and contest-update model review:
-  [Plan 91](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/91-sport-data-ingestion-and-contest-update-user-cases.md)
+  [Plan 91](./91-sport-data-ingestion-and-contest-update-user-cases.md)
 
 This plan should not be reopened for those deferred contest/ingestion questions.
 Those reviews now belong to the future feature plans above.
@@ -284,9 +284,9 @@ strings:
 
 Representative files:
 
-- [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
-- [packages/shared/domain/enums.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/domain/enums.ts)
-- [packages/shared/dto/contest-management.dto.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/dto/contest-management.dto.ts)
+- [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
+- [packages/shared/domain/enums.ts](../packages/shared/domain/enums.ts)
+- [packages/shared/dto/contest-management.dto.ts](../packages/shared/dto/contest-management.dto.ts)
 
 Needs review because some value catalogs are intentionally broader than the
 active v1 runtime, so a persistence-enum pass could accidentally freeze in
@@ -308,8 +308,8 @@ Current JSON-heavy areas include:
 
 Representative files:
 
-- [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
-- [packages/shared/domain/types.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/domain/types.ts)
+- [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
+- [packages/shared/domain/types.ts](../packages/shared/domain/types.ts)
 
 Some of these are honest flexible payloads; others may be candidates for
 future normalization. This needs a narrower review so we do not convert useful
@@ -317,8 +317,8 @@ extensibility into premature schema churn.
 
 #### Auth placeholder routes
 
-- [packages/core-api/src/modules/auth/routes.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/routes.ts)
-- [packages/core-api/src/modules/auth/handler.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/auth/handler.ts)
+- [packages/core-api/src/modules/auth/routes.ts](../packages/core-api/src/modules/auth/routes.ts)
+- [packages/core-api/src/modules/auth/handler.ts](../packages/core-api/src/modules/auth/handler.ts)
 
 `forgot-password` and OAuth callback remain intentionally placeholder/deferred.
 Needs review on whether to:
@@ -329,8 +329,8 @@ Needs review on whether to:
 
 #### Root-admin user detail still exposes placeholder-backed fields
 
-- [packages/shared/dto/admin.dto.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/dto/admin.dto.ts)
-- [packages/core-api/src/modules/admin/user-service.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/user-service.ts)
+- [packages/shared/dto/admin.dto.ts](../packages/shared/dto/admin.dto.ts)
+- [packages/core-api/src/modules/admin/user-service.ts](../packages/core-api/src/modules/admin/user-service.ts)
 
 The active user-detail surface still includes:
 
@@ -343,8 +343,8 @@ either implemented properly or removed from the active contract.
 
 #### Closed-set list persistence needs a convention decision
 
-- [packages/core-api/prisma/schema.prisma](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/prisma/schema.prisma)
-- [packages/shared/domain/types.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/domain/types.ts)
+- [packages/core-api/prisma/schema.prisma](../packages/core-api/prisma/schema.prisma)
+- [packages/shared/domain/types.ts](../packages/shared/domain/types.ts)
 
 `LeagueMembership.permissions` is a closed commissioner-permission set stored
 as JSON. This needs an explicit convention decision:
@@ -355,9 +355,9 @@ as JSON. This needs an explicit convention decision:
 
 #### Provider-ingestion status mismatch
 
-- [packages/shared/dto/ingestion.dto.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/dto/ingestion.dto.ts)
-- [packages/shared/dto/admin.dto.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/shared/dto/admin.dto.ts)
-- [packages/core-api/src/modules/admin/provider-service.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/admin/provider-service.ts)
+- [packages/shared/dto/ingestion.dto.ts](../packages/shared/dto/ingestion.dto.ts)
+- [packages/shared/dto/admin.dto.ts](../packages/shared/dto/admin.dto.ts)
+- [packages/core-api/src/modules/admin/provider-service.ts](../packages/core-api/src/modules/admin/provider-service.ts)
 
 The ingestion module uses `PENDING`, while the admin provider/dashboard surface
 still advertises and queries `QUEUED`. This is an active contract mismatch that
@@ -365,9 +365,9 @@ needs review before changing.
 
 #### Deferred UI affordances
 
-- [clients/poolmaster/src/features/leagues/leagues-page.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/features/leagues/leagues-page.tsx)
-- [clients/poolmaster/src/features/leagues/league-detail-page.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/features/leagues/league-detail-page.tsx)
-- [clients/poolmaster/src/routes/index.tsx](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/clients/poolmaster/src/routes/index.tsx)
+- [clients/poolmaster/src/features/leagues/leagues-page.tsx](../clients/poolmaster/src/features/leagues/leagues-page.tsx)
+- [clients/poolmaster/src/features/leagues/league-detail-page.tsx](../clients/poolmaster/src/features/leagues/league-detail-page.tsx)
+- [clients/poolmaster/src/routes/index.tsx](../clients/poolmaster/src/routes/index.tsx)
 
 Current UI still includes:
 
@@ -380,7 +380,7 @@ either expanded or pruned over time.
 
 ### Additional Notes
 
-- [packages/core-api/src/modules/leagues/invitation-service.ts](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/packages/core-api/src/modules/leagues/invitation-service.ts)
+- [packages/core-api/src/modules/leagues/invitation-service.ts](../packages/core-api/src/modules/leagues/invitation-service.ts)
   still contains an explicit simplification note about not resolving existing
   member emails during invite skipping. This is real service debt and should be
   cleaned when member directory/user lookup is revisited.

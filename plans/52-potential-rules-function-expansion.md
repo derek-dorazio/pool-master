@@ -7,7 +7,7 @@ may be valuable after Plan 51 proves out the scoring architecture.
 
 This plan is intentionally a later-review catalog. It should not expand the
 first-pass launch scope established in
-[plans/51-scoring-and-participant-data-review.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/51-scoring-and-participant-data-review.md).
+[plans/51-scoring-and-participant-data-review.md](./51-scoring-and-participant-data-review.md).
 
 Plan 51 launch scope remains:
 

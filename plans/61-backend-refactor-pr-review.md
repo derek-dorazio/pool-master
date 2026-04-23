@@ -145,12 +145,12 @@ If reviewing the branch manually, prioritize:
 
 ## Suggested Companion Files For Review
 
-- [37-league-top-level-domain-and-data-simplification.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/37-league-top-level-domain-and-data-simplification.md)
-- [38-contest-entry-and-squad-alignment-review.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/38-contest-entry-and-squad-alignment-review.md)
-- [38-contest-entry-and-squad-alignment-review-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/38-contest-entry-and-squad-alignment-review-user-cases.md)
-- [39-sport-event-import-and-status-propagation-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/39-sport-event-import-and-status-propagation-user-cases.md)
-- [41-contest-history-user-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/41-contest-history-user-cases.md)
-- [42-history-simplification.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/42-history-simplification.md)
-- [51-scoring-and-participant-data-review.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/51-scoring-and-participant-data-review.md)
-- [53-commissioner-tools-contest-management-use-cases.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/53-commissioner-tools-contest-management-use-cases.md)
-- [59-backend-refactor-worker-slices.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/59-backend-refactor-worker-slices.md)
+- [37-league-top-level-domain-and-data-simplification.md](./37-league-top-level-domain-and-data-simplification.md)
+- [38-contest-entry-and-squad-alignment-review.md](./38-contest-entry-and-squad-alignment-review.md)
+- [38-contest-entry-and-squad-alignment-review-user-cases.md](./38-contest-entry-and-squad-alignment-review-user-cases.md)
+- [39-sport-event-import-and-status-propagation-user-cases.md](./39-sport-event-import-and-status-propagation-user-cases.md)
+- [41-contest-history-user-cases.md](./41-contest-history-user-cases.md)
+- [42-history-simplification.md](./42-history-simplification.md)
+- [51-scoring-and-participant-data-review.md](./51-scoring-and-participant-data-review.md)
+- [53-commissioner-tools-contest-management-use-cases.md](./53-commissioner-tools-contest-management-use-cases.md)
+- [59-backend-refactor-worker-slices.md](./59-backend-refactor-worker-slices.md)

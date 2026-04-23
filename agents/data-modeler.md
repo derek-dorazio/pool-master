@@ -28,7 +28,7 @@ implementation continues.
 - call out contract-cleanup or documentation-cleanup debt explicitly when the
   feature review surfaces stale backend signals
 - check
-  [domain-model-conventions-rules.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/rules/domain-model-conventions-rules.md)
+  [domain-model-conventions-rules.md](../rules/domain-model-conventions-rules.md)
   before proposing schema or entity changes
 - verify proposed model changes against those conventions before asking the
   human reviewer for approval

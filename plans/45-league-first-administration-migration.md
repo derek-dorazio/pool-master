@@ -11,9 +11,9 @@ and toward a league-first administration model where:
 
 This plan should stay aligned with:
 
-- [Plan 37](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/37-league-top-level-domain-and-data-simplification.md)
-- [Plan 36](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/36-authentication-and-authorization-unification.md)
-- [Plan 44 Companion: League-First Commissioner Administration User Cases](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/44-league-first-commissioner-administration-user-cases.md)
+- [Plan 37](./37-league-top-level-domain-and-data-simplification.md)
+- [Plan 36](./36-authentication-and-authorization-unification.md)
+- [Plan 44 Companion: League-First Commissioner Administration User Cases](./44-league-first-commissioner-administration-user-cases.md)
 
 ## Recommended Direction
 

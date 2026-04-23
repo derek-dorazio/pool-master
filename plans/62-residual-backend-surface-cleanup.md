@@ -89,7 +89,7 @@ The active backend still includes:
 
 This conflicts with the direction in:
 
-- [Plan 48](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/48-social-and-notification-simplification.md)
+- [Plan 48](./48-social-and-notification-simplification.md)
 
 which says first pass should be a simplified in-app feed model.
 

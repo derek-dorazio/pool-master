@@ -185,11 +185,11 @@ journey:
   - enforcement that the last commissioner cannot leave until another
     commissioner exists
 - That follow-on work is now tracked separately in
-  [Plan 92](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/92-league-management-details-and-identity-execution.md)
+  [Plan 92](./92-league-management-details-and-identity-execution.md)
   so lifecycle cleanup does not need to be rediscovered as league-management
   feature work continues.
 - Commissioner role-management and handoff work is further tracked in
-  [Plan 96](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/96-league-member-role-management-and-commissioner-handoff.md).
+  [Plan 96](./96-league-member-role-management-and-commissioner-handoff.md).
 
 ## Open Questions
 

@@ -6,9 +6,9 @@ Simplify PoolMaster's history model so that first-pass history is derived from
 the core contest model instead of relying on a separate archival subsystem.
 
 This plan follows the contest-entry, squad, roster, and prize simplification
-decisions in [Plan 38](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/38-contest-entry-and-squad-alignment-review.md)
+decisions in [Plan 38](./38-contest-entry-and-squad-alignment-review.md)
 and the product definition captured in
-[Plan 41 Companion: Contest History User Cases](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/41-contest-history-user-cases.md).
+[Plan 41 Companion: Contest History User Cases](./41-contest-history-user-cases.md).
 
 ## First-Pass History Definition
 

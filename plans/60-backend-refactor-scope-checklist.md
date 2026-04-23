@@ -135,7 +135,7 @@ These were intentionally left out of the active first-pass backend implementatio
 ### Scoring Expansion
 
 - additional participant scoring rules listed in:
-  - [52-potential-rules-function-expansion.md](/Users/DDorazio/Library/CloudStorage/OneDrive-CURRICULUMASSOCIATESLLC/Documents/Claude/pool-master/plans/52-potential-rules-function-expansion.md)
+  - [52-potential-rules-function-expansion.md](./52-potential-rules-function-expansion.md)
 - broader prize-definition expansion beyond the current launch-support path
 - provider-specific recompute-vs-delta strategy decisions pending deeper feed implementation review
 
