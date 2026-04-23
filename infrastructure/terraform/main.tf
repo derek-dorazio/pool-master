@@ -282,9 +282,10 @@ resource "aws_ecr_lifecycle_policy" "cleanup" {
         rulePriority = 2
         description  = "Keep last 10 tagged images"
         selection = {
-          tagStatus   = "tagged"
-          countType   = "imageCountMoreThan"
-          countNumber = 10
+          tagStatus      = "tagged"
+          tagPatternList = ["*"]
+          countType      = "imageCountMoreThan"
+          countNumber    = 10
         }
         action = { type = "expire" }
       }

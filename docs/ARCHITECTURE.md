@@ -299,7 +299,7 @@ Push to main
 | Decision | Rationale |
 |----------|-----------|
 | **Modular monolith** (not microservices) | All modules share one DB and one in-process event bus. No network boundaries needed. Single Docker image eliminates workspace resolution issues. |
-| **In-process EventBus** (not Redis Streams) | All publishers and subscribers run in the same process. External queue infrastructure can be added later only when scale or deployment topology requires it. |
+| **In-process EventBus** (no external queue/cache) | All publishers and subscribers run in the same process. PoolMaster does not currently depend on Redis or other external queue infrastructure. That can be added later only when scale or deployment topology truly requires it. |
 | **S3 + CloudFront** (not Docker/nginx for frontends) | Static React SPAs don't need a server. CloudFront is cheaper, faster (global CDN), and simpler to deploy. |
 | **Hexagonal architecture** | Repository port interfaces allow swapping Prisma for any adapter. Tests can use in-memory implementations. |
 | **Explicit scoring rules** | Scoring is driven by code-owned rule registries plus contest-owned configured rules. Adding a new sport or rule means adding tested code and configuration support, not preserving a broad template abstraction. |
