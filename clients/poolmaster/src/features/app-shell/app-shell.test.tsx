@@ -54,10 +54,21 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 vi.mock('@/features/account/account-menu', () => ({
-  AccountMenu: ({ onLogout, userName }: { onLogout: () => Promise<void>; userName: string }) => (
-    <button data-testid="mock-account-menu-logout" onClick={() => void onLogout()} type="button">
-      Logout {userName}
-    </button>
+  AccountMenu: ({
+    onLogout,
+    userName,
+    isRootAdmin,
+  }: {
+    onLogout: () => Promise<void>;
+    userName: string;
+    isRootAdmin?: boolean;
+  }) => (
+    <>
+      <div data-testid="mock-account-menu-is-root-admin">{isRootAdmin ? 'true' : 'false'}</div>
+      <button data-testid="mock-account-menu-logout" onClick={() => void onLogout()} type="button">
+        Logout {userName}
+      </button>
+    </>
   ),
 }));
 
@@ -191,6 +202,28 @@ describe('AppShell', () => {
         expect.any(String),
       ),
     );
+  });
+
+  it('forwards isRootAdmin from auth into the account menu', async () => {
+    clearSessionMock.mockResolvedValue(undefined);
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [] } });
+    authState.isRootAdmin = true;
+
+    renderAppShell();
+
+    await screen.findByTestId('mock-outlet');
+    expect(await screen.findByTestId('mock-account-menu-is-root-admin')).toHaveTextContent('true');
+  });
+
+  it('forwards a false isRootAdmin for regular members', async () => {
+    clearSessionMock.mockResolvedValue(undefined);
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [] } });
+    authState.isRootAdmin = false;
+
+    renderAppShell();
+
+    await screen.findByTestId('mock-outlet');
+    expect(await screen.findByTestId('mock-account-menu-is-root-admin')).toHaveTextContent('false');
   });
 
   it('logs logout completion when the app-shell logout action succeeds', async () => {

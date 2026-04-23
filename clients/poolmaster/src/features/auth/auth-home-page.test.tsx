@@ -103,6 +103,7 @@ function renderAuthHomePage(
         <Routes>
           <Route element={<AuthHomePage />} path="/" />
           <Route element={<div data-testid="welcome-destination" />} path="/welcome" />
+          <Route element={<div data-testid="manage-destination" />} path="/manage" />
           <Route element={<div data-testid="invite-destination" />} path="/invite/:inviteCode" />
         </Routes>
       </MemoryRouter>
@@ -151,6 +152,73 @@ describe('AuthHomePage', () => {
         data: expect.objectContaining({
           destination: '/welcome',
           userId: 'user-1',
+        }),
+      }),
+      expect.any(String),
+    );
+  });
+
+  it('redirects root admins to /manage after login when there is no explicit destination', async () => {
+    loginUserMock.mockResolvedValue({
+      data: {
+        user: createUser({ isRootAdmin: true }),
+      },
+    });
+
+    renderAuthHomePage();
+
+    fireEvent.change(screen.getByTestId('auth-login-identifier'), {
+      target: { value: 'derek@example.com' },
+    });
+    fireEvent.change(screen.getByTestId('auth-login-password'), {
+      target: { value: 'password123' },
+    });
+    fireEvent.click(screen.getByTestId('auth-login-submit'));
+
+    await screen.findByTestId('manage-destination');
+
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'auth.login.succeeded',
+        data: expect.objectContaining({
+          destination: '/manage',
+          isRootAdmin: true,
+        }),
+      }),
+      expect.any(String),
+    );
+  });
+
+  it('still honors an explicit routeState.from for a root admin after login', async () => {
+    loginUserMock.mockResolvedValue({
+      data: {
+        user: createUser({ isRootAdmin: true }),
+      },
+    });
+
+    renderAuthHomePage({
+      pathname: '/',
+      state: {
+        from: '/invite/LEAGUE123',
+      },
+    });
+
+    fireEvent.change(screen.getByTestId('auth-login-identifier'), {
+      target: { value: 'derek@example.com' },
+    });
+    fireEvent.change(screen.getByTestId('auth-login-password'), {
+      target: { value: 'password123' },
+    });
+    fireEvent.click(screen.getByTestId('auth-login-submit'));
+
+    await screen.findByTestId('invite-destination');
+
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'auth.login.succeeded',
+        data: expect.objectContaining({
+          destination: '/invite/LEAGUE123',
+          isRootAdmin: true,
         }),
       }),
       expect.any(String),

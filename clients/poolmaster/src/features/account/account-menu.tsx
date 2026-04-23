@@ -4,9 +4,10 @@ import { Link } from 'react-router-dom';
 type AccountMenuProps = {
   userName: string;
   onLogout: () => void | Promise<void>;
+  isRootAdmin?: boolean;
 };
 
-export function AccountMenu({ userName, onLogout }: AccountMenuProps) {
+export function AccountMenu({ userName, onLogout, isRootAdmin = false }: AccountMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -33,6 +34,16 @@ export function AccountMenu({ userName, onLogout }: AccountMenuProps) {
           </div>
 
           <nav aria-label="User menu" className="mt-3 space-y-2">
+            {isRootAdmin ? (
+              <Link
+                className="block rounded-[1.25rem] border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+                data-testid="account-menu-manage"
+                onClick={() => setIsOpen(false)}
+                to="/manage"
+              >
+                Manage
+              </Link>
+            ) : null}
             <Link
               className="block rounded-[1.25rem] border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
               data-testid="account-menu-profile"

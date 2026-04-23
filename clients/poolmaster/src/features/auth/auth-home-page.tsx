@@ -56,6 +56,23 @@ function parseTeamInviteCode(path: string | undefined) {
   return match?.[1] ?? null;
 }
 
+type PostAuthUser = {
+  isRootAdmin?: boolean | null;
+};
+
+export function resolvePostAuthDestination(
+  user: PostAuthUser,
+  routeState: { from?: string },
+): string {
+  if (routeState.from) {
+    return routeState.from;
+  }
+  if (user.isRootAdmin) {
+    return '/manage';
+  }
+  return '/welcome';
+}
+
 function extractErrorMessage(error: unknown): string {
   if (!error || typeof error !== 'object') {
     return 'Something went wrong. Please try again.';
@@ -210,18 +227,20 @@ export function AuthHomePage() {
       }
 
       setSession(response.data.user);
+      const loginDestination = resolvePostAuthDestination(response.data.user, routeState);
       logger.info(
         {
           action: 'auth.login.succeeded',
           data: {
-            destination,
+            destination: loginDestination,
             userId: response.data.user.id,
+            isRootAdmin: response.data.user.isRootAdmin,
             hasInvitation: Boolean(inviteCode || teamInviteCode),
           },
         },
         'Completed login flow',
       );
-      navigate(destination, { replace: true });
+      navigate(loginDestination, { replace: true });
     } catch (error) {
       const logPayload = {
         action: 'auth.login.failed',
@@ -270,18 +289,20 @@ export function AuthHomePage() {
       }
 
       setSession(response.data.user);
+      const registerDestination = resolvePostAuthDestination(response.data.user, routeState);
       logger.info(
         {
           action: 'auth.register.succeeded',
           data: {
-            destination,
+            destination: registerDestination,
             userId: response.data.user.id,
+            isRootAdmin: response.data.user.isRootAdmin,
             hasInvitation: Boolean(inviteCode || teamInviteCode),
           },
         },
         'Completed registration flow',
       );
-      navigate(destination, { replace: true });
+      navigate(registerDestination, { replace: true });
     } catch (error) {
       const logPayload = {
         action: 'auth.register.failed',
@@ -302,7 +323,7 @@ export function AuthHomePage() {
   }
 
   if (user) {
-    return <Navigate replace to={destination} />;
+    return <Navigate replace to={resolvePostAuthDestination(user, routeState)} />;
   }
 
   return (

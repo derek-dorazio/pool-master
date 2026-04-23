@@ -162,6 +162,7 @@ export function AppShell() {
                   Help
                 </button>
                 <AccountMenu
+                  isRootAdmin={auth.isRootAdmin}
                   userName={formatUserName(auth.user?.firstName, auth.user?.lastName)}
                   onLogout={async () => {
                     logger.info(
