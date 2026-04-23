@@ -8,6 +8,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import {
+  buildContestEligibleEventTiming,
   buildCreateLeaguePayload,
   cleanupTestData,
   createTestUser,
@@ -32,8 +33,11 @@ describe('RosterPick CRUD integration', () => {
   let contestId: string;
   let entryId: string;
   let sportEventParticipantId: string;
+  let entryLocksAt: string;
 
   beforeAll(async () => {
+    const eventTiming = buildContestEligibleEventTiming();
+    entryLocksAt = eventTiming.entryLocksAt.toISOString();
     const owner = await createTestUser({ displayName: 'Roster Pick CRUD Owner' });
     ownerHeaders = owner.headers;
 
@@ -74,9 +78,9 @@ describe('RosterPick CRUD integration', () => {
         providerId: 'integration-test',
         sport: Sport.GOLF,
         name: 'Roster Pick CRUD Event',
-        startDate: new Date('2026-04-10T12:00:00.000Z'),
-        releaseAt: new Date('2026-04-10T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-04-10T12:00:00.000Z'),
+        startDate: eventTiming.startDate,
+        releaseAt: eventTiming.releaseAt,
+        fieldLocksAt: eventTiming.fieldLocksAt,
         status: 'SCHEDULED',
       },
     });
@@ -100,7 +104,7 @@ describe('RosterPick CRUD integration', () => {
         contestType: 'SINGLE_EVENT',
         configuration: {
           mode: 'GOLF_TIERED',
-          locksAt: '2026-04-10T11:30:00.000Z',
+          locksAt: entryLocksAt,
           maxEntriesPerSquad: 1,
           rosterSize: 1,
           countedScores: 1,

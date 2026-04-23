@@ -1,4 +1,5 @@
 import {
+  buildContestEligibleEventTiming,
   buildCreateLeaguePayload,
   cleanupTestData,
   createTestUser,
@@ -26,8 +27,11 @@ describe('Contest management integration', () => {
   let contestId: string;
   let topParticipantId: string;
   let secondParticipantId: string;
+  let entryLocksAt: string;
 
   beforeAll(async () => {
+    const eventTiming = buildContestEligibleEventTiming();
+    entryLocksAt = eventTiming.entryLocksAt.toISOString();
     const owner = await createTestUser({
       displayName: 'Contest Management Owner',
     });
@@ -77,9 +81,9 @@ describe('Contest management integration', () => {
         providerId: 'PGA',
         sport: Sport.GOLF,
         name: 'Masters Tournament 2026',
-        startDate: new Date('2026-04-10T12:00:00.000Z'),
-        releaseAt: new Date('2026-04-10T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-04-10T12:00:00.000Z'),
+        startDate: eventTiming.startDate,
+        releaseAt: eventTiming.releaseAt,
+        fieldLocksAt: eventTiming.fieldLocksAt,
         status: 'SCHEDULED',
       },
     });
@@ -108,7 +112,7 @@ describe('Contest management integration', () => {
           externalId: `top-${randomUUID().slice(0, 8)}`,
           rawPayload: { metadata: { odds: 8.5, ranking: 1 } },
           normalizedData: { odds: 8.5, ranking: 1 },
-          receivedAt: new Date('2026-04-08T10:00:00.000Z'),
+          receivedAt: eventTiming.sourceReceivedAt,
         },
         {
           sportEventParticipantId: secondEventParticipant.id,
@@ -116,7 +120,7 @@ describe('Contest management integration', () => {
           externalId: `second-${randomUUID().slice(0, 8)}`,
           rawPayload: { metadata: { odds: 15.2, ranking: 8 } },
           normalizedData: { odds: 15.2, ranking: 8 },
-          receivedAt: new Date('2026-04-08T10:00:00.000Z'),
+          receivedAt: eventTiming.sourceReceivedAt,
         },
       ],
     });
@@ -133,7 +137,7 @@ describe('Contest management integration', () => {
         contestType: 'SINGLE_EVENT',
         configuration: {
           mode: 'GOLF_TIERED',
-          locksAt: '2026-04-10T11:30:00.000Z',
+          locksAt: entryLocksAt,
           maxEntriesPerSquad: 3,
           rosterSize: 6,
           countedScores: 4,
@@ -226,7 +230,7 @@ describe('Contest management integration', () => {
       headers: ownerHeaders,
       payload: {
         mode: 'GOLF_CATEGORY_PICKS',
-        locksAt: '2026-04-10T11:45:00.000Z',
+        locksAt: entryLocksAt,
         maxEntriesPerSquad: null,
         categories: [
           {

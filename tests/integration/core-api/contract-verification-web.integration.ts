@@ -1,4 +1,5 @@
 import {
+  buildContestEligibleEventTiming,
   buildCreateLeaguePayload,
   cleanupTestData,
   createTestUser,
@@ -421,6 +422,7 @@ describe('Contract verification (web)', () => {
   });
 
   it('contest management routes match their template-first response DTOs', async () => {
+    const eventTiming = buildContestEligibleEventTiming();
     const owner = await createTestUser({ displayName: 'Contract Contest Owner' });
 
     const leagueRes = await getApp().inject({
@@ -430,6 +432,30 @@ describe('Contract verification (web)', () => {
       payload: buildCreateLeaguePayload('Contract Contest League'),
     });
     const leagueId = leagueRes.json().league.id as string;
+    await getPrisma().sport.upsert({
+      where: {
+        name: Sport.GOLF,
+      },
+      update: {},
+      create: {
+        name: Sport.GOLF,
+        participantType: 'INDIVIDUAL',
+        statSchema: {},
+      },
+    });
+
+    const participant = await getPrisma().participant.create({
+      data: {
+        name: `Tiger Contract Contest ${randomUUID().slice(0, 8)}`,
+        participantType: 'INDIVIDUAL',
+        status: 'ACTIVE',
+        sport: {
+          connect: {
+            name: Sport.GOLF,
+          },
+        },
+      },
+    });
 
     const sportEvent = await getPrisma().sportEvent.create({
       data: {
@@ -437,10 +463,17 @@ describe('Contract verification (web)', () => {
         providerId: 'integration-test',
         sport: Sport.GOLF,
         name: 'Contract Event',
-        startDate: new Date('2026-04-12T12:00:00.000Z'),
-        releaseAt: new Date('2026-04-12T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-04-12T12:00:00.000Z'),
+        startDate: eventTiming.startDate,
+        releaseAt: eventTiming.releaseAt,
+        fieldLocksAt: eventTiming.fieldLocksAt,
         status: 'SCHEDULED',
+      },
+    });
+    await getPrisma().sportEventParticipant.create({
+      data: {
+        sportEventId: sportEvent.id,
+        participantId: participant.id,
+        status: 'ACTIVE',
       },
     });
 
