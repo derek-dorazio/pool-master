@@ -131,9 +131,7 @@ describe('RootAdminManageLeaguesPage', () => {
 
     await waitFor(() =>
       expect(adminListLeaguesMock).toHaveBeenLastCalledWith({
-        query: {
-          limit: 25,
-        },
+        query: {},
       }),
     );
 
@@ -144,7 +142,6 @@ describe('RootAdminManageLeaguesPage', () => {
       expect(adminListLeaguesMock).toHaveBeenLastCalledWith({
         query: {
           search: 'Archive',
-          limit: 25,
         },
       }),
     );

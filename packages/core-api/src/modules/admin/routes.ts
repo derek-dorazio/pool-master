@@ -12,6 +12,8 @@ import { UserService } from './user-service';
 import { createUserHandlers } from './user-handler';
 import { AdminLeagueService } from './league-service';
 import { createLeagueAdminHandlers } from './league-handler';
+import { AdminTeamService } from './team-service';
+import { createTeamAdminHandlers } from './team-handler';
 import { HealthService } from './health-service';
 import { createHealthHandlers } from './health-handler';
 import { ProviderService } from './provider-service';
@@ -25,6 +27,8 @@ import { createContestTemplateAdminHandlers } from './contest-template-handler';
 import { auditRoutes } from './audit-routes';
 import {
   AdminListLeaguesQuerySchema,
+  AdminListTeamsQuerySchema,
+  AdminTeamListResponseSchema,
   AdminDeleteUserRequestSchema,
   AdminResetUserPasswordRequestSchema,
   AdminResetUserPasswordResponseSchema,
@@ -124,6 +128,7 @@ export async function adminModule(
     fastify.log,
   );
   const adminLeagueService = new AdminLeagueService(prisma, leagueService, fastify.log);
+  const adminTeamService = new AdminTeamService(prisma, fastify.log);
   const healthService = new HealthService(prisma, fastify.log);
   const providerService = opts.providerService ?? new ProviderService(prisma, opts.providerRegistry, undefined, fastify.log);
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
@@ -137,6 +142,7 @@ export async function adminModule(
   // --- Handlers ---
   const user = createUserHandlers(userService);
   const leagues = createLeagueAdminHandlers(adminLeagueService);
+  const teams = createTeamAdminHandlers(adminTeamService);
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService);
   const contestTemplates = createContestTemplateAdminHandlers(contestTemplateAdminService);
@@ -260,6 +266,18 @@ export async function adminModule(
       response: withAdminErrorResponses({ 200: zodToJsonSchema(LeagueListResponseSchema) }),
     },
     handler: leagues.listLeagues,
+  });
+
+  fastify.get('/teams', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List teams for root-admin management',
+      description: 'Returns cross-league root-admin team search results with optional team-name, league-code, and active filters for manage-page operations.',
+      operationId: 'adminListTeams',
+      querystring: zodToJsonSchema(AdminListTeamsQuerySchema),
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(AdminTeamListResponseSchema) }),
+    },
+    handler: teams.listTeams,
   });
 
   fastify.post('/leagues/:leagueId/inactivate', {

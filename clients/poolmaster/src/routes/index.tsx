@@ -19,8 +19,8 @@ import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin
 import { RootAdminManageHubPage } from '@/features/root-admin/root-admin-manage-hub-page';
 import { RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
 import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-manage-leagues-page';
+import { RootAdminManageTeamsPage } from '@/features/root-admin/root-admin-manage-teams-page';
 import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manage-users-page';
-import { RootAdminManageScaffoldPage } from '@/features/root-admin/root-admin-manage-scaffold-page';
 import { RootAdminPollIntervalsPage } from '@/features/root-admin/root-admin-poll-intervals-page';
 import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
 import { RootAdminRunSportSyncPage } from '@/features/root-admin/root-admin-run-sport-sync-page';
@@ -166,7 +166,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: 'teams',
-                element: <RootAdminManageScaffoldPage sectionKey="teams" />,
+                element: <RootAdminManageTeamsPage />,
               },
               {
                 path: 'users',

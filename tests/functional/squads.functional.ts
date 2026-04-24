@@ -69,7 +69,7 @@ describe('SDK Functional: Squads', () => {
 
     expect(commissionerTeam).toBeDefined();
     expect(commissionerTeam?.leagueId).toBe(league.id);
-    expect(commissionerTeam?.status).toBe('ACTIVE');
+    expect(commissionerTeam?.isActive).toBe(true);
     expect(commissionerTeam?.memberCount).toBe(1);
     expect(commissionerTeam?.teamRelationship).toEqual({
       leagueMember: true,
@@ -82,7 +82,7 @@ describe('SDK Functional: Squads', () => {
       where: {
         leagueId: league.id,
         createdBy: invitee.userId,
-        status: 'ACTIVE',
+        isActive: true,
       },
       include: {
         memberships: {
@@ -95,7 +95,7 @@ describe('SDK Functional: Squads', () => {
 
     expect(inviteeTeam).toBeDefined();
     expect(inviteeTeam?.leagueId).toBe(league.id);
-    expect(inviteeTeam?.status).toBe('ACTIVE');
+    expect(inviteeTeam?.isActive).toBe(true);
     expect(inviteeTeam?.memberships).toHaveLength(1);
 
     const duplicateCreateResponse = await createLeagueSquad({

@@ -29,10 +29,10 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     key: 'teams',
     title: 'Teams',
     description:
-      'Cross-league team admin search is waiting on the backend contract, so this section is staged but not yet operational.',
+      'Search teams across leagues, then open canonical Team Home for owner and lifecycle actions.',
     to: '/manage/teams',
-    availability: 'blocked',
-    availabilityLabel: 'Blocked by backend',
+    availability: 'live',
+    availabilityLabel: 'Live now',
   },
   {
     key: 'users',

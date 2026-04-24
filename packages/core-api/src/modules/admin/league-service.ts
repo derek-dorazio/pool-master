@@ -14,7 +14,6 @@ import { toLeagueDetailDto, toLeagueSummaryDto } from '../../mappers/leagues.map
 import { logAdminAction } from './admin-audit-service';
 import { LeagueNotFoundError, LeagueOperationError, LeagueService } from '../leagues/service';
 
-const DEFAULT_LIMIT = 25;
 const ACTIVE_LEAGUE_CONTEST_STATUSES = [
   ContestStatus.DRAFT,
   ContestStatus.OPEN,
@@ -25,7 +24,7 @@ const ACTIVE_LEAGUE_CONTEST_STATUSES = [
 
 interface AdminLeagueSearchQuery {
   search?: string;
-  limit?: number;
+  isActive?: boolean;
 }
 
 interface LeagueSummaryRow {
@@ -51,30 +50,31 @@ export class AdminLeagueService {
 
   async searchLeagues(query: AdminLeagueSearchQuery): Promise<LeagueSummaryDto[]> {
     const trimmedSearch = query.search?.trim();
-    const limit = query.limit ?? DEFAULT_LIMIT;
 
     this.logger?.debug({
       action: 'adminLeagueService.search.start',
       data: {
         hasSearch: Boolean(trimmedSearch),
-        limit,
+        isActive: query.isActive ?? null,
       },
     }, 'Searching leagues for root-admin management');
 
     const rows = await this.prisma.league.findMany({
-      where: trimmedSearch
-        ? {
+      where: {
+        ...(trimmedSearch
+          ? {
             name: {
               contains: trimmedSearch,
               mode: 'insensitive',
             },
           }
-        : undefined,
+          : {}),
+        ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
+      },
       orderBy: [
         { updatedAt: 'desc' },
         { createdAt: 'desc' },
       ],
-      take: limit,
       select: {
         id: true,
         leagueCode: true,
@@ -136,7 +136,7 @@ export class AdminLeagueService {
       data: {
         hasSearch: Boolean(trimmedSearch),
         returnedCount: leagues.length,
-        limit,
+        isActive: query.isActive ?? null,
       },
     }, 'Loaded leagues for root-admin management');
 

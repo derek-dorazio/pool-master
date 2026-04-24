@@ -35,7 +35,7 @@ export function toSquadDto(
     createdBy: squad.createdBy,
     name: squad.name,
     iconKey: squad.iconKey,
-    status: squad.status,
+    isActive: squad.isActive,
     memberCount,
     createdAt: squad.createdAt.toISOString(),
     updatedAt: squad.updatedAt.toISOString(),

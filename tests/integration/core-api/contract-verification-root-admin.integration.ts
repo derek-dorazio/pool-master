@@ -8,6 +8,7 @@ import {
   IngestionScheduleConfigSchema,
   IngestionProvidersResponseSchema,
   IngestSportOddsResponseSchema,
+  AdminTeamListResponseSchema,
   LeagueListResponseSchema,
   LeagueResponseSchema,
   PollIntervalConfigSchema,
@@ -636,6 +637,62 @@ describe('Contract verification (root admin)', () => {
     expect(deleteRes.statusCode).toBe(200);
     expect(deleteRes.json().success).toBe(true);
     expect(await getPrisma().league.findUnique({ where: { id: league.id } })).toBeNull();
+  });
+
+  it('root-admin team search routes match their DTOs on happy paths', async () => {
+    const rootAdmin = await createTestUser({
+      displayName: 'Root Admin Team Contract User',
+      isRootAdmin: true,
+    });
+    const commissioner = await createTestUser({
+      displayName: 'Root Admin Team Commissioner',
+    });
+
+    const league = await getPrisma().league.create({
+      data: {
+        leagueCode: 'ADMINTEAM1',
+        name: 'Root Admin Team Contract League',
+        description: 'Managed through contract verification.',
+        createdBy: commissioner.user.id,
+        isActive: true,
+        iconKey: 'TROPHY',
+        joinPolicy: 'COMMISSIONER_ONLY',
+      },
+    });
+    await getPrisma().leagueMembership.create({
+      data: {
+        leagueId: league.id,
+        userId: commissioner.user.id,
+        role: 'COMMISSIONER',
+        status: 'ACTIVE',
+      },
+    });
+    const squad = await getPrisma().squad.create({
+      data: {
+        leagueId: league.id,
+        createdBy: commissioner.user.id,
+        name: 'Contract Tigers',
+        iconKey: 'CAPTAIN_SMILE_FIELD',
+        isActive: true,
+      },
+    });
+    await getPrisma().squadMembership.create({
+      data: {
+        squadId: squad.id,
+        leagueId: league.id,
+        userId: commissioner.user.id,
+        status: 'ACTIVE',
+      },
+    });
+
+    const listRes = await getApp().inject({
+      method: 'GET',
+      url: `/api/v1/admin/teams?search=Contract&leagueCode=${league.leagueCode}&isActive=true`,
+      headers: rootAdmin.headers,
+    });
+    expect(listRes.statusCode).toBe(200);
+    expect(AdminTeamListResponseSchema.safeParse(listRes.json()).success).toBe(true);
+    expect(listRes.json().teams.some((item: { id: string }) => item.id === squad.id)).toBe(true);
   });
 
   it('root-admin provider operational routes match their DTOs on happy paths', async () => {

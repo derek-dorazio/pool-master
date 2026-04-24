@@ -177,6 +177,44 @@ export function createSquadHandlers(service: SquadService) {
       }
     },
 
+    deleteSquad: async (
+      request: FastifyRequest<{
+        Params: { id: string; squadId: string };
+      }>,
+      reply: FastifyReply,
+    ) => {
+      const logger = request.contextLogger ?? request.log;
+      logger.debug({
+        action: 'squadRoute.delete.enter',
+        data: { leagueId: request.params.id, squadId: request.params.squadId, userId: request.authUser?.userId ?? null },
+      }, 'Handling delete squad request');
+      if (request.authUser?.isRootAdmin !== true) {
+        logger.warn({
+          action: 'squadRoute.delete.rootAdminRequired',
+          data: { leagueId: request.params.id, squadId: request.params.squadId, userId: request.authUser?.userId ?? null },
+        }, 'Rejected squad delete for non-root-admin user');
+        return sendError(reply, 403, 'ROOT_ADMIN_ACCESS_REQUIRED', 'Root-admin access is required');
+      }
+      try {
+        const userId = request.authUser!.userId;
+        await service.deleteInactiveSquad(
+          request.params.id,
+          request.params.squadId,
+          userId,
+        );
+        logger.info({
+          action: 'squadRoute.delete.success',
+          data: { leagueId: request.params.id, squadId: request.params.squadId, userId },
+        }, 'Deleted squad');
+        return reply.send({ success: true as const });
+      } catch (error) {
+        logHandledSquadError(logger, 'squadRoute.delete', request.params.id, error, {
+          squadId: request.params.squadId,
+        });
+        return handleSquadError(reply, error);
+      }
+    },
+
     addOwner: async (
       request: FastifyRequest<{
         Params: { id: string; squadId: string };

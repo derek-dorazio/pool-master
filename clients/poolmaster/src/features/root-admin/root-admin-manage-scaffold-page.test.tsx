@@ -19,7 +19,7 @@ describe('RootAdminManageScaffoldPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders a blocker note for backend-blocked sections', () => {
+  it('treats teams as a live section after the backend contract lands', () => {
     render(
       <MemoryRouter>
         <RootAdminManageScaffoldPage sectionKey="teams" />
@@ -30,7 +30,7 @@ describe('RootAdminManageScaffoldPage', () => {
       screen.getByTestId('root-admin-manage-scaffold-page-teams'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/waiting on backend work/i),
+      screen.getByText(/already has a dedicated surface/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByTestId('root-admin-manage-scaffold-legacy-teams'),

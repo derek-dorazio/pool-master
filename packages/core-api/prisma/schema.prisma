@@ -63,11 +63,6 @@ enum PrismaLeagueMembershipStatus {
   INACTIVE
 }
 
-enum PrismaSquadStatus {
-  ACTIVE
-  INACTIVE
-}
-
 enum PrismaSquadIconKey {
   CAPTAIN_SMILE_SUNSET
   CAPTAIN_SMILE_FIELD
@@ -359,7 +354,7 @@ model Squad {
   createdBy String   @map("created_by") @db.Uuid
   name      String
   iconKey   PrismaSquadIconKey @default(CAPTAIN_SMILE_FIELD) @map("icon_key")
-  status    PrismaSquadStatus @default(ACTIVE)
+  isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -369,7 +364,7 @@ model Squad {
   entries      ContestEntry[]
   ownerInvitations SquadOwnerInvitation[]
 
-  @@index([leagueId, status])
+  @@index([leagueId, isActive])
   @@map("squads")
 }
 

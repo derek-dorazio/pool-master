@@ -15,7 +15,6 @@ import {
   LeagueRole,
   SquadMembershipStatus,
   SquadOwnerInvitationStatus as SharedSquadOwnerInvitationStatus,
-  SquadStatus,
 } from '@poolmaster/shared/domain';
 import type {
   TeamOwnerInvitationDto,
@@ -356,7 +355,7 @@ export class SquadOwnerInvitationService {
     if (!squad || squad.leagueId !== leagueId) {
       throw new SquadOwnerInvitationNotFoundError(`Team not found: ${squadId}`);
     }
-    if (squad.status !== SquadStatus.ACTIVE) {
+    if (!squad.isActive) {
       throw new SquadOwnerInvitationOperationError(
         'Team-owner invites require an active team',
         'SQUAD_INACTIVE',
@@ -436,8 +435,8 @@ export class SquadOwnerInvitationService {
     }
 
     const squad = await this.squadRepo.findById(squadId);
-    if (squad && squad.status !== SquadStatus.ACTIVE) {
-      await this.squadRepo.update(squadId, { status: SquadStatus.ACTIVE });
+    if (squad && !squad.isActive) {
+      await this.squadRepo.update(squadId, { isActive: true });
     }
   }
 

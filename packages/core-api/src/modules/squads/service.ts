@@ -9,7 +9,6 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
-  SquadStatus,
   TeamIconKey,
 } from '@poolmaster/shared/domain';
 import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
@@ -92,7 +91,7 @@ export class SquadService {
       createdBy: userId,
       name: input.name?.trim() || buildDefaultSquadName(user.firstName, user.lastName),
       iconKey: input.iconKey ?? TeamIconKey.CAPTAIN_SMILE_FIELD,
-      status: SquadStatus.ACTIVE,
+      isActive: true,
     });
 
     await this.squadMembershipRepo.create({
@@ -162,7 +161,7 @@ export class SquadService {
     }, 'Inactivating squad');
     const viewerContext = await this.requireSquadManager(leagueId, squadId, userId, isRootAdmin);
     const squad = await this.requireLeagueScopedSquad(leagueId, squadId);
-    if (squad.status === SquadStatus.INACTIVE) {
+    if (!squad.isActive) {
       this.logger?.warn({
         action: 'squad.inactivate.alreadyInactive',
         data: { leagueId, squadId, userId },
@@ -186,8 +185,8 @@ export class SquadService {
     );
 
     const refreshedSquad = await this.squadRepo.findById(squadId);
-    if (refreshedSquad?.status === SquadStatus.ACTIVE) {
-      await this.squadRepo.update(squadId, { status: SquadStatus.INACTIVE });
+    if (refreshedSquad?.isActive) {
+      await this.squadRepo.update(squadId, { isActive: false });
     }
 
     const squadDto = await this.loadSquadDto(squadId, viewerContext);
@@ -238,8 +237,8 @@ export class SquadService {
         status: SquadMembershipStatus.ACTIVE,
         joinedAt: new Date(),
       });
-      if (squad.status !== SquadStatus.ACTIVE) {
-        await this.squadRepo.update(squadId, { status: SquadStatus.ACTIVE });
+      if (!squad.isActive) {
+        await this.squadRepo.update(squadId, { isActive: true });
       }
       this.logger?.info({
         action: 'squad.addOwner.reactivated',
@@ -304,7 +303,7 @@ export class SquadService {
 
     const remaining = await this.squadMembershipRepo.findBySquad(squadId);
     if (remaining.length === 0) {
-      await this.squadRepo.update(squadId, { status: SquadStatus.INACTIVE });
+      await this.squadRepo.update(squadId, { isActive: false });
     }
 
     const membershipDto = await this.loadSquadMembershipDto(updated);
@@ -313,6 +312,99 @@ export class SquadService {
       data: { leagueId, squadId, actorUserId, targetUserId, squadInactivated: remaining.length === 0 },
     }, 'Removed squad owner');
     return membershipDto;
+  }
+
+  async deleteInactiveSquad(
+    leagueId: string,
+    squadId: string,
+    userId: string,
+  ): Promise<void> {
+    this.logger?.debug({
+      action: 'squad.delete.enter',
+      data: { leagueId, squadId, userId },
+    }, 'Deleting inactive squad');
+    const squad = await this.requireLeagueScopedSquad(leagueId, squadId);
+    if (squad.isActive) {
+      this.logger?.warn({
+        action: 'squad.delete.requiresInactive',
+        data: { leagueId, squadId, userId },
+      }, 'Rejected squad delete because team is still active');
+      throw new SquadOperationError(
+        'Team must already be inactive before it can be permanently deleted.',
+        'SQUAD_DELETE_REQUIRES_INACTIVE',
+      );
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      const entryIds = (
+        await tx.contestEntry.findMany({
+          where: { squadId },
+          select: { id: true },
+        })
+      ).map((entry) => entry.id);
+
+      const participantScoreIds = entryIds.length === 0
+        ? []
+        : (
+            await tx.contestEntryParticipantScore.findMany({
+              where: {
+                entryId: { in: entryIds },
+              },
+              select: { id: true },
+            })
+          ).map((score) => score.id);
+
+      if (participantScoreIds.length > 0) {
+        await tx.contestEntryParticipantScoreEvent.deleteMany({
+          where: {
+            contestEntryParticipantScoreId: { in: participantScoreIds },
+          },
+        });
+      }
+
+      if (entryIds.length > 0) {
+        await tx.contestEntryPrizeAward.deleteMany({
+          where: {
+            entryId: { in: entryIds },
+          },
+        });
+        await tx.draftPickHistory.deleteMany({
+          where: {
+            entryId: { in: entryIds },
+          },
+        });
+        await tx.contestEntryParticipantScore.deleteMany({
+          where: {
+            entryId: { in: entryIds },
+          },
+        });
+        await tx.rosterPick.deleteMany({
+          where: {
+            entryId: { in: entryIds },
+          },
+        });
+        await tx.contestEntry.deleteMany({
+          where: {
+            id: { in: entryIds },
+          },
+        });
+      }
+
+      await tx.squadOwnerInvitation.deleteMany({
+        where: { squadId },
+      });
+      await tx.squadMembership.deleteMany({
+        where: { squadId },
+      });
+      await tx.squad.delete({
+        where: { id: squadId },
+      });
+    });
+
+    this.logger?.info({
+      action: 'squad.delete.success',
+      data: { leagueId, squadId, userId },
+    }, 'Deleted inactive squad');
   }
 
   private async loadSquadDto(

@@ -16,7 +16,6 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
-  SquadStatus,
   TeamIconKey,
 } from '@poolmaster/shared/domain';
 import { buildInvitation, buildLeague, buildMembership } from '../../factories';
@@ -91,7 +90,7 @@ function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRep
       createdBy: 'user-1',
       name: "User One's Team",
       iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-      status: SquadStatus.ACTIVE,
+      isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
       ...updates,
@@ -334,7 +333,7 @@ describe('InvitationService', () => {
           leagueId: 'league-1',
           createdBy: 'returning-user',
           name: "Returning User's Team",
-          status: SquadStatus.ACTIVE,
+          isActive: true,
           iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
           createdAt: new Date(),
           updatedAt: new Date(),

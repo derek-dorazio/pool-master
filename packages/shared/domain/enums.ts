@@ -227,12 +227,6 @@ export const DateFormat = {
 } as const;
 export type DateFormat = (typeof DateFormat)[keyof typeof DateFormat];
 
-export const SquadStatus = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-} as const;
-export type SquadStatus = (typeof SquadStatus)[keyof typeof SquadStatus];
-
 export const GolfContestConfigMode = {
   GOLF_TIERED: 'GOLF_TIERED',
   GOLF_CATEGORY_PICKS: 'GOLF_CATEGORY_PICKS',

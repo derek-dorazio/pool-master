@@ -1,6 +1,6 @@
 import type { SquadMembershipRepository, SquadRepository } from '@poolmaster/shared/db';
 import type { FastifyBaseLogger } from 'fastify';
-import { SquadMembershipStatus, SquadStatus } from '@poolmaster/shared/domain';
+import { SquadMembershipStatus } from '@poolmaster/shared/domain';
 
 interface DeactivateSquadMembershipForLeagueMemberInput {
   leagueId: string;
@@ -37,7 +37,7 @@ export async function deactivateSquadMembershipForLeagueMember(
   const remainingOwners = await input.squadMembershipRepo.findBySquad(membership.squadId);
   if (remainingOwners.length === 0) {
     await input.squadRepo.update(membership.squadId, {
-      status: SquadStatus.INACTIVE,
+      isActive: false,
     });
     input.logger?.info({
       action: 'squadMembership.deactivateForLeagueMember.squadInactivated',

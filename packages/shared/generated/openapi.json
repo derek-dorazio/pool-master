@@ -5017,13 +5017,9 @@
                             ],
                             "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
                           },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "ACTIVE",
-                              "INACTIVE"
-                            ],
-                            "description": "Current squad lifecycle state."
+                          "isActive": {
+                            "type": "boolean",
+                            "description": "Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks."
                           },
                           "memberCount": {
                             "type": "integer",
@@ -5142,7 +5138,7 @@
                           "createdBy",
                           "name",
                           "iconKey",
-                          "status",
+                          "isActive",
                           "memberCount",
                           "createdAt",
                           "updatedAt",
@@ -5559,13 +5555,9 @@
                           ],
                           "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
                         },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "ACTIVE",
-                            "INACTIVE"
-                          ],
-                          "description": "Current squad lifecycle state."
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks."
                         },
                         "memberCount": {
                           "type": "integer",
@@ -5684,7 +5676,7 @@
                         "createdBy",
                         "name",
                         "iconKey",
-                        "status",
+                        "isActive",
                         "memberCount",
                         "createdAt",
                         "updatedAt",
@@ -5983,13 +5975,9 @@
                           ],
                           "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
                         },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "ACTIVE",
-                            "INACTIVE"
-                          ],
-                          "description": "Current squad lifecycle state."
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks."
                         },
                         "memberCount": {
                           "type": "integer",
@@ -6108,7 +6096,7 @@
                         "createdBy",
                         "name",
                         "iconKey",
-                        "status",
+                        "isActive",
                         "memberCount",
                         "createdAt",
                         "updatedAt",
@@ -6532,13 +6520,9 @@
                           ],
                           "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
                         },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "ACTIVE",
-                            "INACTIVE"
-                          ],
-                          "description": "Current squad lifecycle state."
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks."
                         },
                         "memberCount": {
                           "type": "integer",
@@ -6657,7 +6641,7 @@
                         "createdBy",
                         "name",
                         "iconKey",
-                        "status",
+                        "isActive",
                         "memberCount",
                         "createdAt",
                         "updatedAt",
@@ -6717,6 +6701,214 @@
             }
           },
           "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteLeagueSquad",
+        "summary": "Permanently delete an inactive team",
+        "tags": [
+          "Squads"
+        ],
+        "description": "Permanently deletes an inactive team and cascades related team-owned data. This route is root-admin only and exists to support QA cleanup flows from Team Home.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "squadId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Minimal success response envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ],
+                      "description": "Confirms that the requested operation succeeded."
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Minimal success response envelope."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "403": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -6956,13 +7148,9 @@
                           ],
                           "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
                         },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "ACTIVE",
-                            "INACTIVE"
-                          ],
-                          "description": "Current squad lifecycle state."
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks."
                         },
                         "memberCount": {
                           "type": "integer",
@@ -7081,7 +7269,7 @@
                         "createdBy",
                         "name",
                         "iconKey",
-                        "status",
+                        "isActive",
                         "memberCount",
                         "createdAt",
                         "updatedAt",
@@ -23127,14 +23315,12 @@
           },
           {
             "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100
+              "type": "boolean"
             },
             "in": "query",
-            "name": "limit",
+            "name": "isActive",
             "required": false,
-            "description": "Maximum number of league rows to return for root-admin search results."
+            "description": "Optional active/inactive filter for root-admin league management surfaces."
           }
         ],
         "responses": {
@@ -23265,6 +23451,298 @@
                   ],
                   "additionalProperties": false,
                   "description": "League-list response."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/teams": {
+      "get": {
+        "operationId": "adminListTeams",
+        "summary": "List teams for root-admin management",
+        "tags": [
+          "Admin"
+        ],
+        "description": "Returns cross-league root-admin team search results with optional team-name, league-code, and active filters for manage-page operations.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "description": "Optional case-insensitive team-name search for root-admin management surfaces."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "leagueCode",
+            "required": false,
+            "description": "Optional canonical league-code filter for cross-league team management."
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "isActive",
+            "required": false,
+            "description": "Optional active/inactive filter for root-admin team management surfaces."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cross-league team list response for root-admin management surfaces.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "teams": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "leagueId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "leagueCode": {
+                            "type": "string",
+                            "description": "Canonical league code for routing and filtering."
+                          },
+                          "leagueName": {
+                            "type": "string",
+                            "description": "Display name for the team’s parent league."
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Team display name."
+                          },
+                          "iconKey": {
+                            "type": "string",
+                            "enum": [
+                              "CAPTAIN_SMILE_SUNSET",
+                              "CAPTAIN_SMILE_FIELD",
+                              "CAPTAIN_SMILE_OCEAN",
+                              "CAPTAIN_SMILE_MIDNIGHT",
+                              "CAPTAIN_SMILE_CANDY",
+                              "CAPTAIN_WINK_SUNSET",
+                              "CAPTAIN_WINK_FIELD",
+                              "CAPTAIN_WINK_OCEAN",
+                              "CAPTAIN_WINK_MIDNIGHT",
+                              "CAPTAIN_WINK_CANDY",
+                              "CHAMPION_BEARD_SUNSET",
+                              "CHAMPION_BEARD_FIELD",
+                              "CHAMPION_BEARD_OCEAN",
+                              "CHAMPION_BEARD_MIDNIGHT",
+                              "CHAMPION_BEARD_CANDY",
+                              "MAVERICK_MASK_SUNSET",
+                              "MAVERICK_MASK_FIELD",
+                              "MAVERICK_MASK_OCEAN",
+                              "MAVERICK_MASK_MIDNIGHT",
+                              "MAVERICK_MASK_CANDY",
+                              "STARFACE_SUNSET",
+                              "STARFACE_FIELD",
+                              "STARFACE_OCEAN",
+                              "STARFACE_MIDNIGHT",
+                              "STARFACE_CANDY",
+                              "HELMET_STRIPE_SUNSET",
+                              "HELMET_STRIPE_FIELD",
+                              "HELMET_STRIPE_OCEAN",
+                              "HELMET_STRIPE_MIDNIGHT",
+                              "HELMET_STRIPE_CANDY",
+                              "HELMET_BOLT_SUNSET",
+                              "HELMET_BOLT_FIELD",
+                              "HELMET_BOLT_OCEAN",
+                              "HELMET_BOLT_MIDNIGHT",
+                              "HELMET_BOLT_CANDY",
+                              "HELMET_HORN_SUNSET",
+                              "HELMET_HORN_FIELD",
+                              "HELMET_HORN_OCEAN",
+                              "HELMET_HORN_MIDNIGHT",
+                              "HELMET_HORN_CANDY",
+                              "HELMET_WING_SUNSET",
+                              "HELMET_WING_FIELD",
+                              "HELMET_WING_OCEAN",
+                              "HELMET_WING_MIDNIGHT",
+                              "HELMET_WING_CANDY",
+                              "HELMET_GRID_SUNSET",
+                              "HELMET_GRID_FIELD",
+                              "HELMET_GRID_OCEAN",
+                              "HELMET_GRID_MIDNIGHT",
+                              "HELMET_GRID_CANDY",
+                              "GOLF_BAG_SUNSET",
+                              "GOLF_BAG_FIELD",
+                              "GOLF_BAG_OCEAN",
+                              "GOLF_BAG_MIDNIGHT",
+                              "GOLF_BAG_CANDY",
+                              "WHISTLE_BADGE_SUNSET",
+                              "WHISTLE_BADGE_FIELD",
+                              "WHISTLE_BADGE_OCEAN",
+                              "WHISTLE_BADGE_MIDNIGHT",
+                              "WHISTLE_BADGE_CANDY",
+                              "STOPWATCH_BADGE_SUNSET",
+                              "STOPWATCH_BADGE_FIELD",
+                              "STOPWATCH_BADGE_OCEAN",
+                              "STOPWATCH_BADGE_MIDNIGHT",
+                              "STOPWATCH_BADGE_CANDY",
+                              "MEGAPHONE_SUNSET",
+                              "MEGAPHONE_FIELD",
+                              "MEGAPHONE_OCEAN",
+                              "MEGAPHONE_MIDNIGHT",
+                              "MEGAPHONE_CANDY",
+                              "FOAM_FINGER_SUNSET",
+                              "FOAM_FINGER_FIELD",
+                              "FOAM_FINGER_OCEAN",
+                              "FOAM_FINGER_MIDNIGHT",
+                              "FOAM_FINGER_CANDY",
+                              "BULL_HEAD_SUNSET",
+                              "BULL_HEAD_FIELD",
+                              "BULL_HEAD_OCEAN",
+                              "BULL_HEAD_MIDNIGHT",
+                              "BULL_HEAD_CANDY",
+                              "LUCKY_DUCK_SUNSET",
+                              "LUCKY_DUCK_FIELD",
+                              "LUCKY_DUCK_OCEAN",
+                              "LUCKY_DUCK_MIDNIGHT",
+                              "LUCKY_DUCK_CANDY",
+                              "TURBO_TURTLE_SUNSET",
+                              "TURBO_TURTLE_FIELD",
+                              "TURBO_TURTLE_OCEAN",
+                              "TURBO_TURTLE_MIDNIGHT",
+                              "TURBO_TURTLE_CANDY",
+                              "FIRE_PIZZA_SUNSET",
+                              "FIRE_PIZZA_FIELD",
+                              "FIRE_PIZZA_OCEAN",
+                              "FIRE_PIZZA_MIDNIGHT",
+                              "FIRE_PIZZA_CANDY",
+                              "BANANA_BAT_SUNSET",
+                              "BANANA_BAT_FIELD",
+                              "BANANA_BAT_OCEAN",
+                              "BANANA_BAT_MIDNIGHT",
+                              "BANANA_BAT_CANDY"
+                            ],
+                            "description": "Selected built-in team icon key from the curated PoolMaster team icon catalog."
+                          },
+                          "isActive": {
+                            "type": "boolean",
+                            "description": "Whether the team is currently active. This is the lifecycle source of truth for root-admin team management surfaces."
+                          },
+                          "ownerCount": {
+                            "type": "integer",
+                            "description": "Count of active owners attached to the team."
+                          },
+                          "owners": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "userId": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "firstName": {
+                                  "type": "string",
+                                  "description": "First name for the active team owner."
+                                },
+                                "lastName": {
+                                  "type": "string",
+                                  "description": "Last name for the active team owner."
+                                }
+                              },
+                              "required": [
+                                "userId"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Thin owner summary row emitted for root-admin team management surfaces."
+                            },
+                            "description": "Active owners attached to the team."
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the team was created."
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the team was last updated."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "leagueId",
+                          "leagueCode",
+                          "leagueName",
+                          "name",
+                          "iconKey",
+                          "isActive",
+                          "ownerCount",
+                          "owners",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Cross-league team summary row for root-admin management surfaces."
+                      }
+                    }
+                  },
+                  "required": [
+                    "teams"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Cross-league team list response for root-admin management surfaces."
                 }
               }
             }

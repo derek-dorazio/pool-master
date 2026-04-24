@@ -56,7 +56,9 @@ export const SquadDtoSchema = z.object({
   createdBy: z.string().uuid(),
   name: z.string().describe('Squad display name.'),
   iconKey: z.enum(TeamIconKeyValues).describe('Selected built-in team icon key from the curated PoolMaster team icon catalog.'),
-  status: z.enum(['ACTIVE', 'INACTIVE']).describe('Current squad lifecycle state.'),
+  isActive: z
+    .boolean()
+    .describe('Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks.'),
   memberCount: z.number().int().describe('Number of memberships attached to the squad.'),
   createdAt: DateTimeSchema.describe('When the squad was created.'),
   updatedAt: DateTimeSchema.describe('When the squad was last updated.'),

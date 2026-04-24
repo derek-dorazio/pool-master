@@ -272,9 +272,9 @@ export function TeamsPage() {
                         >
                           {team.name}
                         </Link>
-                        {team.status !== 'ACTIVE' ? (
+                        {team.isActive === false ? (
                           <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                            {team.status}
+                            Inactive
                           </span>
                         ) : null}
                       </div>

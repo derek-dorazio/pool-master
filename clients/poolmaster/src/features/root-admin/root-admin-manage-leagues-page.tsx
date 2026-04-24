@@ -57,7 +57,6 @@ export function RootAdminManageLeaguesPage() {
       const response = await adminListLeagues({
         query: {
           search: trimmedSearch.length > 0 ? trimmedSearch : undefined,
-          limit: 25,
         },
       });
 

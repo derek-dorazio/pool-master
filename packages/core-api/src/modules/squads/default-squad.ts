@@ -2,7 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { SquadMembershipRepository, SquadRepository } from '@poolmaster/shared/db';
 import type { Squad } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
-import { SquadMembershipStatus, SquadStatus, TeamIconKey } from '@poolmaster/shared/domain';
+import { SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
 import { buildDefaultSquadName } from '../../core/user-name';
 
 interface EnsureDefaultSquadForLeagueMemberInput {
@@ -66,9 +66,9 @@ export async function ensureDefaultSquadForLeagueMember(
     : null;
 
   if (existingMembership && existingSquad) {
-    if (existingSquad.status !== SquadStatus.ACTIVE) {
+    if (!existingSquad.isActive) {
       await input.squadRepo.update(existingSquad.id, {
-        status: SquadStatus.ACTIVE,
+        isActive: true,
       });
     }
 
@@ -100,7 +100,7 @@ export async function ensureDefaultSquadForLeagueMember(
     createdBy: input.userId,
     name: buildDefaultSquadName(user.firstName, user.lastName),
     iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-    status: SquadStatus.ACTIVE,
+    isActive: true,
   });
 
   if (existingMembership) {

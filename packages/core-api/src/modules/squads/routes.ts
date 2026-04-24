@@ -9,6 +9,7 @@ import {
   TeamOwnerInvitationListResponseSchema,
   TeamOwnerInvitationResponseSchema,
   UpdateSquadRequestSchema,
+  SuccessSchema,
   zodToJsonSchema,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
@@ -133,6 +134,24 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       },
     },
     handler: handler.inactivateSquad,
+  });
+
+  fastify.delete('/:squadId', {
+    schema: {
+      tags: ['Squads'],
+      summary: 'Permanently delete an inactive team',
+      description:
+        'Permanently deletes an inactive team and cascades related team-owned data. This route is root-admin only and exists to support QA cleanup flows from Team Home.',
+      operationId: 'deleteLeagueSquad',
+      response: {
+        200: zodToJsonSchema(SuccessSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        403: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handler.deleteSquad,
   });
 
   fastify.post('/:squadId/members', {

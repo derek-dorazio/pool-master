@@ -5,7 +5,7 @@ import type {
   SquadMembershipRepository,
   SquadRepository,
 } from '@poolmaster/shared/db';
-import { JoinPolicy, LeagueIconKey, LeagueRole, SquadMembershipStatus, SquadStatus, TeamIconKey } from '@poolmaster/shared/domain';
+import { JoinPolicy, LeagueIconKey, LeagueRole, SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
 import { buildLeague, buildMembership } from '../../factories';
 
 function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): LeagueRepository {
@@ -63,7 +63,7 @@ function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRep
       createdBy: 'user-1',
       name: "User One's Team",
       iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-      status: SquadStatus.ACTIVE,
+      isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
       ...updates,

@@ -7,7 +7,6 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
-  SquadStatus,
 } from '@poolmaster/shared/domain';
 import {
   MemberNotFoundError,
@@ -211,7 +210,7 @@ describe('MemberService', () => {
         createdBy: 'user-1',
         name: 'Solo Team',
         iconKey: 'CAPTAIN_SMILE_FIELD',
-        status: SquadStatus.INACTIVE,
+        isActive: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       }),
@@ -234,7 +233,7 @@ describe('MemberService', () => {
       'squad-membership-1',
       expect.objectContaining({ status: SquadMembershipStatus.INACTIVE }),
     );
-    expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { status: SquadStatus.INACTIVE });
+    expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { isActive: false });
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 

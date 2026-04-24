@@ -7,7 +7,6 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
-  SquadStatus,
   TeamIconKey,
 } from '@poolmaster/shared/domain';
 import { inactivateLeagueMemberUnit } from '../../../packages/core-api/src/modules/leagues/member-lifecycle';
@@ -87,7 +86,7 @@ describe('league member lifecycle helpers', () => {
         createdBy: 'user-1',
         name: "Casey Jones's Team",
         iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-        status: SquadStatus.ACTIVE,
+        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       }),
@@ -109,7 +108,7 @@ describe('league member lifecycle helpers', () => {
     expect(squadRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       leagueId: 'league-1',
       createdBy: 'user-1',
-      status: SquadStatus.ACTIVE,
+      isActive: true,
     }));
     expect(squadMembershipRepo.create).toHaveBeenCalled();
     expect(squad.id).toBe('squad-1');
@@ -124,7 +123,7 @@ describe('league member lifecycle helpers', () => {
           createdBy: 'user-1',
           name: "Casey Jones's Team",
           iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-          status: SquadStatus.INACTIVE,
+          isActive: false,
           createdAt: new Date(),
           updatedAt: new Date(),
         })
@@ -134,7 +133,7 @@ describe('league member lifecycle helpers', () => {
           createdBy: 'user-1',
           name: "Casey Jones's Team",
           iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-          status: SquadStatus.ACTIVE,
+          isActive: true,
           createdAt: new Date(),
           updatedAt: new Date(),
         }),
@@ -162,7 +161,7 @@ describe('league member lifecycle helpers', () => {
       prisma: createPrisma() as any,
     });
 
-    expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { status: SquadStatus.ACTIVE });
+    expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { isActive: true });
     expect(squadMembershipRepo.update).toHaveBeenCalledWith(
       'squad-membership-1',
       expect.objectContaining({ status: SquadMembershipStatus.ACTIVE }),
@@ -200,7 +199,7 @@ describe('league member lifecycle helpers', () => {
       'squad-membership-1',
       expect.objectContaining({ status: SquadMembershipStatus.INACTIVE }),
     );
-    expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { status: SquadStatus.INACTIVE });
+    expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { isActive: false });
   });
 
   it('deactivates the user account when their final active league membership is removed', async () => {

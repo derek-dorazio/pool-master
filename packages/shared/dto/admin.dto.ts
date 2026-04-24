@@ -2,7 +2,7 @@
  * Admin DTOs — request/response schemas for root-admin endpoints.
  */
 import { z } from 'zod';
-import { Sport } from '@poolmaster/shared/domain';
+import { Sport, TeamIconKey as TeamIconKeyEnum, type TeamIconKey } from '@poolmaster/shared/domain';
 import { JsonObjectSchema, PaginatedSchema } from './common.dto';
 import { UserProfileDtoSchema } from './auth.dto';
 import { IngestionFeedTypeSchema } from './ingestion.dto';
@@ -23,6 +23,7 @@ const SportSchema = z.enum([
   Sport.MLB,
   Sport.UFC,
 ]);
+const TeamIconKeyValues = Object.values(TeamIconKeyEnum) as [TeamIconKey, ...TeamIconKey[]];
 // --- Response Sub-schemas ---
 
 export const MetricValueDtoSchema = z.object({
@@ -78,15 +79,59 @@ export const AdminListLeaguesQuerySchema = z.object({
     .min(1)
     .optional()
     .describe('Optional case-insensitive league-name search for root-admin management surfaces.'),
-  limit: z
-    .number()
-    .int()
-    .min(1)
-    .max(100)
+  isActive: z
+    .boolean()
     .optional()
-    .describe('Maximum number of league rows to return for root-admin search results.'),
+    .describe('Optional active/inactive filter for root-admin league management surfaces.'),
 }).describe('Root-admin league search query.');
 export type AdminListLeaguesQuery = z.infer<typeof AdminListLeaguesQuerySchema>;
+
+export const AdminTeamOwnerSummaryDtoSchema = z.object({
+  userId: z.string().uuid(),
+  firstName: z.string().optional().describe('First name for the active team owner.'),
+  lastName: z.string().optional().describe('Last name for the active team owner.'),
+}).describe('Thin owner summary row emitted for root-admin team management surfaces.');
+export type AdminTeamOwnerSummaryDto = z.infer<typeof AdminTeamOwnerSummaryDtoSchema>;
+
+export const AdminTeamSummaryDtoSchema = z.object({
+  id: z.string().uuid(),
+  leagueId: z.string().uuid(),
+  leagueCode: z.string().describe('Canonical league code for routing and filtering.'),
+  leagueName: z.string().describe('Display name for the team’s parent league.'),
+  name: z.string().describe('Team display name.'),
+  iconKey: z.enum(TeamIconKeyValues).describe('Selected built-in team icon key from the curated PoolMaster team icon catalog.'),
+  isActive: z.boolean().describe('Whether the team is currently active. This is the lifecycle source of truth for root-admin team management surfaces.'),
+  ownerCount: z.number().int().describe('Count of active owners attached to the team.'),
+  owners: z.array(AdminTeamOwnerSummaryDtoSchema).describe('Active owners attached to the team.'),
+  createdAt: z.string().datetime().describe('When the team was created.'),
+  updatedAt: z.string().datetime().describe('When the team was last updated.'),
+}).describe('Cross-league team summary row for root-admin management surfaces.');
+export type AdminTeamSummaryDto = z.infer<typeof AdminTeamSummaryDtoSchema>;
+
+export const AdminListTeamsQuerySchema = z.object({
+  search: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe('Optional case-insensitive team-name search for root-admin management surfaces.'),
+  leagueCode: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe('Optional canonical league-code filter for cross-league team management.'),
+  isActive: z
+    .boolean()
+    .optional()
+    .describe('Optional active/inactive filter for root-admin team management surfaces.'),
+}).describe('Root-admin team search query.');
+export type AdminListTeamsQuery = z.infer<typeof AdminListTeamsQuerySchema>;
+
+export const AdminTeamListResponseSchema = z.object({
+  teams: z.array(AdminTeamSummaryDtoSchema),
+}).describe('Cross-league team list response for root-admin management surfaces.');
+export type AdminTeamListResponse = z.infer<typeof AdminTeamListResponseSchema>;
 
 export const AdminServiceDependencyDtoSchema = z.object({
   name: z.string(),

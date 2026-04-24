@@ -498,6 +498,13 @@ export async function cleanupFunctionalData(): Promise<void> {
         },
       },
     });
+    await database.squadOwnerInvitation.deleteMany({
+      where: {
+        leagueId: {
+          in: leagueIds,
+        },
+      },
+    });
     await database.squad.deleteMany({
       where: {
         leagueId: {

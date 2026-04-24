@@ -1,7 +1,6 @@
 import {
   LeagueMembershipStatus,
   SquadMembershipStatus,
-  SquadStatus,
   TeamIconKey,
 } from '../../../packages/shared/domain';
 import type {
@@ -81,7 +80,7 @@ describe('SquadService', () => {
         createdBy: 'user-1',
         name: "Derek Dorazio's Team",
         iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-        status: SquadStatus.ACTIVE,
+        isActive: true,
         createdAt: new Date('2026-04-07T00:00:00Z'),
         updatedAt: new Date('2026-04-07T00:00:00Z'),
       }),
@@ -91,7 +90,7 @@ describe('SquadService', () => {
         createdBy: 'user-1',
         name: "Derek Dorazio's Team",
         iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-        status: SquadStatus.ACTIVE,
+        isActive: true,
         createdAt: new Date('2026-04-07T00:00:00Z'),
         updatedAt: new Date('2026-04-07T00:00:00Z'),
       }),
@@ -178,7 +177,7 @@ describe('SquadService', () => {
           createdBy: 'user-2',
           name: 'Ace Squad',
           iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-          status: SquadStatus.ACTIVE,
+          isActive: true,
           createdAt: new Date('2026-04-07T00:00:00Z'),
           updatedAt: new Date('2026-04-07T00:00:00Z'),
         },
@@ -189,7 +188,7 @@ describe('SquadService', () => {
         createdBy: 'user-2',
         name: 'Ace Squad',
         iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-        status: SquadStatus.ACTIVE,
+        isActive: true,
         createdAt: new Date('2026-04-07T00:00:00Z'),
         updatedAt: new Date('2026-04-07T00:00:00Z'),
       }),
@@ -239,7 +238,7 @@ describe('SquadService', () => {
         createdBy: 'user-1',
         name: 'Ace Squad',
         iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-        status: SquadStatus.ACTIVE,
+        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       }),
@@ -312,7 +311,7 @@ describe('SquadService', () => {
         createdBy: 'user-2',
         name: 'Original Team',
         iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-        status: SquadStatus.ACTIVE,
+        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       }),
@@ -322,7 +321,7 @@ describe('SquadService', () => {
         createdBy: 'user-2',
         name: 'Updated Team',
         iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-        status: SquadStatus.ACTIVE,
+        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       }),
@@ -359,7 +358,7 @@ describe('SquadService', () => {
         createdBy: 'user-1',
         name: 'Shared Team',
         iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-        status: archivedTeamReads <= 2 ? SquadStatus.ACTIVE : SquadStatus.INACTIVE,
+        isActive: archivedTeamReads <= 2,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -372,7 +371,7 @@ describe('SquadService', () => {
         createdBy: 'user-1',
         name: updates.name ?? 'Shared Team',
         iconKey: updates.iconKey ?? TeamIconKey.CAPTAIN_SMILE_FIELD,
-        status: updates.status ?? SquadStatus.ACTIVE,
+        isActive: updates.isActive ?? true,
         createdAt: new Date(),
         updatedAt: new Date(),
       })),
@@ -464,7 +463,7 @@ describe('SquadService', () => {
 
     await service.inactivateSquad('league-1', 'squad-1', 'user-1');
 
-    expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { status: SquadStatus.INACTIVE });
+    expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { isActive: false });
     expect(squadMembershipRepo.update).toHaveBeenCalledWith('membership-1', { status: SquadMembershipStatus.INACTIVE });
     expect(squadMembershipRepo.update).toHaveBeenCalledWith('membership-2', { status: SquadMembershipStatus.INACTIVE });
     expect(leagueMembershipRepo.update).toHaveBeenCalledWith(baseMembership.id, {

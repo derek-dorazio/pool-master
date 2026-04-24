@@ -287,7 +287,7 @@ describe('SDK Functional: Leagues', () => {
       where: {
         leagueId: leagueId as string,
         createdBy: invitee.userId,
-        status: 'ACTIVE',
+        isActive: true,
       },
       include: {
         memberships: {
@@ -579,7 +579,7 @@ describe('SDK Functional: Leagues', () => {
       },
     });
 
-    expect(inactiveTeam?.status).toBe('INACTIVE');
+    expect(inactiveTeam?.isActive).toBe(false);
 
     const secondLeaveResponse = await leaveLeague({
       client: member.client,

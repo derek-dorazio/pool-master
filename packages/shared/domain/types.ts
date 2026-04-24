@@ -29,7 +29,6 @@ import type {
   Sport,
   SquadMembershipStatus,
   SquadOwnerInvitationStatus,
-  SquadStatus,
   TeamIconKey,
   TimeFormat,
 } from './enums';
@@ -88,7 +87,7 @@ export interface Squad extends DomainEntity {
   createdBy: string;
   name: string;
   iconKey: TeamIconKey;
-  status: SquadStatus;
+  isActive: boolean;
 }
 
 /** User membership within a squad. */

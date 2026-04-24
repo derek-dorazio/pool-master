@@ -15,14 +15,14 @@ export function createLeagueAdminHandlers(adminLeagueService: AdminLeagueService
     request: FastifyRequest<{
       Querystring: {
         search?: string;
-        limit?: number;
+        isActive?: boolean;
       };
     }>,
     _reply: FastifyReply,
   ) {
     const leagues = await adminLeagueService.searchLeagues({
       search: request.query.search,
-      limit: request.query.limit,
+      isActive: request.query.isActive,
     });
 
     return {

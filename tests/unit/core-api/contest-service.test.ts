@@ -18,7 +18,6 @@ import {
   ScoringEngine,
   ContestType,
   SquadMembershipStatus,
-  SquadStatus,
   TeamIconKey,
 } from '@poolmaster/shared/domain';
 import { buildContest, buildLeague, buildMembership, buildUser } from '../../factories';
@@ -123,7 +122,7 @@ function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRep
       createdBy: 'user-1',
       name: "Derek's Squad",
       iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-      status: SquadStatus.ACTIVE,
+      isActive: true,
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
     }),
@@ -134,7 +133,7 @@ function createMockSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRep
       createdBy: 'user-1',
       name: "Derek's Squad",
       iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-      status: SquadStatus.ACTIVE,
+      isActive: true,
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-01'),
     }),

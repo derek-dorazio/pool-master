@@ -9,7 +9,6 @@ import {
   LeagueRole,
   SquadMembershipStatus,
   SquadOwnerInvitationStatus,
-  SquadStatus,
   TeamIconKey,
 } from '@poolmaster/shared/domain';
 import {
@@ -53,7 +52,7 @@ function createSquadRepo(overrides: Partial<SquadRepository> = {}): SquadReposit
       createdBy: 'user-1',
       name: 'Beer Bellies',
       iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-      status: SquadStatus.ACTIVE,
+      isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     }),
@@ -65,7 +64,7 @@ function createSquadRepo(overrides: Partial<SquadRepository> = {}): SquadReposit
       createdBy: 'user-1',
       name: 'Beer Bellies',
       iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-      status: SquadStatus.ACTIVE,
+      isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     }),
