@@ -186,7 +186,7 @@ Each build item (A–S) should become its own Beads issue when execution starts.
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 108-001 | 1 | Build `/manage` hub shell, breadcrumbs, and child-route scaffold | Not Started | Minimal landing with six section links; no data queries on the hub itself. Intentionally sequenced after 108-002 so the first additive destination page exists before `/manage` stops being the legacy stacked page. |
+| 108-001 | 1 | Build `/manage` hub shell, breadcrumbs, and child-route scaffold | Done | `/manage` now renders the minimal hub, `/manage/legacy` preserves the stacked transitional surface, manage sub-pages share breadcrumbs through a common layout, and truthful scaffold routes exist for not-yet-extracted sections while dedicated pages land. Validated with the full required repo gate set before closeout. |
 | 108-002 | 1 | Build Content Configuration list and per-template edit pages | Done | Added dedicated `/manage/content-configuration` list and `:templateKey` detail routes/pages, shared template-edit helpers, focused frontend coverage, and a transitional "Open dedicated page" affordance from the legacy `/manage` contest-configuration section. Validated with the full required repo gate set before closeout. |
 | 108-003 | 2 | Build Sync dashboard plus dedicated Run Sport Sync and Run Event Sync pages | Not Started | Reuse existing backend/manual-trigger contracts; split operational actions off the read-only dashboard. |
 | 108-004 | 2 | Build Sync Configuration landing page plus Poll Intervals, Ingestion Schedule, and Sport Overrides pages | Not Started | Mostly form lift-outs from the current root-admin page. |

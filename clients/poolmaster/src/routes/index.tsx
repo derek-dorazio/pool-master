@@ -11,6 +11,9 @@ import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { MyLeaguesPage, WelcomePage } from '@/features/leagues/leagues-page';
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminContentConfigurationListPage } from '@/features/root-admin/root-admin-content-configuration-list-page';
+import { RootAdminManageHubPage } from '@/features/root-admin/root-admin-manage-hub-page';
+import { RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
+import { RootAdminManageScaffoldPage } from '@/features/root-admin/root-admin-manage-scaffold-page';
 import { RootAdminPage } from '@/features/root-admin/root-admin-page';
 import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
@@ -101,15 +104,45 @@ export const router = createBrowserRouter([
         children: [
           {
             path: 'manage',
-            element: <RootAdminPage />,
-          },
-          {
-            path: 'manage/content-configuration',
-            element: <RootAdminContentConfigurationListPage />,
-          },
-          {
-            path: 'manage/content-configuration/:templateKey',
-            element: <RootAdminContentConfigurationDetailPage />,
+            element: <RootAdminManageLayout />,
+            children: [
+              {
+                index: true,
+                element: <RootAdminManageHubPage />,
+              },
+              {
+                path: 'legacy',
+                element: <RootAdminPage />,
+              },
+              {
+                path: 'content-configuration',
+                element: <RootAdminContentConfigurationListPage />,
+              },
+              {
+                path: 'content-configuration/:templateKey',
+                element: <RootAdminContentConfigurationDetailPage />,
+              },
+              {
+                path: 'leagues',
+                element: <RootAdminManageScaffoldPage sectionKey="leagues" />,
+              },
+              {
+                path: 'teams',
+                element: <RootAdminManageScaffoldPage sectionKey="teams" />,
+              },
+              {
+                path: 'users',
+                element: <RootAdminManageScaffoldPage sectionKey="users" />,
+              },
+              {
+                path: 'sync',
+                element: <RootAdminManageScaffoldPage sectionKey="sync" />,
+              },
+              {
+                path: 'sync-config',
+                element: <RootAdminManageScaffoldPage sectionKey="sync-config" />,
+              },
+            ],
           },
         ],
       },
