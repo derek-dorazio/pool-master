@@ -33,7 +33,7 @@ Every route in the reorganized webapp, flat. Authority column indicates who sees
 | Route | Page | Visibility |
 |---|---|---|
 | `/welcome` | Zero-league fallback | Regular users with 0 leagues (transitional/defensive — not a main-journey destination) |
-| `/users/:userId` | Canonical **User page** (authority-gated modals) | All authenticated |
+| `/users/:userId` | Canonical **User page** (account-scope only; authority-gated modals for self + root admin; viewer = read-only identity) | All authenticated |
 | `/my-account` *(alias)* | Redirect → `/users/:myId` | All authenticated |
 | `/profile`, `/preferences`, `/password`, `/account` *(aliases)* | Redirect → `/users/:myId` | All authenticated |
 
@@ -123,28 +123,39 @@ Clicking a group label navigates to that group's landing page. Hover/secondary i
 |---|---|---|
 | League Home | `/league/:leagueCode` | `useLeagueAuthority` → `commissioner \| member`; commissioner edits identity/settings/lifecycle; member read-only. Root admin collapses into `commissioner` on any league. Root-admin-only delete section gated by `useIsRootAdmin()` + inactive status. |
 | Team Home | `/league/:leagueCode/teams/:teamId` | `useTeamAuthority` → `owner \| commissioner \| viewer`; owner/commissioner edit, viewer read-only. Root admin collapses into `commissioner`. Root-admin-only delete section gated by `useIsRootAdmin()` + inactive status. |
-| **User page** | `/users/:userId` | Backend-emitted `viewerAuthority` per request → `self \| commissioner \| root-admin \| viewer`. Action buttons launch focused modals; set visible depends on authority. See Authority matrix below. |
+| **User page** | `/users/:userId` | Backend-emitted `viewerAuthority` per request → `self \| root-admin \| viewer`. The User page is **account-scope only** — it never surfaces league-role actions. Commissioner-scope actions (promote/demote/remove owner) live on Teams and Owners / Team Home per their authority hooks, not here. Action buttons launch focused modals; set visible depends on authority. See Authority matrix below. |
 | Contest Home | `/league/:leagueCode/contests/:contestId` (canonical; old `/contests/:contestId` may temporarily redirect during migration) | Pre-event: entries list (name + team only). **Self rows are clickable and navigate to My Team ▾ Entries** (nav shortcut to own management page). Other rows are not clickable for anyone (including commissioners/root admin) — competitive-integrity rule. Post-event: becomes leaderboard with per-entry expand/modal |
 | Entry page | `/contests/:contestId/entries/:entryId` (exists) | Editable only by entry owner when unlocked; read-only otherwise |
 
 ### User page authority matrix
 
-`/users/:userId` is a single canonical page with authority-gated action modals. Backend enforces the authority rules; frontend reads `viewerAuthority` (or equivalent capability signal) from the response and renders the matching modal set. Multiple authorities may apply simultaneously (e.g. a root admin who's also a commissioner in a league sees both sets).
+`/users/:userId` is a single canonical page with authority-gated action modals, **scoped to the user account only**. Backend enforces the authority rules; frontend reads `viewerAuthority` (or equivalent capability signal) from the response and renders the matching modal set. `viewerAuthority` is a set — a user who is both self and root admin sees both sets.
 
-| Action (modal) | Self | Commissioner (of this user's league) | Root admin | Viewer (default) |
-|---|---|---|---|---|
-| Edit Profile | ✅ | — | — | — |
-| Edit Preferences | ✅ | — | — | — |
-| Change Password | ✅ | — | — | — |
-| Inactivate Account (platform, reversible) | ✅ | ❌ | ✅ | — |
-| Delete Account (platform, locked until inactive) | ✅ | ❌ | ✅ | — |
-| Promote to Commissioner (role in this league) | — | ✅ | ✅ | — |
-| Demote to Member (role in this league) | — | ✅ | ✅ | — |
-| Remove from League (league membership only) | — | ✅ | ✅ | — |
-| Toggle Root Admin | — | ❌ | ✅ | — |
-| Reset Password (admin-initiated) | — | ❌ | ✅ | — |
+| Action (modal) | Self | Root admin | Viewer (default) |
+|---|---|---|---|
+| Edit Profile | ✅ | — | — |
+| Edit Preferences | ✅ | — | — |
+| Change Password | ✅ | — | — |
+| Inactivate Account (platform, reversible) | ✅ | ✅ | — |
+| Delete Account (platform, locked until inactive) | ✅ | ✅ | — |
+| Toggle Root Admin | — | ✅ | — |
+| Reset Password (admin-initiated) | — | ✅ | — |
 
-Commissioner never touches account-level state (inactivate/delete). Only self and root admin do.
+**Hard rule:** commissioners never touch user accounts. All league-role actions (Remove Owner, Promote to Commissioner, Demote to Member) live on Teams and Owners / Team Home and are gated by `useLeagueAuthority` / `useTeamAuthority`. A commissioner clicking an owner name on Teams and Owners lands here as a `viewer` (read-only identity) — the commissioner's league-role actions stay on the league surface where they originated. See [League-role action map](#league-role-action-map) below.
+
+### League-role action map
+
+These actions do **not** live on `/users/:userId`. They are league-scoped and use the surfaces already agreed: Teams and Owners (per-row) and Team Home (per-team and per-owner inside the Owners section).
+
+| Action | Authority | Home(s) | Notes |
+|---|---|---|---|
+| Remove Owner (from a team) | Co-owner of the team + commissioner (root admin via `useLeagueAuthority`) | Teams and Owners row action + Team Home Owners section (same modal in both places) | Only allowed when team has >1 owner. Attempting to remove the single owner is redirected to Inactivate Team instead. |
+| Promote to Commissioner | Commissioner + root admin | Teams and Owners per-owner action | League role change; scoped to the current league. |
+| Demote to Member | Commissioner + root admin | Teams and Owners per-owner action | League role change; scoped to the current league. |
+| Inactivate Team | Team owner + commissioner + root admin | Team Home | Soft action. Inactivated team cannot create entries for future contests. **Owners of the inactivated team lose league access** (including history for this league). Data is preserved — remaining league members and the commissioner can still see the inactivated team's historical entries and contest results in history. Reversible. |
+| Delete Team | Root admin only, team must be inactive | Team Home (root-admin-gated section) | Hard cascade delete — wipes the team's data from history. Intended for QA testing residue cleanup, not real-world team removal. Irreversible. |
+
+The earlier "Remove Team" and "Remove from League" names collapse into these operations: the effect of "removing a user from the league" is achieved by removing them from each of their teams (Remove Owner) or inactivating their sole-owned team (Inactivate Team). There is **no** separate `removeTeam` or `removeFromLeague` backend operation.
 
 **Discovery paths to `/users/:userId`:**
 - From "My Profile" in the Account dropdown → `/users/:myId` (self authority)
@@ -176,7 +187,7 @@ canonical **League Home** at `/league/:leagueCode` and **Teams and Owners** at
 | Tile | Source lines | Destination |
 |---|---|---|
 | League Header & Summary | 532–576 | **League Home** — identity + status + counts. Commissioner-editable fields (name, description, icon) inline on the same page via authority hook. |
-| Members list (with promote/demote/remove actions) | 579–682 | DELETE — commissioner/root-admin member-role actions move to `/users/:userId` in the later canonical User-page slice; League Home no longer owns roster role management. |
+| Members list (with promote/demote/remove actions) | 579–682 | DELETE — commissioner/root-admin league-role actions (Promote / Demote / Remove Owner) now live as per-owner row actions on **Teams and Owners** (`/league/:leagueCode/teams`) and on **Team Home** Owners section. The User page at `/users/:userId` is account-scope only; it does not carry these actions. |
 | My Team link card | 684–701 | DELETE — users reach team via My Team ▾ nav or Teams and Owners row link |
 | Teams (browse all) link card | 703–718 | DELETE — users reach via League ▾ → Teams and Owners |
 | Membership Actions (Leave league) | 721–755 | **League Home** — member-visible section. Resolves former OPEN QUESTION §2. |
@@ -211,7 +222,7 @@ Remains as the zero-league landing (`/welcome`). The file has three render state
 
 ### `clients/poolmaster/src/features/teams/teams-page.tsx`
 
-This page becomes (or is replaced by) **Teams and Owners** at `/league/:leagueCode`.
+This page becomes (or is replaced by) **Teams and Owners** at `/league/:leagueCode/teams`. Once commissioner row actions land, each owner in the Owners column exposes a per-owner action menu authority-gated via `useLeagueAuthority`: **Remove Owner** (if team has >1 owner; co-owner of team or commissioner), **Promote to Commissioner** (commissioner / root admin), **Demote to Member** (commissioner / root admin). Same modals are reachable from Team Home's Owners section. The Team row itself carries the commissioner-only **Inactivate Team** action; **Delete Team** appears as a root-admin-only section on Team Home when the team is already inactive.
 
 | Tile | Source lines | Destination |
 |---|---|---|
@@ -229,8 +240,8 @@ This page becomes **Team Home** — canonical single-page for any team (authorit
 | Team Details & Icon Selection (edit name + icon, save) | 567–654 | STAY on Team Home — authority-gated editable |
 | Active Contest Entries (contest tiles + entries + Create Entry + rename) | 657–832 | MOVE to **My Team ▾ Entries** page. Team Home no longer carries entries; Entries page is the single source for entry management |
 | Historical Contest Entries | 834–914 | MOVE to **My Team ▾ History** page (placeholder for now; data still fetches even if presentation is minimal) |
-| Active Team Members (owners list, invite co-owner, replace owner, remove owner, revoke invites) | 916–1108 | STAY on Team Home — Owners section, authority-gated. Active owners + pending invites both shown here. Owner/commissioner sees the full management UI (invite co-owner, replace, remove, cancel/resend/nudge pending invites, inactivate team). Viewer sees a read-only list showing active owner names and pending invite rows (email + status icon, no actions). Owner names are clickable links to `/users/:ownerUserId` for all authority tiers. |
-| Team Lifecycle (inactivate team) | 1110–1128 | STAY on Team Home — owner-gated destructive action with its own warning UX |
+| Active Team Members (owners list, invite co-owner, replace owner, remove owner, revoke invites) | 916–1108 | STAY on Team Home — Owners section, authority-gated. Active owners + pending invites both shown here. Owner/commissioner (or root admin via `useLeagueAuthority`) sees the full management UI: invite co-owner, **Remove Owner** (only when team has >1 owner), cancel/resend/nudge pending invites, plus per-owner **Promote to Commissioner** / **Demote to Member** league-role actions (commissioner + root admin only). Viewer sees a read-only list showing active owner names and pending invite rows (email + status icon, no actions). Owner names are clickable links to `/users/:ownerUserId` for all authority tiers and always resolve to an account-scope view — league-role actions stay here on Team Home, not on the User page. |
+| Team Lifecycle (inactivate team) | 1110–1128 | STAY on Team Home — authority: team owner + commissioner + root admin. **Inactivate Team is a soft action**: the inactivated team cannot create new contest entries, and its owners lose league access (they can no longer see the league including its history from this team), but all data is preserved — remaining league members and the commissioner can still see the inactivated team's historical entries/contest results in league history. Reversible by reactivation. **Delete Team** is a distinct hard action that lives as a root-admin-only section on Team Home, only visible when the team is already inactive. Delete cascades and wipes the team's data from history; it is intended for QA testing residue cleanup, not real-world team removal. |
 
 ### `clients/poolmaster/src/features/contests/contest-detail-page.tsx`
 
@@ -303,11 +314,12 @@ These are called out by the new nav but don't exist in the code yet:
 - **D. League Home page** — new canonical page at `/league/:leagueCode` (replaces today's `LeagueDetailPage` content, which is being dissolved). Authority-gated via `useLeagueAuthority`: members see identity + status + overview + Leave league. When league is inactive, members see the "This league is not currently active" banner (future: Message commissioner CTA). Commissioners additionally see inline League details (name + description, editable + Save), League branding (icon selector + Save), Commissioner invitations (join-link regeneration + invite by email), and League lifecycle (Inactivate). Root admin collapses into commissioner tier and additionally gets a root-admin-gated permanent-delete section when the league is inactive (mirrors Team Home pattern). Contest and completed-history cards remain on League Home temporarily as truthful fallback sections until their dedicated routes land later in the plan. This page *replaces* both the previously planned separate League Settings page **and** the old `ManageLeagueModal` interaction.
 - **E. Manage Contests list page** — new list page under League ▾ (commissioner-only). Rows link to the existing `/contests/:contestId/manage` page.
 - **F. My Team ▾ History placeholder page** — new route, minimal page. Detailed design deferred (see Open Questions §7).
-- **G. User page** `/users/:userId` — canonical page with authority-gated action modals. Replaces `/my-account` and the previously-planned decomposed `/profile`, `/preferences`, `/password`, `/account` pages. Reached from My Profile (Account dropdown, self), from Teams and Owners / Team Home (owner-name click, viewer or commissioner depending on context), and from `/manage/users` (root admin). Self-authority modal set: Edit Profile, Edit Preferences, Change Password, Inactivate Account, Delete Account (locked until inactive).
-- **G1. `useUserAuthority(userId)` (or equivalent authority read)** — reads backend-emitted `viewerAuthority` signal from the user detail response. Frontend does not compute authority client-side; it displays the modal set that matches the backend authority signal.
-- **G2. Commissioner action modals on `/users/:userId`** — Promote to Commissioner, Demote to Member, Remove from League. Visible when authority includes commissioner on the user's current-league context.
-- **G3. Root-admin action modals on `/users/:userId`** — Toggle Root Admin, Reset Password, Inactivate Account, Delete Account. Visible when authority includes root admin. Replaces the Plan 108-era modals that were planned on `/manage/users` row actions.
-- **G4. Clickable owner names** — a small shared "owner link" render component used on both the Teams and Owners table (Owners column) and the Team Home Owners section, routing to `/users/:ownerUserId`.
+- **G. User page** `/users/:userId` — canonical **account-scope** page with authority-gated action modals. Replaces `/my-account` and the previously-planned decomposed `/profile`, `/preferences`, `/password`, `/account` pages. Reached from My Profile (Account dropdown, self), from Teams and Owners / Team Home (owner-name click, always landing as `viewer` authority), and from `/manage/users` (root admin). Does **not** carry league-role actions — those live on Teams and Owners / Team Home (see items L1–L2 below). Self-authority modal set: Edit Profile, Edit Preferences, Change Password, Inactivate Account, Delete Account (locked until inactive).
+- **G1. `useUserAuthority(userId)` (or equivalent authority read)** — reads backend-emitted `viewerAuthority` signal from the user detail response. Signal shape: `{ self, rootAdmin, viewer }` — no commissioner tier on the User page. Frontend does not compute authority client-side; it displays the modal set that matches the backend authority signal. Multiple flags can be true simultaneously (e.g. self+rootAdmin); viewer is the fallback when no other flag applies.
+- **G2. Root-admin account-scope modals on `/users/:userId`** — Toggle Root Admin, Reset Password, Inactivate Account, Delete Account (locked until inactive). Visible when authority includes `rootAdmin`. Replaces the Plan 108-era modals that were previously planned on `/manage/users` row actions.
+- **G3. Clickable owner names** — a small shared "owner link" render component used on both the Teams and Owners table (Owners column) and the Team Home Owners section, routing to `/users/:ownerUserId`. Always lands on the account-scope User page; commissioners do not carry league authority into this click.
+- **L1. Commissioner per-owner row action menu** — on both Teams and Owners (per-owner row in the Owners column) and Team Home (per-owner entry in the Owners section), expose the league-role action menu: **Remove Owner** (co-owner of the team + commissioner + root admin; only enabled when team has >1 owner; attempting to remove the single owner routes to Inactivate Team), **Promote to Commissioner** (commissioner + root admin), **Demote to Member** (commissioner + root admin). Same modal used from both surfaces. Authority comes from `useLeagueAuthority` + per-team co-owner check.
+- **L2. Root-admin Delete Team section on Team Home** — already called out in Team Home tile destinations, re-listed here for completeness. Visible only when `user.isRootAdmin && team.status === 'INACTIVE'`. Hard cascade delete, intended for QA residue cleanup only. Paired with the pre-existing commissioner Inactivate Team action; Delete is additional, not a replacement.
 - **H. `useTeamAuthority(teamId)` hook** — returns `owner \| commissioner \| viewer`. Powers Team Home's authority gating. Root admin collapses into `commissioner` tier on any team. Replaces scattered inline `leagueQuery.data?.role === 'COMMISSIONER'` checks.
 - **I. `useLeagueAuthority(leagueCode)` hook** — returns `commissioner \| member`. Powers League Home's authority gating. Root admin collapses into `commissioner` tier on any league. Also usable for commissioner-gated nav items (Create Contest, Manage Contests visibility).
 - **J. `useIsRootAdmin()` hook** — fine-grained check for root-admin-only sections on League Home and Team Home (permanent delete).
@@ -325,7 +337,7 @@ These are called out by the new nav but don't exist in the code yet:
 
 ## Open Questions / Product Calls Needed
 
-1. ~~Member promote/demote/remove~~ — **RESOLVED**: all three live as commissioner-authority modals on `/users/:userId` (Promote to Commissioner, Demote to Member, Remove from League). Commissioners reach a user via clickable owner names on Teams and Owners / Team Home. The old Members tile at `league-detail-page.tsx:579–682` is fully replaced by this flow and should be deleted.
+1. ~~Member promote/demote/remove~~ — **RESOLVED** (revised): the three league-role actions are **Remove Owner**, **Promote to Commissioner**, and **Demote to Member**. They live as per-owner row actions on **Teams and Owners** (per-owner entry in the Owners column) and on **Team Home** (Owners section) — same modal in both places. Commissioners (and root admins via `useLeagueAuthority`) are the actors. `/users/:userId` does **not** carry these actions — it is account-scope only. The earlier "Remove from League" label collapses into per-team Remove Owner or Inactivate Team. See row 107-012 in the Action Plan and items L1–L2 in BUILD NEW. The old Members tile at `league-detail-page.tsx:579–682` is fully replaced by this flow and should be deleted.
 2. ~~Leave league home~~ — **RESOLVED**: lives on League Home, member-visible section.
 3. ~~Commissioner invitations scope~~ — **RESOLVED**: both the join link/code AND "Invite by email" live on League Home in a commissioner-gated section.
 4. ~~Pending owner invites home~~ — **RESOLVED**: Team Home Owners section (primary, with Cancel/Resend/Nudge actions for owner+commissioner authority) + Teams and Owners Owners column (read-only aggregate with email + status icon). No standalone tile.
@@ -348,7 +360,10 @@ These are called out by the new nav but don't exist in the code yet:
 - **Per-contest entry limits** — the Entries page Create Entry button must disable at a contest's entry cap; surface the cap on the generated `Contest` or `ContestConfiguration` shape.
 - **Entry creation route** — today we have `/contests/:contestId/entries/:entryId` for detail/edit. Creation flow (what route, what payload, what response) needs confirmation against the generated SDK before the Entries page ships.
 - **Team authority** — confirm the current `league-detail` response carries enough information to compute `useTeamAuthority(teamId)` locally (owner team membership + league commissioner role). If not, a dedicated endpoint or field is needed.
-- **User `viewerAuthority` signal** — the user detail endpoint (`getUser` or equivalent) must emit a `viewerAuthority` field (or a capabilities object) indicating what the current requester can do: `self`, `commissioner` (for which league), `root-admin`, `viewer`. Frontend reads this directly rather than computing authority locally. If the endpoint does not expose this today, request an additive field. Root-admin / commissioner gating of action endpoints must remain backend-enforced regardless.
+- **User `viewerAuthority` signal** — the user detail endpoint (`getUser` or equivalent) must emit a `viewerAuthority` field indicating what the current requester can do on the account-scope User page: `{ self, rootAdmin, viewer }` as a set (flags, not single enum). No commissioner tier is needed on this endpoint — league-role actions live on league surfaces and use `useLeagueAuthority` / league-detail signals, not the user-detail endpoint. Frontend reads this directly rather than computing authority locally. Root-admin gating of the action endpoints (toggle root-admin, reset password, inactivate/delete account) must remain backend-enforced regardless.
+- **Admin-initiated reset-password endpoint** — net-new operation `POST /api/v1/admin/users/{userId}/reset-password` (or equivalent) that generates a secure reset token or temporary credential for the admin to relay to the user. UX shape (temporary password to copy vs email link) is a product question; audit logging required.
+- **Team `removeOwner` + team-owner authority** — Teams and Owners / Team Home row actions need a backend operation to remove an owner from a team (not the league). Confirm an op exists or add one. Needs to enforce the ">1 owner" constraint server-side (single-owner removal must be rejected or redirected to team inactivation). Also needs caller↔team-owner authority check.
+- **Team `delete` semantics** — confirm a permanent team-delete endpoint exists for the root-admin-only Delete Team section on Team Home. Must cascade related data for QA cleanup use cases; should remain locked behind inactive state and root-admin authority. If not present, add.
 
 ## Bugs Consumed by This Plan
 
@@ -378,7 +393,8 @@ Phase-level sequencing will get its own slicing once open questions §1–12 are
 | 107-003 | 2 | Build Teams and Owners page from current teams-page tile content | Done | Reworked `/league/:leagueCode/teams` into the read-only Teams and Owners directory, removed the standalone pending-invites/manage affordances, linked team names directly to Team Home, and added owner-name links that resolve through a truthful temporary `/users/:userId` scaffold. Current squad-list contract does not expose a separate team-code field, so this first pass uses the linked team name as the identifier. Validated with the full required repo gate set before closeout. |
 | 107-004 | 2 | Build League Home and dissolve `LeagueDetailPage` + `manage-league-modal` content into authority-gated panels | Done | Reworked League Home around inline commissioner/root-admin management panels, removed roster role-management from this page, kept member leave behavior and inactive-banner semantics on the canonical route, and retained contests/history as temporary fallback sections while later dedicated routes are still staged. Root-admin-only delete now lives on League Home for inactive leagues. Validated with the full required repo gate set before closeout. |
 | 107-005 | 3 | Build canonical User page at `/users/:userId` with self-service modal set | Done | Moved self-service account actions onto the canonical `/users/:userId` route with dedicated profile, preferences, password, lifecycle, and delete dialogs; `/my-account` now redirects to `/users/:myId`; and non-self routes stay truthful placeholders until the additive cross-user detail/capabilities contract lands. Validated with the full required repo gate set before closeout. |
-| 107-006 | 3 | Add commissioner and root-admin action modals to the User page | Not Started | Commissioner: promote/demote/remove from league. Root admin: toggle root admin, reset password, inactivate/delete account. |
+| 107-006 | 3 | Add root-admin account-scope action modals to `/users/:userId` | Not Started | Scope trimmed: User page is account-only. Root-admin modals: Toggle Root Admin, Reset Password (admin-initiated), Inactivate Account, Delete Account (locked until inactive). Consumes backend `viewerAuthority` + `adminResetPassword` contract from 107-B1. Commissioner promote/demote/remove-owner actions were moved out of this slice to row 107-012 per the account-vs-league-scope clarification. |
+| 107-012 | 3 | Add commissioner per-owner row action menu on Teams and Owners and Team Home | Not Started | League-role actions (Remove Owner, Promote to Commissioner, Demote to Member) live on Teams and Owners (per-owner row in the Owners column) and on Team Home (Owners section); same modals from both surfaces. Authority: commissioner + root admin (via `useLeagueAuthority`) for promote/demote; co-owner of the team + commissioner for Remove Owner. Remove Owner is only enabled when the team has >1 owner; single-owner removal routes to Inactivate Team instead. |
 | 107-007 | 4 | Build My Team Entries page and move entry-management affordances off Team Home and Contest Home | Done | Added the dedicated `/league/:leagueCode/entries` page, moved live entry creation/rename off Team Home and Contest Home, and left historical results on Team Home until 107-010 lands. Slice-local tests plus typecheck, eslint, repo jest, and functional API passed; `test:poolmaster:unit` remained red only because another in-progress `/manage/leagues` session had unrelated local WIP. |
 | 107-008 | 4 | Complete Contest Home migration, pre-event click rules, and post-event leaderboard expansion behavior | Done | Contest Home now uses the canonical league-scoped route in touched tests/navigation, pre-event self rows link to My Entries while non-self rows stay read-only, and post-event leaderboard rows expand one-at-a-time to reveal lineup detail instead of using the old duplicate leaderboard panel. Slice-local tests plus typecheck passed; the only known red full-repo gate remains the separate in-progress `/manage/leagues` session. |
 | 107-009 | 5 | Build Manage Contests list page and wire commissioner League-menu navigation | Done | `/league/:leagueCode/contests/manage` is now a real commissioner/root-admin page with active and historical contest sections, create/open/manage links, League Home handoff links, and commissioner-only app-shell navigation to the canonical list route. Per-contest manage remains the row destination, and the specific list route still sits ahead of dynamic `:contestId` matching. |

@@ -72,7 +72,7 @@ Reached from the Account dropdown "Manage" link (visible only when `user.isRootA
 - **Row action:** click → navigate to `/users/:userId` (the canonical User page — Plan 107 item G)
 - **No modals on this admin list.** All admin actions (toggle root admin, reset password, inactivate, delete) live on `/users/:userId` as root-admin-authority modals, not as row actions here.
 - Mirrors `/manage/leagues` and `/manage/teams` — search + link only.
-- **Coordination with Plan 106:** The shipped backend `setRootAdmin` contract and existing `/manage` users panel are transitional implementation, not blockers. This plan replaces that current `/manage`-embedded panel with (a) a dedicated `/manage/users` search+link page and (b) the root-admin modal set on `/users/:userId` (owned by Plan 107 item G3).
+- **Coordination with Plan 106:** The shipped backend `setRootAdmin` contract and existing `/manage` users panel are transitional implementation, not blockers. This plan replaces that current `/manage`-embedded panel with (a) a dedicated `/manage/users` search+link page and (b) the root-admin account-scope modal set on `/users/:userId` (owned by Plan 107 item **G2** — Toggle Root Admin, Reset Password, Inactivate Account, Delete Account). Per the Plan 107 account-vs-league scope clarification, `/users/:userId` does **not** surface league-role actions (promote/demote/remove owner); those live on Teams and Owners / Team Home — see Plan 107 row 107-012 and items L1–L2.
 
 ### 4. Content Configuration — `/manage/content-configuration`
 
