@@ -1,32 +1,32 @@
 # Plans Overview
 
-> Active plans live directly under `plans/`.
-> Deferred future-scope plans live under `plans/deferred/`.
+`plans/` holds **narrative companions** for work currently in flight. Each plan file maps to a parent Beads epic and is deleted when that epic closes. See `rules/workflow-rules.md §0 Document Lifecycle` and `docs/adr/0002-plans-as-narrative-delete-after-epic-closes.md` for the governing rules.
 
-## How To Use This Folder
+## How this folder works
 
-- Treat files in `plans/` as the current execution and replanning surface.
-- Plans are execution-oriented only:
-  - progress
-  - scope
-  - sequencing
-  - execution notes
-  - task tables
-- Plans should not act as the product source of truth or technical source of
-  truth.
-- Product behavior belongs in `requirements/`.
-- Technical design belongs in `tech-specs/`.
-- Treat files in `plans/deferred/` as future enhancement planning, not current delivery scope.
+- Every active plan has a **Beads epic reference** in its header (e.g. `pool-master-784` for Plan 107).
+- **Task state lives in Beads**, not in plans. Use `bd show <epic-id>` to see the live slice list, statuses, dependencies, and closeout notes.
+- Plan files contain **narrative only**: purpose, governing principles, scope, architecture / pattern narrative, site maps, tile→destination mappings, open questions, and backend contract questions.
+- Plan files do **not** contain task tables or Done/Not Started status columns.
 
-## Current Intent
+## When a plan dies
 
-The active planning set is being narrowed toward a reviewable MVP:
+- When the parent Beads epic closes (all child stories resolved), the plan file is **deleted** in the same commit or an immediately following cleanup commit.
+- Before deletion, any durable patterns or decisions the plan introduced must be codified in `rules/*.md` or as an ADR in `docs/adr/`.
+- Git history preserves the deleted file. `git log -- plans/NN-*.md` and `git show <sha>:plans/NN-*.md` retrieve any prior version.
+- This directory does **not** use an `archive/` subdirectory. Archive directories accumulate the same problem under a different path; deletion is the enforcement mechanism.
 
-- leagues and invitations
-- contest creation and participation
-- draft-once tournament-style contests
-- scoring, standings, and results
-- minimal history, social, and billing surfaces
-- no mobile apps until the web app and service layers are mature enough to review end to end
+## Where things actually live
 
-If an older plan no longer exists on disk, treat git history as the historical record and replan from the current product direction before reviving the work.
+| Concept | Canonical home |
+|---|---|
+| Task status, dependencies, slice list | `.beads/issues.jsonl` (live tracker; use `bd show`, `bd list`) |
+| How we build here (conventions, checklists) | `rules/*.md` |
+| Why we chose a durable approach | `docs/adr/*.md` |
+| Product intent for a major feature | `requirements/product-requirements/features/<feature>/` |
+| Pre-implementation technical spec for a major feature | `tech-specs/features/<feature>/` (deleted when implementation ships) |
+| Narrative context for an in-flight major effort | `plans/NN-*.md` (deleted when Beads epic closes) |
+
+## Currently active
+
+Run `bd list` to see the open epics. Each plan file here links to its parent epic.

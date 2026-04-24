@@ -1,3 +1,7 @@
+# Plan 109: Team Relationship Contract Pattern
+
+**Beads epic:** `pool-master-083` — see `bd show pool-master-083` for live slice state. This plan is the narrative companion; task tracking lives in Beads.
+
 ## Purpose
 
 Create the dedicated design and execution plan for applying the new
@@ -369,15 +373,3 @@ slices.
 - Revisit `memberType` enum expansion only if PoolMaster introduces true
   non-owner Team participation semantics.
 
-## Action Plan
-
-| ID | Phase | Task | Status | Notes |
-|---|---|---|---|---|
-| 109-001 | 1 | Lock the Team authority contract design and naming | Done | This plan locks Team `teamRelationship` plus separate `isRootAdmin` as the Team contract truth, intentionally omits a redundant Team `memberType`/`ownerType` field in the first pass, and uses `leagueMember/owner/commissioner` as the initial Team relationship flags. |
-| 109-002 | 1 | Audit current Team DTOs, mappers, and permission hooks against the locked model | Done | Audited `SquadDto`, squad mapper output, squad service permission helpers, Team Home, Teams and Owners, and squad owner-invitation flows to identify the remaining implicit root-admin/owner/commissioner checks. |
-| 109-003 | 2 | Add Team `teamRelationship` + `isRootAdmin` DTOs, mapper output, and OpenAPI/client refresh | Done | Added `TeamRelationshipDtoSchema` to `packages/shared/dto/squads.dto.ts`, extended `SquadDto`, updated the squad mapper, refreshed `packages/shared/generated/openapi.json`, and regenerated the Hey API client types/sdk. |
-| 109-004 | 2 | Patch backend Team authorization to make owner/commissioner/root-admin checks truthful | Done | Squad list/get/update/inactivate/add/remove flows and owner-invitation management now thread root-admin-aware Team viewer context through the backend instead of relying on frontend-only assumptions. |
-| 109-005 | 3 | Refactor frontend Team authority consumers to read backend-emitted contract truth | Done | Team Home and Teams and Owners now read `teamRelationship` plus `isRootAdmin` from squad responses instead of recomputing authority from mixed league-role and owner-array heuristics. |
-| 109-006 | 3 | Decide and implement the Team-derived entry authority propagation pattern | Done | The first-pass decision is to compose Team-derived entry behavior from the Team response already loaded on the page; no additive entry relationship contract was needed in this slice. |
-| 109-007 | 4 | Add unit, contract, functional, and frontend verification for the Team authority pattern | Done | Added root-admin-specific squad and owner-invitation unit coverage, updated Team frontend tests for the new Team contract, refreshed contract verification via the squad DTO schemas, and extended functional API coverage to assert Team relationship truth. |
-| 109-008 | 4 | Reconcile Plan 107 references, Beads, and close Team authority drift | Done | Plan 107/108 already pointed at the Team relationship contract. This slice reconciles the Team implementation tracker items so the shipped Team contract matches the narrative plans and Beads state. |

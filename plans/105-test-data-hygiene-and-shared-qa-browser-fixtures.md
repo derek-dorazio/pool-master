@@ -1,3 +1,7 @@
+# Plan 105: Test Data Hygiene and Reusable QA Browser Fixtures
+
+**Beads epic:** `pool-master-xw5` — see `bd show pool-master-xw5` for live slice state, child stories, and status. This plan is the narrative companion; task tracking lives in Beads.
+
 ## Objective
 
 Stop both QA and local Postgres from accumulating avoidable automated-test
@@ -123,19 +127,3 @@ residue by:
 - Manual QA cleanup can be performed through existing real lifecycle flows
   rather than bespoke SQL for normal operation.
 
-## Action Plan
-
-| ID | Phase | Task | Status | Notes |
-|---|---|---|---|---|
-| 105-001 | 1 | Confirm the real residue sources in browser E2E and local DB-backed tests | Done | Current residue comes from unique Playwright users/leagues plus best-effort local cleanup in `tests/functional/setup.ts` and `tests/integration/helpers.ts`. |
-| 105-002 | 1 | Lock the shared-fixture QA browser strategy and lifecycle-cleanup assumptions | Done | Reuse stable QA commissioner/member accounts and one `QA-TEST-LEAGUE`; create/repair missing state instead of minting unbounded new identities. Existing league delete, contest delete, and entry delete flows are part of the plan. |
-| 105-003 | 2 | Backend/frontend developer: add stable QA commissioner/member fixture accounts to the bootstrap workflow | Not Started | Extend `.github/fixtures/qa-test-users.json` and the browser helpers to use durable non-root-admin fixture users. |
-| 105-004 | 2 | Frontend developer: replace per-run random browser identities with login-first reusable-fixture helpers | Not Started | Rewrite `clients/poolmaster/e2e/` helpers/specs to stop generating new emails and league codes by default. |
-| 105-005 | 2 | Frontend developer: add self-healing `QA-TEST-LEAGUE` bootstrap/restore behavior | Not Started | If the shared league is missing, the harness may create it truthfully; otherwise it should reuse and normalize the existing shared fixture state. |
-| 105-006 | 2 | Frontend developer: rebuild high-value browser journeys inside the shared QA league | Not Started | Focus on commissioner/member login, contest create/manage, and member entry flows rather than shallow sign-up-only smoke. |
-| 105-007 | 2 | Frontend developer/backend developer: control subordinate shared-league artifacts so contests and entries do not accumulate unbounded residue | Not Started | Reuse deterministic contest names and existing delete flows where possible before each run. |
-| 105-008 | 3 | Backend developer/QA engineer: harden functional API cleanup and recovery behavior | Done | Functional cleanup now removes contest-owned dependencies before provider participants, widens disposable user/provider sweeps, and tolerates run-state file loss by falling back to the shared daemon state during long functional runs. |
-| 105-009 | 3 | Backend developer/QA engineer: harden integration cleanup and remove narrow heuristic residue assumptions | Done | Integration setup now starts from cleanup, teardown globally sweeps sports-data tables in `poolmaster_test`, and merged service coverage revalidated cleanly once Prisma was run against local Postgres outside the sandbox boundary. |
-| 105-010 | 3 | Documentation/rules: codify the supported local test DB reset and cleanup workflow | Done | Developer setup and testing rules now prefer reset-first recovery, `:fresh` scripts, and “confirm/start Postgres first”; we also captured that Prisma/Jest DB checks may need to run outside the sandbox even when `psql` works locally. |
-| 105-011 | 4 | QA/product operations: adopt manual QA cleanup through real lifecycle flows | Not Started | Use commissioner league delete as the normal manual reset tool for the shared QA league and reserve account delete for occasional fixture-user resets. |
-| 105-012 | 4 | QA engineer: remove existing QA residue after the shared-fixture browser lane is live | Not Started | Prefer existing real flows first; only create a follow-up admin cleanup lane if durable residue still remains impractical to remove. |

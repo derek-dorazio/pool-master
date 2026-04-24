@@ -1,3 +1,7 @@
+# Plan 110: League Relationship Contract Pattern
+
+**Beads epic:** `pool-master-lz9` — see `bd show pool-master-lz9` for live slice state. This plan is the narrative companion; task tracking lives in Beads.
+
 ## Purpose
 
 Create the dedicated design and execution plan for applying the new
@@ -244,14 +248,3 @@ This is primarily:
    - The extra verbosity keeps naming consistent across League, Team, and
      Team-owned resources.
 
-## Action Plan
-
-| ID | Phase | Task | Status | Notes |
-|---|---|---|---|---|
-| 110-001 | 1 | Lock the League relationship contract design and naming | Done | This plan locks `leagueRelationship` plus separate `isRootAdmin` as the League contract truth, keeps descriptive `memberType`, and uses `leagueMember/commissioner` as the initial League relationship flags. |
-| 110-002 | 1 | Audit current League DTOs, mappers, and permission hooks against the locked model | Done | Audited shared DTOs, mapper usage, league route handlers, permission hooks, root-admin admin-league responses, and every active frontend consumer still reading viewer-scoped `role`. |
-| 110-003 | 2 | Add `leagueRelationship` + `memberType` + `isRootAdmin` DTOs, mapper output, and OpenAPI/client refresh | Done | Added `LeagueRelationshipDtoSchema`, updated League summary/detail DTOs, refreshed mapper output, and regenerated OpenAPI + Hey API client artifacts. |
-| 110-004 | 2 | Patch backend League authorization to make member/commissioner/root-admin checks truthful | Done | League permission helpers now allow explicit root-admin override, get-by-id/code handlers return truthful non-member root-admin payloads, and root-admin admin league responses emit `memberType: null` plus relationship false flags. |
-| 110-005 | 3 | Refactor frontend League authority consumers to read backend-emitted contract truth | Done | League Home, App Shell, contest-management pages, team pages, league routing helpers, and transitional manage-league UI now use `leagueRelationship` plus `isRootAdmin` for gating while keeping `memberType` descriptive-only. |
-| 110-006 | 4 | Add unit, contract, functional, and frontend verification for the League relationship pattern | Done | Required repo gates all passed: turbo typecheck, eslint, repo jest, functional API, and PoolMaster unit tests. Functional assertions now cover the new league shape and frontend tests use the regenerated DTO contract. |
-| 110-007 | 4 | Reconcile Plan 107 references, Beads, and close League relationship drift | Done | Plan 107 already pointed at this contract; this slice closes the remaining league `role` drift in implementation and tracker state, and closes the Beads epic for the League relationship lane. |

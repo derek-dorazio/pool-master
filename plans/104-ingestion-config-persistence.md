@@ -1,5 +1,7 @@
 # Plan 104: Persistent Ingestion Schedule Configuration
 
+**Beads:** `pool-master-lpo` — see `bd show pool-master-lpo` for live slice state. This plan is the narrative companion; task tracking lives in Beads.
+
 ## Purpose
 
 Persist the feed-aware ingestion schedule configuration so root-admin changes

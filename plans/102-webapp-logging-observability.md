@@ -1,22 +1,16 @@
 # Implementation Plan: Observability-Grade Logging for PoolMaster Webapp Frontend
 
+**Beads epic:** `pool-master-hwt` — see `bd show pool-master-hwt` for live slice state, child stories, and status. This plan is the narrative companion; task tracking lives in Beads.
+
 This is a full-stack observability plan for the PoolMaster webapp, not a
 frontend-only change. The web client is the primary producer of the new
 signals, but the rollout also introduces backend correlation/header handling
 and a backend operational ingestion route so browser events can join the
 existing CloudWatch-backed service logs.
 
-## Action Plan
+## Task state
 
-| ID | Phase | Task | Status | Notes |
-|---|---|---|---|---|
-| WLO-001 | 1 | Logger foundation in the webapp | Done | Added shared logger types, redaction, trace id helper, console sink, singleton hook, bootstrap wiring, test logger helper, and unit proof under `clients/poolmaster/src/lib/logger/`. |
-| WLO-001A | 1 | Expose safe sessionId in the webapp auth/session model | Done | Added safe `sessionId` to auth/session DTOs, authenticated account self-service responses, generated SDK types, and the frontend session store/logger context, with unit/contract/functional proof. |
-| WLO-002 | 2 | Correlation headers and backend request bindings | Done | Added browser request headers in `clients/poolmaster/src/lib/api.ts`, bound them into backend request logs in `packages/core-api/src/core/logger.ts`, and added unit + webapp proof for header propagation. |
-| WLO-003 | 3 | Client log ingestion endpoint and transport | Done | Added shared client-log DTOs, the public `/api/v1/client-logs` operational endpoint with optional auth binding and rate-limit/oversize handling, browser batching transport, functional/unit proof, and refreshed generated OpenAPI artifacts. |
-| WLO-004 | 3 | Global browser failure capture and fallback UX | Done | Added a top-level React error boundary, global `error` and `unhandledrejection` listeners, fallback reload UX, and behavioral proof for render-failure capture plus browser-global fatal logging. |
-| WLO-005 | 4 | Feature-level logging backfill and branch proof | Done | Feature-level logging and branch-proof coverage now span auth/session, league/team workflows, contest workflows, account/root-admin workflows, and the remaining routing/app-shell/navigation surfaces (`app-shell`, `league-selector`, `route-guards`, `not-found-page`). |
-| WLO-006 | 5 | Docs and final gap sweep | Done | Updated [docs/LOGGING-OPERATIONS.md](../docs/LOGGING-OPERATIONS.md) with browser/client-log query guidance and completed the final frontend observability gap audit; only intentional out-of-scope surfaces remain (archived frontend, one-off scripts, and static/pure helpers like `route-state.ts`). |
+Task state for this plan lives in Beads under epic `pool-master-hwt`. Use `bd show pool-master-hwt` for the live slice list, statuses, dependencies, and closeout notes. Do not maintain a parallel task table in this file (see `rules/workflow-rules.md §1` and `docs/adr/0002-plans-as-narrative-delete-after-epic-closes.md`).
 
 ## Research Summary
 
