@@ -373,7 +373,7 @@ Phase-level sequencing will get its own slicing once open questions §1–12 are
 
 | ID | Phase | Task | Status | Notes |
 |---|---|---|---|---|
-| 107-001 | 1 | Add route scaffold for canonical League Home, Teams and Owners, My Entries, My History, Manage Contests list, and canonical Contest Home migration path | Not Started | Includes temporary `/contests/:contestId` compatibility redirect and final cleanup requirement. |
+| 107-001 | 1 | Add route scaffold for canonical League Home, Teams and Owners, My Entries, My History, Manage Contests list, and canonical Contest Home migration path | Done | Added league-scope canonical path builders, honest scaffold pages for `entries`, `history`, `contests`, and `contests/manage`, a canonical team-home adapter route, and a temporary `/contests/:contestId` compatibility redirect into `/league/:leagueCode/contests/:contestId`. Validated with the full required repo gate set before closeout. |
 | 107-002 | 1 | Rework post-auth landing and delete `/my-leagues` as a first-class destination | Not Started | League switcher becomes the only switcher; remove the unreachable Welcome fallback grid in the same effort. |
 | 107-003 | 2 | Build Teams and Owners page from current teams-page tile content | Not Started | Read-only league-level table with owner-name links to `/users/:userId`; product-confirmed question #5 remains a gating check. |
 | 107-004 | 2 | Build League Home and dissolve `LeagueDetailPage` + `manage-league-modal` content into authority-gated panels | Not Started | Includes commissioner edit panels, member leave section, inactive banner, and root-admin delete section hook points. |

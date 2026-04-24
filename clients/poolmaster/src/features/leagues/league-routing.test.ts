@@ -2,6 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { LeagueIconKey, LeagueRole } from '@poolmaster/shared/domain';
 import type { ListLeaguesResponses } from '@/lib/api';
 import {
+  buildLeagueContestPath,
+  buildLeagueContestsManagePath,
+  buildLeagueContestsPath,
+  buildLeagueEntriesPath,
+  buildLeagueHistoryPath,
+  buildLeagueTeamHomePath,
   getLeagueSelectorOptions,
   sortLeaguesForOverview,
 } from './league-routing';
@@ -71,5 +77,20 @@ describe('league routing helpers', () => {
       'COMMOFF1',
       'INACTIVE1',
     ]);
+  });
+
+  it('builds canonical league-scoped paths for the reorganized IA', () => {
+    expect(buildLeagueTeamHomePath('BIGDOGS', 'team-1')).toBe(
+      '/league/BIGDOGS/teams/team-1',
+    );
+    expect(buildLeagueEntriesPath('BIGDOGS')).toBe('/league/BIGDOGS/entries');
+    expect(buildLeagueHistoryPath('BIGDOGS')).toBe('/league/BIGDOGS/history');
+    expect(buildLeagueContestsPath('BIGDOGS')).toBe('/league/BIGDOGS/contests');
+    expect(buildLeagueContestsManagePath('BIGDOGS')).toBe(
+      '/league/BIGDOGS/contests/manage',
+    );
+    expect(buildLeagueContestPath('BIGDOGS', 'contest-9')).toBe(
+      '/league/BIGDOGS/contests/contest-9',
+    );
   });
 });

@@ -13,12 +13,36 @@ export function buildLeagueTeamPath(leagueCode: string) {
   return `/league/${leagueCode}/team`;
 }
 
+export function buildLeagueTeamHomePath(leagueCode: string, teamId: string) {
+  return `/league/${leagueCode}/teams/${teamId}`;
+}
+
 export function buildLeagueTeamsPath(leagueCode: string) {
   return `/league/${leagueCode}/teams`;
 }
 
+export function buildLeagueEntriesPath(leagueCode: string) {
+  return `/league/${leagueCode}/entries`;
+}
+
+export function buildLeagueHistoryPath(leagueCode: string) {
+  return `/league/${leagueCode}/history`;
+}
+
+export function buildLeagueContestsPath(leagueCode: string) {
+  return `/league/${leagueCode}/contests`;
+}
+
 export function buildLeagueContestCreatePath(leagueCode: string) {
   return `/league/${leagueCode}/contests/new`;
+}
+
+export function buildLeagueContestPath(leagueCode: string, contestId: string) {
+  return `/league/${leagueCode}/contests/${contestId}`;
+}
+
+export function buildLeagueContestsManagePath(leagueCode: string) {
+  return `/league/${leagueCode}/contests/manage`;
 }
 
 export function buildLeagueContestManagePath(leagueCode: string, contestId: string) {

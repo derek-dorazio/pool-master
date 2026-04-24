@@ -6,8 +6,10 @@ import { NotFoundPage } from '@/features/app-shell/not-found-page';
 import { CreateContestPage } from '@/features/contests/create-contest-page';
 import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { ContestEntryPage } from '@/features/contests/contest-entry-page';
+import { LegacyContestDetailRedirect } from '@/features/contests/legacy-contest-detail-redirect';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
+import { LeagueRouteScaffoldPage } from '@/features/leagues/league-route-scaffold-page';
 import { MyLeaguesPage, WelcomePage } from '@/features/leagues/leagues-page';
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminContentConfigurationListPage } from '@/features/root-admin/root-admin-content-configuration-list-page';
@@ -22,6 +24,7 @@ import { RootAdminRunSportSyncPage } from '@/features/root-admin/root-admin-run-
 import { RootAdminSportOverridesPage } from '@/features/root-admin/root-admin-sport-overrides-page';
 import { RootAdminSyncConfigPage } from '@/features/root-admin/root-admin-sync-config-page';
 import { RootAdminSyncDashboardPage } from '@/features/root-admin/root-admin-sync-dashboard-page';
+import { CanonicalTeamHomeRoute } from '@/features/teams/canonical-team-home-route';
 import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
 import { TeamsPage } from '@/features/teams/teams-page';
@@ -89,12 +92,36 @@ export const router = createBrowserRouter([
             element: <MyTeamPage />,
           },
           {
+            path: 'league/:leagueCode/teams/:teamId',
+            element: <CanonicalTeamHomeRoute />,
+          },
+          {
+            path: 'league/:leagueCode/entries',
+            element: <LeagueRouteScaffoldPage scaffoldKey="entries" />,
+          },
+          {
+            path: 'league/:leagueCode/history',
+            element: <LeagueRouteScaffoldPage scaffoldKey="history" />,
+          },
+          {
             path: 'league/:leagueCode/teams',
             element: <TeamsPage />,
           },
           {
-            path: 'contests/:contestId',
+            path: 'league/:leagueCode/contests',
+            element: <LeagueRouteScaffoldPage scaffoldKey="contests" />,
+          },
+          {
+            path: 'league/:leagueCode/contests/manage',
+            element: <LeagueRouteScaffoldPage scaffoldKey="manage-contests" />,
+          },
+          {
+            path: 'league/:leagueCode/contests/:contestId',
             element: <ContestDetailPage />,
+          },
+          {
+            path: 'contests/:contestId',
+            element: <LegacyContestDetailRedirect />,
           },
           {
             path: 'contests/:contestId/entries/:entryId',
