@@ -445,7 +445,6 @@ Current persona nickname map:
 | Backend Developer | Brad | Service, DTO, OpenAPI, and test implementation |
 | Frontend Developer | Fran | PoolMaster web UI and browser-flow delivery |
 | QA/Test Engineer | Quinn | Verification strategy, regression detection, and test-lane ownership |
-| Project Manager | Parker | Plan shaping, sequencing, and reconciliation |
 | Architect | Archie | Design plans, execution planning, and platform work |
 | Code Reviewer | Riley | Findings-first review and risk detection |
 - Cross-cutting workflow requirements remain mandatory for all personas,
@@ -454,9 +453,7 @@ Current persona nickname map:
   - updating the Beads story state for the exact slice worked
   - validating work before marking slices done
   - updating docs and rules when the change affects them
-- The `project-manager` persona may help with plan shaping, sequencing, and
-  progress reconciliation, but it is not the sole owner of task tracking.
-  Agents doing implementation work must still update plans themselves.
+- Plan shaping, slice sequencing, and progress reconciliation are responsibilities shared across the active implementation personas and the user. Beads owns live task state; plans own narrative. No single persona owns "project management" as a discrete role — the old project-manager persona was retired because its responsibilities were fully subsumed by Beads (task state) and the narrative-only plan convention (no task tables to reconcile). See Plan 111 for the retirement rationale.
 
 ### Frontend / Data Model / Backend Handoff Rules
 

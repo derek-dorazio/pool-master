@@ -60,7 +60,6 @@ The `agents/` directory contains optional role-scoped playbooks for common kinds
 - `agents/product-manager.md`
 - `agents/product-discovery.md`
 - `agents/technical-specification-creator.md`
-- `agents/project-manager.md`
 - `agents/data-modeler.md`
 - `agents/test-planner.md`
 - `agents/frontend-developer.md`
@@ -90,7 +89,7 @@ Important:
 
 - `AGENTS.md` and `rules/` remain the canonical shared contract.
 - `agents/` files must not redefine or contradict repo-wide policy.
-- Cross-cutting workflow requirements such as checking Beads, updating affected plan rows, and validating slices remain required for all agents, not just the project-manager persona.
+- Cross-cutting workflow requirements such as checking Beads and validating slices remain required for all agents.
 - Frontend implementation should be driven by reviewed plans, generated SDK/types, and documented API contracts rather than backend implementation details.
 - Contract meaning, API documentation quality, and model-change implementation remain backend-owned responsibilities.
 
