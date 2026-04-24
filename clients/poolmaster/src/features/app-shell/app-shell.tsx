@@ -5,6 +5,7 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { listLeagues } from '@/lib/api';
 import { useLogger } from '@/lib/logger';
 import { AccountMenu } from '@/features/account/account-menu';
+import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
 import {
   CreateLeagueModal,
@@ -163,6 +164,7 @@ export function AppShell() {
                 </button>
                 <AccountMenu
                   isRootAdmin={auth.isRootAdmin}
+                  profilePath={auth.user?.id ? buildUserPath(auth.user.id) : '/'}
                   userName={formatUserName(auth.user?.firstName, auth.user?.lastName)}
                   onLogout={async () => {
                     logger.info(

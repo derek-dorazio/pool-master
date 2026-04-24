@@ -7,7 +7,12 @@ function renderMenu(props: Partial<Parameters<typeof AccountMenu>[0]> = {}) {
   const onLogout = vi.fn();
   const utils = render(
     <MemoryRouter>
-      <AccountMenu onLogout={onLogout} userName="Derek Dorazio" {...props} />
+      <AccountMenu
+        onLogout={onLogout}
+        profilePath="/users/user-1"
+        userName="Derek Dorazio"
+        {...props}
+      />
     </MemoryRouter>,
   );
   return { ...utils, onLogout };
@@ -40,5 +45,11 @@ describe('AccountMenu', () => {
     expect(screen.getByTestId('account-menu-panel')).toBeVisible();
     fireEvent.click(screen.getByTestId('account-menu-manage'));
     expect(screen.queryByTestId('account-menu-panel')).toBeNull();
+  });
+
+  it('links Profile to the canonical user route', () => {
+    renderMenu();
+    fireEvent.click(screen.getByTestId('account-menu-trigger'));
+    expect(screen.getByTestId('account-menu-profile')).toHaveAttribute('href', '/users/user-1');
   });
 });
