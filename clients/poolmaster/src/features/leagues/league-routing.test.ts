@@ -23,7 +23,9 @@ const leagues: LeagueSummary[] = [
     iconKey: LeagueIconKey.TROPHY,
     memberCount: 12,
     activeContestCount: 2,
-    role: LeagueRole.MEMBER,
+    memberType: LeagueRole.MEMBER,
+    leagueRelationship: { leagueMember: true, commissioner: false },
+    isRootAdmin: false,
     createdAt: '2026-04-10T12:00:00.000Z',
   },
   {
@@ -34,7 +36,9 @@ const leagues: LeagueSummary[] = [
     iconKey: LeagueIconKey.TROPHY,
     memberCount: 10,
     activeContestCount: 0,
-    role: LeagueRole.MEMBER,
+    memberType: LeagueRole.MEMBER,
+    leagueRelationship: { leagueMember: true, commissioner: false },
+    isRootAdmin: false,
     createdAt: '2026-04-09T12:00:00.000Z',
   },
   {
@@ -45,7 +49,9 @@ const leagues: LeagueSummary[] = [
     iconKey: LeagueIconKey.TROPHY,
     memberCount: 8,
     activeContestCount: 0,
-    role: LeagueRole.COMMISSIONER,
+    memberType: LeagueRole.COMMISSIONER,
+    leagueRelationship: { leagueMember: true, commissioner: true },
+    isRootAdmin: false,
     createdAt: '2026-04-11T12:00:00.000Z',
   },
   {
@@ -56,7 +62,9 @@ const leagues: LeagueSummary[] = [
     iconKey: LeagueIconKey.TROPHY,
     memberCount: 14,
     activeContestCount: 3,
-    role: LeagueRole.COMMISSIONER,
+    memberType: LeagueRole.COMMISSIONER,
+    leagueRelationship: { leagueMember: true, commissioner: true },
+    isRootAdmin: false,
     createdAt: '2026-04-12T12:00:00.000Z',
   },
 ];

@@ -108,6 +108,7 @@ function primeCommonMocks(overrides?: {
   contestStatus?: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
   selectionType?: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
   role?: 'MEMBER' | 'COMMISSIONER';
+  isRootAdmin?: boolean;
 }) {
   getContestMock.mockResolvedValue({
     data: {
@@ -196,7 +197,12 @@ function primeCommonMocks(overrides?: {
         id: 'league-1',
         leagueCode: 'BIGDAWGS',
         name: 'Big Dawgs',
-        role: overrides?.role ?? 'MEMBER',
+        memberType: overrides?.role ?? 'MEMBER',
+        leagueRelationship: {
+          leagueMember: true,
+          commissioner: (overrides?.role ?? 'MEMBER') === 'COMMISSIONER',
+        },
+        isRootAdmin: overrides?.isRootAdmin ?? false,
       },
     },
   });

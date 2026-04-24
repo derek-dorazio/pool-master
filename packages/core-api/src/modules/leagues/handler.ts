@@ -10,9 +10,14 @@ import {
 import { sendError } from '../../core/error-handler';
 import type { CreateLeagueInput, LeagueService } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
-import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
+import { LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
+import type { LeagueMembership } from '@poolmaster/shared/domain';
+import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
 
-export function createLeagueHandlers(leagueService: LeagueService) {
+export function createLeagueHandlers(
+  leagueService: LeagueService,
+  membershipRepo: LeagueMembershipRepository,
+) {
   return {
     listLeagues,
     createLeague,
@@ -23,6 +28,23 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     inactivateLeague,
     deleteLeague,
   };
+
+  function getLeagueViewerShape(
+    membership: LeagueMembership | null | undefined,
+    isRootAdmin: boolean,
+  ) {
+    const isActiveMembership = membership?.status === LeagueMembershipStatus.ACTIVE;
+    const memberType = isActiveMembership ? membership.role : null;
+
+    return {
+      memberType,
+      leagueRelationship: {
+        leagueMember: isActiveMembership,
+        commissioner: isActiveMembership && membership?.role === LeagueRole.COMMISSIONER,
+      },
+      isRootAdmin,
+    };
+  }
 
   async function listLeagues(
     request: FastifyRequest,
@@ -50,7 +72,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     }, 'Listed leagues');
     return {
       leagues: leagues.map((item) => toLeagueSummaryDto(item.league, {
-        role: item.membership.role,
+        ...getLeagueViewerShape(item.membership, request.authUser?.isRootAdmin === true),
       })),
     };
   }
@@ -97,7 +119,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       league: toLeagueDetailDto(result.league, {
         memberCount: 1,
         activeContestCount: 0,
-        role: result.membership.role,
+        ...getLeagueViewerShape(result.membership, request.authUser?.isRootAdmin === true),
       }),
     });
   }
@@ -128,7 +150,8 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       return sendError(reply, 404, 'LEAGUE_NOT_FOUND', 'League not found');
     }
     const membership = result.members.find((member) => member.userId === userId);
-    if (!membership) {
+    const rootAdminViewer = request.authUser?.isRootAdmin === true;
+    if (!membership && !rootAdminViewer) {
       logger.warn({
         action: 'leagueRoute.get.membershipMissing',
         data: { leagueId: request.params.id, userId },
@@ -140,7 +163,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
         'You must be an active member of this league to view it',
       );
     }
-    if (membership.status !== LeagueMembershipStatus.ACTIVE) {
+    if (membership && membership.status !== LeagueMembershipStatus.ACTIVE && !rootAdminViewer) {
       logger.warn({
         action: 'leagueRoute.get.membershipInactive',
         data: { leagueId: request.params.id, userId, status: membership.status },
@@ -160,7 +183,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       league: toLeagueDetailDto(result.league, {
         memberCount: result.members.length,
         activeContestCount: 0,
-        role: membership.role,
+        ...getLeagueViewerShape(membership, rootAdminViewer),
       }),
     });
   }
@@ -191,7 +214,8 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       return sendError(reply, 404, 'LEAGUE_NOT_FOUND', 'League not found');
     }
     const membership = result.members.find((member) => member.userId === userId);
-    if (!membership) {
+    const rootAdminViewer = request.authUser?.isRootAdmin === true;
+    if (!membership && !rootAdminViewer) {
       logger.warn({
         action: 'leagueRoute.getByCode.membershipMissing',
         data: { leagueCode: request.params.leagueCode, leagueId: result.league.id, userId },
@@ -203,7 +227,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
         'You must be an active member of this league to view it',
       );
     }
-    if (membership.status !== LeagueMembershipStatus.ACTIVE) {
+    if (membership && membership.status !== LeagueMembershipStatus.ACTIVE && !rootAdminViewer) {
       logger.warn({
         action: 'leagueRoute.getByCode.membershipInactive',
         data: {
@@ -228,7 +252,7 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       league: toLeagueDetailDto(result.league, {
         memberCount: result.members.length,
         activeContestCount: 0,
-        role: membership.role,
+        ...getLeagueViewerShape(membership, rootAdminViewer),
       }),
     });
   }
@@ -244,12 +268,18 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     }, 'Handling inactivate league request');
     try {
       const league = await leagueService.inactivateLeague(request.params.id);
+      const membership = request.authUser?.userId
+        ? await membershipRepo.findByLeagueAndUser(request.params.id, request.authUser.userId)
+        : null;
       logger.info({
         action: 'leagueRoute.inactivate.success',
         data: { leagueId: request.params.id },
       }, 'Inactivated league');
       return reply.send({
-        league: toLeagueDetailDto(league),
+        league: toLeagueDetailDto(
+          league,
+          getLeagueViewerShape(membership, request.authUser?.isRootAdmin === true),
+        ),
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
@@ -284,12 +314,18 @@ export function createLeagueHandlers(leagueService: LeagueService) {
     }, 'Handling update league details request');
     try {
       const league = await leagueService.updateLeagueDetails(request.params.id, request.body);
+      const membership = request.authUser?.userId
+        ? await membershipRepo.findByLeagueAndUser(request.params.id, request.authUser.userId)
+        : null;
       logger.info({
         action: 'leagueRoute.updateDetails.success',
         data: { leagueId: request.params.id },
       }, 'Updated league details');
       return reply.send({
-        league: toLeagueDetailDto(league),
+        league: toLeagueDetailDto(
+          league,
+          getLeagueViewerShape(membership, request.authUser?.isRootAdmin === true),
+        ),
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
@@ -326,12 +362,18 @@ export function createLeagueHandlers(leagueService: LeagueService) {
       const league = await leagueService.updateLeagueIcon(request.params.id, {
         iconKey: request.body.iconKey as never,
       });
+      const membership = request.authUser?.userId
+        ? await membershipRepo.findByLeagueAndUser(request.params.id, request.authUser.userId)
+        : null;
       logger.info({
         action: 'leagueRoute.updateIcon.success',
         data: { leagueId: request.params.id, iconKey: request.body.iconKey },
       }, 'Updated league icon');
       return reply.send({
-        league: toLeagueDetailDto(league),
+        league: toLeagueDetailDto(
+          league,
+          getLeagueViewerShape(membership, request.authUser?.isRootAdmin === true),
+        ),
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {

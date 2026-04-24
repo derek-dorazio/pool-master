@@ -640,9 +640,26 @@ export type ListLeaguesResponses = {
              */
             activeContestCount: number;
             /**
-             * Current user role in the league when the response is viewer-scoped.
+             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            role?: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+             */
+            leagueRelationship: {
+                /**
+                 * Whether the current requester is an active member of this league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active commissioner of this league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+             */
+            isRootAdmin: boolean;
             /**
              * League creation timestamp in ISO 8601 format.
              */
@@ -767,9 +784,26 @@ export type CreateLeagueResponses = {
              */
             activeContestCount: number;
             /**
-             * Current user role in the league when the response is viewer-scoped.
+             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            role?: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+             */
+            leagueRelationship: {
+                /**
+                 * Whether the current requester is an active member of this league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active commissioner of this league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+             */
+            isRootAdmin: boolean;
             /**
              * League creation timestamp in ISO 8601 format.
              */
@@ -942,9 +976,26 @@ export type GetLeagueResponses = {
              */
             activeContestCount: number;
             /**
-             * Current user role in the league when the response is viewer-scoped.
+             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            role?: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+             */
+            leagueRelationship: {
+                /**
+                 * Whether the current requester is an active member of this league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active commissioner of this league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+             */
+            isRootAdmin: boolean;
             /**
              * League creation timestamp in ISO 8601 format.
              */
@@ -1037,9 +1088,26 @@ export type GetLeagueByCodeResponses = {
              */
             activeContestCount: number;
             /**
-             * Current user role in the league when the response is viewer-scoped.
+             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            role?: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+             */
+            leagueRelationship: {
+                /**
+                 * Whether the current requester is an active member of this league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active commissioner of this league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+             */
+            isRootAdmin: boolean;
             /**
              * League creation timestamp in ISO 8601 format.
              */
@@ -1166,9 +1234,26 @@ export type UpdateLeagueDetailsResponses = {
              */
             activeContestCount: number;
             /**
-             * Current user role in the league when the response is viewer-scoped.
+             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            role?: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+             */
+            leagueRelationship: {
+                /**
+                 * Whether the current requester is an active member of this league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active commissioner of this league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+             */
+            isRootAdmin: boolean;
             /**
              * League creation timestamp in ISO 8601 format.
              */
@@ -1291,9 +1376,26 @@ export type UpdateLeagueIconResponses = {
              */
             activeContestCount: number;
             /**
-             * Current user role in the league when the response is viewer-scoped.
+             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            role?: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+             */
+            leagueRelationship: {
+                /**
+                 * Whether the current requester is an active member of this league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active commissioner of this league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+             */
+            isRootAdmin: boolean;
             /**
              * League creation timestamp in ISO 8601 format.
              */
@@ -1408,9 +1510,26 @@ export type InactivateLeagueResponses = {
              */
             activeContestCount: number;
             /**
-             * Current user role in the league when the response is viewer-scoped.
+             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            role?: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+             */
+            leagueRelationship: {
+                /**
+                 * Whether the current requester is an active member of this league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active commissioner of this league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+             */
+            isRootAdmin: boolean;
             /**
              * League creation timestamp in ISO 8601 format.
              */
@@ -11227,9 +11346,26 @@ export type AdminListLeaguesResponses = {
              */
             activeContestCount: number;
             /**
-             * Current user role in the league when the response is viewer-scoped.
+             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            role?: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+             */
+            leagueRelationship: {
+                /**
+                 * Whether the current requester is an active member of this league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active commissioner of this league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+             */
+            isRootAdmin: boolean;
             /**
              * League creation timestamp in ISO 8601 format.
              */
@@ -11362,9 +11498,26 @@ export type AdminInactivateLeagueResponses = {
              */
             activeContestCount: number;
             /**
-             * Current user role in the league when the response is viewer-scoped.
+             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            role?: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+             */
+            leagueRelationship: {
+                /**
+                 * Whether the current requester is an active member of this league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active commissioner of this league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+             */
+            isRootAdmin: boolean;
             /**
              * League creation timestamp in ISO 8601 format.
              */

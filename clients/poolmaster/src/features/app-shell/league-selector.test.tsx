@@ -47,6 +47,9 @@ describe('LeagueSelector', () => {
               iconKey: 'GOLF_FLAG',
               memberCount: 12,
               activeContestCount: 3,
+              memberType: 'MEMBER',
+              leagueRelationship: { leagueMember: true, commissioner: false },
+              isRootAdmin: false,
             },
             {
               id: 'league-2',
@@ -56,6 +59,9 @@ describe('LeagueSelector', () => {
               iconKey: 'FOOTBALL',
               memberCount: 10,
               activeContestCount: 1,
+              memberType: 'MEMBER',
+              leagueRelationship: { leagueMember: true, commissioner: false },
+              isRootAdmin: false,
             },
           ]}
           onCreateLeague={() => undefined}

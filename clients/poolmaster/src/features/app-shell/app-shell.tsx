@@ -49,7 +49,7 @@ export function AppShell() {
     [activeLeagueCode, leaguesQuery.data],
   );
   const canManageActiveLeague = Boolean(
-    activeLeagueCode && (activeLeague?.role === 'COMMISSIONER' || auth.isRootAdmin),
+    activeLeagueCode && (activeLeague?.leagueRelationship.commissioner || activeLeague?.isRootAdmin),
   );
   const isCreateLeagueOpen = searchParams.get('createLeague') === '1';
 

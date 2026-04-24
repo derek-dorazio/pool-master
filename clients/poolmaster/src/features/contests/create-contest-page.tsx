@@ -961,7 +961,7 @@ export function CreateContestPage() {
   }
 
   const isCommissioner =
-    leagueQuery.data?.role === 'COMMISSIONER' || Boolean(auth.user?.isRootAdmin);
+    Boolean(leagueQuery.data?.leagueRelationship.commissioner) || Boolean(leagueQuery.data?.isRootAdmin);
   const isDraftEditable = !isEditMode || managedContestQuery.data?.status === 'DRAFT';
 
   if (

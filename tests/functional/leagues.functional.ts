@@ -58,7 +58,12 @@ describe('SDK Functional: Leagues', () => {
     expect(createResponse.data).toBeDefined();
     expect(createResponse.data?.league.id).toBeTruthy();
     expect(createResponse.data?.league.name).toBe('Functional League');
-    expect(createResponse.data?.league.role).toBe('COMMISSIONER');
+    expect(createResponse.data?.league.memberType).toBe('COMMISSIONER');
+    expect(createResponse.data?.league.leagueRelationship).toEqual({
+      leagueMember: true,
+      commissioner: true,
+    });
+    expect(createResponse.data?.league.isRootAdmin).toBe(false);
     expect(createResponse.data?.league.memberCount).toBe(1);
 
     const leagueId = createResponse.data?.league.id;
@@ -72,7 +77,12 @@ describe('SDK Functional: Leagues', () => {
     const listedLeague = listResponse.data?.leagues.find((league) => league.id === leagueId);
     expect(listedLeague).toBeDefined();
     expect(listedLeague?.name).toBe('Functional League');
-    expect(listedLeague?.role).toBe('COMMISSIONER');
+    expect(listedLeague?.memberType).toBe('COMMISSIONER');
+    expect(listedLeague?.leagueRelationship).toEqual({
+      leagueMember: true,
+      commissioner: true,
+    });
+    expect(listedLeague?.isRootAdmin).toBe(false);
 
     const detailResponse = await getLeague({
       client: commissioner.client,
@@ -84,7 +94,12 @@ describe('SDK Functional: Leagues', () => {
     expect(detailResponse.data).toBeDefined();
     expect(detailResponse.data?.league.id).toBe(leagueId);
     expect(detailResponse.data?.league.name).toBe('Functional League');
-    expect(detailResponse.data?.league.role).toBe('COMMISSIONER');
+    expect(detailResponse.data?.league.memberType).toBe('COMMISSIONER');
+    expect(detailResponse.data?.league.leagueRelationship).toEqual({
+      leagueMember: true,
+      commissioner: true,
+    });
+    expect(detailResponse.data?.league.isRootAdmin).toBe(false);
     expect(detailResponse.data?.league.memberCount).toBe(1);
 
     const commissionerSquads = await listLeagueSquads({
@@ -245,7 +260,12 @@ describe('SDK Functional: Leagues', () => {
     expect(inviteeLeagues.data).toBeDefined();
     const joinedLeague = inviteeLeagues.data?.leagues.find((league) => league.id === leagueId);
     expect(joinedLeague).toBeDefined();
-    expect(joinedLeague?.role).toBe('MEMBER');
+    expect(joinedLeague?.memberType).toBe('MEMBER');
+    expect(joinedLeague?.leagueRelationship).toEqual({
+      leagueMember: true,
+      commissioner: false,
+    });
+    expect(joinedLeague?.isRootAdmin).toBe(false);
 
     const inviteeDetail = await getLeague({
       client: invitee.client,
@@ -256,7 +276,12 @@ describe('SDK Functional: Leagues', () => {
 
     expect(inviteeDetail.data).toBeDefined();
     expect(inviteeDetail.data?.league.id).toBe(leagueId);
-    expect(inviteeDetail.data?.league.role).toBe('MEMBER');
+    expect(inviteeDetail.data?.league.memberType).toBe('MEMBER');
+    expect(inviteeDetail.data?.league.leagueRelationship).toEqual({
+      leagueMember: true,
+      commissioner: false,
+    });
+    expect(inviteeDetail.data?.league.isRootAdmin).toBe(false);
 
     const inviteeTeam = await getFunctionalPrisma().squad.findFirst({
       where: {
@@ -949,7 +974,12 @@ describe('SDK Functional: Leagues', () => {
 
     expect(memberLeagueResponse.data?.league.id).toBe(leagueId);
     expect(memberLeagueResponse.data?.league.leagueCode).toBe(leagueCode);
-    expect(memberLeagueResponse.data?.league.role).toBe('MEMBER');
+    expect(memberLeagueResponse.data?.league.memberType).toBe('MEMBER');
+    expect(memberLeagueResponse.data?.league.leagueRelationship).toEqual({
+      leagueMember: true,
+      commissioner: false,
+    });
+    expect(memberLeagueResponse.data?.league.isRootAdmin).toBe(false);
 
     const outsiderLeagueResponse = await getLeagueByCode({
       client: outsider.client,

@@ -12,7 +12,6 @@ import {
   type GetStandingsResponses,
   type ListContestEntriesResponses,
 } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
 import {
   buildLeagueContestManagePath,
   buildLeagueEntriesPath,
@@ -215,7 +214,6 @@ export function ContestDetailPage() {
     leagueCode?: string;
   }>();
   const location = useLocation();
-  const auth = useAuth();
   const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
   const [expandedLeaderboardEntryId, setExpandedLeaderboardEntryId] = useState<string | null>(null);
 
@@ -298,7 +296,8 @@ export function ContestDetailPage() {
         )
       : null;
   const canManageContest =
-    (leagueCodeQuery.data?.role === 'COMMISSIONER' || Boolean(auth.user?.isRootAdmin))
+    (Boolean(leagueCodeQuery.data?.leagueRelationship.commissioner)
+      || Boolean(leagueCodeQuery.data?.isRootAdmin))
     && contestQuery.data?.status === 'DRAFT';
   const myEntriesPath =
     hintedLeagueCode || leagueCodeQuery.data?.leagueCode

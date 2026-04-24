@@ -116,7 +116,12 @@ function primeCommonMocks() {
         iconKey: 'TROPHY',
         memberCount: 2,
         activeContestCount: 0,
-        role: 'COMMISSIONER',
+        memberType: 'COMMISSIONER',
+        leagueRelationship: {
+          leagueMember: true,
+          commissioner: true,
+        },
+        isRootAdmin: false,
         joinPolicy: 'COMMISSIONER_ONLY',
         createdAt: '2026-04-15T00:00:00.000Z',
       },

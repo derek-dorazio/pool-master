@@ -102,7 +102,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     invitationRepo,
   );
 
-  const league = createLeagueHandlers(leagueService);
+  const league = createLeagueHandlers(leagueService, membershipRepo);
   const invitation = createInvitationHandlers(invitationService);
   const member = createMemberHandlers(memberService, memberDirectoryService);
   const dashboard = createDashboardHandlers(dashboardService);
@@ -148,7 +148,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Get league details by ID',
       description:
-        'Returns detailed league information by internal league ID for authenticated member or commissioner surfaces that already know the database identifier.',
+        'Returns detailed league information by internal league ID for authenticated league members, league commissioners, or root admins using platform-level override access.',
       operationId: 'getLeague',
       response: {
         200: zodToJsonSchema(LeagueResponseSchema),
@@ -163,7 +163,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Leagues'],
       summary: 'Get league details by league code',
       description:
-        'Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation.',
+        'Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation and allows root-admin override access without faking league membership.',
       operationId: 'getLeagueByCode',
       response: {
         200: zodToJsonSchema(LeagueResponseSchema),

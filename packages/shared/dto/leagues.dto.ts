@@ -123,6 +123,16 @@ export type ImportLeagueMembersRequest = z.infer<typeof ImportLeagueMembersReque
 
 // --- Response Sub-schemas ---
 
+export const LeagueRelationshipDtoSchema = z.object({
+  leagueMember: z
+    .boolean()
+    .describe('Whether the current requester is an active member of this league.'),
+  commissioner: z
+    .boolean()
+    .describe('Whether the current requester is an active commissioner of this league.'),
+}).describe('Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.');
+export type LeagueRelationshipDto = z.infer<typeof LeagueRelationshipDtoSchema>;
+
 export const LeagueSummaryDtoSchema = z.object({
   id: z.string().describe('Internal league identifier used for authenticated management APIs.'),
   leagueCode: z.string().describe('Stable short code used in bookmarkable league-home routes and invite context.'),
@@ -155,10 +165,14 @@ export const LeagueSummaryDtoSchema = z.object({
     .describe('Selected built-in league icon key from the curated PoolMaster icon catalog.'),
   memberCount: z.number().describe('Current number of memberships in the league.'),
   activeContestCount: z.number().describe('Number of currently active contests associated with the league.'),
-  role: z
+  memberType: z
     .enum([LeagueRole.COMMISSIONER, LeagueRole.MEMBER])
-    .optional()
-    .describe('Current user role in the league when the response is viewer-scoped.'),
+    .nullable()
+    .describe('Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.'),
+  leagueRelationship: LeagueRelationshipDtoSchema,
+  isRootAdmin: z
+    .boolean()
+    .describe('Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.'),
   createdAt: z.string().datetime().optional().describe('League creation timestamp in ISO 8601 format.'),
 }).describe('League list item used for selectors, welcome screens, and league overviews.');
 export type LeagueSummaryDto = z.infer<typeof LeagueSummaryDtoSchema>;

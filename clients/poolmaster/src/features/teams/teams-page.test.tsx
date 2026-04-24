@@ -84,6 +84,26 @@ function renderTeamsPage() {
   );
 }
 
+function buildLeagueDetail(role: 'COMMISSIONER' | 'MEMBER' = 'COMMISSIONER', isRootAdmin = false) {
+  return {
+    id: 'league-1',
+    leagueCode: 'BIGDAWGS',
+    name: 'Big Dawgs',
+    isActive: true,
+    iconKey: 'TROPHY',
+    memberCount: 2,
+    activeContestCount: 0,
+    memberType: role,
+    leagueRelationship: {
+      leagueMember: true,
+      commissioner: role === 'COMMISSIONER',
+    },
+    isRootAdmin,
+    joinPolicy: 'COMMISSIONER_ONLY',
+    createdAt: '2026-04-16T00:00:00.000Z',
+  } as const;
+}
+
 describe('TeamsPage', () => {
   afterEach(() => {
     getCurrentUserMock.mockReset();
@@ -119,18 +139,7 @@ describe('TeamsPage', () => {
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
       data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Big Dawgs',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 0,
-          role: 'COMMISSIONER',
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-16T00:00:00.000Z',
-        },
+        league: buildLeagueDetail('COMMISSIONER'),
       },
     });
     listLeagueSquadsMock.mockResolvedValue({
@@ -238,18 +247,7 @@ describe('TeamsPage', () => {
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
       data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Big Dawgs',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 0,
-          role: 'COMMISSIONER',
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-16T00:00:00.000Z',
-        },
+        league: buildLeagueDetail('COMMISSIONER'),
       },
     });
     listLeagueSquadsMock.mockResolvedValue({

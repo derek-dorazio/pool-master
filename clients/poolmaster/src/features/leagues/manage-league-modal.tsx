@@ -45,9 +45,9 @@ type ManageLeagueModalProps = {
   onDeleted: () => void;
 };
 
-function roleLabel(role: string | undefined) {
+function roleLabel(role: string | null | undefined) {
   if (!role) {
-    return 'Member';
+    return 'Not a member';
   }
 
   return role
@@ -300,7 +300,9 @@ export function ManageLeagueModal({
                 <div className="mt-3 space-y-2">
                   <div className="text-lg font-semibold">{league.name}</div>
                   <div className="text-sm text-muted-foreground">League code: {league.leagueCode}</div>
-                  <div className="text-sm text-muted-foreground">Role: {roleLabel(league.role)}</div>
+                  <div className="text-sm text-muted-foreground">
+                    Role: {league.isRootAdmin ? 'Root Admin' : roleLabel(league.memberType)}
+                  </div>
                   <div className="text-sm text-muted-foreground">
                     Status: {isInactive ? 'Inactive' : 'Active'}
                   </div>

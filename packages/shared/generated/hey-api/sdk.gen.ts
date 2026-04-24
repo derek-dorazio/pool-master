@@ -131,7 +131,7 @@ export const deleteLeague = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Get league details by ID
  *
- * Returns detailed league information by internal league ID for authenticated member or commissioner surfaces that already know the database identifier.
+ * Returns detailed league information by internal league ID for authenticated league members, league commissioners, or root admins using platform-level override access.
  */
 export const getLeague = <ThrowOnError extends boolean = false>(options: Options<GetLeagueData, ThrowOnError>) => (options.client ?? client).get<GetLeagueResponses, GetLeagueErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -142,7 +142,7 @@ export const getLeague = <ThrowOnError extends boolean = false>(options: Options
 /**
  * Get league details by league code
  *
- * Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation.
+ * Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation and allows root-admin override access without faking league membership.
  */
 export const getLeagueByCode = <ThrowOnError extends boolean = false>(options: Options<GetLeagueByCodeData, ThrowOnError>) => (options.client ?? client).get<GetLeagueByCodeResponses, GetLeagueByCodeErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

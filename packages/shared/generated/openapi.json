@@ -966,13 +966,37 @@
                             "type": "number",
                             "description": "Number of currently active contests associated with the league."
                           },
-                          "role": {
+                          "memberType": {
                             "type": "string",
                             "enum": [
                               "COMMISSIONER",
                               "MEMBER"
                             ],
-                            "description": "Current user role in the league when the response is viewer-scoped."
+                            "nullable": true,
+                            "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
+                          },
+                          "leagueRelationship": {
+                            "type": "object",
+                            "properties": {
+                              "leagueMember": {
+                                "type": "boolean",
+                                "description": "Whether the current requester is an active member of this league."
+                              },
+                              "commissioner": {
+                                "type": "boolean",
+                                "description": "Whether the current requester is an active commissioner of this league."
+                              }
+                            },
+                            "required": [
+                              "leagueMember",
+                              "commissioner"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix."
+                          },
+                          "isRootAdmin": {
+                            "type": "boolean",
+                            "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data."
                           },
                           "createdAt": {
                             "type": "string",
@@ -987,7 +1011,10 @@
                           "isActive",
                           "iconKey",
                           "memberCount",
-                          "activeContestCount"
+                          "activeContestCount",
+                          "memberType",
+                          "leagueRelationship",
+                          "isRootAdmin"
                         ],
                         "additionalProperties": false,
                         "description": "League list item used for selectors, welcome screens, and league overviews."
@@ -1152,13 +1179,37 @@
                           "type": "number",
                           "description": "Number of currently active contests associated with the league."
                         },
-                        "role": {
+                        "memberType": {
                           "type": "string",
                           "enum": [
                             "COMMISSIONER",
                             "MEMBER"
                           ],
-                          "description": "Current user role in the league when the response is viewer-scoped."
+                          "nullable": true,
+                          "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
+                        },
+                        "leagueRelationship": {
+                          "type": "object",
+                          "properties": {
+                            "leagueMember": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active member of this league."
+                            },
+                            "commissioner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active commissioner of this league."
+                            }
+                          },
+                          "required": [
+                            "leagueMember",
+                            "commissioner"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data."
                         },
                         "createdAt": {
                           "type": "string",
@@ -1183,6 +1234,9 @@
                         "iconKey",
                         "memberCount",
                         "activeContestCount",
+                        "memberType",
+                        "leagueRelationship",
+                        "isRootAdmin",
                         "joinPolicy"
                       ],
                       "additionalProperties": false,
@@ -1286,7 +1340,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Returns detailed league information by internal league ID for authenticated member or commissioner surfaces that already know the database identifier.",
+        "description": "Returns detailed league information by internal league ID for authenticated league members, league commissioners, or root admins using platform-level override access.",
         "parameters": [
           {
             "schema": {
@@ -1363,13 +1417,37 @@
                           "type": "number",
                           "description": "Number of currently active contests associated with the league."
                         },
-                        "role": {
+                        "memberType": {
                           "type": "string",
                           "enum": [
                             "COMMISSIONER",
                             "MEMBER"
                           ],
-                          "description": "Current user role in the league when the response is viewer-scoped."
+                          "nullable": true,
+                          "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
+                        },
+                        "leagueRelationship": {
+                          "type": "object",
+                          "properties": {
+                            "leagueMember": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active member of this league."
+                            },
+                            "commissioner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active commissioner of this league."
+                            }
+                          },
+                          "required": [
+                            "leagueMember",
+                            "commissioner"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data."
                         },
                         "createdAt": {
                           "type": "string",
@@ -1394,6 +1472,9 @@
                         "iconKey",
                         "memberCount",
                         "activeContestCount",
+                        "memberType",
+                        "leagueRelationship",
+                        "isRootAdmin",
                         "joinPolicy"
                       ],
                       "additionalProperties": false,
@@ -1603,7 +1684,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation.",
+        "description": "Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation and allows root-admin override access without faking league membership.",
         "parameters": [
           {
             "schema": {
@@ -1680,13 +1761,37 @@
                           "type": "number",
                           "description": "Number of currently active contests associated with the league."
                         },
-                        "role": {
+                        "memberType": {
                           "type": "string",
                           "enum": [
                             "COMMISSIONER",
                             "MEMBER"
                           ],
-                          "description": "Current user role in the league when the response is viewer-scoped."
+                          "nullable": true,
+                          "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
+                        },
+                        "leagueRelationship": {
+                          "type": "object",
+                          "properties": {
+                            "leagueMember": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active member of this league."
+                            },
+                            "commissioner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active commissioner of this league."
+                            }
+                          },
+                          "required": [
+                            "leagueMember",
+                            "commissioner"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data."
                         },
                         "createdAt": {
                           "type": "string",
@@ -1711,6 +1816,9 @@
                         "iconKey",
                         "memberCount",
                         "activeContestCount",
+                        "memberType",
+                        "leagueRelationship",
+                        "isRootAdmin",
                         "joinPolicy"
                       ],
                       "additionalProperties": false,
@@ -1881,13 +1989,37 @@
                           "type": "number",
                           "description": "Number of currently active contests associated with the league."
                         },
-                        "role": {
+                        "memberType": {
                           "type": "string",
                           "enum": [
                             "COMMISSIONER",
                             "MEMBER"
                           ],
-                          "description": "Current user role in the league when the response is viewer-scoped."
+                          "nullable": true,
+                          "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
+                        },
+                        "leagueRelationship": {
+                          "type": "object",
+                          "properties": {
+                            "leagueMember": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active member of this league."
+                            },
+                            "commissioner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active commissioner of this league."
+                            }
+                          },
+                          "required": [
+                            "leagueMember",
+                            "commissioner"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data."
                         },
                         "createdAt": {
                           "type": "string",
@@ -1912,6 +2044,9 @@
                         "iconKey",
                         "memberCount",
                         "activeContestCount",
+                        "memberType",
+                        "leagueRelationship",
+                        "isRootAdmin",
                         "joinPolicy"
                       ],
                       "additionalProperties": false,
@@ -2136,13 +2271,37 @@
                           "type": "number",
                           "description": "Number of currently active contests associated with the league."
                         },
-                        "role": {
+                        "memberType": {
                           "type": "string",
                           "enum": [
                             "COMMISSIONER",
                             "MEMBER"
                           ],
-                          "description": "Current user role in the league when the response is viewer-scoped."
+                          "nullable": true,
+                          "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
+                        },
+                        "leagueRelationship": {
+                          "type": "object",
+                          "properties": {
+                            "leagueMember": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active member of this league."
+                            },
+                            "commissioner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active commissioner of this league."
+                            }
+                          },
+                          "required": [
+                            "leagueMember",
+                            "commissioner"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data."
                         },
                         "createdAt": {
                           "type": "string",
@@ -2167,6 +2326,9 @@
                         "iconKey",
                         "memberCount",
                         "activeContestCount",
+                        "memberType",
+                        "leagueRelationship",
+                        "isRootAdmin",
                         "joinPolicy"
                       ],
                       "additionalProperties": false,
@@ -2347,13 +2509,37 @@
                           "type": "number",
                           "description": "Number of currently active contests associated with the league."
                         },
-                        "role": {
+                        "memberType": {
                           "type": "string",
                           "enum": [
                             "COMMISSIONER",
                             "MEMBER"
                           ],
-                          "description": "Current user role in the league when the response is viewer-scoped."
+                          "nullable": true,
+                          "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
+                        },
+                        "leagueRelationship": {
+                          "type": "object",
+                          "properties": {
+                            "leagueMember": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active member of this league."
+                            },
+                            "commissioner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active commissioner of this league."
+                            }
+                          },
+                          "required": [
+                            "leagueMember",
+                            "commissioner"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data."
                         },
                         "createdAt": {
                           "type": "string",
@@ -2378,6 +2564,9 @@
                         "iconKey",
                         "memberCount",
                         "activeContestCount",
+                        "memberType",
+                        "leagueRelationship",
+                        "isRootAdmin",
                         "joinPolicy"
                       ],
                       "additionalProperties": false,
@@ -22866,13 +23055,37 @@
                             "type": "number",
                             "description": "Number of currently active contests associated with the league."
                           },
-                          "role": {
+                          "memberType": {
                             "type": "string",
                             "enum": [
                               "COMMISSIONER",
                               "MEMBER"
                             ],
-                            "description": "Current user role in the league when the response is viewer-scoped."
+                            "nullable": true,
+                            "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
+                          },
+                          "leagueRelationship": {
+                            "type": "object",
+                            "properties": {
+                              "leagueMember": {
+                                "type": "boolean",
+                                "description": "Whether the current requester is an active member of this league."
+                              },
+                              "commissioner": {
+                                "type": "boolean",
+                                "description": "Whether the current requester is an active commissioner of this league."
+                              }
+                            },
+                            "required": [
+                              "leagueMember",
+                              "commissioner"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix."
+                          },
+                          "isRootAdmin": {
+                            "type": "boolean",
+                            "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data."
                           },
                           "createdAt": {
                             "type": "string",
@@ -22887,7 +23100,10 @@
                           "isActive",
                           "iconKey",
                           "memberCount",
-                          "activeContestCount"
+                          "activeContestCount",
+                          "memberType",
+                          "leagueRelationship",
+                          "isRootAdmin"
                         ],
                         "additionalProperties": false,
                         "description": "League list item used for selectors, welcome screens, and league overviews."
@@ -23029,13 +23245,37 @@
                           "type": "number",
                           "description": "Number of currently active contests associated with the league."
                         },
-                        "role": {
+                        "memberType": {
                           "type": "string",
                           "enum": [
                             "COMMISSIONER",
                             "MEMBER"
                           ],
-                          "description": "Current user role in the league when the response is viewer-scoped."
+                          "nullable": true,
+                          "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
+                        },
+                        "leagueRelationship": {
+                          "type": "object",
+                          "properties": {
+                            "leagueMember": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active member of this league."
+                            },
+                            "commissioner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active commissioner of this league."
+                            }
+                          },
+                          "required": [
+                            "leagueMember",
+                            "commissioner"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data."
                         },
                         "createdAt": {
                           "type": "string",
@@ -23060,6 +23300,9 @@
                         "iconKey",
                         "memberCount",
                         "activeContestCount",
+                        "memberType",
+                        "leagueRelationship",
+                        "isRootAdmin",
                         "joinPolicy"
                       ],
                       "additionalProperties": false,

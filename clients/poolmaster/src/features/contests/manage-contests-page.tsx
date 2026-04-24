@@ -7,7 +7,6 @@ import {
   type GetLeagueByCodeResponses,
   type ListContestsResponses,
 } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   buildLeagueContestCreatePath,
@@ -27,7 +26,6 @@ function isHistoricalContest(status: ContestSummary['status']) {
 
 export function ManageContestsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
-  const auth = useAuth();
   const logger = useLogger().child({
     feature: 'manage-contests-page',
   });
@@ -112,7 +110,7 @@ export function ManageContestsPage() {
   }
 
   const league = leagueQuery.data;
-  const canManageContests = league.role === 'COMMISSIONER' || auth.isRootAdmin;
+  const canManageContests = league.leagueRelationship.commissioner || league.isRootAdmin;
 
   if (!canManageContests) {
     return (

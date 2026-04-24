@@ -290,7 +290,7 @@ export function TeamsPage() {
                     {activeOwners.map((owner) => {
                       const leagueMember = leagueMembersByUserId.get(owner.userId);
                       const canManageLeagueRole =
-                        leagueQuery.data.role === 'COMMISSIONER' || auth.user?.isRootAdmin === true;
+                        leagueQuery.data.leagueRelationship.commissioner || leagueQuery.data.isRootAdmin;
                       const canRemoveOwner =
                         canManageLeagueRole
                         || activeOwners.some((member) => member.userId === auth.user?.id);

@@ -173,12 +173,21 @@ export function MyTeamPage() {
 
   const requestedTeamId = searchParams.get('teamId');
   const selectedTeam = useMemo(() => {
-    if ((leagueQuery.data?.role === 'COMMISSIONER' || auth.user?.isRootAdmin === true) && requestedTeamId) {
+    if (
+      (leagueQuery.data?.leagueRelationship.commissioner || leagueQuery.data?.isRootAdmin === true)
+      && requestedTeamId
+    ) {
       return teamsQuery.data?.find((team) => team.id === requestedTeamId) ?? myTeam;
     }
 
     return myTeam;
-  }, [auth.user?.isRootAdmin, leagueQuery.data?.role, myTeam, requestedTeamId, teamsQuery.data]);
+  }, [
+    leagueQuery.data?.isRootAdmin,
+    leagueQuery.data?.leagueRelationship.commissioner,
+    myTeam,
+    requestedTeamId,
+    teamsQuery.data,
+  ]);
 
   const leagueMembersByUserId = useMemo(
     () => new Map((leagueMembersQuery.data ?? []).map((member) => [member.userId, member])),
@@ -380,7 +389,8 @@ export function MyTeamPage() {
   }
 
   const isInactiveLeague = leagueQuery.data.isActive === false;
-  const isCommissioner = leagueQuery.data.role === 'COMMISSIONER' || auth.user?.isRootAdmin === true;
+  const isCommissioner =
+    leagueQuery.data.leagueRelationship.commissioner || leagueQuery.data.isRootAdmin;
   const isBusy =
     createTeamMutation.isPending
     || updateTeamMutation.isPending

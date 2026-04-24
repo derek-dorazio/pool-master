@@ -13,8 +13,11 @@ function extractLeagueContext(request: FastifyRequest): { userId?: string; leagu
   return { userId, leagueId };
 }
 
-async function loadMembership(
-  membershipRepo: LeagueMembershipRepository,
+function isRootAdmin(request: FastifyRequest) {
+  return request.authUser?.isRootAdmin === true;
+}
+
+function validateLeagueScopeRequest(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
@@ -25,7 +28,7 @@ async function loadMembership(
       action: 'leaguePermission.loadMembership.unauthenticated',
       data: { leagueId: leagueId ?? null },
     }, 'Rejected league permission check without authenticated session');
-    await sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
+    void sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     return null;
   }
   if (!leagueId) {
@@ -33,9 +36,23 @@ async function loadMembership(
       action: 'leaguePermission.loadMembership.missingLeagueId',
       data: { userId },
     }, 'Rejected league permission check without league id');
-    await sendError(reply, 400, 'LEAGUE_ID_REQUIRED', 'League id is required');
+    void sendError(reply, 400, 'LEAGUE_ID_REQUIRED', 'League id is required');
     return null;
   }
+  return { userId, leagueId };
+}
+
+async function loadMembership(
+  membershipRepo: LeagueMembershipRepository,
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const logger = request.contextLogger ?? request.log;
+  const scope = validateLeagueScopeRequest(request, reply);
+  if (!scope) {
+    return null;
+  }
+  const { userId, leagueId } = scope;
   const membership = await membershipRepo.findByLeagueAndUser(leagueId, userId);
   if (!membership) {
     logger.warn({
@@ -80,6 +97,17 @@ export function requireLeagueMembership(
       action: 'leaguePermission.requireMembership.enter',
       data: { leagueId: (request.params as { id?: string }).id ?? null },
     }, 'Checking league membership permission');
+    const scope = validateLeagueScopeRequest(request, reply);
+    if (!scope) {
+      return;
+    }
+    if (isRootAdmin(request)) {
+      logger.debug({
+        action: 'leaguePermission.requireMembership.rootAdminBypass',
+        data: { leagueId: scope.leagueId, userId: scope.userId },
+      }, 'Granted league membership permission via root-admin override');
+      return;
+    }
     await loadMembership(membershipRepo, request, reply);
   };
 }
@@ -94,6 +122,17 @@ export function requireCommissioner(
       action: 'leaguePermission.requireCommissioner.enter',
       data: { leagueId: (request.params as { id?: string }).id ?? null },
     }, 'Checking commissioner permission');
+    const scope = validateLeagueScopeRequest(request, reply);
+    if (!scope) {
+      return;
+    }
+    if (isRootAdmin(request)) {
+      logger.debug({
+        action: 'leaguePermission.requireCommissioner.rootAdminBypass',
+        data: { leagueId: scope.leagueId, userId: scope.userId },
+      }, 'Granted commissioner permission via root-admin override');
+      return;
+    }
     const membership = await loadMembership(membershipRepo, request, reply);
     if (!membership) {
       return;

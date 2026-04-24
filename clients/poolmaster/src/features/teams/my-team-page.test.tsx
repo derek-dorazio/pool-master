@@ -72,6 +72,26 @@ function renderMyTeamPage(initialEntry = '/league/BIGDAWGS/team') {
   );
 }
 
+function buildLeagueDetail(role: 'COMMISSIONER' | 'MEMBER' = 'MEMBER', isRootAdmin = false) {
+  return {
+    id: 'league-1',
+    leagueCode: 'BIGDAWGS',
+    name: 'Big Dawgs',
+    isActive: true,
+    iconKey: 'TROPHY',
+    memberCount: 2,
+    activeContestCount: 0,
+    memberType: role,
+    leagueRelationship: {
+      leagueMember: true,
+      commissioner: role === 'COMMISSIONER',
+    },
+    isRootAdmin,
+    joinPolicy: 'COMMISSIONER_ONLY',
+    createdAt: '2026-04-15T00:00:00.000Z',
+  } as const;
+}
+
 describe('MyTeamPage', () => {
   beforeEach(() => {
     listLeagueMembersMock.mockResolvedValue({ data: { members: [] } });
@@ -117,18 +137,7 @@ describe('MyTeamPage', () => {
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
       data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Big Dawgs',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 0,
-          role: 'MEMBER',
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
-        },
+        league: buildLeagueDetail('MEMBER'),
       },
     });
     listLeagueSquadsMock.mockResolvedValue({
@@ -224,18 +233,7 @@ describe('MyTeamPage', () => {
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
       data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Big Dawgs',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 0,
-          role: 'MEMBER',
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
-        },
+        league: buildLeagueDetail('MEMBER'),
       },
     });
     listLeagueSquadsMock.mockResolvedValue({
@@ -358,18 +356,7 @@ describe('MyTeamPage', () => {
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
       data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Big Dawgs',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 0,
-          role: 'MEMBER',
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
-        },
+        league: buildLeagueDetail('MEMBER'),
       },
     });
     listLeagueSquadsMock.mockResolvedValue({
@@ -608,18 +595,7 @@ describe('MyTeamPage', () => {
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
       data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Big Dawgs',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 0,
-          role: 'MEMBER',
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
-        },
+        league: buildLeagueDetail('MEMBER'),
       },
     });
     listLeagueSquadsMock.mockResolvedValue({
@@ -725,16 +701,8 @@ describe('MyTeamPage', () => {
     getLeagueByCodeMock.mockResolvedValue({
       data: {
         league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Big Dawgs',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
+          ...buildLeagueDetail('MEMBER'),
           activeContestCount: 2,
-          role: 'MEMBER',
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
         },
       },
     });
@@ -819,18 +787,7 @@ describe('MyTeamPage', () => {
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockResolvedValue({
       data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Big Dawgs',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 0,
-          role: 'COMMISSIONER',
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
-        },
+        league: buildLeagueDetail('COMMISSIONER'),
       },
     });
     listLeagueSquadsMock.mockResolvedValue({

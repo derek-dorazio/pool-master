@@ -122,6 +122,12 @@ export class AdminLeagueService {
       {
         memberCount: row.memberships.length,
         activeContestCount: row.contests.length,
+        memberType: null,
+        leagueRelationship: {
+          leagueMember: false,
+          commissioner: false,
+        },
+        isRootAdmin: true,
       },
     ));
 
@@ -186,6 +192,12 @@ export class AdminLeagueService {
       {
         memberCount: updated.memberCount,
         activeContestCount: updated.activeContestCount,
+        memberType: null,
+        leagueRelationship: {
+          leagueMember: false,
+          commissioner: false,
+        },
+        isRootAdmin: true,
       },
     );
   }

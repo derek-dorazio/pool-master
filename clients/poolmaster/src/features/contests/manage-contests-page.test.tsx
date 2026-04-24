@@ -87,7 +87,12 @@ function primeCommonMocks({
         iconKey: 'TROPHY',
         memberCount: 12,
         activeContestCount: 2,
-        role: leagueRole,
+        memberType: leagueRole,
+        leagueRelationship: {
+          leagueMember: true,
+          commissioner: leagueRole === 'COMMISSIONER',
+        },
+        isRootAdmin,
         joinPolicy: 'COMMISSIONER_ONLY',
         createdAt: '2026-04-15T00:00:00.000Z',
       },
@@ -143,7 +148,7 @@ describe('ManageContestsPage', () => {
       'href',
       '/league/BIGDAWGS/contests/new',
     );
-    expect(screen.getByTestId('manage-contests-row-contest-1')).toBeInTheDocument();
+    expect(await screen.findByTestId('manage-contests-row-contest-1')).toBeInTheDocument();
     expect(screen.getByTestId('manage-contests-row-contest-2')).toBeInTheDocument();
     expect(screen.getByTestId('manage-contests-open-contest-1')).toHaveAttribute(
       'href',

@@ -5,6 +5,7 @@ import type {
   LeagueSummaryDto,
   LeagueDetailDto,
   LeagueListResponse,
+  LeagueRelationshipDto,
 } from '@poolmaster/shared/dto';
 import type { JoinPolicy, LeagueIconKey, LeagueRole } from '@poolmaster/shared/domain';
 
@@ -23,8 +24,20 @@ interface LeagueRow {
 
 export function toLeagueSummaryDto(
   league: LeagueRow,
-  opts?: { memberCount?: number; activeContestCount?: number; role?: LeagueRole },
+  opts?: {
+    memberCount?: number;
+    activeContestCount?: number;
+    memberType?: LeagueRole | null;
+    leagueRelationship?: LeagueRelationshipDto;
+    isRootAdmin?: boolean;
+  },
 ): LeagueSummaryDto {
+  const memberType = opts?.memberType ?? null;
+  const leagueRelationship = opts?.leagueRelationship ?? {
+    leagueMember: memberType !== null,
+    commissioner: memberType === 'COMMISSIONER',
+  };
+
   return {
     id: league.id,
     leagueCode: league.leagueCode,
@@ -34,14 +47,22 @@ export function toLeagueSummaryDto(
     iconKey: league.iconKey,
     memberCount: opts?.memberCount ?? 0,
     activeContestCount: opts?.activeContestCount ?? 0,
-    role: opts?.role,
+    memberType,
+    leagueRelationship,
+    isRootAdmin: opts?.isRootAdmin ?? false,
     createdAt: league.createdAt.toISOString(),
   };
 }
 
 export function toLeagueDetailDto(
   league: LeagueRow,
-  opts?: { memberCount?: number; activeContestCount?: number; role?: LeagueRole },
+  opts?: {
+    memberCount?: number;
+    activeContestCount?: number;
+    memberType?: LeagueRole | null;
+    leagueRelationship?: LeagueRelationshipDto;
+    isRootAdmin?: boolean;
+  },
 ): LeagueDetailDto {
   return {
     ...toLeagueSummaryDto(league, opts),

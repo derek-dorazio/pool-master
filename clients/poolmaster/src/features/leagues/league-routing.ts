@@ -113,11 +113,11 @@ export function sortLeaguesForOverview(leagues: LeagueSummary[]) {
       return left.isActive ? -1 : 1;
     }
 
-    if (left.role === 'COMMISSIONER' && right.role !== 'COMMISSIONER') {
+    if (left.leagueRelationship.commissioner && !right.leagueRelationship.commissioner) {
       return -1;
     }
 
-    if (left.role !== 'COMMISSIONER' && right.role === 'COMMISSIONER') {
+    if (!left.leagueRelationship.commissioner && right.leagueRelationship.commissioner) {
       return 1;
     }
 
@@ -127,6 +127,6 @@ export function sortLeaguesForOverview(leagues: LeagueSummary[]) {
 
 export function getLeagueSelectorOptions(leagues: LeagueSummary[]) {
   return sortLeaguesNewestFirst(
-    leagues.filter((league) => league.isActive || league.role === 'COMMISSIONER'),
+    leagues.filter((league) => league.isActive || league.leagueRelationship.commissioner),
   );
 }

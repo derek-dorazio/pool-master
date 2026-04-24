@@ -41,9 +41,9 @@ type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 type ContestEntrySummary = ListContestEntriesResponses[200]['entries'][number];
 type LeaveLeagueResponse = LeaveLeagueResponses[200];
 
-function formatRole(role: string | undefined) {
+function formatRole(role: string | null | undefined) {
   if (!role) {
-    return 'Member';
+    return 'Not a member';
   }
 
   return role
@@ -181,8 +181,8 @@ export function LeagueDetailPage() {
     retry: false,
   });
 
-  const isCommissioner = leagueQuery.data?.role === 'COMMISSIONER';
-  const canManageLeague = isCommissioner || auth.isRootAdmin;
+  const canManageLeague =
+    leagueQuery.data?.leagueRelationship.commissioner === true || leagueQuery.data?.isRootAdmin === true;
   const isInactiveLeague = leagueQuery.data?.isActive === false;
   const currentUserId = auth.user?.id;
 
@@ -478,7 +478,9 @@ export function LeagueDetailPage() {
 
   const canEditLeague = canManageLeague && !isInactiveLeague;
   const canDeleteLeague =
-    auth.isRootAdmin && isInactiveLeague && deleteConfirmation.trim().toUpperCase() === leagueQuery.data.leagueCode;
+    leagueQuery.data.isRootAdmin
+    && isInactiveLeague
+    && deleteConfirmation.trim().toUpperCase() === leagueQuery.data.leagueCode;
 
   return (
     <section className="space-y-6" data-testid="league-home">
@@ -500,7 +502,7 @@ export function LeagueDetailPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
             <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-              {auth.isRootAdmin ? 'Root Admin' : formatRole(leagueQuery.data.role)}
+              {leagueQuery.data.isRootAdmin ? 'Root Admin' : formatRole(leagueQuery.data.memberType)}
             </span>
             <div className="flex items-start gap-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-primary/10 text-primary">
@@ -818,7 +820,7 @@ export function LeagueDetailPage() {
                 </button>
               </div>
 
-              {auth.isRootAdmin ? (
+              {leagueQuery.data.isRootAdmin ? (
                 <div className="rounded-[1.5rem] border border-red-300 bg-red-50/80 p-5">
                   <h4 className="text-lg font-semibold text-red-950">Delete league</h4>
                   <p className="mt-2 text-sm text-red-900">
@@ -855,7 +857,7 @@ export function LeagueDetailPage() {
         </div>
       ) : null}
 
-      {!auth.isRootAdmin ? (
+      {!leagueQuery.data.isRootAdmin ? (
         <div className="rounded-[2rem] border border-border bg-card p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
