@@ -7,17 +7,19 @@ import {
   createLeagueSquad,
   getLeagueByCode,
   inactivateLeagueSquad,
+  listLeagueMembers,
   listLeagueSquads,
   listSquadOwnerInvitations,
-  removeSquadOwner,
   replaceSquadOwner,
   revokeSquadOwnerInvitation,
   updateLeagueSquad,
   type ListSquadOwnerInvitationsResponses,
   type GetLeagueByCodeResponses,
+  type ListLeagueMembersResponses,
   type ListLeagueSquadsResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
+import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
@@ -27,11 +29,13 @@ import {
   setRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
+import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption, TEAM_ICON_OPTIONS } from './team-icon-catalog';
 import { buildDefaultTeamName } from './team-defaults';
 import { TeamIcon } from './team-icon';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
+type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
 type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 type TeamMember = NonNullable<TeamSummary['members']>[number];
 type OwnerInvitation = ListSquadOwnerInvitationsResponses[200]['invitations'][number];
@@ -141,6 +145,20 @@ export function MyTeamPage() {
     retry: false,
   });
 
+  const leagueMembersQuery = useQuery({
+    queryKey: ['poolmaster', 'league-members', leagueId],
+    queryFn: async (): Promise<LeagueMember[]> => {
+      const response = await listLeagueMembers({ path: { id: leagueId } });
+      if (!response.data?.members) {
+        throw response.error ?? new Error('League members response is missing data.');
+      }
+
+      return response.data.members;
+    },
+    enabled: Boolean(leagueId),
+    retry: false,
+  });
+
   const myTeam = useMemo(() => {
     if (!auth.user?.id) {
       return null;
@@ -155,12 +173,17 @@ export function MyTeamPage() {
 
   const requestedTeamId = searchParams.get('teamId');
   const selectedTeam = useMemo(() => {
-    if (leagueQuery.data?.role === 'COMMISSIONER' && requestedTeamId) {
+    if ((leagueQuery.data?.role === 'COMMISSIONER' || auth.user?.isRootAdmin === true) && requestedTeamId) {
       return teamsQuery.data?.find((team) => team.id === requestedTeamId) ?? myTeam;
     }
 
     return myTeam;
-  }, [leagueQuery.data?.role, myTeam, requestedTeamId, teamsQuery.data]);
+  }, [auth.user?.isRootAdmin, leagueQuery.data?.role, myTeam, requestedTeamId, teamsQuery.data]);
+
+  const leagueMembersByUserId = useMemo(
+    () => new Map((leagueMembersQuery.data ?? []).map((member) => [member.userId, member])),
+    [leagueMembersQuery.data],
+  );
 
   useEffect(() => {
     if (selectedTeam) {
@@ -266,28 +289,6 @@ export function MyTeamPage() {
     },
   });
 
-  const removeOwnerMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      const squadId = selectedTeam?.id;
-      if (!squadId) {
-        throw new Error('A team must exist before removing an owner.');
-      }
-
-      const response = await removeSquadOwner({
-        path: { id: leagueId, squadId, userId },
-      });
-
-      if (!response.data?.membership) {
-        throw response.error ?? new Error('Remove owner response is missing data.');
-      }
-
-      return response.data.membership;
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
-    },
-  });
-
   const revokeOwnerInvitationMutation = useMutation({
     mutationFn: async (invitationId: string) => {
       const response = await revokeSquadOwnerInvitation({
@@ -379,13 +380,12 @@ export function MyTeamPage() {
   }
 
   const isInactiveLeague = leagueQuery.data.isActive === false;
-  const isCommissioner = leagueQuery.data.role === 'COMMISSIONER';
+  const isCommissioner = leagueQuery.data.role === 'COMMISSIONER' || auth.user?.isRootAdmin === true;
   const isBusy =
     createTeamMutation.isPending
     || updateTeamMutation.isPending
     || createOwnerInvitationMutation.isPending
     || replaceOwnerMutation.isPending
-    || removeOwnerMutation.isPending
     || revokeOwnerInvitationMutation.isPending
     || inactivateTeamMutation.isPending;
   const activeMembers = (selectedTeam?.members ?? []).filter((member) => member.status === 'ACTIVE');
@@ -411,7 +411,7 @@ export function MyTeamPage() {
               </h2>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                 {isCommissioner && selectedTeam && selectedTeam.id !== myTeam?.id
-                  ? 'Commissioners can use this same team surface to review and update any team in the league.'
+                  ? 'Commissioners and root admins can use this same team surface to review and update any team in the league.'
                   : 'Team identity lives inside the league context. This slice adds the built-in icon catalog so your Team can look distinct before owner controls expand.'}
               </p>
             </div>
@@ -614,39 +614,54 @@ export function MyTeamPage() {
                     key={member.id}
                   >
                     <div>
-                      <div className="font-medium">
-                        {formatUserName(member.firstName, member.lastName)}
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Link
+                          className="font-medium text-foreground hover:underline"
+                          data-testid={`my-team-member-link-${member.userId}`}
+                          to={buildUserPath(member.userId)}
+                        >
+                          {formatUserName(member.firstName, member.lastName)}
+                        </Link>
+                        <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                          Active owner
+                        </span>
+                        {leagueMembersByUserId.get(member.userId) ? (
+                          <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                            {leagueMembersByUserId.get(member.userId)?.role === 'COMMISSIONER' ? 'Commissioner' : 'Member'}
+                          </span>
+                        ) : null}
                       </div>
                       <div className="text-sm text-muted-foreground">{member.userId}</div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                        Active
-                      </span>
+                      <TeamOwnerActionMenu
+                        activeOwnerCount={activeMembers.length}
+                        canManageLeagueRole={isCommissioner}
+                        canRemoveOwner={
+                          isCommissioner
+                          || activeMembers.some((owner) => owner.userId === auth.user?.id)
+                        }
+                        leagueCode={leagueCode}
+                        leagueId={leagueId}
+                        ownerName={formatUserName(member.firstName, member.lastName)}
+                        ownerRole={leagueMembersByUserId.get(member.userId)?.role}
+                        ownerUserId={member.userId}
+                        surface="team-home"
+                        teamId={selectedTeam.id}
+                      />
                       {member.userId !== auth.user?.id ? (
-                        <>
-                          <button
-                            className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                            data-testid={`my-team-remove-owner-${member.userId}`}
-                            disabled={isInactiveLeague || isBusy}
-                            onClick={() => void removeOwnerMutation.mutateAsync(member.userId)}
-                            type="button"
-                          >
-                            Remove owner
-                          </button>
-                          <button
-                            className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                            data-testid={`my-team-open-replace-${member.userId}`}
-                            disabled={isInactiveLeague || isBusy}
-                            onClick={() => {
-                              setReplaceTargetUserId((current) => current === member.userId ? null : member.userId);
-                              setReplaceEmail('');
-                            }}
-                            type="button"
-                          >
-                            Replace owner
-                          </button>
-                        </>
+                        <button
+                          className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                          data-testid={`my-team-open-replace-${member.userId}`}
+                          disabled={isInactiveLeague || isBusy}
+                          onClick={() => {
+                            setReplaceTargetUserId((current) => current === member.userId ? null : member.userId);
+                            setReplaceEmail('');
+                          }}
+                          type="button"
+                        >
+                          Replace owner
+                        </button>
                       ) : null}
                     </div>
                   </div>
@@ -730,9 +745,6 @@ export function MyTeamPage() {
                   <p className="mt-3 text-sm text-destructive">{extractErrorMessage(replaceOwnerMutation.error)}</p>
                 ) : null}
               </div>
-            ) : null}
-            {removeOwnerMutation.isError ? (
-              <p className="mt-4 text-sm text-destructive">{extractErrorMessage(removeOwnerMutation.error)}</p>
             ) : null}
             {revokeOwnerInvitationMutation.isError ? (
               <p className="mt-4 text-sm text-destructive">{extractErrorMessage(revokeOwnerInvitationMutation.error)}</p>

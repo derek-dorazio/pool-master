@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -10,10 +10,13 @@ import { TeamsPage } from './teams-page';
 const {
   getCurrentUserMock,
   getLeagueByCodeMock,
+  listLeagueMembersMock,
   listLeagueSquadsMock,
   listSquadOwnerInvitationsMock,
   logoutUserMock,
   mockLogger,
+  removeSquadOwnerMock,
+  changeMemberRoleMock,
   refreshTokenMock,
 } = vi.hoisted(() => {
   const logger = {
@@ -30,10 +33,13 @@ const {
   return {
     getCurrentUserMock: vi.fn(),
     getLeagueByCodeMock: vi.fn(),
+    listLeagueMembersMock: vi.fn(),
     listLeagueSquadsMock: vi.fn(),
     listSquadOwnerInvitationsMock: vi.fn(),
     logoutUserMock: vi.fn(),
     mockLogger: logger,
+    removeSquadOwnerMock: vi.fn(),
+    changeMemberRoleMock: vi.fn(),
     refreshTokenMock: vi.fn(),
   };
 });
@@ -46,9 +52,12 @@ vi.mock('@/lib/logger', () => ({
 vi.mock('@/lib/api', () => ({
   getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
   getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
+  listLeagueMembers: (...args: unknown[]) => listLeagueMembersMock(...args),
   listLeagueSquads: (...args: unknown[]) => listLeagueSquadsMock(...args),
   listSquadOwnerInvitations: (...args: unknown[]) => listSquadOwnerInvitationsMock(...args),
   logoutUser: (...args: unknown[]) => logoutUserMock(...args),
+  removeSquadOwner: (...args: unknown[]) => removeSquadOwnerMock(...args),
+  changeMemberRole: (...args: unknown[]) => changeMemberRoleMock(...args),
   refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
 }));
 
@@ -79,9 +88,12 @@ describe('TeamsPage', () => {
   afterEach(() => {
     getCurrentUserMock.mockReset();
     getLeagueByCodeMock.mockReset();
+    listLeagueMembersMock.mockReset();
     listLeagueSquadsMock.mockReset();
     listSquadOwnerInvitationsMock.mockReset();
     logoutUserMock.mockReset();
+    removeSquadOwnerMock.mockReset();
+    changeMemberRoleMock.mockReset();
     refreshTokenMock.mockReset();
     mockLogger.debug.mockReset();
     mockLogger.info.mockReset();
@@ -152,6 +164,21 @@ describe('TeamsPage', () => {
         ],
       },
     });
+    listLeagueMembersMock.mockResolvedValue({
+      data: {
+        members: [
+          {
+            id: 'league-member-1',
+            userId: 'user-1',
+            email: 'derek@example.com',
+            firstName: 'Derek',
+            lastName: 'Dorazio',
+            role: 'COMMISSIONER',
+            joinedAt: '2026-04-16T00:00:00.000Z',
+          },
+        ],
+      },
+    });
     listSquadOwnerInvitationsMock.mockResolvedValue({
       data: {
         invitations: [
@@ -188,9 +215,140 @@ describe('TeamsPage', () => {
       'href',
       '/users/user-1',
     );
+    expect(screen.getByTestId('teams-owner-actions-trigger-team-1-user-1')).toBeInTheDocument();
     expect(screen.getByTestId('league-team-owner-invitation-team-1-invite-1')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /manage team/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /revoke/i })).not.toBeInTheDocument();
+  });
+
+  it('lets a commissioner promote an owner to commissioner from the teams directory', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-16T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        league: {
+          id: 'league-1',
+          leagueCode: 'BIGDAWGS',
+          name: 'Big Dawgs',
+          isActive: true,
+          iconKey: 'TROPHY',
+          memberCount: 2,
+          activeContestCount: 0,
+          role: 'COMMISSIONER',
+          joinPolicy: 'COMMISSIONER_ONLY',
+          createdAt: '2026-04-16T00:00:00.000Z',
+        },
+      },
+    });
+    listLeagueSquadsMock.mockResolvedValue({
+      data: {
+        squads: [
+          {
+            id: 'team-1',
+            leagueId: 'league-1',
+            createdBy: 'user-1',
+            name: 'Beer Bellies',
+            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+            status: 'ACTIVE',
+            memberCount: 2,
+            createdAt: '2026-04-16T00:00:00.000Z',
+            updatedAt: '2026-04-16T00:00:00.000Z',
+            members: [
+              {
+                id: 'membership-1',
+                squadId: 'team-1',
+                leagueId: 'league-1',
+                userId: 'user-1',
+                firstName: 'Derek',
+                lastName: 'Dorazio',
+                status: 'ACTIVE',
+                joinedAt: '2026-04-16T00:00:00.000Z',
+                createdAt: '2026-04-16T00:00:00.000Z',
+                updatedAt: '2026-04-16T00:00:00.000Z',
+              },
+              {
+                id: 'membership-2',
+                squadId: 'team-1',
+                leagueId: 'league-1',
+                userId: 'user-2',
+                firstName: 'Fran',
+                lastName: 'Lane',
+                status: 'ACTIVE',
+                joinedAt: '2026-04-16T00:00:00.000Z',
+                createdAt: '2026-04-16T00:00:00.000Z',
+                updatedAt: '2026-04-16T00:00:00.000Z',
+              },
+            ],
+          },
+        ],
+      },
+    });
+    listLeagueMembersMock.mockResolvedValue({
+      data: {
+        members: [
+          {
+            id: 'league-member-1',
+            userId: 'user-1',
+            email: 'derek@example.com',
+            firstName: 'Derek',
+            lastName: 'Dorazio',
+            role: 'COMMISSIONER',
+            joinedAt: '2026-04-16T00:00:00.000Z',
+          },
+          {
+            id: 'league-member-2',
+            userId: 'user-2',
+            email: 'fran@example.com',
+            firstName: 'Fran',
+            lastName: 'Lane',
+            role: 'MEMBER',
+            joinedAt: '2026-04-16T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+    listSquadOwnerInvitationsMock.mockResolvedValue({ data: { invitations: [] } });
+    changeMemberRoleMock.mockResolvedValue({
+      data: {
+        membership: {
+          id: 'league-member-2',
+          leagueId: 'league-1',
+          userId: 'user-2',
+          role: 'COMMISSIONER',
+          status: 'ACTIVE',
+          joinedAt: '2026-04-16T00:00:00.000Z',
+          createdAt: '2026-04-16T00:00:00.000Z',
+          updatedAt: '2026-04-16T00:00:00.000Z',
+        },
+      },
+    });
+
+    renderTeamsPage();
+
+    await screen.findByTestId('league-team-owner-team-1-user-2');
+    fireEvent.click(screen.getByTestId('teams-owner-actions-trigger-team-1-user-2'));
+    fireEvent.click(screen.getByTestId('teams-owner-actions-promote-team-1-user-2'));
+    await screen.findByTestId('teams-owner-actions-dialog-team-1-user-2');
+    fireEvent.click(screen.getByTestId('teams-owner-actions-confirm-promote-team-1-user-2'));
+
+    await waitFor(() =>
+      expect(changeMemberRoleMock).toHaveBeenCalledWith({
+        path: { id: 'league-1', uid: 'user-2' },
+        body: { role: 'COMMISSIONER' },
+      }),
+    );
   });
 
   it('shows the load failure state when the league detail cannot be loaded', async () => {
@@ -209,6 +367,7 @@ describe('TeamsPage', () => {
     });
     refreshTokenMock.mockResolvedValue({ data: null });
     getLeagueByCodeMock.mockRejectedValue(new Error('League missing'));
+    listLeagueMembersMock.mockResolvedValue({ data: { members: [] } });
 
     renderTeamsPage();
 

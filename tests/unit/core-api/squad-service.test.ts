@@ -169,7 +169,7 @@ describe('SquadService', () => {
     );
   });
 
-  it('inactivates the squad when the last owner is removed', async () => {
+  it('rejects removing the last active owner and requires team inactivation instead', async () => {
     const squadRepo = createSquadRepo({
       findById: jest.fn().mockResolvedValue({
         id: 'squad-1',
@@ -178,16 +178,6 @@ describe('SquadService', () => {
         name: 'Ace Squad',
         iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
         status: SquadStatus.ACTIVE,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
-      update: jest.fn().mockResolvedValue({
-        id: 'squad-1',
-        leagueId: 'league-1',
-        createdBy: 'user-1',
-        name: 'Ace Squad',
-        iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-        status: SquadStatus.INACTIVE,
         createdAt: new Date(),
         updatedAt: new Date(),
       }),
@@ -215,17 +205,19 @@ describe('SquadService', () => {
           createdAt: new Date(),
           updatedAt: new Date(),
         }),
-      update: jest.fn().mockResolvedValue({
-        id: 'target-membership',
-        squadId: 'squad-1',
-        leagueId: 'league-1',
-        userId: 'user-1',
-        status: SquadMembershipStatus.INACTIVE,
-        joinedAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
-      findBySquad: jest.fn().mockResolvedValue([]),
+      update: jest.fn(),
+      findBySquad: jest.fn().mockResolvedValue([
+        {
+          id: 'target-membership',
+          squadId: 'squad-1',
+          leagueId: 'league-1',
+          userId: 'user-1',
+          status: SquadMembershipStatus.ACTIVE,
+          joinedAt: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]),
     });
     const leagueMembershipRepo = createLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(baseMembership),
@@ -239,9 +231,15 @@ describe('SquadService', () => {
       prisma,
     );
 
-    await service.removeOwner('league-1', 'squad-1', 'user-1', 'user-1');
+    await expect(service.removeOwner('league-1', 'squad-1', 'user-1', 'user-1')).rejects.toThrow(
+      new SquadOperationError(
+        'This team only has one active owner. Inactivate the team instead.',
+        'SQUAD_OWNER_REMOVE_REQUIRES_MULTIPLE_OWNERS',
+      ),
+    );
 
-    expect(squadRepo.update).toHaveBeenCalledWith('squad-1', { status: SquadStatus.INACTIVE });
+    expect(squadMembershipRepo.update).not.toHaveBeenCalled();
+    expect(squadRepo.update).not.toHaveBeenCalled();
   });
 
   it('allows a commissioner to update another team in the same league', async () => {

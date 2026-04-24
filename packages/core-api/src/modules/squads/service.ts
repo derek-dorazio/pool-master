@@ -262,6 +262,20 @@ export class SquadService {
       throw new SquadNotFoundError(`Active squad membership not found for user ${targetUserId}`);
     }
 
+    const activeMemberships = (await this.squadMembershipRepo.findBySquad(squadId)).filter(
+      (item) => item.status === SquadMembershipStatus.ACTIVE,
+    );
+    if (activeMemberships.length <= 1) {
+      this.logger?.warn({
+        action: 'squad.removeOwner.requiresMultipleOwners',
+        data: { leagueId, squadId, actorUserId, targetUserId },
+      }, 'Rejected remove owner because the team only has one active owner');
+      throw new SquadOperationError(
+        'This team only has one active owner. Inactivate the team instead.',
+        'SQUAD_OWNER_REMOVE_REQUIRES_MULTIPLE_OWNERS',
+      );
+    }
+
     const updated = await this.squadMembershipRepo.update(membership.id, {
       status: SquadMembershipStatus.INACTIVE,
     });

@@ -3,12 +3,15 @@ import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
 import {
   getLeagueByCode,
+  listLeagueMembers,
   listLeagueSquads,
   listSquadOwnerInvitations,
   type GetLeagueByCodeResponses,
+  type ListLeagueMembersResponses,
   type ListLeagueSquadsResponses,
   type ListSquadOwnerInvitationsResponses,
 } from '@/lib/api';
+import { useAuth } from '@/features/auth/auth-provider';
 import { buildUserPath } from '@/features/account/user-routing';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
@@ -17,10 +20,12 @@ import {
   setRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
+import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
+type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
 type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 type OwnerInvitation = ListSquadOwnerInvitationsResponses[200]['invitations'][number];
 
@@ -34,6 +39,7 @@ function getOwnerLabel(firstName?: string, lastName?: string) {
 }
 
 export function TeamsPage() {
+  const auth = useAuth();
   const logger = useLogger().child({
     feature: 'teams-page',
   });
@@ -106,6 +112,20 @@ export function TeamsPage() {
     retry: false,
   });
 
+  const leagueMembersQuery = useQuery({
+    queryKey: ['poolmaster', 'league-members', leagueId],
+    queryFn: async (): Promise<LeagueMember[]> => {
+      const response = await listLeagueMembers({ path: { id: leagueId } });
+      if (!response.data?.members) {
+        throw response.error ?? new Error('League members response is missing data.');
+      }
+
+      return response.data.members;
+    },
+    enabled: Boolean(leagueId),
+    retry: false,
+  });
+
   const pendingInvitationsByTeam = useMemo(() => {
     const grouped = new Map<string, OwnerInvitation[]>();
     for (const invitation of ownerInvitationsQuery.data ?? []) {
@@ -119,6 +139,11 @@ export function TeamsPage() {
     }
     return grouped;
   }, [ownerInvitationsQuery.data]);
+
+  const leagueMembersByUserId = useMemo(
+    () => new Map((leagueMembersQuery.data ?? []).map((member) => [member.userId, member])),
+    [leagueMembersQuery.data],
+  );
 
   useEffect(() => {
     if (!leagueQuery.data || !teamsQuery.data) {
@@ -193,8 +218,9 @@ export function TeamsPage() {
         </span>
         <h2 className="mt-4 text-3xl font-semibold tracking-tight">Teams and Owners</h2>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Browse every team in {leagueQuery.data.name}. This league-level directory is read-only:
-          open a team to manage owners or lifecycle actions on Team Home.
+          Browse every team in {leagueQuery.data.name}. Members use this as a directory, while
+          commissioners, root admins, and team co-owners can use the inline owner actions here and
+          move to Team Home for deeper lifecycle work.
         </p>
       </div>
 
@@ -261,24 +287,52 @@ export function TeamsPage() {
                   </div>
 
                   <div className="mt-5 space-y-3 md:mt-0">
-                    {activeOwners.map((owner) => (
-                      <div
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border px-4 py-3"
-                        data-testid={`league-team-owner-${team.id}-${owner.userId}`}
-                        key={owner.id}
-                      >
-                        <Link
-                          className="text-sm font-medium text-foreground hover:underline"
-                          data-testid={`league-team-owner-link-${team.id}-${owner.userId}`}
-                          to={buildUserPath(owner.userId)}
+                    {activeOwners.map((owner) => {
+                      const leagueMember = leagueMembersByUserId.get(owner.userId);
+                      const canManageLeagueRole =
+                        leagueQuery.data.role === 'COMMISSIONER' || auth.user?.isRootAdmin === true;
+                      const canRemoveOwner =
+                        canManageLeagueRole
+                        || activeOwners.some((member) => member.userId === auth.user?.id);
+
+                      return (
+                        <div
+                          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border px-4 py-3"
+                          data-testid={`league-team-owner-${team.id}-${owner.userId}`}
+                          key={owner.id}
                         >
-                          {getOwnerLabel(owner.firstName, owner.lastName)}
-                        </Link>
-                        <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                          Active owner
-                        </span>
-                      </div>
-                    ))}
+                          <div className="flex flex-wrap items-center gap-3">
+                            <Link
+                              className="text-sm font-medium text-foreground hover:underline"
+                              data-testid={`league-team-owner-link-${team.id}-${owner.userId}`}
+                              to={buildUserPath(owner.userId)}
+                            >
+                              {getOwnerLabel(owner.firstName, owner.lastName)}
+                            </Link>
+                            <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                              Active owner
+                            </span>
+                            {leagueMember ? (
+                              <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                                {leagueMember.role === 'COMMISSIONER' ? 'Commissioner' : 'Member'}
+                              </span>
+                            ) : null}
+                          </div>
+                          <TeamOwnerActionMenu
+                            activeOwnerCount={activeOwners.length}
+                            canManageLeagueRole={canManageLeagueRole}
+                            canRemoveOwner={canRemoveOwner}
+                            leagueCode={leagueQuery.data.leagueCode}
+                            leagueId={leagueId}
+                            ownerName={getOwnerLabel(owner.firstName, owner.lastName)}
+                            ownerRole={leagueMember?.role}
+                            ownerUserId={owner.userId}
+                            surface="teams"
+                            teamId={team.id}
+                          />
+                        </div>
+                      );
+                    })}
 
                     {pendingInvitations.map((invitation) => (
                       <div
