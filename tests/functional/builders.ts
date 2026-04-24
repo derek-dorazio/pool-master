@@ -128,10 +128,12 @@ export async function buildLeagueWithCommissioner(overrides?: {
 }): Promise<{
   league: {
     id: string;
+    leagueCode: string;
     name: string;
     memberCount: number;
     activeContestCount: number;
     isActive: boolean;
+    iconKey: string;
     joinPolicy: string;
     createdAt?: string;
     description?: string;
