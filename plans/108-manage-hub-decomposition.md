@@ -1,5 +1,7 @@
 # Plan 108 — Manage Hub Decomposition
 
+**Beads epic:** `pool-master-upa` — see `bd show pool-master-upa` for live slice state, child stories, and status. This plan is the narrative companion; task tracking lives in Beads.
+
 ## Purpose
 
 Decompose the root-admin `/manage` page (currently a single 2,000+ line file with 7 stacked tiles) into a minimal hub homepage plus six sectioned sub-areas, each following the repo's single-purpose-page and list→Home patterns. This is the handoff artifact for the Fran frontend developer persona (and any agent touching root-admin surfaces).
@@ -169,30 +171,6 @@ Source file: `clients/poolmaster/src/features/root-admin/root-admin-page.tsx`
 - Impersonation, audit logs, additional per-user or per-team admin actions beyond the ones specified above
 - Any league-scope UX — that's Plan 107
 
-## Execution Phases (sketch)
+## Task state
 
-Slicing will get concrete once backend contracts (Q1–Q6 above) are confirmed. Tentative order:
-
-1. **Hub shell** — A (hub page) + S (breadcrumb) + route scaffolding. No functional regressions.
-2. **Content Configuration** — K, L. Lowest backend-coordination risk; existing tile migrates cleanly.
-3. **Sync + Sync Configuration** — M, N, O, P, Q. Mostly tile lift-outs; minimal new behavior.
-4. **Leagues** — B, C. List + link page (no modal); delete section lands on League Home (coordinate with Plan 107 item D).
-5. **Users** — G. List + link page only; the root-admin modals live on `/users/:userId` (Plan 107 G/G3). This is frontend decomposition/replacement work, not a backend-search blocker, because `adminListUsers` and `setRootAdmin` already exist.
-6. **Teams** — D, E, F, R. Highest backend dependency (cross-league search); schedule after backend lands.
-
-Each build item (A–S) should become its own Beads issue when execution starts.
-
-## Action Plan
-
-| ID | Phase | Task | Status | Notes |
-|---|---|---|---|---|
-| 108-001 | 1 | Build `/manage` hub shell, breadcrumbs, and child-route scaffold | Done | `/manage` now renders the minimal hub, `/manage/legacy` preserves the stacked transitional surface, manage sub-pages share breadcrumbs through a common layout, and truthful scaffold routes exist for not-yet-extracted sections while dedicated pages land. Validated with the full required repo gate set before closeout. |
-| 108-002 | 1 | Build Content Configuration list and per-template edit pages | Done | Added dedicated `/manage/content-configuration` list and `:templateKey` detail routes/pages, shared template-edit helpers, focused frontend coverage, and a transitional "Open dedicated page" affordance from the legacy `/manage` contest-configuration section. Validated with the full required repo gate set before closeout. |
-| 108-003 | 2 | Build Sync dashboard plus dedicated Run Sport Sync and Run Event Sync pages | Done | Added `/manage/sync` dashboard plus `/manage/sync/run-sport-sync` and `/manage/sync/run-event-sync`, shared sync utility helpers, hub availability flip from scaffold to live, and a transitional legacy-manage link into the new sync pages. Validated with the full required repo gate set before closeout. |
-| 108-004 | 2 | Build Sync Configuration landing page plus Poll Intervals, Ingestion Schedule, and Sport Overrides pages | Done | Added `/manage/sync-config` plus dedicated `/poll-intervals`, `/ingestion-schedule`, and `/sport-overrides` routes/pages, shared sync-config helpers, breadcrumb labels, hub availability flip from scaffold to live, and a transitional legacy-manage link into the new pages. Validated with the full required repo gate set before closeout. |
-| 108-005 | 3 | Build `/manage/leagues` search+link page and remove embedded league lifecycle controls from the old manage surface | Done | New `RootAdminManageLeaguesPage` replaces the scaffold; rows link to canonical League Home (`/league/:leagueCode`) where commissioner/root-admin authority-gated lifecycle already lives. The manage hub flips leagues from `legacy` to `live`. The embedded League lifecycle tile plus its query/mutations/state/imports/tests are deleted from `root-admin-page.tsx`. Validated with the full required repo gate set before closeout. |
-| 108-006 | 3 | Build `/manage/users` search+link page and replace the transitional embedded root-admin users panel | Done | Added the dedicated `/manage/users` page with root-admin account search, canonical `/users/:userId` row links, and pagination; flipped the manage hub users section from scaffold to live; removed the embedded root-admin users panel from `/manage/legacy`; and deleted the old transitional panel component/tests. Root-admin account actions remain on `/users/:userId` per Plan 107. Validated with the full required repo gate set before closeout. |
-| 108-007 | 4 | Build `/manage/teams` search+link page once cross-league team search exists | Not Started | Blocked on backend `adminListTeams`/equivalent contract. |
-| 108-008 | 4 | Add root-admin delete sections on League Home and Team Home | Not Started | Coordinates with Plan 107 League Home / Team Home authority work and any backend hard-delete semantics confirmation. |
-| 108-009 | 5 | Dissolve `root-admin-page.tsx` and finish route/menu cleanup | Not Started | Remove the legacy stacked-tile page once all destination pages are live. |
-| 108-010 | 6 | Run full validation, reconcile Beads, and close decomposition tracker items | Not Started | Final cleanup includes removing transitional manage UI and ensuring breadcrumbs/nav point only to the new pages. |
+Task state for this plan lives in Beads under epic `pool-master-upa`. Use `bd show pool-master-upa` for the live slice list, statuses, dependencies, and closeout notes. Do not maintain a parallel task table in this file (see `rules/workflow-rules.md §1 Plans and the Beads Tracker` and `docs/adr/0002-plans-as-narrative-delete-after-epic-closes.md`).

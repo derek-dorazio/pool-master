@@ -1,70 +1,73 @@
 # PoolMaster — Workflow Rules
 
-## 1. Action Plan Tracking
+## 0. Document Lifecycle (Governing Rule)
 
-`plans/` remain the narrative execution context for the repo, but Beads is the
-project's live workflow tracker for active execution and large-lane refinement.
+> **One source of truth per concept. Working documents are deleted when the work ships. Durable decisions become ADRs. Git history is the archive.**
 
-Use the layers this way:
+The repository uses layered artifacts. Each artifact has a clear lifetime and a single canonical purpose. Do not duplicate content across layers — reference instead.
 
-- `requirements/` = product truth and refinement handoff artifacts
-- `tech-specs/` = technical truth and implementation handoff artifacts
-- `plans/` = rationale, scope, phased rollout notes, and execution context
-- `Beads` = live status, dependencies, stable question IDs, and active slices
+### Durability tiers
 
-When these layers disagree:
+| Tier | Artifact | Lifetime | Purpose |
+|---|---|---|---|
+| Permanent | `rules/*.md`, `agents/*.md`, `docs/adr/*.md`, `AGENTS.md` | Months–years | How we build here; who does what; why we chose durable patterns |
+| Feature-life | `requirements/product-requirements/features/<feature>/` | Weeks–months (during active feature development) | Product intent for a *major* feature; retire/delete when the feature stabilizes |
+| Slice-life | `plans/NN-*.md` | Days–weeks (a single feature reorg or major effort) | Narrative execution context paired with a Beads epic; **deleted** when the parent epic closes |
+| Pre-implementation | `tech-specs/features/<feature>/` | Up to ship | Technical framing before implementation; **deleted** when the implementation lands |
+| Live | `.beads/issues.jsonl` | Hours–days | Current task state, dependencies, slice list, status |
 
-- `requirements/` is the product source of truth
-- `tech-specs/` is the technical source of truth
-- older plan prose must not override either one
-- if an old plan still carries stale product or technical guidance, update it
-  or clearly mark it as historical/non-authoritative in the same effort
+### Governing rules
 
-For larger cross-module design and refinement work, Beads should also hold the
-stable IDs for active questions and decisions so chat numbering does not drift
-as the discussion evolves.
+1. **One canonical home per concept.** If you're writing the same thing in two files, pick one and link from the other. Business rules live in `requirements/.../business-rules.md`. Task status and task lists live in Beads. Architecture decisions live in `rules/` or `docs/adr/`. The generated SDK + domain types are the API contract. The code + tests are the behavioral spec.
+2. **Short-lived artifacts reference long-lived ones, never the reverse.** Plans reference rules, not vice versa. Beads notes reference plans, not vice versa.
+3. **Delete on ship, don't archive.** When a plan's parent Beads epic closes, the plan file is deleted in the same commit (or the next cleanup slice). When a tech spec's implementation lands on main, the spec is deleted. Git preserves history; `git show <sha>:path/to/file` retrieves any prior version. Archival directories are anti-patterns — files in the tree get read.
+4. **Capture durable decisions as ADRs.** Decisions that outlast a single slice (architectural choices, cross-cutting patterns, hard boundaries) are written as Architecture Decision Records in `docs/adr/`. Once accepted, ADRs are immutable; supersede with a new ADR rather than editing.
+5. **Rules absorb what plans learn.** If a plan introduces a durable pattern (a new convention, a hard boundary, a reusable approach), update `rules/` or write an ADR in the same effort. Don't leave the pattern only in the plan — it will be deleted when the epic closes.
 
-Every active plan document in `plans/` should still have an **Action Plan**
-section with a task table, but those tables are now the narrative companion to
-Beads rather than the sole live issue tracker.
+---
 
-### Task Table Format
+## 1. Plans and the Beads Tracker
 
-```markdown
-| ID | Phase | Task | Status | Notes |
-|---|---|---|---|---|
-| 01-001 | 1 | Task description | Done | Completed notes |
-| 01-002 | 1 | Task description | In Progress | What's done, what remains |
-| 01-003 | 1 | Task description | Not Started | |
-```
+### Plans are narrative; Beads is live task state
 
-### Status Values
+- **A plan file** (`plans/NN-*.md`) is the narrative companion to a Beads epic: scope, rationale, architecture, site maps, tile mappings, open questions, references. Plans do **not** contain task tables.
+- **The Beads epic** (`pool-master-<suffix>`) owns the task list as child stories, with labels, dependencies, statuses, and notes.
+- Every plan has a one-line header at the top referencing its parent Beads epic. Every Beads epic has a link back to its plan in its description or notes.
 
-| Status | Meaning |
-|---|---|
-| Not Started | Work has not begun |
-| In Progress | Work has started but is not complete |
-| Done | Fully implemented and working |
-| Removed | Out of scope; strike through the task and explain why |
+### Plan file structure
 
-### Required Workflow
+A plan file typically contains:
 
-When starting work:
+- **Beads epic:** link/ID to the parent epic (e.g. `pool-master-upa`)
+- **Purpose** — why this plan exists
+- **Governing principles** — link to relevant rules/memory/ADRs
+- **Site map / structural references** (where applicable)
+- **Architecture or pattern narrative** (authority models, URL structures, etc.)
+- **Tile → destination mapping** (for reorgs; these are structural, not status)
+- **Open questions** (unresolved product/contract calls)
+- **Backend contract questions** (handoff to Brad)
 
-1. Find or create the relevant bead for the slice, question, or decision.
-2. Update the bead status first so the live tracker reflects the active work.
-3. Find the relevant task in the plan.
-4. Mark it `In Progress` when the plan row is affected.
-5. Add notes about the implementation or refinement slice you are taking.
+What a plan file does **not** contain:
 
-When finishing work:
+- Task tables with slice numbers, status columns, or Done markers
+- Duplicated rule text or persona responsibilities
+- Per-slice completion notes (those live in the Beads story closing notes)
 
-1. Close or otherwise update the relevant bead status first.
-2. Mark the plan task `Done` or `Removed` when the row is truly complete.
-3. Add notes with the relevant files and decisions.
-4. Update every affected plan, not just the first one you looked at.
+### Beads is the canonical task state
 
-### Beads Usage Rules
+- Every active slice is a Beads story (child of a plan's epic).
+- Status transitions (open → in_progress → closed/deferred) happen in Beads as work starts and completes.
+- Slice context, scope changes, and closeout notes go in the Beads story's notes field.
+- When a slice closes, the plan file is not edited — the Beads closeout captures the execution record. The plan file is updated only when scope, architecture, or open questions change.
+
+### When a plan dies
+
+- When the parent Beads epic closes (all child stories closed or deferred), the plan file is **deleted** in a cleanup commit.
+- Durable patterns/decisions the plan established must be codified in `rules/` or `docs/adr/` before deletion. A plan that introduced a new convention without updating rules/ADRs is not ready to be deleted.
+- git preserves the deleted file; it can be retrieved via `git log` / `git show` if historical context is needed.
+- Do **not** move completed plans to `plans/archive/`. Archive directories grow and get read; deletion is the enforcement mechanism.
+
+### Beads usage rules
 
 - Use one Beads epic per active feature lane or cross-module initiative.
 - Use child beads for:
@@ -88,8 +91,8 @@ When finishing work:
 - Report every changed file in the final handoff for a slice. Do not summarize a broader file set as if it were narrower.
 - If slice work exposes adjacent-slice files or tasks, stop and report that spillover instead of bundling it into the same commit.
 - Coverage threshold changes are main-thread coordination work. Worker slices must not raise or lower thresholds on their own.
-- Update plan rows only for the exact slice being worked. Do not mark unrelated queue items `In Progress` or `Done`.
-- Mark a slice `Done` only when the exact scoped work is complete and validated. Partial work stays `In Progress`.
+- Update Beads state only for the exact slice being worked. Do not flip unrelated stories to `in_progress` or `closed`.
+- Close a Beads story only when the exact scoped work is complete and validated. Partial work stays `in_progress`.
 - A slice is not finished while any relevant required local test suite for that
   slice is still failing.
 - "Implementation complete" without green relevant local validation is still
@@ -225,20 +228,9 @@ test cleanup.
 
 ### Slice Deliverables
 
-When plans break work into slices (e.g., Plan 59's A–I slices), each slice should be tracked at layer granularity, not as a single monolithic task. Either expand the plan's task table to include per-layer rows:
+When a feature requires coordinated work across multiple layers (schema, service, DTOs, mappers, route schemas, unit tests, integration tests, contract verification), each layer is its own checkbox in the Slice Completion Checklist above. For substantial multi-layer slices, break the work into multiple Beads stories — one per layer — so progress and blockers are visible in the live tracker.
 
-```markdown
-| D.1 | Schema + migration | Done |
-| D.2 | Service + repository | Done |
-| D.3 | DTOs (request + response Zod schemas) | Not Started |
-| D.4 | Mappers | Not Started |
-| D.5 | Route schemas (zodToJsonSchema, operationId, tags) | Not Started |
-| D.6 | Unit tests | In Progress |
-| D.7 | Integration tests (CRUD + negative paths) | Not Started |
-| D.8 | Contract verification | Not Started |
-```
-
-Or confirm all layers pass the Slice Completion Checklist above before marking the slice `Done`. A slice is only complete when all applicable layers are done — not when the "hard part" (schema + service) lands.
+A slice is only complete when every applicable layer has been validated, not when the "hard part" (schema + service) lands.
 
 ### Slice Retrospective
 
@@ -278,13 +270,13 @@ Required behavior:
 - do not let builders or follow-on implementers assume inherited failures came
   from their work unless the new slice actually caused them
 
-### Plan Closeout And Archiving
+### Plan Deletion And Durable-Decision Capture
 
-- Plans are execution tools, not long-lived policy documents. Durable rules belong in `rules/`, not in active plans.
-- When all remaining tasks in an umbrella plan are done, removed, or intentionally handed off to a newer active plan, close it out instead of leaving it in `plans/` indefinitely.
-- Remove completed or superseded plans from the active planning surface once their useful execution life is over.
-- If historical context still matters, rely on git history or rewrite the needed background into current docs/rules instead of maintaining a large on-disk archive.
-- If a plan contained temporary guidance that has either served its purpose or become durable policy, remove it from the active plan during closeout. Only move it into `rules/` if it is genuinely long-lived guidance.
+- Plans are execution tools, not long-lived policy documents. Durable rules belong in `rules/` or `docs/adr/`, not in active plans.
+- When the parent Beads epic closes (all child stories closed or deferred), the plan file is **deleted** in the same commit (or an immediately following cleanup commit).
+- Before deleting a plan, verify that durable patterns, conventions, or boundaries the plan introduced have been codified in `rules/` (for patterns) or `docs/adr/` (for cross-cutting decisions). A plan that introduced durable guidance without updating those layers is not ready to delete.
+- Do **not** move plans to an archive directory. Git preserves deleted files; archives just replicate the clutter problem under a different name.
+- For historical context, rely on `git log` and `git show`. If a specific decision warrants permanent attention, write an ADR.
 
 ---
 
@@ -319,19 +311,19 @@ PoolMaster's default feature lifecycle is:
 8. QA Verification — `Quinn`
 9. Code Review — `Riley`
 
-Artifact hierarchy:
+Artifact hierarchy (with lifetimes; see §0 Document Lifecycle):
 
-- `requirements/reference/` = seed discovery materials
-- `requirements/product-overview/` = product-discovery inputs and handoff artifacts
-- `requirements/product-requirements/` = refined product-requirement inputs and handoff artifacts
-- `tech-specs/` = technical inputs and handoff artifacts
-- `plans/` = execution ledger and narrative context
-- `Beads` = live execution/refinement tracker and stable question-ID layer
+- `requirements/reference/` = seed discovery materials (feature-life; delete when obsolete)
+- `requirements/product-overview/` = Piper discovery artifacts (feature-life; retire after major feature stabilizes)
+- `requirements/product-requirements/features/<feature>/` = Pam's refined product-requirement bundle for **major** features (feature-life; retire or trim after stabilization)
+- `tech-specs/features/<feature>/` = Tom's pre-implementation technical framing (pre-implementation only; **deleted when implementation ships**)
+- `plans/NN-*.md` = narrative companion to a Beads epic (slice-life; **deleted when parent Beads epic closes**)
+- `.beads/issues.jsonl` = live task state (tasks, dependencies, status, notes)
+- `docs/adr/` = Architecture Decision Records (permanent; immutable once accepted)
 
-Do not treat `requirements/` or `tech-specs/` as replacements for active plans
-or Beads. If implementation or large-lane refinement is underway, the relevant
-Beads items should be updated as work starts and finishes, and the affected
-`plans/` rows should still be reconciled when they apply.
+Skip the requirements bundle and tech spec for small/incremental work. Those artifacts are high-leverage for major new features, but they become overhead for work that fits entirely inside an already-documented feature or a narrow improvement. Capture that work's narrative directly in the plan file.
+
+Do not treat `requirements/` or `tech-specs/` as replacements for Beads task state. When implementation is underway, Beads is canonical for status.
 
 ### Webapp Rebuild Direction
 
@@ -459,7 +451,7 @@ Current persona nickname map:
 - Cross-cutting workflow requirements remain mandatory for all personas,
   including:
   - checking for active plans
-  - updating task rows for the exact slice worked
+  - updating the Beads story state for the exact slice worked
   - validating work before marking slices done
   - updating docs and rules when the change affects them
 - The `project-manager` persona may help with plan shaping, sequencing, and
@@ -512,9 +504,12 @@ Current persona nickname map:
 
 ## 2A. Source-Of-Truth Priority
 
-- `rules/` and active `plans/` / use-case companions are the authoritative implementation guidance.
-- Treat `docs/` as reference material only unless an active rule or active plan explicitly promotes a doc as current source of truth.
-- If `docs/` conflicts with active plans or rules, follow the active plans/rules and treat the doc as stale.
+- `rules/` and `docs/adr/` are the authoritative durable guidance.
+- Active `plans/` files are authoritative narrative context for work in flight; they are paired with a Beads epic that owns task state.
+- `.beads/issues.jsonl` is the canonical source for task status, dependencies, and slice lists.
+- For product intent: `requirements/product-requirements/features/<feature>/` is authoritative for *major* features while they are active; for code/behavioral contract, generated SDK/types + code + tests are authoritative; active plan prose never overrides either.
+- Treat `docs/` as reference material only unless an active rule or ADR explicitly promotes a doc as current source of truth.
+- If any document conflicts with the currently valid `rules/` + ADRs + active plan + generated contract, follow the governing layer and treat the stale doc as pending cleanup.
 
 ---
 
@@ -582,24 +577,12 @@ Do not protect obsolete architecture with inertia.
 
 ## 5. Finding Tasks
 
-Use the table below for active plan ranges still expected to receive execution updates. Completed ranges should leave the active planning surface once they are no longer execution tools.
+Use Beads directly. The canonical queries:
 
-| Prefix | Plan File | Area |
-|---|---|---|
-| 13-xxx | `plans/13-poolmaster-search-discovery.md` | Search and discovery |
-| 28-xxx | `plans/28-backend-service-hardening.md` | Backend service hardening |
-| 29-xxx | `plans/29-webapp-and-admin-hardening.md` | Webapp/admin hardening |
-| 30-xxx | `plans/30-platform-and-deploy-hardening.md` | Platform and deploy hardening |
-| 31-xxx | `plans/31-mock-contest-feed-provider.md` | Mock contest feed provider |
-| 32-xxx | `plans/32-stack-upgrade-modernization.md` | Stack modernization |
-| 36-xxx | `plans/36-authentication-and-authorization-unification.md` | Authentication and authorization unification |
-| 37-xxx | `plans/37-league-top-level-domain-and-data-simplification.md` | League-first domain and data simplification |
-| 38-xxx | `plans/38-contest-entry-and-squad-alignment-review.md` | Contest, entry, and squad alignment review |
+- `bd list` — currently open and in-progress issues across all epics
+- `bd show <issue-id>` — full context for one issue, including the parent epic's plan reference
+- `bd show <epic-id>` — an epic's children; use this to see the slice list for a plan
 
-Archived/deferred and not active execution guidance:
+Do not maintain a list of "active plan prefixes" in this rule file — that list drifts. Active plans are exactly the files currently present in `plans/`. Each of those plans links to its Beads epic in its header; the epic's children are the live tasks.
 
-- `13` search and discovery
-- `07` billing/subscriptions
-- `10` social communication
-- `12` mobile client
-- `15` responsible gaming / legal compliance
+If a plan exists without an associated Beads epic, that is a drift bug to fix: either create the epic or delete the plan.

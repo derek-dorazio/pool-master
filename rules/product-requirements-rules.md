@@ -3,14 +3,36 @@
 Use this document when producing refined product-requirement artifacts under
 `requirements/product-requirements/`.
 
+## 0. When To Write A Requirements Bundle (And When To Skip)
+
+The Piper/Pam requirements bundle — overview + use-cases + screens + business-rules + open-questions for a feature — is high-leverage for **major new features** on a mostly-greenfield surface. It is low-leverage and often net-negative for incremental work on features that already exist.
+
+### Write a requirements bundle when all of the following apply
+
+- The feature is genuinely new (not already covered by an existing feature bundle).
+- It introduces new actors, new domain concepts, new navigation surfaces, or substantially new product behavior.
+- Product decisions benefit from shared framing *before* design/implementation begins.
+
+### Skip the bundle when
+
+- The work fits within an existing feature's bundle (no new actors, no new concepts, no new primary surfaces).
+- The scope is a UX refinement, incremental improvement, or bug-class fix.
+- Rewriting the requirements would mostly duplicate what already exists.
+
+For skip cases, capture the product intent directly in the plan file (`plans/NN-*.md`) — just enough narrative for the slice author to do the work. Do not create a parallel requirements artifact.
+
+### Bundles have a lifetime
+
+When a feature has shipped and stabilized, trim the bundle to only what still describes *current* product intent. Delete exploratory open-questions that were answered by shipping. Delete entire bundles for features that are no longer active product scope (e.g. retired surfaces, archived apps).
+
 ## 1. Purpose
 
 Product requirements should define **what the product must do** and **how users
 experience it**, without collapsing into schema, DTO, route, or architecture
 implementation details.
 
-These artifacts are design inputs. They do not replace active execution plans
-under `plans/`.
+These artifacts are design inputs for major features (see §0). They are not
+the home of task status — that lives in Beads.
 
 ## 2. Output Structure
 
@@ -120,21 +142,14 @@ Before product requirements are handed forward, they must make clear:
 - what is confirmed vs open
 - what technical/model implications are already visible
 
-## 9. Interaction With Plans
+## 9. Interaction With Other Layers
 
-- `requirements/` artifacts are inputs and handoff materials
-- `requirements/product-overview/` is the discovery layer for Piper
-- `requirements/product-requirements/` is the refined product-requirement layer for Pam
-- active implementation tracking still belongs in `plans/`
-- when a requirement materially changes an active feature lane, update the
-  relevant plan notes or task rows in the same effort
-- when older plan prose drifts from current refined requirements, the
-  `requirements/` layer wins
-- do not surface product questions from older plan prose without first checking
-  the current `requirements/product-requirements/` feature files
-- if an older plan is still useful for execution context but no longer
-  trustworthy as product definition, add an explicit note that it is historical
-  context only and point back to the current requirements and tech spec
+The layered artifact model is owned by `rules/workflow-rules.md §0 Document Lifecycle`. This rule file only adds Pam-specific notes:
+
+- `requirements/product-requirements/` is authoritative for *major-feature* product intent while the feature is active.
+- When requirement changes affect in-flight work, update the relevant plan narrative in the same effort; task state is updated in Beads (not in plan task tables — plan files no longer carry task tables).
+- If older plan prose contradicts current refined requirements, requirements wins; plan prose should be reconciled or the plan deleted if its epic has closed.
+- Do not surface product questions from older plan prose without first checking current `requirements/product-requirements/` feature files.
 
 ## 10. Continuous Propagation
 

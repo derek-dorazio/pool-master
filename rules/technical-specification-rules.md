@@ -2,13 +2,40 @@
 
 Use this document when producing technical-spec artifacts under `tech-specs/`.
 
+## 0. When To Write A Tech Spec (And When Not To)
+
+Tech specs are **pre-implementation planning artifacts**. They exist to translate a reviewed product requirement into an implementation-ready technical baseline *before* the code is written. They are **not** permanent reference documents.
+
+### Write a tech spec when all of the following apply
+
+- The work is a **major** new feature or architectural change that introduces substantial new domain types, API surfaces, or integration patterns.
+- The product requirements are approved (a `requirements/product-requirements/features/<feature>/` bundle exists and is current).
+- Implementation has **not yet started**, and writing the spec will meaningfully reduce ambiguity or rework during coding.
+
+### Skip the tech spec when
+
+- The work fits within an existing feature's contract (no new domain types, no new endpoints, no new integration patterns).
+- The scope is an incremental change, bug fix, UX refinement, or targeted refactor.
+- Implementation has already begun and the design is emerging through code review.
+- Generated SDK types + existing tests already describe the behavior the slice would need to redocument.
+
+For all skip cases, capture the technical narrative directly in the plan file (`plans/NN-*.md`) instead of creating a parallel `tech-specs/` artifact.
+
+### Tech specs have a lifetime; they are deleted, not archived
+
+Once a feature's implementation ships (lands on `main`, is covered by tests, and the generated SDK reflects the final contract), the pre-implementation tech spec is **deleted in the same cleanup pass**. The code + tests + generated types + OpenAPI descriptions are the authoritative post-ship spec. Maintaining a parallel prose spec after implementation creates a drift risk without compensating value.
+
+If a durable technical decision was made during spec work that outlasts the feature (e.g. a new pattern, a cross-cutting choice), record it as an ADR in `docs/adr/` before deleting the spec.
+
 ## 1. Purpose
 
 Technical specifications translate approved product requirements into an
-implementation-ready baseline for design plans and coding work.
+implementation-ready baseline for design plans and coding work — during the
+pre-implementation phase of a major feature. See §0 for when to write one and
+when to skip.
 
 These specs are the bridge between Pam's requirements and later design,
-planning, testing, and implementation.
+planning, testing, and implementation — not the long-term home for either.
 
 ## 2. Output Structure
 
