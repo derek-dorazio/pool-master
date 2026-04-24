@@ -31,7 +31,7 @@ fi
 
 # --- 2. Start Docker containers ---
 echo -e "${CYAN}[2/4]${RESET} Starting Docker containers..."
-docker compose -f "$COMPOSE_FILE" up -d postgres dynamodb mailpit 2>&1 | tail -3
+docker compose -f "$COMPOSE_FILE" up -d postgres mailpit 2>&1 | tail -3
 echo -n "       Waiting for PostgreSQL..."
 until docker exec docker-postgres-1 pg_isready -U postgres -q 2>/dev/null; do
   sleep 1
@@ -57,7 +57,6 @@ echo -e "${BOLD}╟────────────────────�
 echo -e "${BOLD}║  INFRASTRUCTURE                                             ║${RESET}"
 echo -e "${BOLD}╟──────────────────────────────────────────────────────────────╢${RESET}"
 echo -e "${BOLD}║${RESET}  ${YELLOW}PostgreSQL${RESET}        localhost:${BOLD}5432${RESET}  ${DIM}poolmaster/postgres${RESET}    ${BOLD}║${RESET}"
-echo -e "${BOLD}║${RESET}  ${YELLOW}DynamoDB Local${RESET}    localhost:${BOLD}8000${RESET}  ${DIM}NoSQL event store${RESET}      ${BOLD}║${RESET}"
 echo -e "${BOLD}╟──────────────────────────────────────────────────────────────╢${RESET}"
 echo -e "${BOLD}║  DEV TOOLS — open in browser                                ║${RESET}"
 echo -e "${BOLD}╟──────────────────────────────────────────────────────────────╢${RESET}"
@@ -68,7 +67,6 @@ echo -e "${BOLD}╟────────────────────�
 echo -e "${BOLD}║  CLI ACCESS                                                 ║${RESET}"
 echo -e "${BOLD}╟──────────────────────────────────────────────────────────────╢${RESET}"
 echo -e "${BOLD}║${RESET}  ${DIM}PostgreSQL CLI${RESET}    ${DIM}docker exec -it docker-postgres-1 psql -U postgres -d poolmaster${RESET}${BOLD}║${RESET}"
-echo -e "${BOLD}║${RESET}  ${DIM}DynamoDB Shell${RESET}    ${DIM}aws dynamodb list-tables --endpoint-url http://localhost:8000${RESET}${BOLD}║${RESET}"
 echo -e "${BOLD}║${RESET}  ${DIM}LocalStack${RESET}        ${DIM}localhost:4566  (npm run dev:infra:all)${RESET} ${BOLD}║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════════╝${RESET}"
 echo ""

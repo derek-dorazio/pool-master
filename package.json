@@ -13,7 +13,7 @@
     "build:poolmaster": "npm run build --workspace @poolmaster/shared && npm run build --workspace @poolmaster/poolmaster",
     "dev": "turbo run dev --parallel --filter=@poolmaster/core-api --filter=@poolmaster/poolmaster",
     "dev:start": "./scripts/dev-start.sh",
-    "dev:infra": "docker compose -f infrastructure/docker/docker-compose.dev.yml up -d postgres dynamodb mailpit",
+    "dev:infra": "docker compose -f infrastructure/docker/docker-compose.dev.yml up -d postgres mailpit",
     "dev:infra:all": "docker compose -f infrastructure/docker/docker-compose.dev.yml up -d",
     "dev:infra:stop": "docker compose -f infrastructure/docker/docker-compose.dev.yml down",
     "db:migrate": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma migrate dev",

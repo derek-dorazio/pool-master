@@ -3,6 +3,9 @@ import fs from 'node:fs';
 import { PrismaClient } from '@prisma/client';
 import { createClient, createConfig } from '@poolmaster/shared/generated/hey-api/client';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
+const FUNCTIONAL_TEST_EMAIL_DOMAIN = '@functional.test';
+const FUNCTIONAL_TEST_PROVIDER_IDS = ['functional-test', 'integration-test'] as const;
+const FUNCTIONAL_PROVIDER_PREFIX = 'functional-provider-';
 
 export interface FunctionalServerState {
   pid: number;
@@ -43,26 +46,55 @@ function getStateFilePath(): string {
 }
 
 let prisma: PrismaClient | undefined;
+const DAEMON_STATE_FILE_PATH = path.join(
+  process.cwd(),
+  'coverage',
+  'service-functional-api',
+  'daemon',
+  'server-state.json',
+);
+
+function readStateFile(filePath: string): Partial<FunctionalServerState> | null {
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8')) as Partial<FunctionalServerState>;
+  } catch {
+    return null;
+  }
+}
 
 function readState(): FunctionalServerState {
   const stateFilePath = getStateFilePath();
-  if (!fs.existsSync(stateFilePath)) {
-    throw new Error(
-      `Functional server state file not found at ${stateFilePath}. ` +
-        'Did the functional global setup run?',
-    );
-  }
+  const parsed = readStateFile(stateFilePath)
+    ?? (() => {
+      const daemonState = readStateFile(DAEMON_STATE_FILE_PATH);
+      if (!daemonState) {
+        return null;
+      }
 
-  const raw = fs.readFileSync(stateFilePath, 'utf8');
-  const parsed = JSON.parse(raw) as Partial<FunctionalServerState>;
+      const runId = process.env.FUNCTIONAL_RUN_ID;
+      return {
+        ...daemonState,
+        runId: typeof runId === 'string' && runId.length > 0
+          ? runId
+          : daemonState.runId,
+      } satisfies Partial<FunctionalServerState>;
+    })();
 
   if (
+    !parsed ||
     typeof parsed.pid !== 'number' ||
     typeof parsed.port !== 'number' ||
     typeof parsed.baseUrl !== 'string' ||
     typeof parsed.runId !== 'string'
   ) {
-    throw new Error(`Invalid functional server state: ${raw}`);
+    throw new Error(
+      `Functional server state file not found at ${stateFilePath}. ` +
+        'Did the functional global setup run?',
+    );
   }
 
   return parsed as FunctionalServerState;
@@ -147,46 +179,303 @@ export async function disconnectFunctionalPrisma(): Promise<void> {
   }
 }
 
+async function cleanupContestArtifacts(
+  database: PrismaClient,
+  contestIds: string[],
+): Promise<void> {
+  if (contestIds.length === 0) {
+    return;
+  }
+
+  await database.contestEntryParticipantScoreEvent.deleteMany({
+    where: {
+      participantScore: {
+        entry: {
+          contestId: {
+            in: contestIds,
+          },
+        },
+      },
+    },
+  });
+  await database.contestEntryParticipantScore.deleteMany({
+    where: {
+      entry: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.draftPickHistory.deleteMany({
+    where: {
+      entry: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.contestEntryPrizeAward.deleteMany({
+    where: {
+      entry: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.rosterPick.deleteMany({
+    where: {
+      entry: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.contestEntry.deleteMany({
+    where: {
+      contestId: {
+        in: contestIds,
+      },
+    },
+  });
+  await database.draftSession.deleteMany({
+    where: {
+      contestId: {
+        in: contestIds,
+      },
+    },
+  });
+  await database.participantContestScoringRule.deleteMany({
+    where: {
+      contestConfiguration: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.contestEntryAggregationRule.deleteMany({
+    where: {
+      contestConfiguration: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.contestPrizeDefinition.deleteMany({
+    where: {
+      contestConfiguration: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.contestConfiguration.deleteMany({
+    where: {
+      contestId: {
+        in: contestIds,
+      },
+    },
+  });
+  await database.contest.deleteMany({
+    where: {
+      id: {
+        in: contestIds,
+      },
+    },
+  });
+}
+
+async function cleanupSportEventParticipantArtifacts(
+  database: PrismaClient,
+  sportEventParticipantIds: string[],
+): Promise<void> {
+  if (sportEventParticipantIds.length === 0) {
+    return;
+  }
+
+  await database.contestEntryParticipantScoreEvent.deleteMany({
+    where: {
+      participantScore: {
+        rosterPick: {
+          sportEventParticipantId: {
+            in: sportEventParticipantIds,
+          },
+        },
+      },
+    },
+  });
+  await database.contestEntryParticipantScore.deleteMany({
+    where: {
+      rosterPick: {
+        sportEventParticipantId: {
+          in: sportEventParticipantIds,
+        },
+      },
+    },
+  });
+  await database.draftPickHistory.deleteMany({
+    where: {
+      rosterPick: {
+        sportEventParticipantId: {
+          in: sportEventParticipantIds,
+        },
+      },
+    },
+  });
+  await database.rosterPick.deleteMany({
+    where: {
+      sportEventParticipantId: {
+        in: sportEventParticipantIds,
+      },
+    },
+  });
+  await database.sportEventParticipantSourceData.deleteMany({
+    where: {
+      sportEventParticipantId: {
+        in: sportEventParticipantIds,
+      },
+    },
+  });
+  await database.sportEventParticipantValuation.deleteMany({
+    where: {
+      sportEventParticipantId: {
+        in: sportEventParticipantIds,
+      },
+    },
+  });
+  await database.sportEventParticipant.deleteMany({
+    where: {
+      id: {
+        in: sportEventParticipantIds,
+      },
+    },
+  });
+}
+
 export async function cleanupFunctionalData(): Promise<void> {
   const database = getFunctionalPrisma();
-  const runId = getFunctionalRunId();
-  const emailPrefix = `functional-${runId}-`;
 
   const users = await database.user.findMany({
     where: {
       email: {
-        startsWith: emailPrefix,
+        endsWith: FUNCTIONAL_TEST_EMAIL_DOMAIN,
       },
     },
     select: {
       id: true,
     },
   });
-
-  if (users.length === 0) {
-    return;
-  }
-
   const userIds = users.map((user) => user.id);
+  const providerSportEvents = await database.sportEvent.findMany({
+    where: {
+      providerId: {
+        in: [...FUNCTIONAL_TEST_PROVIDER_IDS],
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
+  const providerSportEventIds = providerSportEvents.map((event) => event.id);
+  const providerSportEventParticipants = providerSportEventIds.length > 0
+    ? await database.sportEventParticipant.findMany({
+        where: {
+          sportEventId: {
+            in: providerSportEventIds,
+          },
+        },
+        select: {
+          id: true,
+          participantId: true,
+        },
+      })
+    : [];
+  const providerSportEventParticipantIds = providerSportEventParticipants.map(
+    (participant) => participant.id,
+  );
+  const providerParticipantIds = [...new Set(
+    providerSportEventParticipants.map((participant) => participant.participantId),
+  )];
+  const providerParticipants = providerParticipantIds.length > 0
+    ? await database.participant.findMany({
+        where: {
+          id: {
+            in: providerParticipantIds,
+          },
+        },
+        select: {
+          id: true,
+          sportId: true,
+        },
+      })
+    : [];
+  const providerSportIds = [...new Set(
+    providerParticipants
+      .map((participant) => participant.sportId)
+      .filter((sportId): sportId is string => Boolean(sportId)),
+  )];
   const leagues = await database.league.findMany({
     where: {
-      createdBy: {
-        in: userIds,
-      },
+      OR: [
+        {
+          createdBy: {
+            in: userIds,
+          },
+        },
+        {
+          memberships: {
+            some: {
+              userId: {
+                in: userIds,
+              },
+            },
+          },
+        },
+      ],
     },
     select: {
       id: true,
     },
   });
   const leagueIds = leagues.map((league) => league.id);
-
-  await database.consentRecord.deleteMany({
+  const contests = await database.contest.findMany({
     where: {
-      userId: {
-        in: userIds,
-      },
+      OR: [
+        {
+          leagueId: {
+            in: leagueIds,
+          },
+        },
+        {
+          sportEventId: {
+            in: providerSportEventIds,
+          },
+        },
+      ],
+    },
+    select: {
+      id: true,
     },
   });
+  const contestIds = contests.map((contest) => contest.id);
+
+  if (userIds.length > 0) {
+    await database.consentRecord.deleteMany({
+      where: {
+        userId: {
+          in: userIds,
+        },
+      },
+    });
+  }
+  await cleanupContestArtifacts(database, contestIds);
+
   if (leagueIds.length > 0) {
     await database.leagueInvitation.deleteMany({
       where: {
@@ -202,47 +491,6 @@ export async function cleanupFunctionalData(): Promise<void> {
         },
       },
     });
-    const contests = await database.contest.findMany({
-      where: {
-        leagueId: {
-          in: leagueIds,
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
-    const contestIds = contests.map((contest) => contest.id);
-    if (contestIds.length > 0) {
-      await database.contestEntry.deleteMany({
-        where: {
-          contestId: {
-            in: contestIds,
-          },
-        },
-      });
-      await database.contestConfiguration.deleteMany({
-        where: {
-          contestId: {
-            in: contestIds,
-          },
-        },
-      });
-      await database.draftSession.deleteMany({
-        where: {
-          contestId: {
-            in: contestIds,
-          },
-        },
-      });
-      await database.contest.deleteMany({
-        where: {
-          id: {
-            in: contestIds,
-          },
-        },
-      });
-    }
     await database.squadMembership.deleteMany({
       where: {
         leagueId: {
@@ -279,28 +527,99 @@ export async function cleanupFunctionalData(): Promise<void> {
       },
     });
   }
-  await database.refreshToken.deleteMany({
-    where: {
-      userId: {
-        in: userIds,
+  await cleanupSportEventParticipantArtifacts(database, providerSportEventParticipantIds);
+  if (providerSportEventIds.length > 0) {
+    await database.sportEvent.deleteMany({
+      where: {
+        id: {
+          in: providerSportEventIds,
+        },
       },
+    });
+  }
+  await database.providerSyncRun.deleteMany({
+    where: {
+      OR: [
+        {
+          providerId: {
+            in: [...FUNCTIONAL_TEST_PROVIDER_IDS],
+          },
+        },
+        {
+          providerId: {
+            startsWith: FUNCTIONAL_PROVIDER_PREFIX,
+          },
+        },
+      ],
     },
   });
-  await database.adminAuditEntry.deleteMany({
-    where: {
-      actorId: {
-        in: userIds,
+  if (providerParticipantIds.length > 0) {
+    await database.participantProviderMapping.deleteMany({
+      where: {
+        participantId: {
+          in: providerParticipantIds,
+        },
       },
-    },
-  });
+    });
+    await database.participantSeasonRecord.deleteMany({
+      where: {
+        participantId: {
+          in: providerParticipantIds,
+        },
+      },
+    });
+    await database.participant.deleteMany({
+      where: {
+        id: {
+          in: providerParticipantIds,
+        },
+        sportEventParticipants: {
+          none: {},
+        },
+        providerMappings: {
+          none: {},
+        },
+      },
+    });
+  }
+  if (providerSportIds.length > 0) {
+    await database.sport.deleteMany({
+      where: {
+        id: {
+          in: providerSportIds,
+        },
+        participants: {
+          none: {},
+        },
+      },
+    });
+  }
+  if (userIds.length > 0) {
+    await database.refreshToken.deleteMany({
+      where: {
+        userId: {
+          in: userIds,
+        },
+      },
+    });
+    await database.adminAuditEntry.deleteMany({
+      where: {
+        actorId: {
+          in: userIds,
+        },
+      },
+    });
+  }
   await database.platformRuntimeConfig.deleteMany();
-  await database.user.deleteMany({
-    where: {
-      id: {
-        in: userIds,
+  if (userIds.length > 0) {
+    await database.user.deleteMany({
+      where: {
+        id: {
+          in: userIds,
+        },
       },
-    },
-  });
+    });
+  }
 }
 
 export function expectFunctionalError(

@@ -133,6 +133,13 @@ Notes:
 - Treat `poolmaster_test` as an always-disposable local test database. It is
   acceptable to reset or recreate it before an integration, FAPI, or merged
   coverage run.
+- If a DB-backed run was interrupted or residue is suspected, prefer the
+  supported reset-first path:
+  - confirm local Postgres is running
+  - rerun the exact command once Postgres is available
+  - if `poolmaster_test` still looks dirty, use `npm run db:test:reset` or the
+    matching `:fresh` script (`test:service:integration:fresh`,
+    `test:service:functional-api:fresh`, `test:coverage:service:fresh`)
 - Backend work must not be pushed with required test gates intentionally
   skipped. CI is confirmation, not the first place we discover missing local
   validation.

@@ -210,7 +210,7 @@ core-api
 | Service | Purpose | Dev (Docker) | QA/Prod (AWS) |
 |---------|---------|-------------|---------------|
 | **PostgreSQL 16** | Primary database | `localhost:5432` | RDS (private subnet) |
-| **DynamoDB** | Event store (future) | `localhost:8000` (Local) | DynamoDB |
+| **No dedicated event-store cache** | Event/state persistence stays in PostgreSQL today | N/A | Add only if scale or product needs justify it later |
 | **Mailpit** | Email capture | `localhost:8025` | N/A (SES in prod) |
 | **Push Mock** | Push notification capture | `localhost:3099` | N/A (APNs/FCM in prod) |
 | **LocalStack** | AWS service mock | `localhost:4566` | N/A (real AWS) |

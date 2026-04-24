@@ -43,6 +43,14 @@ import { historyModule } from '../../packages/core-api/src/modules/history/route
 import { notificationsModule } from '../../packages/core-api/src/modules/notifications/routes';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
+const INTEGRATION_TEST_EMAIL_DOMAIN = '@integration.test';
+const INTEGRATION_TEST_PROVIDER_IDS = [
+  'integration-test',
+  'TEST_PROVIDER',
+  'contract-provider',
+  'contract-events-provider',
+  'PGA',
+] as const;
 
 let app: FastifyInstance;
 let prisma: PrismaClient;
@@ -112,6 +120,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
 export async function setupIntegrationTests(): Promise<void> {
   prisma = new PrismaClient();
   await prisma.$connect();
+  await cleanupTestData();
   app = await buildTestApp();
 }
 
@@ -264,20 +273,222 @@ export function buildContestEligibleEventTiming(now: Date = new Date()): {
   };
 }
 
+async function cleanupContestArtifacts(
+  database: PrismaClient,
+  contestIds: string[],
+): Promise<void> {
+  if (contestIds.length === 0) {
+    return;
+  }
+
+  await database.contestEntryParticipantScoreEvent.deleteMany({
+    where: {
+      participantScore: {
+        entry: {
+          contestId: {
+            in: contestIds,
+          },
+        },
+      },
+    },
+  });
+  await database.contestEntryParticipantScore.deleteMany({
+    where: {
+      entry: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.draftPickHistory.deleteMany({
+    where: {
+      entry: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.contestEntryPrizeAward.deleteMany({
+    where: {
+      entry: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.rosterPick.deleteMany({
+    where: {
+      entry: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.contestEntry.deleteMany({
+    where: {
+      contestId: {
+        in: contestIds,
+      },
+    },
+  });
+  await database.draftSession.deleteMany({
+    where: {
+      contestId: {
+        in: contestIds,
+      },
+    },
+  });
+  await database.participantContestScoringRule.deleteMany({
+    where: {
+      contestConfiguration: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.contestEntryAggregationRule.deleteMany({
+    where: {
+      contestConfiguration: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.contestPrizeDefinition.deleteMany({
+    where: {
+      contestConfiguration: {
+        contestId: {
+          in: contestIds,
+        },
+      },
+    },
+  });
+  await database.contestConfiguration.deleteMany({
+    where: {
+      contestId: {
+        in: contestIds,
+      },
+    },
+  });
+  await database.contest.deleteMany({
+    where: {
+      id: {
+        in: contestIds,
+      },
+    },
+  });
+}
+
+async function cleanupSportEventParticipantArtifacts(
+  database: PrismaClient,
+  sportEventParticipantIds: string[],
+): Promise<void> {
+  if (sportEventParticipantIds.length === 0) {
+    return;
+  }
+
+  await database.contestEntryParticipantScoreEvent.deleteMany({
+    where: {
+      participantScore: {
+        rosterPick: {
+          sportEventParticipantId: {
+            in: sportEventParticipantIds,
+          },
+        },
+      },
+    },
+  });
+  await database.contestEntryParticipantScore.deleteMany({
+    where: {
+      rosterPick: {
+        sportEventParticipantId: {
+          in: sportEventParticipantIds,
+        },
+      },
+    },
+  });
+  await database.draftPickHistory.deleteMany({
+    where: {
+      rosterPick: {
+        sportEventParticipantId: {
+          in: sportEventParticipantIds,
+        },
+      },
+    },
+  });
+  await database.rosterPick.deleteMany({
+    where: {
+      sportEventParticipantId: {
+        in: sportEventParticipantIds,
+      },
+    },
+  });
+  await database.sportEventParticipantSourceData.deleteMany({
+    where: {
+      sportEventParticipantId: {
+        in: sportEventParticipantIds,
+      },
+    },
+  });
+  await database.sportEventParticipantValuation.deleteMany({
+    where: {
+      sportEventParticipantId: {
+        in: sportEventParticipantIds,
+      },
+    },
+  });
+  await database.sportEventParticipant.deleteMany({
+    where: {
+      id: {
+        in: sportEventParticipantIds,
+      },
+    },
+  });
+}
+
 /**
  * Clean up test data created during tests.
- * Deletes in reverse dependency order using raw SQL for reliability.
+ * Deletes in reverse dependency order using explicit relation-aware Prisma filters.
  */
 export async function cleanupTestData(): Promise<void> {
   const users = await prisma.user.findMany({
     where: {
       email: {
-        endsWith: '@integration.test',
+        endsWith: INTEGRATION_TEST_EMAIL_DOMAIN,
       },
     },
     select: { id: true },
   });
   const userIds = users.map((user) => user.id);
+  const providerSportEvents = await prisma.sportEvent.findMany({
+    where: {
+      providerId: {
+        in: [...INTEGRATION_TEST_PROVIDER_IDS],
+      },
+    },
+    select: { id: true },
+  });
+  const providerSportEventIds = providerSportEvents.map((event) => event.id);
+  const providerSportEventParticipants = providerSportEventIds.length
+    ? await prisma.sportEventParticipant.findMany({
+        where: {
+          sportEventId: {
+            in: providerSportEventIds,
+          },
+        },
+        select: {
+          id: true,
+          participantId: true,
+        },
+      })
+    : [];
+  const providerSportEventParticipantIds = providerSportEventParticipants.map((participant) => participant.id);
 
   const leagues = userIds.length
     ? await prisma.league.findMany({
@@ -291,81 +502,57 @@ export async function cleanupTestData(): Promise<void> {
       })
     : [];
   const leagueIds = leagues.map((league) => league.id);
-  const contests = leagueIds.length
+  const contests = (leagueIds.length || providerSportEventIds.length)
     ? await prisma.contest.findMany({
-        where: { leagueId: { in: leagueIds } },
+        where: {
+          OR: [
+            { leagueId: { in: leagueIds } },
+            { sportEventId: { in: providerSportEventIds } },
+          ],
+        },
         select: { id: true },
       })
     : [];
   const contestIds = contests.map((contest) => contest.id);
 
-  // Tables that reference contests
-  const contestChildTables = [
-    'contest_entry_participant_score_events', 'contest_entry_participant_scores', 'contest_entry_prize_awards',
-    'contest_entries',
-    'draft_sessions', 'draft_pick_histories',
-    'contest_participant_pool', 'contest_pools', 'roster_picks',
-    'participant_contest_scoring_rules', 'contest_entry_aggregation_rules', 'contest_prize_definitions', 'contest_configurations',
-    'commissioner_audit_log', 'commissioner_action_items', 'discoverable_contests',
-  ];
-  // Tables that reference leagues
-  const leagueChildTables = [
-    'squad_memberships', 'squads',
-    'discoverable_leagues',
-  ];
+  await cleanupContestArtifacts(prisma, contestIds);
+  await cleanupSportEventParticipantArtifacts(prisma, providerSportEventParticipantIds);
 
-  for (const table of contestChildTables) {
-    if (contestIds.length === 0) break;
-    await prisma.$executeRawUnsafe(
-      `DELETE FROM "${table}" WHERE contest_id = ANY($1::uuid[])`,
-      contestIds,
-    ).catch(() => {});
-  }
-  if (contestIds.length > 0) {
-    await prisma.contest.deleteMany({
-      where: { id: { in: contestIds } },
-    }).catch(() => {});
-  }
-
-  await prisma.$executeRawUnsafe(
-    "DELETE FROM sport_event_participant_source_data WHERE sport_event_participant_id IN (SELECT id FROM sport_event_participants WHERE sport_event_id IN (SELECT id FROM sport_events WHERE provider_id = 'integration-test'))",
-  ).catch(() => {});
-  await prisma.$executeRawUnsafe(
-    "DELETE FROM sport_event_participant_valuations WHERE sport_event_participant_id IN (SELECT id FROM sport_event_participants WHERE sport_event_id IN (SELECT id FROM sport_events WHERE provider_id = 'integration-test'))",
-  ).catch(() => {});
-  await prisma.$executeRawUnsafe(
-    "DELETE FROM sport_event_participants WHERE sport_event_id IN (SELECT id FROM sport_events WHERE provider_id = 'integration-test')",
-  ).catch(() => {});
-  await prisma.$executeRawUnsafe(
-    "DELETE FROM sport_events WHERE provider_id = 'integration-test'",
-  ).catch(() => {});
-  await prisma.$executeRawUnsafe(
-    "DELETE FROM provider_sync_runs WHERE provider_id = 'integration-test'",
-  ).catch(() => {});
-
-  for (const table of leagueChildTables) {
-    if (leagueIds.length === 0) break;
-    await prisma.$executeRawUnsafe(
-      `DELETE FROM "${table}" WHERE league_id = ANY($1::uuid[])`,
-      leagueIds,
-    ).catch(() => {});
-  }
   if (leagueIds.length > 0) {
+    await prisma.squadMembership.deleteMany({
+      where: { leagueId: { in: leagueIds } },
+    });
+    await prisma.squad.deleteMany({
+      where: { leagueId: { in: leagueIds } },
+    });
+    await prisma.commissionerAuditLog.deleteMany({
+      where: { leagueId: { in: leagueIds } },
+    });
+    await prisma.commissionerActionItem.deleteMany({
+      where: { leagueId: { in: leagueIds } },
+    });
     await prisma.leagueInvitation.deleteMany({
       where: { leagueId: { in: leagueIds } },
-    }).catch(() => {});
+    });
     await prisma.leagueMembership.deleteMany({
       where: { leagueId: { in: leagueIds } },
-    }).catch(() => {});
+    });
     await prisma.league.deleteMany({
       where: { id: { in: leagueIds } },
-    }).catch(() => {});
+    });
   }
 
-  // Participants created during tests (name starts with test pattern)
-  await prisma.$executeRawUnsafe(`DELETE FROM participant_season_records WHERE participant_id IN (SELECT id FROM participants WHERE name LIKE 'Tiger%' OR name LIKE 'Eldrick%')`).catch(() => {});
-  await prisma.$executeRawUnsafe(`DELETE FROM participants WHERE name LIKE 'Tiger%' OR name LIKE 'Eldrick%'`).catch(() => {});
-  await prisma.platformRuntimeConfig.deleteMany().catch(() => {});
+  await prisma.providerSyncRun.deleteMany();
+  await prisma.sportEventParticipantSourceData.deleteMany();
+  await prisma.sportEventParticipantValuation.deleteMany();
+  await prisma.sportEventParticipant.deleteMany();
+  await prisma.participantSeasonRecord.deleteMany();
+  await prisma.participantProviderMapping.deleteMany();
+  await prisma.participant.deleteMany();
+  await prisma.sportEvent.deleteMany();
+  await prisma.sport.deleteMany();
+
+  await prisma.platformRuntimeConfig.deleteMany();
   if (userIds.length > 0) {
     await prisma.refreshToken.deleteMany({
       where: { userId: { in: userIds } },

@@ -137,7 +137,6 @@ Polls external sports data providers and publishes `stat.updated` events to the 
 |-----------|-------------|
 | **PostgreSQL 16** | Primary database via Prisma ORM (50+ models) |
 | **In-process EventBus** | Domain-event fan-out inside the monolith |
-| **DynamoDB** | Deferred/high-volume event support |
 | **In-process EventBus** | `stat.updated` → scoring → `score.updated` → `standings.updated` |
 
 ## Standalone Support Packages

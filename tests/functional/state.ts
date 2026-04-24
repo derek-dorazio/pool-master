@@ -8,6 +8,14 @@ export interface FunctionalServerState {
   runId: string;
 }
 
+const DAEMON_STATE_FILE_PATH = path.join(
+  process.cwd(),
+  'coverage',
+  'service-functional-api',
+  'daemon',
+  'server-state.json',
+);
+
 export function getFunctionalStateFilePath(): string {
   const configuredPath = process.env.FUNCTIONAL_SERVER_STATE_FILE;
   if (configuredPath) {
@@ -36,26 +44,48 @@ export function getFunctionalStateFilePath(): string {
 
 export function readFunctionalServerState(): FunctionalServerState {
   const functionalStateFilePath = getFunctionalStateFilePath();
-  if (!fs.existsSync(functionalStateFilePath)) {
+  const parsed = readStateFile(functionalStateFilePath)
+    ?? (() => {
+      const daemonState = readStateFile(DAEMON_STATE_FILE_PATH);
+      if (!daemonState) {
+        return null;
+      }
+
+      const runId = process.env.FUNCTIONAL_RUN_ID;
+      return {
+        ...daemonState,
+        runId: typeof runId === 'string' && runId.length > 0
+          ? runId
+          : daemonState.runId,
+      } satisfies Partial<FunctionalServerState>;
+    })();
+
+  if (
+    !parsed ||
+    typeof parsed.pid !== 'number' ||
+    typeof parsed.port !== 'number' ||
+    typeof parsed.baseUrl !== 'string' ||
+    typeof parsed.runId !== 'string'
+  ) {
     throw new Error(
       `Functional server state file not found at ${functionalStateFilePath}. ` +
         'The shared functional server was not started.',
     );
   }
 
-  const raw = fs.readFileSync(functionalStateFilePath, 'utf8');
-  const parsed = JSON.parse(raw) as Partial<FunctionalServerState>;
+  return parsed as FunctionalServerState;
+}
 
-  if (
-    typeof parsed.pid !== 'number' ||
-    typeof parsed.port !== 'number' ||
-    typeof parsed.baseUrl !== 'string' ||
-    typeof parsed.runId !== 'string'
-  ) {
-    throw new Error(`Functional server state file is invalid: ${raw}`);
+function readStateFile(filePath: string): Partial<FunctionalServerState> | null {
+  if (!fs.existsSync(filePath)) {
+    return null;
   }
 
-  return parsed as FunctionalServerState;
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8')) as Partial<FunctionalServerState>;
+  } catch {
+    return null;
+  }
 }
 
 export function getFunctionalRunId(): string {

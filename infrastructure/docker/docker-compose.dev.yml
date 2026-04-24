@@ -1,4 +1,4 @@
-# Development docker-compose — local databases, caches, and mock services
+# Development docker-compose — local databases and mock services
 # Usage: docker compose -f infrastructure/docker/docker-compose.dev.yml up
 
 services:
@@ -35,15 +35,6 @@ services:
       - localstack-data:/var/lib/localstack
       - ./localstack-init:/etc/localstack/init
 
-  # DynamoDB Local — NoSQL for high-volume event data (scoring events, stat streams)
-  dynamodb:
-    image: amazon/dynamodb-local:latest
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /data"
-    ports:
-      - "8000:8000"
-    volumes:
-      - dynamodb-data:/data
-
   # Push notification mock — captures APNs/FCM payloads, log at GET http://localhost:3099/push-log
   push-mock:
     build:
@@ -54,4 +45,3 @@ services:
 volumes:
   pgdata:
   localstack-data:
-  dynamodb-data:

@@ -44,7 +44,6 @@ This starts:
 | Service | Port(s) | Purpose |
 |---|---|---|
 | **PostgreSQL 16** | `5432` | Primary database (`poolmaster` / `postgres` / `postgres`) |
-| **DynamoDB Local** | `8000` | NoSQL for high-volume event data |
 | **Mailpit** | `8025` (UI), `1025` (SMTP) | Email viewer — all outbound email. Browse at http://localhost:8025 |
 | **LocalStack** | `4566` | AWS mock (SES, SNS, SQS) — no credentials needed |
 | **Push Mock** | `3099` | APNs/FCM push capture — view at http://localhost:3099/push-log |
@@ -62,10 +61,6 @@ This starts:
 ```bash
 # PostgreSQL CLI — run SQL queries
 docker exec -it docker-postgres-1 psql -U postgres -d poolmaster
-
-# DynamoDB — list tables (requires AWS CLI or use the SDK)
-AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test \
-  aws dynamodb list-tables --endpoint-url http://localhost:8000 --region us-east-1
 
 # LocalStack — interact with mock AWS services
 AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test \
@@ -124,7 +119,7 @@ npm run dev:start
 
 This will:
 1. Create `.env` from `.env.example` (if not present)
-2. Start Docker containers (PostgreSQL, DynamoDB, Mailpit)
+2. Start Docker containers (PostgreSQL and Mailpit)
 3. Run Prisma migrations
 4. Run the minimal bootstrap seed step
 5. Launch the backend and active PoolMaster web app via Turborepo
@@ -145,7 +140,7 @@ If you prefer to run steps separately:
 ### Database Commands
 
 ```bash
-npm run dev:infra          # Start Postgres + DynamoDB + Mailpit
+npm run dev:infra          # Start Postgres + Mailpit
 npm run dev:infra:all      # Start all containers (+ Mailpit, LocalStack, Push Mock)
 npm run dev:infra:stop     # Stop all containers
 
