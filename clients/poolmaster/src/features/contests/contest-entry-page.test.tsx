@@ -70,7 +70,10 @@ function renderContestEntryPage() {
       >
         <Routes>
           <Route element={<ContestEntryPage />} path="/contests/:contestId/entries/:entryId" />
-          <Route element={<div data-testid="contest-page" />} path="/contests/:contestId" />
+          <Route
+            element={<div data-testid="contest-page" />}
+            path="/league/:leagueCode/contests/:contestId"
+          />
           <Route element={<div data-testid="league-page" />} path="/league/:leagueCode" />
           <Route element={<div data-testid="team-page" />} path="/league/:leagueCode/team" />
         </Routes>
@@ -267,6 +270,10 @@ describe('ContestEntryPage', () => {
     renderContestEntryPage();
 
     expect(await screen.findByText('Build your lineup')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-back-to-contest')).toHaveAttribute(
+      'href',
+      '/league/BIGDAWGS/contests/contest-1',
+    );
     expect(screen.getAllByText('0/2')).toHaveLength(2);
     expect(screen.getByText('Winning score 271')).toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toBeInTheDocument();

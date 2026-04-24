@@ -13,7 +13,9 @@ import {
 } from '@/features/leagues/create-league-modal';
 import {
   buildLeagueContestCreatePath,
+  buildLeagueContestsPath,
   buildLeagueContestsManagePath,
+  buildLeagueHistoryPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
 import { LeagueSelector } from './league-selector';
@@ -251,16 +253,16 @@ export function AppShell() {
                 <Link
                   className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
                   data-testid="app-nav-contest-list"
-                  to={`${buildLeaguePath(activeLeagueCode)}#league-contests`}
+                  to={buildLeagueContestsPath(activeLeagueCode)}
                 >
-                  Contest List
+                  League Contests
                 </Link>
                 <Link
                   className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
-                  data-testid="app-nav-standings-history"
-                  to={`${buildLeaguePath(activeLeagueCode)}#league-history`}
+                  data-testid="app-nav-my-history"
+                  to={buildLeagueHistoryPath(activeLeagueCode)}
                 >
-                  Standings &amp; History
+                  My History
                 </Link>
               </>
             ) : (
@@ -271,15 +273,15 @@ export function AppShell() {
                   title="Open a league first to browse its contests."
                   type="button"
                 >
-                  Contest List
+                  League Contests
                 </button>
                 <button
                   className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
                   disabled
-                  title="Open a league first to browse standings and history."
+                  title="Open a league first to browse your contest history."
                   type="button"
                 >
-                  Standings &amp; History
+                  My History
                 </button>
               </>
             )}

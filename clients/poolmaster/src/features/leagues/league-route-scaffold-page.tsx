@@ -1,13 +1,10 @@
 import { Link, useParams } from 'react-router-dom';
 import {
   buildLeaguePath,
-  buildLeagueTeamPath,
 } from './league-routing';
 
 type LeagueRouteScaffoldKey =
-  | 'history'
-  | 'contests'
-  | 'manage-contests';
+  | 'contests';
 
 type LeagueRouteScaffoldDefinition = {
   title: string;
@@ -20,24 +17,10 @@ const LEAGUE_ROUTE_SCAFFOLDS: Record<
   LeagueRouteScaffoldKey,
   LeagueRouteScaffoldDefinition
 > = {
-  history: {
-    title: 'My Contest History',
-    description:
-      'This placeholder route reserves the canonical history destination while the dedicated history page is still being designed and built.',
-    fallbackLabel: 'Open current My Team page',
-    buildFallbackPath: buildLeagueTeamPath,
-  },
   contests: {
     title: 'League Contests',
     description:
       'This route is the future canonical contest-list destination. Until the dedicated list page lands, use League Home for the live contest cards and commissioner actions.',
-    fallbackLabel: 'Open current League Home',
-    buildFallbackPath: buildLeaguePath,
-  },
-  'manage-contests': {
-    title: 'Manage Contests',
-    description:
-      'This list route is staged now so commissioner navigation can converge here later. Until then, contest management continues through League Home and the existing per-contest manage routes.',
     fallbackLabel: 'Open current League Home',
     buildFallbackPath: buildLeaguePath,
   },

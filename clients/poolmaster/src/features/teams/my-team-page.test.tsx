@@ -623,7 +623,7 @@ describe('MyTeamPage', () => {
     );
   });
 
-  it('keeps history on team home and points active entry management to the dedicated entries page', async () => {
+  it('routes active entry management and history to their dedicated pages', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {
         user: {
@@ -690,109 +690,16 @@ describe('MyTeamPage', () => {
         invitations: [],
       },
     });
-    listContestsMock.mockResolvedValue({
-      data: {
-        contests: [
-          {
-            id: 'contest-open',
-            name: 'Masters Pick 6',
-            status: 'OPEN',
-            contestType: 'SINGLE_EVENT',
-            selectionType: 'TIERED',
-            scoringEngine: 'STROKE_PLAY',
-            leagueId: 'league-1',
-            sport: 'GOLF',
-            entryCount: 2,
-          },
-          {
-            id: 'contest-complete',
-            name: 'Genesis Recap',
-            status: 'COMPLETED',
-            contestType: 'SINGLE_EVENT',
-            selectionType: 'TIERED',
-            scoringEngine: 'STROKE_PLAY',
-            leagueId: 'league-1',
-            sport: 'GOLF',
-            entryCount: 3,
-          },
-        ],
-      },
-    });
-    listContestEntriesMock
-      .mockResolvedValueOnce({
-        data: {
-          contestId: 'contest-open',
-          total: 2,
-          isJoined: true,
-          myEntryId: 'entry-1',
-          myEntryIds: ['entry-1'],
-          entries: [
-            {
-              id: 'entry-1',
-              contestId: 'contest-open',
-              squadId: 'team-1',
-              squadName: 'Original Team',
-              entryNumber: 1,
-              name: 'Original Team Entry 1',
-              status: 'ACTIVE',
-              totalScore: 12,
-              standingsPosition: 2,
-              isEliminated: false,
-              createdAt: '2026-04-15T00:00:00.000Z',
-              updatedAt: '2026-04-15T00:00:00.000Z',
-            },
-            {
-              id: 'entry-9',
-              contestId: 'contest-open',
-              squadId: 'team-9',
-              squadName: 'Other Team',
-              entryNumber: 1,
-              name: 'Other Team Entry 1',
-              status: 'ACTIVE',
-              totalScore: 18,
-              standingsPosition: 4,
-              isEliminated: false,
-              createdAt: '2026-04-15T00:00:00.000Z',
-              updatedAt: '2026-04-15T00:00:00.000Z',
-            },
-          ],
-        },
-      })
-      .mockResolvedValueOnce({
-        data: {
-          contestId: 'contest-complete',
-          total: 1,
-          isJoined: true,
-          myEntryId: 'entry-2',
-          myEntryIds: ['entry-2'],
-          entries: [
-            {
-              id: 'entry-2',
-              contestId: 'contest-complete',
-              squadId: 'team-1',
-              squadName: 'Original Team',
-              entryNumber: 2,
-              name: 'Original Team Entry 2',
-              status: 'ACTIVE',
-              totalScore: 25,
-              standingsPosition: 1,
-              isEliminated: false,
-              createdAt: '2026-04-15T00:00:00.000Z',
-              updatedAt: '2026-04-15T00:00:00.000Z',
-            },
-          ],
-        },
-      });
-
     renderMyTeamPage();
 
     expect(await screen.findByTestId('my-team-open-my-entries')).toHaveAttribute(
       'href',
       '/league/BIGDAWGS/entries',
     );
-    expect(screen.queryByTestId('my-team-contest-contest-open')).not.toBeInTheDocument();
-    expect(screen.queryByText('Other Team Entry 1')).not.toBeInTheDocument();
-    expect(screen.getByTestId('my-team-history-contest-complete')).toBeInTheDocument();
-    expect(screen.getByTestId('my-team-history-entry-entry-2')).toHaveTextContent('Original Team Entry 2');
+    expect(screen.getByTestId('my-team-open-my-history')).toHaveAttribute(
+      'href',
+      '/league/BIGDAWGS/history',
+    );
+    expect(screen.queryByTestId('my-team-history-contest-contest-complete')).not.toBeInTheDocument();
   });
 });

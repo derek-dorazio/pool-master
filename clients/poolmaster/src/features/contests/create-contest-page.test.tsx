@@ -94,7 +94,10 @@ function renderContestPage(initialEntry: string) {
         <Routes>
           <Route element={<CreateContestPage />} path="/league/:leagueCode/contests/new" />
           <Route element={<CreateContestPage />} path="/league/:leagueCode/contests/:contestId/manage" />
-          <Route element={<div data-testid="contest-detail-page" />} path="/contests/:contestId" />
+          <Route
+            element={<div data-testid="contest-detail-page" />}
+            path="/league/:leagueCode/contests/:contestId"
+          />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,

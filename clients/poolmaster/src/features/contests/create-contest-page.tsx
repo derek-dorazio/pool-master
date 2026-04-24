@@ -22,6 +22,7 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { useLogger } from '@/lib/logger';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
+  buildLeagueContestPath,
   buildLeaguePath,
   buildLeagueTeamPath,
 } from '@/features/leagues/league-routing';
@@ -841,7 +842,7 @@ export function CreateContestPage() {
       await queryClient.invalidateQueries({
         queryKey: ['poolmaster', 'managed-contest', savedContestId],
       });
-      navigate(`/contests/${savedContestId}`, {
+      navigate(buildLeagueContestPath(leagueCode, savedContestId), {
         state: { leagueCode },
       });
     },

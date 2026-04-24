@@ -7,26 +7,22 @@ import {
   createLeagueSquad,
   getLeagueByCode,
   inactivateLeagueSquad,
-  listContestEntries,
-  listContests,
   listLeagueSquads,
   listSquadOwnerInvitations,
   removeSquadOwner,
   replaceSquadOwner,
   revokeSquadOwnerInvitation,
   updateLeagueSquad,
-  type ListContestEntriesResponses,
-  type ListContestsResponses,
   type ListSquadOwnerInvitationsResponses,
   type GetLeagueByCodeResponses,
   type ListLeagueSquadsResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
-import { buildContestEntryPath } from '@/features/contests/contest-entry-page';
 import { formatUserName } from '@/features/account/user-name';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   buildLeagueEntriesPath,
+  buildLeagueHistoryPath,
   buildLeaguePath,
   setRecentLeagueCode,
 } from '@/features/leagues/league-routing';
@@ -39,12 +35,6 @@ type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 type TeamMember = NonNullable<TeamSummary['members']>[number];
 type OwnerInvitation = ListSquadOwnerInvitationsResponses[200]['invitations'][number];
-type ContestSummary = ListContestsResponses[200]['contests'][number];
-type ContestEntrySummary = ListContestEntriesResponses[200]['entries'][number];
-
-function isHistoricalContest(status: ContestSummary['status']) {
-  return status === 'COMPLETED' || status === 'CANCELLED';
-}
 
 function extractErrorMessage(error: unknown): string {
   if (!error || typeof error !== 'object') {
@@ -146,21 +136,6 @@ export function MyTeamPage() {
       }
 
       return response.data.invitations;
-    },
-    enabled: Boolean(leagueId),
-    retry: false,
-  });
-
-  const contestsQuery = useQuery({
-    queryKey: ['poolmaster', 'league-contests', leagueId],
-    queryFn: async (): Promise<ContestSummary[]> => {
-      const response = await listContests({ path: { id: leagueId } });
-
-      if (!response.data?.contests) {
-        throw response.error ?? new Error('Contest list response is missing data.');
-      }
-
-      return response.data.contests;
     },
     enabled: Boolean(leagueId),
     retry: false,
@@ -377,54 +352,6 @@ export function MyTeamPage() {
     await createTeamMutation.mutateAsync({ nextTeamName, nextIconKey: selectedIconKey });
   }
 
-  const contestEntriesByContestQuery = useQuery({
-    queryKey: ['poolmaster', 'team-contest-entries', selectedTeam?.id, contestsQuery.data?.map((contest) => contest.id).join(',')],
-    queryFn: async (): Promise<Record<string, ListContestEntriesResponses[200]>> => {
-      if (!selectedTeam || !contestsQuery.data) {
-        return {};
-      }
-
-      const results = await Promise.all(
-        contestsQuery.data.map(async (contest) => {
-          const response = await listContestEntries({ path: { contestId: contest.id } });
-
-          if (!response.data) {
-            throw response.error ?? new Error('Contest entries response is missing data.');
-          }
-
-          return [contest.id, response.data] as const;
-        }),
-      );
-
-      return Object.fromEntries(results);
-    },
-    enabled: Boolean(selectedTeam && contestsQuery.data),
-    retry: false,
-  });
-
-  const teamContestCards = useMemo(() => {
-    if (!selectedTeam || !contestsQuery.data) {
-      return [];
-    }
-
-    return contestsQuery.data.map((contest) => {
-      const entryResponse = contestEntriesByContestQuery.data?.[contest.id];
-      const teamEntries = (entryResponse?.entries ?? []).filter((entry) => entry.squadId === selectedTeam.id);
-
-      return {
-        contest,
-        isLoading: contestEntriesByContestQuery.isLoading,
-        isError: contestEntriesByContestQuery.isError,
-        teamEntries,
-      };
-    });
-  }, [contestEntriesByContestQuery.data, contestEntriesByContestQuery.isError, contestEntriesByContestQuery.isLoading, contestsQuery.data, selectedTeam]);
-
-  const historicalContestCards = teamContestCards.filter(
-    (card) => isHistoricalContest(card.contest.status) && card.teamEntries.length > 0,
-  );
-  const isContestEntriesBusy = contestEntriesByContestQuery.isLoading;
-
   if (leagueQuery.isLoading) {
     return (
       <section className="rounded-[2rem] border border-border bg-card p-8">
@@ -602,96 +529,25 @@ export function MyTeamPage() {
           <div className="rounded-[2rem] border border-border bg-card p-6">
             <h3 className="text-xl font-semibold">Active entry management</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Active entry creation and rename actions now live on the dedicated My Entries page. Team Home stays focused on team identity, owners, and lifecycle.
+              Active entry creation and rename actions now live on the dedicated My Entries page,
+              and historical results now live on the dedicated My Contest History page. Team Home
+              stays focused on team identity, owners, and lifecycle.
             </p>
-            <Link
-              className="mt-5 inline-flex rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
-              data-testid="my-team-open-my-entries"
-              to={buildLeagueEntriesPath(leagueCode)}
-            >
-              Open My Entries
-            </Link>
-          </div>
-
-          <div className="rounded-[2rem] border border-border bg-card p-6">
-            <h3 className="text-xl font-semibold">Historical contest entries</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Completed and cancelled contests stay visible here, but only with this team&apos;s entries.
-            </p>
-
-            <div className="mt-5 space-y-3">
-              {contestsQuery.isLoading || (selectedTeam && isContestEntriesBusy) ? (
-                <p className="text-sm text-muted-foreground">Loading contest history...</p>
-              ) : contestsQuery.isError ? (
-                <p className="text-sm text-muted-foreground">
-                  We couldn&apos;t load historical contests right now.
-                </p>
-              ) : !selectedTeam ? (
-                <p className="text-sm text-muted-foreground">
-                  Create your team first and contest history will appear here.
-                </p>
-              ) : historicalContestCards.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  This team does not have any historical contest entries yet.
-                </p>
-              ) : (
-                historicalContestCards.map(({ contest, teamEntries }) => (
-                  <div
-                    className="rounded-[1.5rem] border border-border bg-background p-4"
-                    data-testid={`my-team-history-${contest.id}`}
-                    key={contest.id}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <div className="font-medium text-foreground">{contest.name}</div>
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          {contest.selectionType} · {contest.scoringEngine} · {contest.status}
-                        </div>
-                      </div>
-                      <Link
-                        className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground"
-                        state={{ leagueCode }}
-                        to={`/contests/${contest.id}`}
-                      >
-                        Open contest
-                      </Link>
-                    </div>
-
-                    <div className="mt-4 space-y-3">
-                      {teamEntries.map((entry: ContestEntrySummary) => (
-                        <div
-                          className="rounded-2xl border border-border bg-card px-4 py-4"
-                          data-testid={`my-team-history-entry-${entry.id}`}
-                          key={entry.id}
-                        >
-                          <div className="flex items-center justify-between gap-4">
-                            <div>
-                              <div className="font-medium text-foreground">{entry.name}</div>
-                              <div className="mt-1 text-sm text-muted-foreground">
-                                {entry.squadName} · Entry {entry.entryNumber}
-                              </div>
-                            </div>
-                            <div className="text-right text-sm text-muted-foreground">
-                              <div>{entry.standingsPosition ? `#${entry.standingsPosition}` : 'Rank pending'}</div>
-                              <div>{entry.totalScore} pts</div>
-                            </div>
-                          </div>
-                          <div className="mt-4">
-                            <Link
-                              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
-                              data-testid={`my-team-history-entry-open-${entry.id}`}
-                              state={{ leagueCode }}
-                              to={buildContestEntryPath(contest.id, entry.id)}
-                            >
-                              View entry detail
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                className="inline-flex rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+                data-testid="my-team-open-my-entries"
+                to={buildLeagueEntriesPath(leagueCode)}
+              >
+                Open My Entries
+              </Link>
+              <Link
+                className="inline-flex rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted/40"
+                data-testid="my-team-open-my-history"
+                to={buildLeagueHistoryPath(leagueCode)}
+              >
+                Open My Contest History
+              </Link>
             </div>
           </div>
 

@@ -7,7 +7,6 @@ import { NotFoundPage } from '@/features/app-shell/not-found-page';
 import { CreateContestPage } from '@/features/contests/create-contest-page';
 import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { ContestEntryPage } from '@/features/contests/contest-entry-page';
-import { LegacyContestDetailRedirect } from '@/features/contests/legacy-contest-detail-redirect';
 import { ManageContestsPage } from '@/features/contests/manage-contests-page';
 import { MyEntriesPage } from '@/features/entries/my-entries-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
@@ -30,6 +29,7 @@ import { RootAdminSyncConfigPage } from '@/features/root-admin/root-admin-sync-c
 import { RootAdminSyncDashboardPage } from '@/features/root-admin/root-admin-sync-dashboard-page';
 import { CanonicalTeamHomeRoute } from '@/features/teams/canonical-team-home-route';
 import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
+import { MyTeamHistoryPage } from '@/features/teams/my-team-history-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
 import { TeamsPage } from '@/features/teams/teams-page';
 import { MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
@@ -109,7 +109,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'league/:leagueCode/history',
-            element: <LeagueRouteScaffoldPage scaffoldKey="history" />,
+            element: <MyTeamHistoryPage />,
           },
           {
             path: 'league/:leagueCode/teams',
@@ -126,10 +126,6 @@ export const router = createBrowserRouter([
           {
             path: 'league/:leagueCode/contests/:contestId',
             element: <ContestDetailPage />,
-          },
-          {
-            path: 'contests/:contestId',
-            element: <LegacyContestDetailRedirect />,
           },
           {
             path: 'contests/:contestId/entries/:entryId',

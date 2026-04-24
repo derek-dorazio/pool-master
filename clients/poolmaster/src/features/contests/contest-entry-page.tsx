@@ -13,6 +13,7 @@ import {
   type ListContestEntriesResponses,
 } from '@/lib/api';
 import {
+  buildLeagueContestPath,
   buildLeaguePath,
   buildLeagueTeamPath,
 } from '@/features/leagues/league-routing';
@@ -606,7 +607,7 @@ export function ContestEntryPage() {
   const draftState = draftStateQuery.data;
   const backLeagueCode = hintedLeagueCode ?? leagueCodeQuery.data?.leagueCode ?? null;
   const backToContestPath = backLeagueCode
-    ? `/contests/${contestId}`
+    ? buildLeagueContestPath(backLeagueCode, contestId)
     : `/contests/${contestId}`;
   const backToLeaguePath = backLeagueCode ? buildLeaguePath(backLeagueCode) : '/welcome';
   const teamPath = backLeagueCode ? buildLeagueTeamPath(backLeagueCode) : null;

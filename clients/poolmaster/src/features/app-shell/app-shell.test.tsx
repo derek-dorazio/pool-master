@@ -182,6 +182,14 @@ describe('AppShell', () => {
       'href',
       '/league/LEAGUE1',
     );
+    expect(screen.getByTestId('app-nav-contest-list')).toHaveAttribute(
+      'href',
+      '/league/LEAGUE1/contests',
+    );
+    expect(screen.getByTestId('app-nav-my-history')).toHaveAttribute(
+      'href',
+      '/league/LEAGUE1/history',
+    );
     expect(await screen.findByTestId('app-nav-manage-contests')).toHaveAttribute(
       'href',
       '/league/LEAGUE1/contests/manage',
