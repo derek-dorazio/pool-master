@@ -267,20 +267,20 @@ environment. Captured for traceability; safe to prune after the feature ships.
 | 106-002 | 1 | Add optional `isRootAdmin` prop and conditional Manage link to `AccountMenu` | Done | `account-menu.tsx`: `isRootAdmin?: boolean` prop (default false); Manage link with `data-testid="account-menu-manage"` renders above Profile only when true; closes the menu on click. |
 | 106-003 | 1 | Thread `auth.isRootAdmin` from `AppShell` into `AccountMenu` | Done | `app-shell.tsx`: passes `isRootAdmin={auth.isRootAdmin}` alongside existing `userName` and `onLogout` props. |
 | 106-004 | 1 | Extend vitest coverage for Slice A | Done | `auth-home-page.test.tsx`: two new cases (root admin no-from → `/manage`; root admin with `from` → invite still wins). `app-shell.test.tsx`: mocked menu surfaces `isRootAdmin`; two new cases assert forwarding. New `account-menu.test.tsx`: four cases covering hidden/shown/closed-on-click. |
-| 106-005 | 2 | Add `SetUserRootAdminRequestSchema` DTO | Not Started | `packages/shared/dto/admin/users.dto.ts` (new or nearest) |
-| 106-006 | 2 | Add `UserService.setRootAdmin` with guards, audit, refresh-token revoke, and username-aware admin search support | Not Started | `packages/core-api/src/modules/admin/user-service.ts` |
-| 106-007 | 2 | Add `setRootAdmin` handler + route with zodToJsonSchema | Not Started | `user-handler.ts`, `routes.ts` |
-| 106-008 | 2 | `api:refresh` + `api:validate` and regenerate `hey-api` client | Not Started | Must run both before frontend consumes the new SDK method |
-| 106-009 | 2 | Service unit tests for setRootAdmin | Not Started | promote, demote, self-demote, last-root-admin, no-op, not-found, tokens revoked |
-| 106-010 | 2 | Functional API + contract-verification coverage for new route | Not Started | root-admin FAPI suite + contract-verification-root-admin |
-| 106-011 | 2 | Register regression: isRootAdmin=true smuggle attempt ignored | Not Started | functional-api under auth suite |
-| 106-012 | 3 | Build `root-admin-users-panel.tsx` with search, promote, demote, confirm, reason, and backend-driven last-root-admin error handling | Not Started | uses generated `adminListUsers` and new `adminSetUserRootAdmin` |
-| 106-013 | 3 | Stitch users panel into `root-admin-page.tsx` | Not Started | match existing card structure |
-| 106-014 | 3 | Vitest coverage for users panel | Not Started | list, promote, demote, self-disabled, last-root-admin disabled, error surfacing |
+| 106-005 | 2 | Add `SetUserRootAdminRequestSchema` DTO | Done | Added to `packages/shared/dto/admin.dto.ts` so the backend route, OpenAPI export, and generated client share one request contract. |
+| 106-006 | 2 | Add `UserService.setRootAdmin` with guards, audit, refresh-token revoke, and username-aware admin search support | Done | `user-service.ts`: username-aware search, `setRootAdmin`, self-demotion + last-root-admin guards, refresh-token revoke on demotion, `logAdminAction` before/after state capture. |
+| 106-007 | 2 | Add `setRootAdmin` handler + route with zodToJsonSchema | Done | `user-handler.ts` + `routes.ts`: `POST /admin/users/:userId/root-admin` with stable `400 SELF_ROOT_ADMIN_CHANGE`, `404 USER_NOT_FOUND`, `409 LAST_ROOT_ADMIN` mappings. |
+| 106-008 | 2 | `api:refresh` + `api:validate` and regenerate `hey-api` client | Done | Refreshed `packages/shared/generated/openapi.json` and `packages/shared/generated/hey-api/*`; `npm run api:validate` and `npm run api:refresh` completed successfully during the slice. |
+| 106-009 | 2 | Service unit tests for setRootAdmin | Done | Added `tests/unit/core-api/admin-user-service.test.ts` covering promote, demote, self-demote rejection, last-root-admin rejection, no-op, not-found, and refresh-token revocation. |
+| 106-010 | 2 | Functional API + contract-verification coverage for new route | Done | `root-admin.functional.ts` covers non-admin 403, promote, demote, self-demotion 400, audit logging, and token revocation; `contract-verification-root-admin.integration.ts` covers happy path plus stable 404/400 route errors. The `LAST_ROOT_ADMIN` guard remains directly unit-tested at the service layer because self-demotion is blocked and the authenticated route cannot truthfully exercise 409 in normal product flow. |
+| 106-011 | 2 | Register regression: isRootAdmin=true smuggle attempt ignored | Done | Added root-admin functional regression proving registration ignores a smuggled `isRootAdmin: true` value and persists `false`. |
+| 106-012 | 3 | Build `root-admin-users-panel.tsx` with search, promote, demote, confirm, reason, and backend-driven last-root-admin error handling | Done | New panel uses generated `adminListUsers` / `adminSetUserRootAdmin`, supports search by email/username/first/last, confirm flows, optional reason, inline API errors, and self-row demote disablement. |
+| 106-013 | 3 | Stitch users panel into `root-admin-page.tsx` | Done | `root-admin-page.tsx` now mounts the users panel as a dedicated `/manage` section ahead of the league lifecycle controls. |
+| 106-014 | 3 | Vitest coverage for users panel | Done | Added `root-admin-users-panel.test.tsx` for list, search, promote, demote, self-row disabled, and backend error surfacing; updated `root-admin-page.test.tsx` harness to include the new admin-user SDK mocks. |
 | 106-015A | 4 | Slice A pre-push gate set (non-DB) | Done | In Cowork sandbox: `npx turbo typecheck --force` 5/5 workspaces; `npx eslint ... --max-warnings 0` exit 0; `npx vitest run` 120/120 across 31 files; `npx jest --config tests/jest.config.js --forceExit` 519/519 across 55 suites. FAPI not applicable to a UI-only slice. |
-| 106-015B | 4 | Slice B pre-push gate set (DB + non-DB) | Not Started | Slice B requires DB; run on a host with Postgres: `db:test:reset`, `test:service:integration:fresh`, `test:service:functional-api:fresh`, plus non-DB gates. Sandbox cannot reach any Postgres (no outbound TCP/DNS). |
-| 106-015C | 4 | Slice C pre-push gate set (non-DB) | Not Started | Same shape as 015A once Slice C lands. |
-| 106-016 | 4 | Reconcile Beads items and update this plan with file-level handoff notes | Not Started | per Slice Completion Checklist. Slice A Beads child should be closed; epic stays open until B and C close. |
+| 106-015B | 4 | Slice B pre-push gate set (DB + non-DB) | Done | Final validated gate set on the completed slice: `npx turbo typecheck --force`, `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`, `npx jest --config tests/jest.config.js --forceExit`, `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:functional-api`, and `npm run test:poolmaster:unit`. |
+| 106-015C | 4 | Slice C pre-push gate set (non-DB) | Done | Covered by the same final gate run above after the users-panel/frontend changes landed. |
+| 106-016 | 4 | Reconcile Beads items and update this plan with file-level handoff notes | Done | Action table updated to match implementation truth; Beads slice reconciled at closeout. |
 
 ## Beads Seed Commands
 
@@ -309,7 +309,7 @@ After the epic and four children exist, link the children as `blocks`/
 `blockedBy` (C blocked by B, D blocked by A/B/C) and close the matching
 action-plan rows as each slice lands.
 
-## Session Handoff — Slice A Delivered
+## Historical Session Handoff — Slice A Delivered
 
 **Status:** Slice A (Phase 1) implementation and validation complete and
 ready to commit.

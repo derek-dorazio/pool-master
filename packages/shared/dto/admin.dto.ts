@@ -44,6 +44,11 @@ export const UserListResponseSchema = PaginatedSchema(UserProfileDtoSchema);
 export type UserListResponse = z.infer<typeof UserListResponseSchema>;
 export const UserDetailResponseSchema = UserProfileDtoSchema.describe('Root-admin user-detail response.');
 export type UserDetailResponse = z.infer<typeof UserDetailResponseSchema>;
+export const SetUserRootAdminRequestSchema = z.object({
+  isRootAdmin: z.boolean().describe('Whether the target user should hold the platform-level root-admin role after the change.'),
+  reason: z.string().trim().min(1).max(500).optional().describe('Optional human reason captured in the root-admin audit log.'),
+}).describe('Root-admin role-change request payload.');
+export type SetUserRootAdminRequest = z.infer<typeof SetUserRootAdminRequestSchema>;
 
 export const AdminListLeaguesQuerySchema = z.object({
   search: z

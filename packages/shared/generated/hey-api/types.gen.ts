@@ -10792,6 +10792,134 @@ export type AdminEnableUserResponses = {
 
 export type AdminEnableUserResponse = AdminEnableUserResponses[keyof AdminEnableUserResponses];
 
+export type AdminSetUserRootAdminData = {
+    /**
+     * Root-admin role-change request payload.
+     */
+    body: {
+        /**
+         * Whether the target user should hold the platform-level root-admin role after the change.
+         */
+        isRootAdmin: boolean;
+        /**
+         * Optional human reason captured in the root-admin audit log.
+         */
+        reason?: string;
+    };
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/users/{userId}/root-admin';
+};
+
+export type AdminSetUserRootAdminErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminSetUserRootAdminError = AdminSetUserRootAdminErrors[keyof AdminSetUserRootAdminErrors];
+
+export type AdminSetUserRootAdminResponses = {
+    /**
+     * Minimal success response envelope.
+     */
+    200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
+        success: true;
+    };
+};
+
+export type AdminSetUserRootAdminResponse = AdminSetUserRootAdminResponses[keyof AdminSetUserRootAdminResponses];
+
 export type AdminListLeaguesData = {
     body?: never;
     path?: never;

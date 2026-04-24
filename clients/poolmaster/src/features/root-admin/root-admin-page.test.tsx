@@ -9,6 +9,7 @@ const {
   adminGetIngestionScheduleMock,
   adminInactivateLeagueMock,
   adminListLeaguesMock,
+  adminListUsersMock,
   adminGetPollIntervalsMock,
   adminListProviderSyncRunsMock,
   adminListContestConfigTemplatesMock,
@@ -17,6 +18,7 @@ const {
   adminResetIngestionScheduleMock,
   adminResetPollIntervalsMock,
   adminResetSportIngestionOverrideMock,
+  adminSetUserRootAdminMock,
   adminSetSportIngestionOverrideMock,
   adminSyncProviderEventDataMock,
   adminUpdateContestConfigTemplateMock,
@@ -39,6 +41,7 @@ const {
     adminGetIngestionScheduleMock: vi.fn(),
     adminInactivateLeagueMock: vi.fn(),
     adminListLeaguesMock: vi.fn(),
+    adminListUsersMock: vi.fn(),
     adminGetPollIntervalsMock: vi.fn(),
     adminListProviderSyncRunsMock: vi.fn(),
     adminListContestConfigTemplatesMock: vi.fn(),
@@ -47,6 +50,7 @@ const {
     adminResetIngestionScheduleMock: vi.fn(),
     adminResetPollIntervalsMock: vi.fn(),
     adminResetSportIngestionOverrideMock: vi.fn(),
+    adminSetUserRootAdminMock: vi.fn(),
     adminSetSportIngestionOverrideMock: vi.fn(),
     adminSyncProviderEventDataMock: vi.fn(),
     adminUpdateContestConfigTemplateMock: vi.fn(),
@@ -61,6 +65,7 @@ vi.mock('@/lib/api', () => ({
   adminGetIngestionSchedule: (...args: unknown[]) => adminGetIngestionScheduleMock(...args),
   adminInactivateLeague: (...args: unknown[]) => adminInactivateLeagueMock(...args),
   adminListLeagues: (...args: unknown[]) => adminListLeaguesMock(...args),
+  adminListUsers: (...args: unknown[]) => adminListUsersMock(...args),
   adminGetPollIntervals: (...args: unknown[]) => adminGetPollIntervalsMock(...args),
   adminListProviderSyncRuns: (...args: unknown[]) => adminListProviderSyncRunsMock(...args),
   adminListContestConfigTemplates: (...args: unknown[]) => adminListContestConfigTemplatesMock(...args),
@@ -69,6 +74,7 @@ vi.mock('@/lib/api', () => ({
   adminResetIngestionSchedule: (...args: unknown[]) => adminResetIngestionScheduleMock(...args),
   adminResetPollIntervals: (...args: unknown[]) => adminResetPollIntervalsMock(...args),
   adminResetSportIngestionOverride: (...args: unknown[]) => adminResetSportIngestionOverrideMock(...args),
+  adminSetUserRootAdmin: (...args: unknown[]) => adminSetUserRootAdminMock(...args),
   adminSetSportIngestionOverride: (...args: unknown[]) => adminSetSportIngestionOverrideMock(...args),
   adminSyncProviderEventData: (...args: unknown[]) => adminSyncProviderEventDataMock(...args),
   adminUpdateContestConfigTemplate: (...args: unknown[]) => adminUpdateContestConfigTemplateMock(...args),
@@ -79,6 +85,17 @@ vi.mock('@/lib/api', () => ({
 vi.mock('@/lib/logger', () => ({
   logger: mockLogger,
   useLogger: () => mockLogger,
+}));
+
+vi.mock('@/features/auth/auth-provider', () => ({
+  useAuth: () => ({
+    user: {
+      id: 'root-admin-user',
+      firstName: 'Root',
+      lastName: 'Admin',
+      isRootAdmin: true,
+    },
+  }),
 }));
 
 function renderRootAdminPage() {
@@ -303,6 +320,41 @@ function seedRootAdminDefaults() {
       },
     },
   });
+  adminListUsersMock.mockResolvedValue({
+    data: {
+      items: [
+        {
+          id: 'root-admin-user',
+          email: 'root-admin@example.com',
+          username: 'rootadmin',
+          firstName: 'Root',
+          lastName: 'Admin',
+          isRootAdmin: true,
+          isActive: true,
+          createdAt: '2026-04-10T12:00:00.000Z',
+        },
+        {
+          id: 'member-user',
+          email: 'member@example.com',
+          username: 'memberone',
+          firstName: 'Member',
+          lastName: 'One',
+          isRootAdmin: false,
+          isActive: true,
+          createdAt: '2026-04-11T12:00:00.000Z',
+        },
+      ],
+      total: 2,
+      page: 1,
+      pageSize: 25,
+      totalPages: 1,
+    },
+  });
+  adminSetUserRootAdminMock.mockResolvedValue({
+    data: {
+      success: true,
+    },
+  });
 }
 
 describe('RootAdminPage', () => {
@@ -315,6 +367,7 @@ describe('RootAdminPage', () => {
     adminDeleteLeagueMock.mockReset();
     adminInactivateLeagueMock.mockReset();
     adminListLeaguesMock.mockReset();
+    adminListUsersMock.mockReset();
     adminGetPollIntervalsMock.mockReset();
     adminListProviderSyncRunsMock.mockReset();
     adminListContestConfigTemplatesMock.mockReset();
@@ -323,6 +376,7 @@ describe('RootAdminPage', () => {
     adminResetIngestionScheduleMock.mockReset();
     adminResetPollIntervalsMock.mockReset();
     adminResetSportIngestionOverrideMock.mockReset();
+    adminSetUserRootAdminMock.mockReset();
     adminSetSportIngestionOverrideMock.mockReset();
     adminSyncProviderEventDataMock.mockReset();
     adminUpdateContestConfigTemplateMock.mockReset();

@@ -6,6 +6,7 @@ import {
   adminInactivateLeague,
   adminListLeagues,
   adminPrepareSportSync,
+  adminSetUserRootAdmin,
   adminListContestConfigTemplates,
   adminListProviderSyncRuns,
   adminReIngestEvent,
@@ -16,13 +17,16 @@ import {
   adminUpdateContestConfigTemplate,
   adminUpdateIngestionSchedule,
   adminUpdatePollIntervals,
+  registerUser,
 } from '@poolmaster/shared/generated/hey-api';
 import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
 import {
   cleanupFunctionalData,
+  createFunctionalEmail,
   disconnectFunctionalPrisma,
   expectFunctionalError,
   getFunctionalPrisma,
+  getSdkClient,
 } from './setup';
 
 afterEach(async () => {
@@ -87,6 +91,21 @@ describe('SDK Functional: Root Admin', () => {
       status: 403,
       code: 'ROOT_ADMIN_ACCESS_REQUIRED',
     });
+
+    const roleResponse = await adminSetUserRootAdmin({
+      client: user.client,
+      path: {
+        userId: user.userId,
+      },
+      body: {
+        isRootAdmin: true,
+      },
+    });
+
+    expectFunctionalError(roleResponse, {
+      status: 403,
+      code: 'ROOT_ADMIN_ACCESS_REQUIRED',
+    });
   });
 
   it('allows a promoted root-admin user to read root-admin service data', async () => {
@@ -125,6 +144,113 @@ describe('SDK Functional: Root Admin', () => {
     expectFunctionalError(response, {
       status: 404,
       code: 'USER_NOT_FOUND',
+    });
+  });
+
+  it('allows a root admin to promote and demote another user with audit coverage', async () => {
+    const rootAdmin = await buildRegisteredUser({
+      displayName: 'Root Admin Role Manager',
+    });
+    await promoteToRootAdmin(rootAdmin.userId);
+
+    const targetUser = await buildRegisteredUser({
+      displayName: 'Root Admin Role Target',
+    });
+
+    const promoteResponse = await adminSetUserRootAdmin({
+      client: rootAdmin.client,
+      path: {
+        userId: targetUser.userId,
+      },
+      body: {
+        isRootAdmin: true,
+        reason: 'Add backup operator',
+      },
+    });
+
+    expect(promoteResponse.data?.success).toBe(true);
+    await expect(
+      getFunctionalPrisma().user.findUniqueOrThrow({
+        where: { id: targetUser.userId },
+      }),
+    ).resolves.toMatchObject({
+      isRootAdmin: true,
+    });
+
+    const demoteResponse = await adminSetUserRootAdmin({
+      client: rootAdmin.client,
+      path: {
+        userId: targetUser.userId,
+      },
+      body: {
+        isRootAdmin: false,
+        reason: 'Remove temporary access',
+      },
+    });
+
+    expect(demoteResponse.data?.success).toBe(true);
+    await expect(
+      getFunctionalPrisma().user.findUniqueOrThrow({
+        where: { id: targetUser.userId },
+      }),
+    ).resolves.toMatchObject({
+      isRootAdmin: false,
+    });
+
+    const refreshTokens = await getFunctionalPrisma().refreshToken.findMany({
+      where: { userId: targetUser.userId },
+      select: { revokedAt: true },
+    });
+    expect(refreshTokens.length).toBeGreaterThan(0);
+    expect(refreshTokens.every((token) => token.revokedAt instanceof Date)).toBe(true);
+
+    const auditEntries = await getFunctionalPrisma().adminAuditEntry.findMany({
+      where: {
+        actorId: rootAdmin.userId,
+        action: 'user.set_root_admin',
+        resourceId: targetUser.userId,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+      select: {
+        reason: true,
+        beforeState: true,
+        afterState: true,
+      },
+    });
+    expect(auditEntries).toHaveLength(2);
+    expect(auditEntries[0]).toMatchObject({
+      reason: 'Add backup operator',
+      beforeState: { isRootAdmin: false },
+      afterState: { isRootAdmin: true },
+    });
+    expect(auditEntries[1]).toMatchObject({
+      reason: 'Remove temporary access',
+      beforeState: { isRootAdmin: true },
+      afterState: { isRootAdmin: false },
+    });
+  });
+
+  it('rejects self-demotion for root-admin users', async () => {
+    const rootAdmin = await buildRegisteredUser({
+      displayName: 'Root Admin Self Demote',
+    });
+    await promoteToRootAdmin(rootAdmin.userId);
+
+    const response = await adminSetUserRootAdmin({
+      client: rootAdmin.client,
+      path: {
+        userId: rootAdmin.userId,
+      },
+      body: {
+        isRootAdmin: false,
+      },
+    });
+
+    expectFunctionalError(response, {
+      status: 400,
+      code: 'SELF_ROOT_ADMIN_CHANGE',
     });
   });
 
@@ -370,5 +496,30 @@ describe('SDK Functional: Root Admin', () => {
         },
       });
     }
+  });
+
+  it('ignores isRootAdmin in registration payloads', async () => {
+    const email = createFunctionalEmail('register-root-admin');
+    const username = `register-${Date.now().toString(36)}`;
+
+    const response = await registerUser({
+      client: getSdkClient(),
+      body: {
+        username,
+        email,
+        password: 'FuncTest123!',
+        firstName: 'Registration',
+        lastName: 'Probe',
+        isRootAdmin: true,
+      } as any,
+    });
+
+    expect(response.data?.user.isRootAdmin).toBe(false);
+
+    const storedUser = await getFunctionalPrisma().user.findUniqueOrThrow({
+      where: { email },
+      select: { isRootAdmin: true },
+    });
+    expect(storedUser.isRootAdmin).toBe(false);
   });
 });

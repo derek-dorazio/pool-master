@@ -14,6 +14,7 @@ import {
   ProviderIngestionJobDtoSchema,
   ProviderListResponseSchema,
   ProviderSyncRunListResponseSchema,
+  SuccessSchema,
   UserDetailResponseSchema,
   UserListResponseSchema,
 } from '@poolmaster/shared/dto';
@@ -378,6 +379,9 @@ describe('Contract verification (root admin)', () => {
       displayName: 'Root Admin Happy Path User',
       isRootAdmin: true,
     });
+    const targetUser = await createTestUser({
+      displayName: 'Root Admin Managed User',
+    });
 
     await getPrisma().providerSyncRun.createMany({
       data: [
@@ -427,6 +431,18 @@ describe('Contract verification (root admin)', () => {
     });
     expect(detailRes.statusCode).toBe(200);
     expect(UserDetailResponseSchema.safeParse(detailRes.json()).success).toBe(true);
+
+    const setRootAdminRes = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/admin/users/${targetUser.user.id}/root-admin`,
+      headers: rootAdmin.headers,
+      payload: {
+        isRootAdmin: true,
+        reason: 'Contract verification',
+      },
+    });
+    expect(setRootAdminRes.statusCode).toBe(200);
+    expect(SuccessSchema.safeParse(setRootAdminRes.json()).success).toBe(true);
 
     const syncRunsRes = await getApp().inject({
       method: 'GET',
@@ -754,6 +770,30 @@ describe('Contract verification (root admin)', () => {
     expect(userRes.statusCode).toBe(404);
     expect(ErrorEnvelopeSchema.safeParse(userRes.json()).success).toBe(true);
     expect(userRes.json().error.code).toBe('USER_NOT_FOUND');
+
+    const missingRoleChangeRes = await getApp().inject({
+      method: 'POST',
+      url: '/api/v1/admin/users/00000000-0000-0000-0000-000000000000/root-admin',
+      headers: rootAdmin.headers,
+      payload: {
+        isRootAdmin: true,
+      },
+    });
+    expect(missingRoleChangeRes.statusCode).toBe(404);
+    expect(ErrorEnvelopeSchema.safeParse(missingRoleChangeRes.json()).success).toBe(true);
+    expect(missingRoleChangeRes.json().error.code).toBe('USER_NOT_FOUND');
+
+    const selfRoleChangeRes = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/admin/users/${rootAdmin.user.id}/root-admin`,
+      headers: rootAdmin.headers,
+      payload: {
+        isRootAdmin: false,
+      },
+    });
+    expect(selfRoleChangeRes.statusCode).toBe(400);
+    expect(ErrorEnvelopeSchema.safeParse(selfRoleChangeRes.json()).success).toBe(true);
+    expect(selfRoleChangeRes.json().error.code).toBe('SELF_ROOT_ADMIN_CHANGE');
 
     const providerRes = await getApp().inject({
       method: 'GET',

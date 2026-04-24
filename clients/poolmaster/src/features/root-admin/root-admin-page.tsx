@@ -31,6 +31,7 @@ import {
   type AdminSyncProviderEventDataResponses,
 } from '@/lib/api';
 import { useLogger } from '@/lib/logger';
+import { RootAdminUsersPanel } from './root-admin-users-panel';
 
 type PollIntervalConfig = AdminGetPollIntervalsResponses[200];
 type IngestionScheduleConfig = AdminGetIngestionScheduleResponses[200];
@@ -1267,6 +1268,8 @@ export function RootAdminPage() {
           </p>
         ) : null}
       </section>
+
+      <RootAdminUsersPanel />
 
       <section className="rounded-[2rem] border border-border bg-card p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

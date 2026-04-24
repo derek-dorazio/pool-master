@@ -61,6 +61,20 @@ export class UserNotFoundError extends Error {
   }
 }
 
+export class SelfRootAdminChangeError extends Error {
+  constructor(userId: string) {
+    super(`Root admins cannot change their own root-admin role: ${userId}`);
+    this.name = 'SelfRootAdminChangeError';
+  }
+}
+
+export class LastRootAdminError extends Error {
+  constructor(userId: string) {
+    super(`Cannot remove the last remaining root admin: ${userId}`);
+    this.name = 'LastRootAdminError';
+  }
+}
+
 export class UserService {
   constructor(
     private readonly prisma: PrismaClient,
@@ -70,10 +84,11 @@ export class UserService {
   async searchUsers(
     query: UserSearchQuery,
   ): Promise<{ items: UserListItem[]; total: number }> {
+    const trimmedSearch = query.search?.trim();
     this.logger?.debug({
       action: 'adminUserService.search.start',
       data: {
-        hasSearch: Boolean(query.search),
+        hasSearch: Boolean(trimmedSearch),
         isActive: query.isActive ?? null,
         page: query.page ?? 1,
         pageSize: query.pageSize ?? 25,
@@ -85,11 +100,12 @@ export class UserService {
 
     const where: Record<string, unknown> = {};
 
-    if (query.search) {
+    if (trimmedSearch) {
       where.OR = [
-        { email: { contains: query.search, mode: 'insensitive' } },
-        { firstName: { contains: query.search, mode: 'insensitive' } },
-        { lastName: { contains: query.search, mode: 'insensitive' } },
+        { email: { contains: trimmedSearch, mode: 'insensitive' } },
+        { username: { contains: trimmedSearch, mode: 'insensitive' } },
+        { firstName: { contains: trimmedSearch, mode: 'insensitive' } },
+        { lastName: { contains: trimmedSearch, mode: 'insensitive' } },
       ];
     }
     if (typeof query.isActive === 'boolean') {
@@ -291,6 +307,101 @@ export class UserService {
       action: 'adminUserService.enable.success',
       data: { userId },
     }, 'Enabled user');
+  }
+
+  async setRootAdmin(
+    userId: string,
+    nextValue: boolean,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
+    reason?: string,
+  ): Promise<void> {
+    this.logger?.debug({
+      action: 'adminUserService.setRootAdmin.start',
+      data: {
+        userId,
+        nextValue,
+      },
+    }, 'Updating root-admin role');
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      this.logger?.warn({
+        action: 'adminUserService.setRootAdmin.notFound',
+        data: { userId },
+      }, 'Cannot change root-admin role for missing user');
+      throw new UserNotFoundError(userId);
+    }
+
+    if (nextValue === user.isRootAdmin) {
+      this.logger?.debug({
+        action: 'adminUserService.setRootAdmin.noop',
+        data: {
+          userId,
+          isRootAdmin: user.isRootAdmin,
+        },
+      }, 'Skipping no-op root-admin role change');
+      return;
+    }
+
+    if (!nextValue && userId === rootAdminUserId) {
+      this.logger?.warn({
+        action: 'adminUserService.setRootAdmin.selfRejected',
+        data: { userId },
+      }, 'Rejected self root-admin role change');
+      throw new SelfRootAdminChangeError(userId);
+    }
+
+    if (!nextValue && user.isRootAdmin) {
+      const rootAdminCount = await this.prisma.user.count({
+        where: { isRootAdmin: true },
+      });
+      if (rootAdminCount <= 1) {
+        this.logger?.warn({
+          action: 'adminUserService.setRootAdmin.lastRejected',
+          data: { userId, rootAdminCount },
+        }, 'Rejected removal of the last root admin');
+        throw new LastRootAdminError(userId);
+      }
+    }
+
+    const trimmedReason = reason?.trim() || undefined;
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { isRootAdmin: nextValue },
+      });
+
+      if (!nextValue) {
+        await tx.refreshToken.updateMany({
+          where: { userId, revokedAt: null },
+          data: { revokedAt: new Date() },
+        });
+      }
+
+      await logAdminAction({
+        actorUserId: rootAdminUserId,
+        actorEmail: rootAdminEmail,
+        action: 'user.set_root_admin',
+        resourceType: 'USER',
+        resourceId: userId,
+        description: nextValue
+          ? `Granted root-admin role to user ${userId}`
+          : `Revoked root-admin role from user ${userId}`,
+        beforeState: { isRootAdmin: user.isRootAdmin },
+        afterState: { isRootAdmin: nextValue },
+        reason: trimmedReason,
+      });
+    });
+
+    this.logger?.info({
+      action: 'adminUserService.setRootAdmin.success',
+      data: {
+        userId,
+        nextValue,
+      },
+    }, 'Updated root-admin role');
   }
 }
 

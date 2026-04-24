@@ -4,7 +4,11 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { UserService } from './user-service';
-import { UserNotFoundError } from './user-service';
+import {
+  LastRootAdminError,
+  SelfRootAdminChangeError,
+  UserNotFoundError,
+} from './user-service';
 import { sendError } from '../../core/error-handler';
 import { extractRootAdminContext } from './request-admin-context';
 
@@ -15,6 +19,7 @@ export function createUserHandlers(userService: UserService) {
     forceLogout,
     disableUser,
     enableUser,
+    setRootAdmin,
   };
 
   async function listUsers(
@@ -133,6 +138,34 @@ export function createUserHandlers(userService: UserService) {
     } catch (err) {
       if (err instanceof UserNotFoundError) {
         return sendError(reply, 404, 'USER_NOT_FOUND', err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function setRootAdmin(
+    request: FastifyRequest<{
+      Params: { userId: string };
+      Body: { isRootAdmin: boolean; reason?: string };
+    }>,
+    reply: FastifyReply,
+  ) {
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
+    const { userId } = request.params;
+    const { isRootAdmin, reason } = request.body;
+
+    try {
+      await userService.setRootAdmin(userId, isRootAdmin, rootAdminUserId, rootAdminEmail, reason);
+      return reply.send({ success: true });
+    } catch (err) {
+      if (err instanceof UserNotFoundError) {
+        return sendError(reply, 404, 'USER_NOT_FOUND', err.message);
+      }
+      if (err instanceof SelfRootAdminChangeError) {
+        return sendError(reply, 400, 'SELF_ROOT_ADMIN_CHANGE', err.message);
+      }
+      if (err instanceof LastRootAdminError) {
+        return sendError(reply, 409, 'LAST_ROOT_ADMIN', err.message);
       }
       throw err;
     }
