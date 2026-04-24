@@ -19,7 +19,7 @@ test('commissioner can create a league and generate an invite link', async ({ pa
 
   await test.step('create a league from the welcome flow', async () => {
     actualLeagueCode = await createLeague(page, league);
-    await expect(page.getByTestId('league-create-contest')).toBeVisible();
+    await expect(page.getByTestId('app-nav-create-contest')).toBeVisible();
   });
 
   await test.step('generate a member invite link', async () => {

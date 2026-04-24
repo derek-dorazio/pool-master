@@ -82,7 +82,7 @@ export async function generateInviteLink(page: Page) {
 }
 
 export async function openCreateContestFlow(page: Page) {
-  await expect(page.getByTestId('league-create-contest')).toBeVisible();
-  await page.getByTestId('league-create-contest').click();
+  await expect(page.getByTestId('app-nav-create-contest')).toBeVisible();
+  await page.getByTestId('app-nav-create-contest').click();
   await expect(page.getByTestId('create-contest-page')).toBeVisible();
 }
