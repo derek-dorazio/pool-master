@@ -61,11 +61,26 @@ Reached from the Account dropdown "Manage" link (visible only when `user.isRootA
 ### 2. Teams — `/manage/teams`
 
 - Single list page with cross-league search
-- Row renders: team name, league, team code, owner(s), status
+- Row renders: team name, league, team code, owner(s), active/inactive state
 - **Row action:** click → navigate to `/league/:leagueCode/teams/:teamId` (the canonical Team Home)
 - **No modals on this admin list.** All team actions (edit identity, invite/remove co-owners, inactivate, delete) happen on Team Home.
 - Authority model: Team Home should follow the Team relationship contract from [109-team-relationship-contract-pattern.md](./109-team-relationship-contract-pattern.md). `useTeamAuthority(teamId)` remains the frontend helper, but it should read backend-emitted Team `teamRelationship` (`leagueMember`, `owner`, `commissioner`) plus separate global `isRootAdmin` rather than infer authority locally.
-- **Delete**: lives on Team Home as a root-admin-only section, visible only when `user.isRootAdmin && team.status === 'INACTIVE'`. Second check `useIsRootAdmin()` gates this section alongside the authority hook.
+- **Delete**: lives on Team Home as a root-admin-only section, visible only when `user.isRootAdmin && team.isActive === false`. Second check `useIsRootAdmin()` gates this section alongside the authority hook. Before firing the final delete request, Team Home must show a warning/confirmation step that explicitly says the delete is permanent and cascades team-owned data.
+
+### Shared `/manage` list pattern
+
+- Root-admin `/manage` list pages should use a shared high-powered admin grid component rather than bespoke static tables.
+- This grid pattern applies to:
+  - `/manage/leagues`
+  - `/manage/teams`
+  - `/manage/users`
+- It does **not** apply to league-member-facing surfaces, where purpose-built list/leaderboard UI remains preferred.
+- First pass should use:
+  - one fetch of the filtered dataset
+  - no pagination UI
+  - client-side sort/filter interactions inside the grid
+  - optional meaningful backend query filters only
+- The current preferred implementation direction is a fully free/open-source React grid built from TanStack Table + TanStack Virtual, or an equivalent MIT-compatible alternative if implementation proves materially simpler.
 
 ### 3. Users — `/manage/users`
 
@@ -119,7 +134,7 @@ Source file: `clients/poolmaster/src/features/root-admin/root-admin-page.tsx`
 - **A. Hub page** `/manage` — six section cards/links; minimal
 - **B. Leagues list page** `/manage/leagues` — lift existing tile 5 search + list; rows link to League Home. Pure search + link; no modals, no inline lifecycle actions.
 - **C. Root-admin delete section on League Home** — visible only when `user.isRootAdmin && league.status === 'INACTIVE'`. Delete confirmation wizard requiring exact league code match (pattern matches existing `/my-account` delete wizard and the Team Home delete section).
-- **D. Teams list page** `/manage/teams` — entirely new: cross-league team search + results list with row-click routing to Team Home. Requires a backend team-search endpoint (see Contract Questions).
+- **D. Teams list page** `/manage/teams` — entirely new: cross-league team search + results grid with row-click routing to Team Home. Requires a backend team-search endpoint (see Contract Questions) plus the Team lifecycle normalization from Plan 109 so the grid can use `isActive` consistently with `/manage/leagues` and `/manage/users`.
 - **E. Root-admin delete section on Team Home** — visible only when `user.isRootAdmin && team.status === 'INACTIVE'`. Delete confirmation wizard (pattern matches existing `/my-account` delete wizard).
 - **F. `useTeamAuthority` update** — align Team Home with the dedicated Team relationship contract plan. The hook still resolves Team UI into the familiar `owner | commissioner | viewer` presentation paths, but it should read backend-emitted Team `teamRelationship` (`leagueMember`, `owner`, `commissioner`) plus separate global `isRootAdmin` instead of inferring authority from mixed local signals.
 - **G. Users list page** `/manage/users` — search + link only. Rows navigate to `/users/:userId`. No modals, no row toggles. (H, I, J previously listed here have all moved to Plan 107 item G as authority-gated modals on `/users/:userId`.)
@@ -139,18 +154,26 @@ Source file: `clients/poolmaster/src/features/root-admin/root-admin-page.tsx`
 
 ## Open Questions / Product Decisions Needed
 
-1. **Cross-league team search endpoint** — the Teams admin page assumes an admin-scoped search over all teams across leagues. Current SDK does not expose this (today's team listing is per-league). **Ask Brad.** If the endpoint is missing, this is a blocker for Teams section execution.
+1. **Cross-league team search endpoint** — the Teams admin page assumes an admin-scoped search over all teams across leagues. Current SDK does not expose this (today's team listing is per-league). The required first-pass contract is:
+   - `search?`
+   - `leagueCode?`
+   - `isActive?`
+   No pagination/limit params in the public contract for v1. The root-admin UI will fetch a filtered dataset and then use client-side grid sort/filter behavior. **Ask Brad.** If the endpoint is missing, this is a blocker for Teams section execution.
 2. **Admin reset-password endpoint** — the new `/users/:userId` root-admin modal set assumes an admin-initiated reset-password action. Does the backend expose it yet, and does it send email to the user or generate a temporary password? **Ask Brad + Pam.**
-4. **Team delete semantics** — confirm permanent delete of a team is supported at the backend level and not just inactivate. If delete doesn't exist, the root-admin delete section on Team Home deferred until backend lands. Same applies to **league delete** for the root-admin section on League Home.
+4. **Team delete semantics** — confirm permanent delete of a team is supported at the backend level and not just inactivate. Locked UI expectation: Team Home must show an explicit warning/confirmation step before final delete ("Are you sure? This will permanently delete this team and related team-owned data."). If delete doesn't exist, the root-admin delete section on Team Home deferred until backend lands. Same applies to **league delete** for the root-admin section on League Home.
 5. **Impersonate-as-owner / impersonate-as-member** — explicitly out of scope; user confirmed "no further actions" beyond lifecycle + password reset. If ever added later, revisit this plan.
 6. **Minimal hub vs eventual at-a-glance** — the hub is plain six links today. If usage patterns later show operators want a quick "X inactive leagues / Y failed syncs" summary, revisit. Not blocking.
 
 ## Backend / Contract Questions (route to Brad)
 
-- **Cross-league team search** — new generated SDK operation needed (`adminListTeams` or similar) with search-by-name, league filter, and status filter. Must be root-admin gated.
+- **Cross-league team search** — new generated SDK operation needed (`adminListTeams` or similar) with:
+  - `search?`
+  - `leagueCode?`
+  - `isActive?`
+  Must be root-admin gated. No `limit`/pagination contract in the first-pass public API.
 - **Admin-initiated reset password** — new endpoint, triggered by root admin against a target user.
 - **Hard-delete team endpoint** — confirm existence or add.
-- **`Team.status` signal available on admin list** — required for row badges and for the Team Home root-admin delete gating.
+- **Normalize Team lifecycle drift before `/manage/teams` lands** — Team currently uses lifecycle `status` while League and User use `isActive`. Per Plan 109, backend schema/domain/DTOs should be normalized so Team also uses `isActive` before the `/manage/teams` contract and grid ship.
 - **Lifecycle modal state transitions** — confirm that once a league/team/user is inactive, a subsequent delete call is accepted; the "delete locked until inactive" UX depends on it.
 
 ## Coordination With Existing Plans

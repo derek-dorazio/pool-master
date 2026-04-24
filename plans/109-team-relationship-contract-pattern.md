@@ -325,10 +325,34 @@ Required comment intent:
 
 ## Data Model Changes
 
-No persistence schema change is required purely for this authority-contract
-pattern.
+The original authority-contract design assumed no persistence schema change was
+required. During later `/manage/teams` refinement we confirmed one important
+drift item that should be corrected before this pattern propagates further:
 
-This is primarily:
+- Team currently uses `status: ACTIVE | INACTIVE`
+- League and User use `isActive: boolean`
+
+That drift is now considered a **required backend refactor** for the Team lane,
+not a nice-to-have cleanup.
+
+### Required backend normalization
+
+Before more Team-scoped admin/list contract work lands, normalize Team lifecycle
+to the same active/inactive shape used by League and User:
+
+- Prisma model: `Squad.status` -> `Squad.isActive`
+- shared domain model: remove Team lifecycle `status` in favor of `isActive`
+- Team DTOs: expose `isActive`, not Team lifecycle `status`
+- mappers/services/routes/tests: consume `isActive`
+- migration script: map `ACTIVE` -> `true`, `INACTIVE` -> `false`
+
+This refactor should happen in the same backend/model slice that finalizes the
+admin Team search contract so `/manage/teams` does not spread the old Team
+`status` naming into new grid/list contracts.
+
+### Remaining authority-contract work
+
+Beyond that required lifecycle normalization, this plan remains primarily:
 
 - DTO contract work
 - mapper updates
@@ -336,10 +360,6 @@ This is primarily:
 - OpenAPI/generated client refresh
 - frontend authority-hook cleanup
 - tests/docs
-
-If implementation uncovers a real persistence-model gap, that should be
-handled as a separate additive model slice rather than being smuggled into the
-authority-plan assumptions.
 
 ## Non-Obvious Questions Now Locked
 
@@ -361,6 +381,12 @@ this plan:
    - Yes, when the authority question is Team-derived.
    - No, not automatically for all contest-wide read-only behavior.
 
+4. **Should Team keep lifecycle `status` while League/User use `isActive`?**
+   - No.
+   - Normalize Team lifecycle to `isActive` before the `/manage/teams`
+     contract/UI spreads the old naming further.
+   - Migration should map `ACTIVE` to `true` and `INACTIVE` to `false`.
+
 No additional product questions are required before drafting implementation
 slices.
 
@@ -372,4 +398,3 @@ slices.
   surfaces beyond Team and League.
 - Revisit `memberType` enum expansion only if PoolMaster introduces true
   non-owner Team participation semantics.
-
