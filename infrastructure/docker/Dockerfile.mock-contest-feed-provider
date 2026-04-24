@@ -3,12 +3,16 @@ FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 
 COPY package*.json ./
+COPY tsconfig.base.json ./
+COPY packages/shared/package*.json ./packages/shared/
 COPY packages/mock-contest-feed-provider/package*.json ./packages/mock-contest-feed-provider/
 
 RUN npm ci
 
+COPY packages/shared ./packages/shared
 COPY packages/mock-contest-feed-provider ./packages/mock-contest-feed-provider
 
+RUN npm run build --workspace @poolmaster/shared
 RUN npm run build --workspace @poolmaster/mock-contest-feed-provider
 
 FROM node:20-bookworm-slim AS runner
