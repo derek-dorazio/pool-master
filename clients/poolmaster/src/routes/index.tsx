@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate, useParams } from 'react-router-dom';
 import { AuthHomePage } from '@/features/auth/auth-home-page';
 import { MyAccountPage } from '@/features/account/my-account-page';
+import { UserRouteScaffoldPage } from '@/features/account/user-route-scaffold-page';
 import { AppShell } from '@/features/app-shell/app-shell';
 import { NotFoundPage } from '@/features/app-shell/not-found-page';
 import { CreateContestPage } from '@/features/contests/create-contest-page';
@@ -74,6 +75,10 @@ export const router = createBrowserRouter([
           {
             path: 'my-account',
             element: <MyAccountPage />,
+          },
+          {
+            path: 'users/:userId',
+            element: <UserRouteScaffoldPage />,
           },
           {
             path: 'league/:leagueCode',

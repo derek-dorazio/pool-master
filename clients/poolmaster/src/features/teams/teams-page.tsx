@@ -1,19 +1,21 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
 import {
   getLeagueByCode,
   listLeagueSquads,
   listSquadOwnerInvitations,
-  revokeSquadOwnerInvitation,
   type GetLeagueByCodeResponses,
   type ListLeagueSquadsResponses,
   type ListSquadOwnerInvitationsResponses,
 } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
-import { formatUserName } from '@/features/account/user-name';
+import { buildUserPath } from '@/features/account/user-routing';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
-import { buildLeaguePath, buildLeagueTeamPath, setRecentLeagueCode } from '@/features/leagues/league-routing';
+import {
+  buildLeaguePath,
+  buildLeagueTeamHomePath,
+  setRecentLeagueCode,
+} from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
@@ -26,17 +28,9 @@ function formatInvitationStatus(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
 }
 
-function formatDate(value: string | undefined) {
-  if (!value) {
-    return 'Unknown';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return parsed.toLocaleDateString();
+function getOwnerLabel(firstName?: string, lastName?: string) {
+  const display = [firstName, lastName].filter(Boolean).join(' ').trim();
+  return display || 'Unknown owner';
 }
 
 export function TeamsPage() {
@@ -44,8 +38,6 @@ export function TeamsPage() {
     feature: 'teams-page',
   });
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
-  const auth = useAuth();
-  const queryClient = useQueryClient();
 
   const leagueQuery = useQuery({
     queryKey: ['poolmaster', 'league', leagueCode],
@@ -85,7 +77,6 @@ export function TeamsPage() {
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   const leagueId = leagueQuery.data?.id ?? '';
-  const isCommissioner = leagueQuery.data?.role === 'COMMISSIONER';
 
   const teamsQuery = useQuery({
     queryKey: ['poolmaster', 'league-teams', leagueId],
@@ -115,31 +106,19 @@ export function TeamsPage() {
     retry: false,
   });
 
-  const myTeam = useMemo(() => {
-    if (!auth.user?.id) {
-      return null;
+  const pendingInvitationsByTeam = useMemo(() => {
+    const grouped = new Map<string, OwnerInvitation[]>();
+    for (const invitation of ownerInvitationsQuery.data ?? []) {
+      if (invitation.status !== 'PENDING') {
+        continue;
+      }
+
+      const existing = grouped.get(invitation.squadId) ?? [];
+      existing.push(invitation);
+      grouped.set(invitation.squadId, existing);
     }
-
-    return teamsQuery.data?.find((team) =>
-      team.members?.some((member) => member.userId === auth.user?.id && member.status === 'ACTIVE'),
-    ) ?? null;
-  }, [auth.user?.id, teamsQuery.data]);
-
-  const visibleInvitations = useMemo(() => {
-    if (!ownerInvitationsQuery.data) {
-      return [];
-    }
-
-    if (isCommissioner) {
-      return ownerInvitationsQuery.data;
-    }
-
-    if (!myTeam) {
-      return [];
-    }
-
-    return ownerInvitationsQuery.data.filter((invitation) => invitation.squadId === myTeam.id);
-  }, [isCommissioner, myTeam, ownerInvitationsQuery.data]);
+    return grouped;
+  }, [ownerInvitationsQuery.data]);
 
   useEffect(() => {
     if (!leagueQuery.data || !teamsQuery.data) {
@@ -152,14 +131,14 @@ export function TeamsPage() {
         data: {
           leagueCode: leagueQuery.data.leagueCode,
           teamCount: teamsQuery.data.length,
-          invitationCount: visibleInvitations.length,
-          isCommissioner,
-          hasMyTeam: Boolean(myTeam),
+          pendingInvitationCount: ownerInvitationsQuery.data?.filter(
+            (invitation) => invitation.status === 'PENDING',
+          ).length ?? 0,
         },
       },
-      'Teams page loaded',
+      'Teams and owners page loaded',
     );
-  }, [isCommissioner, leagueQuery.data, logger, myTeam, teamsQuery.data, visibleInvitations.length]);
+  }, [leagueQuery.data, logger, ownerInvitationsQuery.data, teamsQuery.data]);
 
   useEffect(() => {
     if (!ownerInvitationsQuery.isError) {
@@ -179,63 +158,10 @@ export function TeamsPage() {
     );
   }, [leagueCode, leagueId, logger, ownerInvitationsQuery.error, ownerInvitationsQuery.isError]);
 
-  const revokeInvitationMutation = useMutation({
-    mutationFn: async (invitationId: string) => {
-      const response = await revokeSquadOwnerInvitation({
-        path: { id: leagueId, invitationId },
-      });
-      if (!response.data?.invitation) {
-        throw response.error ?? new Error('Revoke invitation response is missing data.');
-      }
-
-      return response.data.invitation;
-    },
-    onMutate: (invitationId) => {
-      logger.debug(
-        {
-          action: 'teams.ownerInvitation.revoke.started',
-          data: {
-            leagueId,
-            invitationId,
-          },
-        },
-        'Revoking team-owner invitation',
-      );
-    },
-    onSuccess: async () => {
-      logger.info(
-        {
-          action: 'teams.ownerInvitation.revoke.succeeded',
-          data: {
-            leagueId,
-          },
-        },
-        'Revoked team-owner invitation',
-      );
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-team-owner-invitations', leagueId] });
-    },
-    onError: (error, invitationId) => {
-      const payload = {
-        action: 'teams.ownerInvitation.revoke.failed',
-        data: {
-          leagueId,
-          invitationId,
-        },
-        err: error,
-      };
-
-      if (error instanceof Error) {
-        logger.error(payload, 'Team-owner invitation revoke failed unexpectedly');
-      } else {
-        logger.warn(payload, 'Team-owner invitation revoke was rejected');
-      }
-    },
-  });
-
   if (leagueQuery.isLoading) {
     return (
       <section className="rounded-[2rem] border border-border bg-card p-8">
-        <p className="text-sm text-muted-foreground">Loading teams...</p>
+        <p className="text-sm text-muted-foreground">Loading teams and owners...</p>
       </section>
     );
   }
@@ -245,9 +171,7 @@ export function TeamsPage() {
     return (
       <section className="rounded-[2rem] border border-border bg-card p-8">
         <h2 className="text-2xl font-semibold">{copy.title}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {copy.body}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{copy.body}</p>
         <Link className="mt-4 inline-flex text-sm font-medium text-primary hover:underline" to="/welcome">
           Back to welcome
         </Link>
@@ -258,146 +182,119 @@ export function TeamsPage() {
   return (
     <section className="space-y-6" data-testid="teams-page">
       <div className="rounded-[2rem] border border-border bg-card p-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-3">
-            <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-              Teams
-            </span>
-            <div>
-              <h2 className="text-3xl font-semibold tracking-tight">League teams</h2>
-              <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-                Browse every team in {leagueQuery.data.name}. Members can review the full league directory, and commissioners can jump into any team for adjustments.
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
-              to={buildLeaguePath(leagueQuery.data.leagueCode)}
-            >
-              Back to league
-            </Link>
-            <Link
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
-              to={buildLeagueTeamPath(leagueQuery.data.leagueCode)}
-            >
-              My Team
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-[2rem] border border-border bg-card p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h3 className="text-xl font-semibold">Pending owner invites</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Owner invites stay visible here so commissioners and team owners can track who has been invited and revoke pending invites when needed.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-5 space-y-3">
-          {ownerInvitationsQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading pending owner invites...</p>
-          ) : ownerInvitationsQuery.isError ? (
-            <p className="text-sm text-muted-foreground">We couldn&apos;t load owner invites for this league.</p>
-          ) : visibleInvitations.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No team owner invites are active right now.</p>
-          ) : (
-            visibleInvitations.map((invitation) => (
-              <div
-                className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-background px-4 py-4"
-                data-testid={`team-owner-invitation-${invitation.id}`}
-                key={invitation.id}
-              >
-                <div className="min-w-0">
-                  <div className="font-medium text-foreground">{invitation.email}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    {invitation.team.name} · {formatInvitationStatus(invitation.status)} · Invited {formatDate(invitation.createdAt)}
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                    {formatInvitationStatus(invitation.status)}
-                  </span>
-                  {invitation.status === 'PENDING' ? (
-                    <button
-                      className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                      data-testid={`team-owner-invitation-revoke-${invitation.id}`}
-                      disabled={revokeInvitationMutation.isPending}
-                      onClick={() => void revokeInvitationMutation.mutateAsync(invitation.id)}
-                      type="button"
-                    >
-                      Revoke
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      <div className="rounded-[2rem] border border-border bg-card p-6">
-        <h3 className="text-xl font-semibold">Joined teams</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Members can browse every active team in the league. Commissioners can open any team, while members only get direct management links for their own team.
+        <Link
+          className="text-sm font-medium text-primary transition hover:opacity-80"
+          to={buildLeaguePath(leagueQuery.data.leagueCode)}
+        >
+          Back to League Home
+        </Link>
+        <span className="mt-4 inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+          League Directory
+        </span>
+        <h2 className="mt-4 text-3xl font-semibold tracking-tight">Teams and Owners</h2>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+          Browse every team in {leagueQuery.data.name}. This league-level directory is read-only:
+          open a team to manage owners or lifecycle actions on Team Home.
         </p>
+      </div>
 
-        <div className="mt-5 space-y-3">
+      {ownerInvitationsQuery.isError ? (
+        <section className="rounded-[2rem] border border-amber-300/60 bg-amber-50 p-6 text-amber-950">
+          <h3 className="text-lg font-semibold">Owner invitations are temporarily unavailable</h3>
+          <p className="mt-2 text-sm">
+            Active owners are still shown below, but pending owner invitations could not be loaded
+            for this league right now.
+          </p>
+        </section>
+      ) : null}
+
+      <section className="rounded-[2rem] border border-border bg-card p-6">
+        <div className="hidden border-b border-border pb-3 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] md:gap-6">
+          <span>Team</span>
+          <span>Owners</span>
+        </div>
+
+        <div className="space-y-4 pt-0 md:pt-4">
           {teamsQuery.isLoading ? (
             <p className="text-sm text-muted-foreground">Loading teams...</p>
           ) : teamsQuery.isError ? (
             <p className="text-sm text-muted-foreground">We couldn&apos;t load teams for this league.</p>
           ) : teamsQuery.data?.length ? (
-            teamsQuery.data.map((team, index) => {
+            teamsQuery.data.map((team) => {
               const icon = getTeamIconOption(team.iconKey);
-              const isMyTeam = myTeam?.id === team.id;
-              const manageHref = isCommissioner
-                ? `${buildLeagueTeamPath(leagueQuery.data.leagueCode)}?teamId=${encodeURIComponent(team.id)}`
-                : buildLeagueTeamPath(leagueQuery.data.leagueCode);
+              const activeOwners = (team.members ?? []).filter(
+                (member) => member.status === 'ACTIVE',
+              );
+              const pendingInvitations = pendingInvitationsByTeam.get(team.id) ?? [];
 
               return (
                 <div
-                  className="rounded-2xl border border-border bg-background px-4 py-4"
+                  className="rounded-2xl border border-border bg-background p-5 md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] md:gap-6"
                   data-testid={`league-team-${team.id}`}
                   key={team.id}
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="flex min-w-0 items-start gap-4">
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-[1rem] ${icon.surfaceClass} ${icon.accentClass}`}>
-                        <TeamIcon iconKey={team.iconKey} size="md" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span className="text-sm text-muted-foreground">{index + 1}</span>
-                          <h4 className="truncate text-lg font-semibold text-foreground">{team.name}</h4>
-                          {isMyTeam ? (
-                            <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-primary">
-                              My Team
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="mt-2 space-y-1 text-sm text-muted-foreground">
-                          {(team.members ?? [])
-                            .filter((member) => member.status === 'ACTIVE')
-                            .map((member) => (
-                              <div key={member.id}>
-                                {formatUserName(member.firstName, member.lastName)} · {member.userId}
-                              </div>
-                            ))}
-                        </div>
-                      </div>
+                  <div className="flex min-w-0 items-start gap-4">
+                    <div
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] ${icon.surfaceClass} ${icon.accentClass}`}
+                    >
+                      <TeamIcon iconKey={team.iconKey} size="md" />
                     </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Link
+                          className="truncate text-lg font-semibold text-foreground hover:underline"
+                          data-testid={`league-team-home-link-${team.id}`}
+                          to={buildLeagueTeamHomePath(leagueQuery.data.leagueCode, team.id)}
+                        >
+                          {team.name}
+                        </Link>
+                        {team.status !== 'ACTIVE' ? (
+                          <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                            {team.status}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Team Home is the canonical place for owner and lifecycle actions.
+                      </p>
+                    </div>
+                  </div>
 
-                    {isCommissioner || isMyTeam ? (
-                      <Link
-                        className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
-                        to={manageHref}
+                  <div className="mt-5 space-y-3 md:mt-0">
+                    {activeOwners.map((owner) => (
+                      <div
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border px-4 py-3"
+                        data-testid={`league-team-owner-${team.id}-${owner.userId}`}
+                        key={owner.id}
                       >
-                        {isCommissioner && !isMyTeam ? 'Edit team' : 'Manage team'}
-                      </Link>
+                        <Link
+                          className="text-sm font-medium text-foreground hover:underline"
+                          data-testid={`league-team-owner-link-${team.id}-${owner.userId}`}
+                          to={buildUserPath(owner.userId)}
+                        >
+                          {getOwnerLabel(owner.firstName, owner.lastName)}
+                        </Link>
+                        <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                          Active owner
+                        </span>
+                      </div>
+                    ))}
+
+                    {pendingInvitations.map((invitation) => (
+                      <div
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-border px-4 py-3"
+                        data-testid={`league-team-owner-invitation-${team.id}-${invitation.id}`}
+                        key={invitation.id}
+                      >
+                        <span className="text-sm text-foreground">{invitation.email}</span>
+                        <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                          {formatInvitationStatus(invitation.status)} invite
+                        </span>
+                      </div>
+                    ))}
+
+                    {!activeOwners.length && !pendingInvitations.length ? (
+                      <p className="text-sm text-muted-foreground">No owners are listed for this team yet.</p>
                     ) : null}
                   </div>
                 </div>
@@ -407,7 +304,7 @@ export function TeamsPage() {
             <p className="text-sm text-muted-foreground">No teams exist for this league yet.</p>
           )}
         </div>
-      </div>
+      </section>
     </section>
   );
 }

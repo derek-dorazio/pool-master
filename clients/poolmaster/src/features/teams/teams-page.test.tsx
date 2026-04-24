@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -15,7 +15,6 @@ const {
   logoutUserMock,
   mockLogger,
   refreshTokenMock,
-  revokeSquadOwnerInvitationMock,
 } = vi.hoisted(() => {
   const logger = {
     debug: vi.fn(),
@@ -36,7 +35,6 @@ const {
     logoutUserMock: vi.fn(),
     mockLogger: logger,
     refreshTokenMock: vi.fn(),
-    revokeSquadOwnerInvitationMock: vi.fn(),
   };
 });
 
@@ -52,7 +50,6 @@ vi.mock('@/lib/api', () => ({
   listSquadOwnerInvitations: (...args: unknown[]) => listSquadOwnerInvitationsMock(...args),
   logoutUser: (...args: unknown[]) => logoutUserMock(...args),
   refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
-  revokeSquadOwnerInvitation: (...args: unknown[]) => revokeSquadOwnerInvitationMock(...args),
 }));
 
 function renderTeamsPage() {
@@ -70,6 +67,7 @@ function renderTeamsPage() {
         <MemoryRouter initialEntries={['/league/BIGDAWGS/teams']}>
           <Routes>
             <Route element={<TeamsPage />} path="/league/:leagueCode/teams" />
+            <Route element={<div data-testid="user-route-destination" />} path="/users/:userId" />
           </Routes>
         </MemoryRouter>
       </AuthProvider>
@@ -85,7 +83,6 @@ describe('TeamsPage', () => {
     listSquadOwnerInvitationsMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
-    revokeSquadOwnerInvitationMock.mockReset();
     mockLogger.debug.mockReset();
     mockLogger.info.mockReset();
     mockLogger.warn.mockReset();
@@ -93,7 +90,7 @@ describe('TeamsPage', () => {
     useSessionStore.getState().clearSession();
   });
 
-  it('shows joined teams and pending invites for commissioners', async () => {
+  it('renders the read-only teams and owners directory with team-home and owner links', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {
         user: {
@@ -177,50 +174,23 @@ describe('TeamsPage', () => {
         ],
       },
     });
-    revokeSquadOwnerInvitationMock.mockResolvedValue({
-      data: {
-        invitation: {
-          id: 'invite-1',
-          leagueId: 'league-1',
-          squadId: 'team-1',
-          email: 'friend@example.com',
-          inviteCode: 'TEAM123',
-          status: 'REVOKED',
-          invitedBy: 'user-1',
-          createdAt: '2026-04-16T00:00:00.000Z',
-          updatedAt: '2026-04-16T00:00:00.000Z',
-          team: {
-            id: 'team-1',
-            name: 'Beer Bellies',
-            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-          },
-        },
-      },
-    });
 
     renderTeamsPage();
 
-    await screen.findByTestId('teams-page');
+    await screen.findByTestId('league-team-team-1');
+    expect(screen.getByRole('heading', { name: 'Teams and Owners' })).toBeInTheDocument();
     expect(screen.getByTestId('league-team-team-1')).toBeInTheDocument();
-    expect(screen.getByTestId('team-owner-invitation-invite-1')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /manage team/i })).toHaveAttribute(
+    expect(screen.getByTestId('league-team-home-link-team-1')).toHaveAttribute(
       'href',
-      '/league/BIGDAWGS/team?teamId=team-1',
+      '/league/BIGDAWGS/teams/team-1',
     );
-
-    fireEvent.click(screen.getByTestId('team-owner-invitation-revoke-invite-1'));
-
-    await waitFor(() =>
-      expect(revokeSquadOwnerInvitationMock).toHaveBeenCalledWith({
-        path: { id: 'league-1', invitationId: 'invite-1' },
-      }),
+    expect(screen.getByTestId('league-team-owner-link-team-1-user-1')).toHaveAttribute(
+      'href',
+      '/users/user-1',
     );
-    expect(mockLogger.info).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'teams.ownerInvitation.revoke.succeeded',
-      }),
-      expect.any(String),
-    );
+    expect(screen.getByTestId('league-team-owner-invitation-team-1-invite-1')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /manage team/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /revoke/i })).not.toBeInTheDocument();
   });
 
   it('shows the load failure state when the league detail cannot be loaded', async () => {
