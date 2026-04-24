@@ -7,6 +7,8 @@ import {
   IngestionScheduleConfigSchema,
   IngestionProvidersResponseSchema,
   IngestSportOddsResponseSchema,
+  LeagueListResponseSchema,
+  LeagueResponseSchema,
   PollIntervalConfigSchema,
   ProviderHealthCheckDtoSchema,
   ProviderIngestionJobDtoSchema,
@@ -527,6 +529,63 @@ describe('Contract verification (root admin)', () => {
     }
   });
 
+  it('root-admin league lifecycle routes match their DTOs on happy paths', async () => {
+    const rootAdmin = await createTestUser({
+      displayName: 'Root Admin League Lifecycle User',
+      isRootAdmin: true,
+    });
+    const league = await getPrisma().league.create({
+      data: {
+        leagueCode: 'ADMINLIFE1',
+        name: 'Root Admin Lifecycle League',
+        description: 'Managed through contract verification.',
+        createdBy: rootAdmin.user.id,
+        isActive: true,
+        iconKey: 'TROPHY',
+        joinPolicy: 'COMMISSIONER_ONLY',
+      },
+    });
+    await getPrisma().leagueMembership.create({
+      data: {
+        leagueId: league.id,
+        userId: rootAdmin.user.id,
+        role: 'COMMISSIONER',
+        status: 'ACTIVE',
+      },
+    });
+
+    const listRes = await getApp().inject({
+      method: 'GET',
+      url: '/api/v1/admin/leagues?search=Lifecycle',
+      headers: rootAdmin.headers,
+    });
+    expect(listRes.statusCode).toBe(200);
+    expect(LeagueListResponseSchema.safeParse(listRes.json()).success).toBe(true);
+    expect(listRes.json().leagues.some((item: { id: string }) => item.id === league.id)).toBe(true);
+
+    const inactivateRes = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/admin/leagues/${league.id}/inactivate`,
+      headers: withoutJsonBodyHeaders(rootAdmin.headers),
+    });
+    expect(inactivateRes.statusCode).toBe(200);
+    expect(LeagueResponseSchema.safeParse(inactivateRes.json()).success).toBe(true);
+    expect(inactivateRes.json().league.id).toBe(league.id);
+    expect(inactivateRes.json().league.isActive).toBe(false);
+
+    const deleteRes = await getApp().inject({
+      method: 'DELETE',
+      url: `/api/v1/admin/leagues/${league.id}`,
+      headers: rootAdmin.headers,
+      payload: {
+        leagueCode: 'ADMINLIFE1',
+      },
+    });
+    expect(deleteRes.statusCode).toBe(200);
+    expect(deleteRes.json().success).toBe(true);
+    expect(await getPrisma().league.findUnique({ where: { id: league.id } })).toBeNull();
+  });
+
   it('root-admin provider operational routes match their DTOs on happy paths', async () => {
     const rootAdmin = await createTestUser({
       displayName: 'Root Admin Provider Ops User',
@@ -746,6 +805,27 @@ describe('Contract verification (root admin)', () => {
       expect(reIngestMissingEventRes.statusCode).toBe(404);
       expect(ErrorEnvelopeSchema.safeParse(reIngestMissingEventRes.json()).success).toBe(true);
       expect(reIngestMissingEventRes.json().error.code).toBe('PROVIDER_EVENT_NOT_FOUND');
+
+      const inactivateMissingLeagueRes = await getApp().inject({
+        method: 'POST',
+        url: '/api/v1/admin/leagues/00000000-0000-0000-0000-000000000000/inactivate',
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(inactivateMissingLeagueRes.statusCode).toBe(404);
+      expect(ErrorEnvelopeSchema.safeParse(inactivateMissingLeagueRes.json()).success).toBe(true);
+      expect(inactivateMissingLeagueRes.json().error.code).toBe('LEAGUE_NOT_FOUND');
+
+      const deleteMissingLeagueRes = await getApp().inject({
+        method: 'DELETE',
+        url: '/api/v1/admin/leagues/00000000-0000-0000-0000-000000000000',
+        headers: rootAdmin.headers,
+        payload: {
+          leagueCode: 'MISSING01',
+        },
+      });
+      expect(deleteMissingLeagueRes.statusCode).toBe(404);
+      expect(ErrorEnvelopeSchema.safeParse(deleteMissingLeagueRes.json()).success).toBe(true);
+      expect(deleteMissingLeagueRes.json().error.code).toBe('LEAGUE_NOT_FOUND');
     } finally {
       await app.close();
     }

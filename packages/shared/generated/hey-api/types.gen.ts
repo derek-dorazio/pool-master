@@ -10792,6 +10792,342 @@ export type AdminEnableUserResponses = {
 
 export type AdminEnableUserResponse = AdminEnableUserResponses[keyof AdminEnableUserResponses];
 
+export type AdminListLeaguesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Optional case-insensitive league-name search for root-admin management surfaces.
+         */
+        search?: string;
+        /**
+         * Maximum number of league rows to return for root-admin search results.
+         */
+        limit?: number;
+    };
+    url: '/api/v1/admin/leagues';
+};
+
+export type AdminListLeaguesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminListLeaguesError = AdminListLeaguesErrors[keyof AdminListLeaguesErrors];
+
+export type AdminListLeaguesResponses = {
+    /**
+     * League-list response.
+     */
+    200: {
+        leagues: Array<{
+            /**
+             * Internal league identifier used for authenticated management APIs.
+             */
+            id: string;
+            /**
+             * Stable short code used in bookmarkable league-home routes and invite context.
+             */
+            leagueCode: string;
+            /**
+             * Primary display name for the league.
+             */
+            name: string;
+            /**
+             * Optional short league description.
+             */
+            description?: string;
+            /**
+             * Whether the league is currently active for normal write interactions.
+             */
+            isActive: boolean;
+            /**
+             * Selected built-in league icon key from the curated PoolMaster icon catalog.
+             */
+            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+            /**
+             * Current number of memberships in the league.
+             */
+            memberCount: number;
+            /**
+             * Number of currently active contests associated with the league.
+             */
+            activeContestCount: number;
+            /**
+             * Current user role in the league when the response is viewer-scoped.
+             */
+            role?: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * League creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+        }>;
+    };
+};
+
+export type AdminListLeaguesResponse = AdminListLeaguesResponses[keyof AdminListLeaguesResponses];
+
+export type AdminInactivateLeagueData = {
+    body?: never;
+    path: {
+        leagueId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/leagues/{leagueId}/inactivate';
+};
+
+export type AdminInactivateLeagueErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminInactivateLeagueError = AdminInactivateLeagueErrors[keyof AdminInactivateLeagueErrors];
+
+export type AdminInactivateLeagueResponses = {
+    /**
+     * Single-league detail response.
+     */
+    200: {
+        /**
+         * Detailed league payload used by league-home and commissioner-management surfaces.
+         */
+        league: {
+            /**
+             * Internal league identifier used for authenticated management APIs.
+             */
+            id: string;
+            /**
+             * Stable short code used in bookmarkable league-home routes and invite context.
+             */
+            leagueCode: string;
+            /**
+             * Primary display name for the league.
+             */
+            name: string;
+            /**
+             * Optional short league description.
+             */
+            description?: string;
+            /**
+             * Whether the league is currently active for normal write interactions.
+             */
+            isActive: boolean;
+            /**
+             * Selected built-in league icon key from the curated PoolMaster icon catalog.
+             */
+            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+            /**
+             * Current number of memberships in the league.
+             */
+            memberCount: number;
+            /**
+             * Number of currently active contests associated with the league.
+             */
+            activeContestCount: number;
+            /**
+             * Current user role in the league when the response is viewer-scoped.
+             */
+            role?: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * League creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+            /**
+             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+             */
+            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
+        };
+    };
+};
+
+export type AdminInactivateLeagueResponse = AdminInactivateLeagueResponses[keyof AdminInactivateLeagueResponses];
+
+export type AdminDeleteLeagueData = {
+    /**
+     * Commissioner confirmation payload for permanently deleting an inactive league.
+     */
+    body: {
+        /**
+         * Exact league code confirmation required before permanently deleting an inactive league.
+         */
+        leagueCode: string;
+    };
+    path: {
+        leagueId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/leagues/{leagueId}';
+};
+
+export type AdminDeleteLeagueErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminDeleteLeagueError = AdminDeleteLeagueErrors[keyof AdminDeleteLeagueErrors];
+
+export type AdminDeleteLeagueResponses = {
+    /**
+     * Minimal success response envelope.
+     */
+    200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
+        success: true;
+    };
+};
+
+export type AdminDeleteLeagueResponse = AdminDeleteLeagueResponses[keyof AdminDeleteLeagueResponses];
+
 export type AdminListProvidersData = {
     body?: never;
     path?: never;

@@ -12,7 +12,9 @@
 - `BR-004A` `(Confirmed)` Contest creation should be template-first, with
   seeded reusable contest configuration templates for sport and contest style.
 - `BR-004B` `(Confirmed)` Seeded contest templates are product data, not a
-  first-pass commissioner or root-admin management workflow.
+  first-pass commissioner-managed league contest-configuration workflow.
+  Root-admin may still manage the persisted global default template values that
+  seed future contest create flows.
 - `BR-005` `(Confirmed)` The mock sports data provider is valid non-production
   infrastructure and may hold durable scenario data outside the app database.
 - `BR-006` `(Confirmed)` Automated test data inside app/backend test suites
@@ -42,9 +44,11 @@
   scope.
 - `BR-104` `(Inferred)` Commissioners should not manually author the real-world
   event field; they configure contest behavior on top of imported event data.
-- `BR-105` `(Confirmed)` Root admin does not manage contest templates through a
-  first-pass UI/API surface; template lifecycle is handled through seed data and
-  later migrations if needed.
+- `BR-105` `(Confirmed)` Root admin does not manage league-specific contest
+  configuration through a first-pass UI/API surface. Root-admin may manage the
+  persisted global default template values used by future contest create flows,
+  while broader template lifecycle remains seed/migration managed unless a later
+  product decision expands it.
 
 ## Lifecycle Rules
 

@@ -14,16 +14,25 @@ Primary actions:
 Major states:
 - no provider configured
 - sync available
+- sync submitted
 - sync in progress
+- sync completed
 - event imported but not contest-ready
 - event contest-eligible
 - sync failed / needs attention
+- sync cancelled
+- latest API payload visible for operational review
 
 Notes:
 - this can remain a direct guarded `/manage` route without menu wiring in first
   pass
 - the first-pass manual sync should prepare contest-ready event data, not only
   start a shallow schedule sync
+- request acceptance should be shown as async submission rather than as sync
+  success
+- the surface should show retained workflow status (`SUBMITTED`,
+  `IN_PROGRESS`, `COMPLETED`, `FAILED`, `CANCELLED`) plus payload detail from
+  the root-admin sync APIs
 
 ## Commissioner Contest Create / Configure
 

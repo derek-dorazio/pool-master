@@ -1,7 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import {
+  adminDeleteLeague,
   adminGetIngestionSchedule,
   adminGetPollIntervals,
+  adminInactivateLeague,
+  adminListLeagues,
   adminPrepareSportSync,
   adminListContestConfigTemplates,
   adminListProviderSyncRuns,
@@ -14,7 +17,7 @@ import {
   adminUpdateIngestionSchedule,
   adminUpdatePollIntervals,
 } from '@poolmaster/shared/generated/hey-api';
-import { buildRegisteredUser } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -57,6 +60,15 @@ describe('SDK Functional: Root Admin', () => {
     });
 
     expectFunctionalError(providerResponse, {
+      status: 403,
+      code: 'ROOT_ADMIN_ACCESS_REQUIRED',
+    });
+
+    const leagueResponse = await adminListLeagues({
+      client: user.client,
+    });
+
+    expectFunctionalError(leagueResponse, {
       status: 403,
       code: 'ROOT_ADMIN_ACCESS_REQUIRED',
     });
@@ -257,6 +269,50 @@ describe('SDK Functional: Root Admin', () => {
       },
     });
     expect(resetSportOverride.data?.perSportOverrides.GOLF).toBeUndefined();
+  });
+
+  it('allows a promoted root-admin user to search, inactivate, and delete leagues', async () => {
+    const rootAdmin = await buildRegisteredUser({
+      displayName: 'Root Admin League User',
+    });
+    await promoteToRootAdmin(rootAdmin.userId);
+
+    const { league } = await buildLeagueWithCommissioner({
+      leagueName: 'Root Admin Search League',
+    });
+
+    const listResponse = await adminListLeagues({
+      client: rootAdmin.client,
+      query: {
+        search: 'Search League',
+        limit: 25,
+      },
+    });
+
+    expect(listResponse.data?.leagues.some((item) => item.id === league.id)).toBe(true);
+
+    const inactivateResponse = await adminInactivateLeague({
+      client: rootAdmin.client,
+      path: {
+        leagueId: league.id,
+      },
+    });
+
+    expect(inactivateResponse.data?.league.id).toBe(league.id);
+    expect(inactivateResponse.data?.league.isActive).toBe(false);
+
+    const deleteResponse = await adminDeleteLeague({
+      client: rootAdmin.client,
+      path: {
+        leagueId: league.id,
+      },
+      body: {
+        leagueCode: league.leagueCode,
+      },
+    });
+
+    expect(deleteResponse.data?.success).toBe(true);
+    expect(await getFunctionalPrisma().league.findUnique({ where: { id: league.id } })).toBeNull();
   });
 
   it('allows a promoted root-admin user to manage persisted contest templates', async () => {

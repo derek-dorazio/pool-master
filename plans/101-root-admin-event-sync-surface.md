@@ -74,7 +74,11 @@ intervention.
 
 - Add a compact `Sync events now` control to the existing admin page.
 - Start with explicit sport selection and a first-pass golf-friendly flow.
-- Show pending, success, and failure states clearly.
+- Treat the sync trigger as asynchronous job submission, not immediate success.
+- Show workflow states clearly: `SUBMITTED`, `IN_PROGRESS`, `COMPLETED`,
+  `FAILED`, `CANCELLED`.
+- Surface the latest returned API payload so root admins can inspect the
+  accepted request and later compare it with persisted sync-run payloads.
 - Refresh provider health and sync-run queries after the mutation completes.
 
 ### Phase 3: Route The Existing Admin Page Through `/manage`
@@ -95,6 +99,11 @@ intervention.
 - A root admin can open a direct admin route and manually trigger sport sync
   from the webapp.
 - The action uses the real backend sync contract, not a placeholder flow.
+- A successful request to start async work is represented as accepted
+  submission, not as completed sync success.
+- The page shows truthful workflow status from sync runs rather than treating
+  HTTP request acceptance as job completion.
+- The page retains and shows the latest API payload for operational debugging.
 - The page refreshes sync-run/provider visibility after the action.
 - Non-root-admin users remain blocked from the surface.
 - The feature remains clearly exceptional/operational rather than becoming a

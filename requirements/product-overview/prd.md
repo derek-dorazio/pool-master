@@ -60,8 +60,9 @@ changes.
 - No routine manual root-admin release workflow for events.
 - No routine commissioner release workflow after contest creation.
 - No routine manual scoring or results workflow.
-- No first-pass UI for managing contest templates; templates are seeded product
-  data.
+- No first-pass commissioner-facing or league-scoped UI for managing contest
+  templates; templates remain seeded product data, though root-admin may manage
+  the persisted global default values used by future contest create flows.
 - Mock provider infrastructure is valid in QA and other non-production
   environments, but not as production fallback behavior.
 

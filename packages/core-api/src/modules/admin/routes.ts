@@ -10,6 +10,8 @@ import { setAuditLogger, setAuditPrisma } from './admin-audit-service';
 import { setAuditQueryLogger, setAuditQueryPrisma } from './audit-query-service';
 import { UserService } from './user-service';
 import { createUserHandlers } from './user-handler';
+import { AdminLeagueService } from './league-service';
+import { createLeagueAdminHandlers } from './league-handler';
 import { HealthService } from './health-service';
 import { createHealthHandlers } from './health-handler';
 import { ProviderService } from './provider-service';
@@ -22,10 +24,14 @@ import { ContestTemplateAdminService } from './contest-template-service';
 import { createContestTemplateAdminHandlers } from './contest-template-handler';
 import { auditRoutes } from './audit-routes';
 import {
+  AdminListLeaguesQuerySchema,
   AdminContestConfigTemplateResponseSchema,
   AdminListContestConfigTemplatesQuerySchema,
   AdminUpdateContestConfigTemplateRequestSchema,
   ContestConfigTemplateListResponseSchema,
+  DeleteLeagueRequestSchema,
+  LeagueListResponseSchema,
+  LeagueResponseSchema,
   ProviderManualSyncSubmissionResponseSchema,
   UserListResponseSchema,
   UserDetailResponseSchema,
@@ -55,6 +61,13 @@ import adminAuth from '../../plugins/admin-auth';
 import { getAppPrisma } from '../../core/prisma-context';
 import type { ProviderRegistry } from '../ingestion/core/provider-registry';
 import { PrismaContestConfigTemplateRepository } from '../../adapters';
+import {
+  PrismaLeagueMembershipRepository,
+  PrismaLeagueRepository,
+  PrismaSquadMembershipRepository,
+  PrismaSquadRepository,
+} from '../../adapters';
+import { LeagueService } from '../leagues/service';
 
 function withAdminErrorResponses(
   successResponses: Record<number, unknown>,
@@ -98,6 +111,15 @@ export async function adminModule(
 
   // --- Services ---
   const userService = new UserService(prisma, fastify.log);
+  const leagueService = new LeagueService(
+    new PrismaLeagueRepository(prisma),
+    new PrismaLeagueMembershipRepository(prisma),
+    new PrismaSquadRepository(prisma),
+    new PrismaSquadMembershipRepository(prisma),
+    prisma,
+    fastify.log,
+  );
+  const adminLeagueService = new AdminLeagueService(prisma, leagueService, fastify.log);
   const healthService = new HealthService(prisma, fastify.log);
   const providerService = opts.providerService ?? new ProviderService(prisma, opts.providerRegistry, undefined, fastify.log);
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
@@ -110,6 +132,7 @@ export async function adminModule(
 
   // --- Handlers ---
   const user = createUserHandlers(userService);
+  const leagues = createLeagueAdminHandlers(adminLeagueService);
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService);
   const contestTemplates = createContestTemplateAdminHandlers(contestTemplateAdminService);
@@ -185,6 +208,41 @@ export async function adminModule(
       response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [404]),
     },
     handler: user.enableUser,
+  });
+
+  fastify.get('/leagues', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List leagues for root-admin management',
+      description: 'Returns root-admin league search results by league name for manage-page lifecycle actions.',
+      operationId: 'adminListLeagues',
+      querystring: zodToJsonSchema(AdminListLeaguesQuerySchema),
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(LeagueListResponseSchema) }),
+    },
+    handler: leagues.listLeagues,
+  });
+
+  fastify.post('/leagues/:leagueId/inactivate', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Inactivate a league as root admin',
+      description: 'Allows root-admins to inactivate a league before permanent deletion. This reuses the truthful league lifecycle behavior.',
+      operationId: 'adminInactivateLeague',
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(LeagueResponseSchema) }, [400, 404]),
+    },
+    handler: leagues.inactivateLeague,
+  });
+
+  fastify.delete('/leagues/:leagueId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Delete an inactive league as root admin',
+      description: 'Allows root-admins to permanently delete an inactive league after confirming the exact league code. This reuses the truthful cascade-delete lifecycle behavior.',
+      operationId: 'adminDeleteLeague',
+      body: zodToJsonSchema(DeleteLeagueRequestSchema),
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 404]),
+    },
+    handler: leagues.deleteLeague,
   });
 
   // --- Sports Data Provider Routes ---

@@ -1,7 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  adminDeleteLeague,
   adminGetIngestionSchedule,
+  adminInactivateLeague,
+  adminListLeagues,
   adminGetPollIntervals,
   adminPrepareSportSync,
   adminListContestConfigTemplates,
@@ -15,7 +18,10 @@ import {
   adminUpdateContestConfigTemplate,
   adminUpdateIngestionSchedule,
   adminUpdatePollIntervals,
+  type AdminDeleteLeagueResponses,
   type AdminGetIngestionScheduleResponses,
+  type AdminInactivateLeagueResponses,
+  type AdminListLeaguesResponses,
   type AdminGetPollIntervalsResponses,
   type AdminPrepareSportSyncResponses,
   type AdminListContestConfigTemplatesResponses,
@@ -29,11 +35,14 @@ import { useLogger } from '@/lib/logger';
 type PollIntervalConfig = AdminGetPollIntervalsResponses[200];
 type IngestionScheduleConfig = AdminGetIngestionScheduleResponses[200];
 type ContestConfigTemplate = AdminListContestConfigTemplatesResponses[200]['templates'][number];
+type ManagedLeague = AdminListLeaguesResponses[200]['leagues'][number];
 type ProviderSyncRun = AdminListProviderSyncRunsResponses[200]['items'][number];
 type ProviderSummary = AdminListProvidersResponses[200]['items'][number];
 type SportSyncSubmission = AdminPrepareSportSyncResponses[202];
 type EventSyncSubmission = AdminSyncProviderEventDataResponses[202];
 type ContestConfigTemplateUpdateResult = AdminUpdateContestConfigTemplateResponses[200]['template'];
+type InactivateLeagueResult = AdminInactivateLeagueResponses[200]['league'];
+type DeleteLeagueResult = AdminDeleteLeagueResponses[200];
 
 const ALL_SYNC_SPORT_OPTIONS = [
   'GOLF',
@@ -183,6 +192,16 @@ function formatEventValue(eventId: string | null | undefined) {
   }
 
   return eventId;
+}
+
+function formatLeagueStatus(isActive: boolean) {
+  return isActive ? 'Active' : 'Inactive';
+}
+
+function getLeagueStatusClasses(isActive: boolean) {
+  return isActive
+    ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
+    : 'border-amber-300 bg-amber-50 text-amber-900';
 }
 
 function getProviderName(
@@ -394,6 +413,7 @@ export function RootAdminPage() {
   const [providerFilter, setProviderFilter] = useState('ALL');
   const [sportFilter, setSportFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [leagueSearchDraft, setLeagueSearchDraft] = useState('');
   const [sportSyncSport, setSportSyncSport] = useState<SyncSport>('GOLF');
   const [sportSyncPresetId, setSportSyncPresetId] = useState<SportSyncPresetId>('PREPARE_EVENT_DATA');
   const [eventSyncSport, setEventSyncSport] = useState<SyncSport>('GOLF');
@@ -404,6 +424,8 @@ export function RootAdminPage() {
   const [ingestionDraft, setIngestionDraft] = useState<IngestionScheduleConfig | null>(null);
   const [sportOverrideDraft, setSportOverrideDraft] = useState<Record<IngestionPolicyKey, boolean> | null>(null);
   const [templateDrafts, setTemplateDrafts] = useState<Record<string, ContestConfigTemplate>>({});
+  const [leagueDeleteConfirmations, setLeagueDeleteConfirmations] = useState<Record<string, string>>({});
+  const deferredLeagueSearch = useDeferredValue(leagueSearchDraft);
 
   const pollConfigQuery = useQuery({
     queryKey: ['poolmaster', 'root-admin', 'poll-config'],
@@ -437,6 +459,26 @@ export function RootAdminPage() {
         throw response.error ?? new Error('Contest template response is missing data.');
       }
       return response.data.templates;
+    },
+    retry: false,
+  });
+
+  const leaguesQuery = useQuery({
+    queryKey: ['poolmaster', 'root-admin', 'leagues', deferredLeagueSearch.trim()],
+    queryFn: async (): Promise<ManagedLeague[]> => {
+      const trimmedSearch = deferredLeagueSearch.trim();
+      const response = await adminListLeagues({
+        query: {
+          search: trimmedSearch.length > 0 ? trimmedSearch : undefined,
+          limit: 25,
+        },
+      });
+
+      if (!response.data?.leagues) {
+        throw response.error ?? new Error('League management response is missing data.');
+      }
+
+      return response.data.leagues;
     },
     retry: false,
   });
@@ -660,6 +702,48 @@ export function RootAdminPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'root-admin', 'contest-config-templates'] });
+    },
+  });
+
+  const inactivateLeagueMutation = useMutation({
+    mutationFn: async (leagueId: string): Promise<InactivateLeagueResult> => {
+      const response = await adminInactivateLeague({
+        path: { leagueId },
+      });
+
+      if (!response.data?.league) {
+        throw response.error ?? new Error('League inactivation response is missing data.');
+      }
+
+      return response.data.league;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'root-admin', 'leagues'] });
+    },
+  });
+
+  const deleteLeagueMutation = useMutation({
+    mutationFn: async (input: { leagueId: string; leagueCode: string }): Promise<DeleteLeagueResult> => {
+      const response = await adminDeleteLeague({
+        path: { leagueId: input.leagueId },
+        body: {
+          leagueCode: input.leagueCode,
+        },
+      });
+
+      if (!response.data?.success) {
+        throw response.error ?? new Error('League delete response is missing success confirmation.');
+      }
+
+      return response.data;
+    },
+    onSuccess: async (_result, variables) => {
+      setLeagueDeleteConfirmations((current) => {
+        const next = { ...current };
+        delete next[variables.leagueId];
+        return next;
+      });
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'root-admin', 'leagues'] });
     },
   });
 
@@ -941,6 +1025,20 @@ export function RootAdminPage() {
       'Contest template configuration failed to load',
     );
   }, [contestTemplatesQuery.error, contestTemplatesQuery.isError, logger]);
+
+  useEffect(() => {
+    if (!leaguesQuery.isError) {
+      return;
+    }
+
+    logger.warn(
+      {
+        action: 'rootAdmin.leagues.failed',
+        err: leaguesQuery.error instanceof Error ? leaguesQuery.error : undefined,
+      },
+      'League management data failed to load',
+    );
+  }, [leaguesQuery.error, leaguesQuery.isError, logger]);
 
   useEffect(() => {
     if (!providersQuery.data || !syncRunsQuery.data) {
@@ -1407,6 +1505,151 @@ export function RootAdminPage() {
             </>
           )}
         </div>
+      </section>
+
+      <section className="rounded-[2rem] border border-border bg-card p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h3 className="text-xl font-semibold text-foreground">League lifecycle</h3>
+            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+              Search leagues by name, inactivate them when operations should stop, and permanently delete inactive leagues
+              only after confirming the exact league code. Delete follows the real cascade removal path for league-owned data.
+            </p>
+          </div>
+
+          <label className="text-sm text-muted-foreground lg:min-w-[22rem]">
+            <span className="mb-2 block font-medium text-foreground">Search by league name</span>
+            <input
+              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
+              data-testid="root-admin-league-search"
+              onChange={(event) => setLeagueSearchDraft(event.target.value)}
+              placeholder="Search leagues"
+              value={leagueSearchDraft}
+            />
+          </label>
+        </div>
+
+        {leaguesQuery.isLoading ? (
+          <p className="mt-5 text-sm text-muted-foreground">Loading leagues...</p>
+        ) : leaguesQuery.isError ? (
+          <p className="mt-5 text-sm text-rose-700">
+            {extractErrorMessage(leaguesQuery.error, 'We could not load leagues right now.')}
+          </p>
+        ) : (leaguesQuery.data?.length ?? 0) === 0 ? (
+          <div className="mt-5 rounded-[1.5rem] border border-dashed border-border bg-background p-6 text-sm text-muted-foreground">
+            No leagues matched the current search.
+          </div>
+        ) : (
+          <div className="mt-5 space-y-4">
+            {leaguesQuery.data?.map((league) => {
+              const deleteConfirmation = leagueDeleteConfirmations[league.id] ?? '';
+              const deleteCodeMatches = deleteConfirmation.trim() === league.leagueCode;
+              const showInactivateError = inactivateLeagueMutation.isError && inactivateLeagueMutation.variables === league.id;
+              const showDeleteError = deleteLeagueMutation.isError && deleteLeagueMutation.variables?.leagueId === league.id;
+
+              return (
+                <div
+                  className="rounded-[1.5rem] border border-border bg-background p-5"
+                  data-testid={`root-admin-league-${league.id}`}
+                  key={league.id}
+                >
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h4 className="text-lg font-semibold text-foreground">{league.name}</h4>
+                        <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${getLeagueStatusClasses(league.isActive)}`}>
+                          {formatLeagueStatus(league.isActive)}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Code: <span className="font-medium text-foreground">{league.leagueCode}</span>
+                        {' · '}
+                        Members: <span className="font-medium text-foreground">{league.memberCount}</span>
+                        {' · '}
+                        Active contests: <span className="font-medium text-foreground">{league.activeContestCount}</span>
+                      </p>
+                      {league.description ? (
+                        <p className="mt-2 text-sm text-muted-foreground">{league.description}</p>
+                      ) : null}
+                    </div>
+
+                    <div className="xl:min-w-[24rem]">
+                      {league.isActive ? (
+                        <>
+                          <p className="text-sm text-muted-foreground">
+                            Inactivate first to make the league read-only before permanent deletion becomes available.
+                          </p>
+                          <button
+                            className="mt-3 rounded-2xl border border-border px-5 py-3 text-sm font-medium text-foreground transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-60"
+                            data-testid={`root-admin-league-inactivate-${league.id}`}
+                            disabled={inactivateLeagueMutation.isPending}
+                            onClick={() => inactivateLeagueMutation.mutate(league.id)}
+                            type="button"
+                          >
+                            {inactivateLeagueMutation.isPending && inactivateLeagueMutation.variables === league.id
+                              ? 'Inactivating...'
+                              : 'Inactivate league'}
+                          </button>
+                          {showInactivateError ? (
+                            <p className="mt-3 text-sm text-rose-700">
+                              {extractErrorMessage(inactivateLeagueMutation.error, 'We could not inactivate this league right now.')}
+                            </p>
+                          ) : null}
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm text-muted-foreground">
+                            This league is already inactive. Type the exact league code to permanently delete the league and its
+                            league-owned data.
+                          </p>
+                          <label className="mt-3 block text-sm text-muted-foreground">
+                            <span className="mb-2 block font-medium text-foreground">Confirm league code</span>
+                            <input
+                              className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground"
+                              data-testid={`root-admin-league-delete-code-${league.id}`}
+                              onChange={(event) => {
+                                setLeagueDeleteConfirmations((current) => ({
+                                  ...current,
+                                  [league.id]: event.target.value,
+                                }));
+                              }}
+                              placeholder={league.leagueCode}
+                              value={deleteConfirmation}
+                            />
+                          </label>
+                          <button
+                            className="mt-3 rounded-2xl bg-foreground px-5 py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                            data-testid={`root-admin-league-delete-${league.id}`}
+                            disabled={deleteLeagueMutation.isPending || !deleteCodeMatches}
+                            onClick={() => deleteLeagueMutation.mutate({
+                              leagueId: league.id,
+                              leagueCode: deleteConfirmation.trim(),
+                            })}
+                            type="button"
+                          >
+                            {deleteLeagueMutation.isPending && deleteLeagueMutation.variables?.leagueId === league.id
+                              ? 'Deleting...'
+                              : 'Delete league'}
+                          </button>
+                          {!deleteCodeMatches ? (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              Type <span className="font-medium text-foreground">{league.leagueCode}</span> to enable delete.
+                            </p>
+                          ) : null}
+                          {showDeleteError ? (
+                            <p className="mt-3 text-sm text-rose-700">
+                              {extractErrorMessage(deleteLeagueMutation.error, 'We could not delete this league right now.')}
+                            </p>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="rounded-[2rem] border border-border bg-card p-6">

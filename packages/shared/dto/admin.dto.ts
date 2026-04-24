@@ -45,6 +45,23 @@ export type UserListResponse = z.infer<typeof UserListResponseSchema>;
 export const UserDetailResponseSchema = UserProfileDtoSchema.describe('Root-admin user-detail response.');
 export type UserDetailResponse = z.infer<typeof UserDetailResponseSchema>;
 
+export const AdminListLeaguesQuerySchema = z.object({
+  search: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe('Optional case-insensitive league-name search for root-admin management surfaces.'),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe('Maximum number of league rows to return for root-admin search results.'),
+}).describe('Root-admin league search query.');
+export type AdminListLeaguesQuery = z.infer<typeof AdminListLeaguesQuerySchema>;
+
 export const AdminServiceDependencyDtoSchema = z.object({
   name: z.string(),
   status: z.enum(['UP', 'DOWN']),

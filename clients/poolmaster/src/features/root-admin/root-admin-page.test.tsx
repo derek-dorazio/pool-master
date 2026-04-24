@@ -5,7 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RootAdminPage } from './root-admin-page';
 
 const {
+  adminDeleteLeagueMock,
   adminGetIngestionScheduleMock,
+  adminInactivateLeagueMock,
+  adminListLeaguesMock,
   adminGetPollIntervalsMock,
   adminListProviderSyncRunsMock,
   adminListContestConfigTemplatesMock,
@@ -32,7 +35,10 @@ const {
   mockLogger.child.mockReturnValue(mockLogger);
 
   return {
+    adminDeleteLeagueMock: vi.fn(),
     adminGetIngestionScheduleMock: vi.fn(),
+    adminInactivateLeagueMock: vi.fn(),
+    adminListLeaguesMock: vi.fn(),
     adminGetPollIntervalsMock: vi.fn(),
     adminListProviderSyncRunsMock: vi.fn(),
     adminListContestConfigTemplatesMock: vi.fn(),
@@ -51,7 +57,10 @@ const {
 });
 
 vi.mock('@/lib/api', () => ({
+  adminDeleteLeague: (...args: unknown[]) => adminDeleteLeagueMock(...args),
   adminGetIngestionSchedule: (...args: unknown[]) => adminGetIngestionScheduleMock(...args),
+  adminInactivateLeague: (...args: unknown[]) => adminInactivateLeagueMock(...args),
+  adminListLeagues: (...args: unknown[]) => adminListLeaguesMock(...args),
   adminGetPollIntervals: (...args: unknown[]) => adminGetPollIntervalsMock(...args),
   adminListProviderSyncRuns: (...args: unknown[]) => adminListProviderSyncRunsMock(...args),
   adminListContestConfigTemplates: (...args: unknown[]) => adminListContestConfigTemplatesMock(...args),
@@ -91,6 +100,55 @@ function renderRootAdminPage() {
 }
 
 function seedRootAdminDefaults() {
+  adminListLeaguesMock.mockResolvedValue({
+    data: {
+      leagues: [
+        {
+          id: 'league-active-1',
+          leagueCode: 'ACTIVE01',
+          name: 'Alpha League',
+          description: 'Primary active league',
+          isActive: true,
+          iconKey: 'TROPHY',
+          memberCount: 12,
+          activeContestCount: 3,
+          createdAt: '2026-04-10T12:00:00.000Z',
+        },
+        {
+          id: 'league-inactive-1',
+          leagueCode: 'INACT001',
+          name: 'Archive League',
+          description: 'Already inactive',
+          isActive: false,
+          iconKey: 'GOLF_FLAG',
+          memberCount: 8,
+          activeContestCount: 0,
+          createdAt: '2026-03-01T12:00:00.000Z',
+        },
+      ],
+    },
+  });
+  adminInactivateLeagueMock.mockResolvedValue({
+    data: {
+      league: {
+        id: 'league-active-1',
+        leagueCode: 'ACTIVE01',
+        name: 'Alpha League',
+        description: 'Primary active league',
+        isActive: false,
+        iconKey: 'TROPHY',
+        memberCount: 12,
+        activeContestCount: 3,
+        joinPolicy: 'COMMISSIONER_ONLY',
+        createdAt: '2026-04-10T12:00:00.000Z',
+      },
+    },
+  });
+  adminDeleteLeagueMock.mockResolvedValue({
+    data: {
+      success: true,
+    },
+  });
   adminGetPollIntervalsMock.mockResolvedValue({
     data: {
       standings: 10000,
@@ -254,6 +312,9 @@ describe('RootAdminPage', () => {
 
   afterEach(() => {
     adminGetIngestionScheduleMock.mockReset();
+    adminDeleteLeagueMock.mockReset();
+    adminInactivateLeagueMock.mockReset();
+    adminListLeaguesMock.mockReset();
     adminGetPollIntervalsMock.mockReset();
     adminListProviderSyncRunsMock.mockReset();
     adminListContestConfigTemplatesMock.mockReset();
@@ -663,6 +724,70 @@ describe('RootAdminPage', () => {
           active: true,
           isDefault: true,
         }),
+      }),
+    );
+  });
+
+  it('searches leagues by name from the manage section', async () => {
+    adminListProvidersMock.mockResolvedValue({
+      data: { items: [] },
+    });
+    adminListProviderSyncRunsMock.mockResolvedValue({
+      data: { items: [] },
+    });
+
+    renderRootAdminPage();
+
+    const searchInput = await screen.findByTestId('root-admin-league-search');
+    fireEvent.change(searchInput, {
+      target: { value: 'Archive' },
+    });
+
+    await waitFor(() =>
+      expect(adminListLeaguesMock).toHaveBeenLastCalledWith({
+        query: {
+          search: 'Archive',
+          limit: 25,
+        },
+      }),
+    );
+  });
+
+  it('inactivates and deletes leagues from the manage section', async () => {
+    adminListProvidersMock.mockResolvedValue({
+      data: { items: [] },
+    });
+    adminListProviderSyncRunsMock.mockResolvedValue({
+      data: { items: [] },
+    });
+
+    renderRootAdminPage();
+
+    await screen.findByTestId('root-admin-league-league-active-1');
+    fireEvent.click(screen.getByTestId('root-admin-league-inactivate-league-active-1'));
+
+    await waitFor(() =>
+      expect(adminInactivateLeagueMock).toHaveBeenCalledWith({
+        path: {
+          leagueId: 'league-active-1',
+        },
+      }),
+    );
+
+    const deleteCodeInput = await screen.findByTestId('root-admin-league-delete-code-league-inactive-1');
+    fireEvent.change(deleteCodeInput, {
+      target: { value: 'INACT001' },
+    });
+    fireEvent.click(screen.getByTestId('root-admin-league-delete-league-inactive-1'));
+
+    await waitFor(() =>
+      expect(adminDeleteLeagueMock).toHaveBeenCalledWith({
+        path: {
+          leagueId: 'league-inactive-1',
+        },
+        body: {
+          leagueCode: 'INACT001',
+        },
       }),
     );
   });

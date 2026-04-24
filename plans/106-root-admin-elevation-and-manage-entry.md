@@ -28,7 +28,9 @@ This plan closes three adjacent gaps:
 - Backend admin user management already has search, detail, force-logout,
   disable, and enable (`packages/core-api/src/modules/admin/user-service.ts`,
   `user-handler.ts`, `routes.ts`). It does **not** have a setRootAdmin
-  operation.
+  operation. The existing user search also needs to cover username in addition
+  to email, first name, and last name so root admins can reliably find the
+  target user from `/manage`.
 - Registration cannot grant root admin. `RegisterRequestSchema`
   (`packages/shared/dto/auth.dto.ts`) does not include `isRootAdmin`, and
   `AuthService.register()` writes only `email`, `username`, `passwordHash`,
@@ -150,6 +152,8 @@ environment. Captured for traceability; safe to prune after the feature ships.
   reason: z.string().trim().min(1).max(500).optional() })` to
   `packages/shared/dto/admin/users.dto.ts` (create this file if it does not
   already exist; otherwise extend the nearest existing admin-user DTO file).
+- Extend the existing admin user search implementation so the `/users` list
+  search matches against email, username, first name, and last name.
 - Add `UserService.setRootAdmin(userId, nextValue, actorUserId, actorEmail,
   reason?)`:
   - Load target; throw `UserNotFoundError` if missing.
@@ -170,6 +174,10 @@ environment. Captured for traceability; safe to prune after the feature ships.
   ..., handler: ... })` in `routes.ts` under the same admin-auth plugin.
 - Route schema must use `zodToJsonSchema` per service rules and include
   `operationId`, `summary`, and `tags`.
+- The route contract should explicitly document the UI-handled error outcomes:
+  - `404 USER_NOT_FOUND`
+  - `400 SELF_ROOT_ADMIN_CHANGE`
+  - `409 LAST_ROOT_ADMIN`
 - `npm run api:refresh` and `npm run api:validate`, then regenerate
   `packages/shared/generated/hey-api` so the webapp can call the new
   operation through the generated SDK.
@@ -188,17 +196,20 @@ environment. Captured for traceability; safe to prune after the feature ships.
 - New component
   `clients/poolmaster/src/features/root-admin/root-admin-users-panel.tsx`:
   - Consumes generated `adminListUsers` for search + pagination.
+  - Search should reliably find users by email, username, first name, or last
+    name.
   - Table columns: user (name + username), email, active, root admin.
   - Promote button visible when the target is not a root admin. Demote
     button visible when the target is a root admin; disabled for the current
-    authenticated user's own row and visually annotated when the row is the
-    only remaining root admin.
+    authenticated user's own row. The UI does not attempt to pre-compute
+    "last remaining root admin" from paginated list data; it relies on the
+    backend `LAST_ROOT_ADMIN` validation and surfaces that response clearly.
   - Confirm dialog for both promote and demote with an optional "reason"
     free-text field that flows through to the audit log.
   - Mutation calls generated `adminSetUserRootAdmin`. On success, invalidate
-    the user-list query. On `LAST_ROOT_ADMIN` or
+    the user-list query. On `USER_NOT_FOUND`, `LAST_ROOT_ADMIN`, or
     `SELF_ROOT_ADMIN_CHANGE`, surface an inline error message matching the
-    service-level reason.
+    service-level reason and code.
   - Short copy at the top of the panel: "Root admin is an internal system
     role. It cannot be granted through registration or invitations. Only an
     existing root admin can grant it here, and at least one root admin must
@@ -227,9 +238,13 @@ environment. Captured for traceability; safe to prune after the feature ships.
   from `/manage` by the existing guard.
 - A root admin can promote another user from the `/manage` user panel, and
   the change is reflected in the list after a successful response.
+- A root admin can reliably find a target user by email, username, first name,
+  or last name from the `/manage` user panel.
 - A root admin can demote another root admin from the same panel, with an
   explicit confirmation step.
 - Self-demotion is blocked with a 400 `SELF_ROOT_ADMIN_CHANGE` response and a
+  clear UI message.
+- A missing target user is surfaced as a 404 `USER_NOT_FOUND` response with a
   clear UI message.
 - Demoting the only remaining root admin is blocked with a 409
   `LAST_ROOT_ADMIN` response and a clear UI message.
@@ -253,13 +268,13 @@ environment. Captured for traceability; safe to prune after the feature ships.
 | 106-003 | 1 | Thread `auth.isRootAdmin` from `AppShell` into `AccountMenu` | Done | `app-shell.tsx`: passes `isRootAdmin={auth.isRootAdmin}` alongside existing `userName` and `onLogout` props. |
 | 106-004 | 1 | Extend vitest coverage for Slice A | Done | `auth-home-page.test.tsx`: two new cases (root admin no-from → `/manage`; root admin with `from` → invite still wins). `app-shell.test.tsx`: mocked menu surfaces `isRootAdmin`; two new cases assert forwarding. New `account-menu.test.tsx`: four cases covering hidden/shown/closed-on-click. |
 | 106-005 | 2 | Add `SetUserRootAdminRequestSchema` DTO | Not Started | `packages/shared/dto/admin/users.dto.ts` (new or nearest) |
-| 106-006 | 2 | Add `UserService.setRootAdmin` with guards, audit, and refresh-token revoke | Not Started | `packages/core-api/src/modules/admin/user-service.ts` |
+| 106-006 | 2 | Add `UserService.setRootAdmin` with guards, audit, refresh-token revoke, and username-aware admin search support | Not Started | `packages/core-api/src/modules/admin/user-service.ts` |
 | 106-007 | 2 | Add `setRootAdmin` handler + route with zodToJsonSchema | Not Started | `user-handler.ts`, `routes.ts` |
 | 106-008 | 2 | `api:refresh` + `api:validate` and regenerate `hey-api` client | Not Started | Must run both before frontend consumes the new SDK method |
 | 106-009 | 2 | Service unit tests for setRootAdmin | Not Started | promote, demote, self-demote, last-root-admin, no-op, not-found, tokens revoked |
 | 106-010 | 2 | Functional API + contract-verification coverage for new route | Not Started | root-admin FAPI suite + contract-verification-root-admin |
 | 106-011 | 2 | Register regression: isRootAdmin=true smuggle attempt ignored | Not Started | functional-api under auth suite |
-| 106-012 | 3 | Build `root-admin-users-panel.tsx` with search, promote, demote, confirm, reason | Not Started | uses generated `adminListUsers` and new `adminSetUserRootAdmin` |
+| 106-012 | 3 | Build `root-admin-users-panel.tsx` with search, promote, demote, confirm, reason, and backend-driven last-root-admin error handling | Not Started | uses generated `adminListUsers` and new `adminSetUserRootAdmin` |
 | 106-013 | 3 | Stitch users panel into `root-admin-page.tsx` | Not Started | match existing card structure |
 | 106-014 | 3 | Vitest coverage for users panel | Not Started | list, promote, demote, self-disabled, last-root-admin disabled, error surfacing |
 | 106-015A | 4 | Slice A pre-push gate set (non-DB) | Done | In Cowork sandbox: `npx turbo typecheck --force` 5/5 workspaces; `npx eslint ... --max-warnings 0` exit 0; `npx vitest run` 120/120 across 31 files; `npx jest --config tests/jest.config.js --forceExit` 519/519 across 55 suites. FAPI not applicable to a UI-only slice. |
