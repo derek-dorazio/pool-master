@@ -15,6 +15,9 @@ import { RootAdminManageHubPage } from '@/features/root-admin/root-admin-manage-
 import { RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
 import { RootAdminManageScaffoldPage } from '@/features/root-admin/root-admin-manage-scaffold-page';
 import { RootAdminPage } from '@/features/root-admin/root-admin-page';
+import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
+import { RootAdminRunSportSyncPage } from '@/features/root-admin/root-admin-run-sport-sync-page';
+import { RootAdminSyncDashboardPage } from '@/features/root-admin/root-admin-sync-dashboard-page';
 import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
 import { TeamsPage } from '@/features/teams/teams-page';
@@ -136,7 +139,15 @@ export const router = createBrowserRouter([
               },
               {
                 path: 'sync',
-                element: <RootAdminManageScaffoldPage sectionKey="sync" />,
+                element: <RootAdminSyncDashboardPage />,
+              },
+              {
+                path: 'sync/run-sport-sync',
+                element: <RootAdminRunSportSyncPage />,
+              },
+              {
+                path: 'sync/run-event-sync',
+                element: <RootAdminRunEventSyncPage />,
               },
               {
                 path: 'sync-config',

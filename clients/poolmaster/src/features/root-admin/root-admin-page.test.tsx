@@ -797,6 +797,21 @@ describe('RootAdminPage', () => {
     ).toHaveAttribute('href', '/manage/content-configuration');
   });
 
+  it('links to the dedicated sync dashboard from the legacy manage section', async () => {
+    adminListProvidersMock.mockResolvedValue({
+      data: { items: [] },
+    });
+    adminListProviderSyncRunsMock.mockResolvedValue({
+      data: { items: [] },
+    });
+
+    renderRootAdminPage();
+
+    expect(
+      await screen.findByTestId('root-admin-sync-open-page'),
+    ).toHaveAttribute('href', '/manage/sync');
+  });
+
   it('searches leagues by name from the manage section', async () => {
     adminListProvidersMock.mockResolvedValue({
       data: { items: [] },

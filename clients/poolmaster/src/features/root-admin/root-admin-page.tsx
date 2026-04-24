@@ -24,90 +24,40 @@ import {
   type AdminInactivateLeagueResponses,
   type AdminListLeaguesResponses,
   type AdminGetPollIntervalsResponses,
-  type AdminPrepareSportSyncResponses,
   type AdminListContestConfigTemplatesResponses,
-  type AdminListProviderSyncRunsResponses,
-  type AdminListProvidersResponses,
   type AdminUpdateContestConfigTemplateResponses,
-  type AdminSyncProviderEventDataResponses,
 } from '@/lib/api';
 import { useLogger } from '@/lib/logger';
+import {
+  ALL_SYNC_SPORT_OPTIONS,
+  buildPayloadSummary,
+  EVENT_SYNC_PRESETS,
+  formatJsonPayload,
+  getEventSyncPreset,
+  getProviderName,
+  getProviderStatusClasses,
+  getSportSyncPreset,
+  getSupportedSyncSports,
+  getSyncRunStatusClasses,
+  SPORT_SYNC_PRESETS,
+  SYNC_STATUS_OPTIONS,
+  type EventSyncPresetId,
+  type EventSyncSubmission,
+  type ProviderSummary,
+  type ProviderSyncRun,
+  type SportSyncPresetId,
+  type SportSyncSubmission,
+  type SyncSport,
+} from './root-admin-sync-utils';
 import { RootAdminUsersPanel } from './root-admin-users-panel';
 
 type PollIntervalConfig = AdminGetPollIntervalsResponses[200];
 type IngestionScheduleConfig = AdminGetIngestionScheduleResponses[200];
 type ContestConfigTemplate = AdminListContestConfigTemplatesResponses[200]['templates'][number];
 type ManagedLeague = AdminListLeaguesResponses[200]['leagues'][number];
-type ProviderSyncRun = AdminListProviderSyncRunsResponses[200]['items'][number];
-type ProviderSummary = AdminListProvidersResponses[200]['items'][number];
-type SportSyncSubmission = AdminPrepareSportSyncResponses[202];
-type EventSyncSubmission = AdminSyncProviderEventDataResponses[202];
 type ContestConfigTemplateUpdateResult = AdminUpdateContestConfigTemplateResponses[200]['template'];
 type InactivateLeagueResult = AdminInactivateLeagueResponses[200]['league'];
 type DeleteLeagueResult = AdminDeleteLeagueResponses[200];
-
-const ALL_SYNC_SPORT_OPTIONS = [
-  'GOLF',
-  'NFL',
-  'NBA',
-  'F1',
-  'NASCAR',
-  'NCAA_BASKETBALL',
-  'NCAA_HOCKEY',
-  'NCAA_FOOTBALL',
-  'TENNIS',
-  'HORSE_RACING',
-  'SOCCER',
-  'NHL',
-  'MLB',
-  'UFC',
-] as const;
-type SyncSport = (typeof ALL_SYNC_SPORT_OPTIONS)[number];
-
-const SYNC_STATUS_OPTIONS = ['SUBMITTED', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CANCELLED'] as const;
-
-const SPORT_SYNC_PRESETS = [
-  {
-    id: 'PREPARE_EVENT_DATA',
-    label: 'Prepare event data',
-    feeds: ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS'] as const,
-  },
-  {
-    id: 'EVENTPARTICIPANTS_ONLY',
-    label: 'Refresh participants only',
-    feeds: ['EVENTPARTICIPANTS'] as const,
-  },
-  {
-    id: 'EVENTSCHEDULE_ONLY',
-    label: 'Refresh schedule only',
-    feeds: ['EVENTSCHEDULE'] as const,
-  },
-  {
-    id: 'PARTICIPANTRANKINGS_ONLY',
-    label: 'Refresh rankings only',
-    feeds: ['PARTICIPANTRANKINGS'] as const,
-  },
-] as const;
-type SportSyncPresetId = (typeof SPORT_SYNC_PRESETS)[number]['id'];
-
-const EVENT_SYNC_PRESETS = [
-  {
-    id: 'EVENTPARTICIPANTS',
-    label: 'Refresh event participants',
-    feeds: ['EVENTPARTICIPANTS'] as const,
-  },
-  {
-    id: 'EVENTLIVESCORES',
-    label: 'Refresh live scores',
-    feeds: ['EVENTLIVESCORES'] as const,
-  },
-  {
-    id: 'EVENTRESULTS',
-    label: 'Refresh final results',
-    feeds: ['EVENTRESULTS'] as const,
-  },
-] as const;
-type EventSyncPresetId = (typeof EVENT_SYNC_PRESETS)[number]['id'];
 
 const INGESTION_POLICY_FIELDS = [
   {
@@ -204,108 +154,6 @@ function getLeagueStatusClasses(isActive: boolean) {
   return isActive
     ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
     : 'border-amber-300 bg-amber-50 text-amber-900';
-}
-
-function getProviderName(
-  providerId: string,
-  providers: ProviderSummary[] | undefined,
-) {
-  return providers?.find((provider) => provider.providerId === providerId)?.providerName ?? providerId;
-}
-
-function buildPayloadSummary(payload: Record<string, unknown>) {
-  const primaryTextFields = ['detail', 'message', 'summary', 'runType'] as const;
-  for (const key of primaryTextFields) {
-    const value = payload[key];
-    if (typeof value === 'string' && value.trim().length > 0) {
-      return value;
-    }
-  }
-
-  const metricPairs: Array<[string, string]> = [
-    ['recordsProcessed', 'processed'],
-    ['eventCount', 'events'],
-    ['participantCount', 'participants'],
-    ['errorCount', 'errors'],
-    ['errors', 'errors'],
-  ];
-
-  const metrics = metricPairs.flatMap(([key, label]) => {
-    const value = payload[key];
-    if (typeof value === 'number') {
-      return [`${value} ${label}`];
-    }
-
-    if (typeof value === 'string' && value.trim().length > 0) {
-      return [`${label}: ${value}`];
-    }
-
-    return [];
-  });
-
-  if (metrics.length > 0) {
-    return metrics.slice(0, 3).join(' · ');
-  }
-
-  const fallbackEntries = Object.entries(payload).flatMap(([key, value]) => {
-    if (
-      value === null
-      || value === undefined
-      || typeof value === 'object'
-      || key.endsWith('At')
-      || key === 'providerId'
-      || key === 'eventId'
-      || key === 'status'
-    ) {
-      return [];
-    }
-
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      return [`${key}: ${String(value)}`];
-    }
-
-    return [];
-  });
-
-  return fallbackEntries[0] ?? 'Payload captured for operational review.';
-}
-
-function getProviderStatusClasses(status: ProviderSummary['status']) {
-  switch (status) {
-    case 'HEALTHY':
-      return 'border-emerald-300 bg-emerald-50 text-emerald-900';
-    case 'DOWN':
-      return 'border-rose-300 bg-rose-50 text-rose-900';
-    case 'DEGRADED':
-      return 'border-amber-300 bg-amber-50 text-amber-900';
-  }
-}
-
-function getSyncRunStatusClasses(status: ProviderSyncRun['status']) {
-  switch (status) {
-    case 'SUBMITTED':
-      return 'border-sky-300 bg-sky-50 text-sky-900';
-    case 'IN_PROGRESS':
-      return 'border-indigo-300 bg-indigo-50 text-indigo-900';
-    case 'FAILED':
-      return 'border-rose-300 bg-rose-50 text-rose-900';
-    case 'CANCELLED':
-      return 'border-amber-300 bg-amber-50 text-amber-900';
-    case 'COMPLETED':
-      return 'border-slate-300 bg-slate-50 text-slate-900';
-  }
-}
-
-function getSportSyncPreset(presetId: SportSyncPresetId) {
-  return SPORT_SYNC_PRESETS.find((preset) => preset.id === presetId) ?? SPORT_SYNC_PRESETS[0];
-}
-
-function getEventSyncPreset(presetId: EventSyncPresetId) {
-  return EVENT_SYNC_PRESETS.find((preset) => preset.id === presetId) ?? EVENT_SYNC_PRESETS[0];
-}
-
-function formatJsonPayload(payload: unknown) {
-  return JSON.stringify(payload, null, 2);
 }
 
 function clonePollConfig(config: PollIntervalConfig): PollIntervalConfig {
@@ -530,15 +378,7 @@ export function RootAdminPage() {
   }, [providersQuery.data, recentRuns]);
 
   const supportedSyncSports = useMemo(() => {
-    const configuredSports = Array.from(new Set(
-      (providersQuery.data ?? []).flatMap((provider) => provider.sportsCovered),
-    )).filter((sport): sport is SyncSport => ALL_SYNC_SPORT_OPTIONS.includes(sport as SyncSport));
-
-    if (configuredSports.length === 0) {
-      return [...ALL_SYNC_SPORT_OPTIONS];
-    }
-
-    return ALL_SYNC_SPORT_OPTIONS.filter((sport) => configuredSports.includes(sport));
+    return getSupportedSyncSports(providersQuery.data);
   }, [providersQuery.data]);
 
   const summary = useMemo(() => {
@@ -1170,7 +1010,15 @@ export function RootAdminPage() {
               when imported event or participant data has not loaded yet, then review the resulting sync history below.
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="flex flex-col gap-3 lg:items-end">
+            <Link
+              className="inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+              data-testid="root-admin-sync-open-page"
+              to="/manage/sync"
+            >
+              Open dedicated sync pages
+            </Link>
+            <div className="grid gap-3 sm:grid-cols-3">
             <label className="text-sm text-muted-foreground">
               <span className="mb-2 block font-medium text-foreground">Provider</span>
               <select
@@ -1221,6 +1069,7 @@ export function RootAdminPage() {
                 ))}
               </select>
             </label>
+            </div>
           </div>
         </div>
 

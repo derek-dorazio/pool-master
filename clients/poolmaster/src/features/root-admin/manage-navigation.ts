@@ -59,11 +59,10 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     key: 'sync',
     title: 'Sync',
     description:
-      'Provider visibility, sync history, and manual run actions are moving into dedicated operational pages.',
+      'Provider visibility, sync history, and manual run actions now live in dedicated operational pages.',
     to: '/manage/sync',
-    availability: 'legacy',
-    availabilityLabel: 'Temporary scaffold',
-    legacyHref: '/manage/legacy',
+    availability: 'live',
+    availabilityLabel: 'Live now',
   },
   {
     key: 'sync-config',
@@ -96,6 +95,14 @@ export function getManageBreadcrumbLabel(segment: string): string {
 
   if (segment === 'legacy') {
     return 'Legacy Manage Surface';
+  }
+
+  if (segment === 'run-sport-sync') {
+    return 'Run Sport Sync';
+  }
+
+  if (segment === 'run-event-sync') {
+    return 'Run Event Sync';
   }
 
   const section = MANAGE_SECTION_DEFINITIONS.find(
