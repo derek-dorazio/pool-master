@@ -21,11 +21,10 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     key: 'leagues',
     title: 'Leagues',
     description:
-      'Search for leagues and move into the canonical league surfaces while the dedicated admin list page is still landing.',
+      'Search leagues and open the canonical League Home to act on them. Commissioner and root-admin lifecycle controls live on League Home under authority-gated sections.',
     to: '/manage/leagues',
-    availability: 'legacy',
-    availabilityLabel: 'Temporary scaffold',
-    legacyHref: '/manage/legacy',
+    availability: 'live',
+    availabilityLabel: 'Live now',
   },
   {
     key: 'teams',

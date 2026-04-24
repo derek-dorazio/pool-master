@@ -7,15 +7,15 @@ describe('RootAdminManageScaffoldPage', () => {
   it('routes legacy-backed sections back to the transitional manage surface', () => {
     render(
       <MemoryRouter>
-        <RootAdminManageScaffoldPage sectionKey="leagues" />
+        <RootAdminManageScaffoldPage sectionKey="users" />
       </MemoryRouter>,
     );
 
     expect(
-      screen.getByTestId('root-admin-manage-scaffold-page-leagues'),
+      screen.getByTestId('root-admin-manage-scaffold-page-users'),
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId('root-admin-manage-scaffold-legacy-leagues'),
+      screen.getByTestId('root-admin-manage-scaffold-legacy-users'),
     ).toHaveAttribute('href', '/manage/legacy');
   });
 

@@ -18,6 +18,7 @@ import { RootAdminContentConfigurationListPage } from '@/features/root-admin/roo
 import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin-ingestion-schedule-page';
 import { RootAdminManageHubPage } from '@/features/root-admin/root-admin-manage-hub-page';
 import { RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
+import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-manage-leagues-page';
 import { RootAdminManageScaffoldPage } from '@/features/root-admin/root-admin-manage-scaffold-page';
 import { RootAdminPage } from '@/features/root-admin/root-admin-page';
 import { RootAdminPollIntervalsPage } from '@/features/root-admin/root-admin-poll-intervals-page';
@@ -164,7 +165,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: 'leagues',
-                element: <RootAdminManageScaffoldPage sectionKey="leagues" />,
+                element: <RootAdminManageLeaguesPage />,
               },
               {
                 path: 'teams',
