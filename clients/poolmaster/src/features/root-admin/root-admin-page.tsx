@@ -3,14 +3,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   adminDeleteLeague,
-  adminGetIngestionSchedule,
   adminInactivateLeague,
   adminListLeagues,
-  adminGetPollIntervals,
+  adminGetIngestionSchedule,
   adminPrepareSportSync,
   adminListContestConfigTemplates,
   adminListProviderSyncRuns,
   adminListProviders,
+  adminGetPollIntervals,
   adminResetIngestionSchedule,
   adminResetPollIntervals,
   adminResetSportIngestionOverride,
@@ -20,14 +20,23 @@ import {
   adminUpdateIngestionSchedule,
   adminUpdatePollIntervals,
   type AdminDeleteLeagueResponses,
-  type AdminGetIngestionScheduleResponses,
   type AdminInactivateLeagueResponses,
   type AdminListLeaguesResponses,
-  type AdminGetPollIntervalsResponses,
   type AdminListContestConfigTemplatesResponses,
   type AdminUpdateContestConfigTemplateResponses,
 } from '@/lib/api';
 import { useLogger } from '@/lib/logger';
+import {
+  buildSportOverrideDraft,
+  cloneIngestionConfig,
+  clonePollConfig,
+  extractAdminErrorMessage as extractErrorMessage,
+  INGESTION_POLICY_FIELDS,
+  toPositiveNumber,
+  type IngestionPolicyKey,
+  type IngestionScheduleConfig,
+  type PollIntervalConfig,
+} from './root-admin-sync-config-utils';
 import {
   ALL_SYNC_SPORT_OPTIONS,
   buildPayloadSummary,
@@ -51,79 +60,11 @@ import {
 } from './root-admin-sync-utils';
 import { RootAdminUsersPanel } from './root-admin-users-panel';
 
-type PollIntervalConfig = AdminGetPollIntervalsResponses[200];
-type IngestionScheduleConfig = AdminGetIngestionScheduleResponses[200];
 type ContestConfigTemplate = AdminListContestConfigTemplatesResponses[200]['templates'][number];
 type ManagedLeague = AdminListLeaguesResponses[200]['leagues'][number];
 type ContestConfigTemplateUpdateResult = AdminUpdateContestConfigTemplateResponses[200]['template'];
 type InactivateLeagueResult = AdminInactivateLeagueResponses[200]['league'];
 type DeleteLeagueResult = AdminDeleteLeagueResponses[200];
-
-const INGESTION_POLICY_FIELDS = [
-  {
-    key: 'healthCheck',
-    label: 'Health checks',
-    intervalLabel: 'Minutes',
-    intervalKey: 'intervalMinutes',
-  },
-  {
-    key: 'eventSchedule',
-    label: 'Event schedule',
-    intervalLabel: 'Minutes',
-    intervalKey: 'intervalMinutes',
-    extraKey: 'lookaheadDays',
-    extraLabel: 'Lookahead days',
-  },
-  {
-    key: 'eventParticipants',
-    label: 'Event participants',
-    intervalLabel: 'Minutes',
-    intervalKey: 'intervalMinutes',
-    extraKey: 'leadDaysBeforeStart',
-    extraLabel: 'Lead days',
-  },
-  {
-    key: 'participantRankings',
-    label: 'Participant rankings',
-    intervalLabel: 'Minutes',
-    intervalKey: 'intervalMinutes',
-  },
-  {
-    key: 'eventLiveScores',
-    label: 'Event live scores',
-    intervalLabel: 'Seconds',
-    intervalKey: 'intervalSeconds',
-  },
-  {
-    key: 'eventResults',
-    label: 'Event results',
-    intervalLabel: 'Minutes',
-    intervalKey: 'intervalMinutes',
-  },
-] as const;
-type IngestionPolicyField = (typeof INGESTION_POLICY_FIELDS)[number];
-type IngestionPolicyKey = IngestionPolicyField['key'];
-
-function extractErrorMessage(error: unknown, fallback = 'We could not load this admin data right now.') {
-  if (!error || typeof error !== 'object') {
-    return fallback;
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return fallback;
-}
 
 function formatDateTimeDisplay(isoString: string | null | undefined) {
   if (!isoString) {
@@ -156,64 +97,11 @@ function getLeagueStatusClasses(isActive: boolean) {
     : 'border-amber-300 bg-amber-50 text-amber-900';
 }
 
-function clonePollConfig(config: PollIntervalConfig): PollIntervalConfig {
-  return { ...config };
-}
-
-function cloneIngestionConfig(
-  config: IngestionScheduleConfig,
-): IngestionScheduleConfig {
-  return {
-    ...config,
-    healthCheck: { ...config.healthCheck },
-    eventSchedule: { ...config.eventSchedule },
-    eventParticipants: { ...config.eventParticipants },
-    participantRankings: { ...config.participantRankings },
-    eventLiveScores: { ...config.eventLiveScores },
-    eventResults: { ...config.eventResults },
-    perSportOverrides: Object.fromEntries(
-      Object.entries(config.perSportOverrides ?? {}).map(([sport, override]) => [
-        sport,
-        {
-          ...(override.healthCheck && { healthCheck: { ...override.healthCheck } }),
-          ...(override.eventSchedule && { eventSchedule: { ...override.eventSchedule } }),
-          ...(override.eventParticipants && { eventParticipants: { ...override.eventParticipants } }),
-          ...(override.participantRankings && { participantRankings: { ...override.participantRankings } }),
-          ...(override.eventLiveScores && { eventLiveScores: { ...override.eventLiveScores } }),
-          ...(override.eventResults && { eventResults: { ...override.eventResults } }),
-        },
-      ]),
-    ),
-  };
-}
-
 function cloneContestTemplate(template: ContestConfigTemplate): ContestConfigTemplate {
   return {
     ...template,
     configuration: JSON.parse(JSON.stringify(template.configuration)) as ContestConfigTemplate['configuration'],
   };
-}
-
-function buildSportOverrideDraft(
-  config: IngestionScheduleConfig,
-  sport: SyncSport,
-): Record<IngestionPolicyKey, boolean> {
-  const override = config.perSportOverrides[sport];
-
-  return Object.fromEntries(
-    INGESTION_POLICY_FIELDS.map((field) => [
-      field.key,
-      override?.[field.key]?.enabled ?? config[field.key].enabled,
-    ]),
-  ) as Record<IngestionPolicyKey, boolean>;
-}
-
-function toPositiveNumber(value: string) {
-  const parsed = Number(value);
-  if (Number.isNaN(parsed) || parsed <= 0) {
-    return 1;
-  }
-  return parsed;
 }
 
 function buildTierLabel(index: number) {
@@ -1129,6 +1017,13 @@ export function RootAdminPage() {
               Durable platform settings for client polling and automated ingestion behavior.
             </p>
           </div>
+          <Link
+            className="inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+            data-testid="root-admin-sync-config-open-page"
+            to="/manage/sync-config"
+          >
+            Open dedicated sync configuration pages
+          </Link>
         </div>
 
         <div className="mt-5 grid gap-4 xl:grid-cols-2">

@@ -812,6 +812,21 @@ describe('RootAdminPage', () => {
     ).toHaveAttribute('href', '/manage/sync');
   });
 
+  it('links to the dedicated sync configuration pages from the legacy manage section', async () => {
+    adminListProvidersMock.mockResolvedValue({
+      data: { items: [] },
+    });
+    adminListProviderSyncRunsMock.mockResolvedValue({
+      data: { items: [] },
+    });
+
+    renderRootAdminPage();
+
+    expect(
+      await screen.findByTestId('root-admin-sync-config-open-page'),
+    ).toHaveAttribute('href', '/manage/sync-config');
+  });
+
   it('searches leagues by name from the manage section', async () => {
     adminListProvidersMock.mockResolvedValue({
       data: { items: [] },

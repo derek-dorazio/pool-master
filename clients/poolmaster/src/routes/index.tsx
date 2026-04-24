@@ -11,12 +11,16 @@ import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { MyLeaguesPage, WelcomePage } from '@/features/leagues/leagues-page';
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminContentConfigurationListPage } from '@/features/root-admin/root-admin-content-configuration-list-page';
+import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin-ingestion-schedule-page';
 import { RootAdminManageHubPage } from '@/features/root-admin/root-admin-manage-hub-page';
 import { RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
 import { RootAdminManageScaffoldPage } from '@/features/root-admin/root-admin-manage-scaffold-page';
 import { RootAdminPage } from '@/features/root-admin/root-admin-page';
+import { RootAdminPollIntervalsPage } from '@/features/root-admin/root-admin-poll-intervals-page';
 import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
 import { RootAdminRunSportSyncPage } from '@/features/root-admin/root-admin-run-sport-sync-page';
+import { RootAdminSportOverridesPage } from '@/features/root-admin/root-admin-sport-overrides-page';
+import { RootAdminSyncConfigPage } from '@/features/root-admin/root-admin-sync-config-page';
 import { RootAdminSyncDashboardPage } from '@/features/root-admin/root-admin-sync-dashboard-page';
 import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
@@ -151,7 +155,19 @@ export const router = createBrowserRouter([
               },
               {
                 path: 'sync-config',
-                element: <RootAdminManageScaffoldPage sectionKey="sync-config" />,
+                element: <RootAdminSyncConfigPage />,
+              },
+              {
+                path: 'sync-config/poll-intervals',
+                element: <RootAdminPollIntervalsPage />,
+              },
+              {
+                path: 'sync-config/ingestion-schedule',
+                element: <RootAdminIngestionSchedulePage />,
+              },
+              {
+                path: 'sync-config/sport-overrides',
+                element: <RootAdminSportOverridesPage />,
               },
             ],
           },

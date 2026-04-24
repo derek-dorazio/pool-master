@@ -30,4 +30,29 @@ describe('RootAdminManageLayout', () => {
     expect(screen.getByText('golf-tiered-pick-6')).toBeInTheDocument();
     expect(screen.getByText('Detail body')).toBeInTheDocument();
   });
+
+  it('renders friendly breadcrumb labels for sync configuration sub-pages', () => {
+    render(
+      <MemoryRouter initialEntries={['/manage/sync-config/poll-intervals']}>
+        <Routes>
+          <Route element={<RootAdminManageLayout />} path="/manage">
+            <Route
+              element={<div>Sync config body</div>}
+              path="sync-config/poll-intervals"
+            />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Manage' })).toHaveAttribute(
+      'href',
+      '/manage',
+    );
+    expect(
+      screen.getByRole('link', { name: 'Sync Configuration' }),
+    ).toHaveAttribute('href', '/manage/sync-config');
+    expect(screen.getByText('Poll Intervals')).toBeInTheDocument();
+    expect(screen.getByText('Sync config body')).toBeInTheDocument();
+  });
 });

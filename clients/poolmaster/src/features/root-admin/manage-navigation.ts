@@ -68,11 +68,10 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     key: 'sync-config',
     title: 'Sync Configuration',
     description:
-      'Poll intervals, ingestion schedule, and sport overrides are staged here while the dedicated edit pages land.',
+      'Poll intervals, ingestion schedule, and sport overrides now live in dedicated edit pages.',
     to: '/manage/sync-config',
-    availability: 'legacy',
-    availabilityLabel: 'Temporary scaffold',
-    legacyHref: '/manage/legacy',
+    availability: 'live',
+    availabilityLabel: 'Live now',
   },
 ];
 
@@ -103,6 +102,18 @@ export function getManageBreadcrumbLabel(segment: string): string {
 
   if (segment === 'run-event-sync') {
     return 'Run Event Sync';
+  }
+
+  if (segment === 'poll-intervals') {
+    return 'Poll Intervals';
+  }
+
+  if (segment === 'ingestion-schedule') {
+    return 'Global Ingestion Schedule';
+  }
+
+  if (segment === 'sport-overrides') {
+    return 'Sport Ingestion Overrides';
   }
 
   const section = MANAGE_SECTION_DEFINITIONS.find(
