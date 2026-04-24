@@ -20,7 +20,11 @@ export function createSquadHandlers(service: SquadService) {
       }, 'Handling list squads request');
       try {
         const userId = request.authUser!.userId;
-        const squads = await service.listSquads(request.params.id, userId);
+        const squads = await service.listSquads(
+          request.params.id,
+          userId,
+          request.authUser?.isRootAdmin === true,
+        );
         logger.info({
           action: 'squadRoute.list.success',
           data: { leagueId: request.params.id, userId, squadCount: squads.length },
@@ -43,7 +47,12 @@ export function createSquadHandlers(service: SquadService) {
       }, 'Handling get squad request');
       try {
         const userId = request.authUser!.userId;
-        const squad = await service.getSquad(request.params.id, request.params.squadId, userId);
+        const squad = await service.getSquad(
+          request.params.id,
+          request.params.squadId,
+          userId,
+          request.authUser?.isRootAdmin === true,
+        );
         logger.info({
           action: 'squadRoute.get.success',
           data: { leagueId: request.params.id, squadId: request.params.squadId, userId },
@@ -121,6 +130,7 @@ export function createSquadHandlers(service: SquadService) {
             name: request.body?.name,
             iconKey: request.body?.iconKey as TeamIconKey | undefined,
           },
+          request.authUser?.isRootAdmin === true,
         );
         logger.info({
           action: 'squadRoute.update.success',
@@ -152,6 +162,7 @@ export function createSquadHandlers(service: SquadService) {
           request.params.id,
           request.params.squadId,
           userId,
+          request.authUser?.isRootAdmin === true,
         );
         logger.info({
           action: 'squadRoute.inactivate.success',
@@ -190,6 +201,7 @@ export function createSquadHandlers(service: SquadService) {
           request.params.squadId,
           userId,
           request.body.userId,
+          request.authUser?.isRootAdmin === true,
         );
         logger.info({
           action: 'squadRoute.addOwner.success',
@@ -228,6 +240,7 @@ export function createSquadHandlers(service: SquadService) {
           request.params.squadId,
           actorUserId,
           request.params.userId,
+          request.authUser?.isRootAdmin === true,
         );
         logger.info({
           action: 'squadRoute.removeOwner.success',

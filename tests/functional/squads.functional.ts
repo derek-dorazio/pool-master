@@ -2,14 +2,17 @@ import {
   acceptInvitation,
   createLeagueSquad,
   generateInviteLink,
+  loginUser,
   listLeagueSquads,
 } from '@poolmaster/shared/generated/hey-api';
 import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
 import {
   cleanupFunctionalData,
+  createAuthenticatedClient,
   disconnectFunctionalPrisma,
   expectFunctionalError,
   getFunctionalPrisma,
+  getSdkClient,
 } from './setup';
 
 afterEach(async () => {
@@ -68,6 +71,12 @@ describe('SDK Functional: Squads', () => {
     expect(commissionerTeam?.leagueId).toBe(league.id);
     expect(commissionerTeam?.status).toBe('ACTIVE');
     expect(commissionerTeam?.memberCount).toBe(1);
+    expect(commissionerTeam?.teamRelationship).toEqual({
+      leagueMember: true,
+      owner: true,
+      commissioner: true,
+    });
+    expect(commissionerTeam?.isRootAdmin).toBe(false);
 
     const inviteeTeam = await getFunctionalPrisma().squad.findFirst({
       where: {
@@ -137,5 +146,48 @@ describe('SDK Functional: Squads', () => {
       status: 400,
       code: 'LEAGUE_MEMBERSHIP_REQUIRED',
     });
+  });
+
+  it('allows a root admin to list league teams without league membership and emits relationship truth', async () => {
+    const { league } = await buildLeagueWithCommissioner({
+      displayName: 'Root Team Commissioner',
+      leagueName: 'Root Team League',
+    });
+    const rootAdmin = await buildRegisteredUser({
+      displayName: 'Root Team Admin',
+    });
+
+    await getFunctionalPrisma().user.update({
+      where: { id: rootAdmin.userId },
+      data: { isRootAdmin: true },
+    });
+
+    const relogin = await loginUser({
+      client: getSdkClient(),
+      body: {
+        identifier: rootAdmin.username,
+        password: rootAdmin.password,
+      },
+    });
+
+    if (!relogin.data) {
+      throw new Error('Expected relogin after root-admin promotion to succeed.');
+    }
+
+    const rootClient = createAuthenticatedClient(relogin.data.tokens.accessToken);
+    const response = await listLeagueSquads({
+      client: rootClient,
+      path: {
+        id: league.id,
+      },
+    });
+
+    expect(response.data?.squads).toHaveLength(1);
+    expect(response.data?.squads[0]?.teamRelationship).toEqual({
+      leagueMember: false,
+      owner: false,
+      commissioner: false,
+    });
+    expect(response.data?.squads[0]?.isRootAdmin).toBe(true);
   });
 });

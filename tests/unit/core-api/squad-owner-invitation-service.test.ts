@@ -266,6 +266,44 @@ describe('SquadOwnerInvitationService', () => {
     expect(result.status).toBe(SquadOwnerInvitationStatus.ACCEPTED);
   });
 
+  it('allows a root admin outsider to list invitations for any team in the league', async () => {
+    const invitationRepo = createInvitationRepo({
+      findByLeague: jest.fn().mockResolvedValue([
+        {
+          id: 'invite-1',
+          leagueId: 'league-1',
+          squadId: 'squad-1',
+          email: 'invitee@example.com',
+          inviteCode: 'invite-code',
+          status: SquadOwnerInvitationStatus.PENDING,
+          invitedBy: 'user-2',
+          acceptedBy: null,
+          acceptedAt: null,
+          expiresAt: new Date('2026-04-23T00:00:00Z'),
+          replacementForUserId: null,
+          createdAt: new Date('2026-04-16T00:00:00Z'),
+          updatedAt: new Date('2026-04-16T00:00:00Z'),
+        },
+      ]),
+    });
+    const membershipRepo = createMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockResolvedValue(null),
+    });
+    const service = new SquadOwnerInvitationService(
+      invitationRepo,
+      membershipRepo,
+      createSquadRepo(),
+      createSquadMembershipRepo(),
+      createPrisma(),
+    );
+
+    const result = await service.listInvitationsForViewer('league-1', 'root-admin-1', true);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.status).toBe(SquadOwnerInvitationStatus.PENDING);
+    expect(invitationRepo.findByLeague).toHaveBeenCalledWith('league-1');
+  });
+
   it('rejects replacing yourself as an owner', async () => {
     const membershipRepo = createMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue({

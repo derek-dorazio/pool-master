@@ -1,5 +1,5 @@
 import type { Squad, SquadMembership } from '@poolmaster/shared/domain';
-import type { SquadDto, SquadMembershipDto } from '@poolmaster/shared/dto';
+import type { SquadDto, SquadMembershipDto, TeamRelationshipDto } from '@poolmaster/shared/dto';
 
 export function toSquadMembershipDto(
   membership: SquadMembership,
@@ -24,6 +24,10 @@ export function toSquadDto(
   squad: Squad,
   memberCount: number,
   members?: SquadMembershipDto[],
+  opts?: {
+    teamRelationship?: TeamRelationshipDto;
+    isRootAdmin?: boolean;
+  },
 ): SquadDto {
   return {
     id: squad.id,
@@ -35,6 +39,12 @@ export function toSquadDto(
     memberCount,
     createdAt: squad.createdAt.toISOString(),
     updatedAt: squad.updatedAt.toISOString(),
+    teamRelationship: opts?.teamRelationship ?? {
+      leagueMember: false,
+      owner: false,
+      commissioner: false,
+    },
+    isRootAdmin: opts?.isRootAdmin ?? false,
     ...(members ? { members } : {}),
   };
 }

@@ -357,7 +357,7 @@ export const importMembers = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * List squads in a league
  *
- * Returns the squads associated with the current league for squad management and contest-entry flows.
+ * Returns the squads associated with the current league for team management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
  */
 export const listLeagueSquads = <ThrowOnError extends boolean = false>(options: Options<ListLeagueSquadsData, ThrowOnError>) => (options.client ?? client).get<ListLeagueSquadsResponses, ListLeagueSquadsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -383,7 +383,7 @@ export const createLeagueSquad = <ThrowOnError extends boolean = false>(options:
 /**
  * Get squad details
  *
- * Returns the detailed squad payload for the requested squad identifier.
+ * Returns the detailed squad payload for the requested squad identifier, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
  */
 export const getLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<GetLeagueSquadData, ThrowOnError>) => (options.client ?? client).get<GetLeagueSquadResponses, GetLeagueSquadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -394,7 +394,7 @@ export const getLeagueSquad = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Update squad details
  *
- * Updates mutable squad fields such as naming and presentation detail.
+ * Updates mutable squad fields such as naming and presentation detail for an active team owner, league commissioner, or root admin.
  */
 export const updateLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<UpdateLeagueSquadData, ThrowOnError>) => (options.client ?? client).patch<UpdateLeagueSquadResponses, UpdateLeagueSquadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -409,7 +409,7 @@ export const updateLeagueSquad = <ThrowOnError extends boolean = false>(options:
 /**
  * Inactivate a team
  *
- * Inactivates the target team, preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any active leagues.
+ * Inactivates the target team, preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any active leagues. Active team owners, league commissioners, and root admins may perform this action.
  */
 export const inactivateLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<InactivateLeagueSquadData, ThrowOnError>) => (options.client ?? client).post<InactivateLeagueSquadResponses, InactivateLeagueSquadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -420,7 +420,7 @@ export const inactivateLeagueSquad = <ThrowOnError extends boolean = false>(opti
 /**
  * Add or reactivate a team owner
  *
- * Adds an owner to the team or reactivates an existing inactive owner membership.
+ * Adds an owner to the team or reactivates an existing inactive owner membership for an active team owner, league commissioner, or root admin.
  */
 export const addSquadOwner = <ThrowOnError extends boolean = false>(options: Options<AddSquadOwnerData, ThrowOnError>) => (options.client ?? client).post<AddSquadOwnerResponses, AddSquadOwnerErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -435,7 +435,7 @@ export const addSquadOwner = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Remove a team owner
  *
- * Removes the owner relationship between the target user and team.
+ * Removes the owner relationship between the target user and team. The backend blocks removal of the final active owner and requires team inactivation instead.
  */
 export const removeSquadOwner = <ThrowOnError extends boolean = false>(options: Options<RemoveSquadOwnerData, ThrowOnError>) => (options.client ?? client).delete<RemoveSquadOwnerResponses, RemoveSquadOwnerErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -446,7 +446,7 @@ export const removeSquadOwner = <ThrowOnError extends boolean = false>(options: 
 /**
  * List team-owner invitations for a league
  *
- * Returns pending and historical team-owner invitations visible to the current commissioner or team owner.
+ * Returns pending and historical team-owner invitations visible to the current commissioner, active team owner, or root admin.
  */
 export const listSquadOwnerInvitations = <ThrowOnError extends boolean = false>(options: Options<ListSquadOwnerInvitationsData, ThrowOnError>) => (options.client ?? client).get<ListSquadOwnerInvitationsResponses, ListSquadOwnerInvitationsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -457,7 +457,7 @@ export const listSquadOwnerInvitations = <ThrowOnError extends boolean = false>(
 /**
  * Invite a co-owner by email
  *
- * Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected.
+ * Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. Active team owners, league commissioners, and root admins may start this flow.
  */
 export const createSquadOwnerInvitation = <ThrowOnError extends boolean = false>(options: Options<CreateSquadOwnerInvitationData, ThrowOnError>) => (options.client ?? client).post<CreateSquadOwnerInvitationResponses, CreateSquadOwnerInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -472,7 +472,7 @@ export const createSquadOwnerInvitation = <ThrowOnError extends boolean = false>
 /**
  * Replace an active team owner
  *
- * Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email.
+ * Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email. Active team owners, league commissioners, and root admins may start this flow.
  */
 export const replaceSquadOwner = <ThrowOnError extends boolean = false>(options: Options<ReplaceSquadOwnerData, ThrowOnError>) => (options.client ?? client).post<ReplaceSquadOwnerResponses, ReplaceSquadOwnerErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -487,7 +487,7 @@ export const replaceSquadOwner = <ThrowOnError extends boolean = false>(options:
 /**
  * Revoke a pending team-owner invitation
  *
- * Revokes a pending co-owner invitation so it can no longer be accepted.
+ * Revokes a pending co-owner invitation so it can no longer be accepted. Active team owners, league commissioners, and root admins may revoke invitations in their allowed scope.
  */
 export const revokeSquadOwnerInvitation = <ThrowOnError extends boolean = false>(options: Options<RevokeSquadOwnerInvitationData, ThrowOnError>) => (options.client ?? client).delete<RevokeSquadOwnerInvitationResponses, RevokeSquadOwnerInvitationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

@@ -104,6 +104,41 @@ function buildLeagueDetail(role: 'COMMISSIONER' | 'MEMBER' = 'COMMISSIONER', isR
   } as const;
 }
 
+function buildTeamSummary(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'team-1',
+    leagueId: 'league-1',
+    createdBy: 'user-1',
+    name: 'Beer Bellies',
+    iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+    status: 'ACTIVE',
+    memberCount: 1,
+    createdAt: '2026-04-16T00:00:00.000Z',
+    updatedAt: '2026-04-16T00:00:00.000Z',
+    teamRelationship: {
+      leagueMember: true,
+      owner: true,
+      commissioner: true,
+    },
+    isRootAdmin: false,
+    members: [
+      {
+        id: 'membership-1',
+        squadId: 'team-1',
+        leagueId: 'league-1',
+        userId: 'user-1',
+        firstName: 'Derek',
+        lastName: 'Dorazio',
+        status: 'ACTIVE',
+        joinedAt: '2026-04-16T00:00:00.000Z',
+        createdAt: '2026-04-16T00:00:00.000Z',
+        updatedAt: '2026-04-16T00:00:00.000Z',
+      },
+    ],
+    ...overrides,
+  };
+}
+
 describe('TeamsPage', () => {
   afterEach(() => {
     getCurrentUserMock.mockReset();
@@ -144,33 +179,7 @@ describe('TeamsPage', () => {
     });
     listLeagueSquadsMock.mockResolvedValue({
       data: {
-        squads: [
-          {
-            id: 'team-1',
-            leagueId: 'league-1',
-            createdBy: 'user-1',
-            name: 'Beer Bellies',
-            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-            status: 'ACTIVE',
-            memberCount: 1,
-            createdAt: '2026-04-16T00:00:00.000Z',
-            updatedAt: '2026-04-16T00:00:00.000Z',
-            members: [
-              {
-                id: 'membership-1',
-                squadId: 'team-1',
-                leagueId: 'league-1',
-                userId: 'user-1',
-                firstName: 'Derek',
-                lastName: 'Dorazio',
-                status: 'ACTIVE',
-                joinedAt: '2026-04-16T00:00:00.000Z',
-                createdAt: '2026-04-16T00:00:00.000Z',
-                updatedAt: '2026-04-16T00:00:00.000Z',
-              },
-            ],
-          },
-        ],
+        squads: [buildTeamSummary()],
       },
     });
     listLeagueMembersMock.mockResolvedValue({
@@ -253,16 +262,8 @@ describe('TeamsPage', () => {
     listLeagueSquadsMock.mockResolvedValue({
       data: {
         squads: [
-          {
-            id: 'team-1',
-            leagueId: 'league-1',
-            createdBy: 'user-1',
-            name: 'Beer Bellies',
-            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-            status: 'ACTIVE',
+          buildTeamSummary({
             memberCount: 2,
-            createdAt: '2026-04-16T00:00:00.000Z',
-            updatedAt: '2026-04-16T00:00:00.000Z',
             members: [
               {
                 id: 'membership-1',
@@ -289,7 +290,7 @@ describe('TeamsPage', () => {
                 updatedAt: '2026-04-16T00:00:00.000Z',
               },
             ],
-          },
+          }),
         ],
       },
     });

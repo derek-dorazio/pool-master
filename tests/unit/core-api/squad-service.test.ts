@@ -169,6 +169,68 @@ describe('SquadService', () => {
     );
   });
 
+  it('allows a root admin outsider to list squads and emits team relationship truth', async () => {
+    const squadRepo = createSquadRepo({
+      findByLeague: jest.fn().mockResolvedValue([
+        {
+          id: 'squad-1',
+          leagueId: 'league-1',
+          createdBy: 'user-2',
+          name: 'Ace Squad',
+          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+          status: SquadStatus.ACTIVE,
+          createdAt: new Date('2026-04-07T00:00:00Z'),
+          updatedAt: new Date('2026-04-07T00:00:00Z'),
+        },
+      ]),
+      findById: jest.fn().mockResolvedValue({
+        id: 'squad-1',
+        leagueId: 'league-1',
+        createdBy: 'user-2',
+        name: 'Ace Squad',
+        iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+        status: SquadStatus.ACTIVE,
+        createdAt: new Date('2026-04-07T00:00:00Z'),
+        updatedAt: new Date('2026-04-07T00:00:00Z'),
+      }),
+    });
+    const squadMembershipRepo = createSquadMembershipRepo({
+      findBySquad: jest.fn().mockResolvedValue([
+        {
+          id: 'membership-2',
+          squadId: 'squad-1',
+          leagueId: 'league-1',
+          userId: 'user-2',
+          status: SquadMembershipStatus.ACTIVE,
+          joinedAt: new Date('2026-04-07T00:00:00Z'),
+          createdAt: new Date('2026-04-07T00:00:00Z'),
+          updatedAt: new Date('2026-04-07T00:00:00Z'),
+        },
+      ]),
+    });
+    const leagueMembershipRepo = createLeagueMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockResolvedValue(null),
+    });
+    prisma.user.findMany.mockResolvedValue([{ id: 'user-2', firstName: 'Fran', lastName: 'Lane' }]);
+
+    const service = new SquadService(
+      squadRepo,
+      squadMembershipRepo,
+      leagueMembershipRepo,
+      prisma,
+    );
+
+    const result = await service.listSquads('league-1', 'root-admin-1', true);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.teamRelationship).toEqual({
+      leagueMember: false,
+      owner: false,
+      commissioner: false,
+    });
+    expect(result[0]?.isRootAdmin).toBe(true);
+  });
+
   it('rejects removing the last active owner and requires team inactivation instead', async () => {
     const squadRepo = createSquadRepo({
       findById: jest.fn().mockResolvedValue({

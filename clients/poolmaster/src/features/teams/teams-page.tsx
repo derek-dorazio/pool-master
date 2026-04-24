@@ -11,7 +11,6 @@ import {
   type ListLeagueSquadsResponses,
   type ListSquadOwnerInvitationsResponses,
 } from '@/lib/api';
-import { useAuth } from '@/features/auth/auth-provider';
 import { buildUserPath } from '@/features/account/user-routing';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
@@ -39,7 +38,6 @@ function getOwnerLabel(firstName?: string, lastName?: string) {
 }
 
 export function TeamsPage() {
-  const auth = useAuth();
   const logger = useLogger().child({
     feature: 'teams-page',
   });
@@ -290,10 +288,10 @@ export function TeamsPage() {
                     {activeOwners.map((owner) => {
                       const leagueMember = leagueMembersByUserId.get(owner.userId);
                       const canManageLeagueRole =
-                        leagueQuery.data.leagueRelationship.commissioner || leagueQuery.data.isRootAdmin;
+                        team.teamRelationship.commissioner || team.isRootAdmin;
                       const canRemoveOwner =
                         canManageLeagueRole
-                        || activeOwners.some((member) => member.userId === auth.user?.id);
+                        || team.teamRelationship.owner;
 
                       return (
                         <div

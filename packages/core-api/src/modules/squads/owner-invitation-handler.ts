@@ -27,7 +27,11 @@ export function createSquadOwnerInvitationHandlers(
       if (!userId) {
         return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
       }
-      const invitations = await service.listInvitations(request.params.id, userId);
+      const invitations = await service.listInvitationsForViewer(
+        request.params.id,
+        userId,
+        request.authUser?.isRootAdmin === true,
+      );
       return reply.send({ invitations });
     } catch (error) {
       return handleOwnerInvitationError(reply, error);
@@ -50,6 +54,7 @@ export function createSquadOwnerInvitationHandlers(
         leagueId: request.params.id,
         squadId: request.params.squadId,
         actorUserId: userId,
+        actorIsRootAdmin: request.authUser?.isRootAdmin === true,
         email: request.body.email,
       });
       return reply.code(201).send({ invitation });
@@ -75,6 +80,7 @@ export function createSquadOwnerInvitationHandlers(
         squadId: request.params.squadId,
         targetUserId: request.params.userId,
         actorUserId,
+        actorIsRootAdmin: request.authUser?.isRootAdmin === true,
         email: request.body.email,
       });
       return reply.code(201).send({ invitation });
@@ -96,6 +102,7 @@ export function createSquadOwnerInvitationHandlers(
         request.params.id,
         request.params.invitationId,
         actorUserId,
+        request.authUser?.isRootAdmin === true,
       );
       return reply.send({ invitation });
     } catch (error) {

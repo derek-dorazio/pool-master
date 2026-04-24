@@ -4871,7 +4871,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Returns the squads associated with the current league for squad management and contest-entry flows.",
+        "description": "Returns the squads associated with the current league for team management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.",
         "parameters": [
           {
             "schema": {
@@ -5039,6 +5039,34 @@
                             "format": "date-time",
                             "description": "When the squad was last updated."
                           },
+                          "teamRelationship": {
+                            "type": "object",
+                            "properties": {
+                              "leagueMember": {
+                                "type": "boolean",
+                                "description": "Whether the current requester is an active member of the team’s parent league."
+                              },
+                              "owner": {
+                                "type": "boolean",
+                                "description": "Whether the current requester is an active owner of this team."
+                              },
+                              "commissioner": {
+                                "type": "boolean",
+                                "description": "Whether the current requester has commissioner authority in the team’s parent league."
+                              }
+                            },
+                            "required": [
+                              "leagueMember",
+                              "owner",
+                              "commissioner"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
+                          },
+                          "isRootAdmin": {
+                            "type": "boolean",
+                            "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data."
+                          },
                           "members": {
                             "type": "array",
                             "items": {
@@ -5117,7 +5145,9 @@
                           "status",
                           "memberCount",
                           "createdAt",
-                          "updatedAt"
+                          "updatedAt",
+                          "teamRelationship",
+                          "isRootAdmin"
                         ],
                         "additionalProperties": false,
                         "description": "Squad detail returned from squad-management APIs."
@@ -5551,6 +5581,34 @@
                           "format": "date-time",
                           "description": "When the squad was last updated."
                         },
+                        "teamRelationship": {
+                          "type": "object",
+                          "properties": {
+                            "leagueMember": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active member of the team’s parent league."
+                            },
+                            "owner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active owner of this team."
+                            },
+                            "commissioner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester has commissioner authority in the team’s parent league."
+                            }
+                          },
+                          "required": [
+                            "leagueMember",
+                            "owner",
+                            "commissioner"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data."
+                        },
                         "members": {
                           "type": "array",
                           "items": {
@@ -5629,7 +5687,9 @@
                         "status",
                         "memberCount",
                         "createdAt",
-                        "updatedAt"
+                        "updatedAt",
+                        "teamRelationship",
+                        "isRootAdmin"
                       ],
                       "additionalProperties": false,
                       "description": "Squad detail returned from squad-management APIs."
@@ -5771,7 +5831,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Returns the detailed squad payload for the requested squad identifier.",
+        "description": "Returns the detailed squad payload for the requested squad identifier, including requester-scoped teamRelationship plus separate global isRootAdmin flags.",
         "parameters": [
           {
             "schema": {
@@ -5945,6 +6005,34 @@
                           "format": "date-time",
                           "description": "When the squad was last updated."
                         },
+                        "teamRelationship": {
+                          "type": "object",
+                          "properties": {
+                            "leagueMember": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active member of the team’s parent league."
+                            },
+                            "owner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active owner of this team."
+                            },
+                            "commissioner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester has commissioner authority in the team’s parent league."
+                            }
+                          },
+                          "required": [
+                            "leagueMember",
+                            "owner",
+                            "commissioner"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data."
+                        },
                         "members": {
                           "type": "array",
                           "items": {
@@ -6023,7 +6111,9 @@
                         "status",
                         "memberCount",
                         "createdAt",
-                        "updatedAt"
+                        "updatedAt",
+                        "teamRelationship",
+                        "isRootAdmin"
                       ],
                       "additionalProperties": false,
                       "description": "Squad detail returned from squad-management APIs."
@@ -6163,7 +6253,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Updates mutable squad fields such as naming and presentation detail.",
+        "description": "Updates mutable squad fields such as naming and presentation detail for an active team owner, league commissioner, or root admin.",
         "requestBody": {
           "required": true,
           "content": {
@@ -6464,6 +6554,34 @@
                           "format": "date-time",
                           "description": "When the squad was last updated."
                         },
+                        "teamRelationship": {
+                          "type": "object",
+                          "properties": {
+                            "leagueMember": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active member of the team’s parent league."
+                            },
+                            "owner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active owner of this team."
+                            },
+                            "commissioner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester has commissioner authority in the team’s parent league."
+                            }
+                          },
+                          "required": [
+                            "leagueMember",
+                            "owner",
+                            "commissioner"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data."
+                        },
                         "members": {
                           "type": "array",
                           "items": {
@@ -6542,7 +6660,9 @@
                         "status",
                         "memberCount",
                         "createdAt",
-                        "updatedAt"
+                        "updatedAt",
+                        "teamRelationship",
+                        "isRootAdmin"
                       ],
                       "additionalProperties": false,
                       "description": "Squad detail returned from squad-management APIs."
@@ -6684,7 +6804,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Inactivates the target team, preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any active leagues.",
+        "description": "Inactivates the target team, preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any active leagues. Active team owners, league commissioners, and root admins may perform this action.",
         "parameters": [
           {
             "schema": {
@@ -6858,6 +6978,34 @@
                           "format": "date-time",
                           "description": "When the squad was last updated."
                         },
+                        "teamRelationship": {
+                          "type": "object",
+                          "properties": {
+                            "leagueMember": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active member of the team’s parent league."
+                            },
+                            "owner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active owner of this team."
+                            },
+                            "commissioner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester has commissioner authority in the team’s parent league."
+                            }
+                          },
+                          "required": [
+                            "leagueMember",
+                            "owner",
+                            "commissioner"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data."
+                        },
                         "members": {
                           "type": "array",
                           "items": {
@@ -6936,7 +7084,9 @@
                         "status",
                         "memberCount",
                         "createdAt",
-                        "updatedAt"
+                        "updatedAt",
+                        "teamRelationship",
+                        "isRootAdmin"
                       ],
                       "additionalProperties": false,
                       "description": "Squad detail returned from squad-management APIs."
@@ -7078,7 +7228,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Adds an owner to the team or reactivates an existing inactive owner membership.",
+        "description": "Adds an owner to the team or reactivates an existing inactive owner membership for an active team owner, league commissioner, or root admin.",
         "requestBody": {
           "required": true,
           "content": {
@@ -7329,7 +7479,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Removes the owner relationship between the target user and team.",
+        "description": "Removes the owner relationship between the target user and team. The backend blocks removal of the final active owner and requires team inactivation instead.",
         "parameters": [
           {
             "schema": {
@@ -7565,7 +7715,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Returns pending and historical team-owner invitations visible to the current commissioner or team owner.",
+        "description": "Returns pending and historical team-owner invitations visible to the current commissioner, active team owner, or root admin.",
         "parameters": [
           {
             "schema": {
@@ -7938,7 +8088,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected.",
+        "description": "Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. Active team owners, league commissioners, and root admins may start this flow.",
         "requestBody": {
           "required": true,
           "content": {
@@ -8339,7 +8489,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email.",
+        "description": "Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email. Active team owners, league commissioners, and root admins may start this flow.",
         "requestBody": {
           "required": true,
           "content": {
@@ -8748,7 +8898,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Revokes a pending co-owner invitation so it can no longer be accepted.",
+        "description": "Revokes a pending co-owner invitation so it can no longer be accepted. Active team owners, league commissioners, and root admins may revoke invitations in their allowed scope.",
         "parameters": [
           {
             "schema": {

@@ -53,7 +53,7 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'List squads in a league',
       description:
-        'Returns the squads associated with the current league for squad management and contest-entry flows.',
+        'Returns the squads associated with the current league for team management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.',
       operationId: 'listLeagueSquads',
       response: {
         200: zodToJsonSchema(SquadListResponseSchema),
@@ -88,7 +88,7 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'Get squad details',
       description:
-        'Returns the detailed squad payload for the requested squad identifier.',
+        'Returns the detailed squad payload for the requested squad identifier, including requester-scoped teamRelationship plus separate global isRootAdmin flags.',
       operationId: 'getLeagueSquad',
       response: {
         200: zodToJsonSchema(SquadResponseSchema),
@@ -105,7 +105,7 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'Update squad details',
       description:
-        'Updates mutable squad fields such as naming and presentation detail.',
+        'Updates mutable squad fields such as naming and presentation detail for an active team owner, league commissioner, or root admin.',
       operationId: 'updateLeagueSquad',
       body: zodToJsonSchema(UpdateSquadRequestSchema),
       response: {
@@ -123,7 +123,7 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'Inactivate a team',
       description:
-        'Inactivates the target team, preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any active leagues.',
+        'Inactivates the target team, preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any active leagues. Active team owners, league commissioners, and root admins may perform this action.',
       operationId: 'inactivateLeagueSquad',
       response: {
         200: zodToJsonSchema(SquadResponseSchema),
@@ -140,7 +140,7 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'Add or reactivate a team owner',
       description:
-        'Adds an owner to the team or reactivates an existing inactive owner membership.',
+        'Adds an owner to the team or reactivates an existing inactive owner membership for an active team owner, league commissioner, or root admin.',
       operationId: 'addSquadOwner',
       body: zodToJsonSchema(AddSquadMemberRequestSchema),
       response: {
@@ -158,7 +158,7 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'Remove a team owner',
       description:
-        'Removes the owner relationship between the target user and team.',
+        'Removes the owner relationship between the target user and team. The backend blocks removal of the final active owner and requires team inactivation instead.',
       operationId: 'removeSquadOwner',
       response: {
         200: zodToJsonSchema(SquadMembershipResponseSchema),
@@ -175,7 +175,7 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'List team-owner invitations for a league',
       description:
-        'Returns pending and historical team-owner invitations visible to the current commissioner or team owner.',
+        'Returns pending and historical team-owner invitations visible to the current commissioner, active team owner, or root admin.',
       operationId: 'listSquadOwnerInvitations',
       response: {
         200: zodToJsonSchema(TeamOwnerInvitationListResponseSchema),
@@ -192,7 +192,7 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'Invite a co-owner by email',
       description:
-        'Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected.',
+        'Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. Active team owners, league commissioners, and root admins may start this flow.',
       operationId: 'createSquadOwnerInvitation',
       body: zodToJsonSchema(CreateSquadOwnerInvitationRequestSchema),
       response: {
@@ -210,7 +210,7 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'Replace an active team owner',
       description:
-        'Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email.',
+        'Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email. Active team owners, league commissioners, and root admins may start this flow.',
       operationId: 'replaceSquadOwner',
       body: zodToJsonSchema(ReplaceSquadOwnerRequestSchema),
       response: {
@@ -228,7 +228,7 @@ export async function squadsModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Squads'],
       summary: 'Revoke a pending team-owner invitation',
       description:
-        'Revokes a pending co-owner invitation so it can no longer be accepted.',
+        'Revokes a pending co-owner invitation so it can no longer be accepted. Active team owners, league commissioners, and root admins may revoke invitations in their allowed scope.',
       operationId: 'revokeSquadOwnerInvitation',
       response: {
         200: zodToJsonSchema(TeamOwnerInvitationResponseSchema),

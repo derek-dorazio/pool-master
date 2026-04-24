@@ -93,7 +93,12 @@ describe('MyTeamHistoryPage', () => {
           iconKey: 'TROPHY',
           memberCount: 2,
           activeContestCount: 2,
-          role: 'MEMBER',
+          memberType: 'MEMBER',
+          leagueRelationship: {
+            leagueMember: true,
+            commissioner: false,
+          },
+          isRootAdmin: false,
           joinPolicy: 'COMMISSIONER_ONLY',
           createdAt: '2026-04-15T00:00:00.000Z',
         },
@@ -112,6 +117,12 @@ describe('MyTeamHistoryPage', () => {
             memberCount: 1,
             createdAt: '2026-04-15T00:00:00.000Z',
             updatedAt: '2026-04-15T00:00:00.000Z',
+            teamRelationship: {
+              leagueMember: true,
+              owner: true,
+              commissioner: false,
+            },
+            isRootAdmin: false,
             members: [
               {
                 id: 'membership-1',

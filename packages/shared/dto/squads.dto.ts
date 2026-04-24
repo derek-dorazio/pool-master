@@ -35,6 +35,21 @@ export const SquadMembershipDtoSchema = z.object({
 }).describe('Squad membership summary.');
 export type SquadMembershipDto = z.infer<typeof SquadMembershipDtoSchema>;
 
+export const TeamRelationshipDtoSchema = z.object({
+  leagueMember: z
+    .boolean()
+    .describe('Whether the current requester is an active member of the team’s parent league.'),
+  owner: z
+    .boolean()
+    .describe('Whether the current requester is an active owner of this team.'),
+  commissioner: z
+    .boolean()
+    .describe('Whether the current requester has commissioner authority in the team’s parent league.'),
+}).describe(
+  'Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.',
+);
+export type TeamRelationshipDto = z.infer<typeof TeamRelationshipDtoSchema>;
+
 export const SquadDtoSchema = z.object({
   id: z.string().uuid(),
   leagueId: z.string().uuid(),
@@ -45,6 +60,10 @@ export const SquadDtoSchema = z.object({
   memberCount: z.number().int().describe('Number of memberships attached to the squad.'),
   createdAt: DateTimeSchema.describe('When the squad was created.'),
   updatedAt: DateTimeSchema.describe('When the squad was last updated.'),
+  teamRelationship: TeamRelationshipDtoSchema,
+  isRootAdmin: z
+    .boolean()
+    .describe('Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.'),
   members: z.array(SquadMembershipDtoSchema).optional().describe('Optional expanded squad membership list.'),
 }).describe('Squad detail returned from squad-management APIs.');
 export type SquadDto = z.infer<typeof SquadDtoSchema>;

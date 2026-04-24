@@ -17,6 +17,15 @@ import { toSquadDto, toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { buildDefaultSquadName } from '../../core/user-name';
 import { inactivateLeagueMemberUnit } from '../leagues/member-lifecycle';
 
+interface SquadViewerContext {
+  userId: string;
+  isRootAdmin: boolean;
+  teamRelationship: {
+    leagueMember: boolean;
+    commissioner: boolean;
+  };
+}
+
 interface CreateSquadInput {
   name?: string;
   iconKey?: TeamIconKey;
@@ -36,15 +45,17 @@ export class SquadService {
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
-  async listSquads(leagueId: string, userId: string): Promise<SquadDto[]> {
+  async listSquads(leagueId: string, userId: string, isRootAdmin = false): Promise<SquadDto[]> {
     this.logger?.debug({
       action: 'squad.list.enter',
       data: { leagueId, userId },
     }, 'Listing squads');
-    await this.requireActiveLeagueMembership(leagueId, userId);
+    const viewerContext = await this.requireSquadViewerContext(leagueId, userId, isRootAdmin);
 
     const squads = await this.squadRepo.findByLeague(leagueId, true);
-    const result = await Promise.all(squads.map(async (squad) => this.loadSquadDto(squad.id)));
+    const result = await Promise.all(
+      squads.map(async (squad) => this.loadSquadDto(squad.id, viewerContext)),
+    );
     this.logger?.info({
       action: 'squad.list.success',
       data: { leagueId, userId, squadCount: result.length },
@@ -52,14 +63,14 @@ export class SquadService {
     return result;
   }
 
-  async getSquad(leagueId: string, squadId: string, userId: string): Promise<SquadDto> {
+  async getSquad(leagueId: string, squadId: string, userId: string, isRootAdmin = false): Promise<SquadDto> {
     this.logger?.debug({
       action: 'squad.get.enter',
       data: { leagueId, squadId, userId },
     }, 'Loading squad');
-    await this.requireActiveLeagueMembership(leagueId, userId);
+    const viewerContext = await this.requireSquadViewerContext(leagueId, userId, isRootAdmin);
     await this.requireLeagueScopedSquad(leagueId, squadId);
-    const squad = await this.loadSquadDto(squadId);
+    const squad = await this.loadSquadDto(squadId, viewerContext);
     this.logger?.info({
       action: 'squad.get.success',
       data: { leagueId, squadId, userId },
@@ -72,7 +83,7 @@ export class SquadService {
       action: 'squad.create.enter',
       data: { leagueId, userId, hasName: Boolean(input.name?.trim()), iconKey: input.iconKey ?? null },
     }, 'Creating squad');
-    await this.requireActiveLeagueMembership(leagueId, userId);
+    const leagueMembership = await this.requireActiveLeagueMembership(leagueId, userId);
     await this.ensureUserCanJoinLeagueSquad(leagueId, userId);
 
     const user = await this.requireUser(userId);
@@ -92,7 +103,14 @@ export class SquadService {
       joinedAt: new Date(),
     });
 
-    const squadDto = await this.loadSquadDto(squad.id);
+    const squadDto = await this.loadSquadDto(squad.id, {
+      userId,
+      isRootAdmin: false,
+      teamRelationship: {
+        leagueMember: true,
+        commissioner: leagueMembership.role === LeagueRole.COMMISSIONER,
+      },
+    });
     this.logger?.info({
       action: 'squad.create.success',
       data: { leagueId, squadId: squad.id, userId },
@@ -105,6 +123,7 @@ export class SquadService {
     squadId: string,
     userId: string,
     input: UpdateSquadInput,
+    isRootAdmin = false,
   ): Promise<SquadDto> {
     this.logger?.debug({
       action: 'squad.update.enter',
@@ -118,12 +137,12 @@ export class SquadService {
         },
       },
     }, 'Updating squad');
-    await this.requireSquadManager(leagueId, squadId, userId);
+    const viewerContext = await this.requireSquadManager(leagueId, squadId, userId, isRootAdmin);
     await this.squadRepo.update(squadId, {
       ...(input.name !== undefined ? { name: input.name.trim() } : {}),
       ...(input.iconKey !== undefined ? { iconKey: input.iconKey } : {}),
     });
-    const squad = await this.loadSquadDto(squadId);
+    const squad = await this.loadSquadDto(squadId, viewerContext);
     this.logger?.info({
       action: 'squad.update.success',
       data: { leagueId, squadId, userId },
@@ -135,19 +154,20 @@ export class SquadService {
     leagueId: string,
     squadId: string,
     userId: string,
+    isRootAdmin = false,
   ): Promise<SquadDto> {
     this.logger?.debug({
       action: 'squad.inactivate.enter',
       data: { leagueId, squadId, userId },
     }, 'Inactivating squad');
-    await this.requireSquadManager(leagueId, squadId, userId);
+    const viewerContext = await this.requireSquadManager(leagueId, squadId, userId, isRootAdmin);
     const squad = await this.requireLeagueScopedSquad(leagueId, squadId);
     if (squad.status === SquadStatus.INACTIVE) {
       this.logger?.warn({
         action: 'squad.inactivate.alreadyInactive',
         data: { leagueId, squadId, userId },
       }, 'Squad already inactive');
-      return this.loadSquadDto(squadId);
+      return this.loadSquadDto(squadId, viewerContext);
     }
 
     const activeMemberships = await this.squadMembershipRepo.findBySquad(squadId);
@@ -170,7 +190,7 @@ export class SquadService {
       await this.squadRepo.update(squadId, { status: SquadStatus.INACTIVE });
     }
 
-    const squadDto = await this.loadSquadDto(squadId);
+    const squadDto = await this.loadSquadDto(squadId, viewerContext);
     this.logger?.info({
       action: 'squad.inactivate.success',
       data: { leagueId, squadId, userId },
@@ -183,13 +203,14 @@ export class SquadService {
     squadId: string,
     actorUserId: string,
     targetUserId: string,
+    isRootAdmin = false,
   ): Promise<SquadMembershipDto> {
     this.logger?.debug({
       action: 'squad.addOwner.enter',
       data: { leagueId, squadId, actorUserId, targetUserId },
     }, 'Adding squad owner');
     const squad = await this.requireLeagueScopedSquad(leagueId, squadId);
-    await this.requireSquadManager(leagueId, squadId, actorUserId);
+    await this.requireSquadManager(leagueId, squadId, actorUserId, isRootAdmin);
     await this.requireActiveLeagueMembership(leagueId, targetUserId);
 
     const existingLeagueMembership = await this.squadMembershipRepo.findByLeagueAndUser(leagueId, targetUserId);
@@ -247,12 +268,13 @@ export class SquadService {
     squadId: string,
     actorUserId: string,
     targetUserId: string,
+    isRootAdmin = false,
   ): Promise<SquadMembershipDto> {
     this.logger?.debug({
       action: 'squad.removeOwner.enter',
       data: { leagueId, squadId, actorUserId, targetUserId },
     }, 'Removing squad owner');
-    await this.requireSquadManager(leagueId, squadId, actorUserId);
+    await this.requireSquadManager(leagueId, squadId, actorUserId, isRootAdmin);
     const membership = await this.squadMembershipRepo.findBySquadAndUser(squadId, targetUserId);
     if (!membership || membership.status !== SquadMembershipStatus.ACTIVE) {
       this.logger?.warn({
@@ -293,7 +315,10 @@ export class SquadService {
     return membershipDto;
   }
 
-  private async loadSquadDto(squadId: Promise<string> | string): Promise<SquadDto> {
+  private async loadSquadDto(
+    squadId: Promise<string> | string,
+    viewerContext: SquadViewerContext,
+  ): Promise<SquadDto> {
     const resolvedSquadId = await squadId;
     const squad = await this.squadRepo.findById(resolvedSquadId);
     if (!squad) {
@@ -317,7 +342,17 @@ export class SquadService {
     const memberCount = memberships.filter(
       (membership) => membership.status === SquadMembershipStatus.ACTIVE,
     ).length;
-    return toSquadDto(squad, memberCount, memberDtos);
+    const teamRelationship = {
+      ...viewerContext.teamRelationship,
+      owner: memberships.some(
+        (membership) =>
+          membership.userId === viewerContext.userId && membership.status === SquadMembershipStatus.ACTIVE,
+      ),
+    };
+    return toSquadDto(squad, memberCount, memberDtos, {
+      teamRelationship,
+      isRootAdmin: viewerContext.isRootAdmin,
+    });
   }
 
   private async loadSquadMembershipDto(membership: {
@@ -365,6 +400,44 @@ export class SquadService {
     return membership;
   }
 
+  private async requireSquadViewerContext(
+    leagueId: string,
+    userId: string,
+    isRootAdmin: boolean,
+  ): Promise<SquadViewerContext> {
+    if (isRootAdmin) {
+      const membership = await this.leagueMembershipRepo.findByLeagueAndUser(leagueId, userId);
+      if (membership?.status === LeagueMembershipStatus.ACTIVE) {
+        return {
+          userId,
+          isRootAdmin: true,
+          teamRelationship: {
+            leagueMember: true,
+            commissioner: membership.role === LeagueRole.COMMISSIONER,
+          },
+        };
+      }
+      return {
+        userId,
+        isRootAdmin: true,
+        teamRelationship: {
+          leagueMember: false,
+          commissioner: false,
+        },
+      };
+    }
+
+    const membership = await this.requireActiveLeagueMembership(leagueId, userId);
+    return {
+      userId,
+      isRootAdmin: false,
+      teamRelationship: {
+        leagueMember: true,
+        commissioner: membership.role === LeagueRole.COMMISSIONER,
+      },
+    };
+  }
+
   private async requireActiveSquadOwner(leagueId: string, squadId: string, userId: string) {
     await this.requireLeagueScopedSquad(leagueId, squadId);
     const membership = await this.squadMembershipRepo.findBySquadAndUser(squadId, userId);
@@ -396,7 +469,31 @@ export class SquadService {
     return membership;
   }
 
-  private async requireSquadManager(leagueId: string, squadId: string, userId: string) {
+  private async requireSquadManager(
+    leagueId: string,
+    squadId: string,
+    userId: string,
+    isRootAdmin: boolean,
+  ): Promise<SquadViewerContext> {
+    if (isRootAdmin) {
+      await this.requireLeagueScopedSquad(leagueId, squadId);
+      this.logger?.debug({
+        action: 'squad.requireManager.rootAdminBypass',
+        data: { leagueId, squadId, userId },
+      }, 'Root admin managing squad');
+      const membership = await this.leagueMembershipRepo.findByLeagueAndUser(leagueId, userId);
+      return {
+        userId,
+        isRootAdmin: true,
+        teamRelationship: {
+          leagueMember: membership?.status === LeagueMembershipStatus.ACTIVE,
+          commissioner:
+            membership?.status === LeagueMembershipStatus.ACTIVE
+            && membership.role === LeagueRole.COMMISSIONER,
+        },
+      };
+    }
+
     const leagueMembership = await this.requireActiveLeagueMembership(leagueId, userId);
     if (leagueMembership.role === LeagueRole.COMMISSIONER) {
       await this.requireLeagueScopedSquad(leagueId, squadId);
@@ -404,10 +501,25 @@ export class SquadService {
         action: 'squad.requireManager.commissionerBypass',
         data: { leagueId, squadId, userId },
       }, 'Commissioner managing squad');
-      return leagueMembership;
+      return {
+        userId,
+        isRootAdmin: false,
+        teamRelationship: {
+          leagueMember: true,
+          commissioner: true,
+        },
+      };
     }
 
-    return this.requireActiveSquadOwner(leagueId, squadId, userId);
+    await this.requireActiveSquadOwner(leagueId, squadId, userId);
+    return {
+      userId,
+      isRootAdmin: false,
+      teamRelationship: {
+        leagueMember: true,
+        commissioner: false,
+      },
+    };
   }
 
   private async ensureUserCanJoinLeagueSquad(leagueId: string, userId: string): Promise<void> {

@@ -28,6 +28,7 @@ interface InviteOwnerInput {
   leagueId: string;
   squadId: string;
   actorUserId: string;
+  actorIsRootAdmin?: boolean;
   email: string;
 }
 
@@ -45,12 +46,21 @@ export class SquadOwnerInvitationService {
   ) {}
 
   async listInvitations(leagueId: string, actorUserId: string): Promise<TeamOwnerInvitationDto[]> {
-    const { isCommissioner, actorSquadMembership } = await this.requireActorContext(
+    return this.listInvitationsForViewer(leagueId, actorUserId, false);
+  }
+
+  async listInvitationsForViewer(
+    leagueId: string,
+    actorUserId: string,
+    actorIsRootAdmin: boolean,
+  ): Promise<TeamOwnerInvitationDto[]> {
+    const { isCommissioner, isRootAdmin, actorSquadMembership } = await this.requireActorContext(
       leagueId,
       actorUserId,
+      actorIsRootAdmin,
     );
     const invitations = await this.invitationRepo.findByLeague(leagueId);
-    const visibleInvitations = isCommissioner
+    const visibleInvitations = isRootAdmin || isCommissioner
       ? invitations
       : invitations.filter((invitation) => invitation.squadId === actorSquadMembership!.squadId);
     return this.mapInvitationDtos(visibleInvitations);
@@ -58,7 +68,12 @@ export class SquadOwnerInvitationService {
 
   async inviteOwner(input: InviteOwnerInput): Promise<TeamOwnerInvitationDto> {
     const normalizedEmail = normalizeEmail(input.email);
-    await this.requireActorCanManageSquad(input.leagueId, input.squadId, input.actorUserId);
+    await this.requireActorCanManageSquad(
+      input.leagueId,
+      input.squadId,
+      input.actorUserId,
+      input.actorIsRootAdmin ?? false,
+    );
     await this.requireActiveSquad(input.leagueId, input.squadId);
 
     const duplicate = await this.invitationRepo.findPendingByLeagueAndEmail(
@@ -104,6 +119,7 @@ export class SquadOwnerInvitationService {
       input.leagueId,
       input.squadId,
       input.actorUserId,
+      input.actorIsRootAdmin ?? false,
     );
     await this.requireActiveSquad(input.leagueId, input.squadId);
 
@@ -132,7 +148,7 @@ export class SquadOwnerInvitationService {
       );
     }
 
-    if (!context.isCommissioner && context.actorSquadMembership?.userId !== input.actorUserId) {
+    if (!context.isRootAdmin && !context.isCommissioner && context.actorSquadMembership?.userId !== input.actorUserId) {
       throw new SquadOwnerInvitationOperationError(
         'Only an active owner on the team can replace another owner',
         'SQUAD_OWNER_REPLACE_FORBIDDEN',
@@ -185,12 +201,18 @@ export class SquadOwnerInvitationService {
     leagueId: string,
     invitationId: string,
     actorUserId: string,
+    actorIsRootAdmin = false,
   ): Promise<TeamOwnerInvitationDto> {
     const invitation = await this.invitationRepo.findById(invitationId);
     if (!invitation || invitation.leagueId !== leagueId) {
       throw new SquadOwnerInvitationNotFoundError(`Team-owner invitation not found: ${invitationId}`);
     }
-    await this.requireActorCanManageSquad(leagueId, invitation.squadId, actorUserId);
+    await this.requireActorCanManageSquad(
+      leagueId,
+      invitation.squadId,
+      actorUserId,
+      actorIsRootAdmin,
+    );
     if (invitation.status !== SharedSquadOwnerInvitationStatus.PENDING) {
       throw new SquadOwnerInvitationOperationError(
         'Only pending team-owner invitations can be revoked',
@@ -276,7 +298,22 @@ export class SquadOwnerInvitationService {
     return membership;
   }
 
-  private async requireActorContext(leagueId: string, actorUserId: string) {
+  private async requireActorContext(
+    leagueId: string,
+    actorUserId: string,
+    actorIsRootAdmin: boolean,
+  ) {
+    if (actorIsRootAdmin) {
+      const membership = await this.membershipRepo.findByLeagueAndUser(leagueId, actorUserId);
+      const isActiveMember = membership?.status === LeagueMembershipStatus.ACTIVE;
+      return {
+        membership: isActiveMember ? membership : null,
+        isCommissioner: isActiveMember ? membership.role === LeagueRole.COMMISSIONER : false,
+        isRootAdmin: true,
+        actorSquadMembership: null,
+      };
+    }
+
     const membership = await this.requireActiveLeagueMembership(leagueId, actorUserId);
     const isCommissioner = membership.role === LeagueRole.COMMISSIONER;
     const actorSquadMembership = isCommissioner
@@ -288,15 +325,20 @@ export class SquadOwnerInvitationService {
         'SQUAD_OWNER_REQUIRED',
       );
     }
-    return { membership, isCommissioner, actorSquadMembership };
+    return { membership, isCommissioner, isRootAdmin: false, actorSquadMembership };
   }
 
   private async requireActorCanManageSquad(
     leagueId: string,
     squadId: string,
     actorUserId: string,
+    actorIsRootAdmin: boolean,
   ) {
-    const context = await this.requireActorContext(leagueId, actorUserId);
+    const context = await this.requireActorContext(leagueId, actorUserId, actorIsRootAdmin);
+    if (context.isRootAdmin) {
+      await this.requireActiveSquad(leagueId, squadId);
+      return context;
+    }
     if (context.isCommissioner) {
       return context;
     }

@@ -160,34 +160,24 @@ export function MyTeamPage() {
   });
 
   const myTeam = useMemo(() => {
-    if (!auth.user?.id) {
-      return null;
-    }
-
-    return teamsQuery.data?.find((team) =>
-      team.members?.some(
-        (member) => member.userId === auth.user?.id && member.status === 'ACTIVE',
-      ),
-    ) ?? null;
-  }, [auth.user?.id, teamsQuery.data]);
+    return teamsQuery.data?.find((team) => team.teamRelationship.owner) ?? null;
+  }, [teamsQuery.data]);
 
   const requestedTeamId = searchParams.get('teamId');
+  const requestedTeam = useMemo(
+    () => teamsQuery.data?.find((team) => team.id === requestedTeamId) ?? null,
+    [requestedTeamId, teamsQuery.data],
+  );
   const selectedTeam = useMemo(() => {
     if (
-      (leagueQuery.data?.leagueRelationship.commissioner || leagueQuery.data?.isRootAdmin === true)
-      && requestedTeamId
+      requestedTeam
+      && (requestedTeam.teamRelationship.commissioner || requestedTeam.isRootAdmin)
     ) {
-      return teamsQuery.data?.find((team) => team.id === requestedTeamId) ?? myTeam;
+      return requestedTeam;
     }
 
     return myTeam;
-  }, [
-    leagueQuery.data?.isRootAdmin,
-    leagueQuery.data?.leagueRelationship.commissioner,
-    myTeam,
-    requestedTeamId,
-    teamsQuery.data,
-  ]);
+  }, [myTeam, requestedTeam]);
 
   const leagueMembersByUserId = useMemo(
     () => new Map((leagueMembersQuery.data ?? []).map((member) => [member.userId, member])),
@@ -351,6 +341,9 @@ export function MyTeamPage() {
     }
 
     if (selectedTeam) {
+      if (!canManageSelectedTeam) {
+        return;
+      }
       await updateTeamMutation.mutateAsync({
         teamId: selectedTeam.id,
         nextTeamName,
@@ -359,6 +352,9 @@ export function MyTeamPage() {
       return;
     }
 
+    if (!canCreateOwnTeam) {
+      return;
+    }
     await createTeamMutation.mutateAsync({ nextTeamName, nextIconKey: selectedIconKey });
   }
 
@@ -389,8 +385,19 @@ export function MyTeamPage() {
   }
 
   const isInactiveLeague = leagueQuery.data.isActive === false;
-  const isCommissioner =
-    leagueQuery.data.leagueRelationship.commissioner || leagueQuery.data.isRootAdmin;
+  const canCreateOwnTeam = leagueQuery.data.leagueRelationship.leagueMember;
+  const canManageSelectedTeam = Boolean(
+    selectedTeam
+    && (selectedTeam.teamRelationship.owner
+      || selectedTeam.teamRelationship.commissioner
+      || selectedTeam.isRootAdmin),
+  );
+  const isManagingAnotherTeam = Boolean(
+    selectedTeam
+    && myTeam
+    && selectedTeam.id !== myTeam.id
+    && (selectedTeam.teamRelationship.commissioner || selectedTeam.isRootAdmin),
+  );
   const isBusy =
     createTeamMutation.isPending
     || updateTeamMutation.isPending
@@ -414,15 +421,17 @@ export function MyTeamPage() {
             </div>
             <div>
               <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                {isCommissioner && selectedTeam && selectedTeam.id !== myTeam?.id ? 'Commissioner team view' : 'Team'}
+                {isManagingAnotherTeam ? 'Commissioner team view' : 'Team'}
               </span>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight">
                 {selectedTeam ? selectedTeam.name : 'Create your team'}
               </h2>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                {isCommissioner && selectedTeam && selectedTeam.id !== myTeam?.id
+                {isManagingAnotherTeam
                   ? 'Commissioners and root admins can use this same team surface to review and update any team in the league.'
-                  : 'Team identity lives inside the league context. This slice adds the built-in icon catalog so your Team can look distinct before owner controls expand.'}
+                  : !selectedTeam && !canCreateOwnTeam
+                    ? 'Select a team from Teams and Owners to manage it here. Root admins can review any team without becoming league members.'
+                    : 'Team identity lives inside the league context. This slice adds the built-in icon catalog so your Team can look distinct before owner controls expand.'}
               </p>
             </div>
           </div>
@@ -460,7 +469,7 @@ export function MyTeamPage() {
               <input
                 className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
                 data-testid="my-team-name"
-                disabled={isInactiveLeague || isBusy}
+                disabled={isInactiveLeague || isBusy || (selectedTeam ? !canManageSelectedTeam : !canCreateOwnTeam)}
                 maxLength={100}
                 onChange={(event) => setTeamName(event.target.value)}
                 value={teamName}
@@ -509,7 +518,7 @@ export function MyTeamPage() {
             <button
               className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
               data-testid="my-team-save"
-              disabled={!teamName.trim() || isInactiveLeague || isBusy}
+                disabled={!teamName.trim() || isInactiveLeague || isBusy || (selectedTeam ? !canManageSelectedTeam : !canCreateOwnTeam)}
               onClick={() => void handleSaveTeam()}
               type="button"
             >
@@ -517,7 +526,9 @@ export function MyTeamPage() {
                 ? 'Saving...'
                 : selectedTeam
                   ? 'Save team'
-                  : 'Create team'}
+                  : canCreateOwnTeam
+                    ? 'Create team'
+                    : 'Choose a team first'}
             </button>
 
             {createTeamMutation.isSuccess && !selectedTeam ? (
@@ -578,7 +589,7 @@ export function MyTeamPage() {
                   <input
                     className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
                     data-testid="my-team-owner-email"
-                    disabled={isInactiveLeague || isBusy}
+                    disabled={isInactiveLeague || isBusy || !canManageSelectedTeam}
                     onChange={(event) => setCoOwnerEmail(event.target.value)}
                     placeholder="owner@example.com"
                     type="email"
@@ -587,7 +598,7 @@ export function MyTeamPage() {
                   <button
                     className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
                     data-testid="my-team-owner-invite"
-                    disabled={isInactiveLeague || isBusy || !coOwnerEmail.trim()}
+                    disabled={isInactiveLeague || isBusy || !canManageSelectedTeam || !coOwnerEmail.trim()}
                     onClick={() => void createOwnerInvitationMutation.mutateAsync(coOwnerEmail.trim())}
                     type="button"
                   >
@@ -646,10 +657,13 @@ export function MyTeamPage() {
                     <div className="flex flex-wrap items-center gap-3">
                       <TeamOwnerActionMenu
                         activeOwnerCount={activeMembers.length}
-                        canManageLeagueRole={isCommissioner}
+                        canManageLeagueRole={
+                          selectedTeam.teamRelationship.commissioner || selectedTeam.isRootAdmin
+                        }
                         canRemoveOwner={
-                          isCommissioner
-                          || activeMembers.some((owner) => owner.userId === auth.user?.id)
+                          selectedTeam.teamRelationship.owner
+                          || selectedTeam.teamRelationship.commissioner
+                          || selectedTeam.isRootAdmin
                         }
                         leagueCode={leagueCode}
                         leagueId={leagueId}
@@ -663,7 +677,7 @@ export function MyTeamPage() {
                         <button
                           className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
                           data-testid={`my-team-open-replace-${member.userId}`}
-                          disabled={isInactiveLeague || isBusy}
+                          disabled={isInactiveLeague || isBusy || !canManageSelectedTeam}
                           onClick={() => {
                             setReplaceTargetUserId((current) => current === member.userId ? null : member.userId);
                             setReplaceEmail('');
@@ -698,7 +712,7 @@ export function MyTeamPage() {
                         <button
                           className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
                           data-testid={`my-team-revoke-owner-invitation-${invitation.id}`}
-                          disabled={isInactiveLeague || isBusy}
+                          disabled={isInactiveLeague || isBusy || !canManageSelectedTeam}
                           onClick={() => void revokeOwnerInvitationMutation.mutateAsync(invitation.id)}
                           type="button"
                         >
@@ -720,7 +734,7 @@ export function MyTeamPage() {
                   <input
                     className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
                     data-testid="my-team-replace-email"
-                    disabled={isInactiveLeague || isBusy}
+                    disabled={isInactiveLeague || isBusy || !canManageSelectedTeam}
                     onChange={(event) => setReplaceEmail(event.target.value)}
                     placeholder="replacement@example.com"
                     type="email"
@@ -729,7 +743,7 @@ export function MyTeamPage() {
                   <button
                     className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
                     data-testid="my-team-replace-submit"
-                    disabled={isInactiveLeague || isBusy || !replaceEmail.trim()}
+                    disabled={isInactiveLeague || isBusy || !canManageSelectedTeam || !replaceEmail.trim()}
                     onClick={() =>
                       void replaceOwnerMutation.mutateAsync({
                         userId: replaceTargetUserId,
@@ -775,7 +789,7 @@ export function MyTeamPage() {
             <button
               className="mt-4 rounded-2xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-60"
               data-testid="my-team-inactivate"
-              disabled={!selectedTeam || isInactiveLeague || isBusy}
+              disabled={!selectedTeam || isInactiveLeague || isBusy || !canManageSelectedTeam}
               onClick={() => void inactivateTeamMutation.mutateAsync()}
               type="button"
             >

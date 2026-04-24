@@ -92,6 +92,41 @@ function buildLeagueDetail(role: 'COMMISSIONER' | 'MEMBER' = 'MEMBER', isRootAdm
   } as const;
 }
 
+function buildTeamSummary(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'team-1',
+    leagueId: 'league-1',
+    createdBy: 'user-1',
+    name: 'Derek Squad',
+    iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+    status: 'ACTIVE',
+    memberCount: 1,
+    createdAt: '2026-04-15T00:00:00.000Z',
+    updatedAt: '2026-04-15T00:00:00.000Z',
+    teamRelationship: {
+      leagueMember: true,
+      owner: true,
+      commissioner: false,
+    },
+    isRootAdmin: false,
+    members: [
+      {
+        id: 'membership-1',
+        squadId: 'team-1',
+        leagueId: 'league-1',
+        userId: 'user-1',
+        firstName: 'Derek',
+        lastName: 'Dorazio',
+        status: 'ACTIVE',
+        joinedAt: '2026-04-15T00:00:00.000Z',
+        createdAt: '2026-04-15T00:00:00.000Z',
+        updatedAt: '2026-04-15T00:00:00.000Z',
+      },
+    ],
+    ...overrides,
+  };
+}
+
 describe('MyTeamPage', () => {
   beforeEach(() => {
     listLeagueMembersMock.mockResolvedValue({ data: { members: [] } });
@@ -172,31 +207,7 @@ describe('MyTeamPage', () => {
     });
     createLeagueSquadMock.mockResolvedValue({
       data: {
-        squad: {
-          id: 'team-1',
-          leagueId: 'league-1',
-          createdBy: 'user-1',
-          name: 'Derek Squad',
-          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-          status: 'ACTIVE',
-          memberCount: 1,
-          createdAt: '2026-04-15T00:00:00.000Z',
-          updatedAt: '2026-04-15T00:00:00.000Z',
-          members: [
-            {
-              id: 'membership-1',
-              squadId: 'team-1',
-              leagueId: 'league-1',
-              userId: 'user-1',
-              firstName: 'Derek',
-              lastName: 'Dorazio',
-              status: 'ACTIVE',
-              joinedAt: '2026-04-15T00:00:00.000Z',
-              createdAt: '2026-04-15T00:00:00.000Z',
-              updatedAt: '2026-04-15T00:00:00.000Z',
-            },
-          ],
-        },
+        squad: buildTeamSummary(),
       },
     });
 
@@ -239,31 +250,9 @@ describe('MyTeamPage', () => {
     listLeagueSquadsMock.mockResolvedValue({
       data: {
         squads: [
-          {
-            id: 'team-1',
-            leagueId: 'league-1',
-            createdBy: 'user-1',
+          buildTeamSummary({
             name: 'Original Team',
-            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-            status: 'ACTIVE',
-            memberCount: 1,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-15T00:00:00.000Z',
-            members: [
-              {
-                id: 'membership-1',
-                squadId: 'team-1',
-                leagueId: 'league-1',
-                userId: 'user-1',
-                firstName: 'Derek',
-                lastName: 'Dorazio',
-                status: 'ACTIVE',
-                joinedAt: '2026-04-15T00:00:00.000Z',
-                createdAt: '2026-04-15T00:00:00.000Z',
-                updatedAt: '2026-04-15T00:00:00.000Z',
-              },
-            ],
-          },
+          }),
         ],
       },
     });
@@ -294,31 +283,10 @@ describe('MyTeamPage', () => {
     });
     updateLeagueSquadMock.mockResolvedValue({
       data: {
-        squad: {
-          id: 'team-1',
-          leagueId: 'league-1',
-          createdBy: 'user-1',
+        squad: buildTeamSummary({
           name: 'Updated Team',
           iconKey: TeamIconKey.TURBO_TURTLE_MIDNIGHT,
-          status: 'ACTIVE',
-          memberCount: 1,
-          createdAt: '2026-04-15T00:00:00.000Z',
-          updatedAt: '2026-04-15T00:00:00.000Z',
-          members: [
-            {
-              id: 'membership-1',
-              squadId: 'team-1',
-              leagueId: 'league-1',
-              userId: 'user-1',
-              firstName: 'Derek',
-              lastName: 'Dorazio',
-              status: 'ACTIVE',
-              joinedAt: '2026-04-15T00:00:00.000Z',
-              createdAt: '2026-04-15T00:00:00.000Z',
-              updatedAt: '2026-04-15T00:00:00.000Z',
-            },
-          ],
-        },
+        }),
       },
     });
 
@@ -362,16 +330,14 @@ describe('MyTeamPage', () => {
     listLeagueSquadsMock.mockResolvedValue({
       data: {
         squads: [
-          {
-            id: 'team-1',
-            leagueId: 'league-1',
-            createdBy: 'user-1',
+          buildTeamSummary({
             name: 'Original Team',
-            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-            status: 'ACTIVE',
             memberCount: 2,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-15T00:00:00.000Z',
+            teamRelationship: {
+              leagueMember: true,
+              owner: true,
+              commissioner: true,
+            },
             members: [
               {
                 id: 'membership-1',
@@ -398,7 +364,7 @@ describe('MyTeamPage', () => {
                 updatedAt: '2026-04-15T00:00:00.000Z',
               },
             ],
-          },
+          }),
         ],
       },
     });
@@ -601,31 +567,9 @@ describe('MyTeamPage', () => {
     listLeagueSquadsMock.mockResolvedValue({
       data: {
         squads: [
-          {
-            id: 'team-1',
-            leagueId: 'league-1',
-            createdBy: 'user-1',
+          buildTeamSummary({
             name: 'Original Team',
-            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-            status: 'ACTIVE',
-            memberCount: 1,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-15T00:00:00.000Z',
-            members: [
-              {
-                id: 'membership-1',
-                squadId: 'team-1',
-                leagueId: 'league-1',
-                userId: 'user-1',
-                firstName: 'Derek',
-                lastName: 'Dorazio',
-                status: 'ACTIVE',
-                joinedAt: '2026-04-15T00:00:00.000Z',
-                createdAt: '2026-04-15T00:00:00.000Z',
-                updatedAt: '2026-04-15T00:00:00.000Z',
-              },
-            ],
-          },
+          }),
         ],
       },
     });
@@ -656,18 +600,12 @@ describe('MyTeamPage', () => {
     });
     inactivateLeagueSquadMock.mockResolvedValue({
       data: {
-        squad: {
-          id: 'team-1',
-          leagueId: 'league-1',
-          createdBy: 'user-1',
+        squad: buildTeamSummary({
           name: 'Original Team',
-          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
           status: 'INACTIVE',
           memberCount: 0,
-          createdAt: '2026-04-15T00:00:00.000Z',
-          updatedAt: '2026-04-15T00:00:00.000Z',
           members: [],
-        },
+        }),
       },
     });
 
@@ -709,31 +647,9 @@ describe('MyTeamPage', () => {
     listLeagueSquadsMock.mockResolvedValue({
       data: {
         squads: [
-          {
-            id: 'team-1',
-            leagueId: 'league-1',
-            createdBy: 'user-1',
+          buildTeamSummary({
             name: 'Original Team',
-            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-            status: 'ACTIVE',
-            memberCount: 1,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-15T00:00:00.000Z',
-            members: [
-              {
-                id: 'membership-1',
-                squadId: 'team-1',
-                leagueId: 'league-1',
-                userId: 'user-1',
-                firstName: 'Derek',
-                lastName: 'Dorazio',
-                status: 'ACTIVE',
-                joinedAt: '2026-04-15T00:00:00.000Z',
-                createdAt: '2026-04-15T00:00:00.000Z',
-                updatedAt: '2026-04-15T00:00:00.000Z',
-              },
-            ],
-          },
+          }),
         ],
       },
     });
@@ -793,16 +709,15 @@ describe('MyTeamPage', () => {
     listLeagueSquadsMock.mockResolvedValue({
       data: {
         squads: [
-          {
-            id: 'team-1',
-            leagueId: 'league-1',
+          buildTeamSummary({
             createdBy: 'user-2',
             name: 'Original Team',
-            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-            status: 'ACTIVE',
             memberCount: 2,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-15T00:00:00.000Z',
+            teamRelationship: {
+              leagueMember: true,
+              owner: true,
+              commissioner: true,
+            },
             members: [
               {
                 id: 'membership-1',
@@ -829,7 +744,7 @@ describe('MyTeamPage', () => {
                 updatedAt: '2026-04-15T00:00:00.000Z',
               },
             ],
-          },
+          }),
         ],
       },
     });

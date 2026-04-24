@@ -2884,6 +2884,27 @@ export type ListLeagueSquadsResponses = {
              */
             updatedAt: string;
             /**
+             * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
+             */
+            teamRelationship: {
+                /**
+                 * Whether the current requester is an active member of the team’s parent league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active owner of this team.
+                 */
+                owner: boolean;
+                /**
+                 * Whether the current requester has commissioner authority in the team’s parent league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.
+             */
+            isRootAdmin: boolean;
+            /**
              * Optional expanded squad membership list.
              */
             members?: Array<{
@@ -3051,6 +3072,27 @@ export type CreateLeagueSquadResponses = {
              */
             updatedAt: string;
             /**
+             * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
+             */
+            teamRelationship: {
+                /**
+                 * Whether the current requester is an active member of the team’s parent league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active owner of this team.
+                 */
+                owner: boolean;
+                /**
+                 * Whether the current requester has commissioner authority in the team’s parent league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.
+             */
+            isRootAdmin: boolean;
+            /**
              * Optional expanded squad membership list.
              */
             members?: Array<{
@@ -3206,6 +3248,27 @@ export type GetLeagueSquadResponses = {
              * When the squad was last updated.
              */
             updatedAt: string;
+            /**
+             * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
+             */
+            teamRelationship: {
+                /**
+                 * Whether the current requester is an active member of the team’s parent league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active owner of this team.
+                 */
+                owner: boolean;
+                /**
+                 * Whether the current requester has commissioner authority in the team’s parent league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.
+             */
+            isRootAdmin: boolean;
             /**
              * Optional expanded squad membership list.
              */
@@ -3375,6 +3438,27 @@ export type UpdateLeagueSquadResponses = {
              */
             updatedAt: string;
             /**
+             * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
+             */
+            teamRelationship: {
+                /**
+                 * Whether the current requester is an active member of the team’s parent league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active owner of this team.
+                 */
+                owner: boolean;
+                /**
+                 * Whether the current requester has commissioner authority in the team’s parent league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.
+             */
+            isRootAdmin: boolean;
+            /**
              * Optional expanded squad membership list.
              */
             members?: Array<{
@@ -3530,6 +3614,27 @@ export type InactivateLeagueSquadResponses = {
              * When the squad was last updated.
              */
             updatedAt: string;
+            /**
+             * Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix.
+             */
+            teamRelationship: {
+                /**
+                 * Whether the current requester is an active member of the team’s parent league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active owner of this team.
+                 */
+                owner: boolean;
+                /**
+                 * Whether the current requester has commissioner authority in the team’s parent league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data.
+             */
+            isRootAdmin: boolean;
             /**
              * Optional expanded squad membership list.
              */
