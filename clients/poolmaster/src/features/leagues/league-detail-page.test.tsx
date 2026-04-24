@@ -6,36 +6,38 @@ import { AuthProvider } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
 import { LeagueDetailPage } from './league-detail-page';
 
-const changeMemberRoleMock = vi.fn();
+const deleteLeagueMock = vi.fn();
 const enterContestMock = vi.fn();
 const generateInviteLinkMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
+const inactivateLeagueMock = vi.fn();
 const leaveLeagueMock = vi.fn();
 const listContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
-const listLeagueMembersMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
 const logoutUserMock = vi.fn();
 const refreshTokenMock = vi.fn();
-const removeMemberMock = vi.fn();
 const sendLeagueInvitationsMock = vi.fn();
+const updateLeagueDetailsMock = vi.fn();
+const updateLeagueIconMock = vi.fn();
 
 vi.mock('@/lib/api', () => ({
-  changeMemberRole: (...args: unknown[]) => changeMemberRoleMock(...args),
+  deleteLeague: (...args: unknown[]) => deleteLeagueMock(...args),
   enterContest: (...args: unknown[]) => enterContestMock(...args),
   generateInviteLink: (...args: unknown[]) => generateInviteLinkMock(...args),
   getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
   getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
+  inactivateLeague: (...args: unknown[]) => inactivateLeagueMock(...args),
   leaveLeague: (...args: unknown[]) => leaveLeagueMock(...args),
   listContestEntries: (...args: unknown[]) => listContestEntriesMock(...args),
   listContests: (...args: unknown[]) => listContestsMock(...args),
-  listLeagueMembers: (...args: unknown[]) => listLeagueMembersMock(...args),
   listLeagueSquads: (...args: unknown[]) => listLeagueSquadsMock(...args),
   logoutUser: (...args: unknown[]) => logoutUserMock(...args),
   refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
-  removeMember: (...args: unknown[]) => removeMemberMock(...args),
   sendLeagueInvitations: (...args: unknown[]) => sendLeagueInvitationsMock(...args),
+  updateLeagueDetails: (...args: unknown[]) => updateLeagueDetailsMock(...args),
+  updateLeagueIcon: (...args: unknown[]) => updateLeagueIconMock(...args),
 }));
 
 function renderLeagueDetailPage() {
@@ -53,8 +55,11 @@ function renderLeagueDetailPage() {
         <MemoryRouter initialEntries={['/league/BIGDAWGS']}>
           <Routes>
             <Route element={<LeagueDetailPage />} path="/league/:leagueCode" />
-            <Route element={<div data-testid="team-page" />} path="/league/:leagueCode/team" />
-            <Route element={<div data-testid="contest-page" />} path="/contests/:contestId" />
+            <Route element={<div data-testid="team-page" />} path="/league/:leagueCode/teams/:teamId" />
+            <Route
+              element={<div data-testid="contest-page" />}
+              path="/league/:leagueCode/contests/:contestId"
+            />
             <Route element={<div data-testid="welcome-page" />} path="/welcome" />
           </Routes>
         </MemoryRouter>
@@ -63,7 +68,15 @@ function renderLeagueDetailPage() {
   );
 }
 
-function primeCommonMocks() {
+function primeCommonMocks({
+  isRootAdmin = false,
+  leagueRole = 'COMMISSIONER',
+  isActive = true,
+}: {
+  isRootAdmin?: boolean;
+  leagueRole?: 'COMMISSIONER' | 'MEMBER';
+  isActive?: boolean;
+} = {}) {
   getCurrentUserMock.mockResolvedValue({
     data: {
       user: {
@@ -72,7 +85,7 @@ function primeCommonMocks() {
         firstName: 'Casey',
         lastName: 'Commissioner',
         isActive: true,
-        isRootAdmin: false,
+        isRootAdmin,
         createdAt: '2026-04-15T00:00:00.000Z',
       },
     },
@@ -85,11 +98,11 @@ function primeCommonMocks() {
         leagueCode: 'BIGDAWGS',
         name: 'Big Dawgs',
         description: 'A test league',
-        isActive: true,
+        isActive,
         iconKey: 'TROPHY',
         memberCount: 2,
-        activeContestCount: 0,
-        role: 'COMMISSIONER',
+        activeContestCount: 1,
+        role: leagueRole,
         joinPolicy: 'COMMISSIONER_ONLY',
         createdAt: '2026-04-15T00:00:00.000Z',
       },
@@ -131,64 +144,44 @@ function primeCommonMocks() {
       ],
     },
   });
-  listLeagueMembersMock.mockResolvedValue({
-    data: {
-      members: [
-        {
-          id: 'membership-1',
-          userId: 'user-1',
-          email: 'commissioner@example.com',
-          firstName: 'Casey',
-          lastName: 'Commissioner',
-          role: 'COMMISSIONER',
-          joinedAt: '2026-04-15T00:00:00.000Z',
-        },
-        {
-          id: 'membership-2',
-          userId: 'user-2',
-          email: 'member@example.com',
-          firstName: 'Morgan',
-          lastName: 'Member',
-          role: 'MEMBER',
-          joinedAt: '2026-04-16T00:00:00.000Z',
-        },
-      ],
-    },
-  });
 }
 
 describe('LeagueDetailPage', () => {
   afterEach(() => {
-    changeMemberRoleMock.mockReset();
+    deleteLeagueMock.mockReset();
     enterContestMock.mockReset();
     generateInviteLinkMock.mockReset();
     getCurrentUserMock.mockReset();
     getLeagueByCodeMock.mockReset();
+    inactivateLeagueMock.mockReset();
     leaveLeagueMock.mockReset();
     listContestEntriesMock.mockReset();
     listContestsMock.mockReset();
-    listLeagueMembersMock.mockReset();
     listLeagueSquadsMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
-    removeMemberMock.mockReset();
     sendLeagueInvitationsMock.mockReset();
+    updateLeagueDetailsMock.mockReset();
+    updateLeagueIconMock.mockReset();
     useSessionStore.getState().clearSession();
   });
 
-  it('allows a commissioner to promote a member from the roster', async () => {
+  it('lets a commissioner update league details inline on league home', async () => {
     primeCommonMocks();
-    changeMemberRoleMock.mockResolvedValue({
+    updateLeagueDetailsMock.mockResolvedValue({
       data: {
-        membership: {
-          id: 'membership-2',
-          leagueId: 'league-1',
-          userId: 'user-2',
+        league: {
+          id: 'league-1',
+          leagueCode: 'BIGDAWGS',
+          name: 'Bigger Dawgs',
+          description: 'Updated description',
+          isActive: true,
+          iconKey: 'TROPHY',
+          memberCount: 2,
+          activeContestCount: 1,
           role: 'COMMISSIONER',
-          status: 'ACTIVE',
-          joinedAt: '2026-04-16T00:00:00.000Z',
-          createdAt: '2026-04-16T00:00:00.000Z',
-          updatedAt: '2026-04-16T00:00:00.000Z',
+          joinPolicy: 'COMMISSIONER_ONLY',
+          createdAt: '2026-04-15T00:00:00.000Z',
         },
       },
     });
@@ -196,12 +189,21 @@ describe('LeagueDetailPage', () => {
     renderLeagueDetailPage();
 
     await screen.findByTestId('league-home');
-    fireEvent.click(screen.getByTestId('league-member-promote-membership-2'));
+    fireEvent.change(screen.getByTestId('league-details-name'), {
+      target: { value: 'Bigger Dawgs' },
+    });
+    fireEvent.change(screen.getByTestId('league-details-description'), {
+      target: { value: 'Updated description' },
+    });
+    fireEvent.click(screen.getByTestId('league-save-details'));
 
     await waitFor(() =>
-      expect(changeMemberRoleMock).toHaveBeenCalledWith({
-        path: { id: 'league-1', uid: 'user-2' },
-        body: { role: 'COMMISSIONER' },
+      expect(updateLeagueDetailsMock).toHaveBeenCalledWith({
+        path: { id: 'league-1' },
+        body: {
+          name: 'Bigger Dawgs',
+          description: 'Updated description',
+        },
       }),
     );
   });
@@ -311,134 +313,27 @@ describe('LeagueDetailPage', () => {
     expect(screen.getByTestId('league-create-entry-contest-1')).toHaveTextContent('Create entry');
   });
 
-  it('creates another entry for the current team from league home', async () => {
-    primeCommonMocks();
-    listContestsMock.mockResolvedValue({
+  it('lets a root admin delete an inactive league after confirmation', async () => {
+    primeCommonMocks({ isRootAdmin: true, leagueRole: 'MEMBER', isActive: false });
+    deleteLeagueMock.mockResolvedValue({
       data: {
-        contests: [
-          {
-            id: 'contest-1',
-            name: 'Masters Pick 6',
-            status: 'OPEN',
-            contestType: 'SINGLE_EVENT',
-            selectionType: 'TIERED',
-            scoringEngine: 'STROKE_PLAY',
-            leagueId: 'league-1',
-            sport: 'GOLF',
-            entryCount: 1,
-          },
-        ],
-      },
-    });
-    listContestEntriesMock.mockResolvedValue({
-      data: {
-        contestId: 'contest-1',
-        total: 1,
-        isJoined: true,
-        myEntryId: 'entry-1',
-        myEntryIds: ['entry-1'],
-        entries: [
-          {
-            id: 'entry-1',
-            contestId: 'contest-1',
-            squadId: 'team-1',
-            squadName: 'Casey Crushers',
-            entryNumber: 1,
-            name: 'Casey Crushers Entry 1',
-            status: 'ACTIVE',
-            totalScore: 7,
-            standingsPosition: 3,
-            isEliminated: false,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-15T00:00:00.000Z',
-          },
-        ],
-      },
-    });
-    enterContestMock.mockResolvedValue({
-      data: {
-        contestId: 'contest-1',
-        entry: {
-          id: 'entry-2',
-          contestId: 'contest-1',
-          squadId: 'team-1',
-          squadName: 'Casey Crushers',
-          entryNumber: 2,
-          name: 'Casey Crushers Entry 2',
-          status: 'ACTIVE',
-          totalScore: 0,
-          standingsPosition: undefined,
-          isEliminated: false,
-          createdAt: '2026-04-15T00:00:00.000Z',
-          updatedAt: '2026-04-15T00:00:00.000Z',
-        },
+        success: true,
       },
     });
 
     renderLeagueDetailPage();
 
-    expect(await screen.findByTestId('league-create-entry-contest-1')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('league-create-entry-contest-1'));
+    await screen.findByTestId('league-home');
+    fireEvent.change(screen.getByTestId('league-delete-confirmation'), {
+      target: { value: 'BIGDAWGS' },
+    });
+    fireEvent.click(screen.getByTestId('league-delete-submit'));
 
     await waitFor(() =>
-      expect(enterContestMock).toHaveBeenCalledWith({
-        path: { contestId: 'contest-1' },
+      expect(deleteLeagueMock).toHaveBeenCalledWith({
+        path: { id: 'league-1' },
+        body: { leagueCode: 'BIGDAWGS' },
       }),
-    );
-  });
-
-  it('shows completed contests in a league history section', async () => {
-    primeCommonMocks();
-    listContestsMock.mockResolvedValue({
-      data: {
-        contests: [
-          {
-            id: 'contest-history-1',
-            name: 'Masters 2026',
-            status: 'COMPLETED',
-            contestType: 'SINGLE_EVENT',
-            selectionType: 'TIERED',
-            scoringEngine: 'STROKE_PLAY',
-            leagueId: 'league-1',
-            sport: 'GOLF',
-            entryCount: 12,
-          },
-        ],
-      },
-    });
-    listContestEntriesMock.mockResolvedValue({
-      data: {
-        contestId: 'contest-history-1',
-        total: 1,
-        isJoined: true,
-        myEntryId: 'entry-history-1',
-        myEntryIds: ['entry-history-1'],
-        entries: [
-          {
-            id: 'entry-history-1',
-            contestId: 'contest-history-1',
-            squadId: 'team-1',
-            squadName: 'Casey Crushers',
-            entryNumber: 1,
-            name: 'Casey Crushers Entry 1',
-            status: 'ACTIVE',
-            totalScore: -34,
-            standingsPosition: 1,
-            isEliminated: false,
-            createdAt: '2026-04-01T00:00:00.000Z',
-            updatedAt: '2026-04-12T22:30:00.000Z',
-          },
-        ],
-      },
-    });
-
-    renderLeagueDetailPage();
-
-    expect(await screen.findByTestId('league-history-contest-contest-history-1')).toHaveTextContent(
-      'Masters 2026',
-    );
-    expect(screen.getByTestId('league-history-open-contest-history-1')).toHaveTextContent(
-      'Open contest history',
     );
   });
 });

@@ -2,46 +2,42 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  changeMemberRole,
+  deleteLeague,
   enterContest,
   generateInviteLink,
   getLeagueByCode,
+  inactivateLeague,
   leaveLeague,
   listContestEntries,
   listContests,
-  listLeagueMembers,
   listLeagueSquads,
-  removeMember,
   sendLeagueInvitations,
-  type ChangeMemberRoleResponses,
+  updateLeagueDetails,
+  updateLeagueIcon,
   type GetLeagueResponses,
   type LeaveLeagueResponses,
   type ListContestEntriesResponses,
   type ListContestsResponses,
-  type ListLeagueMembersResponses,
   type ListLeagueSquadsResponses,
-  type RemoveMemberResponses,
 } from '@/lib/api';
-import { formatUserName } from '@/features/account/user-name';
 import { useAuth } from '@/features/auth/auth-provider';
+import { useLogger } from '@/lib/logger';
+import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { LeagueIcon } from './league-icon';
+import { getLeagueLoadErrorCopy } from './league-load-error';
 import {
   buildInvitePath,
   buildLeagueContestCreatePath,
-  buildLeagueTeamPath,
+  buildLeagueContestPath,
+  buildLeagueTeamHomePath,
   buildLeagueTeamsPath,
   setRecentLeagueCode,
 } from './league-routing';
-import { getLeagueLoadErrorCopy } from './league-load-error';
-import { useLogger } from '@/lib/logger';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
-type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
 type ContestSummary = ListContestsResponses[200]['contests'][number];
 type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 type ContestEntrySummary = ListContestEntriesResponses[200]['entries'][number];
-type ChangeRoleResponse = ChangeMemberRoleResponses[200]['membership'];
-type RemoveMemberResponse = RemoveMemberResponses[200];
 type LeaveLeagueResponse = LeaveLeagueResponses[200];
 
 function formatRole(role: string | undefined) {
@@ -53,19 +49,6 @@ function formatRole(role: string | undefined) {
     .split('_')
     .map((part) => part.slice(0, 1).toUpperCase() + part.slice(1).toLowerCase())
     .join(' ');
-}
-
-function formatJoinedAt(value: string | undefined) {
-  if (!value) {
-    return 'Joined recently';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return 'Joined recently';
-  }
-
-  return `Joined ${parsed.toLocaleDateString()}`;
 }
 
 function isHistoricalContest(status: ContestSummary['status']) {
@@ -111,8 +94,11 @@ export function LeagueDetailPage() {
   });
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLink, setInviteLink] = useState('');
-  const [memberActionError, setMemberActionError] = useState<string | null>(null);
   const [leaveActionError, setLeaveActionError] = useState<string | null>(null);
+  const [detailsName, setDetailsName] = useState('');
+  const [detailsDescription, setDetailsDescription] = useState('');
+  const [selectedIconKey, setSelectedIconKey] = useState<LeagueDetail['iconKey']>('TROPHY');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   const leagueQuery = useQuery({
     queryKey: ['poolmaster', 'league', leagueCode],
@@ -136,6 +122,16 @@ export function LeagueDetailPage() {
   }, [leagueQuery.data?.leagueCode]);
 
   useEffect(() => {
+    if (!leagueQuery.data) {
+      return;
+    }
+
+    setDetailsName(leagueQuery.data.name);
+    setDetailsDescription(leagueQuery.data.description ?? '');
+    setSelectedIconKey(leagueQuery.data.iconKey);
+  }, [leagueQuery.data]);
+
+  useEffect(() => {
     if (!leagueQuery.isError) {
       return;
     }
@@ -153,21 +149,6 @@ export function LeagueDetailPage() {
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   const leagueId = leagueQuery.data?.id ?? '';
-
-  const membersQuery = useQuery({
-    queryKey: ['poolmaster', 'league-members', leagueId],
-    queryFn: async (): Promise<LeagueMember[]> => {
-      const response = await listLeagueMembers({ path: { id: leagueId } });
-
-      if (!response.data?.members) {
-        throw response.error ?? new Error('League members response is missing data.');
-      }
-
-      return response.data.members;
-    },
-    enabled: Boolean(leagueId),
-    retry: false,
-  });
 
   const contestsQuery = useQuery({
     queryKey: ['poolmaster', 'league-contests', leagueId],
@@ -199,122 +180,11 @@ export function LeagueDetailPage() {
     retry: false,
   });
 
-  const inviteLinkMutation = useMutation({
-    mutationFn: async (): Promise<string> => {
-      const response = await generateInviteLink({
-        path: { id: leagueId },
-        body: {},
-      });
-
-      const inviteCode = response.data?.invitation?.inviteCode;
-      if (!inviteCode) {
-        throw response.error ?? new Error('Invite link generation did not return an invite code.');
-      }
-
-      return `${window.location.origin}${buildInvitePath(inviteCode)}`;
-    },
-  });
-
-  const sendInviteMutation = useMutation({
-    mutationFn: async (email: string) => {
-      const response = await sendLeagueInvitations({
-        path: { id: leagueId },
-        body: {
-          emails: [email],
-        },
-      });
-
-      if (!response.data) {
-        throw response.error ?? new Error('Invitation send response is missing data.');
-      }
-
-      return response.data;
-    },
-  });
-
-  const changeRoleMutation = useMutation({
-    mutationFn: async ({
-      targetUserId,
-      role,
-    }: {
-      targetUserId: string;
-      role: 'COMMISSIONER' | 'MEMBER';
-    }): Promise<ChangeRoleResponse> => {
-      const response = await changeMemberRole({
-        path: { id: leagueId, uid: targetUserId },
-        body: { role },
-      });
-
-      if (!response.data?.membership) {
-        throw response.error ?? new Error('Role update response is missing data.');
-      }
-
-      return response.data.membership;
-    },
-    onSuccess: async () => {
-      setMemberActionError(null);
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-members', leagueId] });
-    },
-    onError: (error) => {
-      setMemberActionError(
-        extractErrorMessage(error, 'We could not update that league role right now.'),
-      );
-    },
-  });
-
-  const removeMemberMutation = useMutation({
-    mutationFn: async (targetUserId: string): Promise<RemoveMemberResponse> => {
-      const response = await removeMember({
-        path: { id: leagueId, uid: targetUserId },
-      });
-
-      if (!response.data) {
-        throw response.error ?? new Error('Member removal response is missing data.');
-      }
-
-      return response.data;
-    },
-    onSuccess: async () => {
-      setMemberActionError(null);
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', leagueCode] });
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-members', leagueId] });
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
-    },
-    onError: (error) => {
-      setMemberActionError(
-        extractErrorMessage(error, 'We could not remove that member right now.'),
-      );
-    },
-  });
-
-  const leaveLeagueMutation = useMutation({
-    mutationFn: async (): Promise<LeaveLeagueResponse> => {
-      const response = await leaveLeague({
-        path: { id: leagueId },
-      });
-
-      if (!response.data) {
-        throw response.error ?? new Error('Leave league response is missing data.');
-      }
-
-      return response.data;
-    },
-    onSuccess: async () => {
-      setLeaveActionError(null);
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-members', leagueId] });
-      void navigate('/welcome');
-    },
-    onError: (error) => {
-      setLeaveActionError(
-        extractErrorMessage(error, 'We could not complete that leave request right now.'),
-      );
-    },
-  });
-
   const isCommissioner = leagueQuery.data?.role === 'COMMISSIONER';
+  const canManageLeague = isCommissioner || auth.isRootAdmin;
   const isInactiveLeague = leagueQuery.data?.isActive === false;
   const currentUserId = auth.user?.id;
+
   const myTeam = useMemo(() => {
     if (!currentUserId) {
       return null;
@@ -324,11 +194,14 @@ export function LeagueDetailPage() {
       team.members?.some((member) => member.userId === currentUserId && member.status === 'ACTIVE'),
     ) ?? null;
   }, [currentUserId, teamsQuery.data]);
-  const activeCommissionerCount =
-    membersQuery.data?.filter((member) => member.role === 'COMMISSIONER').length ?? 0;
 
   const contestEntriesByContestQuery = useQuery({
-    queryKey: ['poolmaster', 'league-contest-entries', myTeam?.id, contestsQuery.data?.map((contest) => contest.id).join(',')],
+    queryKey: [
+      'poolmaster',
+      'league-contest-entries',
+      myTeam?.id,
+      contestsQuery.data?.map((contest) => contest.id).join(','),
+    ],
     queryFn: async (): Promise<Record<string, ListContestEntriesResponses[200]>> => {
       if (!myTeam || !contestsQuery.data) {
         return {};
@@ -370,9 +243,158 @@ export function LeagueDetailPage() {
         myTeamEntries,
       };
     });
-  }, [contestEntriesByContestQuery.data, contestEntriesByContestQuery.isError, contestEntriesByContestQuery.isLoading, contestsQuery.data, myTeam]);
+  }, [
+    contestEntriesByContestQuery.data,
+    contestEntriesByContestQuery.isError,
+    contestEntriesByContestQuery.isLoading,
+    contestsQuery.data,
+    myTeam,
+  ]);
+
   const activeContestCards = contestCards.filter((card) => !isHistoricalContest(card.contest.status));
   const historicalContestCards = contestCards.filter((card) => isHistoricalContest(card.contest.status));
+
+  const inviteLinkMutation = useMutation({
+    mutationFn: async (): Promise<string> => {
+      const response = await generateInviteLink({
+        path: { id: leagueId },
+        body: {},
+      });
+
+      const inviteCode = response.data?.invitation?.inviteCode;
+      if (!inviteCode) {
+        throw response.error ?? new Error('Invite link generation did not return an invite code.');
+      }
+
+      return `${window.location.origin}${buildInvitePath(inviteCode)}`;
+    },
+  });
+
+  const sendInviteMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await sendLeagueInvitations({
+        path: { id: leagueId },
+        body: {
+          emails: [email],
+        },
+      });
+
+      if (!response.data) {
+        throw response.error ?? new Error('Invitation send response is missing data.');
+      }
+
+      return response.data;
+    },
+  });
+
+  const updateDetailsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await updateLeagueDetails({
+        path: { id: leagueId },
+        body: {
+          name: detailsName.trim(),
+          ...(detailsDescription.trim() ? { description: detailsDescription.trim() } : {}),
+        },
+      });
+
+      if (!response.data?.league) {
+        throw response.error ?? new Error('League details update response is missing data.');
+      }
+
+      return response.data.league;
+    },
+    onSuccess: async (league) => {
+      setDetailsName(league.name);
+      setDetailsDescription(league.description ?? '');
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', leagueCode] });
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+    },
+  });
+
+  const updateIconMutation = useMutation({
+    mutationFn: async () => {
+      const response = await updateLeagueIcon({
+        path: { id: leagueId },
+        body: { iconKey: selectedIconKey },
+      });
+
+      if (!response.data?.league) {
+        throw response.error ?? new Error('League icon update response is missing data.');
+      }
+
+      return response.data.league;
+    },
+    onSuccess: async (league) => {
+      setSelectedIconKey(league.iconKey);
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', leagueCode] });
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+    },
+  });
+
+  const inactivateLeagueMutation = useMutation({
+    mutationFn: async () => {
+      const response = await inactivateLeague({
+        path: { id: leagueId },
+      });
+
+      if (!response.data?.league) {
+        throw response.error ?? new Error('League inactivation response is missing data.');
+      }
+
+      return response.data.league;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', leagueCode] });
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+    },
+  });
+
+  const deleteLeagueMutation = useMutation({
+    mutationFn: async () => {
+      if (!leagueQuery.data) {
+        throw new Error('League detail response is missing data.');
+      }
+
+      const response = await deleteLeague({
+        path: { id: leagueId },
+        body: { leagueCode: leagueQuery.data.leagueCode },
+      });
+
+      if (!response.data?.success) {
+        throw response.error ?? new Error('League delete response is missing data.');
+      }
+
+      return response.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+      void navigate('/welcome');
+    },
+  });
+
+  const leaveLeagueMutation = useMutation({
+    mutationFn: async (): Promise<LeaveLeagueResponse> => {
+      const response = await leaveLeague({
+        path: { id: leagueId },
+      });
+
+      if (!response.data) {
+        throw response.error ?? new Error('Leave league response is missing data.');
+      }
+
+      return response.data;
+    },
+    onSuccess: async () => {
+      setLeaveActionError(null);
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+      void navigate('/welcome');
+    },
+    onError: (error) => {
+      setLeaveActionError(
+        extractErrorMessage(error, 'We could not complete that leave request right now.'),
+      );
+    },
+  });
 
   const createContestEntryMutation = useMutation({
     mutationFn: async (contestId: string) => {
@@ -423,39 +445,6 @@ export function LeagueDetailPage() {
     setInviteEmail('');
   }
 
-  async function handlePromoteMember(member: LeagueMember) {
-    setMemberActionError(null);
-    try {
-      await changeRoleMutation.mutateAsync({
-        targetUserId: member.userId,
-        role: 'COMMISSIONER',
-      });
-    } catch {
-      // Error state is handled by the mutation onError callback.
-    }
-  }
-
-  async function handleDemoteMember(member: LeagueMember) {
-    setMemberActionError(null);
-    try {
-      await changeRoleMutation.mutateAsync({
-        targetUserId: member.userId,
-        role: 'MEMBER',
-      });
-    } catch {
-      // Error state is handled by the mutation onError callback.
-    }
-  }
-
-  async function handleRemoveMember(member: LeagueMember) {
-    setMemberActionError(null);
-    try {
-      await removeMemberMutation.mutateAsync(member.userId);
-    } catch {
-      // Error state is handled by the mutation onError callback.
-    }
-  }
-
   async function handleLeaveLeague() {
     setLeaveActionError(null);
     try {
@@ -478,15 +467,17 @@ export function LeagueDetailPage() {
     return (
       <section className="rounded-[2rem] border border-border bg-card p-8">
         <h2 className="text-2xl font-semibold">{copy.title}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {copy.body}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{copy.body}</p>
         <Link className="mt-4 inline-flex text-sm font-medium text-primary hover:underline" to="/welcome">
           Back to welcome
         </Link>
       </section>
     );
   }
+
+  const canEditLeague = canManageLeague && !isInactiveLeague;
+  const canDeleteLeague =
+    auth.isRootAdmin && isInactiveLeague && deleteConfirmation.trim().toUpperCase() === leagueQuery.data.leagueCode;
 
   return (
     <section className="space-y-6" data-testid="league-home">
@@ -497,35 +488,10 @@ export function LeagueDetailPage() {
         >
           <h2 className="text-xl font-semibold">This league is not currently active.</h2>
           <p className="mt-2 text-sm text-amber-900/90">
-            The league home stays available in read-only mode so members can still review the
-            league context. Commissioner actions are disabled while this league remains inactive.
+            League Home stays available in read-only mode while the league is inactive.
+            Commissioner edits and invites are disabled until the league is reactivated in a later
+            lifecycle slice.
           </p>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            {isCommissioner ? (
-              <button
-                className="rounded-2xl border border-amber-300 bg-white px-4 py-3 text-sm font-medium text-amber-950 disabled:cursor-not-allowed disabled:opacity-70"
-                data-testid="league-reactivate"
-                disabled
-                title="Reactivation and renewal tools will be added in a later slice."
-                type="button"
-              >
-                Reactivate league
-              </button>
-            ) : (
-              <button
-                className="rounded-2xl border border-amber-300 bg-white px-4 py-3 text-sm font-medium text-amber-950 disabled:cursor-not-allowed disabled:opacity-70"
-                data-testid="league-message-commissioner"
-                disabled
-                title="Commissioner messaging will be added in a later slice."
-                type="button"
-              >
-                Message commissioner
-              </button>
-            )}
-            <p className="text-xs text-amber-900/80">
-              Renewal, reactivation, and notification flows are planned separately.
-            </p>
-          </div>
         </div>
       ) : null}
 
@@ -533,18 +499,18 @@ export function LeagueDetailPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
             <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-              {formatRole(leagueQuery.data.role)}
+              {auth.isRootAdmin ? 'Root Admin' : formatRole(leagueQuery.data.role)}
             </span>
             <div className="flex items-start gap-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-primary/10 text-primary">
                 <LeagueIcon iconKey={leagueQuery.data.iconKey} size="lg" />
               </div>
               <div>
-              <h2 className="text-3xl font-semibold tracking-tight">{leagueQuery.data.name}</h2>
-              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                {leagueQuery.data.description?.trim() ||
-                  'This league is ready for contests, squads, standings, and commissioner workflows in the rebuilt PoolMaster app.'}
-              </p>
+                <h2 className="text-3xl font-semibold tracking-tight">{leagueQuery.data.name}</h2>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                  {leagueQuery.data.description?.trim() ||
+                    'This league home is the canonical place for league identity, commissioner controls, and member leave actions.'}
+                </p>
               </div>
             </div>
           </div>
@@ -575,205 +541,183 @@ export function LeagueDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[2rem] border border-border bg-card p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl font-semibold">Members</h3>
-              <p className="text-sm text-muted-foreground">
-                The rebuilt member area stays connected to current membership roles and lifecycle
-                state from the backend.
-              </p>
-            </div>
-            <Link className="text-sm font-medium text-primary hover:underline" to="/welcome">
-              Welcome
+      <section className="rounded-[2rem] border border-border bg-card p-6">
+        <div className="flex flex-wrap gap-3">
+          <Link
+            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+            to={buildLeagueTeamsPath(leagueQuery.data.leagueCode)}
+          >
+            Open Teams and Owners
+          </Link>
+          {myTeam ? (
+            <Link
+              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+              to={buildLeagueTeamHomePath(leagueQuery.data.leagueCode, myTeam.id)}
+            >
+              Open My Team
             </Link>
-          </div>
+          ) : null}
+          {canManageLeague && !isInactiveLeague ? (
+            <Link
+              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+              to={buildLeagueContestCreatePath(leagueQuery.data.leagueCode)}
+            >
+              Create Contest
+            </Link>
+          ) : null}
+        </div>
+      </section>
 
-          <div className="mt-5 space-y-3">
-            {membersQuery.isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading members...</p>
-            ) : membersQuery.isError ? (
-              <p className="text-sm text-muted-foreground">
-                We couldn&apos;t load members for this league.
+      {canManageLeague ? (
+        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <section className="rounded-[2rem] border border-border bg-card p-6">
+            <h3 className="text-xl font-semibold">League details</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              League Home now owns the commissioner-editable identity fields directly instead of
+              sending commissioners to a separate modal.
+            </p>
+
+            <div className="mt-5 grid gap-4 rounded-[1.5rem] border border-border bg-background p-5 sm:grid-cols-2">
+              <label className="block space-y-2 sm:col-span-2">
+                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  League name
+                </span>
+                <input
+                  className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
+                  data-testid="league-details-name"
+                  disabled={!canEditLeague}
+                  onChange={(event) => setDetailsName(event.target.value)}
+                  type="text"
+                  value={detailsName}
+                />
+              </label>
+
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  League code
+                </div>
+                <div className="mt-1 font-mono text-base font-medium">{leagueQuery.data.leagueCode}</div>
+              </div>
+
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Created
+                </div>
+                <div className="mt-1 text-base font-medium">
+                  {leagueQuery.data.createdAt
+                    ? new Date(leagueQuery.data.createdAt).toLocaleDateString()
+                    : 'Unknown'}
+                </div>
+              </div>
+
+              <label className="block space-y-2 sm:col-span-2">
+                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Description
+                </span>
+                <textarea
+                  className="min-h-28 w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
+                  data-testid="league-details-description"
+                  disabled={!canEditLeague}
+                  onChange={(event) => setDetailsDescription(event.target.value)}
+                  value={detailsDescription}
+                />
+              </label>
+            </div>
+
+            {updateDetailsMutation.isError ? (
+              <p className="mt-4 text-sm text-destructive">
+                {extractErrorMessage(updateDetailsMutation.error, 'We could not save league details.')}
               </p>
-            ) : (
-              <>
-                {memberActionError ? (
-                  <div
-                    className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-                    data-testid="league-member-action-error"
-                  >
-                    {memberActionError}
-                  </div>
-                ) : null}
-                {membersQuery.data?.map((member) => {
-                  const isCurrentMember = member.userId === currentUserId;
-                  const canManageMember =
-                    isCommissioner && !isCurrentMember && !isInactiveLeague && !changeRoleMutation.isPending && !removeMemberMutation.isPending;
+            ) : null}
 
+            <div className="mt-5 flex justify-end">
+              <button
+                className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                data-testid="league-save-details"
+                disabled={!canEditLeague || !detailsName.trim()}
+                onClick={() => void updateDetailsMutation.mutateAsync()}
+                type="button"
+              >
+                {updateDetailsMutation.isPending ? 'Saving...' : 'Save details'}
+              </button>
+            </div>
+          </section>
+
+          <section className="rounded-[2rem] border border-border bg-card p-6">
+            <h3 className="text-xl font-semibold">League icon and invites</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Commissioners and root admins can update league branding and reuse the live invite
+              flows directly from League Home.
+            </p>
+
+            <div className="mt-5 rounded-[1.5rem] border border-border bg-background p-5">
+              <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card px-4 py-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-primary/10 text-primary">
+                  <LeagueIcon iconKey={selectedIconKey} size="lg" />
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Selected icon
+                  </div>
+                  <div className="mt-1 text-base font-medium">
+                    {LEAGUE_ICON_OPTIONS.find((icon) => icon.key === selectedIconKey)?.label ?? 'Trophy'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-4">
+                {LEAGUE_ICON_OPTIONS.map((icon) => {
+                  const isSelected = selectedIconKey === icon.key;
                   return (
-                    <div
-                      className="flex flex-col gap-4 rounded-2xl border border-border bg-background px-4 py-4 lg:flex-row lg:items-center lg:justify-between"
-                      data-testid={`league-member-${member.id}`}
-                      key={member.id}
+                    <button
+                      className={`rounded-[1.25rem] border px-3 py-4 text-center transition ${
+                        isSelected
+                          ? 'border-primary bg-primary/10 text-foreground'
+                          : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
+                      }`}
+                      data-testid={`league-icon-${icon.key}`}
+                      disabled={!canEditLeague}
+                      key={icon.key}
+                      onClick={() => setSelectedIconKey(icon.key)}
+                      type="button"
                     >
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="font-medium">
-                            {formatUserName(member.firstName, member.lastName)}
-                          </div>
-                          {isCurrentMember ? (
-                            <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                              You
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="mt-1 text-sm text-muted-foreground">{member.email}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {formatJoinedAt(member.joinedAt)}
-                        </div>
+                      <div className="flex justify-center text-primary">
+                        <LeagueIcon iconKey={icon.key} size="md" />
                       </div>
-                      <div className="flex flex-col items-start gap-3 lg:items-end">
-                        <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                          {formatRole(member.role)}
-                        </span>
-                        {canManageMember ? (
-                          <div className="flex flex-wrap gap-2">
-                            {member.role === 'MEMBER' ? (
-                              <button
-                                className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
-                                data-testid={`league-member-promote-${member.id}`}
-                                disabled={changeRoleMutation.isPending}
-                                onClick={() => void handlePromoteMember(member)}
-                                type="button"
-                              >
-                                Make commissioner
-                              </button>
-                            ) : (
-                              <button
-                                className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60"
-                                data-testid={`league-member-demote-${member.id}`}
-                                disabled={changeRoleMutation.isPending}
-                                onClick={() => void handleDemoteMember(member)}
-                                type="button"
-                              >
-                                Change to member
-                              </button>
-                            )}
-                            <button
-                              className="rounded-2xl border border-destructive/30 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/5 disabled:cursor-not-allowed disabled:opacity-60"
-                              data-testid={`league-member-remove-${member.id}`}
-                              disabled={removeMemberMutation.isPending}
-                              onClick={() => void handleRemoveMember(member)}
-                              type="button"
-                            >
-                              Remove member
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
+                      <div className="mt-3 text-xs font-medium">{icon.label}</div>
+                    </button>
                   );
                 })}
-              </>
-            )}
-          </div>
-        </div>
+              </div>
 
-        <div className="space-y-6">
-          <div className="rounded-[2rem] border border-border bg-card p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3 className="text-xl font-semibold">My Team</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Team identity lives in league context. Create or manage your team here before
-                  icons and ownership controls expand in the next slice.
+              {updateIconMutation.isError ? (
+                <p className="mt-4 text-sm text-destructive">
+                  {extractErrorMessage(updateIconMutation.error, 'We could not save the league icon.')}
                 </p>
-              </div>
-              <Link
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
-                to={buildLeagueTeamPath(leagueQuery.data.leagueCode)}
-              >
-                Manage team
-              </Link>
-            </div>
-          </div>
+              ) : null}
 
-          <div className="rounded-[2rem] border border-border bg-card p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3 className="text-xl font-semibold">Teams</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Browse every team in the league and review pending owner invites from one place.
-                </p>
-              </div>
-              <Link
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
-                to={buildLeagueTeamsPath(leagueQuery.data.leagueCode)}
-              >
-                View teams
-              </Link>
-            </div>
-          </div>
-
-          {!auth.isRootAdmin ? (
-            <div className="rounded-[2rem] border border-border bg-card p-6">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-xl font-semibold">Membership actions</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Leaving the league also removes your team from the active league roster. If you are the last commissioner, appoint another commissioner before leaving.
-                  </p>
-                </div>
-                {isCommissioner ? (
-                  <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                    {activeCommissionerCount} commissioner{activeCommissionerCount === 1 ? '' : 's'}
-                  </span>
-                ) : null}
-              </div>
-              <div className="mt-5 space-y-3">
+              <div className="mt-5 flex justify-end">
                 <button
-                  className="rounded-2xl border border-destructive/30 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/5 disabled:cursor-not-allowed disabled:opacity-60"
-                  data-testid="league-leave"
-                  disabled={leaveLeagueMutation.isPending || isInactiveLeague}
-                  onClick={() => void handleLeaveLeague()}
+                  className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                  data-testid="league-save-icon"
+                  disabled={!canEditLeague}
+                  onClick={() => void updateIconMutation.mutateAsync()}
                   type="button"
                 >
-                  {leaveLeagueMutation.isPending ? 'Leaving...' : 'Leave league'}
+                  {updateIconMutation.isPending ? 'Saving...' : 'Save icon'}
                 </button>
-                {leaveActionError ? (
-                  <p
-                    className="text-sm text-destructive"
-                    data-testid="league-leave-error"
-                  >
-                    {leaveActionError}
-                  </p>
-                ) : null}
               </div>
             </div>
-          ) : null}
 
-          <div className="rounded-[2rem] border border-border bg-card p-6">
-            <h3 className="text-xl font-semibold">Next build steps</h3>
-            <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
-              <li>Contest list/detail and standings will hang off this league surface next.</li>
-              <li>Commissioner tools will stay in-app with role-aware navigation.</li>
-              <li>Invite acceptance already routes through the same member-session model.</li>
-            </ul>
-          </div>
-
-          {isCommissioner ? (
-            <div className="rounded-[2rem] border border-border bg-card p-6">
-              <h3 className="text-xl font-semibold">Commissioner invitations</h3>
+            <div className="mt-6 rounded-[1.5rem] border border-border bg-background p-5">
+              <h4 className="text-lg font-semibold">Commissioner invitations</h4>
               <p className="mt-2 text-sm text-muted-foreground">
-                {isInactiveLeague
-                  ? 'This league is inactive, so invitation actions stay visible but disabled until the league is reactivated.'
-                  : 'Generate a shareable invite link or send an invitation email through the current backend invitation flow.'}
+                Generate a shareable invite link or send invitation emails through the current
+                backend invitation flow.
               </p>
 
               <div className="mt-5 space-y-4">
-                <div className="rounded-2xl border border-border bg-background p-4">
+                <div className="rounded-2xl border border-border bg-card p-4">
                   <div className="flex flex-wrap items-center gap-3">
                     <button
                       className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
@@ -805,19 +749,14 @@ export function LeagueDetailPage() {
                     readOnly
                     value={inviteLink}
                   />
-                  {inviteLinkMutation.isError ? (
-                    <p className="mt-2 text-sm text-destructive">
-                      We couldn&apos;t generate an invite link right now.
-                    </p>
-                  ) : null}
                 </div>
 
-                <div className="rounded-2xl border border-border bg-background p-4">
+                <div className="rounded-2xl border border-border bg-card p-4">
                   <label className="block space-y-2">
                     <span className="text-sm font-medium">Invite by email</span>
                     <div className="flex gap-3">
                       <input
-                        className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-70"
+                        className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-70"
                         data-testid="league-invite-email"
                         disabled={isInactiveLeague}
                         onChange={(event) => setInviteEmail(event.target.value)}
@@ -832,235 +771,305 @@ export function LeagueDetailPage() {
                         onClick={() => void handleSendInvite()}
                         type="button"
                       >
-                        {isInactiveLeague
-                          ? 'League inactive'
-                          : sendInviteMutation.isPending
-                            ? 'Sending...'
-                            : 'Send'}
+                        {sendInviteMutation.isPending ? 'Sending...' : 'Send'}
                       </button>
                     </div>
                   </label>
-                  {sendInviteMutation.isSuccess ? (
-                    <p className="mt-2 text-sm text-emerald-700">
-                      Invitation sent successfully.
-                    </p>
-                  ) : null}
-                  {sendInviteMutation.isError ? (
-                    <p className="mt-2 text-sm text-destructive">
-                      We couldn&apos;t send that invitation right now.
-                    </p>
-                  ) : null}
                 </div>
               </div>
             </div>
-          ) : null}
+          </section>
 
-          <div className="rounded-[2rem] border border-border bg-card p-6" id="league-contests">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3 className="text-xl font-semibold">Contests</h3>
-                <p className="text-sm text-muted-foreground">
-                  League Home is a valid team-context entry point. Active contest tiles show your
-                  team&apos;s entries alongside the contest-level entry count.
+          <section className="rounded-[2rem] border border-border bg-card p-6 xl:col-span-2">
+            <h3 className="text-xl font-semibold">League lifecycle</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Lifecycle stays inline on League Home: commissioners and root admins can inactivate,
+              and root admins can permanently delete once the league is inactive.
+            </p>
+
+            <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_1fr]">
+              <div className="rounded-[1.5rem] border border-border bg-background p-5">
+                <h4 className="text-lg font-semibold">Inactivate league</h4>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Inactivation is the normal reversible lifecycle action for a league that is no
+                  longer active day to day.
                 </p>
-              </div>
-              {isCommissioner && !isInactiveLeague ? (
-                <Link
-                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
-                  data-testid="league-create-contest"
-                  to={buildLeagueContestCreatePath(leagueQuery.data.leagueCode)}
+                <button
+                  className="mt-5 rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                  data-testid="league-inactivate"
+                  disabled={isInactiveLeague || inactivateLeagueMutation.isPending}
+                  onClick={() => void inactivateLeagueMutation.mutateAsync()}
+                  type="button"
                 >
-                  Create contest
-                </Link>
+                  {isInactiveLeague
+                    ? 'League inactive'
+                    : inactivateLeagueMutation.isPending
+                      ? 'Inactivating...'
+                      : 'Inactivate league'}
+                </button>
+              </div>
+
+              {auth.isRootAdmin ? (
+                <div className="rounded-[1.5rem] border border-red-300 bg-red-50/80 p-5">
+                  <h4 className="text-lg font-semibold text-red-950">Delete league</h4>
+                  <p className="mt-2 text-sm text-red-900">
+                    Root admins can permanently delete inactive leagues after confirming the league
+                    code. This remains intentionally unavailable while the league is still active.
+                  </p>
+
+                  <label className="mt-4 block space-y-2">
+                    <span className="text-sm font-medium text-red-950">Confirmation code</span>
+                    <input
+                      className="w-full rounded-2xl border border-red-200 bg-white px-4 py-3 font-mono text-sm uppercase outline-none transition focus:border-red-500"
+                      data-testid="league-delete-confirmation"
+                      disabled={!isInactiveLeague || deleteLeagueMutation.isPending}
+                      onChange={(event) => setDeleteConfirmation(event.target.value)}
+                      placeholder={leagueQuery.data.leagueCode}
+                      type="text"
+                      value={deleteConfirmation}
+                    />
+                  </label>
+
+                  <button
+                    className="mt-5 rounded-2xl bg-red-700 px-4 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-red-300"
+                    data-testid="league-delete-submit"
+                    disabled={!canDeleteLeague || deleteLeagueMutation.isPending}
+                    onClick={() => void deleteLeagueMutation.mutateAsync()}
+                    type="button"
+                  >
+                    {deleteLeagueMutation.isPending ? 'Deleting...' : 'Delete league'}
+                  </button>
+                </div>
               ) : null}
             </div>
+          </section>
+        </div>
+      ) : null}
 
-            <div className="mt-5 space-y-3">
-              {contestsQuery.isLoading ? (
-                <p className="text-sm text-muted-foreground">Loading contests...</p>
-              ) : contestsQuery.isError ? (
-                <p className="text-sm text-muted-foreground">
-                  We couldn&apos;t load contests for this league.
-                </p>
-              ) : teamsQuery.isLoading ? (
-                <p className="text-sm text-muted-foreground">Loading your team context...</p>
-              ) : teamsQuery.isError ? (
-                <p className="text-sm text-muted-foreground">
-                  We couldn&apos;t load team context for contest entry actions.
-                </p>
-              ) : !myTeam ? (
-                <div className="rounded-2xl border border-border bg-background px-4 py-4">
-                  <p className="font-medium text-foreground">Create your team to enter contests.</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Contest entries always belong to an existing team in this league.
-                  </p>
+      {!auth.isRootAdmin ? (
+        <div className="rounded-[2rem] border border-border bg-card p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-semibold">Membership actions</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Leaving the league removes your membership from the active roster. If you are the
+                last commissioner, appoint another commissioner before leaving.
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 space-y-3">
+            <button
+              className="rounded-2xl border border-destructive/30 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/5 disabled:cursor-not-allowed disabled:opacity-60"
+              data-testid="league-leave"
+              disabled={leaveLeagueMutation.isPending || isInactiveLeague}
+              onClick={() => void handleLeaveLeague()}
+              type="button"
+            >
+              {leaveLeagueMutation.isPending ? 'Leaving...' : 'Leave league'}
+            </button>
+            {leaveActionError ? (
+              <p className="text-sm text-destructive" data-testid="league-leave-error">
+                {leaveActionError}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="rounded-[2rem] border border-border bg-card p-6" id="league-contests">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="text-xl font-semibold">Contests</h3>
+            <p className="text-sm text-muted-foreground">
+              League Home temporarily continues to host contest cards until the dedicated League
+              Contests page lands later in Plan 107.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 space-y-3">
+          {contestsQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading contests...</p>
+          ) : contestsQuery.isError ? (
+            <p className="text-sm text-muted-foreground">We couldn&apos;t load contests for this league.</p>
+          ) : teamsQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading your team context...</p>
+          ) : teamsQuery.isError ? (
+            <p className="text-sm text-muted-foreground">
+              We couldn&apos;t load team context for contest entry actions.
+            </p>
+          ) : !myTeam ? (
+            <div className="rounded-2xl border border-border bg-background px-4 py-4">
+              <p className="font-medium text-foreground">Create your team to enter contests.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Contest entries always belong to an existing team in this league.
+              </p>
+              <Link
+                className="mt-4 inline-flex rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+                to={buildLeagueTeamsPath(leagueQuery.data.leagueCode)}
+              >
+                Open Teams and Owners
+              </Link>
+            </div>
+          ) : activeContestCards.length ? (
+            activeContestCards.map(({ contest, isEntryError, isEntryLoading, myTeamEntries }) => (
+              <div
+                className="rounded-2xl border border-border bg-background px-4 py-4"
+                data-testid={`league-contest-${contest.id}`}
+                key={contest.id}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="font-medium">{contest.name}</div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      {contest.selectionType} · {contest.scoringEngine}
+                    </div>
+                  </div>
+                  <div className="text-right text-sm text-muted-foreground">
+                    <div>{contest.status}</div>
+                    <div>{contest.entryCount ?? 0} entries</div>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-3">
                   <Link
-                    className="mt-4 inline-flex rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
-                    to={buildLeagueTeamPath(leagueQuery.data.leagueCode)}
+                    className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+                    state={{ leagueCode: leagueQuery.data.leagueCode }}
+                    to={buildLeagueContestPath(leagueQuery.data.leagueCode, contest.id)}
                   >
-                    Open team home
+                    Open contest
+                  </Link>
+                  {contest.status === 'OPEN' ? (
+                    <button
+                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                      data-testid={`league-create-entry-${contest.id}`}
+                      disabled={createContestEntryMutation.isPending || isInactiveLeague}
+                      onClick={() => void createContestEntryMutation.mutateAsync(contest.id)}
+                      type="button"
+                    >
+                      {createContestEntryMutation.isPending ? 'Creating...' : 'Create entry'}
+                    </button>
+                  ) : null}
+                  <Link
+                    className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+                    to={buildLeagueTeamHomePath(leagueQuery.data.leagueCode, myTeam.id)}
+                  >
+                    Team home
                   </Link>
                 </div>
-              ) : activeContestCards.length ? (
-                activeContestCards.map(({ contest, isEntryError, isEntryLoading, myTeamEntries }) => (
-                  <div
-                    className="rounded-2xl border border-border bg-background px-4 py-4"
-                    data-testid={`league-contest-${contest.id}`}
-                    key={contest.id}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="font-medium">{contest.name}</div>
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          {contest.selectionType} · {contest.scoringEngine}
-                        </div>
-                      </div>
-                      <div className="text-right text-sm text-muted-foreground">
-                        <div>{contest.status}</div>
-                        <div>{contest.entryCount ?? 0} entries</div>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      <Link
-                        className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
-                        state={{ leagueCode: leagueQuery.data.leagueCode }}
-                        to={`/contests/${contest.id}`}
-                      >
-                        Open contest
-                      </Link>
-                      {contest.status === 'OPEN' ? (
-                        <button
-                          className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                          data-testid={`league-create-entry-${contest.id}`}
-                          disabled={createContestEntryMutation.isPending || isInactiveLeague}
-                          onClick={() => void createContestEntryMutation.mutateAsync(contest.id)}
-                          type="button"
-                        >
-                          {createContestEntryMutation.isPending
-                            ? 'Creating...'
-                            : 'Create entry'}
-                        </button>
-                      ) : null}
-                      <Link
-                        className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
-                        to={buildLeagueTeamPath(leagueQuery.data.leagueCode)}
-                      >
-                        Team home
-                      </Link>
-                    </div>
 
-                    <div className="mt-4 rounded-2xl border border-border bg-card px-4 py-4">
-                      <div className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                        {myTeam.name}
-                      </div>
-                      {isEntryLoading ? (
-                        <p className="mt-2 text-sm text-muted-foreground">Loading your team entries...</p>
-                      ) : isEntryError ? (
-                        <p className="mt-2 text-sm text-destructive">
-                          We couldn&apos;t load your team&apos;s entries for this contest.
-                        </p>
-                      ) : myTeamEntries.length ? (
-                        <div className="mt-3 space-y-3">
-                          {myTeamEntries.map((entry: ContestEntrySummary) => (
-                            <div
-                              className="rounded-2xl border border-border bg-background px-4 py-4"
-                              data-testid={`league-contest-entry-${entry.id}`}
-                              key={entry.id}
-                            >
-                              <div className="flex items-center justify-between gap-4">
-                                <div>
-                                  <div className="font-medium text-foreground">{entry.name}</div>
-                                  <div className="mt-1 text-sm text-muted-foreground">
-                                    {entry.squadName} · Entry {entry.entryNumber}
-                                  </div>
-                                </div>
-                                <div className="text-right text-sm text-muted-foreground">
-                                  <div>{entry.standingsPosition ? `#${entry.standingsPosition}` : 'Rank pending'}</div>
-                                  <div>{entry.totalScore} pts</div>
-                                </div>
+                <div className="mt-4 rounded-2xl border border-border bg-card px-4 py-4">
+                  <div className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                    {myTeam.name}
+                  </div>
+                  {isEntryLoading ? (
+                    <p className="mt-2 text-sm text-muted-foreground">Loading your team entries...</p>
+                  ) : isEntryError ? (
+                    <p className="mt-2 text-sm text-destructive">
+                      We couldn&apos;t load your team&apos;s entries for this contest.
+                    </p>
+                  ) : myTeamEntries.length ? (
+                    <div className="mt-3 space-y-3">
+                      {myTeamEntries.map((entry: ContestEntrySummary) => (
+                        <div
+                          className="rounded-2xl border border-border bg-background px-4 py-4"
+                          data-testid={`league-contest-entry-${entry.id}`}
+                          key={entry.id}
+                        >
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <div className="font-medium text-foreground">{entry.name}</div>
+                              <div className="mt-1 text-sm text-muted-foreground">
+                                {entry.squadName} · Entry {entry.entryNumber}
                               </div>
                             </div>
-                          ))}
+                            <div className="text-right text-sm text-muted-foreground">
+                              <div>
+                                {entry.standingsPosition ? `#${entry.standingsPosition}` : 'Rank pending'}
+                              </div>
+                              <div>{entry.totalScore} pts</div>
+                            </div>
+                          </div>
                         </div>
-                      ) : (
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          Your team does not have an entry in this contest yet.
-                        </p>
-                      )}
+                      ))}
                     </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No active contests are available for this league yet.
-                </p>
-              )}
-              {createContestEntryMutation.isError ? (
-                <p className="text-sm text-destructive">
-                  {extractErrorMessage(
-                    createContestEntryMutation.error,
-                    'We could not create that contest entry right now.',
+                  ) : (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Your team does not have an entry in this contest yet.
+                    </p>
                   )}
-                </p>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="rounded-[2rem] border border-border bg-card p-6" id="league-history">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3 className="text-xl font-semibold">Completed contest history</h3>
-                <p className="text-sm text-muted-foreground">
-                  Browse completed and cancelled contests for this league by sport and contest type.
-                </p>
+                </div>
               </div>
-            </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No active contests are available for this league yet.
+            </p>
+          )}
+          {createContestEntryMutation.isError ? (
+            <p className="text-sm text-destructive">
+              {extractErrorMessage(
+                createContestEntryMutation.error,
+                'We could not create that contest entry right now.',
+              )}
+            </p>
+          ) : null}
+        </div>
+      </div>
 
-            <div className="mt-5 space-y-3">
-              {contestsQuery.isLoading ? (
-                <p className="text-sm text-muted-foreground">Loading completed contests...</p>
-              ) : contestsQuery.isError ? (
-                <p className="text-sm text-muted-foreground">
-                  We couldn&apos;t load completed contests for this league.
-                </p>
-              ) : historicalContestCards.length ? (
-                historicalContestCards.map(({ contest, myTeamEntries }) => (
-                  <div
-                    className="rounded-2xl border border-border bg-background px-4 py-4"
-                    data-testid={`league-history-contest-${contest.id}`}
-                    key={contest.id}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="font-medium">{contest.name}</div>
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          {contest.sport} · {contest.selectionType} · {contest.status}
-                        </div>
-                      </div>
-                      <div className="text-right text-sm text-muted-foreground">
-                        <div>{contest.entryCount ?? 0} entries</div>
-                        <div>{myTeamEntries.length} team entries</div>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      <Link
-                        className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
-                        data-testid={`league-history-open-${contest.id}`}
-                        state={{ leagueCode: leagueQuery.data.leagueCode }}
-                        to={`/contests/${contest.id}`}
-                      >
-                        Open contest history
-                      </Link>
+      <div className="rounded-[2rem] border border-border bg-card p-6" id="league-history">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="text-xl font-semibold">Completed contest history</h3>
+            <p className="text-sm text-muted-foreground">
+              Browse completed and cancelled contests for this league until the dedicated history
+              surfaces move to their own routes later in the plan.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 space-y-3">
+          {contestsQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading completed contests...</p>
+          ) : contestsQuery.isError ? (
+            <p className="text-sm text-muted-foreground">
+              We couldn&apos;t load completed contests for this league.
+            </p>
+          ) : historicalContestCards.length ? (
+            historicalContestCards.map(({ contest, myTeamEntries }) => (
+              <div
+                className="rounded-2xl border border-border bg-background px-4 py-4"
+                data-testid={`league-history-contest-${contest.id}`}
+                key={contest.id}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="font-medium">{contest.name}</div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      {contest.sport} · {contest.selectionType} · {contest.status}
                     </div>
                   </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  This league does not have any completed contests yet.
-                </p>
-              )}
-            </div>
-          </div>
+                  <div className="text-right text-sm text-muted-foreground">
+                    <div>{contest.entryCount ?? 0} entries</div>
+                    <div>{myTeamEntries.length} team entries</div>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Link
+                    className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+                    data-testid={`league-history-open-${contest.id}`}
+                    state={{ leagueCode: leagueQuery.data.leagueCode }}
+                    to={buildLeagueContestPath(leagueQuery.data.leagueCode, contest.id)}
+                  >
+                    Open contest history
+                  </Link>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              This league does not have any completed contests yet.
+            </p>
+          )}
         </div>
       </div>
     </section>
