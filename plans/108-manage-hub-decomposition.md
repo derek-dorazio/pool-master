@@ -62,7 +62,7 @@ Reached from the Account dropdown "Manage" link (visible only when `user.isRootA
 - Row renders: team name, league, team code, owner(s), status
 - **Row action:** click → navigate to `/league/:leagueCode/teams/:teamId` (the canonical Team Home)
 - **No modals on this admin list.** All team actions (edit identity, invite/remove co-owners, inactivate, delete) happen on Team Home.
-- Authority model: `useTeamAuthority(teamId)` treats root admin as `commissioner` tier on any team. Team Home renders the full editing UI for root admin as a result.
+- Authority model: Team Home should follow the Team relationship contract from [109-team-relationship-contract-pattern.md](./109-team-relationship-contract-pattern.md). `useTeamAuthority(teamId)` remains the frontend helper, but it should read backend-emitted Team `teamRelationship` (`leagueMember`, `owner`, `commissioner`) plus separate global `isRootAdmin` rather than infer authority locally.
 - **Delete**: lives on Team Home as a root-admin-only section, visible only when `user.isRootAdmin && team.status === 'INACTIVE'`. Second check `useIsRootAdmin()` gates this section alongside the authority hook.
 
 ### 3. Users — `/manage/users`
@@ -119,7 +119,7 @@ Source file: `clients/poolmaster/src/features/root-admin/root-admin-page.tsx`
 - **C. Root-admin delete section on League Home** — visible only when `user.isRootAdmin && league.status === 'INACTIVE'`. Delete confirmation wizard requiring exact league code match (pattern matches existing `/my-account` delete wizard and the Team Home delete section).
 - **D. Teams list page** `/manage/teams` — entirely new: cross-league team search + results list with row-click routing to Team Home. Requires a backend team-search endpoint (see Contract Questions).
 - **E. Root-admin delete section on Team Home** — visible only when `user.isRootAdmin && team.status === 'INACTIVE'`. Delete confirmation wizard (pattern matches existing `/my-account` delete wizard).
-- **F. `useTeamAuthority` update** — hook returns `commissioner` for root admin on any team (extending existing owner/commissioner/viewer model). Parallel `useLeagueAuthority` hook (Plan 107 item I) powers League Home.
+- **F. `useTeamAuthority` update** — align Team Home with the dedicated Team relationship contract plan. The hook still resolves Team UI into the familiar `owner | commissioner | viewer` presentation paths, but it should read backend-emitted Team `teamRelationship` (`leagueMember`, `owner`, `commissioner`) plus separate global `isRootAdmin` instead of inferring authority from mixed local signals.
 - **G. Users list page** `/manage/users` — search + link only. Rows navigate to `/users/:userId`. No modals, no row toggles. (H, I, J previously listed here have all moved to Plan 107 item G as authority-gated modals on `/users/:userId`.)
 - **K. Content Configuration list page** `/manage/content-configuration` — lift tile 6 grid into a row list (template key / name / sport / status), click through to edit page.
 - **L. Content Configuration edit page** `/manage/content-configuration/:templateKey` — lift tile 6 inline edit form into a dedicated page.
