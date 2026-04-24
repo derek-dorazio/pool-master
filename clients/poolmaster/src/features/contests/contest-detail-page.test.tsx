@@ -86,10 +86,10 @@ function renderContestDetailPage() {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter
-        initialEntries={[{ pathname: '/contests/contest-1', state: { leagueCode: 'BIGDAWGS' } }]}
+        initialEntries={[{ pathname: '/league/BIGDAWGS/contests/contest-1' }]}
       >
         <Routes>
-          <Route element={<ContestDetailPage />} path="/contests/:contestId" />
+          <Route element={<ContestDetailPage />} path="/league/:leagueCode/contests/:contestId" />
           <Route element={<div data-testid="contest-entry-page" />} path="/contests/:contestId/entries/:entryId" />
           <Route element={<div data-testid="my-entries-page" />} path="/league/:leagueCode/entries" />
           <Route element={<div data-testid="league-team-page" />} path="/league/:leagueCode/team" />
@@ -332,12 +332,21 @@ describe('ContestDetailPage', () => {
     expect(await screen.findByTestId('contest-entry-entry-1')).toHaveTextContent('Birdie Hunters Entry 1');
     expect(screen.getByTestId('contest-entry-entry-3')).toHaveTextContent('Birdie Hunters Entry 2');
     expect(screen.getAllByText('Your team')).toHaveLength(2);
-    expect(screen.queryByTestId('contest-entry-open-entry-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-open-my-entries-entry-1')).toHaveAttribute(
+      'href',
+      '/league/BIGDAWGS/entries',
+    );
+    expect(screen.getByTestId('contest-entry-open-my-entries-entry-3')).toHaveAttribute(
+      'href',
+      '/league/BIGDAWGS/entries',
+    );
+    expect(screen.queryByTestId('contest-entry-open-my-entries-entry-2')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-entry-2')).toHaveTextContent('Fairway Finders Entry 1');
+    expect(screen.queryByTestId('contest-leaderboard')).not.toBeInTheDocument();
   });
 
   it('expands leaderboard details when requested', async () => {
-    primeCommonMocks();
+    primeCommonMocks({ contestStatus: 'ACTIVE' });
     listContestEntriesMock.mockResolvedValue({
       data: {
         contestId: 'contest-1',
@@ -370,7 +379,9 @@ describe('ContestDetailPage', () => {
       'Birdie Hunters Entry 1',
     );
 
-    fireEvent.click(screen.getByTestId('contest-toggle-leaderboard-details'));
+    expect(screen.queryByTestId('contest-entry-list')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-leaderboard-toggle-entry-1'));
 
     expect(await screen.findByTestId('contest-leaderboard-participant-entry-1-participant-1')).toHaveTextContent(
       'Scottie Scheffler',
@@ -396,6 +407,8 @@ describe('ContestDetailPage', () => {
 
     expect(await screen.findByTestId('contest-open-my-entries')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-enter-entry')).not.toBeInTheDocument();
-    expect(screen.getByText(/Contest Home now stays focused on rules, all entries, and the leaderboard/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Contest Home keeps the full entry directory here until scoring begins/),
+    ).toBeInTheDocument();
   });
 });

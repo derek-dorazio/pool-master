@@ -210,11 +210,14 @@ export function ContestDetailPage() {
   const logger = useLogger().child({
     feature: 'contest-detail-page',
   });
-  const { contestId = '' } = useParams<{ contestId: string }>();
+  const { contestId = '', leagueCode: routeLeagueCode } = useParams<{
+    contestId: string;
+    leagueCode?: string;
+  }>();
   const location = useLocation();
   const auth = useAuth();
-  const hintedLeagueCode = parseRouteState(location.state).leagueCode ?? null;
-  const [showLeaderboardDetails, setShowLeaderboardDetails] = useState(false);
+  const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
+  const [expandedLeaderboardEntryId, setExpandedLeaderboardEntryId] = useState<string | null>(null);
 
   const contestQuery = useQuery({
     queryKey: ['poolmaster', 'contest', contestId],
@@ -370,21 +373,25 @@ export function ContestDetailPage() {
     );
   }
 
+  const contest = contestQuery.data;
+  const isPostEventLeaderboard =
+    contest.status === 'ACTIVE' || contest.status === 'COMPLETED';
+
   return (
     <section className="space-y-6">
       <div className="rounded-[2rem] border border-border bg-card p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
             <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-              {contestQuery.data.status}
+              {contest.status}
             </span>
             <div>
               <h2 className="text-3xl font-semibold tracking-tight" data-testid="contest-detail-heading">
-                {contestQuery.data.name}
+                {contest.name}
               </h2>
               <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-detail-summary">
-                {contestQuery.data.selectionType} · {contestQuery.data.scoringEngine}
-                {contestQuery.data.sport ? ` · ${contestQuery.data.sport}` : ''}
+                {contest.selectionType} · {contest.scoringEngine}
+                {contest.sport ? ` · ${contest.sport}` : ''}
               </p>
             </div>
           </div>
@@ -415,19 +422,19 @@ export function ContestDetailPage() {
           <dl className="mt-5 grid gap-3 sm:grid-cols-2 text-sm text-muted-foreground">
             <div className="rounded-2xl bg-background px-4 py-4">
               <dt>Contest type</dt>
-              <dd className="mt-1 font-semibold text-foreground">{contestQuery.data.contestType}</dd>
+              <dd className="mt-1 font-semibold text-foreground">{contest.contestType}</dd>
             </div>
             <div className="rounded-2xl bg-background px-4 py-4">
               <dt>Selection type</dt>
-              <dd className="mt-1 font-semibold text-foreground">{contestQuery.data.selectionType}</dd>
+              <dd className="mt-1 font-semibold text-foreground">{contest.selectionType}</dd>
             </div>
             <div className="rounded-2xl bg-background px-4 py-4">
               <dt>Scoring engine</dt>
-              <dd className="mt-1 font-semibold text-foreground">{contestQuery.data.scoringEngine}</dd>
+              <dd className="mt-1 font-semibold text-foreground">{contest.scoringEngine}</dd>
             </div>
             <div className="rounded-2xl bg-background px-4 py-4">
               <dt>Entries</dt>
-              <dd className="mt-1 font-semibold text-foreground">{contestQuery.data.entryCount ?? 0}</dd>
+              <dd className="mt-1 font-semibold text-foreground">{contest.entryCount ?? 0}</dd>
             </div>
           </dl>
         </div>
@@ -453,125 +460,140 @@ export function ContestDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[2rem] border border-border bg-card p-6">
-          <h3 className="text-xl font-semibold">All entries</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Contest entries are always shown with both the entry name and the team name.
-          </p>
-          <div className="mt-5 space-y-3" data-testid="contest-entry-list">
-            {contestEntriesQuery.isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading contest entries...</p>
-            ) : contestEntriesQuery.isError ? (
-              <p className="text-sm text-muted-foreground">
-                We couldn&apos;t load the current contest entries.
-              </p>
-            ) : displayedEntries.length ? (
-              displayedEntries.map((entry: ContestEntrySummary) => {
-                const isCurrentUserEntry = currentUserEntryIds.includes(entry.id);
-
-                return (
-                  <div
-                    className="rounded-2xl border border-border bg-background px-4 py-4"
-                    data-testid={`contest-entry-${entry.id}`}
-                    key={entry.id}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{entry.name}</span>
-                          {isCurrentUserEntry ? (
-                            <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                              Your team
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          {entry.squadName} · Entry {entry.entryNumber}
-                        </div>
-                      </div>
-                      <div className="text-right text-sm text-muted-foreground">
-                        <div>{entry.standingsPosition ? `#${entry.standingsPosition}` : 'Rank pending'}</div>
-                        <div>{entry.totalScore} pts</div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {isJoined
-                  ? 'Your contest entry exists, but the contest entry list has not populated yet.'
-                  : 'No contest entries exist yet.'}
-              </p>
-            )}
+      <div className="rounded-[2rem] border border-border bg-card p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-xl font-semibold">
+              {isPostEventLeaderboard ? 'Leaderboard' : 'All entries'}
+            </h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {isPostEventLeaderboard
+                ? 'Contest Home becomes the leaderboard once scoring is underway. Expand a row to inspect the picked lineup.'
+                : 'Contest Home keeps the full entry directory here until scoring begins. Your own rows link back to My Entries; non-self rows stay read-only.'}
+            </p>
           </div>
+          <a
+            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
+            data-testid="contest-view-rules"
+            href="#contest-rules"
+          >
+            View rules
+          </a>
         </div>
-
-        <div className="rounded-[2rem] border border-border bg-card p-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h3 className="text-xl font-semibold">Leaderboard</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                This is the primary live and final contest view. Hide details to focus on entry standings only.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <a
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
-                data-testid="contest-view-rules"
-                href="#contest-rules"
-              >
-                View rules
-              </a>
-              <button
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
-                data-testid="contest-toggle-leaderboard-details"
-                onClick={() => setShowLeaderboardDetails((current) => !current)}
-                type="button"
-              >
-                {showLeaderboardDetails ? 'Hide details' : 'Show details'}
-              </button>
-            </div>
-          </div>
-          <div className="mt-5 space-y-3" data-testid="contest-leaderboard">
-            {leaderboardQuery.isLoading ? (
+        <div
+          className="mt-5 space-y-3"
+          data-testid={isPostEventLeaderboard ? 'contest-leaderboard' : 'contest-entry-list'}
+        >
+          {isPostEventLeaderboard ? (
+            leaderboardQuery.isLoading ? (
               <p className="text-sm text-muted-foreground">Loading leaderboard...</p>
             ) : leaderboardQuery.isError ? (
               <p className="text-sm text-muted-foreground">
                 We couldn&apos;t load the leaderboard for this contest.
               </p>
             ) : leaderboardQuery.data?.length ? (
-              leaderboardQuery.data.map((entry) => (
-                <div
-                  className="rounded-2xl border border-border bg-background px-4 py-4"
-                  data-testid={`contest-leaderboard-entry-${entry.entryId}`}
-                  key={entry.entryId}
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <div className="font-medium text-foreground">{entry.entryName}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {entry.ownerDisplayName}
-                        {entry.isEliminated ? ' · Eliminated' : ''}
+              leaderboardQuery.data.map((entry) => {
+                const isExpanded = expandedLeaderboardEntryId === entry.entryId;
+
+                return (
+                  <div
+                    className="rounded-2xl border border-border bg-background px-4 py-4"
+                    data-testid={`contest-leaderboard-entry-${entry.entryId}`}
+                    key={entry.entryId}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="font-medium text-foreground">{entry.entryName}</div>
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          {entry.ownerDisplayName}
+                          {entry.isEliminated ? ' · Eliminated' : ''}
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="text-right">
+                          <div className="text-lg font-semibold text-foreground">#{entry.rank}</div>
+                          <div className="text-sm text-muted-foreground">{entry.totalScore}</div>
+                        </div>
+                        <button
+                          className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground"
+                          data-testid={`contest-leaderboard-toggle-${entry.entryId}`}
+                          onClick={() =>
+                            setExpandedLeaderboardEntryId((current) =>
+                              current === entry.entryId ? null : entry.entryId,
+                            )}
+                          type="button"
+                        >
+                          {isExpanded ? 'Hide lineup' : 'View lineup'}
+                        </button>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-lg font-semibold text-foreground">#{entry.rank}</div>
-                      <div className="text-sm text-muted-foreground">{entry.totalScore}</div>
-                    </div>
+                    <ContestLeaderboardEntryDetail
+                      contestId={contestId}
+                      enabled={isExpanded}
+                      entryId={entry.entryId}
+                    />
                   </div>
-                  <ContestLeaderboardEntryDetail
-                    contestId={contestId}
-                    enabled={showLeaderboardDetails}
-                    entryId={entry.entryId}
-                  />
-                </div>
-              ))
+                );
+              })
             ) : (
               <p className="text-sm text-muted-foreground">No leaderboard entries yet.</p>
-            )}
-          </div>
+            )
+          ) : contestEntriesQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading contest entries...</p>
+          ) : contestEntriesQuery.isError ? (
+            <p className="text-sm text-muted-foreground">
+              We couldn&apos;t load the current contest entries.
+            </p>
+          ) : displayedEntries.length ? (
+            displayedEntries.map((entry: ContestEntrySummary) => {
+              const isCurrentUserEntry = currentUserEntryIds.includes(entry.id);
+
+              return (
+                <div
+                  className="rounded-2xl border border-border bg-background px-4 py-4"
+                  data-testid={`contest-entry-${entry.id}`}
+                  key={entry.id}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{entry.name}</span>
+                        {isCurrentUserEntry ? (
+                          <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                            Your team
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        {entry.squadName} · Entry {entry.entryNumber}
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="text-right text-sm text-muted-foreground">
+                        <div>{entry.standingsPosition ? `#${entry.standingsPosition}` : 'Rank pending'}</div>
+                        <div>{entry.totalScore} pts</div>
+                      </div>
+                      {isCurrentUserEntry && myEntriesPath ? (
+                        <Link
+                          className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground"
+                          data-testid={`contest-entry-open-my-entries-${entry.id}`}
+                          to={myEntriesPath}
+                        >
+                          Open in My Entries
+                        </Link>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {isJoined
+                ? 'Your contest entry exists, but the contest entry list has not populated yet.'
+                : 'No contest entries exist yet.'}
+            </p>
+          )}
         </div>
       </div>
 
