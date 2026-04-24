@@ -5,7 +5,6 @@ import {
 } from './league-routing';
 
 type LeagueRouteScaffoldKey =
-  | 'entries'
   | 'history'
   | 'contests'
   | 'manage-contests';
@@ -21,13 +20,6 @@ const LEAGUE_ROUTE_SCAFFOLDS: Record<
   LeagueRouteScaffoldKey,
   LeagueRouteScaffoldDefinition
 > = {
-  entries: {
-    title: 'My Entries',
-    description:
-      'This canonical route is staged now so future entry-management work can move here cleanly. Use the current My Team page during the transition.',
-    fallbackLabel: 'Open current My Team page',
-    buildFallbackPath: buildLeagueTeamPath,
-  },
   history: {
     title: 'My Contest History',
     description:

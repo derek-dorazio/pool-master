@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ContestDetailPage } from './contest-detail-page';
@@ -91,6 +91,7 @@ function renderContestDetailPage() {
         <Routes>
           <Route element={<ContestDetailPage />} path="/contests/:contestId" />
           <Route element={<div data-testid="contest-entry-page" />} path="/contests/:contestId/entries/:entryId" />
+          <Route element={<div data-testid="my-entries-page" />} path="/league/:leagueCode/entries" />
           <Route element={<div data-testid="league-team-page" />} path="/league/:leagueCode/team" />
           <Route
             element={<div data-testid="contest-manage-page" />}
@@ -217,7 +218,7 @@ describe('ContestDetailPage', () => {
     mockLogger.error.mockReset();
   });
 
-  it('creates a first entry from the contest detail when the contest is open', async () => {
+  it('links members to the dedicated My Entries page instead of rendering a personal entry tile', async () => {
     primeCommonMocks();
     listContestEntriesMock.mockResolvedValueOnce({
       data: {
@@ -228,44 +229,14 @@ describe('ContestDetailPage', () => {
         entries: [],
       },
     });
-    enterContestMock.mockResolvedValue({
-      data: {
-        contestId: 'contest-1',
-        entry: {
-          id: 'entry-22',
-          contestId: 'contest-1',
-          squadId: 'squad-1',
-          squadName: 'Birdie Hunters',
-          entryNumber: 1,
-          name: 'Birdie Hunters Entry 1',
-          status: 'ACTIVE',
-          totalScore: 0,
-          standingsPosition: undefined,
-          isEliminated: false,
-          createdAt: '2026-04-15T00:00:00.000Z',
-          updatedAt: '2026-04-15T00:00:00.000Z',
-        },
-      },
-    });
-
     renderContestDetailPage();
 
-    expect(await screen.findByTestId('contest-enter-entry')).toHaveTextContent('Create entry');
-    fireEvent.click(screen.getByTestId('contest-enter-entry'));
-
-    await waitFor(() =>
-      expect(enterContestMock).toHaveBeenCalledWith({
-        path: { contestId: 'contest-1' },
-      }),
+    expect(await screen.findByTestId('contest-open-my-entries')).toHaveAttribute(
+      'href',
+      '/league/BIGDAWGS/entries',
     );
-
-    expect(await screen.findByTestId('contest-entry-page')).toBeInTheDocument();
-    expect(mockLogger.info).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'contestDetail.enter.succeeded',
-      }),
-      expect.any(String),
-    );
+    expect(screen.queryByTestId('contest-my-entry')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-enter-entry')).not.toBeInTheDocument();
   });
 
   it('shows the contest load failure state when the contest query fails', async () => {
@@ -358,17 +329,11 @@ describe('ContestDetailPage', () => {
 
     renderContestDetailPage();
 
-    expect(await screen.findByTestId('contest-my-team-entry-entry-1')).toHaveTextContent(
-      'Birdie Hunters Entry 1',
-    );
-    expect(screen.getByTestId('contest-my-team-entry-entry-3')).toHaveTextContent('Birdie Hunters Entry 2');
+    expect(await screen.findByTestId('contest-entry-entry-1')).toHaveTextContent('Birdie Hunters Entry 1');
+    expect(screen.getByTestId('contest-entry-entry-3')).toHaveTextContent('Birdie Hunters Entry 2');
     expect(screen.getAllByText('Your team')).toHaveLength(2);
-    expect(screen.getByTestId('contest-enter-entry')).toHaveTextContent('Create entry');
-    expect(screen.getByTestId('contest-leave-entry')).toHaveTextContent(
-      'Leave latest entry for Birdie Hunters',
-    );
+    expect(screen.queryByTestId('contest-entry-open-entry-1')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-entry-2')).toHaveTextContent('Fairway Finders Entry 1');
-    expect(screen.getAllByTestId('contest-entry-open-entry-1')[0]).toHaveTextContent('Open entry');
   });
 
   it('expands leaderboard details when requested', async () => {
@@ -415,100 +380,6 @@ describe('ContestDetailPage', () => {
     });
   });
 
-  it('renames a team-owned entry from contest detail while the contest is open', async () => {
-    primeCommonMocks();
-    listContestEntriesMock
-      .mockResolvedValueOnce({
-        data: {
-          contestId: 'contest-1',
-          total: 1,
-          isJoined: true,
-          myEntryId: 'entry-1',
-          myEntryIds: ['entry-1'],
-          entries: [
-            {
-              id: 'entry-1',
-              contestId: 'contest-1',
-              squadId: 'squad-1',
-              squadName: 'Birdie Hunters',
-              entryNumber: 1,
-              name: 'Birdie Hunters Entry 1',
-              status: 'ACTIVE',
-              totalScore: 12,
-              standingsPosition: 2,
-              isEliminated: false,
-              createdAt: '2026-04-15T00:00:00.000Z',
-              updatedAt: '2026-04-15T00:00:00.000Z',
-            },
-          ],
-        },
-      })
-      .mockResolvedValueOnce({
-        data: {
-          contestId: 'contest-1',
-          total: 1,
-          isJoined: true,
-          myEntryId: 'entry-1',
-          myEntryIds: ['entry-1'],
-          entries: [
-            {
-              id: 'entry-1',
-              contestId: 'contest-1',
-              squadId: 'squad-1',
-              squadName: 'Birdie Hunters',
-              entryNumber: 1,
-              name: 'Major Hunters',
-              status: 'ACTIVE',
-              totalScore: 12,
-              standingsPosition: 2,
-              isEliminated: false,
-              createdAt: '2026-04-15T00:00:00.000Z',
-              updatedAt: '2026-04-16T00:00:00.000Z',
-            },
-          ],
-        },
-      });
-    updateContestEntryMock.mockResolvedValue({
-      data: {
-        contestId: 'contest-1',
-        entry: {
-          id: 'entry-1',
-          contestId: 'contest-1',
-          squadId: 'squad-1',
-          squadName: 'Birdie Hunters',
-          entryNumber: 1,
-          name: 'Major Hunters',
-          status: 'ACTIVE',
-          totalScore: 12,
-          standingsPosition: 2,
-          isEliminated: false,
-          createdAt: '2026-04-15T00:00:00.000Z',
-          updatedAt: '2026-04-16T00:00:00.000Z',
-        },
-      },
-    });
-
-    renderContestDetailPage();
-
-    expect(await screen.findByTestId('contest-entry-name-edit-entry-1')).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('contest-entry-name-edit-entry-1'));
-    fireEvent.change(screen.getByTestId('contest-entry-name-input-entry-1'), {
-      target: { value: 'Major Hunters' },
-    });
-    fireEvent.click(screen.getByTestId('contest-entry-name-save-entry-1'));
-
-    await waitFor(() =>
-      expect(updateContestEntryMock).toHaveBeenCalledWith({
-        path: { contestId: 'contest-1', entryId: 'entry-1' },
-        body: { name: 'Major Hunters' },
-      }),
-    );
-
-    expect(await screen.findByTestId('contest-my-team-entry-entry-1')).toHaveTextContent(
-      'Major Hunters',
-    );
-  });
-
   it('shows truthful locked-state copy when entry creation is no longer available', async () => {
     primeCommonMocks({ contestStatus: 'LOCKED', selectionType: 'PICK_EM' });
     listContestEntriesMock.mockResolvedValue({
@@ -523,9 +394,8 @@ describe('ContestDetailPage', () => {
 
     renderContestDetailPage();
 
-    expect(await screen.findByText('Your team doesn\'t have an entry in this contest yet.')).toBeInTheDocument();
+    expect(await screen.findByTestId('contest-open-my-entries')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-enter-entry')).not.toBeInTheDocument();
-    expect(screen.getAllByText('This contest is locked, so new entries are closed.')).toHaveLength(2);
-    expect(screen.getByTestId('contest-manage-team-link')).toHaveAttribute('href', '/league/BIGDAWGS/team');
+    expect(screen.getByText(/Contest Home now stays focused on rules, all entries, and the leaderboard/)).toBeInTheDocument();
   });
 });

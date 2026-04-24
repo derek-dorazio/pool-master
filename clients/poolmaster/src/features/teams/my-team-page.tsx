@@ -3,7 +3,6 @@ import { TeamIconKey } from '@poolmaster/shared/domain';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  enterContest,
   createSquadOwnerInvitation,
   createLeagueSquad,
   getLeagueByCode,
@@ -15,7 +14,6 @@ import {
   removeSquadOwner,
   replaceSquadOwner,
   revokeSquadOwnerInvitation,
-  updateContestEntry,
   updateLeagueSquad,
   type ListContestEntriesResponses,
   type ListContestsResponses,
@@ -27,7 +25,11 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { buildContestEntryPath } from '@/features/contests/contest-entry-page';
 import { formatUserName } from '@/features/account/user-name';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
-import { buildLeaguePath, setRecentLeagueCode } from '@/features/leagues/league-routing';
+import {
+  buildLeagueEntriesPath,
+  buildLeaguePath,
+  setRecentLeagueCode,
+} from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
 import { getTeamIconOption, TEAM_ICON_OPTIONS } from './team-icon-catalog';
 import { buildDefaultTeamName } from './team-defaults';
@@ -79,8 +81,6 @@ export function MyTeamPage() {
   const [teamInactivationNotice, setTeamInactivationNotice] = useState<string | null>(null);
   const [replaceTargetUserId, setReplaceTargetUserId] = useState<string | null>(null);
   const [replaceEmail, setReplaceEmail] = useState('');
-  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
-  const [entryNameDraft, setEntryNameDraft] = useState('');
 
   const leagueQuery = useQuery({
     queryKey: ['poolmaster', 'league', leagueCode],
@@ -420,52 +420,10 @@ export function MyTeamPage() {
     });
   }, [contestEntriesByContestQuery.data, contestEntriesByContestQuery.isError, contestEntriesByContestQuery.isLoading, contestsQuery.data, selectedTeam]);
 
-  const activeContestCards = teamContestCards.filter((card) => !isHistoricalContest(card.contest.status));
   const historicalContestCards = teamContestCards.filter(
     (card) => isHistoricalContest(card.contest.status) && card.teamEntries.length > 0,
   );
   const isContestEntriesBusy = contestEntriesByContestQuery.isLoading;
-
-  const createContestEntryMutation = useMutation({
-    mutationFn: async (contestId: string) => {
-      const response = await enterContest({ path: { contestId } });
-
-      if (!response.data?.entry) {
-        throw response.error ?? new Error('Contest entry creation response is missing data.');
-      }
-
-      return response.data.entry;
-    },
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-contests', leagueId] }),
-        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'team-contest-entries', selectedTeam?.id] }),
-      ]);
-    },
-  });
-
-  const renameContestEntryMutation = useMutation({
-    mutationFn: async ({ contestId, entryId, name }: { contestId: string; entryId: string; name: string }) => {
-      const response = await updateContestEntry({
-        path: { contestId, entryId },
-        body: { name },
-      });
-
-      if (!response.data?.entry) {
-        throw response.error ?? new Error('Contest entry rename response is missing data.');
-      }
-
-      return response.data.entry;
-    },
-    onSuccess: async () => {
-      setEditingEntryId(null);
-      setEntryNameDraft('');
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-contests', leagueId] }),
-        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'team-contest-entries', selectedTeam?.id] }),
-      ]);
-    },
-  });
 
   if (leagueQuery.isLoading) {
     return (
@@ -508,19 +466,6 @@ export function MyTeamPage() {
   const teamOwnerInvitations = ownerInvitationsQuery.data?.filter(
     (invitation) => invitation.squadId === selectedTeam?.id,
   ) ?? [];
-  const selectedTeamIsOwnedByCurrentUser = Boolean(selectedTeam && myTeam && selectedTeam.id === myTeam.id);
-
-  function startRenamingEntry(entry: ContestEntrySummary) {
-    setEditingEntryId(entry.id);
-    setEntryNameDraft(entry.name);
-    renameContestEntryMutation.reset();
-  }
-
-  function cancelRenamingEntry() {
-    setEditingEntryId(null);
-    setEntryNameDraft('');
-    renameContestEntryMutation.reset();
-  }
 
   return (
     <section className="space-y-6" data-testid="my-team-page">
@@ -655,180 +600,17 @@ export function MyTeamPage() {
 
         <div className="space-y-6">
           <div className="rounded-[2rem] border border-border bg-card p-6">
-            <h3 className="text-xl font-semibold">Active contest entries</h3>
+            <h3 className="text-xl font-semibold">Active entry management</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Every contest entry belongs to this team. Use the same Create entry action from the contest tile whenever the contest is still open.
+              Active entry creation and rename actions now live on the dedicated My Entries page. Team Home stays focused on team identity, owners, and lifecycle.
             </p>
-
-            <div className="mt-5 space-y-3">
-              {contestsQuery.isLoading || (selectedTeam && isContestEntriesBusy) ? (
-                <p className="text-sm text-muted-foreground">Loading active contest entries...</p>
-              ) : contestsQuery.isError ? (
-                <p className="text-sm text-muted-foreground">
-                  We couldn&apos;t load league contests right now.
-                </p>
-              ) : !selectedTeam ? (
-                <p className="text-sm text-muted-foreground">
-                  Create your team first and active contest entry tiles will appear here.
-                </p>
-              ) : activeContestCards.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No active contests are available for this league yet.
-                </p>
-              ) : (
-                activeContestCards.map(({ contest, isError, teamEntries }) => (
-                  <div
-                    className="rounded-[1.5rem] border border-border bg-background p-4"
-                    data-testid={`my-team-contest-${contest.id}`}
-                    key={contest.id}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <div className="font-medium text-foreground">{contest.name}</div>
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          {contest.selectionType} · {contest.scoringEngine} · {contest.status}
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-3">
-                        <Link
-                          className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground"
-                          state={{ leagueCode }}
-                          to={`/contests/${contest.id}`}
-                        >
-                          Open contest
-                        </Link>
-                        {contest.status === 'OPEN' ? (
-                          <button
-                            className="rounded-2xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                            data-testid={`my-team-create-entry-${contest.id}`}
-                            disabled={createContestEntryMutation.isPending}
-                            onClick={() => void createContestEntryMutation.mutateAsync(contest.id)}
-                            type="button"
-                          >
-                            {createContestEntryMutation.isPending
-                              ? 'Creating...'
-                              : 'Create entry'}
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {isError ? (
-                      <p className="mt-3 text-sm text-destructive">
-                        We couldn&apos;t load this team&apos;s entries for the contest right now.
-                      </p>
-                    ) : teamEntries.length ? (
-                      <div className="mt-4 space-y-3">
-                        {teamEntries.map((entry: ContestEntrySummary) => (
-                          <div
-                            className="rounded-2xl border border-border bg-card px-4 py-4"
-                            data-testid={`my-team-contest-entry-${entry.id}`}
-                            key={entry.id}
-                          >
-                            <div className="flex items-center justify-between gap-4">
-                              <div>
-                                <div className="font-medium text-foreground">{entry.name}</div>
-                                <div className="mt-1 text-sm text-muted-foreground">
-                                  {entry.squadName} · Entry {entry.entryNumber}
-                                </div>
-                              </div>
-                              <div className="text-right text-sm text-muted-foreground">
-                                <div>{entry.standingsPosition ? `#${entry.standingsPosition}` : 'Rank pending'}</div>
-                                <div>{entry.totalScore} pts</div>
-                              </div>
-                            </div>
-                            <div className="mt-4 flex flex-wrap gap-3">
-                              <Link
-                                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
-                                data-testid={`my-team-entry-open-${entry.id}`}
-                                state={{ leagueCode }}
-                                to={buildContestEntryPath(contest.id, entry.id)}
-                              >
-                                {contest.status === 'OPEN' ? 'Open entry' : 'View entry detail'}
-                              </Link>
-                            </div>
-                            {contest.status === 'OPEN' && selectedTeamIsOwnedByCurrentUser ? (
-                              <div className="mt-4 rounded-2xl border border-border bg-background px-4 py-4">
-                                {editingEntryId === entry.id ? (
-                                  <div className="space-y-3">
-                                    <label className="block space-y-2">
-                                      <span className="text-sm font-medium text-foreground">Entry name</span>
-                                      <input
-                                        className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
-                                        data-testid={`my-team-entry-name-input-${entry.id}`}
-                                        disabled={renameContestEntryMutation.isPending}
-                                        maxLength={100}
-                                        onChange={(event) => setEntryNameDraft(event.target.value)}
-                                        value={entryNameDraft}
-                                      />
-                                    </label>
-                                    <div className="flex flex-wrap gap-3">
-                                      <button
-                                        className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                                        data-testid={`my-team-entry-name-save-${entry.id}`}
-                                        disabled={!entryNameDraft.trim() || renameContestEntryMutation.isPending}
-                                        onClick={() =>
-                                          void renameContestEntryMutation.mutateAsync({
-                                            contestId: contest.id,
-                                            entryId: entry.id,
-                                            name: entryNameDraft.trim(),
-                                          })
-                                        }
-                                        type="button"
-                                      >
-                                        {renameContestEntryMutation.isPending ? 'Saving...' : 'Save name'}
-                                      </button>
-                                      <button
-                                        className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                                        data-testid={`my-team-entry-name-cancel-${entry.id}`}
-                                        disabled={renameContestEntryMutation.isPending}
-                                        onClick={cancelRenamingEntry}
-                                        type="button"
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                    {editingEntryId === entry.id && renameContestEntryMutation.isError ? (
-                                      <p className="text-sm text-destructive">
-                                        {extractErrorMessage(renameContestEntryMutation.error)}
-                                      </p>
-                                    ) : null}
-                                  </div>
-                                ) : (
-                                  <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <p className="text-sm text-muted-foreground">
-                                      The default team-based name is seeded automatically, but you can rename this entry while the contest is open.
-                                    </p>
-                                    <button
-                                      className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                                      data-testid={`my-team-entry-name-edit-${entry.id}`}
-                                      disabled={renameContestEntryMutation.isPending}
-                                      onClick={() => startRenamingEntry(entry)}
-                                      type="button"
-                                    >
-                                      Rename entry
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="mt-3 text-sm text-muted-foreground">
-                        This team does not have an entry in this contest yet.
-                      </p>
-                    )}
-                  </div>
-                ))
-              )}
-              {createContestEntryMutation.isError ? (
-                <p className="text-sm text-destructive">
-                  {extractErrorMessage(createContestEntryMutation.error)}
-                </p>
-              ) : null}
-            </div>
+            <Link
+              className="mt-5 inline-flex rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+              data-testid="my-team-open-my-entries"
+              to={buildLeagueEntriesPath(leagueCode)}
+            >
+              Open My Entries
+            </Link>
           </div>
 
           <div className="rounded-[2rem] border border-border bg-card p-6">

@@ -8,6 +8,7 @@ import { CreateContestPage } from '@/features/contests/create-contest-page';
 import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { ContestEntryPage } from '@/features/contests/contest-entry-page';
 import { LegacyContestDetailRedirect } from '@/features/contests/legacy-contest-detail-redirect';
+import { MyEntriesPage } from '@/features/entries/my-entries-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { LeagueRouteScaffoldPage } from '@/features/leagues/league-route-scaffold-page';
@@ -102,7 +103,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'league/:leagueCode/entries',
-            element: <LeagueRouteScaffoldPage scaffoldKey="entries" />,
+            element: <MyEntriesPage />,
           },
           {
             path: 'league/:leagueCode/history',
