@@ -13,6 +13,7 @@ import {
 } from '@/features/leagues/create-league-modal';
 import {
   buildLeagueContestCreatePath,
+  buildLeagueContestsManagePath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
 import { LeagueSelector } from './league-selector';
@@ -41,6 +42,13 @@ export function AppShell() {
     const match = location.pathname.match(/^\/league\/([^/]+)/);
     return match?.[1] ?? null;
   }, [location.pathname]);
+  const activeLeague = useMemo(
+    () => leaguesQuery.data?.find((league) => league.leagueCode === activeLeagueCode) ?? null,
+    [activeLeagueCode, leaguesQuery.data],
+  );
+  const canManageActiveLeague = Boolean(
+    activeLeagueCode && (activeLeague?.role === 'COMMISSIONER' || auth.isRootAdmin),
+  );
   const isCreateLeagueOpen = searchParams.get('createLeague') === '1';
 
   function openCreateLeague() {
@@ -229,6 +237,15 @@ export function AppShell() {
                 Create Contest
               </button>
             )}
+            {canManageActiveLeague ? (
+              <Link
+                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
+                data-testid="app-nav-manage-contests"
+                to={buildLeagueContestsManagePath(activeLeagueCode ?? '')}
+              >
+                Manage Contests
+              </Link>
+            ) : null}
             {activeLeagueCode ? (
               <>
                 <Link

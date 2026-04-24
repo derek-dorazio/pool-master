@@ -28,6 +28,7 @@ import { getLeagueLoadErrorCopy } from './league-load-error';
 import {
   buildInvitePath,
   buildLeagueContestCreatePath,
+  buildLeagueContestsManagePath,
   buildLeagueContestPath,
   buildLeagueTeamHomePath,
   buildLeagueTeamsPath,
@@ -560,6 +561,14 @@ export function LeagueDetailPage() {
           {canManageLeague && !isInactiveLeague ? (
             <Link
               className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+              to={buildLeagueContestsManagePath(leagueQuery.data.leagueCode)}
+            >
+              Manage Contests
+            </Link>
+          ) : null}
+          {canManageLeague && !isInactiveLeague ? (
+            <Link
+              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
               to={buildLeagueContestCreatePath(leagueQuery.data.leagueCode)}
             >
               Create Contest
@@ -882,9 +891,18 @@ export function LeagueDetailPage() {
             <h3 className="text-xl font-semibold">Contests</h3>
             <p className="text-sm text-muted-foreground">
               League Home temporarily continues to host contest cards until the dedicated League
-              Contests page lands later in Plan 107.
+              Contests page lands later in Plan 107. Commissioner administration now routes
+              through the dedicated Manage Contests page.
             </p>
           </div>
+          {canManageLeague && !isInactiveLeague ? (
+            <Link
+              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+              to={buildLeagueContestsManagePath(leagueQuery.data.leagueCode)}
+            >
+              Manage Contests
+            </Link>
+          ) : null}
         </div>
 
         <div className="mt-5 space-y-3">

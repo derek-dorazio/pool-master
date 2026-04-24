@@ -189,6 +189,11 @@ describe('LeagueDetailPage', () => {
     renderLeagueDetailPage();
 
     await screen.findByTestId('league-home');
+    expect(
+      screen
+        .getAllByRole('link', { name: 'Manage Contests' })
+        .every((link) => link.getAttribute('href') === '/league/BIGDAWGS/contests/manage'),
+    ).toBe(true);
     fireEvent.change(screen.getByTestId('league-details-name'), {
       target: { value: 'Bigger Dawgs' },
     });

@@ -169,6 +169,7 @@ describe('AppShell', () => {
             name: 'League One',
             isActive: true,
             iconKey: 'clubhouse',
+            role: 'COMMISSIONER',
           },
         ],
       },
@@ -180,6 +181,10 @@ describe('AppShell', () => {
     expect(screen.getByTestId('app-nav-league-home')).toHaveAttribute(
       'href',
       '/league/LEAGUE1',
+    );
+    expect(await screen.findByTestId('app-nav-manage-contests')).toHaveAttribute(
+      'href',
+      '/league/LEAGUE1/contests/manage',
     );
     await waitFor(() =>
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -221,13 +226,27 @@ describe('AppShell', () => {
 
   it('forwards a false isRootAdmin for regular members', async () => {
     clearSessionMock.mockResolvedValue(undefined);
-    listLeaguesMock.mockResolvedValue({ data: { leagues: [] } });
+    listLeaguesMock.mockResolvedValue({
+      data: {
+        leagues: [
+          {
+            id: 'league-1',
+            leagueCode: 'LEAGUE1',
+            name: 'League One',
+            isActive: true,
+            iconKey: 'clubhouse',
+            role: 'MEMBER',
+          },
+        ],
+      },
+    });
     authState.isRootAdmin = false;
 
     renderAppShell();
 
     await screen.findByTestId('mock-outlet');
     expect(await screen.findByTestId('mock-account-menu-is-root-admin')).toHaveTextContent('false');
+    expect(screen.queryByTestId('app-nav-manage-contests')).not.toBeInTheDocument();
   });
 
   it('falls back to /welcome for the league-home nav when no active league is selected', async () => {
