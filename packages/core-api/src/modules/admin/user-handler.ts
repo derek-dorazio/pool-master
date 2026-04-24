@@ -7,6 +7,9 @@ import type { UserService } from './user-service';
 import {
   LastRootAdminError,
   SelfRootAdminChangeError,
+  UserDeleteConfirmationMismatchError,
+  UserDeleteDependenciesExistError,
+  UserDeleteRequiresInactiveError,
   UserNotFoundError,
 } from './user-service';
 import { sendError } from '../../core/error-handler';
@@ -19,7 +22,9 @@ export function createUserHandlers(userService: UserService) {
     forceLogout,
     disableUser,
     enableUser,
+    resetPassword,
     setRootAdmin,
+    deleteUser,
   };
 
   async function listUsers(
@@ -72,7 +77,8 @@ export function createUserHandlers(userService: UserService) {
     reply: FastifyReply,
   ) {
     try {
-      const detail = await userService.getUserDetail(request.params.userId);
+      const { rootAdminUserId } = extractRootAdminContext(request);
+      const detail = await userService.getUserDetail(request.params.userId, rootAdminUserId);
       return reply.send({
         ...detail,
         createdAt: detail.createdAt.toISOString(),
@@ -143,6 +149,33 @@ export function createUserHandlers(userService: UserService) {
     }
   }
 
+  async function resetPassword(
+    request: FastifyRequest<{
+      Params: { userId: string };
+      Body: { reason?: string };
+    }>,
+    reply: FastifyReply,
+  ) {
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
+    const { userId } = request.params;
+    const { reason } = request.body ?? {};
+
+    try {
+      const result = await userService.resetUserPassword(
+        userId,
+        rootAdminUserId,
+        rootAdminEmail,
+        reason,
+      );
+      return reply.send(result);
+    } catch (err) {
+      if (err instanceof UserNotFoundError) {
+        return sendError(reply, 404, 'USER_NOT_FOUND', err.message);
+      }
+      throw err;
+    }
+  }
+
   async function setRootAdmin(
     request: FastifyRequest<{
       Params: { userId: string };
@@ -163,6 +196,40 @@ export function createUserHandlers(userService: UserService) {
       }
       if (err instanceof SelfRootAdminChangeError) {
         return sendError(reply, 400, 'SELF_ROOT_ADMIN_CHANGE', err.message);
+      }
+      if (err instanceof LastRootAdminError) {
+        return sendError(reply, 409, 'LAST_ROOT_ADMIN', err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function deleteUser(
+    request: FastifyRequest<{
+      Params: { userId: string };
+      Body: { email: string; reason?: string };
+    }>,
+    reply: FastifyReply,
+  ) {
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
+    const { userId } = request.params;
+    const { email, reason } = request.body;
+
+    try {
+      await userService.deleteUser(userId, email, rootAdminUserId, rootAdminEmail, reason);
+      return reply.send({ success: true });
+    } catch (err) {
+      if (err instanceof UserNotFoundError) {
+        return sendError(reply, 404, 'USER_NOT_FOUND', err.message);
+      }
+      if (err instanceof UserDeleteConfirmationMismatchError) {
+        return sendError(reply, 400, 'ACCOUNT_DELETE_CONFIRMATION_MISMATCH', err.message);
+      }
+      if (err instanceof UserDeleteRequiresInactiveError) {
+        return sendError(reply, 409, 'ACCOUNT_DELETE_REQUIRES_INACTIVE', err.message);
+      }
+      if (err instanceof UserDeleteDependenciesExistError) {
+        return sendError(reply, 409, 'ACCOUNT_DELETE_DEPENDENCIES_EXIST', err.message);
       }
       if (err instanceof LastRootAdminError) {
         return sendError(reply, 409, 'LAST_ROOT_ADMIN', err.message);

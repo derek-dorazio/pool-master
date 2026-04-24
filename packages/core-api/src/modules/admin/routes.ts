@@ -25,6 +25,9 @@ import { createContestTemplateAdminHandlers } from './contest-template-handler';
 import { auditRoutes } from './audit-routes';
 import {
   AdminListLeaguesQuerySchema,
+  AdminDeleteUserRequestSchema,
+  AdminResetUserPasswordRequestSchema,
+  AdminResetUserPasswordResponseSchema,
   AdminContestConfigTemplateResponseSchema,
   AdminListContestConfigTemplatesQuerySchema,
   AdminUpdateContestConfigTemplateRequestSchema,
@@ -211,6 +214,18 @@ export async function adminModule(
     handler: user.enableUser,
   });
 
+  fastify.post('/users/:userId/reset-password', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Reset a user password as root admin',
+      description: 'Generates a temporary password for the target user, revokes their active refresh sessions, and returns the temporary credential so the root admin can relay it.',
+      operationId: 'adminResetUserPassword',
+      body: zodToJsonSchema(AdminResetUserPasswordRequestSchema),
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(AdminResetUserPasswordResponseSchema) }, [404]),
+    },
+    handler: user.resetPassword,
+  });
+
   fastify.post('/users/:userId/root-admin', {
     schema: {
       tags: ['Admin'],
@@ -221,6 +236,18 @@ export async function adminModule(
       response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 404, 409]),
     },
     handler: user.setRootAdmin,
+  });
+
+  fastify.delete('/users/:userId', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Delete an inactive user account as root admin',
+      description: 'Permanently deletes an inactive user account after confirming the exact email. Stable UI-handled errors include 404 USER_NOT_FOUND, 400 ACCOUNT_DELETE_CONFIRMATION_MISMATCH, 409 ACCOUNT_DELETE_REQUIRES_INACTIVE, 409 ACCOUNT_DELETE_DEPENDENCIES_EXIST, and 409 LAST_ROOT_ADMIN.',
+      operationId: 'adminDeleteUser',
+      body: zodToJsonSchema(AdminDeleteUserRequestSchema),
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 404, 409]),
+    },
+    handler: user.deleteUser,
   });
 
   fastify.get('/leagues', {

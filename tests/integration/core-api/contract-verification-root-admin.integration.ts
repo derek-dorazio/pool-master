@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import {
+  AdminResetUserPasswordResponseSchema,
   AdminContestConfigTemplateResponseSchema,
   ContestConfigTemplateListResponseSchema,
   IngestionJobsResponseSchema,
@@ -431,6 +432,11 @@ describe('Contract verification (root admin)', () => {
     });
     expect(detailRes.statusCode).toBe(200);
     expect(UserDetailResponseSchema.safeParse(detailRes.json()).success).toBe(true);
+    expect(detailRes.json().viewerAuthority).toEqual({
+      self: true,
+      rootAdmin: true,
+      viewer: false,
+    });
 
     const setRootAdminRes = await getApp().inject({
       method: 'POST',
@@ -443,6 +449,36 @@ describe('Contract verification (root admin)', () => {
     });
     expect(setRootAdminRes.statusCode).toBe(200);
     expect(SuccessSchema.safeParse(setRootAdminRes.json()).success).toBe(true);
+
+    const resetPasswordRes = await getApp().inject({
+      method: 'POST',
+      url: `/api/v1/admin/users/${targetUser.user.id}/reset-password`,
+      headers: rootAdmin.headers,
+      payload: {
+        reason: 'Contract verification',
+      },
+    });
+    expect(resetPasswordRes.statusCode).toBe(200);
+    expect(AdminResetUserPasswordResponseSchema.safeParse(resetPasswordRes.json()).success).toBe(true);
+    expect(typeof resetPasswordRes.json().temporaryPassword).toBe('string');
+
+    await getPrisma().user.update({
+      where: { id: targetUser.user.id },
+      data: { isActive: false },
+    });
+
+    const deleteUserRes = await getApp().inject({
+      method: 'DELETE',
+      url: `/api/v1/admin/users/${targetUser.user.id}`,
+      headers: rootAdmin.headers,
+      payload: {
+        email: targetUser.user.email,
+        reason: 'Contract verification cleanup',
+      },
+    });
+    expect(deleteUserRes.statusCode).toBe(200);
+    expect(SuccessSchema.safeParse(deleteUserRes.json()).success).toBe(true);
+    expect(await getPrisma().user.findUnique({ where: { id: targetUser.user.id } })).toBeNull();
 
     const syncRunsRes = await getApp().inject({
       method: 'GET',
@@ -782,6 +818,28 @@ describe('Contract verification (root admin)', () => {
     expect(missingRoleChangeRes.statusCode).toBe(404);
     expect(ErrorEnvelopeSchema.safeParse(missingRoleChangeRes.json()).success).toBe(true);
     expect(missingRoleChangeRes.json().error.code).toBe('USER_NOT_FOUND');
+
+    const missingResetPasswordRes = await getApp().inject({
+      method: 'POST',
+      url: '/api/v1/admin/users/00000000-0000-0000-0000-000000000000/reset-password',
+      headers: rootAdmin.headers,
+      payload: {},
+    });
+    expect(missingResetPasswordRes.statusCode).toBe(404);
+    expect(ErrorEnvelopeSchema.safeParse(missingResetPasswordRes.json()).success).toBe(true);
+    expect(missingResetPasswordRes.json().error.code).toBe('USER_NOT_FOUND');
+
+    const missingDeleteUserRes = await getApp().inject({
+      method: 'DELETE',
+      url: '/api/v1/admin/users/00000000-0000-0000-0000-000000000000',
+      headers: rootAdmin.headers,
+      payload: {
+        email: 'missing@example.com',
+      },
+    });
+    expect(missingDeleteUserRes.statusCode).toBe(404);
+    expect(ErrorEnvelopeSchema.safeParse(missingDeleteUserRes.json()).success).toBe(true);
+    expect(missingDeleteUserRes.json().error.code).toBe('USER_NOT_FOUND');
 
     const selfRoleChangeRes = await getApp().inject({
       method: 'POST',

@@ -42,13 +42,34 @@ export type PlatformMetricsResponse = z.infer<typeof PlatformMetricsResponseSche
 
 export const UserListResponseSchema = PaginatedSchema(UserProfileDtoSchema);
 export type UserListResponse = z.infer<typeof UserListResponseSchema>;
-export const UserDetailResponseSchema = UserProfileDtoSchema.describe('Root-admin user-detail response.');
+export const UserViewerAuthorityDtoSchema = z.object({
+  self: z.boolean().describe('Whether the current requester is viewing their own user account.'),
+  rootAdmin: z.boolean().describe('Whether the current requester has root-admin authority on this account page.'),
+  viewer: z.boolean().describe('Fallback viewer state when the requester is neither self nor root admin on this account page.'),
+}).describe('Account-page authority flags emitted for the viewed user.');
+export type UserViewerAuthorityDto = z.infer<typeof UserViewerAuthorityDtoSchema>;
+export const UserDetailResponseSchema = UserProfileDtoSchema.extend({
+  viewerAuthority: UserViewerAuthorityDtoSchema,
+}).describe('Root-admin user-detail response.');
 export type UserDetailResponse = z.infer<typeof UserDetailResponseSchema>;
 export const SetUserRootAdminRequestSchema = z.object({
   isRootAdmin: z.boolean().describe('Whether the target user should hold the platform-level root-admin role after the change.'),
   reason: z.string().trim().min(1).max(500).optional().describe('Optional human reason captured in the root-admin audit log.'),
 }).describe('Root-admin role-change request payload.');
 export type SetUserRootAdminRequest = z.infer<typeof SetUserRootAdminRequestSchema>;
+export const AdminResetUserPasswordRequestSchema = z.object({
+  reason: z.string().trim().min(1).max(500).optional().describe('Optional human reason captured in the root-admin audit log.'),
+}).describe('Root-admin initiated password-reset request.');
+export type AdminResetUserPasswordRequest = z.infer<typeof AdminResetUserPasswordRequestSchema>;
+export const AdminResetUserPasswordResponseSchema = z.object({
+  temporaryPassword: z.string().min(8).describe('Temporary password to relay to the user. Existing refresh sessions are revoked and the user should change this after signing in.'),
+}).describe('Root-admin password-reset response.');
+export type AdminResetUserPasswordResponse = z.infer<typeof AdminResetUserPasswordResponseSchema>;
+export const AdminDeleteUserRequestSchema = z.object({
+  email: z.string().email().describe('Exact target email confirmation required before permanently deleting the account.'),
+  reason: z.string().trim().min(1).max(500).optional().describe('Optional human reason captured in the root-admin audit log.'),
+}).describe('Root-admin delete-account confirmation payload.');
+export type AdminDeleteUserRequest = z.infer<typeof AdminDeleteUserRequestSchema>;
 
 export const AdminListLeaguesQuerySchema = z.object({
   search: z

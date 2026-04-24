@@ -96,10 +96,18 @@ describe('admin support services', () => {
 
       const service = new UserService(prisma, createLogger() as any);
 
-      await expect(service.getUserDetail('user-1')).resolves.toEqual(
-        expect.objectContaining({ id: 'user-1', username: 'userone' }),
+      await expect(service.getUserDetail('user-1', 'admin-1')).resolves.toEqual(
+        expect.objectContaining({
+          id: 'user-1',
+          username: 'userone',
+          viewerAuthority: {
+            self: false,
+            rootAdmin: true,
+            viewer: false,
+          },
+        }),
       );
-      await expect(service.getUserDetail('missing-user')).rejects.toBeInstanceOf(UserNotFoundError);
+      await expect(service.getUserDetail('missing-user', 'admin-1')).rejects.toBeInstanceOf(UserNotFoundError);
     });
 
     it('force-logs out a user and rejects missing users', async () => {

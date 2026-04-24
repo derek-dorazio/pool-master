@@ -13,6 +13,7 @@ import {
 import { useAuth } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
 import { useLogger } from '@/lib/logger';
+import { RootAdminUserAccountPage } from './root-admin-user-account-page';
 import { formatUserName } from './user-name';
 import { buildUserPath } from './user-routing';
 
@@ -312,6 +313,10 @@ export function UserPage() {
   }
 
   if (!isSelf) {
+    if (user.isRootAdmin) {
+      return <RootAdminUserAccountPage userId={userId} />;
+    }
+
     return (
       <section className="space-y-6" data-testid="user-page-non-self-placeholder">
         <div className="rounded-[2rem] border border-border bg-card p-8">
@@ -322,9 +327,9 @@ export function UserPage() {
             Cross-user profile views land next
           </h1>
           <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-            The canonical user route now owns self-service account actions, but viewer,
-            commissioner, and root-admin detail states still depend on the additive user-detail
-            contract in the next slice. This page stays truthful until that contract lands.
+            The canonical user route now owns self-service account actions, but non-root-admin
+            viewer detail still depends on the broader user-detail contract in the next slice.
+            This page stays truthful until that contract lands.
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
             Requested user id: <span className="font-medium text-foreground">{userId}</span>

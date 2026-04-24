@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import {
+  adminDeleteUser,
   adminDeleteLeague,
+  adminDisableUser,
+  adminEnableUser,
   adminGetIngestionSchedule,
   adminGetPollIntervals,
   adminInactivateLeague,
@@ -10,6 +13,7 @@ import {
   adminListContestConfigTemplates,
   adminListProviderSyncRuns,
   adminReIngestEvent,
+  adminResetUserPassword,
   adminResetSportIngestionOverride,
   adminTriggerHealthCheck,
   adminGetUserDetail,
@@ -17,6 +21,7 @@ import {
   adminUpdateContestConfigTemplate,
   adminUpdateIngestionSchedule,
   adminUpdatePollIntervals,
+  loginUser,
   registerUser,
 } from '@poolmaster/shared/generated/hey-api';
 import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
@@ -126,6 +131,11 @@ describe('SDK Functional: Root Admin', () => {
       },
     });
     expect(detailResponse.data?.id).toBe(user.userId);
+    expect(detailResponse.data?.viewerAuthority).toEqual({
+      self: true,
+      rootAdmin: true,
+      viewer: false,
+    });
   });
 
   it('returns stable not-found codes for root-admin user detail reads', async () => {
@@ -252,6 +262,81 @@ describe('SDK Functional: Root Admin', () => {
       status: 400,
       code: 'SELF_ROOT_ADMIN_CHANGE',
     });
+  });
+
+  it('allows a root admin to reset another user password and delete an inactive account', async () => {
+    const rootAdmin = await buildRegisteredUser({
+      displayName: 'Root Admin Password Reset',
+    });
+    await promoteToRootAdmin(rootAdmin.userId);
+
+    const targetUser = await buildRegisteredUser({
+      displayName: 'Root Admin Password Target',
+      password: 'OriginalPass123!',
+    });
+
+    const resetResponse = await adminResetUserPassword({
+      client: rootAdmin.client,
+      path: {
+        userId: targetUser.userId,
+      },
+      body: {
+        reason: 'Support reset',
+      },
+    });
+
+    expect(typeof resetResponse.data?.temporaryPassword).toBe('string');
+
+    const reloginResponse = await loginUser({
+      client: getSdkClient(),
+      body: {
+        identifier: targetUser.username,
+        password: resetResponse.data?.temporaryPassword ?? '',
+      },
+    });
+    expect(reloginResponse.data?.user.id).toBe(targetUser.userId);
+
+    const disableResponse = await adminDisableUser({
+      client: rootAdmin.client,
+      path: {
+        userId: targetUser.userId,
+      },
+      body: {
+        reason: 'Cleanup path',
+      },
+    });
+    expect(disableResponse.response.status).toBe(204);
+
+    const enableResponse = await adminEnableUser({
+      client: rootAdmin.client,
+      path: {
+        userId: targetUser.userId,
+      },
+    });
+    expect(enableResponse.response.status).toBe(204);
+
+    await getFunctionalPrisma().user.update({
+      where: { id: targetUser.userId },
+      data: { isActive: false },
+    });
+
+    const deleteResponse = await adminDeleteUser({
+      client: rootAdmin.client,
+      path: {
+        userId: targetUser.userId,
+      },
+      body: {
+        email: targetUser.email,
+        reason: 'Cleanup path',
+      },
+    });
+
+    expect(deleteResponse.data?.success).toBe(true);
+    await expect(
+      getFunctionalPrisma().user.findUnique({
+        where: { id: targetUser.userId },
+      }),
+    ).resolves.toBeNull();
   });
 
   it('allows a promoted root-admin user to inspect persisted provider sync run history', async () => {

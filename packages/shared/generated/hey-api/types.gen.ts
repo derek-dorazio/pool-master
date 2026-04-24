@@ -10454,6 +10454,134 @@ export type AdminListUsersResponses = {
 
 export type AdminListUsersResponse = AdminListUsersResponses[keyof AdminListUsersResponses];
 
+export type AdminDeleteUserData = {
+    /**
+     * Root-admin delete-account confirmation payload.
+     */
+    body: {
+        /**
+         * Exact target email confirmation required before permanently deleting the account.
+         */
+        email: string;
+        /**
+         * Optional human reason captured in the root-admin audit log.
+         */
+        reason?: string;
+    };
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/users/{userId}';
+};
+
+export type AdminDeleteUserErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminDeleteUserError = AdminDeleteUserErrors[keyof AdminDeleteUserErrors];
+
+export type AdminDeleteUserResponses = {
+    /**
+     * Minimal success response envelope.
+     */
+    200: {
+        /**
+         * Confirms that the requested operation succeeded.
+         */
+        success: true;
+    };
+};
+
+export type AdminDeleteUserResponse = AdminDeleteUserResponses[keyof AdminDeleteUserResponses];
+
 export type AdminGetUserDetailData = {
     body?: never;
     path: {
@@ -10569,6 +10697,23 @@ export type AdminGetUserDetailResponses = {
          * Account creation timestamp in ISO 8601 format.
          */
         createdAt?: string;
+        /**
+         * Account-page authority flags emitted for the viewed user.
+         */
+        viewerAuthority: {
+            /**
+             * Whether the current requester is viewing their own user account.
+             */
+            self: boolean;
+            /**
+             * Whether the current requester has root-admin authority on this account page.
+             */
+            rootAdmin: boolean;
+            /**
+             * Fallback viewer state when the requester is neither self nor root admin on this account page.
+             */
+            viewer: boolean;
+        };
     };
 };
 
@@ -10791,6 +10936,86 @@ export type AdminEnableUserResponses = {
 };
 
 export type AdminEnableUserResponse = AdminEnableUserResponses[keyof AdminEnableUserResponses];
+
+export type AdminResetUserPasswordData = {
+    /**
+     * Root-admin initiated password-reset request.
+     */
+    body: {
+        /**
+         * Optional human reason captured in the root-admin audit log.
+         */
+        reason?: string;
+    };
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/users/{userId}/reset-password';
+};
+
+export type AdminResetUserPasswordErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminResetUserPasswordError = AdminResetUserPasswordErrors[keyof AdminResetUserPasswordErrors];
+
+export type AdminResetUserPasswordResponses = {
+    /**
+     * Root-admin password-reset response.
+     */
+    200: {
+        /**
+         * Temporary password to relay to the user. Existing refresh sessions are revoked and the user should change this after signing in.
+         */
+        temporaryPassword: string;
+    };
+};
+
+export type AdminResetUserPasswordResponse = AdminResetUserPasswordResponses[keyof AdminResetUserPasswordResponses];
 
 export type AdminSetUserRootAdminData = {
     /**

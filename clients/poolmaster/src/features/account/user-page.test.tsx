@@ -8,6 +8,12 @@ import { UserPage } from './user-page';
 
 const {
   changeAccountPasswordMock,
+  adminDeleteUserMock,
+  adminDisableUserMock,
+  adminEnableUserMock,
+  adminGetUserDetailMock,
+  adminResetUserPasswordMock,
+  adminSetUserRootAdminMock,
   inactivateAccountMock,
   deleteAccountMock,
   getCurrentUserMock,
@@ -29,6 +35,12 @@ const {
   mockLogger.child.mockReturnValue(mockLogger);
 
   return {
+    adminDeleteUserMock: vi.fn(),
+    adminDisableUserMock: vi.fn(),
+    adminEnableUserMock: vi.fn(),
+    adminGetUserDetailMock: vi.fn(),
+    adminResetUserPasswordMock: vi.fn(),
+    adminSetUserRootAdminMock: vi.fn(),
     changeAccountPasswordMock: vi.fn(),
     inactivateAccountMock: vi.fn(),
     deleteAccountMock: vi.fn(),
@@ -43,6 +55,12 @@ const {
 });
 
 vi.mock('@/lib/api', () => ({
+  adminDeleteUser: (...args: unknown[]) => adminDeleteUserMock(...args),
+  adminDisableUser: (...args: unknown[]) => adminDisableUserMock(...args),
+  adminEnableUser: (...args: unknown[]) => adminEnableUserMock(...args),
+  adminGetUserDetail: (...args: unknown[]) => adminGetUserDetailMock(...args),
+  adminResetUserPassword: (...args: unknown[]) => adminResetUserPasswordMock(...args),
+  adminSetUserRootAdmin: (...args: unknown[]) => adminSetUserRootAdminMock(...args),
   changeAccountPassword: (...args: unknown[]) => changeAccountPasswordMock(...args),
   inactivateAccount: (...args: unknown[]) => inactivateAccountMock(...args),
   deleteAccount: (...args: unknown[]) => deleteAccountMock(...args),
@@ -112,8 +130,47 @@ function primeCurrentUser({
   refreshTokenMock.mockResolvedValue({ data: null });
 }
 
+function primeAdminUserDetail({
+  id = 'user-2',
+  isActive = true,
+  isRootAdmin = false,
+}: {
+  id?: string;
+  isActive?: boolean;
+  isRootAdmin?: boolean;
+} = {}) {
+  adminGetUserDetailMock.mockResolvedValue({
+    data: {
+      id,
+      email: 'target@example.com',
+      username: 'target-user',
+      firstName: 'Target',
+      lastName: 'User',
+      isActive,
+      isRootAdmin,
+      authProvider: 'EMAIL',
+      timezone: 'America/New_York',
+      locale: 'en-US',
+      timeFormat: '12H',
+      dateFormat: 'MDY',
+      createdAt: '2026-04-13T00:00:00.000Z',
+      viewerAuthority: {
+        self: false,
+        rootAdmin: true,
+        viewer: false,
+      },
+    },
+  });
+}
+
 describe('UserPage', () => {
   afterEach(() => {
+    adminDeleteUserMock.mockReset();
+    adminDisableUserMock.mockReset();
+    adminEnableUserMock.mockReset();
+    adminGetUserDetailMock.mockReset();
+    adminResetUserPasswordMock.mockReset();
+    adminSetUserRootAdminMock.mockReset();
     changeAccountPasswordMock.mockReset();
     inactivateAccountMock.mockReset();
     deleteAccountMock.mockReset();
@@ -217,5 +274,74 @@ describe('UserPage', () => {
 
     expect(await screen.findByTestId('user-page-non-self-placeholder')).toBeVisible();
     expect(screen.getByTestId('user-page-self-link')).toHaveAttribute('href', '/users/user-1');
+  });
+
+  it('shows root-admin account controls for a non-self user route', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+    primeAdminUserDetail({ id: 'user-2', isRootAdmin: false, isActive: true });
+
+    renderUserPage('/users/user-2');
+
+    expect(await screen.findByTestId('root-admin-user-page')).toBeVisible();
+    expect(adminGetUserDetailMock).toHaveBeenCalledWith({
+      path: {
+        userId: 'user-2',
+      },
+    });
+    expect(screen.getByTestId('root-admin-user-open-role')).toBeVisible();
+    expect(screen.getByTestId('root-admin-user-open-reset-password')).toBeVisible();
+    expect(screen.getByTestId('root-admin-user-open-lifecycle')).toBeVisible();
+    expect(screen.getByTestId('root-admin-user-open-delete')).toBeDisabled();
+  });
+
+  it('submits a root-admin role change from the non-self user page', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+    primeAdminUserDetail({ id: 'user-2', isRootAdmin: false, isActive: true });
+    adminSetUserRootAdminMock.mockResolvedValue({
+      data: { success: true },
+    });
+
+    renderUserPage('/users/user-2');
+
+    await screen.findByTestId('root-admin-user-page');
+    fireEvent.click(screen.getByTestId('root-admin-user-open-role'));
+    await screen.findByTestId('root-admin-user-role-dialog');
+    fireEvent.change(screen.getByTestId('root-admin-user-role-reason'), {
+      target: { value: 'Coverage promotion' },
+    });
+    fireEvent.click(screen.getByTestId('root-admin-user-submit-role'));
+
+    await waitFor(() =>
+      expect(adminSetUserRootAdminMock).toHaveBeenCalledWith({
+        path: {
+          userId: 'user-2',
+        },
+        body: {
+          isRootAdmin: true,
+          reason: 'Coverage promotion',
+        },
+      }),
+    );
+  });
+
+  it('generates a temporary password for the viewed user from the root-admin page', async () => {
+    primeCurrentUser({ id: 'admin-1', isRootAdmin: true });
+    primeAdminUserDetail({ id: 'user-2', isRootAdmin: false, isActive: true });
+    adminResetUserPasswordMock.mockResolvedValue({
+      data: {
+        temporaryPassword: 'Pm-temp-password!9a',
+      },
+    });
+
+    renderUserPage('/users/user-2');
+
+    await screen.findByTestId('root-admin-user-page');
+    fireEvent.click(screen.getByTestId('root-admin-user-open-reset-password'));
+    await screen.findByTestId('root-admin-user-reset-password-dialog');
+    fireEvent.click(screen.getByTestId('root-admin-user-submit-reset-password'));
+
+    expect(await screen.findByTestId('root-admin-user-temp-password')).toHaveTextContent(
+      'Pm-temp-password!9a',
+    );
   });
 });
