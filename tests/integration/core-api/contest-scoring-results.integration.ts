@@ -227,7 +227,7 @@ async function createScoringFixture() {
       leagueId: league.id,
       createdBy: owner.user.id,
       name: `Scoring Squad ${randomUUID().slice(0, 8)}`,
-      status: 'ACTIVE',
+      isActive: true,
     },
   });
 
