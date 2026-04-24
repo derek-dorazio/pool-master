@@ -11,9 +11,8 @@ export type ManageSectionDefinition = {
   title: string;
   description: string;
   to: string;
-  availability: 'live' | 'legacy' | 'blocked';
+  availability: 'live' | 'blocked';
   availabilityLabel: string;
-  legacyHref?: string;
 };
 
 export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
@@ -88,10 +87,6 @@ export function getManageSectionDefinition(
 export function getManageBreadcrumbLabel(segment: string): string {
   if (segment === 'manage') {
     return 'Manage';
-  }
-
-  if (segment === 'legacy') {
-    return 'Legacy Manage Surface';
   }
 
   if (segment === 'run-sport-sync') {

@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import {
   getManageSectionDefinition,
   type ManageSectionKey,
@@ -36,24 +35,6 @@ export function RootAdminManageScaffoldPage({
             This section already has a dedicated surface. Use the page navigation
             above if you need to switch areas.
           </p>
-        ) : section.availability === 'legacy' ? (
-          <>
-            <p className="text-sm text-muted-foreground">
-              This section is now routed through its own canonical `/manage/*`
-              destination, but the dedicated extraction work has not fully landed
-              yet. Use the legacy manage surface for the live controls during the
-              transition.
-            </p>
-            {section.legacyHref ? (
-              <Link
-                className="mt-5 inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
-                data-testid={`root-admin-manage-scaffold-legacy-${sectionKey}`}
-                to={section.legacyHref}
-              >
-                Open legacy manage surface
-              </Link>
-            ) : null}
-          </>
         ) : (
           <p className="text-sm text-muted-foreground">
             This section is waiting on backend work before the dedicated admin

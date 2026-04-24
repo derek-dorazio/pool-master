@@ -26,10 +26,9 @@ export function RootAdminManageHubPage() {
           Manage
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          Choose a focused operational area instead of working from the old
-          stacked manage surface. During the transition, some sections already
-          have dedicated pages and others route through truthful scaffold pages
-          until their extraction slices land.
+          Choose a focused operational area from the canonical manage hub. Live
+          sections route directly into their dedicated pages, and blocked areas
+          keep truthful scaffold routes until their backend contracts land.
         </p>
       </div>
 

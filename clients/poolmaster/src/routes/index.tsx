@@ -21,7 +21,6 @@ import { RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-l
 import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-manage-leagues-page';
 import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manage-users-page';
 import { RootAdminManageScaffoldPage } from '@/features/root-admin/root-admin-manage-scaffold-page';
-import { RootAdminPage } from '@/features/root-admin/root-admin-page';
 import { RootAdminPollIntervalsPage } from '@/features/root-admin/root-admin-poll-intervals-page';
 import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
 import { RootAdminRunSportSyncPage } from '@/features/root-admin/root-admin-run-sport-sync-page';
@@ -151,7 +150,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: 'legacy',
-                element: <RootAdminPage />,
+                element: <Navigate replace to="/manage" />,
               },
               {
                 path: 'content-configuration',
