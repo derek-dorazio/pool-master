@@ -52,7 +52,6 @@ import {
   type SportSyncSubmission,
   type SyncSport,
 } from './root-admin-sync-utils';
-import { RootAdminUsersPanel } from './root-admin-users-panel';
 
 type ContestConfigTemplate = AdminListContestConfigTemplatesResponses[200]['templates'][number];
 type ContestConfigTemplateUpdateResult = AdminUpdateContestConfigTemplateResponses[200]['template'];
@@ -909,7 +908,26 @@ export function RootAdminPage() {
         ) : null}
       </section>
 
-      <RootAdminUsersPanel />
+      <section className="rounded-[2rem] border border-border bg-card p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h3 className="text-xl font-semibold text-foreground">Users</h3>
+            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+              The root-admin user directory and account actions now live on
+              dedicated pages. Search on `/manage/users`, then use canonical
+              user pages for reset-password, root-admin toggle, and account
+              lifecycle work.
+            </p>
+          </div>
+          <Link
+            className="inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+            data-testid="root-admin-users-open-page"
+            to="/manage/users"
+          >
+            Open dedicated users page
+          </Link>
+        </div>
+      </section>
 
       <section className="rounded-[2rem] border border-border bg-card p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

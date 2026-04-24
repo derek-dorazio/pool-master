@@ -19,6 +19,7 @@ import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin
 import { RootAdminManageHubPage } from '@/features/root-admin/root-admin-manage-hub-page';
 import { RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
 import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-manage-leagues-page';
+import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manage-users-page';
 import { RootAdminManageScaffoldPage } from '@/features/root-admin/root-admin-manage-scaffold-page';
 import { RootAdminPage } from '@/features/root-admin/root-admin-page';
 import { RootAdminPollIntervalsPage } from '@/features/root-admin/root-admin-poll-intervals-page';
@@ -170,7 +171,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: 'users',
-                element: <RootAdminManageScaffoldPage sectionKey="users" />,
+                element: <RootAdminManageUsersPage />,
               },
               {
                 path: 'sync',

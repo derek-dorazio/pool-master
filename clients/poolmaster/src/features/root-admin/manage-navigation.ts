@@ -39,11 +39,10 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     key: 'users',
     title: 'Users',
     description:
-      'Search for users and move into canonical user pages once the dedicated admin list page replaces the legacy embedded panel.',
+      'Search user accounts and move into canonical user pages for root-admin account actions.',
     to: '/manage/users',
-    availability: 'legacy',
-    availabilityLabel: 'Temporary scaffold',
-    legacyHref: '/manage/legacy',
+    availability: 'live',
+    availabilityLabel: 'Live now',
   },
   {
     key: 'content-configuration',

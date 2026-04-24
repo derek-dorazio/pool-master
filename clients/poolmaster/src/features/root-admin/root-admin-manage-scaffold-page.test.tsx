@@ -4,19 +4,19 @@ import { describe, expect, it } from 'vitest';
 import { RootAdminManageScaffoldPage } from './root-admin-manage-scaffold-page';
 
 describe('RootAdminManageScaffoldPage', () => {
-  it('routes legacy-backed sections back to the transitional manage surface', () => {
+  it('shows the dedicated-surface note for live sections', () => {
     render(
       <MemoryRouter>
-        <RootAdminManageScaffoldPage sectionKey="users" />
+        <RootAdminManageScaffoldPage sectionKey="content-configuration" />
       </MemoryRouter>,
     );
 
     expect(
-      screen.getByTestId('root-admin-manage-scaffold-page-users'),
+      screen.getByTestId('root-admin-manage-scaffold-page-content-configuration'),
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId('root-admin-manage-scaffold-legacy-users'),
-    ).toHaveAttribute('href', '/manage/legacy');
+      screen.getByText(/already has a dedicated surface/i),
+    ).toBeInTheDocument();
   });
 
   it('renders a blocker note for backend-blocked sections', () => {
