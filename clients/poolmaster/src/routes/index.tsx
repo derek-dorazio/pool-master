@@ -10,7 +10,7 @@ import { LegacyContestDetailRedirect } from '@/features/contests/legacy-contest-
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { LeagueRouteScaffoldPage } from '@/features/leagues/league-route-scaffold-page';
-import { MyLeaguesPage, WelcomePage } from '@/features/leagues/leagues-page';
+import { WelcomePage } from '@/features/leagues/leagues-page';
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminContentConfigurationListPage } from '@/features/root-admin/root-admin-content-configuration-list-page';
 import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin-ingestion-schedule-page';
@@ -65,11 +65,11 @@ export const router = createBrowserRouter([
           },
           {
             path: 'leagues',
-            element: <Navigate replace to="/my-leagues" />,
+            element: <Navigate replace to="/welcome" />,
           },
           {
             path: 'my-leagues',
-            element: <MyLeaguesPage />,
+            element: <Navigate replace to="/welcome" />,
           },
           {
             path: 'my-account',
@@ -131,7 +131,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'contests',
-        element: <Navigate replace to="/my-leagues" />,
+        element: <Navigate replace to="/welcome" />,
       },
       {
         element: <RootAdminRouteGuard />,

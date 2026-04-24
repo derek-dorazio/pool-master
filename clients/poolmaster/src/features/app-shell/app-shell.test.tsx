@@ -177,6 +177,10 @@ describe('AppShell', () => {
     renderAppShell();
 
     await screen.findByTestId('mock-outlet');
+    expect(screen.getByTestId('app-nav-league-home')).toHaveAttribute(
+      'href',
+      '/league/LEAGUE1',
+    );
     await waitFor(() =>
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -224,6 +228,19 @@ describe('AppShell', () => {
 
     await screen.findByTestId('mock-outlet');
     expect(await screen.findByTestId('mock-account-menu-is-root-admin')).toHaveTextContent('false');
+  });
+
+  it('falls back to /welcome for the league-home nav when no active league is selected', async () => {
+    clearSessionMock.mockResolvedValue(undefined);
+    listLeaguesMock.mockResolvedValue({ data: { leagues: [] } });
+
+    renderAppShell(['/welcome']);
+
+    await screen.findByTestId('mock-outlet');
+    expect(screen.getByTestId('app-nav-league-home')).toHaveAttribute(
+      'href',
+      '/welcome',
+    );
   });
 
   it('logs logout completion when the app-shell logout action succeeds', async () => {

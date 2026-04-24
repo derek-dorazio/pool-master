@@ -585,8 +585,8 @@ export function LeagueDetailPage() {
                 state from the backend.
               </p>
             </div>
-            <Link className="text-sm font-medium text-primary hover:underline" to="/my-leagues">
-              My leagues
+            <Link className="text-sm font-medium text-primary hover:underline" to="/welcome">
+              Welcome
             </Link>
           </div>
 
