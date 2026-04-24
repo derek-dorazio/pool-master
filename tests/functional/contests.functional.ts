@@ -647,6 +647,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const contestId = createResponse.data?.contest.id;
     expect(contestId).toBeTruthy();
+    expect(createResponse.data?.contestConfiguration?.maxEntriesPerSquad).toBe(1);
 
     const enterResponse = await enterContest({
       client: commissioner.client,
@@ -660,6 +661,18 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(enterResponse.data?.entry.status).toBe('ACTIVE');
     expect(enterResponse.data?.entry.totalScore).toBe(0);
     expect(enterResponse.data?.entry.entryNumber).toBe(1);
+
+    const secondEnterResponse = await enterContest({
+      client: commissioner.client,
+      path: {
+        contestId: contestId as string,
+      },
+    });
+
+    expectFunctionalError(secondEnterResponse, {
+      status: 409,
+      code: 'CONTEST_ENTRY_LIMIT_REACHED',
+    });
 
     const myEntryResponse = await getMyContestEntry({
       client: commissioner.client,

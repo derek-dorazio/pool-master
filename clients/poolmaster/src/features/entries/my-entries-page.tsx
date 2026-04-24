@@ -3,11 +3,13 @@ import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import {
   enterContest,
+  getContest,
   getLeagueByCode,
   listContestEntries,
   listContests,
   listLeagueSquads,
   updateContestEntry,
+  type GetContestResponses,
   type GetLeagueByCodeResponses,
   type ListContestEntriesResponses,
   type ListContestsResponses,
@@ -24,6 +26,7 @@ import {
 import { useLogger } from '@/lib/logger';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
+type ContestDetailResponse = GetContestResponses[200];
 type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 type ContestSummary = ListContestsResponses[200]['contests'][number];
 type ContestEntrySummary = ListContestEntriesResponses[200]['entries'][number];
@@ -170,6 +173,31 @@ export function MyEntriesPage() {
     retry: false,
   });
 
+  const contestDetailsByContestQuery = useQuery({
+    queryKey: ['poolmaster', 'contest-details', contestsQuery.data?.map((contest) => contest.id).join(',')],
+    queryFn: async (): Promise<Record<string, ContestDetailResponse>> => {
+      if (!contestsQuery.data) {
+        return {};
+      }
+
+      const results = await Promise.all(
+        contestsQuery.data.map(async (contest) => {
+          const response = await getContest({ path: { contestId: contest.id } });
+
+          if (!response.data) {
+            throw response.error ?? new Error('Contest detail response is missing data.');
+          }
+
+          return [contest.id, response.data] as const;
+        }),
+      );
+
+      return Object.fromEntries(results);
+    },
+    enabled: Boolean(contestsQuery.data),
+    retry: false,
+  });
+
   const activeContestCards = useMemo(() => {
     if (!myTeam || !contestsQuery.data) {
       return [];
@@ -179,15 +207,23 @@ export function MyEntriesPage() {
       .filter((contest) => !isHistoricalContest(contest.status))
       .map((contest) => {
         const entryResponse = contestEntriesByContestQuery.data?.[contest.id];
+        const contestDetail = contestDetailsByContestQuery.data?.[contest.id];
         const teamEntries = (entryResponse?.entries ?? []).filter((entry) => entry.squadId === myTeam.id);
+        const maxEntriesPerSquad = contestDetail?.contestConfiguration?.maxEntriesPerSquad ?? 1;
+        const entryLimitReached =
+          maxEntriesPerSquad !== null && teamEntries.length >= maxEntriesPerSquad;
 
         return {
           contest,
+          entryLimitReached,
           isError: contestEntriesByContestQuery.isError,
+          isLimitError: contestDetailsByContestQuery.isError,
           teamEntries,
         };
       });
   }, [
+    contestDetailsByContestQuery.data,
+    contestDetailsByContestQuery.isError,
     contestEntriesByContestQuery.data,
     contestEntriesByContestQuery.isError,
     contestsQuery.data,
@@ -274,6 +310,7 @@ export function MyEntriesPage() {
 
   const isInactiveLeague = leagueQuery.data.isActive === false;
   const isContestEntriesBusy = contestEntriesByContestQuery.isLoading;
+  const isContestDetailBusy = contestDetailsByContestQuery.isLoading;
 
   return (
     <section className="space-y-6" data-testid="my-entries-page">
@@ -333,7 +370,7 @@ export function MyEntriesPage() {
             </p>
 
             <div className="mt-5 space-y-3">
-              {contestsQuery.isLoading || isContestEntriesBusy ? (
+              {contestsQuery.isLoading || isContestEntriesBusy || isContestDetailBusy ? (
                 <p className="text-sm text-muted-foreground">Loading active contest entries...</p>
               ) : contestsQuery.isError ? (
                 <p className="text-sm text-muted-foreground">
@@ -344,7 +381,7 @@ export function MyEntriesPage() {
                   No active contests are available for this league yet.
                 </p>
               ) : (
-                activeContestCards.map(({ contest, isError, teamEntries }) => (
+                activeContestCards.map(({ contest, entryLimitReached, isError, isLimitError, teamEntries }) => (
                   <div
                     className="rounded-[1.5rem] border border-border bg-background p-4"
                     data-testid={`my-entries-contest-${contest.id}`}
@@ -368,7 +405,11 @@ export function MyEntriesPage() {
                           <button
                             className="rounded-2xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
                             data-testid={`my-entries-create-entry-${contest.id}`}
-                            disabled={isInactiveLeague || createContestEntryMutation.isPending}
+                            disabled={
+                              isInactiveLeague
+                              || entryLimitReached
+                              || createContestEntryMutation.isPending
+                            }
                             onClick={() => void createContestEntryMutation.mutateAsync(contest.id)}
                             type="button"
                           >
@@ -383,6 +424,10 @@ export function MyEntriesPage() {
                     {isError ? (
                       <p className="mt-3 text-sm text-destructive">
                         We couldn&apos;t load your team&apos;s entries for this contest right now.
+                      </p>
+                    ) : isLimitError ? (
+                      <p className="mt-3 text-sm text-destructive">
+                        We couldn&apos;t load the contest entry limit right now.
                       </p>
                     ) : teamEntries.length ? (
                       <div className="mt-4 space-y-3">
@@ -487,6 +532,14 @@ export function MyEntriesPage() {
                         Your team does not have an entry in this contest yet.
                       </p>
                     )}
+                    {entryLimitReached ? (
+                      <p
+                        className="mt-3 text-sm text-muted-foreground"
+                        data-testid={`my-entries-entry-limit-${contest.id}`}
+                      >
+                        This contest has already reached your team&apos;s entry limit.
+                      </p>
+                    ) : null}
                   </div>
                 ))
               )}

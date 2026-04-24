@@ -5218,10 +5218,155 @@ export type CreateContestResponses = {
             isExclusive?: boolean;
         };
         /**
-         * Contest configuration payload when the client requested expanded detail.
+         * Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces.
          */
         contestConfiguration?: {
-            [key: string]: unknown;
+            draftMode?: string;
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: Array<{
+                /**
+                 * Stable tier identifier.
+                 */
+                tierId: string;
+                /**
+                 * Tier label shown in commissioner and draft UI.
+                 */
+                tierName: string;
+                /**
+                 * Tier order number.
+                 */
+                tierNumber: number;
+                /**
+                 * How many picks each entry must make from the tier.
+                 */
+                picksFromTier: number;
+                /**
+                 * Optional ranking range that produced the tier.
+                 */
+                rankingRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional pricing range that produced the tier.
+                 */
+                priceRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional cap on how many participants can live in the tier.
+                 */
+                maxParticipants?: number;
+                /**
+                 * Participants assigned to the tier.
+                 */
+                participantIds: Array<string>;
+            }>;
+            tierAssignmentMethod?: string;
+            budget?: number;
+            pricingMethod?: string;
+            rosterSize?: number;
+            pickCount?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            isExclusive?: boolean;
+            bestBallN?: number;
+            missedCutPenalty?: number;
+            captainSlot?: boolean;
+            captainMultiplier?: number;
+            /**
+             * Optional typed configuration mode for golf-first managed contests.
+             */
+            mode?: string;
+            /**
+             * Contest entry lock timestamp stored on the contest configuration record.
+             */
+            locksAt?: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number;
+            /**
+             * How many roster scores count toward the entry total in managed golf contests.
+             */
+            countedScores?: number;
+            /**
+             * Tier source used for managed golf contests.
+             */
+            tierSource?: string;
+            tierGeneration?: {
+                /**
+                 * Default managed tier size used to seed tier generation.
+                 */
+                defaultTierSize: number;
+            };
+            /**
+             * Resolved managed-golf tier definitions when the contest stores typed tiered configuration.
+             */
+            tiers?: Array<{
+                /**
+                 * Stable tier key such as A, B, or C.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked from the tier.
+                 */
+                pickCount: number;
+                /**
+                 * Starting resolved rank/odds position for the tier.
+                 */
+                startPosition: number;
+                /**
+                 * Ending resolved rank/odds position for the tier. Null means remainder of field.
+                 */
+                endPosition: number;
+            }>;
+            /**
+             * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
+             */
+            cutRule?: {
+                type: 'FIXED_SCORE';
+                /**
+                 * Fallback score assigned when a golfer misses the cut.
+                 */
+                fixedScore: number;
+            };
+            /**
+             * Managed-golf playoff handling strategy.
+             */
+            playoffHandling?: string;
+            /**
+             * Managed-golf leaderboard display scoring mode.
+             */
+            displayScoring?: string;
+            /**
+             * Managed-golf tiebreaker configuration.
+             */
+            tiebreaker?: {
+                type: 'PREDICT_WINNING_SCORE';
+            };
+            /**
+             * Managed-golf category slot definitions when the contest uses category picks.
+             */
+            categories?: Array<{
+                categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
+                /**
+                 * Commissioner-facing category label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked for the category.
+                 */
+                pickCount: number;
+            }>;
         };
     };
 };
@@ -6886,10 +7031,155 @@ export type GetContestResponses = {
             isExclusive?: boolean;
         };
         /**
-         * Contest configuration payload when the client requested expanded detail.
+         * Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces.
          */
         contestConfiguration?: {
-            [key: string]: unknown;
+            draftMode?: string;
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: Array<{
+                /**
+                 * Stable tier identifier.
+                 */
+                tierId: string;
+                /**
+                 * Tier label shown in commissioner and draft UI.
+                 */
+                tierName: string;
+                /**
+                 * Tier order number.
+                 */
+                tierNumber: number;
+                /**
+                 * How many picks each entry must make from the tier.
+                 */
+                picksFromTier: number;
+                /**
+                 * Optional ranking range that produced the tier.
+                 */
+                rankingRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional pricing range that produced the tier.
+                 */
+                priceRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional cap on how many participants can live in the tier.
+                 */
+                maxParticipants?: number;
+                /**
+                 * Participants assigned to the tier.
+                 */
+                participantIds: Array<string>;
+            }>;
+            tierAssignmentMethod?: string;
+            budget?: number;
+            pricingMethod?: string;
+            rosterSize?: number;
+            pickCount?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            isExclusive?: boolean;
+            bestBallN?: number;
+            missedCutPenalty?: number;
+            captainSlot?: boolean;
+            captainMultiplier?: number;
+            /**
+             * Optional typed configuration mode for golf-first managed contests.
+             */
+            mode?: string;
+            /**
+             * Contest entry lock timestamp stored on the contest configuration record.
+             */
+            locksAt?: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number;
+            /**
+             * How many roster scores count toward the entry total in managed golf contests.
+             */
+            countedScores?: number;
+            /**
+             * Tier source used for managed golf contests.
+             */
+            tierSource?: string;
+            tierGeneration?: {
+                /**
+                 * Default managed tier size used to seed tier generation.
+                 */
+                defaultTierSize: number;
+            };
+            /**
+             * Resolved managed-golf tier definitions when the contest stores typed tiered configuration.
+             */
+            tiers?: Array<{
+                /**
+                 * Stable tier key such as A, B, or C.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked from the tier.
+                 */
+                pickCount: number;
+                /**
+                 * Starting resolved rank/odds position for the tier.
+                 */
+                startPosition: number;
+                /**
+                 * Ending resolved rank/odds position for the tier. Null means remainder of field.
+                 */
+                endPosition: number;
+            }>;
+            /**
+             * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
+             */
+            cutRule?: {
+                type: 'FIXED_SCORE';
+                /**
+                 * Fallback score assigned when a golfer misses the cut.
+                 */
+                fixedScore: number;
+            };
+            /**
+             * Managed-golf playoff handling strategy.
+             */
+            playoffHandling?: string;
+            /**
+             * Managed-golf leaderboard display scoring mode.
+             */
+            displayScoring?: string;
+            /**
+             * Managed-golf tiebreaker configuration.
+             */
+            tiebreaker?: {
+                type: 'PREDICT_WINNING_SCORE';
+            };
+            /**
+             * Managed-golf category slot definitions when the contest uses category picks.
+             */
+            categories?: Array<{
+                categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
+                /**
+                 * Commissioner-facing category label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked for the category.
+                 */
+                pickCount: number;
+            }>;
         };
     };
 };
@@ -6996,10 +7286,155 @@ export type UpdateContestResponses = {
             isExclusive?: boolean;
         };
         /**
-         * Contest configuration payload when the client requested expanded detail.
+         * Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces.
          */
         contestConfiguration?: {
-            [key: string]: unknown;
+            draftMode?: string;
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: Array<{
+                /**
+                 * Stable tier identifier.
+                 */
+                tierId: string;
+                /**
+                 * Tier label shown in commissioner and draft UI.
+                 */
+                tierName: string;
+                /**
+                 * Tier order number.
+                 */
+                tierNumber: number;
+                /**
+                 * How many picks each entry must make from the tier.
+                 */
+                picksFromTier: number;
+                /**
+                 * Optional ranking range that produced the tier.
+                 */
+                rankingRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional pricing range that produced the tier.
+                 */
+                priceRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional cap on how many participants can live in the tier.
+                 */
+                maxParticipants?: number;
+                /**
+                 * Participants assigned to the tier.
+                 */
+                participantIds: Array<string>;
+            }>;
+            tierAssignmentMethod?: string;
+            budget?: number;
+            pricingMethod?: string;
+            rosterSize?: number;
+            pickCount?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            isExclusive?: boolean;
+            bestBallN?: number;
+            missedCutPenalty?: number;
+            captainSlot?: boolean;
+            captainMultiplier?: number;
+            /**
+             * Optional typed configuration mode for golf-first managed contests.
+             */
+            mode?: string;
+            /**
+             * Contest entry lock timestamp stored on the contest configuration record.
+             */
+            locksAt?: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number;
+            /**
+             * How many roster scores count toward the entry total in managed golf contests.
+             */
+            countedScores?: number;
+            /**
+             * Tier source used for managed golf contests.
+             */
+            tierSource?: string;
+            tierGeneration?: {
+                /**
+                 * Default managed tier size used to seed tier generation.
+                 */
+                defaultTierSize: number;
+            };
+            /**
+             * Resolved managed-golf tier definitions when the contest stores typed tiered configuration.
+             */
+            tiers?: Array<{
+                /**
+                 * Stable tier key such as A, B, or C.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked from the tier.
+                 */
+                pickCount: number;
+                /**
+                 * Starting resolved rank/odds position for the tier.
+                 */
+                startPosition: number;
+                /**
+                 * Ending resolved rank/odds position for the tier. Null means remainder of field.
+                 */
+                endPosition: number;
+            }>;
+            /**
+             * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
+             */
+            cutRule?: {
+                type: 'FIXED_SCORE';
+                /**
+                 * Fallback score assigned when a golfer misses the cut.
+                 */
+                fixedScore: number;
+            };
+            /**
+             * Managed-golf playoff handling strategy.
+             */
+            playoffHandling?: string;
+            /**
+             * Managed-golf leaderboard display scoring mode.
+             */
+            displayScoring?: string;
+            /**
+             * Managed-golf tiebreaker configuration.
+             */
+            tiebreaker?: {
+                type: 'PREDICT_WINNING_SCORE';
+            };
+            /**
+             * Managed-golf category slot definitions when the contest uses category picks.
+             */
+            categories?: Array<{
+                categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
+                /**
+                 * Commissioner-facing category label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked for the category.
+                 */
+                pickCount: number;
+            }>;
         };
     };
 };
@@ -7576,44 +8011,33 @@ export type EnterContestErrors = {
             details?: unknown;
         };
     };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
 };
 
 export type EnterContestError = EnterContestErrors[keyof EnterContestErrors];
 
 export type EnterContestResponses = {
-    /**
-     * Single contest-entry response.
-     */
-    200: {
-        /**
-         * Contest that owns the entry.
-         */
-        contestId: string;
-        /**
-         * Contest entry summary.
-         */
-        entry: {
-            id: string;
-            contestId: string;
-            squadId: string;
-            squadName: string;
-            entryNumber: number;
-            name: string;
-            status: 'ACTIVE' | 'INACTIVE';
-            tiebreakerValue?: number;
-            totalScore: number;
-            standingsPosition?: number;
-            isEliminated: boolean;
-            /**
-             * When the contest entry was created.
-             */
-            createdAt: string;
-            /**
-             * When the contest entry was last updated.
-             */
-            updatedAt: string;
-        };
-    };
     /**
      * Single contest-entry response.
      */
@@ -7898,10 +8322,155 @@ export type ReopenContestResponses = {
             isExclusive?: boolean;
         };
         /**
-         * Contest configuration payload when the client requested expanded detail.
+         * Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces.
          */
         contestConfiguration?: {
-            [key: string]: unknown;
+            draftMode?: string;
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: Array<{
+                /**
+                 * Stable tier identifier.
+                 */
+                tierId: string;
+                /**
+                 * Tier label shown in commissioner and draft UI.
+                 */
+                tierName: string;
+                /**
+                 * Tier order number.
+                 */
+                tierNumber: number;
+                /**
+                 * How many picks each entry must make from the tier.
+                 */
+                picksFromTier: number;
+                /**
+                 * Optional ranking range that produced the tier.
+                 */
+                rankingRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional pricing range that produced the tier.
+                 */
+                priceRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional cap on how many participants can live in the tier.
+                 */
+                maxParticipants?: number;
+                /**
+                 * Participants assigned to the tier.
+                 */
+                participantIds: Array<string>;
+            }>;
+            tierAssignmentMethod?: string;
+            budget?: number;
+            pricingMethod?: string;
+            rosterSize?: number;
+            pickCount?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            isExclusive?: boolean;
+            bestBallN?: number;
+            missedCutPenalty?: number;
+            captainSlot?: boolean;
+            captainMultiplier?: number;
+            /**
+             * Optional typed configuration mode for golf-first managed contests.
+             */
+            mode?: string;
+            /**
+             * Contest entry lock timestamp stored on the contest configuration record.
+             */
+            locksAt?: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number;
+            /**
+             * How many roster scores count toward the entry total in managed golf contests.
+             */
+            countedScores?: number;
+            /**
+             * Tier source used for managed golf contests.
+             */
+            tierSource?: string;
+            tierGeneration?: {
+                /**
+                 * Default managed tier size used to seed tier generation.
+                 */
+                defaultTierSize: number;
+            };
+            /**
+             * Resolved managed-golf tier definitions when the contest stores typed tiered configuration.
+             */
+            tiers?: Array<{
+                /**
+                 * Stable tier key such as A, B, or C.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked from the tier.
+                 */
+                pickCount: number;
+                /**
+                 * Starting resolved rank/odds position for the tier.
+                 */
+                startPosition: number;
+                /**
+                 * Ending resolved rank/odds position for the tier. Null means remainder of field.
+                 */
+                endPosition: number;
+            }>;
+            /**
+             * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
+             */
+            cutRule?: {
+                type: 'FIXED_SCORE';
+                /**
+                 * Fallback score assigned when a golfer misses the cut.
+                 */
+                fixedScore: number;
+            };
+            /**
+             * Managed-golf playoff handling strategy.
+             */
+            playoffHandling?: string;
+            /**
+             * Managed-golf leaderboard display scoring mode.
+             */
+            displayScoring?: string;
+            /**
+             * Managed-golf tiebreaker configuration.
+             */
+            tiebreaker?: {
+                type: 'PREDICT_WINNING_SCORE';
+            };
+            /**
+             * Managed-golf category slot definitions when the contest uses category picks.
+             */
+            categories?: Array<{
+                categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
+                /**
+                 * Commissioner-facing category label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked for the category.
+                 */
+                pickCount: number;
+            }>;
         };
     };
 };
@@ -7955,10 +8524,155 @@ export type CloseContestResponses = {
             isExclusive?: boolean;
         };
         /**
-         * Contest configuration payload when the client requested expanded detail.
+         * Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces.
          */
         contestConfiguration?: {
-            [key: string]: unknown;
+            draftMode?: string;
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: Array<{
+                /**
+                 * Stable tier identifier.
+                 */
+                tierId: string;
+                /**
+                 * Tier label shown in commissioner and draft UI.
+                 */
+                tierName: string;
+                /**
+                 * Tier order number.
+                 */
+                tierNumber: number;
+                /**
+                 * How many picks each entry must make from the tier.
+                 */
+                picksFromTier: number;
+                /**
+                 * Optional ranking range that produced the tier.
+                 */
+                rankingRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional pricing range that produced the tier.
+                 */
+                priceRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional cap on how many participants can live in the tier.
+                 */
+                maxParticipants?: number;
+                /**
+                 * Participants assigned to the tier.
+                 */
+                participantIds: Array<string>;
+            }>;
+            tierAssignmentMethod?: string;
+            budget?: number;
+            pricingMethod?: string;
+            rosterSize?: number;
+            pickCount?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            isExclusive?: boolean;
+            bestBallN?: number;
+            missedCutPenalty?: number;
+            captainSlot?: boolean;
+            captainMultiplier?: number;
+            /**
+             * Optional typed configuration mode for golf-first managed contests.
+             */
+            mode?: string;
+            /**
+             * Contest entry lock timestamp stored on the contest configuration record.
+             */
+            locksAt?: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number;
+            /**
+             * How many roster scores count toward the entry total in managed golf contests.
+             */
+            countedScores?: number;
+            /**
+             * Tier source used for managed golf contests.
+             */
+            tierSource?: string;
+            tierGeneration?: {
+                /**
+                 * Default managed tier size used to seed tier generation.
+                 */
+                defaultTierSize: number;
+            };
+            /**
+             * Resolved managed-golf tier definitions when the contest stores typed tiered configuration.
+             */
+            tiers?: Array<{
+                /**
+                 * Stable tier key such as A, B, or C.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked from the tier.
+                 */
+                pickCount: number;
+                /**
+                 * Starting resolved rank/odds position for the tier.
+                 */
+                startPosition: number;
+                /**
+                 * Ending resolved rank/odds position for the tier. Null means remainder of field.
+                 */
+                endPosition: number;
+            }>;
+            /**
+             * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
+             */
+            cutRule?: {
+                type: 'FIXED_SCORE';
+                /**
+                 * Fallback score assigned when a golfer misses the cut.
+                 */
+                fixedScore: number;
+            };
+            /**
+             * Managed-golf playoff handling strategy.
+             */
+            playoffHandling?: string;
+            /**
+             * Managed-golf leaderboard display scoring mode.
+             */
+            displayScoring?: string;
+            /**
+             * Managed-golf tiebreaker configuration.
+             */
+            tiebreaker?: {
+                type: 'PREDICT_WINNING_SCORE';
+            };
+            /**
+             * Managed-golf category slot definitions when the contest uses category picks.
+             */
+            categories?: Array<{
+                categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
+                /**
+                 * Commissioner-facing category label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked for the category.
+                 */
+                pickCount: number;
+            }>;
         };
     };
 };
@@ -8016,10 +8730,155 @@ export type ExtendContestDeadlineResponses = {
             isExclusive?: boolean;
         };
         /**
-         * Contest configuration payload when the client requested expanded detail.
+         * Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces.
          */
         contestConfiguration?: {
-            [key: string]: unknown;
+            draftMode?: string;
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: Array<{
+                /**
+                 * Stable tier identifier.
+                 */
+                tierId: string;
+                /**
+                 * Tier label shown in commissioner and draft UI.
+                 */
+                tierName: string;
+                /**
+                 * Tier order number.
+                 */
+                tierNumber: number;
+                /**
+                 * How many picks each entry must make from the tier.
+                 */
+                picksFromTier: number;
+                /**
+                 * Optional ranking range that produced the tier.
+                 */
+                rankingRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional pricing range that produced the tier.
+                 */
+                priceRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional cap on how many participants can live in the tier.
+                 */
+                maxParticipants?: number;
+                /**
+                 * Participants assigned to the tier.
+                 */
+                participantIds: Array<string>;
+            }>;
+            tierAssignmentMethod?: string;
+            budget?: number;
+            pricingMethod?: string;
+            rosterSize?: number;
+            pickCount?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            isExclusive?: boolean;
+            bestBallN?: number;
+            missedCutPenalty?: number;
+            captainSlot?: boolean;
+            captainMultiplier?: number;
+            /**
+             * Optional typed configuration mode for golf-first managed contests.
+             */
+            mode?: string;
+            /**
+             * Contest entry lock timestamp stored on the contest configuration record.
+             */
+            locksAt?: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number;
+            /**
+             * How many roster scores count toward the entry total in managed golf contests.
+             */
+            countedScores?: number;
+            /**
+             * Tier source used for managed golf contests.
+             */
+            tierSource?: string;
+            tierGeneration?: {
+                /**
+                 * Default managed tier size used to seed tier generation.
+                 */
+                defaultTierSize: number;
+            };
+            /**
+             * Resolved managed-golf tier definitions when the contest stores typed tiered configuration.
+             */
+            tiers?: Array<{
+                /**
+                 * Stable tier key such as A, B, or C.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked from the tier.
+                 */
+                pickCount: number;
+                /**
+                 * Starting resolved rank/odds position for the tier.
+                 */
+                startPosition: number;
+                /**
+                 * Ending resolved rank/odds position for the tier. Null means remainder of field.
+                 */
+                endPosition: number;
+            }>;
+            /**
+             * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
+             */
+            cutRule?: {
+                type: 'FIXED_SCORE';
+                /**
+                 * Fallback score assigned when a golfer misses the cut.
+                 */
+                fixedScore: number;
+            };
+            /**
+             * Managed-golf playoff handling strategy.
+             */
+            playoffHandling?: string;
+            /**
+             * Managed-golf leaderboard display scoring mode.
+             */
+            displayScoring?: string;
+            /**
+             * Managed-golf tiebreaker configuration.
+             */
+            tiebreaker?: {
+                type: 'PREDICT_WINNING_SCORE';
+            };
+            /**
+             * Managed-golf category slot definitions when the contest uses category picks.
+             */
+            categories?: Array<{
+                categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
+                /**
+                 * Commissioner-facing category label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked for the category.
+                 */
+                pickCount: number;
+            }>;
         };
     };
 };
@@ -8077,10 +8936,155 @@ export type UpdateContestLockTimeResponses = {
             isExclusive?: boolean;
         };
         /**
-         * Contest configuration payload when the client requested expanded detail.
+         * Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces.
          */
         contestConfiguration?: {
-            [key: string]: unknown;
+            draftMode?: string;
+            rounds?: number;
+            timePerPickSeconds?: number;
+            autoPickPolicy?: string;
+            tierConfig?: Array<{
+                /**
+                 * Stable tier identifier.
+                 */
+                tierId: string;
+                /**
+                 * Tier label shown in commissioner and draft UI.
+                 */
+                tierName: string;
+                /**
+                 * Tier order number.
+                 */
+                tierNumber: number;
+                /**
+                 * How many picks each entry must make from the tier.
+                 */
+                picksFromTier: number;
+                /**
+                 * Optional ranking range that produced the tier.
+                 */
+                rankingRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional pricing range that produced the tier.
+                 */
+                priceRange?: [
+                    unknown,
+                    unknown
+                ];
+                /**
+                 * Optional cap on how many participants can live in the tier.
+                 */
+                maxParticipants?: number;
+                /**
+                 * Participants assigned to the tier.
+                 */
+                participantIds: Array<string>;
+            }>;
+            tierAssignmentMethod?: string;
+            budget?: number;
+            pricingMethod?: string;
+            rosterSize?: number;
+            pickCount?: number;
+            picksPerPeriod?: number;
+            roundValues?: Array<number>;
+            startRound?: string;
+            isExclusive?: boolean;
+            bestBallN?: number;
+            missedCutPenalty?: number;
+            captainSlot?: boolean;
+            captainMultiplier?: number;
+            /**
+             * Optional typed configuration mode for golf-first managed contests.
+             */
+            mode?: string;
+            /**
+             * Contest entry lock timestamp stored on the contest configuration record.
+             */
+            locksAt?: string;
+            /**
+             * Maximum entries a Team may create. Null means unlimited.
+             */
+            maxEntriesPerSquad?: number;
+            /**
+             * How many roster scores count toward the entry total in managed golf contests.
+             */
+            countedScores?: number;
+            /**
+             * Tier source used for managed golf contests.
+             */
+            tierSource?: string;
+            tierGeneration?: {
+                /**
+                 * Default managed tier size used to seed tier generation.
+                 */
+                defaultTierSize: number;
+            };
+            /**
+             * Resolved managed-golf tier definitions when the contest stores typed tiered configuration.
+             */
+            tiers?: Array<{
+                /**
+                 * Stable tier key such as A, B, or C.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked from the tier.
+                 */
+                pickCount: number;
+                /**
+                 * Starting resolved rank/odds position for the tier.
+                 */
+                startPosition: number;
+                /**
+                 * Ending resolved rank/odds position for the tier. Null means remainder of field.
+                 */
+                endPosition: number;
+            }>;
+            /**
+             * Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.
+             */
+            cutRule?: {
+                type: 'FIXED_SCORE';
+                /**
+                 * Fallback score assigned when a golfer misses the cut.
+                 */
+                fixedScore: number;
+            };
+            /**
+             * Managed-golf playoff handling strategy.
+             */
+            playoffHandling?: string;
+            /**
+             * Managed-golf leaderboard display scoring mode.
+             */
+            displayScoring?: string;
+            /**
+             * Managed-golf tiebreaker configuration.
+             */
+            tiebreaker?: {
+                type: 'PREDICT_WINNING_SCORE';
+            };
+            /**
+             * Managed-golf category slot definitions when the contest uses category picks.
+             */
+            categories?: Array<{
+                categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
+                /**
+                 * Commissioner-facing category label.
+                 */
+                label: string;
+                /**
+                 * How many golfers must be picked for the category.
+                 */
+                pickCount: number;
+            }>;
         };
     };
 };

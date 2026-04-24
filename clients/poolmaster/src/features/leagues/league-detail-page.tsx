@@ -5,6 +5,7 @@ import {
   deleteLeague,
   enterContest,
   generateInviteLink,
+  getContest,
   getLeagueByCode,
   inactivateLeague,
   leaveLeague,
@@ -14,6 +15,7 @@ import {
   sendLeagueInvitations,
   updateLeagueDetails,
   updateLeagueIcon,
+  type GetContestResponses,
   type GetLeagueResponses,
   type LeaveLeagueResponses,
   type ListContestEntriesResponses,
@@ -36,6 +38,7 @@ import {
 } from './league-routing';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
+type ContestDetailResponse = GetContestResponses[200];
 type ContestSummary = ListContestsResponses[200]['contests'][number];
 type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 type ContestEntrySummary = ListContestEntriesResponses[200]['entries'][number];
@@ -226,6 +229,31 @@ export function LeagueDetailPage() {
     retry: false,
   });
 
+  const contestDetailsByContestQuery = useQuery({
+    queryKey: ['poolmaster', 'league-contest-details', contestsQuery.data?.map((contest) => contest.id).join(',')],
+    queryFn: async (): Promise<Record<string, ContestDetailResponse>> => {
+      if (!contestsQuery.data) {
+        return {};
+      }
+
+      const results = await Promise.all(
+        contestsQuery.data.map(async (contest) => {
+          const response = await getContest({ path: { contestId: contest.id } });
+
+          if (!response.data) {
+            throw response.error ?? new Error('Contest detail response is missing data.');
+          }
+
+          return [contest.id, response.data] as const;
+        }),
+      );
+
+      return Object.fromEntries(results);
+    },
+    enabled: Boolean(contestsQuery.data),
+    retry: false,
+  });
+
   const contestCards = useMemo(() => {
     if (!contestsQuery.data) {
       return [];
@@ -233,18 +261,26 @@ export function LeagueDetailPage() {
 
     return contestsQuery.data.map((contest) => {
       const entryResponse = contestEntriesByContestQuery.data?.[contest.id];
+      const contestDetail = contestDetailsByContestQuery.data?.[contest.id];
       const myTeamEntries = myTeam
         ? (entryResponse?.entries ?? []).filter((entry) => entry.squadId === myTeam.id)
         : [];
+      const maxEntriesPerSquad = contestDetail?.contestConfiguration?.maxEntriesPerSquad ?? 1;
+      const entryLimitReached =
+        maxEntriesPerSquad !== null && myTeamEntries.length >= maxEntriesPerSquad;
 
       return {
         contest,
+        entryLimitReached,
         isEntryLoading: contestEntriesByContestQuery.isLoading,
         isEntryError: contestEntriesByContestQuery.isError,
+        isLimitError: contestDetailsByContestQuery.isError,
         myTeamEntries,
       };
     });
   }, [
+    contestDetailsByContestQuery.data,
+    contestDetailsByContestQuery.isError,
     contestEntriesByContestQuery.data,
     contestEntriesByContestQuery.isError,
     contestEntriesByContestQuery.isLoading,
@@ -932,7 +968,7 @@ export function LeagueDetailPage() {
               </Link>
             </div>
           ) : activeContestCards.length ? (
-            activeContestCards.map(({ contest, isEntryError, isEntryLoading, myTeamEntries }) => (
+            activeContestCards.map(({ contest, entryLimitReached, isEntryError, isEntryLoading, isLimitError, myTeamEntries }) => (
               <div
                 className="rounded-2xl border border-border bg-background px-4 py-4"
                 data-testid={`league-contest-${contest.id}`}
@@ -962,7 +998,12 @@ export function LeagueDetailPage() {
                     <button
                       className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
                       data-testid={`league-create-entry-${contest.id}`}
-                      disabled={createContestEntryMutation.isPending || isInactiveLeague}
+                      disabled={
+                        createContestEntryMutation.isPending
+                        || entryLimitReached
+                        || isInactiveLeague
+                        || contestDetailsByContestQuery.isLoading
+                      }
                       onClick={() => void createContestEntryMutation.mutateAsync(contest.id)}
                       type="button"
                     >
@@ -986,6 +1027,10 @@ export function LeagueDetailPage() {
                   ) : isEntryError ? (
                     <p className="mt-2 text-sm text-destructive">
                       We couldn&apos;t load your team&apos;s entries for this contest.
+                    </p>
+                  ) : isLimitError ? (
+                    <p className="mt-2 text-sm text-destructive">
+                      We couldn&apos;t load the contest entry limit for this contest.
                     </p>
                   ) : myTeamEntries.length ? (
                     <div className="mt-3 space-y-3">
@@ -1017,6 +1062,14 @@ export function LeagueDetailPage() {
                       Your team does not have an entry in this contest yet.
                     </p>
                   )}
+                  {entryLimitReached ? (
+                    <p
+                      className="mt-3 text-sm text-muted-foreground"
+                      data-testid={`league-entry-limit-${contest.id}`}
+                    >
+                      This contest has already reached your team&apos;s entry limit.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             ))

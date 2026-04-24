@@ -9,6 +9,7 @@ import { LeagueDetailPage } from './league-detail-page';
 const deleteLeagueMock = vi.fn();
 const enterContestMock = vi.fn();
 const generateInviteLinkMock = vi.fn();
+const getContestMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const inactivateLeagueMock = vi.fn();
@@ -26,6 +27,7 @@ vi.mock('@/lib/api', () => ({
   deleteLeague: (...args: unknown[]) => deleteLeagueMock(...args),
   enterContest: (...args: unknown[]) => enterContestMock(...args),
   generateInviteLink: (...args: unknown[]) => generateInviteLinkMock(...args),
+  getContest: (...args: unknown[]) => getContestMock(...args),
   getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
   getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
   inactivateLeague: (...args: unknown[]) => inactivateLeagueMock(...args),
@@ -156,6 +158,7 @@ describe('LeagueDetailPage', () => {
     deleteLeagueMock.mockReset();
     enterContestMock.mockReset();
     generateInviteLinkMock.mockReset();
+    getContestMock.mockReset();
     getCurrentUserMock.mockReset();
     getLeagueByCodeMock.mockReset();
     inactivateLeagueMock.mockReset();
@@ -312,6 +315,26 @@ describe('LeagueDetailPage', () => {
             updatedAt: '2026-04-15T00:00:00.000Z',
           },
         ],
+      },
+    });
+    getContestMock.mockResolvedValue({
+      data: {
+        contest: {
+          id: 'contest-1',
+          name: 'Masters Pick 6',
+          status: 'OPEN',
+          contestType: 'SINGLE_EVENT',
+          selectionType: 'TIERED',
+          scoringEngine: 'STROKE_PLAY',
+          leagueId: 'league-1',
+          sport: 'GOLF',
+          lockAt: null,
+          isExclusive: false,
+          entryCount: 4,
+        },
+        contestConfiguration: {
+          maxEntriesPerSquad: 3,
+        },
       },
     });
 

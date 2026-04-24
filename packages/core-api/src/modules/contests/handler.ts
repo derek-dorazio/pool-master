@@ -286,15 +286,14 @@ export function createContestHandlers(contestService: ContestService) {
     const userId = request.authUser?.userId as string;
     logger.debug({ contestId: request.params.contestId, userId }, 'contest create entry route start');
     try {
-      const result = await contestService.createEntry(request.params.contestId, userId);
+      const entry = await contestService.createEntry(request.params.contestId, userId);
       logger.info({
         contestId: request.params.contestId,
         userId,
-        entryId: result.entry.id,
-        created: result.created,
+        entryId: entry.id,
       }, 'contest create entry route completed');
-      return reply.status(result.created ? 201 : 200).send(
-        toContestEntryResponse(request.params.contestId, result.entry),
+      return reply.status(201).send(
+        toContestEntryResponse(request.params.contestId, entry),
       );
     } catch (err) {
       if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
@@ -303,7 +302,8 @@ export function createContestHandlers(contestService: ContestService) {
       }
       if (err instanceof ContestEntryOperationError) {
         logger.warn({ contestId: request.params.contestId, userId, code: err.code }, 'contest create entry route rejected');
-        return sendError(reply, 400, err.code, err.message);
+        const statusCode = err.code === 'CONTEST_ENTRY_LIMIT_REACHED' ? 409 : 400;
+        return sendError(reply, statusCode, err.code, err.message);
       }
       logger.error({ contestId: request.params.contestId, userId, err }, 'contest create entry route failed');
       throw err;

@@ -205,14 +205,14 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
   fastify.post('/:contestId/entries/me', {
     schema: {
       tags: ['Contests'],
-      summary: 'Create or return the current user contest entry',
+      summary: 'Create the current user contest entry',
       description:
-        'Creates a contest entry for the authenticated user when needed, or returns the existing entry when the user has already entered.',
+        'Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation.',
       operationId: 'enterContest',
       response: {
-        200: zodToJsonSchema(ContestEntryResponseSchema),
         201: zodToJsonSchema(ContestEntryResponseSchema),
         400: zodToJsonSchema(ErrorEnvelopeSchema),
+        409: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },

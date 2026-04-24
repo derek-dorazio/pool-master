@@ -5,6 +5,7 @@ import type {
   ContestSummaryDto,
   ContestDetailDto,
   ContestResponse,
+  ContestConfigurationDetailDto,
   ContestListResponse,
   ContestEntryDto,
   ContestEntryDetailDto,
@@ -110,9 +111,52 @@ export function toContestResponse(
 ): ContestResponse {
   return {
     contest: toContestDetailDto(contest, contestConfiguration),
-    contestConfiguration: contestConfiguration
-      ? (contestConfiguration as unknown as Record<string, unknown>)
-      : null,
+    contestConfiguration: toContestConfigurationDetailDto(contestConfiguration),
+  };
+}
+
+function toContestConfigurationDetailDto(
+  contestConfiguration?: ContestConfiguration | null,
+): ContestConfigurationDetailDto | null {
+  if (!contestConfiguration) {
+    return null;
+  }
+
+  const isManagedConfiguration = Boolean(contestConfiguration.configJson);
+  const maxEntriesPerSquad =
+    isManagedConfiguration
+      ? (contestConfiguration.maxEntriesPerSquad ?? null)
+      : (contestConfiguration.maxEntriesPerSquad ?? 1);
+
+  if (isManagedConfiguration && contestConfiguration.configJson) {
+    return {
+      ...contestConfiguration.configJson,
+      mode: contestConfiguration.configMode ?? contestConfiguration.configJson.mode,
+      locksAt: contestConfiguration.locksAt?.toISOString() ?? null,
+      maxEntriesPerSquad,
+    };
+  }
+
+  return {
+    rounds: contestConfiguration.rounds,
+    timePerPickSeconds: contestConfiguration.timePerPickSeconds,
+    autoPickPolicy: contestConfiguration.autoPickPolicy,
+    tierConfig: contestConfiguration.tierConfig?.map((tier, index) => ({
+      tierId: tier.tierId ?? tier.tierKey,
+      tierName: tier.tierName ?? tier.label,
+      tierNumber: tier.tierNumber ?? index + 1,
+      picksFromTier: tier.picksFromTier ?? tier.pickCount,
+      participantIds: tier.participantIds ?? [],
+    })),
+    budget: contestConfiguration.budget,
+    pickCount: contestConfiguration.pickCount,
+    isExclusive: contestConfiguration.isExclusive,
+    picksPerPeriod: contestConfiguration.picksPerPeriod,
+    rosterSize: contestConfiguration.rosterSize,
+    roundValues: contestConfiguration.roundValues,
+    startRound: contestConfiguration.startRound,
+    locksAt: contestConfiguration.locksAt?.toISOString() ?? null,
+    maxEntriesPerSquad,
   };
 }
 

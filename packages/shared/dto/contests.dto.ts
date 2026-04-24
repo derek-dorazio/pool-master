@@ -9,6 +9,12 @@ import {
   SelectionType,
 } from '@poolmaster/shared/domain';
 import { JsonObjectSchema } from './common.dto';
+import {
+  GolfCategoryDefinitionSchema,
+  GolfContestTierSchema,
+  GolfFixedCutRuleSchema,
+  GolfTiebreakerSchema,
+} from './contest-management.dto';
 
 // --- Requests ---
 
@@ -221,9 +227,39 @@ export type ContestEntryDetailDto = z.infer<typeof ContestEntryDetailDtoSchema>;
 
 // --- Responses ---
 
+const nullablePositiveIntSchema = z
+  .number()
+  .int()
+  .min(1)
+  .nullable()
+  .optional()
+  .describe('Maximum entries a Team may create. Null means unlimited.');
+
+export const ContestConfigurationDetailDtoSchema = ContestCrudConfigurationRequestSchema.extend({
+  mode: z.string().optional().describe('Optional typed configuration mode for golf-first managed contests.'),
+  locksAt: z.string().datetime().nullable().optional().describe('Contest entry lock timestamp stored on the contest configuration record.'),
+  maxEntriesPerSquad: nullablePositiveIntSchema,
+  countedScores: z.number().int().optional().describe('How many roster scores count toward the entry total in managed golf contests.'),
+  tierSource: z.string().optional().describe('Tier source used for managed golf contests.'),
+  tierGeneration: z.object({
+    defaultTierSize: z.number().int().min(1).describe('Default managed tier size used to seed tier generation.'),
+  }).optional(),
+  tiers: z.array(GolfContestTierSchema).optional().describe('Resolved managed-golf tier definitions when the contest stores typed tiered configuration.'),
+  cutRule: GolfFixedCutRuleSchema.optional().describe('Managed-golf missed-cut scoring rule when the contest uses typed golf configuration.'),
+  playoffHandling: z.string().optional().describe('Managed-golf playoff handling strategy.'),
+  displayScoring: z.string().optional().describe('Managed-golf leaderboard display scoring mode.'),
+  tiebreaker: GolfTiebreakerSchema.optional().describe('Managed-golf tiebreaker configuration.'),
+  categories: z.array(GolfCategoryDefinitionSchema).optional().describe('Managed-golf category slot definitions when the contest uses category picks.'),
+}).describe(
+  'Typed contest configuration returned by contest detail endpoints. Use this shape for client-side entry-cap and contest-behavior decisions instead of treating contestConfiguration as an untyped blob.',
+);
+export type ContestConfigurationDetailDto = z.infer<typeof ContestConfigurationDetailDtoSchema>;
+
 export const ContestResponseSchema = z.object({
   contest: ContestDetailDtoSchema,
-  contestConfiguration: z.record(z.unknown()).nullable().optional().describe('Contest configuration payload when the client requested expanded detail.'),
+  contestConfiguration: ContestConfigurationDetailDtoSchema.nullable().optional().describe(
+    'Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces.',
+  ),
 }).describe('Single-contest response.');
 export type ContestResponse = z.infer<typeof ContestResponseSchema>;
 

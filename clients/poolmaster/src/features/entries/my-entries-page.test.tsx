@@ -8,6 +8,7 @@ import { useSessionStore } from '@/features/auth/session-store';
 import { MyEntriesPage } from './my-entries-page';
 
 const enterContestMock = vi.fn();
+const getContestMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const listContestEntriesMock = vi.fn();
@@ -19,6 +20,7 @@ const updateContestEntryMock = vi.fn();
 
 vi.mock('@/lib/api', () => ({
   enterContest: (...args: unknown[]) => enterContestMock(...args),
+  getContest: (...args: unknown[]) => getContestMock(...args),
   getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
   getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
   listContestEntries: (...args: unknown[]) => listContestEntriesMock(...args),
@@ -58,6 +60,7 @@ function renderMyEntriesPage() {
 describe('MyEntriesPage', () => {
   afterEach(() => {
     enterContestMock.mockReset();
+    getContestMock.mockReset();
     getCurrentUserMock.mockReset();
     getLeagueByCodeMock.mockReset();
     listContestEntriesMock.mockReset();
@@ -94,7 +97,12 @@ describe('MyEntriesPage', () => {
           iconKey: 'TROPHY',
           memberCount: 2,
           activeContestCount: 1,
-          role: 'MEMBER',
+          memberType: 'MEMBER',
+          leagueRelationship: {
+            leagueMember: true,
+            commissioner: false,
+          },
+          isRootAdmin: false,
           joinPolicy: 'COMMISSIONER_ONLY',
           createdAt: '2026-04-15T00:00:00.000Z',
         },
@@ -199,6 +207,26 @@ describe('MyEntriesPage', () => {
         ],
       },
     });
+    getContestMock.mockResolvedValue({
+      data: {
+        contest: {
+          id: 'contest-open',
+          name: 'Masters Pick 6',
+          status: 'OPEN',
+          contestType: 'SINGLE_EVENT',
+          selectionType: 'TIERED',
+          scoringEngine: 'STROKE_PLAY',
+          leagueId: 'league-1',
+          sport: 'GOLF',
+          lockAt: null,
+          isExclusive: false,
+          entryCount: 1,
+        },
+        contestConfiguration: {
+          maxEntriesPerSquad: 2,
+        },
+      },
+    });
     listContestEntriesMock.mockResolvedValue({
       data: {
         contestId: 'contest-open',
@@ -256,6 +284,146 @@ describe('MyEntriesPage', () => {
         path: { contestId: 'contest-open' },
       }),
     );
+  });
+
+  it('disables create entry when the current team already reached the contest entry cap', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        league: {
+          id: 'league-1',
+          leagueCode: 'BIGDAWGS',
+          name: 'Big Dawgs',
+          isActive: true,
+          iconKey: 'TROPHY',
+          memberCount: 2,
+          activeContestCount: 1,
+          memberType: 'MEMBER',
+          leagueRelationship: {
+            leagueMember: true,
+            commissioner: false,
+          },
+          isRootAdmin: false,
+          joinPolicy: 'COMMISSIONER_ONLY',
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    listLeagueSquadsMock.mockResolvedValue({
+      data: {
+        squads: [
+          {
+            id: 'team-1',
+            leagueId: 'league-1',
+            createdBy: 'user-1',
+            name: 'Original Team',
+            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+            status: 'ACTIVE',
+            memberCount: 1,
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
+            members: [
+              {
+                id: 'membership-1',
+                squadId: 'team-1',
+                leagueId: 'league-1',
+                userId: 'user-1',
+                firstName: 'Derek',
+                lastName: 'Dorazio',
+                status: 'ACTIVE',
+                joinedAt: '2026-04-15T00:00:00.000Z',
+                createdAt: '2026-04-15T00:00:00.000Z',
+                updatedAt: '2026-04-15T00:00:00.000Z',
+              },
+            ],
+          },
+        ],
+      },
+    });
+    listContestsMock.mockResolvedValue({
+      data: {
+        contests: [
+          {
+            id: 'contest-open',
+            name: 'Masters Pick 6',
+            status: 'OPEN',
+            contestType: 'SINGLE_EVENT',
+            selectionType: 'TIERED',
+            scoringEngine: 'STROKE_PLAY',
+            leagueId: 'league-1',
+            sport: 'GOLF',
+            entryCount: 1,
+          },
+        ],
+      },
+    });
+    getContestMock.mockResolvedValue({
+      data: {
+        contest: {
+          id: 'contest-open',
+          name: 'Masters Pick 6',
+          status: 'OPEN',
+          contestType: 'SINGLE_EVENT',
+          selectionType: 'TIERED',
+          scoringEngine: 'STROKE_PLAY',
+          leagueId: 'league-1',
+          sport: 'GOLF',
+          lockAt: null,
+          isExclusive: false,
+          entryCount: 1,
+        },
+        contestConfiguration: {
+          maxEntriesPerSquad: 1,
+        },
+      },
+    });
+    listContestEntriesMock.mockResolvedValue({
+      data: {
+        contestId: 'contest-open',
+        total: 1,
+        isJoined: true,
+        myEntryId: 'entry-1',
+        myEntryIds: ['entry-1'],
+        entries: [
+          {
+            id: 'entry-1',
+            contestId: 'contest-open',
+            squadId: 'team-1',
+            squadName: 'Original Team',
+            entryNumber: 1,
+            name: 'Original Team Entry 1',
+            status: 'ACTIVE',
+            totalScore: 12,
+            standingsPosition: 2,
+            isEliminated: false,
+            createdAt: '2026-04-15T00:00:00.000Z',
+            updatedAt: '2026-04-15T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    renderMyEntriesPage();
+
+    expect(await screen.findByTestId('my-entries-entry-limit-contest-open')).toHaveTextContent(
+      'already reached your team',
+    );
+    expect(screen.getByTestId('my-entries-create-entry-contest-open')).toBeDisabled();
+    fireEvent.click(screen.getByTestId('my-entries-create-entry-contest-open'));
+    expect(enterContestMock).not.toHaveBeenCalled();
   });
 
   it('renames a team-owned contest entry from the dedicated entries page while the contest is open', async () => {
@@ -335,6 +503,26 @@ describe('MyEntriesPage', () => {
             entryCount: 1,
           },
         ],
+      },
+    });
+    getContestMock.mockResolvedValue({
+      data: {
+        contest: {
+          id: 'contest-open',
+          name: 'Masters Pick 6',
+          status: 'OPEN',
+          contestType: 'SINGLE_EVENT',
+          selectionType: 'TIERED',
+          scoringEngine: 'STROKE_PLAY',
+          leagueId: 'league-1',
+          sport: 'GOLF',
+          lockAt: null,
+          isExclusive: false,
+          entryCount: 1,
+        },
+        contestConfiguration: {
+          maxEntriesPerSquad: 2,
+        },
       },
     });
     listContestEntriesMock

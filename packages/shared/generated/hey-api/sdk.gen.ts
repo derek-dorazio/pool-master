@@ -733,9 +733,9 @@ export const getMyContestEntry = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
- * Create or return the current user contest entry
+ * Create the current user contest entry
  *
- * Creates a contest entry for the authenticated user when needed, or returns the existing entry when the user has already entered.
+ * Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation.
  */
 export const enterContest = <ThrowOnError extends boolean = false>(options: Options<EnterContestData, ThrowOnError>) => (options.client ?? client).post<EnterContestResponses, EnterContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

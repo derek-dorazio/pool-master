@@ -119,6 +119,8 @@ export class ContestService {
         input.contestConfiguration.isExclusive
           ?? input.isExclusive
           ?? false,
+      maxEntriesPerSquad:
+        input.contestConfiguration.maxEntriesPerSquad ?? 1,
       ...input.contestConfiguration,
     } as Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>);
     this.logger.info({
@@ -295,7 +297,7 @@ export class ContestService {
   async createEntry(
     contestId: string,
     userId: string,
-  ): Promise<{ entry: ContestEntryDto; created: boolean }> {
+  ): Promise<ContestEntryDto> {
     this.logger.debug({ contestId, userId }, 'contest entry create start');
     const context = await this.getEntryContext(contestId, userId);
     const membership = context.membership;
@@ -321,16 +323,7 @@ export class ContestService {
     const existingEntries = await this.findEntriesBySquad(contestId, squad.id);
     const maxEntriesPerSquad = await this.getMaxEntriesPerSquad(contestId);
 
-    if (existingEntries.length >= maxEntriesPerSquad) {
-      if (maxEntriesPerSquad === 1 && existingEntries[0]) {
-        const dto = await this.loadEntryDtoById(existingEntries[0].id);
-        this.logger.info({
-          contestId,
-          userId,
-          entryId: dto.id,
-        }, 'contest entry create returned existing primary entry');
-        return { entry: dto, created: false };
-      }
+    if (maxEntriesPerSquad !== null && existingEntries.length >= maxEntriesPerSquad) {
       this.logger.warn({
         contestId,
         userId,
@@ -363,7 +356,7 @@ export class ContestService {
       entryId: dto.id,
       entryNumber: nextEntryNumber,
     }, 'contest entry create completed');
-    return { entry: dto, created: true };
+    return dto;
   }
 
   async deleteMyEntry(
@@ -606,13 +599,24 @@ export class ContestService {
     );
   }
 
-  private async getMaxEntriesPerSquad(contestId: string): Promise<number> {
+  private async getMaxEntriesPerSquad(contestId: string): Promise<number | null> {
     const prisma = this.requirePrisma();
     const configuration = await prisma.contestConfiguration.findUnique({
       where: { contestId },
-      select: { maxEntriesPerSquad: true },
+      select: {
+        configMode: true,
+        maxEntriesPerSquad: true,
+      },
     });
-    return configuration?.maxEntriesPerSquad ?? 1;
+    if (!configuration) {
+      return 1;
+    }
+
+    if (!configuration.configMode) {
+      return configuration.maxEntriesPerSquad ?? 1;
+    }
+
+    return configuration.maxEntriesPerSquad ?? null;
   }
 
   private requireEntryRepo(): ContestEntryRepository {
