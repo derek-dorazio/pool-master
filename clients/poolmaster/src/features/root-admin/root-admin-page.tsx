@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import {
   adminDeleteLeague,
   adminGetIngestionSchedule,
@@ -1663,6 +1664,13 @@ export function RootAdminPage() {
               Root-admin control over the persisted contest templates used by future commissioner create flows.
             </p>
           </div>
+          <Link
+            className="inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+            data-testid="root-admin-content-config-open-page"
+            to="/manage/content-configuration"
+          >
+            Open dedicated page
+          </Link>
         </div>
 
         {contestTemplatesQuery.isLoading ? (

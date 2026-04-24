@@ -72,7 +72,7 @@ Reached from the Account dropdown "Manage" link (visible only when `user.isRootA
 - **Row action:** click → navigate to `/users/:userId` (the canonical User page — Plan 107 item G)
 - **No modals on this admin list.** All admin actions (toggle root admin, reset password, inactivate, delete) live on `/users/:userId` as root-admin-authority modals, not as row actions here.
 - Mirrors `/manage/leagues` and `/manage/teams` — search + link only.
-- **Coordination with Plan 106:** Slice B backend (`setRootAdmin`) carries over unchanged — it powers the **Toggle Root Admin** modal on `/users/:userId`. Slice C frontend reshapes to land as (a) this list page (BUILD NEW) + (b) the root-admin modal set on `/users/:userId` (owned by Plan 107 item G3), not a panel on `/manage`.
+- **Coordination with Plan 106:** The shipped backend `setRootAdmin` contract and existing `/manage` users panel are transitional implementation, not blockers. This plan replaces that current `/manage`-embedded panel with (a) a dedicated `/manage/users` search+link page and (b) the root-admin modal set on `/users/:userId` (owned by Plan 107 item G3).
 
 ### 4. Content Configuration — `/manage/content-configuration`
 
@@ -138,8 +138,7 @@ Source file: `clients/poolmaster/src/features/root-admin/root-admin-page.tsx`
 ## Open Questions / Product Decisions Needed
 
 1. **Cross-league team search endpoint** — the Teams admin page assumes an admin-scoped search over all teams across leagues. Current SDK does not expose this (today's team listing is per-league). **Ask Brad.** If the endpoint is missing, this is a blocker for Teams section execution.
-2. **Admin user search endpoint** — similar; the Users admin page needs a platform-scoped user search. Current SDK lists leagues, not users. **Ask Brad.**
-3. **Admin reset-password endpoint** — `/manage/users` row modal triggers a password reset on behalf of the user. Does the backend expose a root-admin endpoint for this, and does it send email to the user or generate a temporary password? **Ask Brad + Pam.**
+2. **Admin reset-password endpoint** — the new `/users/:userId` root-admin modal set assumes an admin-initiated reset-password action. Does the backend expose it yet, and does it send email to the user or generate a temporary password? **Ask Brad + Pam.**
 4. **Team delete semantics** — confirm permanent delete of a team is supported at the backend level and not just inactivate. If delete doesn't exist, the root-admin delete section on Team Home deferred until backend lands. Same applies to **league delete** for the root-admin section on League Home.
 5. **Impersonate-as-owner / impersonate-as-member** — explicitly out of scope; user confirmed "no further actions" beyond lifecycle + password reset. If ever added later, revisit this plan.
 6. **Minimal hub vs eventual at-a-glance** — the hub is plain six links today. If usage patterns later show operators want a quick "X inactive leagues / Y failed syncs" summary, revisit. Not blocking.
@@ -147,7 +146,6 @@ Source file: `clients/poolmaster/src/features/root-admin/root-admin-page.tsx`
 ## Backend / Contract Questions (route to Brad)
 
 - **Cross-league team search** — new generated SDK operation needed (`adminListTeams` or similar) with search-by-name, league filter, and status filter. Must be root-admin gated.
-- **Cross-league user search** — new operation needed (`adminListUsers` or similar).
 - **Admin-initiated reset password** — new endpoint, triggered by root admin against a target user.
 - **Hard-delete team endpoint** — confirm existence or add.
 - **`Team.status` signal available on admin list** — required for row badges and for the Team Home root-admin delete gating.
@@ -157,8 +155,8 @@ Source file: `clients/poolmaster/src/features/root-admin/root-admin-page.tsx`
 
 - **Plan 106 — Root Admin Elevation and `/manage` Entry**
   - Slice A (Manage link in Account dropdown, `/manage` routing when root admin) — **remains valid** and ships as originally scoped.
-  - Slice B (backend `setRootAdmin` operation) — **remains valid**; required by the Users list row toggle.
-  - Slice C (frontend `root-admin-users-panel.tsx`) — **reshape required.** Instead of a panel on `/manage`, build the Users list page as part of this plan's Section 3. Coordinate slicing so Plan 106 Slice C doesn't build a throwaway panel.
+  - Slice B (backend `setRootAdmin` operation) — **already shipped** and remains the contract powering root-admin role changes.
+  - Slice C (`root-admin-users-panel.tsx`) — **already shipped as transitional UI** inside `/manage`. This plan replaces that panel with the new decomposition target: `/manage/users` as search+link only, and authority-gated root-admin actions on `/users/:userId`.
 - **Plan 101 — Root Admin Event Sync Surface**
   - Lives inside `/manage/sync`. Verify the existing implementation maps cleanly to the dashboard + manual-run page split described here.
 - **Beads `pool-master-lyf`** (root-admin league search and lifecycle controls) — satisfied by Section 1 (Leagues).
@@ -179,7 +177,22 @@ Slicing will get concrete once backend contracts (Q1–Q6 above) are confirmed. 
 2. **Content Configuration** — K, L. Lowest backend-coordination risk; existing tile migrates cleanly.
 3. **Sync + Sync Configuration** — M, N, O, P, Q. Mostly tile lift-outs; minimal new behavior.
 4. **Leagues** — B, C. List + link page (no modal); delete section lands on League Home (coordinate with Plan 107 item D).
-5. **Users** — G. List + link page only; the root-admin modals live on `/users/:userId` (Plan 107 G/G3). Coordinates with Plan 106 Slice C.
+5. **Users** — G. List + link page only; the root-admin modals live on `/users/:userId` (Plan 107 G/G3). This is frontend decomposition/replacement work, not a backend-search blocker, because `adminListUsers` and `setRootAdmin` already exist.
 6. **Teams** — D, E, F, R. Highest backend dependency (cross-league search); schedule after backend lands.
 
 Each build item (A–S) should become its own Beads issue when execution starts.
+
+## Action Plan
+
+| ID | Phase | Task | Status | Notes |
+|---|---|---|---|---|
+| 108-001 | 1 | Build `/manage` hub shell, breadcrumbs, and child-route scaffold | Not Started | Minimal landing with six section links; no data queries on the hub itself. Intentionally sequenced after 108-002 so the first additive destination page exists before `/manage` stops being the legacy stacked page. |
+| 108-002 | 1 | Build Content Configuration list and per-template edit pages | Done | Added dedicated `/manage/content-configuration` list and `:templateKey` detail routes/pages, shared template-edit helpers, focused frontend coverage, and a transitional "Open dedicated page" affordance from the legacy `/manage` contest-configuration section. Validated with the full required repo gate set before closeout. |
+| 108-003 | 2 | Build Sync dashboard plus dedicated Run Sport Sync and Run Event Sync pages | Not Started | Reuse existing backend/manual-trigger contracts; split operational actions off the read-only dashboard. |
+| 108-004 | 2 | Build Sync Configuration landing page plus Poll Intervals, Ingestion Schedule, and Sport Overrides pages | Not Started | Mostly form lift-outs from the current root-admin page. |
+| 108-005 | 3 | Build `/manage/leagues` search+link page and remove embedded league lifecycle controls from the old manage surface | Not Started | League lifecycle actions move to League Home under Plan 107 authority-gated panels. |
+| 108-006 | 3 | Build `/manage/users` search+link page and replace the transitional embedded root-admin users panel | Not Started | Backend `adminListUsers` and `setRootAdmin` already exist; user actions move to `/users/:userId` under Plan 107. |
+| 108-007 | 4 | Build `/manage/teams` search+link page once cross-league team search exists | Not Started | Blocked on backend `adminListTeams`/equivalent contract. |
+| 108-008 | 4 | Add root-admin delete sections on League Home and Team Home | Not Started | Coordinates with Plan 107 League Home / Team Home authority work and any backend hard-delete semantics confirmation. |
+| 108-009 | 5 | Dissolve `root-admin-page.tsx` and finish route/menu cleanup | Not Started | Remove the legacy stacked-tile page once all destination pages are live. |
+| 108-010 | 6 | Run full validation, reconcile Beads, and close decomposition tracker items | Not Started | Final cleanup includes removing transitional manage UI and ensuring breadcrumbs/nav point only to the new pages. |

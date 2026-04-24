@@ -782,6 +782,21 @@ describe('RootAdminPage', () => {
     );
   });
 
+  it('links to the dedicated content configuration page from the legacy manage section', async () => {
+    adminListProvidersMock.mockResolvedValue({
+      data: { items: [] },
+    });
+    adminListProviderSyncRunsMock.mockResolvedValue({
+      data: { items: [] },
+    });
+
+    renderRootAdminPage();
+
+    expect(
+      await screen.findByTestId('root-admin-content-config-open-page'),
+    ).toHaveAttribute('href', '/manage/content-configuration');
+  });
+
   it('searches leagues by name from the manage section', async () => {
     adminListProvidersMock.mockResolvedValue({
       data: { items: [] },

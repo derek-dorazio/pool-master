@@ -9,6 +9,8 @@ import { ContestEntryPage } from '@/features/contests/contest-entry-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { MyLeaguesPage, WelcomePage } from '@/features/leagues/leagues-page';
+import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
+import { RootAdminContentConfigurationListPage } from '@/features/root-admin/root-admin-content-configuration-list-page';
 import { RootAdminPage } from '@/features/root-admin/root-admin-page';
 import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
@@ -100,6 +102,14 @@ export const router = createBrowserRouter([
           {
             path: 'manage',
             element: <RootAdminPage />,
+          },
+          {
+            path: 'manage/content-configuration',
+            element: <RootAdminContentConfigurationListPage />,
+          },
+          {
+            path: 'manage/content-configuration/:templateKey',
+            element: <RootAdminContentConfigurationDetailPage />,
           },
         ],
       },

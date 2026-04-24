@@ -47,7 +47,7 @@ Every route in the reorganized webapp, flat. Authority column indicates who sees
 | `/league/:leagueCode/entries` | **My Entries** | self — My Team ▾ |
 | `/league/:leagueCode/history` | **My Contest History** *(placeholder)* | self — My Team ▾ |
 | `/league/:leagueCode/contests` | **League Contests** list | all — League ▾ |
-| `/league/:leagueCode/contests/:contestId` *(TBD — today `/contests/:contestId`)* | **Contest Home** (state-transitioning) | all — row click from League Contests. URL move from `/contests/:contestId` is a flag for execution. |
+| `/league/:leagueCode/contests/:contestId` *(canonical; today `/contests/:contestId` still exists)* | **Contest Home** (state-transitioning) | all — row click from League Contests. During migration, keep `/contests/:contestId` only as a temporary compatibility redirect to this canonical route; remove the legacy route in the final cleanup slice. |
 | `/contests/:contestId/entries/:entryId` | **Entry page** (authority-gated) | entry owner when unlocked — edit icon from My Entries; redirect target for self-click on Contest Home pre-event |
 | `/league/:leagueCode/contests/new` | **Create Contest** wizard | commissioner — League ▾ |
 | `/league/:leagueCode/contests/manage` | **Manage Contests** list | commissioner — League ▾ |
@@ -124,7 +124,7 @@ Clicking a group label navigates to that group's landing page. Hover/secondary i
 | League Home | `/league/:leagueCode` | `useLeagueAuthority` → `commissioner \| member`; commissioner edits identity/settings/lifecycle; member read-only. Root admin collapses into `commissioner` on any league. Root-admin-only delete section gated by `useIsRootAdmin()` + inactive status. |
 | Team Home | `/league/:leagueCode/teams/:teamId` | `useTeamAuthority` → `owner \| commissioner \| viewer`; owner/commissioner edit, viewer read-only. Root admin collapses into `commissioner`. Root-admin-only delete section gated by `useIsRootAdmin()` + inactive status. |
 | **User page** | `/users/:userId` | Backend-emitted `viewerAuthority` per request → `self \| commissioner \| root-admin \| viewer`. Action buttons launch focused modals; set visible depends on authority. See Authority matrix below. |
-| Contest Home | `/league/:leagueCode/contests/:contestId` (TBD — today `/contests/:contestId`) | Pre-event: entries list (name + team only). **Self rows are clickable and navigate to My Team ▾ Entries** (nav shortcut to own management page). Other rows are not clickable for anyone (including commissioners/root admin) — competitive-integrity rule. Post-event: becomes leaderboard with per-entry expand/modal |
+| Contest Home | `/league/:leagueCode/contests/:contestId` (canonical; old `/contests/:contestId` may temporarily redirect during migration) | Pre-event: entries list (name + team only). **Self rows are clickable and navigate to My Team ▾ Entries** (nav shortcut to own management page). Other rows are not clickable for anyone (including commissioners/root admin) — competitive-integrity rule. Post-event: becomes leaderboard with per-entry expand/modal |
 | Entry page | `/contests/:contestId/entries/:entryId` (exists) | Editable only by entry owner when unlocked; read-only otherwise |
 
 ### User page authority matrix
@@ -169,7 +169,9 @@ Each row maps an existing tile/section in the current codebase to its new home. 
 
 ### `clients/poolmaster/src/features/leagues/league-detail-page.tsx`
 
-This page is being dissolved — `/league/:leagueCode` becomes Teams and Owners.
+This page is being dissolved — its current multi-tile content is split across the new
+canonical **League Home** at `/league/:leagueCode` and **Teams and Owners** at
+`/league/:leagueCode/teams`.
 
 | Tile | Source lines | Destination |
 |---|---|---|
@@ -297,6 +299,7 @@ These are called out by the new nav but don't exist in the code yet:
 - **A. My Team ▾ Entries page** — consolidates "per-contest entries for this user" logic currently split between `my-team-page.tsx` (lines 657–832) and `contest-detail-page.tsx` (lines 712–940). One page, tile per active contest, each tile contains entries list + Create Entry button + edit icon.
 - **B. Contest Home post-event leaderboard expand/modal** — current All Entries tile (`contest-detail-page.tsx:944–1063`) is a flat list. Post-event UX requires per-row expand or modal revealing participant selections.
 - **C. Contest Home pre-event: disable click-through** — the current "Open entry" links on All Entries (for the current user only) must be removed/hidden pre-event per the competitive-integrity rule.
+- **C1. Contest Home route migration + cleanup** — add the canonical `/league/:leagueCode/contests/:contestId` route, keep old `/contests/:contestId` only as a temporary compatibility redirect during migration, update touched navigation/tests to the canonical route, then remove the legacy route in the final cleanup slice. Do not leave permanent dual-route support behind.
 - **D. League Home page** — new canonical page at `/league/:leagueCode` (replaces today's `LeagueDetailPage` content, which is being dissolved). Authority-gated via `useLeagueAuthority`: members see identity + status + overview + Leave league. When league is inactive, members see the "This league is not currently active" banner (future: Message commissioner CTA). Commissioners additionally see five panels — League identity (name + description, editable + Save), League branding (icon selector + Save), League settings (join policy placeholder), League metrics (read-only counts + code + homepage link), and League lifecycle (Inactivate/Reactivate). Root admin collapses into commissioner tier and additionally gets a root-admin-gated permanent-delete section when the league is inactive (mirrors Team Home pattern). This page *replaces* both the previously planned separate League Settings page **and** the deleted `ManageLeagueModal`; all their contents live here.
 - **E. Manage Contests list page** — new list page under League ▾ (commissioner-only). Rows link to the existing `/contests/:contestId/manage` page.
 - **F. My Team ▾ History placeholder page** — new route, minimal page. Detailed design deferred (see Open Questions §7).
@@ -365,3 +368,19 @@ These open beads issues are directly relevant; resolving them is part of this re
 ## Execution Phases (sketch)
 
 Phase-level sequencing will get its own slicing once open questions §1–12 are answered and the `/manage` audit is complete. At that point each BUILD NEW item (A–I) should get its own Beads issue and be slotted into a sequenced execution plan.
+
+## Action Plan
+
+| ID | Phase | Task | Status | Notes |
+|---|---|---|---|---|
+| 107-001 | 1 | Add route scaffold for canonical League Home, Teams and Owners, My Entries, My History, Manage Contests list, and canonical Contest Home migration path | Not Started | Includes temporary `/contests/:contestId` compatibility redirect and final cleanup requirement. |
+| 107-002 | 1 | Rework post-auth landing and delete `/my-leagues` as a first-class destination | Not Started | League switcher becomes the only switcher; remove the unreachable Welcome fallback grid in the same effort. |
+| 107-003 | 2 | Build Teams and Owners page from current teams-page tile content | Not Started | Read-only league-level table with owner-name links to `/users/:userId`; product-confirmed question #5 remains a gating check. |
+| 107-004 | 2 | Build League Home and dissolve `LeagueDetailPage` + `manage-league-modal` content into authority-gated panels | Not Started | Includes commissioner edit panels, member leave section, inactive banner, and root-admin delete section hook points. |
+| 107-005 | 3 | Build canonical User page at `/users/:userId` with self-service modal set | Not Started | Depends on additive backend authority signal/capabilities field if current detail payload does not already expose it. |
+| 107-006 | 3 | Add commissioner and root-admin action modals to the User page | Not Started | Commissioner: promote/demote/remove from league. Root admin: toggle root admin, reset password, inactivate/delete account. |
+| 107-007 | 4 | Build My Team Entries page and move entry-management affordances off Team Home and Contest Home | Not Started | Consolidates current split logic from Team Home and Contest Home into one page. |
+| 107-008 | 4 | Complete Contest Home migration, pre-event click rules, and post-event leaderboard expansion behavior | Not Started | Includes canonical league-scoped route adoption, self-row redirect to My Entries, and post-event expand/modal build. |
+| 107-009 | 5 | Build Manage Contests list page and wire commissioner League-menu navigation | Not Started | Per-contest manage page remains existing destination; ensure route ordering avoids `:contestId` collisions. |
+| 107-010 | 5 | Add My Team History placeholder and finish orphan-route/component cleanup | Not Started | Remove stale hash anchors, deleted routes, and leftover page exports once replacements are live. |
+| 107-011 | 6 | Run full validation, reconcile Beads, and close remaining plan drift | Not Started | Includes frontend, contract, and route cleanup verification for final merged IA. |
