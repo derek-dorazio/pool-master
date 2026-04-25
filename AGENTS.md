@@ -6,7 +6,7 @@ All agents working in this repo should:
 
 1. Read this file first.
 2. Treat the files in `rules/` as the detailed source of truth for architecture, implementation, testing, and workflow requirements.
-3. Treat persona playbooks in `agents/` as role-specific execution guides layered on top of the shared rules, not as competing policy sources.
+3. Treat persona playbooks in `personas/` as role-specific execution guides layered on top of the shared rules, not as competing policy sources. Tool-specific wrappers under `.claude/skills/`, `.agents/skills/` (Codex), `.claude/agents/`, and `.codex/agents/` are thin pointers to the authoritative `personas/<name>.md` file; when a persona activates, the tool wrapper instructs the agent to Read the personas file for the full playbook.
 4. Keep `CLAUDE.md` as a thin pointer to this file rather than maintaining duplicate policy text elsewhere.
 
 ## Non-Negotiables
@@ -14,7 +14,7 @@ All agents working in this repo should:
 - Never add mock data, fake data, fallback sample payloads, or hardcoded API responses to application code.
 - Fix the real architecture and contract problems first; only adjust tests after the production behavior is correct.
 - Keep OpenAPI, shared DTOs, mappers, generated clients, and frontend/backend usage in sync.
-- Update Beads and affected plan task tables when working against an existing plan or active lane.
+- Update Beads state (status, notes) when working against an existing epic or story. Plans are narrative only; they do not carry task tables (see `rules/workflow-rules.md §1` and `docs/adr/0002-plans-as-narrative-delete-after-epic-closes.md`).
 - Keep documentation and rules in sync when architecture, workflow, or testing patterns change.
 
 ## Read These Files Before Implementing
@@ -55,30 +55,40 @@ All agents working in this repo should:
 
 ## Persona Playbooks
 
-The `agents/` directory contains optional role-scoped playbooks for common kinds of work:
+Persona content lives once in `personas/<name>.md`. Tool-specific thin-pointer wrappers under each tool's canonical directory instruct the agent to Read the personas file for the full playbook. See `plans/111-persona-library-restructure.md` for the full layout and rationale.
 
-- `agents/product-manager.md`
-- `agents/product-discovery.md`
-- `agents/technical-specification-creator.md`
-- `agents/data-modeler.md`
-- `agents/test-planner.md`
-- `agents/frontend-developer.md`
-- `agents/backend-developer.md`
-- `agents/qa-test-engineer.md`
-- `agents/architect.md`
-- `agents/code-reviewer.md`
+**Authoritative persona files (`personas/`):**
 
-Use these playbooks to focus the workflow for that role.
+- `personas/pam.md` — Product Manager
+- `personas/piper.md` — Product Discovery *(dormant)*
+- `personas/tom.md` — Technical Specification Creator *(dormant)*
+- `personas/dom.md` — Data Modeler
+- `personas/tess.md` — Test Planner
+- `personas/fran.md` — Frontend Developer
+- `personas/brad.md` — Backend Developer
+- `personas/archie.md` — Architect
+- `personas/quinn.md` — QA/Test Engineer *(invoked as subagent)*
+- `personas/riley.md` — Code Reviewer *(invoked as subagent)*
+
+**Tool-specific wrappers (thin pointers; do not duplicate persona content):**
+
+- **Claude Code skills:** `.claude/skills/<name>/SKILL.md` — 8 personas (`fran, brad, pam, dom, tess, archie` active; `piper, tom` dormant via `disable-model-invocation: true`).
+- **Claude Code subagents:** `.claude/agents/<name>.md` — `quinn` and `riley` (isolated-context verification/review passes).
+- **Codex skills:** `.agents/skills/<name>/SKILL.md` — same 8 personas; `piper` and `tom` are dormant via `.agents/skills/<name>/agents/openai.yaml` with `allow_implicit_invocation: false`.
+- **Codex subagents:** `.codex/agents/<name>.toml` — `quinn.toml` and `riley.toml`.
 
 Default responsibility split for common lanes:
 
-- `Piper` / product discovery: broad product framing, goals, actors, major modules
+- `Piper` / product discovery *(dormant)*: broad product framing, goals, actors, major modules — invoked explicitly for greenfield only
 - `Pam` / product manager: refined product requirements, use cases, business rules, screen purpose
-- `Tom` / technical specification: technical design, domain/API/flow specification
+- `Tom` / technical specification *(dormant)*: technical design, domain/API/flow specification — invoked explicitly for major new features only
+- `Dom` / data modeler: contract-change gate; classifies UI-only vs contract-only vs true model change
+- `Tess` / test planner: coverage matrix authorship
 - `Archie` / architect: execution slicing, sequencing, infrastructure/cross-cutting architecture
 - `Fran` / frontend developer: frontend UX realization and web implementation
 - `Brad` / backend developer: backend/domain/API implementation
-- `Quinn` / QA/test engineer: verification strategy, validation, regression checks
+- `Quinn` / QA/test engineer *(subagent)*: verification execution, regression triage, release confidence reporting
+- `Riley` / code reviewer *(subagent)*: findings-first review, risk detection
 
 If a role is misassigned during discussion or execution, agents should correct
 it proactively and update the relevant persona/rules if the boundary was not
@@ -88,18 +98,18 @@ time.
 Important:
 
 - `AGENTS.md` and `rules/` remain the canonical shared contract.
-- `agents/` files must not redefine or contradict repo-wide policy.
+- Persona files in `personas/` and their thin-pointer wrappers must not redefine or contradict repo-wide policy.
 - Cross-cutting workflow requirements such as checking Beads and validating slices remain required for all agents.
 - Frontend implementation should be driven by reviewed plans, generated SDK/types, and documented API contracts rather than backend implementation details.
 - Contract meaning, API documentation quality, and model-change implementation remain backend-owned responsibilities.
 
 ## Workflow Expectations
 
-- Check whether the work is already tracked in Beads and/or `plans/`, update the relevant Beads items as work starts and finishes, and reconcile the affected plan rows when they apply.
+- Check whether the work is already tracked in Beads and/or `plans/`, update the relevant Beads items as work starts and finishes. Plans are narrative only — they do not carry task rows.
 - At the start of a resumed session, re-read `rules/working-style.md` to restore the expected collaboration style and continuity defaults before implementing.
 - When a prior session intentionally paused work, check `docs/SESSION-HANDOFF.md` for the current "resume here" note before choosing the next slice.
 - When a refactor changes architecture, testing patterns, or developer workflow, update the matching `rules/*.md` files in the same effort.
-- Do not maintain competing instruction sets across `AGENTS.md`, `CLAUDE.md`, `rules/`, and `agents/`.
+- Do not maintain competing instruction sets across `AGENTS.md`, `CLAUDE.md`, `rules/`, `personas/`, and the tool-specific wrapper directories.
 - Treat `requirements/` and `tech-specs/` as design inputs and handoff artifacts; Beads is the live execution/refinement tracker and `plans/` remain the narrative execution context.
 
 ## Documentation Expectations
@@ -130,4 +140,8 @@ CI-only follow-up signals:
 - `tech-specs/`: technical specification artifacts for approved features
 - `plans/`: tracked implementation plans
 - `rules/`: detailed policy and architecture guidance
+- `docs/adr/`: Architecture Decision Records (durable decisions)
+- `personas/`: authoritative persona playbooks
+- `.claude/skills/`, `.claude/agents/`: Claude Code skill and subagent thin-pointer wrappers
+- `.agents/skills/`, `.codex/agents/`: Codex skill and subagent thin-pointer wrappers
 - `infrastructure/`: deployment and environment assets

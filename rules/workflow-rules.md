@@ -10,7 +10,7 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
 
 | Tier | Artifact | Lifetime | Purpose |
 |---|---|---|---|
-| Permanent | `rules/*.md`, `agents/*.md`, `docs/adr/*.md`, `AGENTS.md` | Months–years | How we build here; who does what; why we chose durable patterns |
+| Permanent | `rules/*.md`, `personas/*.md`, `docs/adr/*.md`, `AGENTS.md` | Months–years | How we build here; who does what; why we chose durable patterns |
 | Feature-life | `requirements/product-requirements/features/<feature>/` | Weeks–months (during active feature development) | Product intent for a *major* feature; retire/delete when the feature stabilizes |
 | Slice-life | `plans/NN-*.md` | Days–weeks (a single feature reorg or major effort) | Narrative execution context paired with a Beads epic; **deleted** when the parent epic closes |
 | Pre-implementation | `tech-specs/features/<feature>/` | Up to ship | Technical framing before implementation; **deleted** when the implementation lands |
@@ -411,10 +411,8 @@ confirmed with the user before implementation expands.
 
 ### Persona Playbooks
 
-- Persona playbooks may live under `agents/` to scope role-specific workflows
-  such as product management, project management, backend implementation,
-  data modeling, frontend implementation, architecture/platform work, and code
-  review.
+- Persona playbooks live under `personas/<name>.md` as the single authoritative source of persona content, with tool-specific thin-pointer wrappers under `.claude/skills/`, `.claude/agents/`, `.agents/skills/` (Codex), and `.codex/agents/`. See Plan 111 for the full layout and the thin-pointer pattern (no symlinks, no build step — each wrapper carries minimal frontmatter + a MUST-Read instruction pointing at `personas/<name>.md`).
+- Personas scope role-specific workflows: product management, backend implementation, data modeling, frontend implementation, test planning, architecture/platform work, and code review. Piper (product discovery) and Tom (technical specification) are dormant — only invoked explicitly for greenfield / major-feature framing.
 - These playbooks are execution aids, not replacement policy sources.
 - `AGENTS.md` and `rules/` remain canonical.
 - Formal persona names remain the canonical workflow language in plans, rules,
