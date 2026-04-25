@@ -13,6 +13,7 @@ import {
 import { buildLeaguePath } from './league-routing';
 import { LeagueIcon } from './league-icon';
 import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
+import { removeLeagueSummary, syncLeagueCaches } from './league-cache';
 
 type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
@@ -133,9 +134,8 @@ export function ManageLeagueModal({
 
       return response.data.league;
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', league?.id, 'manage'] });
+    onSuccess: async (updatedLeague) => {
+      syncLeagueCaches(queryClient, updatedLeague, { manageLeagueId: league?.id ?? null });
     },
   });
 
@@ -166,8 +166,7 @@ export function ManageLeagueModal({
     onSuccess: async (updatedLeague) => {
       setDetailsName(updatedLeague.name);
       setDetailsDescription(updatedLeague.description ?? '');
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', league?.id, 'manage'] });
+      syncLeagueCaches(queryClient, updatedLeague, { manageLeagueId: league?.id ?? null });
     },
   });
 
@@ -186,8 +185,7 @@ export function ManageLeagueModal({
     },
     onSuccess: async (updatedLeague) => {
       setSelectedIconKey(updatedLeague.iconKey);
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', league?.id, 'manage'] });
+      syncLeagueCaches(queryClient, updatedLeague, { manageLeagueId: league?.id ?? null });
     },
   });
 
@@ -205,7 +203,11 @@ export function ManageLeagueModal({
       return response.data;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+      queryClient.setQueryData(['poolmaster', 'leagues'], (current: LeagueSummary[] | undefined) =>
+        removeLeagueSummary(current, league?.id ?? ''),
+      );
+      queryClient.removeQueries({ queryKey: ['poolmaster', 'league', league?.leagueCode], exact: true });
+      queryClient.removeQueries({ queryKey: ['poolmaster', 'league', league?.id, 'manage'], exact: true });
       setDeleteSuccess(true);
     },
   });

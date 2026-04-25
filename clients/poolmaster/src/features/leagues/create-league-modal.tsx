@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createLeague } from '@/lib/api';
 import { useLogger } from '@/lib/logger';
 import { buildLeaguePath, setRecentLeagueCode } from './league-routing';
+import { syncLeagueCaches } from './league-cache';
 
 const LEAGUE_CODE_PATTERN = /^[A-Z0-9]{3,16}$/;
 const WIZARD_STEP_DETAILS = 'details';
@@ -144,7 +145,7 @@ export function CreateLeagueModal({ isOpen, onClose, onCreated }: CreateLeagueMo
         },
         'Created league successfully',
       );
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+      syncLeagueCaches(queryClient, league);
       setRecentLeagueCode(league.leagueCode);
       hasEditedLeagueCodeRef.current = false;
       setStep(WIZARD_STEP_DETAILS);

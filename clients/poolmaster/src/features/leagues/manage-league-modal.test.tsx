@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ListLeaguesResponses } from '@/lib/api';
@@ -19,6 +19,32 @@ vi.mock('@/lib/api', () => ({
 }));
 
 type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
+
+function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummary[]> }) {
+  const leaguesQuery = useQuery({
+    queryKey: ['poolmaster', 'leagues'],
+    queryFn,
+    retry: false,
+  });
+
+  if (leaguesQuery.isLoading) {
+    return <div data-testid="league-list-state">loading</div>;
+  }
+
+  if (leaguesQuery.isError) {
+    return <div data-testid="league-list-state">error</div>;
+  }
+
+  const leagues = leaguesQuery.data ?? [];
+
+  return (
+    <div data-testid="league-list-state">
+      {leagues
+        .map((league) => `${league.leagueCode}:${league.iconKey}`)
+        .join(',') || 'empty'}
+    </div>
+  );
+}
 
 const commissionerLeague: LeagueSummary = {
   id: 'league-1',
@@ -251,6 +277,86 @@ describe('ManageLeagueModal', () => {
         },
       }),
     );
+    expect(queryClient.getQueryData(['poolmaster', 'league', 'BIGDAWGS'])).toMatchObject({
+      name: 'Edited Dawgs',
+      description: 'Updated description',
+    });
+    expect(queryClient.getQueryData(['poolmaster', 'leagues'])).toEqual([
+      expect.objectContaining({
+        id: 'league-1',
+        name: 'Edited Dawgs',
+      }),
+    ]);
+  });
+
+  it('updates the league icon by syncing the shell league list without refetching it', async () => {
+    getLeagueMock.mockResolvedValue({
+      data: {
+        league: {
+          ...commissionerLeague,
+          iconKey: 'TROPHY',
+          joinPolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+    updateLeagueIconMock.mockResolvedValue({
+      data: {
+        league: {
+          ...commissionerLeague,
+          iconKey: 'GOLF_BALL',
+          joinPolicy: 'COMMISSIONER_ONLY',
+        },
+      },
+    });
+    const leaguesQueryFn = vi
+      .fn<() => Promise<LeagueSummary[]>>()
+      .mockResolvedValue([commissionerLeague]);
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <LeaguesQueryProbe queryFn={leaguesQueryFn} />
+        <ManageLeagueModal
+          isOpen
+          league={commissionerLeague}
+          onClose={vi.fn()}
+          onDeleted={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('league-list-state')).toHaveTextContent('BIGDAWGS:TROPHY'),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Icon/ }));
+    fireEvent.click(screen.getByTestId('manage-league-icon-GOLF_BALL'));
+    fireEvent.click(screen.getByTestId('manage-league-save-icon'));
+
+    await waitFor(() =>
+      expect(updateLeagueIconMock).toHaveBeenCalledWith({
+        path: { id: 'league-1' },
+        body: {
+          iconKey: 'GOLF_BALL',
+        },
+      }),
+    );
+    await waitFor(() => expect(screen.getByTestId('league-list-state')).toHaveTextContent('BIGDAWGS:GOLF_BALL'));
+    expect(leaguesQueryFn).toHaveBeenCalledTimes(1);
+    expect(queryClient.getQueryData(['poolmaster', 'league', 'BIGDAWGS'])).toMatchObject({
+      iconKey: 'GOLF_BALL',
+    });
+    expect(queryClient.getQueryData(['poolmaster', 'leagues'])).toEqual([
+      expect.objectContaining({
+        id: 'league-1',
+        iconKey: 'GOLF_BALL',
+      }),
+    ]);
   });
 
   it('shows details as read-only when the league is inactive', async () => {

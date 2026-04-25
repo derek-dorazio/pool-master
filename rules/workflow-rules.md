@@ -97,6 +97,9 @@ What a plan file does **not** contain:
   slice is still failing.
 - "Implementation complete" without green relevant local validation is still
   `In Progress`, not `Done`.
+- Defect-remediation slices must include an automated regression proof that
+  would fail under the buggy behavior, then rerun the required broader local
+  gates before the slice can move to `closed`.
 - Targeted validation does not override the required repo gate set. When the
   rules call for full unit, functional, coverage, typecheck, or lint gates,
   those gates must be run even if focused nearby tests already passed.

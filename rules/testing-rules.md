@@ -163,6 +163,35 @@ Notes:
   builders, or setup helpers are not separate cleanup work; they are part of
   the model-change fix.
 
+### Defect Regression Proof Rule
+
+Defect-remediation slices must prove three things in order:
+
+1. the pre-fix defective behavior is observable in an automated regression test
+2. the implementation removes that defect without weakening the assertion
+3. the required broader local gates still pass before commit/push
+
+Required behavior for defect work:
+
+- Start by writing or updating at least one automated regression test whose
+  assertion would fail if the old buggy behavior were still present.
+- Prefer a red → green loop locally: run the new regression test before the
+  fix when practical, confirm it fails for the right reason, then implement the
+  fix and rerun it to green.
+- If the defect is discovered after code is already partially patched, tighten
+  the regression test so it still clearly proves the old behavior would fail
+  and explain that in the slice notes or handoff.
+- Do not introduce synthetic failures just to make a regression test go red.
+  The regression test must exercise the real escaped scenario and assert the
+  natural buggy outcome or signal, such as an unexpected extra fetch, stale UI,
+  wrong state transition, or incorrect returned value.
+- Do not settle for post-fix snapshotting or cache-shape assertions when the
+  real regression risk is a user-visible failure mode such as a refetch loop,
+  thrown error state, broken navigation, or stale screen state.
+- After the focused regression test passes, run the full required local gate
+  set for the slice. Focused tests prove the bug; broad gates prove the fix did
+  not regress the rest of the repo.
+
 ---
 
 ## 4. Contract Verification Rules

@@ -1,7 +1,10 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { GetLeagueResponses, ListLeaguesResponses } from '@/lib/api';
 import { CreateLeagueModal, suggestLeagueCode } from './create-league-modal';
+
+type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
 const { createLeagueMock, mockLogger } = vi.hoisted(() => {
   const logger = {
@@ -30,6 +33,30 @@ vi.mock('@/lib/logger', () => ({
   useLogger: () => mockLogger,
 }));
 
+function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummary[]> }) {
+  const leaguesQuery = useQuery({
+    queryKey: ['poolmaster', 'leagues'],
+    queryFn,
+    retry: false,
+  });
+
+  if (leaguesQuery.isLoading) {
+    return <div data-testid="league-list-state">loading</div>;
+  }
+
+  if (leaguesQuery.isError) {
+    return <div data-testid="league-list-state">error</div>;
+  }
+
+  const leagues = leaguesQuery.data ?? [];
+
+  return (
+    <div data-testid="league-list-state">
+      {leagues.map((league) => league.leagueCode).join(',') || 'empty'}
+    </div>
+  );
+}
+
 describe('CreateLeagueModal', () => {
   afterEach(() => {
     createLeagueMock.mockReset();
@@ -45,17 +72,33 @@ describe('CreateLeagueModal', () => {
     expect(suggestLeagueCode('A')).toBe('A');
   });
 
-  it('creates a league and routes through the returned league code', async () => {
+  it('creates a league by syncing the shell league list without refetching it', async () => {
+    const createdLeague: GetLeagueResponses[200]['league'] = {
+      id: 'league-1',
+      leagueCode: 'BIGDAWGS',
+      name: 'Big Dawgs',
+      description: 'Neighborhood commissioner league',
+      isActive: true,
+      iconKey: 'TROPHY',
+      memberCount: 1,
+      activeContestCount: 0,
+      memberType: 'COMMISSIONER',
+      leagueRelationship: {
+        leagueMember: true,
+        commissioner: true,
+      },
+      isRootAdmin: false,
+      createdAt: '2026-04-15T00:00:00.000Z',
+      joinPolicy: 'COMMISSIONER_ONLY',
+    };
     createLeagueMock.mockResolvedValue({
       data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-        },
+        league: createdLeague,
       },
     });
 
     const onCreated = vi.fn();
+    const leaguesQueryFn = vi.fn<() => Promise<LeagueSummary[]>>().mockResolvedValue([]);
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -66,9 +109,12 @@ describe('CreateLeagueModal', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
+        <LeaguesQueryProbe queryFn={leaguesQueryFn} />
         <CreateLeagueModal isOpen onClose={vi.fn()} onCreated={onCreated} />
       </QueryClientProvider>,
     );
+
+    await waitFor(() => expect(screen.getByTestId('league-list-state')).toHaveTextContent('empty'));
 
     fireEvent.change(screen.getByTestId('create-league-name'), {
       target: { value: 'Big Dawgs' },
@@ -93,6 +139,28 @@ describe('CreateLeagueModal', () => {
     );
 
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith('BIGDAWGS'));
+    await waitFor(() => expect(screen.getByTestId('league-list-state')).toHaveTextContent('BIGDAWGS'));
+    expect(leaguesQueryFn).toHaveBeenCalledTimes(1);
+    expect(queryClient.getQueryData<ListLeaguesResponses[200]['leagues']>(['poolmaster', 'leagues'])).toEqual([
+      {
+        id: 'league-1',
+        leagueCode: 'BIGDAWGS',
+        name: 'Big Dawgs',
+        description: 'Neighborhood commissioner league',
+        isActive: true,
+        iconKey: 'TROPHY',
+        memberCount: 1,
+        activeContestCount: 0,
+        memberType: 'COMMISSIONER',
+        leagueRelationship: {
+          leagueMember: true,
+          commissioner: true,
+        },
+        isRootAdmin: false,
+        createdAt: '2026-04-15T00:00:00.000Z',
+      },
+    ]);
+    expect(queryClient.getQueryData(['poolmaster', 'league', 'BIGDAWGS'])).toEqual(createdLeague);
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'league.create.succeeded',

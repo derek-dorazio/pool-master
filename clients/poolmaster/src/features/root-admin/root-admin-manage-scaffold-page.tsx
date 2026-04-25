@@ -30,18 +30,10 @@ export function RootAdminManageScaffoldPage({
       </div>
 
       <section className="rounded-[2rem] border border-border bg-card p-6">
-        {section.availability === 'live' ? (
-          <p className="text-sm text-muted-foreground">
-            This section already has a dedicated surface. Use the page navigation
-            above if you need to switch areas.
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            This section is waiting on backend work before the dedicated admin
-            page can become functional. The route is staged now so navigation can
-            converge cleanly when the contract lands.
-          </p>
-        )}
+        <p className="text-sm text-muted-foreground">
+          This section already has a dedicated surface. Use the page navigation
+          above if you need to switch areas.
+        </p>
       </section>
     </section>
   );

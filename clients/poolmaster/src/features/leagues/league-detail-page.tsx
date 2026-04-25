@@ -24,6 +24,7 @@ import {
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useLogger } from '@/lib/logger';
+import { removeLeagueSummary, syncLeagueCaches, type LeagueSummary } from './league-cache';
 import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { LeagueIcon } from './league-icon';
 import { getLeagueLoadErrorCopy } from './league-load-error';
@@ -343,8 +344,7 @@ export function LeagueDetailPage() {
     onSuccess: async (league) => {
       setDetailsName(league.name);
       setDetailsDescription(league.description ?? '');
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', leagueCode] });
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+      syncLeagueCaches(queryClient, league);
     },
   });
 
@@ -363,8 +363,7 @@ export function LeagueDetailPage() {
     },
     onSuccess: async (league) => {
       setSelectedIconKey(league.iconKey);
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', leagueCode] });
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+      syncLeagueCaches(queryClient, league);
     },
   });
 
@@ -381,8 +380,15 @@ export function LeagueDetailPage() {
       return response.data.league;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league', leagueCode] });
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+      if (leagueQuery.data) {
+        syncLeagueCaches(
+          queryClient,
+          {
+            ...leagueQuery.data,
+            isActive: false,
+          },
+        );
+      }
     },
   });
 
@@ -404,7 +410,9 @@ export function LeagueDetailPage() {
       return response.data;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+      queryClient.setQueryData(['poolmaster', 'leagues'], (current: LeagueSummary[] | undefined) =>
+        removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
+      );
       void navigate('/welcome');
     },
   });
@@ -423,7 +431,9 @@ export function LeagueDetailPage() {
     },
     onSuccess: async () => {
       setLeaveActionError(null);
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
+      queryClient.setQueryData(['poolmaster', 'leagues'], (current: LeagueSummary[] | undefined) =>
+        removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
+      );
       void navigate('/welcome');
     },
     onError: (error) => {

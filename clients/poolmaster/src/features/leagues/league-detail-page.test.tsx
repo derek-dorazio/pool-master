@@ -51,7 +51,7 @@ function renderLeagueDetailPage() {
     },
   });
 
-  return render(
+  const renderResult = render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <MemoryRouter initialEntries={['/league/BIGDAWGS']}>
@@ -68,6 +68,11 @@ function renderLeagueDetailPage() {
       </AuthProvider>
     </QueryClientProvider>,
   );
+
+  return {
+    ...renderResult,
+    queryClient,
+  };
 }
 
 function primeCommonMocks({
@@ -174,8 +179,9 @@ describe('LeagueDetailPage', () => {
     useSessionStore.getState().clearSession();
   });
 
-  it('lets a commissioner update league details inline on league home', async () => {
+  it('updates league details by syncing the cached league detail instead of refetching it', async () => {
     primeCommonMocks();
+    const { queryClient } = renderLeagueDetailPage();
     updateLeagueDetailsMock.mockResolvedValue({
       data: {
         league: {
@@ -198,8 +204,6 @@ describe('LeagueDetailPage', () => {
         },
       },
     });
-
-    renderLeagueDetailPage();
 
     await screen.findByTestId('league-home');
     expect(
@@ -224,6 +228,18 @@ describe('LeagueDetailPage', () => {
         },
       }),
     );
+    expect(getLeagueByCodeMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('league-home')).toBeVisible();
+    expect(queryClient.getQueryData(['poolmaster', 'league', 'BIGDAWGS'])).toMatchObject({
+      name: 'Bigger Dawgs',
+      description: 'Updated description',
+    });
+    expect(queryClient.getQueryData(['poolmaster', 'leagues'])).toEqual([
+      expect.objectContaining({
+        id: 'league-1',
+        name: 'Bigger Dawgs',
+      }),
+    ]);
   });
 
   it('shows a clear handoff message when the last commissioner tries to leave', async () => {
