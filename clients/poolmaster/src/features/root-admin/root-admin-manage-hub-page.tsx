@@ -1,17 +1,6 @@
 import { Link } from 'react-router-dom';
 import { MANAGE_SECTION_DEFINITIONS } from './manage-navigation';
 
-function getAvailabilityClasses(availability: string) {
-  switch (availability) {
-    case 'live':
-      return 'border-emerald-300 bg-emerald-50 text-emerald-900';
-    case 'legacy':
-      return 'border-amber-300 bg-amber-50 text-amber-900';
-    default:
-      return 'border-border bg-background text-muted-foreground';
-  }
-}
-
 export function RootAdminManageHubPage() {
   return (
     <section
@@ -26,9 +15,8 @@ export function RootAdminManageHubPage() {
           Manage
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          Choose a focused operational area from the canonical manage hub. Live
-          sections route directly into their dedicated pages, and blocked areas
-          keep truthful scaffold routes until their backend contracts land.
+          Choose a focused operational area from the canonical manage hub and
+          route directly into the dedicated admin pages for each workflow.
         </p>
       </div>
 
@@ -38,7 +26,7 @@ export function RootAdminManageHubPage() {
             key={section.key}
             className="rounded-[2rem] border border-border bg-card p-6"
           >
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
               <div>
                 <h2 className="text-xl font-semibold text-foreground">
                   {section.title}
@@ -47,11 +35,6 @@ export function RootAdminManageHubPage() {
                   {section.description}
                 </p>
               </div>
-              <span
-                className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${getAvailabilityClasses(section.availability)}`}
-              >
-                {section.availabilityLabel}
-              </span>
             </div>
 
             <div className="mt-5">

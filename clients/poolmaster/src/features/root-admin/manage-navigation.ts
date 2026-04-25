@@ -11,8 +11,6 @@ export type ManageSectionDefinition = {
   title: string;
   description: string;
   to: string;
-  availability: 'live' | 'blocked';
-  availabilityLabel: string;
 };
 
 export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
@@ -22,8 +20,6 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     description:
       'Search leagues and open the canonical League Home to act on them. Commissioner and root-admin lifecycle controls live on League Home under authority-gated sections.',
     to: '/manage/leagues',
-    availability: 'live',
-    availabilityLabel: 'Live now',
   },
   {
     key: 'teams',
@@ -31,8 +27,6 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     description:
       'Search teams across leagues, then open canonical Team Home for owner and lifecycle actions.',
     to: '/manage/teams',
-    availability: 'live',
-    availabilityLabel: 'Live now',
   },
   {
     key: 'users',
@@ -40,8 +34,6 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     description:
       'Search user accounts and move into canonical user pages for root-admin account actions.',
     to: '/manage/users',
-    availability: 'live',
-    availabilityLabel: 'Live now',
   },
   {
     key: 'content-configuration',
@@ -49,8 +41,6 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     description:
       'Manage the persisted global contest-default templates used by future commissioner create flows.',
     to: '/manage/content-configuration',
-    availability: 'live',
-    availabilityLabel: 'Live now',
   },
   {
     key: 'sync',
@@ -58,8 +48,6 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     description:
       'Provider visibility, sync history, and manual run actions now live in dedicated operational pages.',
     to: '/manage/sync',
-    availability: 'live',
-    availabilityLabel: 'Live now',
   },
   {
     key: 'sync-config',
@@ -67,8 +55,6 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     description:
       'Poll intervals, ingestion schedule, and sport overrides now live in dedicated edit pages.',
     to: '/manage/sync-config',
-    availability: 'live',
-    availabilityLabel: 'Live now',
   },
 ];
 

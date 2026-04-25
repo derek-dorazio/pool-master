@@ -24,7 +24,7 @@ describe('RootAdminManageHubPage', () => {
       'href',
       '/manage/teams',
     );
-    expect(screen.getAllByText('Live now')).toHaveLength(6);
+    expect(screen.queryByText('Live now')).not.toBeInTheDocument();
     expect(screen.queryByText('Temporary scaffold')).not.toBeInTheDocument();
     expect(screen.queryByText('Blocked by backend')).not.toBeInTheDocument();
   });
