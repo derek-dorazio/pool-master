@@ -11,10 +11,12 @@ All agents working in this repo should:
 
 ## Non-Negotiables
 
-- Never add mock data, fake data, fallback sample payloads, or hardcoded API responses to application code.
+- **Never modify application code to make a test pass or fail predictably.** No mock data, fake data, fallback sample payloads, hardcoded API responses, synthetic defaults, "test mode" branches, swallowed errors, or test-only code paths in production source. Mocks/fakes/fixtures live exclusively in test code. See `rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*. Riley flags any instance as a CRITICAL finding and blocks merge.
+- **Defect-fix slices must include a failing test before the fix.** The slice must demonstrate that a test reproducing the defect fails on the broken code, then passes on the fixed code. See `rules/testing-rules.md` §3 *Defect Verification Protocol*.
+- **Every test references a use-case, business-rule, or defect ID.** Describe block, test name, or leading comment — see `rules/testing-rules.md` §1A *Test Self-Documentation*.
 - Fix the real architecture and contract problems first; only adjust tests after the production behavior is correct.
 - Keep OpenAPI, shared DTOs, mappers, generated clients, and frontend/backend usage in sync.
-- Update Beads state (status, notes) when working against an existing epic or story. Plans are narrative only; they do not carry task tables (see `rules/workflow-rules.md §1` and `docs/adr/0002-plans-as-narrative-delete-after-epic-closes.md`).
+- Update Beads state (status, notes) when working against an existing epic or story. Plans are narrative only; they do not carry task tables (see `rules/workflow-rules.md` §1 and `docs/adr/0002-plans-as-narrative-delete-after-epic-closes.md`).
 - Keep documentation and rules in sync when architecture, workflow, or testing patterns change.
 
 ## Read These Files Before Implementing

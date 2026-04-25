@@ -79,6 +79,85 @@ goal is still behavioral proof, not log-string proof.
 
 ---
 
+## 1A. Test Self-Documentation
+
+Every test must announce *what it is testing* in machine-readable, reviewable form. A test that doesn't explain its purpose is treated as missing for the purposes of the slice-completion checklist and Riley review.
+
+### Required for new tests
+
+For **every new test** added in a slice, the describe block, test name, or a leading comment must reference one of:
+
+- **A documented use-case ID** (e.g., `UC-LM-003 — Owner cannot delete a league with active members`) drawn from the relevant `requirements/product-requirements/features/<feature>/use-cases.md`.
+- **A documented business rule ID** when no use case applies cleanly (e.g., `BR-AUTH-12 — Sessions expire after 24h`).
+- **A defect ID** for regression tests (e.g., `pool-master-142 — Status field returned as null after archive`).
+
+The reference must be specific. `// covers leagues feature` is not enough; `// UC-LM-003: owner-archive blocks deletion` is.
+
+### Required for existing tests touched by a slice
+
+If the slice modifies an existing test's behavior (assertion, setup, expected value), update the traceability comment if the use-case or business rule it covers has shifted. Stale references are worse than missing ones.
+
+### Format
+
+Three forms are acceptable; pick the one that fits the test layer:
+
+- **Describe-block prefix** — preferred for grouping related cases:
+  ```typescript
+  describe('UC-LM-003: Owner archive blocks deletion', () => { ... })
+  ```
+- **Test-name prefix** — preferred for one-off cases:
+  ```typescript
+  it('UC-LM-003: rejects DELETE when status=archived', async () => { ... })
+  ```
+- **Leading comment** — acceptable when the test name is already long:
+  ```typescript
+  // UC-LM-003 — owner-archive blocks deletion
+  it('returns 409 with code LEAGUE_ARCHIVED', ...)
+  ```
+
+### When use-case-style traceability does not apply
+
+For genuinely infrastructure-only tests (e.g., a utility helper, a serialization edge case with no product-visible flow), reference the rule or pattern it enforces — not just "tests serializeDate." Example: `// rule: ISO 8601 over the wire (service-rules §4)`. If neither a use case, business rule, defect, nor rule reference applies, the test probably should not exist.
+
+### Why
+
+Riley and Quinn rely on these references to audit coverage; future agents rely on them to know which tests to update when a use case changes; reviewers rely on them to confirm the slice tested what it claimed.
+
+---
+
+## 1B. Forbidden Application-Code Patterns
+
+Tests exist to exercise real production code paths. Production code must never be modified to accommodate tests.
+
+### Forbidden in application code
+
+- **Hardcoded sample responses** — `if (id === 'test-123') return { … }`.
+- **Synthetic fallbacks** — returning a fabricated default object when the real lookup fails, *for the purpose of making a test pass*.
+- **"Test mode" branches** — `if (process.env.NODE_ENV === 'test') { … behave differently … }` to produce predictable test outputs.
+- **Mock data baked into production paths** — seed-style records, stub user accounts, or placeholder entities that production-flow code returns.
+- **Suppressed errors that production should surface** — swallowing a real error so a test that expected success doesn't fail.
+- **Branches that exist solely to fail in a controlled way under test** — code structured to *fail* unnaturally so a test can assert that failure.
+
+If a test cannot be made to pass against real production code, the conclusion is one of:
+
+1. The production code has a real defect — fix it.
+2. The test is asserting something the contract does not actually require — fix the test.
+3. The behavior is not exercisable at this layer — move the test to a layer where it is.
+
+The conclusion is **never** "modify the production code to make the test pass."
+
+### Where mocks and fakes belong
+
+Mocks, fakes, builders, fixtures, MSW handlers, and `nock` interceptors live in **test code** (`tests/**`, `*.test.ts`, `*.spec.ts`, `clients/**/test/**`, MSW handler modules). They never live in `packages/`, `clients/poolmaster/src/`, or any other production source path.
+
+### Repository surface
+
+If you find yourself adding any of the patterns above to make a slice pass, **stop**. Surface the conflict to the user before proceeding. This is a hard rule — Riley flags any instance as a CRITICAL finding and blocks merge.
+
+See also `§3 Defect Verification Protocol` (formerly *Defect Regression Proof Rule*) for the failing-test-before-fix discipline that prevents the most common path into these patterns.
+
+---
+
 ## 2. Test Layers
 
 ### Backend
@@ -163,34 +242,53 @@ Notes:
   builders, or setup helpers are not separate cleanup work; they are part of
   the model-change fix.
 
-### Defect Regression Proof Rule
+### Defect Verification Protocol
 
-Defect-remediation slices must prove three things in order:
+(Formerly *Defect Regression Proof Rule*.)
 
-1. the pre-fix defective behavior is observable in an automated regression test
-2. the implementation removes that defect without weakening the assertion
-3. the required broader local gates still pass before commit/push
+For any slice whose purpose is to fix a defect (a bug, a regression, a wrong-behavior report), the slice must include both:
 
-Required behavior for defect work:
+1. **A failing test that reproduces the defect** *on the broken code*. The test asserts the expected correct behavior and demonstrates that the unfixed code violates it.
+2. **The fix** that makes the test pass without weakening any unrelated test.
 
-- Start by writing or updating at least one automated regression test whose
-  assertion would fail if the old buggy behavior were still present.
-- Prefer a red → green loop locally: run the new regression test before the
-  fix when practical, confirm it fails for the right reason, then implement the
-  fix and rerun it to green.
-- If the defect is discovered after code is already partially patched, tighten
-  the regression test so it still clearly proves the old behavior would fail
-  and explain that in the slice notes or handoff.
-- Do not introduce synthetic failures just to make a regression test go red.
-  The regression test must exercise the real escaped scenario and assert the
-  natural buggy outcome or signal, such as an unexpected extra fetch, stale UI,
-  wrong state transition, or incorrect returned value.
-- Do not settle for post-fix snapshotting or cache-shape assertions when the
-  real regression risk is a user-visible failure mode such as a refetch loop,
-  thrown error state, broken navigation, or stale screen state.
-- After the focused regression test passes, run the full required local gate
-  set for the slice. Focused tests prove the bug; broad gates prove the fix did
-  not regress the rest of the repo.
+### Required ordering and visibility
+
+The slice must make both halves visible in its history:
+
+- **Preferred:** two commits — `commit 1` adds the failing test (and may temporarily mark it `it.skip` only if absolutely required to keep `main` green; this is rare). `commit 2` lands the fix and unmarks the test. Both reference the same defect ID (e.g., `pool-master-NNN`).
+- **Acceptable:** one commit when adding the failing test alone would block other work. The PR description must then explicitly state that the test was written first and observed to fail before the fix landed, and the Beads story closing note must record the failing-then-passing observation.
+
+The intent is reviewable proof that the test actually catches the defect — not retrofit confidence after the fact.
+
+### Required behavior
+
+- Start by writing or updating at least one automated regression test whose assertion would fail if the old buggy behavior were still present.
+- Prefer a red → green loop locally: run the new regression test before the fix, confirm it fails for the right reason, then implement the fix and rerun it to green.
+- If the defect is discovered after code is already partially patched, tighten the regression test so it still clearly proves the old behavior would fail and explain that in the slice notes or handoff.
+- Do not introduce synthetic failures just to make a regression test go red. The regression test must exercise the real escaped scenario and assert the natural buggy outcome or signal, such as an unexpected extra fetch, stale UI, wrong state transition, or incorrect returned value.
+- Do not settle for post-fix snapshotting or cache-shape assertions when the real regression risk is a user-visible failure mode such as a refetch loop, thrown error state, broken navigation, or stale screen state.
+- After the focused regression test passes, run the full required local gate set for the slice. Focused tests prove the bug; broad gates prove the fix did not regress the rest of the repo.
+
+### Test placement
+
+The failing test goes in the layer that most naturally proves the defect:
+
+- API-visible bug → functional API test
+- Persistence/query bug → data integration test
+- Pure logic bug → unit test
+- UI bug → frontend integration / Playwright test
+
+Adding the test only at a layer where it cannot actually catch the defect (e.g., a unit test for a bug that only reproduces with a real DB) does not satisfy this rule.
+
+### Traceability
+
+The failing/passing test must reference the defect ID per §1A — `pool-master-NNN — <one-line defect description>`.
+
+### When this rule does not apply
+
+- Slices that add genuinely new behavior (no prior code path to defect against) — the use-case coverage rules in §1 still apply; the defect protocol does not.
+- Slices that refactor without behavior change and are covered by existing tests.
+- Slices whose only purpose is documentation, dependency bumps, or test-infrastructure work.
 
 ---
 
@@ -337,9 +435,9 @@ For example, a commissioner contest setup flow may need:
 
 ### Use-Case Traceability
 
-Smoke and E2E tests should be use-case driven and traceable to documented product behavior:
+Smoke and E2E tests must follow §1A *Test Self-Documentation*. Reference the use-case ID, business-rule ID, or defect ID in the describe block, test name, or a leading comment (e.g., `// UC-CO-003 — Member creates contest entry`).
 
-- Reference the plan companion and use-case ID in a comment at the top of the test file or in the `describe` block name (e.g., `// Proves: Plan 38 UC-003 — Member creates contest entry`).
+Additional E2E-specific guidance:
 - If a test covers behavior not yet documented and the behavior is product-significant, document the use case before expanding that suite further.
 - When a use-case companion changes, update the corresponding functional or E2E tests in the same work.
 - As the PoolMaster web app grows, extend the existing reviewed Playwright
@@ -768,6 +866,9 @@ when you need a clean migrated schema.
 - Do not update mocks without checking whether the real contract changed.
 - Do not hand-wave broken contract verification as “just generated client issues.”
 - Do not skip OpenAPI validation after changing route schemas.
+- Do not modify application code to make a test pass — see §1B *Forbidden Application-Code Patterns*. The conclusion is never "add a hardcoded response, fallback, or test-only branch to production code."
+- Do not write a defect-fix slice without first writing a failing test that catches the defect — see §3 *Defect Verification Protocol*.
+- Do not add a new test without a use-case, business-rule, or defect ID reference — see §1A *Test Self-Documentation*.
 
 ---
 

@@ -21,6 +21,13 @@ acceptance decisions.
 - reject incorrect behavior even when tests have been adapted to it
 - treat test completeness as a presence/risk question, not as ownership of the
   full feature coverage matrix
+- verify **test self-documentation** — every new test references a use-case, business-rule, or defect ID per `rules/testing-rules.md` §1A
+- verify the **defect verification protocol** for defect-fix slices — failing test before fix, passing test after, observation recorded in slice history per `rules/testing-rules.md` §3
+- verify **no forbidden application-code patterns** were introduced — no fakes, fallbacks, hardcoded responses, "test mode" branches, or synthetic defaults in production paths per `rules/testing-rules.md` §1B
+
+## Riley As The Auto-Merge Gate
+
+This project's branch + PR + Riley + auto-merge flow (per `rules/workflow-rules.md` §6) treats Riley's findings table as the merge signal. **Zero CRITICAL or HIGH findings = the implementing agent auto-merges. Any CRITICAL or HIGH finding blocks merge.** Severity calibration is therefore load-bearing — see *Severity Calibration* below.
 
 ## Required References
 
@@ -59,3 +66,49 @@ prior conversation. Produce a findings-first report:
 - test-presence gaps
 - style/consistency (low priority)
 - overall accept/revise recommendation
+
+## Findings Categories
+
+Use these categories on findings (in addition to severity):
+
+- **ARCH** — architecture violation
+- **SCHEMA** — data model issue
+- **CONTRACT** — API contract / DTO / mapper gap
+- **TEST** — missing or inadequate test coverage
+- **TRACE** — missing use-case / business-rule / defect-ID traceability comment (see `rules/testing-rules.md` §1A)
+- **DEFECT-PROTOCOL** — defect-fix slice missing the failing-test-before-fix observation (see `rules/testing-rules.md` §3)
+- **FAKE** — forbidden application-code pattern: fakes, fallbacks, hardcoded responses, test-only branches, synthetic defaults in production paths (see `rules/testing-rules.md` §1B). **Always CRITICAL.**
+- **SCOPE** — feature scope issue
+- **STALE** — dead code or legacy reference
+
+## Severity Calibration
+
+The auto-merge gate (zero CRITICAL/HIGH = merge; any CRITICAL/HIGH = block) only works if severity is calibrated honestly.
+
+- **CRITICAL** — blocks the design intent, breaks the architecture, introduces a forbidden pattern, or leaves a defect-fix slice without its failing-test-first proof. **Always blocks merge.**
+- **HIGH** — violates a rule, leaves a significant gap, or breaks a contract / test / coverage requirement that the slice was responsible for. **Blocks merge.**
+- **MEDIUM** — deviates from convention, misses non-critical coverage, or leaves a small gap that should be tracked but does not invalidate the slice. **Does not block merge** (implementing agent files a follow-up Beads story and notes the deferral).
+- **LOW** — cosmetic, naming, minor cleanup. **Does not block merge.**
+
+Specific calibration rules:
+
+- **A FAKE finding (forbidden application-code pattern) is ALWAYS CRITICAL.** No exceptions, no "small ones." Tests exist to exercise real code; modifying production to satisfy tests is a non-negotiable.
+- **A missing failing-test-before-fix in a defect-fix slice is CRITICAL.** The slice's purpose is unmet without it.
+- **A missing traceability comment on a new test is HIGH.** It blocks merge because the comment is part of the slice's deliverable per `rules/testing-rules.md` §1A.
+- **Missing positive OR negative use-case coverage that the slice was responsible for is HIGH.**
+- **Coverage threshold misses on changed files are HIGH.**
+- **A `MEDIUM` finding must be something a reasonable reviewer would let merge with a follow-up note** — if you would not personally let it merge, raise it to HIGH.
+- **Do not pad severity to be "safe."** Padding everything to HIGH defeats the auto-merge gate; under-rating to MEDIUM lets bad code merge. When uncertain, lean toward the higher severity and explain the reasoning in the finding.
+
+## Forbidden-Pattern Scan (always CRITICAL on match)
+
+Scan changed application source paths (`packages/**/src/`, `clients/**/src/`, anywhere outside `tests/**` and `*.test.ts`/`*.spec.ts`) for any of these patterns introduced by the slice:
+
+- Hardcoded sample responses (`if (id === 'test-123') return { ... }`)
+- Synthetic fallbacks returning fabricated defaults to avoid a real failure
+- `if (process.env.NODE_ENV === 'test')` or similar test-mode branches in production code
+- Mock/seed data baked into production paths
+- Suppressed errors that production should surface, swallowed only to make a test pass
+- Branches that exist solely to fail in a controlled way under test
+
+Any match is a **FAKE / CRITICAL** finding and blocks merge. Reference `rules/testing-rules.md` §1B in the finding details.
