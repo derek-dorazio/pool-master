@@ -158,6 +158,58 @@ See also `§3 Defect Verification Protocol` (formerly *Defect Regression Proof R
 
 ---
 
+## 1C. Test-Disable Discipline
+
+A skipped, todo'd, or expected-to-fail test is a hole in the suite. The auto-merge gate is meaningless if "all green" is achieved by silently turning off the tests that aren't passing.
+
+### Forbidden without an active Beads story
+
+The following markers are not allowed in committed code unless they are paired with a referenced Beads story tracking the un-skip:
+
+- `it.skip(...)`, `xit(...)`, `test.skip(...)`, `xtest(...)`
+- `describe.skip(...)`, `xdescribe(...)`
+- `it.todo(...)`, `test.todo(...)`
+- `it.fails(...)`, `test.fails(...)` (Vitest expected-failure marker)
+- `it.failing(...)` (Jest equivalent)
+- Test files renamed to `.skip.test.ts` or moved into a `skipped/` directory to evade discovery
+- `pending(...)` calls inside a test body
+- Hand-rolled early-`return` from a test body that bypasses assertions
+
+### Required when a skip is genuinely necessary
+
+A skip is genuinely necessary only when:
+
+- The test is asserting behavior that is intentionally deferred to a future slice and removing the test loses signal that should be re-acquired later, or
+- The test is blocked by a fixture / environment / external dependency that cannot be resolved in the current slice.
+
+In those cases:
+
+1. Open a Beads story for the un-skip (label `cleanup` and `layer/test-*`).
+2. Add a leading comment immediately above the skip with the story ID and one-line reason:
+   ```typescript
+   // SKIP: pool-master-312 — flaky against ephemeral DB; un-skip after migration to test-containers
+   it.skip('UC-LM-003: rejects DELETE when status=archived', ...)
+   ```
+3. Reference the same story ID in the slice's Beads closing note.
+
+### Forbidden in all cases
+
+- A skip without a referenced Beads story.
+- A skip whose stated reason is "test is wrong" or "behavior changed" — those are deletes, not skips. Delete the test instead.
+- A skip whose stated reason is "intermittently fails" without a Beads story tracking the flake fix.
+- Re-skipping a test that was un-skipped in a prior slice without surfacing the regression to the user.
+
+### Repository scan and CI
+
+A grep for the markers above (`grep -rE '\.(skip|todo|fails|failing)\(|^x(it|test|describe)\(' tests/ packages/*/src/ clients/*/src/`) should return zero matches that lack an adjacent `SKIP: pool-master-NNN` comment. This grep belongs in the `lint` or a dedicated `test:no-undocumented-skips` script.
+
+Riley scans for this on every review:
+
+- Any skipped/todo/expected-fail test introduced by the slice without a `SKIP: pool-master-NNN` comment is a **TEST / HIGH** finding and blocks merge.
+- Any skipped test introduced by the slice with a comment but no actual Beads story is a **TEST / HIGH** finding and blocks merge.
+
+---
+
 ## 2. Test Layers
 
 ### Backend

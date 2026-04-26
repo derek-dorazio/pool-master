@@ -276,6 +276,7 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 - [ ] Every new test references a use-case ID, business-rule ID, or defect ID per `rules/testing-rules.md` §1A *Test Self-Documentation*
 - [ ] For defect-fix slices: a failing test reproducing the defect was written *before* the fix and observed to fail on the broken code, per `rules/testing-rules.md` §3 *Defect Verification Protocol* (record the observation in the Beads closing note)
 - [ ] No application code was modified to make a test pass — no fakes, fallbacks, hardcoded responses, "test mode" branches, or synthetic defaults were added to production paths, per `rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*
+- [ ] No `.skip` / `.todo` / `xit` / `it.fails` / `describe.skip` markers were introduced without a `SKIP: pool-master-NNN` comment and a real Beads story tracking the un-skip, per `rules/testing-rules.md` §1C *Test-Disable Discipline*
 - [ ] If the slice instruments logging or branches, each identified positive
       and negative branch is covered by a truthful automated test at the
       appropriate layer
@@ -706,12 +707,74 @@ When an implementing persona (Brad, Fran, Archie, Dom, etc.) finishes a slice, t
 3. **Commit** with the Beads story ID in the footer: `pool-master-NNN`. One slice = one commit (squash later in the PR if multiple working commits exist).
 4. **Push the branch** to origin.
 5. **Open a PR** with `gh pr create`. Title: short imperative summary. Body: link to the parent Beads epic, the slice's Beads story (`pool-master-NNN`), one-paragraph context, and the gates that were run. For defect-fix slices, the PR body must explicitly state that the failing test was observed to fail before the fix landed.
-6. **Spawn Riley** as a subagent. Pass: the PR diff scope (`git diff origin/main...HEAD`), the parent Beads story ID and link, the relevant requirements / use-case IDs / defect IDs, and any known concerns the implementing agent already identified.
+6. **Spawn Riley** as a subagent using the canonical spawn prompt below — Riley's review quality depends on what you pass.
 7. **Read Riley's findings table.** Then:
    - **Zero blocker-severity findings** (CRITICAL or HIGH) → `gh pr merge --squash --delete-branch`. Close the Beads story with a closing note per §1 *Beads conventions: story notes*. Return to the user with a summary.
    - **Any blocker-severity findings** → **do not merge**. Surface the findings to the user, await direction (fix-and-re-review, merge-anyway-with-justification, or park).
 
 The implementing agent — not Riley — owns the merge decision. Subagents stay in the "findings only" lane.
+
+### Riley spawn prompt
+
+Riley runs in isolated context and sees nothing that the implementing agent has not explicitly passed. A sloppy spawn prompt produces a sloppy review and uncalibrated severities — which then defeats the auto-merge gate.
+
+The spawn prompt must include all of the following, in this order:
+
+1. **Slice intent (one paragraph).** What this slice was supposed to do, in product terms. Not "I changed these files" — *why*.
+2. **Parent Beads epic ID and slice's Beads story ID.** Both with a link back. Riley uses these to read the epic and story descriptions and notes.
+3. **Diff scope.** The exact command to read the changes: `git diff origin/main...HEAD` for a branch, or the PR URL when one exists. Mention the file count and rough size so Riley can flag "scope too large to review honestly" instead of pretending.
+4. **Use-case / business-rule / defect IDs covered.** The specific IDs from `requirements/.../use-cases.md`, `requirements/.../business-rules.md`, or the defect Beads story. Riley audits coverage against these IDs, not against a vague feature name.
+5. **For defect-fix slices: an explicit "failing test before fix" claim.** State that the failing test was observed to fail on the broken code before the fix landed, and point to the commit or PR-body line that proves it.
+6. **Rules and specs Riley should audit against.** The relevant `rules/*.md` files, the active plan if one exists, and any tech-spec under `tech-specs/features/<feature>/` that this slice implements. Default set always includes `rules/workflow-rules.md`, `rules/testing-rules.md`, and the layer-specific rules (`rules/service-rules.md` for backend slices, `rules/react-ui-rules.md` for frontend slices).
+7. **Known concerns the implementing agent already identified.** Anything you noticed but consciously chose not to fix in this slice (and why), or anything you're uncertain about. Naming concerns up front prevents Riley from "discovering" them as findings and lets it focus elsewhere.
+8. **Severity calibration reminder.** A one-line pointer to `personas/riley.md §Severity Calibration` so Riley honors the auto-merge gate (zero CRITICAL/HIGH = merge).
+9. **Expected output.** The findings table format, ordered by severity, with categories from `personas/riley.md`. Tell Riley to flag inability-to-evaluate explicitly rather than guessing.
+
+Boilerplate template (copy and fill in):
+
+```text
+You are Riley. Audit this slice for merge readiness per the auto-merge gate
+in rules/workflow-rules.md §6. Read personas/riley.md before starting.
+
+Slice intent:
+  <one paragraph: what this slice was supposed to do and why>
+
+Parent epic: pool-master-<EPIC>
+Slice story: pool-master-<STORY>
+
+Diff scope:
+  git diff origin/main...HEAD
+  (~<N> files, ~<L> lines changed)
+
+Use-case / business-rule / defect IDs covered:
+  - UC-<ID> — <description>
+  - BR-<ID> — <description>
+  - pool-master-<DEFECT-ID> — <description>   (defect-fix slices only)
+
+Defect-fix observation (defect-fix slices only):
+  The failing test reproducing pool-master-<DEFECT-ID> was observed to fail
+  on the broken code before the fix landed. Evidence: <commit SHA / PR body line>.
+
+Rules to audit against:
+  - rules/workflow-rules.md (slice completion checklist, §6)
+  - rules/testing-rules.md (§1A traceability, §3 defect protocol, §1B
+    forbidden patterns, §1C test-disable discipline)
+  - rules/<layer>-rules.md
+  - <plan or tech-spec path if applicable>
+
+Known concerns I (the implementing agent) already identified:
+  - <concern + why I left it / how it's bounded>
+
+Severity calibration reminder:
+  Honor personas/riley.md §Severity Calibration. The auto-merge gate is
+  zero CRITICAL/HIGH = merge; padding severity defeats the gate.
+
+Expected output:
+  Findings table per personas/riley.md, ordered by severity, with
+  categories. Flag inability-to-evaluate explicitly.
+```
+
+If you cannot fill in any of fields 1–6, the slice is not ready for review yet — go back and finish it, or surface the gap to the user.
 
 ### Auto-merge gate
 
@@ -726,13 +789,18 @@ Riley's severity calibration (per `personas/riley.md`) is what makes this gate w
 
 Even on a clean Riley pass, pause and request explicit user approval before merging when:
 
+- The slice contains a **destructive database migration**: `DROP TABLE`, `DROP COLUMN`, `RENAME COLUMN` on a column with existing data, type narrowing on a populated column, adding `NOT NULL` to an existing column without a backfilled default, or any migration that cannot be rolled back without data loss.
+- The slice contains a **data backfill, data migration script, or any one-time data-modifying operation** that runs against production-shaped data.
+- The slice has any other **non-reversible production effect**: deleting production records, retiring an API endpoint with active consumers, removing a feature flag that gated production behavior, deleting a published artifact, or invalidating cached state at scale.
 - The slice changes shared contracts (DTOs, OpenAPI, generated SDK exports).
 - The slice changes infrastructure, CI/CD, deployment, or auth boundaries.
 - The slice deletes a plan file or retires a feature surface.
 - The slice modifies `rules/`, `docs/adr/`, or `personas/`.
 - The user has explicitly asked for a checkpoint.
 
-Auto-merge is a frictionless default for ordinary slice work; cross-cutting or process-affecting changes still warrant a human read.
+Auto-merge is a frictionless default for ordinary slice work; cross-cutting, process-affecting, or non-reversible changes still warrant a human read.
+
+For migration / backfill / non-reversible slices specifically, the pause request must include: what the operation does, what data it touches, what the rollback plan is (or "none — this is one-way"), and whether a dry-run was performed. Riley flagging a migration as "looks fine" is **not** a substitute for this pause.
 
 ### When the agent must NOT auto-merge regardless of Riley output
 

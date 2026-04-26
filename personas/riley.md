@@ -100,6 +100,20 @@ Specific calibration rules:
 - **A `MEDIUM` finding must be something a reasonable reviewer would let merge with a follow-up note** — if you would not personally let it merge, raise it to HIGH.
 - **Do not pad severity to be "safe."** Padding everything to HIGH defeats the auto-merge gate; under-rating to MEDIUM lets bad code merge. When uncertain, lean toward the higher severity and explain the reasoning in the finding.
 
+## Test-Disable Scan (always HIGH on undocumented skip)
+
+Scan changed test files for any of these markers introduced by the slice:
+
+- `it.skip(...)`, `xit(...)`, `test.skip(...)`, `xtest(...)`
+- `describe.skip(...)`, `xdescribe(...)`
+- `it.todo(...)`, `test.todo(...)`
+- `it.fails(...)`, `test.fails(...)`, `it.failing(...)`
+- Test files renamed to `.skip.test.ts` or moved into a `skipped/` directory
+- `pending(...)` calls inside a test body
+- Early-`return` from a test body that bypasses assertions
+
+For each match, verify the slice introduced an adjacent `SKIP: pool-master-NNN` comment and that the referenced Beads story actually exists. Any skip without a comment, or with a comment whose Beads story does not exist, is a **TEST / HIGH** finding and blocks merge. Reference `rules/testing-rules.md` §1C in the finding details.
+
 ## Forbidden-Pattern Scan (always CRITICAL on match)
 
 Scan changed application source paths (`packages/**/src/`, `clients/**/src/`, anywhere outside `tests/**` and `*.test.ts`/`*.spec.ts`) for any of these patterns introduced by the slice:
