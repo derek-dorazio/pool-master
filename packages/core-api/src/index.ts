@@ -57,6 +57,7 @@ import { OddsApiAdapter } from './modules/ingestion/adapters';
 import { ingestionModule } from './modules/ingestion/routes';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
+import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 
 export function buildApp() {
   const app = Fastify({ logger: createFastifyLoggerOptions('core-api') });
@@ -166,41 +167,7 @@ export function buildApp() {
 
   const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log, {
     configReader: ingestionConfigService,
-    eventReader: {
-      async listEventIdsForFeed({ sport, feed, now }) {
-        app.log.debug({
-          sport,
-          feed,
-          now: now.toISOString(),
-        }, 'Listing sport event ids for scheduled ingestion feed');
-        const rows = await prisma.sportEvent.findMany({
-          where: {
-            sport,
-            externalId: {
-              not: '',
-            },
-            status: {
-              in: feed === 'EVENTLIVESCORES'
-                ? ['IN_PROGRESS']
-                : ['COMPLETED', 'OFFICIAL'],
-            },
-            ...(feed === 'EVENTRESULTS'
-              ? { updatedAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) } }
-              : {}),
-          },
-          select: {
-            externalId: true,
-          },
-        });
-        app.log.debug({
-          sport,
-          feed,
-          eventCount: rows.length,
-          eventExternalIds: rows.map((row) => row.externalId),
-        }, 'Listed sport event ids for scheduled ingestion feed');
-        return rows.map((row) => row.externalId);
-      },
-    },
+    eventReader: createScheduledEventReader({ prisma, registry, logger: app.log }),
   });
   const providerService = new ProviderService(
     prisma,
