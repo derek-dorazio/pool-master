@@ -233,7 +233,7 @@ export function RootAdminRunEventSyncPage() {
               data-testid="root-admin-event-sync-event-id"
               disabled={eventSyncMutation.isPending}
               onChange={(event) => setEventSyncEventId(event.target.value)}
-              placeholder="masters-2026"
+              placeholder="golf-masters-2026"
               value={eventSyncEventId}
             />
           </label>

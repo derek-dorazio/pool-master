@@ -45,6 +45,52 @@ describe('ContestLookup', () => {
       { contestId: 'contest-locked' },
     ]);
   });
+
+  it('pool-master-dxd.27 finds active contests through provider participant mappings for external ids', async () => {
+    const prisma = {
+      rosterPick: {
+        findMany: jest.fn().mockResolvedValue([
+          { entry: { contestId: 'contest-live' } },
+        ]),
+      },
+    } as any;
+
+    const lookup = new ContestLookup(prisma);
+    const contests = await lookup.findActiveContestsForProviderParticipant(
+      'mock-contest-feed',
+      'golfer-01',
+    );
+
+    expect(prisma.rosterPick.findMany).toHaveBeenCalledWith({
+      where: {
+        sportEventParticipant: {
+          participant: {
+            providerMappings: {
+              some: {
+                providerId: 'mock-contest-feed',
+                externalId: 'golfer-01',
+              },
+            },
+          },
+        },
+        entry: {
+          contest: {
+            status: {
+              in: [ContestStatus.ACTIVE, ContestStatus.LOCKED],
+            },
+          },
+        },
+      },
+      select: {
+        entry: {
+          select: {
+            contestId: true,
+          },
+        },
+      },
+    });
+    expect(contests).toEqual([{ contestId: 'contest-live' }]);
+  });
 });
 
 describe('handleStatEvent', () => {
@@ -54,6 +100,7 @@ describe('handleStatEvent', () => {
         findActiveContestsForParticipant: jest.fn().mockResolvedValue([
           { contestId: 'contest-1' },
         ]),
+        findActiveContestsForProviderParticipant: jest.fn().mockResolvedValue([]),
       },
       contestScoringRecalculationService: {
         recalculateContest: jest.fn().mockResolvedValue({
@@ -83,6 +130,7 @@ describe('handleStatEvent', () => {
         sourceService: 'ingestion-worker',
         timestamp: '2026-04-03T10:00:00Z',
         eventId: 'event-1',
+        participantId: 'participant-1',
         participantExternalId: 'participant-external-1',
         statKey: 'birdies',
         statValue: 1,
@@ -94,8 +142,9 @@ describe('handleStatEvent', () => {
     );
 
     expect(deps.contestLookup.findActiveContestsForParticipant).toHaveBeenCalledWith(
-      'participant-external-1',
+      'participant-1',
     );
+    expect(deps.contestLookup.findActiveContestsForProviderParticipant).not.toHaveBeenCalled();
     expect(
       deps.contestScoringRecalculationService.recalculateContest,
     ).toHaveBeenCalledWith('contest-1');
@@ -117,6 +166,7 @@ describe('handleStatEvent', () => {
     const deps = {
       contestLookup: {
         findActiveContestsForParticipant: jest.fn().mockResolvedValue([]),
+        findActiveContestsForProviderParticipant: jest.fn().mockResolvedValue([]),
       },
       contestScoringRecalculationService: {
         recalculateContest: jest.fn(),
@@ -145,5 +195,43 @@ describe('handleStatEvent', () => {
 
     expect(deps.contestScoringRecalculationService.recalculateContest).not.toHaveBeenCalled();
     expect(deps.eventBus.publish).not.toHaveBeenCalled();
+  });
+
+  it('pool-master-dxd.27 uses provider mapping lookup for stat events that only carry provider external ids', async () => {
+    const deps = {
+      contestLookup: {
+        findActiveContestsForParticipant: jest.fn().mockResolvedValue([]),
+        findActiveContestsForProviderParticipant: jest.fn().mockResolvedValue([]),
+      },
+      contestScoringRecalculationService: {
+        recalculateContest: jest.fn(),
+      },
+      eventBus: {
+        publish: jest.fn(),
+      },
+    } as any;
+
+    await handleStatEvent(
+      {
+        id: 'event-1',
+        type: 'stat.received',
+        sourceService: 'ingestion-worker',
+        timestamp: '2026-04-03T10:00:00Z',
+        eventId: 'event-1',
+        participantExternalId: 'golfer-01',
+        statKey: 'TOTAL_SCORE',
+        statValue: -3,
+        isCorrection: false,
+        providerId: 'mock-contest-feed',
+        ingestedAt: '2026-04-03T10:00:00Z',
+      },
+      deps,
+    );
+
+    expect(deps.contestLookup.findActiveContestsForParticipant).not.toHaveBeenCalled();
+    expect(deps.contestLookup.findActiveContestsForProviderParticipant).toHaveBeenCalledWith(
+      'mock-contest-feed',
+      'golfer-01',
+    );
   });
 });

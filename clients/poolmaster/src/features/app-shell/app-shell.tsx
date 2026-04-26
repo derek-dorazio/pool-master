@@ -28,6 +28,8 @@ export function AppShell() {
   const logger = useLogger().child({
     feature: 'app-shell',
   });
+  const isManageRoute = location.pathname === '/manage' || location.pathname.startsWith('/manage/');
+  const shouldLoadLeagueShell = auth.isAuthenticated && !isManageRoute;
   const leaguesQuery = useQuery({
     queryKey: ['poolmaster', 'leagues'],
     queryFn: async () => {
@@ -37,7 +39,7 @@ export function AppShell() {
       }
       return response.data.leagues;
     },
-    enabled: auth.isAuthenticated,
+    enabled: shouldLoadLeagueShell,
     retry: false,
   });
   const activeLeagueCode = useMemo(() => {
@@ -84,7 +86,7 @@ export function AppShell() {
   }
 
   useEffect(() => {
-    if (!auth.isAuthenticated || !leaguesQuery.isError) {
+    if (!shouldLoadLeagueShell || !leaguesQuery.isError) {
       return;
     }
 
@@ -98,10 +100,10 @@ export function AppShell() {
       },
       'App shell failed to load leagues for the authenticated user',
     );
-  }, [auth.isAuthenticated, leaguesQuery.error, leaguesQuery.isError, location.pathname, logger]);
+  }, [leaguesQuery.error, leaguesQuery.isError, location.pathname, logger, shouldLoadLeagueShell]);
 
   useEffect(() => {
-    if (!auth.isAuthenticated || !leaguesQuery.data) {
+    if (!shouldLoadLeagueShell || !leaguesQuery.data) {
       return;
     }
 
@@ -116,7 +118,7 @@ export function AppShell() {
       },
       'Loaded authenticated app shell state',
     );
-  }, [activeLeagueCode, auth.isAuthenticated, leaguesQuery.data, location.pathname, logger]);
+  }, [activeLeagueCode, leaguesQuery.data, location.pathname, logger, shouldLoadLeagueShell]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -130,7 +132,7 @@ export function AppShell() {
               <h1 className="text-2xl font-semibold tracking-tight">League-first web app</h1>
             </div>
 
-            {auth.isAuthenticated ? (
+            {shouldLoadLeagueShell ? (
               <LeagueSelector
                 activeLeagueCode={activeLeagueCode}
                 leagues={leaguesQuery.data ?? []}
@@ -211,7 +213,7 @@ export function AppShell() {
       </header>
 
       <div className="mx-auto max-w-6xl px-6 py-10">
-        {auth.isAuthenticated ? (
+        {shouldLoadLeagueShell ? (
           <nav className="mb-8 flex flex-wrap gap-3">
             <Link
               className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
@@ -293,7 +295,7 @@ export function AppShell() {
         </main>
       </div>
 
-      {auth.isAuthenticated ? (
+      {shouldLoadLeagueShell ? (
         <CreateLeagueModal
           isOpen={isCreateLeagueOpen}
           onClose={closeCreateLeague}

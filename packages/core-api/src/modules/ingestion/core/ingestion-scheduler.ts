@@ -581,7 +581,7 @@ export class IngestionScheduler {
       const detail = await provider.getEventDetails(eventId);
       if (!detail) {
         this.logger?.warn({ sport, eventId, providerId: provider.providerId }, 'Provider returned no event detail for participant sync');
-        return 0;
+        throw new Error(`Provider returned no event detail for event ${eventId}`);
       }
 
       await this.callbacks.onEventDetail(detail);

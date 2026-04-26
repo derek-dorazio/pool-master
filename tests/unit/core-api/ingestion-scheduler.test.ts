@@ -351,6 +351,40 @@ describe('IngestionScheduler', () => {
       expect(provider.getLiveScores).toHaveBeenCalledWith('evt-1');
       expect(jobs.map((job) => job.jobType)).toEqual(['EVENT_PARTICIPANTS_SYNC', 'EVENT_LIVE_SCORES_SYNC']);
     });
+
+    it('pool-master-dxd.28 fails event participant sync when the provider cannot resolve the event id', async () => {
+      const provider = createMockProvider({
+        getEventDetails: jest.fn().mockResolvedValue(null),
+      });
+      const registry = createMockRegistry(provider);
+      const scheduler = new IngestionScheduler(registry, mockCallbacks);
+
+      const jobs = await scheduler.runEventSync({
+        sport: 'GOLF' as Sport,
+        eventId: 'masters-2026',
+        feeds: ['EVENTPARTICIPANTS'],
+      });
+
+      expect(provider.getEventDetails).toHaveBeenCalledWith('masters-2026');
+      expect(mockCallbacks.onEventDetail).not.toHaveBeenCalled();
+      expect(jobs).toHaveLength(1);
+      expect(jobs[0]).toEqual(expect.objectContaining({
+        jobType: 'EVENT_PARTICIPANTS_SYNC',
+        eventExternalId: 'masters-2026',
+        status: 'FAILED',
+        recordsProcessed: 0,
+        errors: 1,
+      }));
+      expect(jobs[0]?.errorLog[0]).toEqual(expect.objectContaining({
+        error: 'Provider returned no event detail for event masters-2026',
+      }));
+      expect(mockCallbacks.onJobComplete).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventExternalId: 'masters-2026',
+          status: 'FAILED',
+        }),
+      );
+    });
   });
 
   describe('fetchEventResults', () => {

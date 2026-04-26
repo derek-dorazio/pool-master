@@ -274,6 +274,19 @@ describe('AppShell', () => {
     );
   });
 
+  it('pool-master-dxd.29 does not load or render league navigation on root-admin manage routes', async () => {
+    clearSessionMock.mockResolvedValue(undefined);
+    authState.isRootAdmin = true;
+
+    renderAppShell(['/manage/sync']);
+
+    await screen.findByTestId('mock-outlet');
+    expect(listLeaguesMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('mock-league-selector-create')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('app-nav-league-home')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('app-nav-create-contest-disabled')).not.toBeInTheDocument();
+  });
+
   it('logs logout completion when the app-shell logout action succeeds', async () => {
     clearSessionMock.mockResolvedValue(undefined);
     listLeaguesMock.mockResolvedValue({

@@ -7,7 +7,7 @@
  * 3. Publishes score.updated events for changed entries
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type { EventBus } from '@poolmaster/shared/events/event-bus';
 import type { StatEvent } from '@poolmaster/shared/events/scoring';
@@ -21,11 +21,37 @@ export class ContestLookup {
   constructor(private readonly prisma: PrismaClient) {}
 
   async findActiveContestsForParticipant(participantId: string): Promise<ContestInfo[]> {
+    return this.findActiveContests({
+      sportEventParticipant: {
+        participantId,
+      },
+    });
+  }
+
+  async findActiveContestsForProviderParticipant(
+    providerId: string,
+    participantExternalId: string,
+  ): Promise<ContestInfo[]> {
+    return this.findActiveContests({
+      sportEventParticipant: {
+        participant: {
+          providerMappings: {
+            some: {
+              providerId,
+              externalId: participantExternalId,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  private async findActiveContests(
+    sportEventParticipantWhere: Prisma.RosterPickWhereInput,
+  ): Promise<ContestInfo[]> {
     const picks = await this.prisma.rosterPick.findMany({
       where: {
-        sportEventParticipant: {
-          participantId,
-        },
+        ...sportEventParticipantWhere,
         entry: {
           contest: {
             status: {
@@ -61,8 +87,12 @@ export async function handleStatEvent(
   event: StatEvent,
   deps: StatEventConsumerDeps,
 ): Promise<void> {
-  const participantId = event.participantId ?? event.participantExternalId;
-  const contests = await deps.contestLookup.findActiveContestsForParticipant(participantId);
+  const contests = event.participantId
+    ? await deps.contestLookup.findActiveContestsForParticipant(event.participantId)
+    : await deps.contestLookup.findActiveContestsForProviderParticipant(
+      event.providerId,
+      event.participantExternalId,
+    );
 
   for (const contest of contests) {
     const result = await deps.contestScoringRecalculationService.recalculateContest(

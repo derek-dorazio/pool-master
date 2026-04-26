@@ -75,14 +75,14 @@ describe('RootAdminRunEventSyncPage', () => {
     adminSyncProviderEventDataMock.mockResolvedValue({
       data: {
         sport: 'GOLF',
-        eventId: 'masters-2026',
+        eventId: 'golf-masters-2026',
         requestedFeeds: ['EVENTPARTICIPANTS'],
         syncRuns: [{ id: 'sync-run-2' }],
       },
     });
   });
 
-  it('requires an event id and submits an event sync', async () => {
+  it('pool-master-dxd.28 requires a provider event id and submits an event sync', async () => {
     renderPage();
 
     expect(
@@ -92,7 +92,7 @@ describe('RootAdminRunEventSyncPage', () => {
     expect(screen.getByTestId('root-admin-event-sync-now')).toBeDisabled();
 
     fireEvent.change(screen.getByTestId('root-admin-event-sync-event-id'), {
-      target: { value: 'masters-2026' },
+      target: { value: 'golf-masters-2026' },
     });
 
     expect(screen.getByTestId('root-admin-event-sync-now')).not.toBeDisabled();
@@ -102,7 +102,7 @@ describe('RootAdminRunEventSyncPage', () => {
       expect(adminSyncProviderEventDataMock).toHaveBeenCalledWith({
         path: {
           sport: 'GOLF',
-          eventId: 'masters-2026',
+          eventId: 'golf-masters-2026',
         },
         body: {
           feeds: ['EVENTPARTICIPANTS'],
@@ -113,6 +113,6 @@ describe('RootAdminRunEventSyncPage', () => {
     expect(
       await screen.findByTestId('root-admin-event-sync-response'),
     ).toBeInTheDocument();
-    expect(screen.getByText(/masters-2026/i)).toBeInTheDocument();
+    expect(screen.getByText(/golf-masters-2026/i)).toBeInTheDocument();
   });
 });
