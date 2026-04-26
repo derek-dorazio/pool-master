@@ -62,6 +62,7 @@ function createMockContestLookup(
 ) {
   return {
     findActiveContestsForParticipant: jest.fn().mockResolvedValue(contests),
+    findActiveContestsForProviderParticipant: jest.fn().mockResolvedValue(contests),
   };
 }
 
@@ -70,7 +71,7 @@ function createMockContestLookup(
 // ========================================================================
 
 describe('handleStatEvent error paths', () => {
-  it('does nothing when participant is not in any contest', async () => {
+  it('pool-master-dxd.27 does nothing when a provider participant is not in any contest', async () => {
     const eventBus = new EventBus();
     const contestLookup = createMockContestLookup([]);
     const contestScoringRecalculationService = {
