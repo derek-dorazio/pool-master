@@ -261,7 +261,10 @@ describe('LeagueDetailPage', () => {
     );
   });
 
-  it('shows only the current team entries on league contest tiles', async () => {
+  // pool-master-dxd.13.2 — League Home renders a thin contest list. Per-contest
+  // entry detail moved to the Contest Board, so the previous fan-out (contest
+  // tiles showing team entries inline) is gone.
+  it('renders a thin contest card linking to the contest board (no per-contest fan-out)', async () => {
     primeCommonMocks();
     listContestsMock.mockResolvedValue({
       data: {
@@ -280,91 +283,84 @@ describe('LeagueDetailPage', () => {
         ],
       },
     });
-    listContestEntriesMock.mockResolvedValue({
+
+    renderLeagueDetailPage();
+
+    const card = await screen.findByTestId('league-contest-contest-1');
+    expect(card).toHaveTextContent('Masters Pick 6');
+    expect(card).toHaveTextContent('4 entries');
+    expect(card).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
+
+    // The fan-out per-team-entry tiles must NOT render here anymore.
+    expect(screen.queryByTestId('league-contest-entry-entry-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('league-create-entry-contest-1')).not.toBeInTheDocument();
+
+    // listContestEntries / getContest are not called by this page anymore.
+    expect(listContestEntriesMock).not.toHaveBeenCalled();
+    expect(getContestMock).not.toHaveBeenCalled();
+  });
+
+  it('renders join policy and lifecycle in their dedicated League Home sections', async () => {
+    primeCommonMocks();
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+
+    expect(screen.getByTestId('league-summary-tile')).not.toHaveTextContent('Join policy');
+    expect(screen.getByTestId('league-summary-tile')).not.toHaveTextContent('Lifecycle');
+
+    expect(screen.getByTestId('league-invitations-section')).toHaveTextContent('Join policy');
+    expect(screen.getByTestId('league-join-policy')).toHaveTextContent('COMMISSIONER_ONLY');
+
+    expect(screen.getByTestId('league-lifecycle-section')).toHaveTextContent('Current status');
+    expect(screen.getByTestId('league-lifecycle-status')).toHaveTextContent('Active');
+  });
+
+  it('updates the league icon from a modal and returns to League Home with the new icon', async () => {
+    primeCommonMocks();
+    updateLeagueIconMock.mockResolvedValue({
       data: {
-        contestId: 'contest-1',
-        total: 4,
-        isJoined: true,
-        myEntryId: 'entry-1',
-        myEntryIds: ['entry-1', 'entry-2'],
-        entries: [
-          {
-            id: 'entry-1',
-            contestId: 'contest-1',
-            squadId: 'team-1',
-            squadName: 'Casey Crushers',
-            entryNumber: 1,
-            name: 'Casey Crushers Entry 1',
-            status: 'ACTIVE',
-            totalScore: 7,
-            standingsPosition: 3,
-            isEliminated: false,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-15T00:00:00.000Z',
+        league: {
+          id: 'league-1',
+          leagueCode: 'BIGDAWGS',
+          name: 'Big Dawgs',
+          description: 'A test league',
+          isActive: true,
+          iconKey: 'GOLF_BALL',
+          memberCount: 2,
+          activeContestCount: 1,
+          memberType: 'COMMISSIONER',
+          leagueRelationship: {
+            leagueMember: true,
+            commissioner: true,
           },
-          {
-            id: 'entry-2',
-            contestId: 'contest-1',
-            squadId: 'team-1',
-            squadName: 'Casey Crushers',
-            entryNumber: 2,
-            name: 'Casey Crushers Entry 2',
-            status: 'ACTIVE',
-            totalScore: 3,
-            standingsPosition: 1,
-            isEliminated: false,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-15T00:00:00.000Z',
-          },
-          {
-            id: 'entry-3',
-            contestId: 'contest-1',
-            squadId: 'team-9',
-            squadName: 'Other Team',
-            entryNumber: 1,
-            name: 'Other Team Entry 1',
-            status: 'ACTIVE',
-            totalScore: 15,
-            standingsPosition: 4,
-            isEliminated: false,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-15T00:00:00.000Z',
-          },
-        ],
-      },
-    });
-    getContestMock.mockResolvedValue({
-      data: {
-        contest: {
-          id: 'contest-1',
-          name: 'Masters Pick 6',
-          status: 'OPEN',
-          contestType: 'SINGLE_EVENT',
-          selectionType: 'TIERED',
-          scoringEngine: 'STROKE_PLAY',
-          leagueId: 'league-1',
-          sport: 'GOLF',
-          lockAt: null,
-          isExclusive: false,
-          entryCount: 4,
-        },
-        contestConfiguration: {
-          maxEntriesPerSquad: 3,
+          isRootAdmin: false,
+          joinPolicy: 'COMMISSIONER_ONLY',
+          createdAt: '2026-04-15T00:00:00.000Z',
         },
       },
     });
 
     renderLeagueDetailPage();
 
-    expect(await screen.findByTestId('league-contest-contest-1')).toBeInTheDocument();
-    expect(await screen.findByTestId('league-contest-entry-entry-1')).toHaveTextContent(
-      'Casey Crushers Entry 1',
+    await screen.findByTestId('league-home');
+    expect(screen.getByTestId('league-current-icon-label')).toHaveTextContent('Trophy');
+
+    fireEvent.click(screen.getByTestId('league-change-icon'));
+    await screen.findByTestId('league-icon-modal');
+
+    fireEvent.click(screen.getByTestId('league-icon-GOLF_BALL'));
+    fireEvent.click(screen.getByTestId('league-save-icon'));
+
+    await waitFor(() =>
+      expect(updateLeagueIconMock).toHaveBeenCalledWith({
+        path: { id: 'league-1' },
+        body: { iconKey: 'GOLF_BALL' },
+      }),
     );
-    expect(screen.getByTestId('league-contest-entry-entry-2')).toHaveTextContent(
-      'Casey Crushers Entry 2',
-    );
-    expect(screen.queryByText('Other Team Entry 1')).not.toBeInTheDocument();
-    expect(screen.getByTestId('league-create-entry-contest-1')).toHaveTextContent('Create entry');
+    await waitFor(() => expect(screen.queryByTestId('league-icon-modal')).not.toBeInTheDocument());
+    expect(screen.getByTestId('league-current-icon-label')).toHaveTextContent('Golf Ball');
   });
 
   it('lets a root admin delete an inactive league after confirmation', async () => {

@@ -38,4 +38,35 @@ describe('poolmaster API client correlation headers', () => {
       vi.unstubAllGlobals();
     }
   });
+
+  it('prefers an explicit VITE_API_BASE_URL over the browser origin', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
+
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ user: null }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }),
+    );
+
+    vi.stubGlobal('fetch', fetchSpy);
+
+    try {
+      const { getCurrentUser } = await import('./api');
+
+      await getCurrentUser();
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const request = fetchSpy.mock.calls[0]?.[0];
+      expect(request).toBeInstanceOf(Request);
+      expect(new URL((request as Request).url).origin).toBe('https://api.example.test');
+      expect((request as Request).url).toContain('/api/v1/auth/me');
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
+    }
+  });
 });

@@ -1,29 +1,29 @@
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import {
+  enterContest,
   getContest,
-  getContestEntry,
-  getLeague,
-  getStandings,
   listContestEntries,
-  type GetContestEntryResponses,
+  listLeagueSquads,
+  updateContestEntry,
   type GetContestResponses,
-  type GetStandingsResponses,
   type ListContestEntriesResponses,
+  type ListLeagueSquadsResponses,
 } from '@/lib/api';
+import { useAuth } from '@/features/auth/auth-provider';
+import { extractErrorMessage } from '@/lib/errors';
 import {
   buildLeagueContestManagePath,
-  buildLeagueEntriesPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 
 type ContestDetail = GetContestResponses[200]['contest'];
-type LeaderboardEntry = GetStandingsResponses[200]['standings'][number];
-type ContestEntrySummary = ListContestEntriesResponses[200]['entries'][number];
-type ContestEntryDetail = GetContestEntryResponses[200]['entry'];
+type ContestEntryDetail = ListContestEntriesResponses[200]['entries'][number];
+type ContestEntryParticipant = NonNullable<ContestEntryDetail['participants']>[number];
+type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 
 function formatRelativeToPar(value: unknown) {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -48,9 +48,7 @@ function readLatestPerformanceMetric(
   return latestPerformance[key];
 }
 
-function getParticipantPerformanceView(
-  participant: NonNullable<ContestEntryDetail['participants']>[number],
-) {
+function getParticipantPerformanceView(participant: ContestEntryParticipant) {
   const latestPerformance = participant.latestPerformance ?? {};
   const scoreToPar = formatRelativeToPar(
     readLatestPerformanceMetric(latestPerformance, 'scoreToPar'),
@@ -72,10 +70,8 @@ function getParticipantPerformanceView(
   };
 }
 
-function sortDetailedParticipants(
-  participants: ContestEntryDetail['participants'] | undefined,
-) {
-  return [...(participants ?? [])].sort((left, right) => {
+function sortDetailedParticipants(participants: ContestEntryParticipant[]) {
+  return [...participants].sort((left, right) => {
     const leftPerformance = getParticipantPerformanceView(left);
     const rightPerformance = getParticipantPerformanceView(right);
 
@@ -87,69 +83,20 @@ function sortDetailedParticipants(
       return leftPerformance.finishPosition - rightPerformance.finishPosition;
     }
 
-    const leftScoreToPar = left.latestPerformance?.scoreToPar;
-    const rightScoreToPar = right.latestPerformance?.scoreToPar;
-    if (
-      typeof leftScoreToPar === 'number'
-      && typeof rightScoreToPar === 'number'
-      && leftScoreToPar !== rightScoreToPar
-    ) {
-      return leftScoreToPar - rightScoreToPar;
-    }
-
     return left.participantName.localeCompare(right.participantName);
   });
 }
 
-function ContestLeaderboardEntryDetail({
-  contestId,
+function ParticipantsTable({
   entryId,
-  enabled,
+  participants,
 }: {
-  contestId: string;
   entryId: string;
-  enabled: boolean;
+  participants: ContestEntryParticipant[];
 }) {
-  const entryDetailQuery = useQuery({
-    queryKey: ['poolmaster', 'contest-entry-detail', contestId, entryId],
-    queryFn: async (): Promise<ContestEntryDetail> => {
-      const response = await getContestEntry({
-        path: { contestId, entryId },
-      });
+  const sorted = sortDetailedParticipants(participants);
 
-      if (!response.data?.entry) {
-        throw response.error ?? new Error('Contest entry detail response is missing data.');
-      }
-
-      return response.data.entry;
-    },
-    enabled,
-    retry: false,
-  });
-
-  if (!enabled) {
-    return null;
-  }
-
-  if (entryDetailQuery.isLoading) {
-    return (
-      <div className="mt-4 rounded-2xl bg-card px-4 py-4 text-sm text-muted-foreground">
-        Loading lineup detail...
-      </div>
-    );
-  }
-
-  if (entryDetailQuery.isError || !entryDetailQuery.data) {
-    return (
-      <div className="mt-4 rounded-2xl bg-card px-4 py-4 text-sm text-muted-foreground">
-        We couldn&apos;t load the lineup detail for this entry.
-      </div>
-    );
-  }
-
-  const participants = sortDetailedParticipants(entryDetailQuery.data.participants);
-
-  if (participants.length === 0) {
+  if (sorted.length === 0) {
     return (
       <div className="mt-4 rounded-2xl bg-card px-4 py-4 text-sm text-muted-foreground">
         This entry does not have any picked participants yet.
@@ -169,7 +116,7 @@ function ContestLeaderboardEntryDetail({
         <span className="text-right">R4</span>
       </div>
       <div className="divide-y divide-border">
-        {participants.map((participant) => {
+        {sorted.map((participant) => {
           const performance = getParticipantPerformanceView(participant);
 
           return (
@@ -206,8 +153,10 @@ function ContestLeaderboardEntryDetail({
 }
 
 export function ContestDetailPage() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
   const logger = useLogger().child({
-    feature: 'contest-detail-page',
+    feature: 'contest-board',
   });
   const { contestId = '', leagueCode: routeLeagueCode } = useParams<{
     contestId: string;
@@ -215,7 +164,10 @@ export function ContestDetailPage() {
   }>();
   const location = useLocation();
   const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
-  const [expandedLeaderboardEntryId, setExpandedLeaderboardEntryId] = useState<string | null>(null);
+  const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
+  const [myOnly, setMyOnly] = useState(false);
+  const [renameEntryId, setRenameEntryId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState('');
 
   const contestQuery = useQuery({
     queryKey: ['poolmaster', 'contest', contestId],
@@ -227,28 +179,6 @@ export function ContestDetailPage() {
       }
 
       return response.data.contest;
-    },
-    enabled: Boolean(contestId),
-    retry: false,
-  });
-
-  const leaderboardQuery = useQuery({
-    queryKey: ['poolmaster', 'contest-standings', contestId],
-    queryFn: async (): Promise<LeaderboardEntry[]> => {
-      const response = await getStandings({
-        path: { contestId },
-        query: {
-          page: '1',
-          pageSize: '50',
-          sortBy: 'rank',
-        },
-      });
-
-      if (!response.data?.standings) {
-        throw response.error ?? new Error('Contest standings response is missing data.');
-      }
-
-      return response.data.standings;
     },
     enabled: Boolean(contestId),
     retry: false,
@@ -269,40 +199,67 @@ export function ContestDetailPage() {
     retry: false,
   });
 
-  const leagueCodeQuery = useQuery({
-    queryKey: ['poolmaster', 'contest-league-code', contestQuery.data?.leagueId],
-    queryFn: async () => {
-      const response = await getLeague({ path: { id: contestQuery.data!.leagueId } });
+  const leagueId = contestQuery.data?.leagueId ?? '';
 
-      if (!response.data?.league) {
-        throw response.error ?? new Error('League response is missing league data.');
+  const teamsQuery = useQuery({
+    queryKey: ['poolmaster', 'league-teams', leagueId],
+    queryFn: async (): Promise<TeamSummary[]> => {
+      const response = await listLeagueSquads({ path: { id: leagueId } });
+
+      if (!response.data?.squads) {
+        throw response.error ?? new Error('Team list response is missing data.');
       }
 
-      return response.data.league;
+      return response.data.squads;
     },
-    enabled: Boolean(contestQuery.data?.leagueId),
+    enabled: Boolean(leagueId),
     retry: false,
   });
-  const backToLeaguePath = hintedLeagueCode
-    ? buildLeaguePath(hintedLeagueCode)
-    : leagueCodeQuery.data?.leagueCode
-      ? buildLeaguePath(leagueCodeQuery.data.leagueCode)
-      : '/welcome';
-  const manageContestPath =
-    hintedLeagueCode || leagueCodeQuery.data?.leagueCode
-      ? buildLeagueContestManagePath(
-          hintedLeagueCode ?? leagueCodeQuery.data!.leagueCode,
-          contestId,
-        )
-      : null;
-  const canManageContest =
-    (Boolean(leagueCodeQuery.data?.leagueRelationship.commissioner)
-      || Boolean(leagueCodeQuery.data?.isRootAdmin))
-    && contestQuery.data?.status === 'DRAFT';
-  const myEntriesPath =
-    hintedLeagueCode || leagueCodeQuery.data?.leagueCode
-      ? buildLeagueEntriesPath(hintedLeagueCode ?? leagueCodeQuery.data!.leagueCode)
-      : null;
+
+  const myTeamId = useMemo(() => {
+    const userId = auth.user?.id;
+    if (!userId) {
+      return null;
+    }
+    return (
+      teamsQuery.data?.find((team) =>
+        team.members?.some(
+          (member) => member.userId === userId && member.status === 'ACTIVE',
+        ),
+      )?.id ?? null
+    );
+  }, [auth.user?.id, teamsQuery.data]);
+
+  const enterContestMutation = useMutation({
+    mutationFn: async () => {
+      const response = await enterContest({ path: { contestId } });
+      if (!response.data?.entry) {
+        throw response.error ?? new Error('Contest entry creation response is missing data.');
+      }
+      return response.data.entry;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] });
+    },
+  });
+
+  const renameEntryMutation = useMutation({
+    mutationFn: async ({ entryId, name }: { entryId: string; name: string }) => {
+      const response = await updateContestEntry({
+        path: { contestId, entryId },
+        body: { name },
+      });
+      if (!response.data?.entry) {
+        throw response.error ?? new Error('Contest entry rename response is missing data.');
+      }
+      return response.data.entry;
+    },
+    onSuccess: async () => {
+      setRenameEntryId(null);
+      setRenameDraft('');
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] });
+    },
+  });
 
   useEffect(() => {
     if (!contestQuery.isError) {
@@ -311,14 +268,14 @@ export function ContestDetailPage() {
 
     logger.warn(
       {
-        action: 'contestDetail.contest.failed',
+        action: 'contestBoard.contest.failed',
         data: {
           contestId,
           leagueCode: hintedLeagueCode ?? null,
         },
         err: contestQuery.error,
       },
-      'Contest detail failed to load contest data',
+      'Contest Board failed to load contest data',
     );
   }, [contestId, contestQuery.error, contestQuery.isError, hintedLeagueCode, logger]);
 
@@ -329,29 +286,25 @@ export function ContestDetailPage() {
 
     logger.info(
       {
-        action: 'contestDetail.page.loaded',
+        action: 'contestBoard.page.loaded',
         data: {
           contestId,
-          leagueCode: hintedLeagueCode ?? leagueCodeQuery.data?.leagueCode ?? null,
+          leagueCode: hintedLeagueCode ?? null,
           status: contestQuery.data.status,
           entryCount: contestEntriesQuery.data.entries.length,
           isJoined: contestEntriesQuery.data.isJoined,
+          picksRevealed: contestEntriesQuery.data.picksRevealed,
         },
       },
-      'Contest detail page loaded',
+      'Contest Board page loaded',
     );
   }, [
     contestEntriesQuery.data,
     contestId,
     contestQuery.data,
     hintedLeagueCode,
-    leagueCodeQuery.data?.leagueCode,
     logger,
   ]);
-
-  const displayedEntries = contestEntriesQuery.data?.entries ?? [];
-  const currentUserEntryIds = contestEntriesQuery.data?.myEntryIds ?? [];
-  const isJoined = contestEntriesQuery.data?.isJoined ?? false;
 
   if (contestQuery.isLoading) {
     return (
@@ -373,11 +326,39 @@ export function ContestDetailPage() {
   }
 
   const contest = contestQuery.data;
-  const isPostEventLeaderboard =
-    contest.status === 'ACTIVE' || contest.status === 'COMPLETED';
+  const entries = contestEntriesQuery.data?.entries ?? [];
+  const picksRevealed = contestEntriesQuery.data?.picksRevealed ?? false;
+  const myEntries = myTeamId
+    ? entries.filter((entry) => entry.squadId === myTeamId)
+    : [];
+  const totalCount = entries.length;
+  const myCount = myEntries.length;
+  const visibleEntries = myOnly ? myEntries : entries;
+  const isOpen = contest.status === 'OPEN';
+  const canCreateEntry = isOpen && Boolean(myTeamId);
+
+  const backToLeaguePath = hintedLeagueCode
+    ? buildLeaguePath(hintedLeagueCode)
+    : '/welcome';
+  const manageContestPath =
+    hintedLeagueCode && contest.status === 'DRAFT'
+      ? buildLeagueContestManagePath(hintedLeagueCode, contestId)
+      : null;
+
+  function startRenameEntry(entry: ContestEntryDetail) {
+    setRenameEntryId(entry.id);
+    setRenameDraft(entry.name);
+    renameEntryMutation.reset();
+  }
+
+  function cancelRenameEntry() {
+    setRenameEntryId(null);
+    setRenameDraft('');
+    renameEntryMutation.reset();
+  }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6" data-testid="contest-board">
       <div className="rounded-[2rem] border border-border bg-card p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
@@ -392,10 +373,24 @@ export function ContestDetailPage() {
                 {contest.selectionType} · {contest.scoringEngine}
                 {contest.sport ? ` · ${contest.sport}` : ''}
               </p>
+              <div className="mt-4 flex flex-wrap gap-3 text-sm">
+                <span
+                  className="rounded-full border border-border px-3 py-1 text-muted-foreground"
+                  data-testid="contest-board-my-count"
+                >
+                  My Entries: <span className="font-semibold text-foreground">{myCount}</span>
+                </span>
+                <span
+                  className="rounded-full border border-border px-3 py-1 text-muted-foreground"
+                  data-testid="contest-board-total-count"
+                >
+                  Total Entries: <span className="font-semibold text-foreground">{totalCount}</span>
+                </span>
+              </div>
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            {canManageContest && manageContestPath ? (
+            {manageContestPath ? (
               <Link
                 className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
                 data-testid="contest-manage-link"
@@ -415,156 +410,102 @@ export function ContestDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[2rem] border border-border bg-card p-6" id="contest-rules">
-          <h3 className="text-xl font-semibold">Contest rules and snapshot</h3>
-          <dl className="mt-5 grid gap-3 sm:grid-cols-2 text-sm text-muted-foreground">
-            <div className="rounded-2xl bg-background px-4 py-4">
-              <dt>Contest type</dt>
-              <dd className="mt-1 font-semibold text-foreground">{contest.contestType}</dd>
-            </div>
-            <div className="rounded-2xl bg-background px-4 py-4">
-              <dt>Selection type</dt>
-              <dd className="mt-1 font-semibold text-foreground">{contest.selectionType}</dd>
-            </div>
-            <div className="rounded-2xl bg-background px-4 py-4">
-              <dt>Scoring engine</dt>
-              <dd className="mt-1 font-semibold text-foreground">{contest.scoringEngine}</dd>
-            </div>
-            <div className="rounded-2xl bg-background px-4 py-4">
-              <dt>Entries</dt>
-              <dd className="mt-1 font-semibold text-foreground">{contest.entryCount ?? 0}</dd>
-            </div>
-          </dl>
-        </div>
-
-        <div className="rounded-[2rem] border border-border bg-card p-6">
-          <h3 className="text-xl font-semibold">My entries</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Contest Home now stays focused on rules, all entries, and the leaderboard. Create and rename actions live on the dedicated My Entries page.
-          </p>
-          {myEntriesPath ? (
-            <Link
-              className="mt-5 inline-flex rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
-              data-testid="contest-open-my-entries"
-              to={myEntriesPath}
-            >
-              Open My Entries
-            </Link>
-          ) : (
-            <p className="mt-5 text-sm text-muted-foreground">
-              We&apos;ll link your league entries page here once the league context finishes loading.
-            </p>
-          )}
-        </div>
-      </div>
-
       <div className="rounded-[2rem] border border-border bg-card p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="text-xl font-semibold">
-              {isPostEventLeaderboard ? 'Leaderboard' : 'All entries'}
+              {picksRevealed ? 'Leaderboard' : 'Entries'}
             </h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              {isPostEventLeaderboard
-                ? 'Contest Home becomes the leaderboard once scoring is underway. Expand a row to inspect the picked lineup.'
-                : 'Contest Home keeps the full entry directory here until scoring begins. Your own rows link back to My Entries; non-self rows stay read-only.'}
+              {picksRevealed
+                ? 'Picks are visible. Expand a row to see each entry’s lineup and live scoring.'
+                : 'Picks are hidden until the contest moves past OPEN. Your own entry expands to its picks; other teams show only how many picks they’ve made.'}
             </p>
           </div>
-          <a
-            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
-            data-testid="contest-view-rules"
-            href="#contest-rules"
-          >
-            View rules
-          </a>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <input
+                checked={myOnly}
+                data-testid="contest-board-my-only-toggle"
+                onChange={(event) => setMyOnly(event.target.checked)}
+                type="checkbox"
+              />
+              My entries only
+            </label>
+            {canCreateEntry ? (
+              <button
+                className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                data-testid="contest-board-create-entry"
+                disabled={enterContestMutation.isPending}
+                onClick={() => void enterContestMutation.mutateAsync()}
+                type="button"
+              >
+                {enterContestMutation.isPending ? 'Creating...' : 'Create entry'}
+              </button>
+            ) : null}
+          </div>
         </div>
+
+        {enterContestMutation.isError ? (
+          <p className="mt-3 text-sm text-destructive" data-testid="contest-board-create-error">
+            {extractErrorMessage(enterContestMutation.error, {
+              fallback: 'We could not create that contest entry right now.',
+            })}
+          </p>
+        ) : null}
+
         <div
           className="mt-5 space-y-3"
-          data-testid={isPostEventLeaderboard ? 'contest-leaderboard' : 'contest-entry-list'}
+          data-testid="contest-board-entries"
         >
-          {isPostEventLeaderboard ? (
-            leaderboardQuery.isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading leaderboard...</p>
-            ) : leaderboardQuery.isError ? (
-              <p className="text-sm text-muted-foreground">
-                We couldn&apos;t load the leaderboard for this contest.
-              </p>
-            ) : leaderboardQuery.data?.length ? (
-              leaderboardQuery.data.map((entry) => {
-                const isExpanded = expandedLeaderboardEntryId === entry.entryId;
-
-                return (
-                  <div
-                    className="rounded-2xl border border-border bg-background px-4 py-4"
-                    data-testid={`contest-leaderboard-entry-${entry.entryId}`}
-                    key={entry.entryId}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="font-medium text-foreground">{entry.entryName}</div>
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          {entry.ownerDisplayName}
-                          {entry.isEliminated ? ' · Eliminated' : ''}
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="text-right">
-                          <div className="text-lg font-semibold text-foreground">#{entry.rank}</div>
-                          <div className="text-sm text-muted-foreground">{entry.totalScore}</div>
-                        </div>
-                        <button
-                          className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground"
-                          data-testid={`contest-leaderboard-toggle-${entry.entryId}`}
-                          onClick={() =>
-                            setExpandedLeaderboardEntryId((current) =>
-                              current === entry.entryId ? null : entry.entryId,
-                            )}
-                          type="button"
-                        >
-                          {isExpanded ? 'Hide lineup' : 'View lineup'}
-                        </button>
-                      </div>
-                    </div>
-                    <ContestLeaderboardEntryDetail
-                      contestId={contestId}
-                      enabled={isExpanded}
-                      entryId={entry.entryId}
-                    />
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-sm text-muted-foreground">No leaderboard entries yet.</p>
-            )
-          ) : contestEntriesQuery.isLoading ? (
+          {contestEntriesQuery.isLoading ? (
             <p className="text-sm text-muted-foreground">Loading contest entries...</p>
           ) : contestEntriesQuery.isError ? (
             <p className="text-sm text-muted-foreground">
               We couldn&apos;t load the current contest entries.
             </p>
-          ) : displayedEntries.length ? (
-            displayedEntries.map((entry: ContestEntrySummary) => {
-              const isCurrentUserEntry = currentUserEntryIds.includes(entry.id);
+          ) : visibleEntries.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {myOnly
+                ? 'Your team does not have an entry in this contest yet.'
+                : 'No contest entries exist yet.'}
+            </p>
+          ) : (
+            visibleEntries.map((entry) => {
+              const isOwnEntry = myTeamId !== null && entry.squadId === myTeamId;
+              const isExpanded = expandedEntryId === entry.id;
+              const isRenaming = renameEntryId === entry.id;
+              const canRename = isOwnEntry && isOpen;
+              const showPicks = isExpanded && (picksRevealed || isOwnEntry);
+              const showHiddenPlaceholder = isExpanded && !picksRevealed && !isOwnEntry;
 
               return (
                 <div
-                  className="rounded-2xl border border-border bg-background px-4 py-4"
-                  data-testid={`contest-entry-${entry.id}`}
+                  className={`rounded-2xl border px-4 py-4 transition ${
+                    isOwnEntry
+                      ? 'border-primary/40 bg-primary/5'
+                      : 'border-border bg-background'
+                  }`}
+                  data-testid={`contest-board-entry-${entry.id}`}
                   key={entry.id}
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{entry.name}</span>
-                        {isCurrentUserEntry ? (
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {isOwnEntry ? (
+                          <span aria-hidden className="text-primary" data-testid={`contest-board-entry-spotlight-${entry.id}`}>
+                            ★
+                          </span>
+                        ) : null}
+                        <span className="font-medium text-foreground">{entry.name}</span>
+                        {isOwnEntry ? (
                           <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
                             Your team
                           </span>
                         ) : null}
                       </div>
                       <div className="mt-1 text-sm text-muted-foreground">
-                        {entry.squadName} · Entry {entry.entryNumber}
+                        {entry.squadName} · Entry {entry.entryNumber} · {entry.picksCount} picks made
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
@@ -572,38 +513,118 @@ export function ContestDetailPage() {
                         <div>{entry.standingsPosition ? `#${entry.standingsPosition}` : 'Rank pending'}</div>
                         <div>{entry.totalScore} pts</div>
                       </div>
-                      {isCurrentUserEntry && myEntriesPath ? (
-                        <Link
-                          className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground"
-                          data-testid={`contest-entry-open-my-entries-${entry.id}`}
-                          to={myEntriesPath}
-                        >
-                          Open in My Entries
-                        </Link>
-                      ) : null}
+                      <button
+                        className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground"
+                        data-testid={`contest-board-toggle-${entry.id}`}
+                        onClick={() =>
+                          setExpandedEntryId((current) =>
+                            current === entry.id ? null : entry.id,
+                          )}
+                        type="button"
+                      >
+                        {isExpanded ? 'Hide' : 'View'}
+                      </button>
                     </div>
                   </div>
+
+                  {canRename ? (
+                    isRenaming ? (
+                      <div className="mt-4 space-y-2 rounded-2xl border border-border bg-card px-4 py-4">
+                        <label className="block space-y-2">
+                          <span className="text-sm font-medium text-foreground">Entry name</span>
+                          <input
+                            className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
+                            data-testid={`contest-board-rename-input-${entry.id}`}
+                            disabled={renameEntryMutation.isPending}
+                            maxLength={100}
+                            onChange={(event) => setRenameDraft(event.target.value)}
+                            value={renameDraft}
+                          />
+                        </label>
+                        <div className="flex flex-wrap gap-3">
+                          <button
+                            className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                            data-testid={`contest-board-rename-save-${entry.id}`}
+                            disabled={!renameDraft.trim() || renameEntryMutation.isPending}
+                            onClick={() =>
+                              void renameEntryMutation.mutateAsync({
+                                entryId: entry.id,
+                                name: renameDraft.trim(),
+                              })
+                            }
+                            type="button"
+                          >
+                            {renameEntryMutation.isPending ? 'Saving...' : 'Save name'}
+                          </button>
+                          <button
+                            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
+                            data-testid={`contest-board-rename-cancel-${entry.id}`}
+                            disabled={renameEntryMutation.isPending}
+                            onClick={cancelRenameEntry}
+                            type="button"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                        {renameEntryMutation.isError ? (
+                          <p className="text-sm text-destructive">
+                            {extractErrorMessage(renameEntryMutation.error)}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="mt-3">
+                        <button
+                          className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground"
+                          data-testid={`contest-board-rename-${entry.id}`}
+                          onClick={() => startRenameEntry(entry)}
+                          type="button"
+                        >
+                          Rename entry
+                        </button>
+                      </div>
+                    )
+                  ) : null}
+
+                  {showPicks && entry.participants ? (
+                    <ParticipantsTable entryId={entry.id} participants={entry.participants} />
+                  ) : null}
+
+                  {showHiddenPlaceholder ? (
+                    <div
+                      className="mt-4 rounded-2xl bg-card px-4 py-4 text-sm text-muted-foreground"
+                      data-testid={`contest-board-picks-hidden-${entry.id}`}
+                    >
+                      Picks hidden until the contest moves past OPEN. {entry.picksCount} picks made so far.
+                    </div>
+                  ) : null}
                 </div>
               );
             })
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {isJoined
-                ? 'Your contest entry exists, but the contest entry list has not populated yet.'
-                : 'No contest entries exist yet.'}
-            </p>
           )}
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-border bg-card p-6">
-        <h3 className="text-xl font-semibold">Lifecycle</h3>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Contest status should follow the real golf event and scoring feed automatically. Commissioners
-          can manage draft setup before the event begins, but PoolMaster should handle lock,
-          in-progress, and completed transitions from event timing and feed updates rather than
-          manual status controls.
-        </p>
+      <div className="rounded-[2rem] border border-border bg-card p-6" id="contest-rules">
+        <h3 className="text-xl font-semibold">Contest rules and snapshot</h3>
+        <dl className="mt-5 grid gap-3 sm:grid-cols-2 text-sm text-muted-foreground">
+          <div className="rounded-2xl bg-background px-4 py-4">
+            <dt>Contest type</dt>
+            <dd className="mt-1 font-semibold text-foreground">{contest.contestType}</dd>
+          </div>
+          <div className="rounded-2xl bg-background px-4 py-4">
+            <dt>Selection type</dt>
+            <dd className="mt-1 font-semibold text-foreground">{contest.selectionType}</dd>
+          </div>
+          <div className="rounded-2xl bg-background px-4 py-4">
+            <dt>Scoring engine</dt>
+            <dd className="mt-1 font-semibold text-foreground">{contest.scoringEngine}</dd>
+          </div>
+          <div className="rounded-2xl bg-background px-4 py-4">
+            <dt>Status</dt>
+            <dd className="mt-1 font-semibold text-foreground">{contest.status}</dd>
+          </div>
+        </dl>
       </div>
     </section>
   );

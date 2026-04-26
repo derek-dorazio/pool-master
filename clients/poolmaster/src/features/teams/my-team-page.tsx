@@ -1,3 +1,4 @@
+import * as Dialog from '@radix-ui/react-dialog';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
@@ -19,11 +20,11 @@ import {
   type ListLeagueSquadsResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
+import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
-  buildLeagueEntriesPath,
   buildLeagueHistoryPath,
   buildLeaguePath,
   setRecentLeagueCode,
@@ -41,24 +42,9 @@ type TeamMember = NonNullable<TeamSummary['members']>[number];
 type OwnerInvitation = ListSquadOwnerInvitationsResponses[200]['invitations'][number];
 
 function extractErrorMessage(error: unknown): string {
-  if (!error || typeof error !== 'object') {
-    return 'We could not complete that team action. Please try again.';
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return 'We could not complete that team action. Please try again.';
+  return extractSharedErrorMessage(error, {
+    fallback: 'We could not complete that team action. Please try again.',
+  });
 }
 
 export function MyTeamPage() {
@@ -70,7 +56,9 @@ export function MyTeamPage() {
     feature: 'my-team-page',
   });
   const [teamName, setTeamName] = useState('');
+  const [iconModalOpen, setIconModalOpen] = useState(false);
   const [selectedIconKey, setSelectedIconKey] = useState<TeamIconKey>(TeamIconKey.CAPTAIN_SMILE_FIELD);
+  const [iconDraftKey, setIconDraftKey] = useState<TeamIconKey>(TeamIconKey.CAPTAIN_SMILE_FIELD);
   const [coOwnerEmail, setCoOwnerEmail] = useState('');
   const [teamInactivationNotice, setTeamInactivationNotice] = useState<string | null>(null);
   const [replaceTargetUserId, setReplaceTargetUserId] = useState<string | null>(null);
@@ -188,12 +176,14 @@ export function MyTeamPage() {
     if (selectedTeam) {
       setTeamName(selectedTeam.name);
       setSelectedIconKey(selectedTeam.iconKey);
+      setIconDraftKey(selectedTeam.iconKey);
       setTeamInactivationNotice(null);
       return;
     }
 
     setTeamName(buildDefaultTeamName(auth.user?.firstName, auth.user?.lastName));
     setSelectedIconKey(TeamIconKey.CAPTAIN_SMILE_FIELD);
+    setIconDraftKey(TeamIconKey.CAPTAIN_SMILE_FIELD);
     setTeamInactivationNotice(null);
   }, [auth.user?.firstName, auth.user?.lastName, selectedTeam]);
 
@@ -233,6 +223,27 @@ export function MyTeamPage() {
     onSuccess: async (team) => {
       setTeamName(team.name);
       setSelectedIconKey(team.iconKey);
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
+    },
+  });
+
+  const updateTeamIconMutation = useMutation({
+    mutationFn: async ({ teamId, nextIconKey }: { teamId: string; nextIconKey: TeamIconKey }) => {
+      const response = await updateLeagueSquad({
+        path: { id: leagueId, squadId: teamId },
+        body: { iconKey: nextIconKey },
+      });
+
+      if (!response.data?.squad) {
+        throw response.error ?? new Error('Team icon update response is missing data.');
+      }
+
+      return response.data.squad;
+    },
+    onSuccess: async (team) => {
+      setSelectedIconKey(team.iconKey);
+      setIconDraftKey(team.iconKey);
+      setIconModalOpen(false);
       await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
     },
   });
@@ -358,6 +369,38 @@ export function MyTeamPage() {
     await createTeamMutation.mutateAsync({ nextTeamName, nextIconKey: selectedIconKey });
   }
 
+  function handleOpenIconModal() {
+    setIconDraftKey(selectedIconKey);
+    setIconModalOpen(true);
+  }
+
+  function handleCloseIconModal() {
+    if (updateTeamIconMutation.isPending) {
+      return;
+    }
+
+    setIconDraftKey(selectedIconKey);
+    setIconModalOpen(false);
+    updateTeamIconMutation.reset();
+  }
+
+  async function handleSaveTeamIcon() {
+    if (selectedTeam) {
+      if (!canManageSelectedTeam || leagueQuery.data?.isActive === false) {
+        return;
+      }
+
+      await updateTeamIconMutation.mutateAsync({
+        teamId: selectedTeam.id,
+        nextIconKey: iconDraftKey,
+      });
+      return;
+    }
+
+    setSelectedIconKey(iconDraftKey);
+    setIconModalOpen(false);
+  }
+
   if (leagueQuery.isLoading) {
     return (
       <section className="rounded-[2rem] border border-border bg-card p-8">
@@ -401,12 +444,14 @@ export function MyTeamPage() {
   const isBusy =
     createTeamMutation.isPending
     || updateTeamMutation.isPending
+    || updateTeamIconMutation.isPending
     || createOwnerInvitationMutation.isPending
     || replaceOwnerMutation.isPending
     || revokeOwnerInvitationMutation.isPending
     || inactivateTeamMutation.isPending;
   const activeMembers = (selectedTeam?.members ?? []).filter((member) => member.status === 'ACTIVE');
   const selectedIcon = getTeamIconOption(selectedIconKey);
+  const draftIcon = getTeamIconOption(iconDraftKey);
   const teamOwnerInvitations = ownerInvitationsQuery.data?.filter(
     (invitation) => invitation.squadId === selectedTeam?.id,
   ) ?? [];
@@ -476,42 +521,31 @@ export function MyTeamPage() {
               />
             </label>
 
-            <div className="space-y-3">
-              <div className="text-sm font-medium text-foreground">Team icon</div>
-              <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-background px-4 py-4">
+            <div className="space-y-3 rounded-[1.25rem] border border-border bg-background px-4 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="text-sm font-medium text-foreground">Team icon</div>
+                <button
+                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                  data-testid="my-team-change-icon"
+                  disabled={isInactiveLeague || isBusy || (selectedTeam ? !canManageSelectedTeam : !canCreateOwnTeam)}
+                  onClick={handleOpenIconModal}
+                  type="button"
+                >
+                  Change icon
+                </button>
+              </div>
+              <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card px-4 py-4">
                 <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`}>
                   <TeamIcon iconKey={selectedIconKey} size="lg" />
                 </div>
                 <div>
                   <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Selected icon
+                    Current icon
                   </div>
-                  <div className="mt-1 text-base font-medium">{selectedIcon.label}</div>
+                  <div className="mt-1 text-base font-medium" data-testid="my-team-current-icon-label">
+                    {selectedIcon.label}
+                  </div>
                 </div>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-4 xl:grid-cols-5">
-                {TEAM_ICON_OPTIONS.map((icon) => {
-                  const isSelected = selectedIconKey === icon.key;
-                  return (
-                    <button
-                      className={`rounded-[1.1rem] border px-3 py-4 text-center transition ${
-                        isSelected
-                          ? 'border-primary bg-primary/10 text-foreground'
-                          : 'border-border bg-background text-muted-foreground hover:bg-muted/40'
-                      }`}
-                      data-testid={`my-team-icon-${icon.key}`}
-                      disabled={isInactiveLeague || isBusy}
-                      key={icon.key}
-                      onClick={() => setSelectedIconKey(icon.key)}
-                      type="button"
-                    >
-                      <div className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full ${icon.surfaceClass} ${icon.accentClass}`}>
-                        <TeamIcon iconKey={icon.key} size="md" />
-                      </div>
-                      <div className="mt-3 text-xs font-medium">{icon.label}</div>
-                    </button>
-                  );
-                })}
               </div>
             </div>
 
@@ -550,17 +584,17 @@ export function MyTeamPage() {
           <div className="rounded-[2rem] border border-border bg-card p-6">
             <h3 className="text-xl font-semibold">Active entry management</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Active entry creation and rename actions now live on the dedicated My Entries page,
-              and historical results now live on the dedicated My Contest History page. Team Home
-              stays focused on team identity, owners, and lifecycle.
+              Contest entries are managed on each contest&apos;s board (open the contest from
+              League Home). Historical results live on the dedicated My Contest History page.
+              Team Home stays focused on team identity, owners, and lifecycle.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
                 className="inline-flex rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
-                data-testid="my-team-open-my-entries"
-                to={buildLeagueEntriesPath(leagueCode)}
+                data-testid="my-team-open-league-home"
+                to={buildLeaguePath(leagueCode)}
               >
-                Open My Entries
+                Open League Home
               </Link>
               <Link
                 className="inline-flex rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted/40"
@@ -802,6 +836,113 @@ export function MyTeamPage() {
           </div>
         </div>
       </div>
+
+      <Dialog.Root
+        onOpenChange={(open) => {
+          if (open) {
+            handleOpenIconModal();
+            return;
+          }
+
+          handleCloseIconModal();
+        }}
+        open={iconModalOpen}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
+          <Dialog.Content
+            aria-describedby="my-team-icon-modal-description"
+            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
+            data-testid="my-team-icon-modal"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <Dialog.Title className="text-2xl font-semibold tracking-tight">
+                  Change team icon
+                </Dialog.Title>
+                <Dialog.Description
+                  className="mt-2 text-sm text-muted-foreground"
+                  id="my-team-icon-modal-description"
+                >
+                  Pick a built-in icon and save it without leaving Team Home.
+                </Dialog.Description>
+              </div>
+              <button
+                aria-label="Close team icon modal"
+                className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-70"
+                disabled={updateTeamIconMutation.isPending}
+                onClick={handleCloseIconModal}
+                type="button"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-[1.5rem] border border-border bg-background p-5">
+              <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card px-4 py-4">
+                <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${draftIcon.surfaceClass} ${draftIcon.accentClass}`}>
+                  <TeamIcon iconKey={iconDraftKey} size="lg" />
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Selected icon
+                  </div>
+                  <div className="mt-1 text-base font-medium">{draftIcon.label}</div>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-4 xl:grid-cols-5">
+                {TEAM_ICON_OPTIONS.map((icon) => {
+                  const isSelected = iconDraftKey === icon.key;
+                  return (
+                    <button
+                      className={`rounded-[1.1rem] border px-3 py-4 text-center transition ${
+                        isSelected
+                          ? 'border-primary bg-primary/10 text-foreground'
+                          : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
+                      }`}
+                      data-testid={`my-team-icon-${icon.key}`}
+                      disabled={isInactiveLeague || isBusy}
+                      key={icon.key}
+                      onClick={() => setIconDraftKey(icon.key)}
+                      type="button"
+                    >
+                      <div className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full ${icon.surfaceClass} ${icon.accentClass}`}>
+                        <TeamIcon iconKey={icon.key} size="md" />
+                      </div>
+                      <div className="mt-3 text-xs font-medium">{icon.label}</div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {updateTeamIconMutation.isError ? (
+                <p className="mt-4 text-sm text-destructive">{extractErrorMessage(updateTeamIconMutation.error)}</p>
+              ) : null}
+
+              <div className="mt-5 flex justify-end gap-3">
+                <button
+                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={updateTeamIconMutation.isPending}
+                  onClick={handleCloseIconModal}
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                  data-testid="my-team-save-icon"
+                  disabled={isInactiveLeague || isBusy || (selectedTeam ? !canManageSelectedTeam : !canCreateOwnTeam)}
+                  onClick={() => void handleSaveTeamIcon()}
+                  type="button"
+                >
+                  {updateTeamIconMutation.isPending ? 'Saving...' : 'Save icon'}
+                </button>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </section>
   );
 }

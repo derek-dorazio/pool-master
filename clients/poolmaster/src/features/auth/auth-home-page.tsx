@@ -16,6 +16,7 @@ import {
   getTeamOwnerInvitationPreviewQueryKey,
 } from '@/features/teams/team-owner-invitation-preview';
 import { parseRouteState } from '@/routes/route-state';
+import { extractErrorMessage } from '@/lib/errors';
 import { useLogger } from '@/lib/logger';
 import { useSessionStore } from './session-store';
 
@@ -71,27 +72,6 @@ export function resolvePostAuthDestination(
     return '/manage';
   }
   return '/welcome';
-}
-
-function extractErrorMessage(error: unknown): string {
-  if (!error || typeof error !== 'object') {
-    return 'Something went wrong. Please try again.';
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return 'Something went wrong. Please try again.';
 }
 
 function isUnexpectedAuthError(error: unknown): boolean {

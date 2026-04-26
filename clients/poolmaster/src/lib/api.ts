@@ -4,14 +4,22 @@ import { client } from '@poolmaster/shared/generated/hey-api/client.gen';
 import { readCookie } from './cookies';
 import { getOrCreateClientTraceId } from './logger';
 
-const resolvedBaseUrl =
-  typeof window !== 'undefined' && window.location?.origin !== 'null'
-    ? window.location.origin
-    : 'http://localhost';
+function resolveBaseUrl() {
+  const envBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (envBaseUrl) {
+    return envBaseUrl;
+  }
+
+  if (typeof window !== 'undefined' && window.location?.origin !== 'null') {
+    return window.location.origin;
+  }
+
+  return 'http://localhost';
+}
 
 client.setConfig(
   createConfig<ClientOptions>({
-    baseUrl: resolvedBaseUrl,
+    baseUrl: resolveBaseUrl(),
     credentials: 'include',
   }),
 );

@@ -8,7 +8,6 @@ import { CreateContestPage } from '@/features/contests/create-contest-page';
 import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { ContestEntryPage } from '@/features/contests/contest-entry-page';
 import { ManageContestsPage } from '@/features/contests/manage-contests-page';
-import { MyEntriesPage } from '@/features/entries/my-entries-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { LeagueRouteScaffoldPage } from '@/features/leagues/league-route-scaffold-page';
@@ -37,6 +36,11 @@ import { MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
 function LegacyJoinInviteRedirect() {
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   return <Navigate replace to={`/invite/${inviteCode}`} />;
+}
+
+function LegacyLeagueEntriesRedirect() {
+  const { leagueCode = '' } = useParams<{ leagueCode: string }>();
+  return <Navigate replace to={`/league/${leagueCode}`} />;
 }
 
 export const router = createBrowserRouter([
@@ -104,8 +108,10 @@ export const router = createBrowserRouter([
             element: <CanonicalTeamHomeRoute />,
           },
           {
+            // pool-master-dxd.13 — MyEntriesPage was folded into the per-contest
+            // Contest Board. Old /entries deep-links redirect to League Home.
             path: 'league/:leagueCode/entries',
-            element: <MyEntriesPage />,
+            element: <LegacyLeagueEntriesRedirect />,
           },
           {
             path: 'league/:leagueCode/history',

@@ -285,7 +285,7 @@ describe('MyTeamPage', () => {
       data: {
         squad: buildTeamSummary({
           name: 'Updated Team',
-          iconKey: TeamIconKey.TURBO_TURTLE_MIDNIGHT,
+          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
         }),
       },
     });
@@ -293,7 +293,6 @@ describe('MyTeamPage', () => {
     renderMyTeamPage();
 
     await screen.findByDisplayValue('Original Team');
-    fireEvent.click(screen.getByTestId(`my-team-icon-${TeamIconKey.TURBO_TURTLE_MIDNIGHT}`));
     fireEvent.change(screen.getByTestId('my-team-name'), {
       target: { value: 'Updated Team' },
     });
@@ -302,9 +301,88 @@ describe('MyTeamPage', () => {
     await waitFor(() =>
       expect(updateLeagueSquadMock).toHaveBeenCalledWith({
         path: { id: 'league-1', squadId: 'team-1' },
-        body: { name: 'Updated Team', iconKey: TeamIconKey.TURBO_TURTLE_MIDNIGHT },
+        body: { name: 'Updated Team', iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD },
       }),
     );
+  });
+
+  it('updates the team icon from a modal and returns to Team Home with the new icon', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        league: buildLeagueDetail('MEMBER'),
+      },
+    });
+    listLeagueSquadsMock.mockResolvedValue({
+      data: {
+        squads: [buildTeamSummary()],
+      },
+    });
+    listLeagueMembersMock.mockResolvedValue({
+      data: {
+        members: [
+          {
+            id: 'league-member-1',
+            userId: 'user-1',
+            email: 'derek@example.com',
+            firstName: 'Derek',
+            lastName: 'Dorazio',
+            role: 'MEMBER',
+            joinedAt: '2026-04-15T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+    listContestsMock.mockResolvedValue({
+      data: {
+        contests: [],
+      },
+    });
+    listSquadOwnerInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [],
+      },
+    });
+    updateLeagueSquadMock.mockResolvedValue({
+      data: {
+        squad: buildTeamSummary({
+          iconKey: TeamIconKey.TURBO_TURTLE_MIDNIGHT,
+        }),
+      },
+    });
+
+    renderMyTeamPage();
+
+    await screen.findByDisplayValue('Derek Squad');
+    expect(screen.getByTestId('my-team-current-icon-label')).toHaveTextContent('Captain Smile Field');
+
+    fireEvent.click(screen.getByTestId('my-team-change-icon'));
+    await screen.findByTestId('my-team-icon-modal');
+
+    fireEvent.click(screen.getByTestId(`my-team-icon-${TeamIconKey.TURBO_TURTLE_MIDNIGHT}`));
+    fireEvent.click(screen.getByTestId('my-team-save-icon'));
+
+    await waitFor(() =>
+      expect(updateLeagueSquadMock).toHaveBeenCalledWith({
+        path: { id: 'league-1', squadId: 'team-1' },
+        body: { iconKey: TeamIconKey.TURBO_TURTLE_MIDNIGHT },
+      }),
+    );
+    await waitFor(() => expect(screen.queryByTestId('my-team-icon-modal')).not.toBeInTheDocument());
+    expect(screen.getByTestId('my-team-current-icon-label')).toHaveTextContent('Turbo Turtle Midnight');
   });
 
   it('creates, replaces, removes, and revokes owner invites for an existing team', async () => {
@@ -675,9 +753,9 @@ describe('MyTeamPage', () => {
     });
     renderMyTeamPage();
 
-    expect(await screen.findByTestId('my-team-open-my-entries')).toHaveAttribute(
+    expect(await screen.findByTestId('my-team-open-league-home')).toHaveAttribute(
       'href',
-      '/league/BIGDAWGS/entries',
+      '/league/BIGDAWGS',
     );
     expect(screen.getByTestId('my-team-open-my-history')).toHaveAttribute(
       'href',

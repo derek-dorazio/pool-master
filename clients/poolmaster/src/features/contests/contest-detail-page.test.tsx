@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ContestDetailPage } from './contest-detail-page';
@@ -7,11 +7,8 @@ import { ContestDetailPage } from './contest-detail-page';
 const {
   enterContestMock,
   getContestMock,
-  getContestEntryMock,
-  getLeagueMock,
-  getStandingsMock,
-  leaveContestMock,
   listContestEntriesMock,
+  listLeagueSquadsMock,
   mockLogger,
   updateContestEntryMock,
 } = vi.hoisted(() => {
@@ -29,11 +26,8 @@ const {
   return {
     enterContestMock: vi.fn(),
     getContestMock: vi.fn(),
-    getContestEntryMock: vi.fn(),
-    getLeagueMock: vi.fn(),
-    getStandingsMock: vi.fn(),
-    leaveContestMock: vi.fn(),
     listContestEntriesMock: vi.fn(),
+    listLeagueSquadsMock: vi.fn(),
     mockLogger: logger,
     updateContestEntryMock: vi.fn(),
   };
@@ -42,11 +36,8 @@ const {
 vi.mock('@/lib/api', () => ({
   enterContest: (...args: unknown[]) => enterContestMock(...args),
   getContest: (...args: unknown[]) => getContestMock(...args),
-  getContestEntry: (...args: unknown[]) => getContestEntryMock(...args),
-  getLeague: (...args: unknown[]) => getLeagueMock(...args),
-  getStandings: (...args: unknown[]) => getStandingsMock(...args),
-  leaveContest: (...args: unknown[]) => leaveContestMock(...args),
   listContestEntries: (...args: unknown[]) => listContestEntriesMock(...args),
+  listLeagueSquads: (...args: unknown[]) => listLeagueSquadsMock(...args),
   updateContestEntry: (...args: unknown[]) => updateContestEntryMock(...args),
 }));
 
@@ -74,7 +65,7 @@ vi.mock('@/lib/logger', () => ({
   useLogger: () => mockLogger,
 }));
 
-function renderContestDetailPage() {
+function renderContestBoard() {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -90,13 +81,6 @@ function renderContestDetailPage() {
       >
         <Routes>
           <Route element={<ContestDetailPage />} path="/league/:leagueCode/contests/:contestId" />
-          <Route element={<div data-testid="contest-entry-page" />} path="/contests/:contestId/entries/:entryId" />
-          <Route element={<div data-testid="my-entries-page" />} path="/league/:leagueCode/entries" />
-          <Route element={<div data-testid="league-team-page" />} path="/league/:leagueCode/team" />
-          <Route
-            element={<div data-testid="contest-manage-page" />}
-            path="/league/:leagueCode/contests/:contestId/manage"
-          />
           <Route element={<div data-testid="league-page" />} path="/league/:leagueCode" />
         </Routes>
       </MemoryRouter>
@@ -104,317 +88,325 @@ function renderContestDetailPage() {
   );
 }
 
-function primeCommonMocks(overrides?: {
+function buildEntry(overrides: Partial<{
+  id: string;
+  squadId: string;
+  squadName: string;
+  name: string;
+  entryNumber: number;
+  totalScore: number;
+  standingsPosition: number | null;
+  picksCount: number;
+  participants: Array<{
+    rosterPickId: string;
+    sportEventParticipantId: string;
+    participantId: string;
+    participantName: string;
+    contestPoints: number;
+    pickedAt: string;
+    latestPerformance: Record<string, unknown>;
+  }> | undefined;
+}> = {}) {
+  return {
+    id: overrides.id ?? 'entry-1',
+    contestId: 'contest-1',
+    squadId: overrides.squadId ?? 'squad-1',
+    squadName: overrides.squadName ?? 'Birdie Hunters',
+    entryNumber: overrides.entryNumber ?? 1,
+    name: overrides.name ?? 'Birdie Hunters Entry 1',
+    status: 'ACTIVE' as const,
+    tiebreakerValue: null,
+    totalScore: overrides.totalScore ?? 0,
+    standingsPosition: overrides.standingsPosition ?? null,
+    isEliminated: false,
+    picksCount: overrides.picksCount ?? 0,
+    createdAt: '2026-04-15T00:00:00.000Z',
+    updatedAt: '2026-04-15T00:00:00.000Z',
+    ...(overrides.participants !== undefined ? { participants: overrides.participants } : {}),
+  };
+}
+
+function primeMocks(opts?: {
   contestStatus?: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-  selectionType?: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
-  role?: 'MEMBER' | 'COMMISSIONER';
-  isRootAdmin?: boolean;
+  picksRevealed?: boolean;
+  entries?: ReturnType<typeof buildEntry>[];
+  myTeamId?: string;
 }) {
+  const contestStatus = opts?.contestStatus ?? 'OPEN';
+  const picksRevealed = opts?.picksRevealed ?? (contestStatus !== 'OPEN' && contestStatus !== 'DRAFT');
+  const entries = opts?.entries ?? [];
+  const myTeamId = opts?.myTeamId ?? 'squad-1';
+  const myEntries = entries.filter((entry) => entry.squadId === myTeamId);
+
   getContestMock.mockResolvedValue({
     data: {
       contest: {
         id: 'contest-1',
         name: 'Masters Pick 6',
-        status: overrides?.contestStatus ?? 'OPEN',
+        status: contestStatus,
         contestType: 'SINGLE_EVENT',
-        selectionType: overrides?.selectionType ?? 'TIERED',
+        selectionType: 'TIERED',
         scoringEngine: 'STROKE_PLAY',
         leagueId: 'league-1',
         sport: 'GOLF',
-        entryCount: 3,
+        entryCount: entries.length,
       },
     },
   });
 
-  getStandingsMock.mockResolvedValue({
+  listContestEntriesMock.mockResolvedValue({
     data: {
-      standings: [
+      contestId: 'contest-1',
+      total: entries.length,
+      isJoined: myEntries.length > 0,
+      myEntryId: myEntries[0]?.id ?? null,
+      myEntryIds: myEntries.map((entry) => entry.id),
+      picksRevealed,
+      entries,
+    },
+  });
+
+  listLeagueSquadsMock.mockResolvedValue({
+    data: {
+      squads: [
         {
-          entryId: 'entry-1',
-          rank: 1,
-          totalScore: 42,
-          entryName: 'Birdie Hunters Entry 1',
-          ownerDisplayName: 'Morgan Member',
-          ownerId: 'user-1',
-          previousRank: 1,
-          movement: 'same',
-          isEliminated: false,
-          lastUpdatedAt: '2026-04-15T00:00:00.000Z',
+          id: myTeamId,
+          name: 'Birdie Hunters',
+          leagueId: 'league-1',
+          isActive: true,
+          iconKey: 'CAPTAIN_SMILE_FIELD',
+          isRootAdmin: false,
+          teamRelationship: { owner: true, commissioner: false },
+          members: [
+            { userId: 'user-1', status: 'ACTIVE', firstName: 'Morgan', lastName: 'Member' },
+          ],
         },
       ],
-      total: 1,
-      page: 1,
-      pageSize: 50,
-      contestId: 'contest-1',
-    },
-  });
-
-  getContestEntryMock.mockResolvedValue({
-    data: {
-      contestId: 'contest-1',
-      entry: {
-        id: 'entry-1',
-        contestId: 'contest-1',
-        squadId: 'squad-1',
-        squadName: 'Birdie Hunters',
-        entryNumber: 1,
-        name: 'Birdie Hunters Entry 1',
-        status: 'ACTIVE',
-        tiebreakerValue: 271,
-        totalScore: 42,
-        standingsPosition: 1,
-        isEliminated: false,
-        createdAt: '2026-04-15T00:00:00.000Z',
-        updatedAt: '2026-04-15T00:00:00.000Z',
-        participants: [
-          {
-            rosterPickId: 'pick-1',
-            sportEventParticipantId: 'sep-1',
-            participantId: 'participant-1',
-            participantName: 'Scottie Scheffler',
-            participantStatus: 'ACTIVE',
-            position: null,
-            teamAffiliation: 'USA',
-            contestPoints: -11,
-            pickedAt: '2026-04-15T00:00:00.000Z',
-            latestPerformance: {
-              scoreToPar: -11,
-              thru: 'F',
-              round1: 70,
-              round2: 74,
-              round3: 65,
-              round4: 68,
-            },
-          },
-        ],
-      },
-    },
-  });
-
-  getLeagueMock.mockResolvedValue({
-    data: {
-      league: {
-        id: 'league-1',
-        leagueCode: 'BIGDAWGS',
-        name: 'Big Dawgs',
-        memberType: overrides?.role ?? 'MEMBER',
-        leagueRelationship: {
-          leagueMember: true,
-          commissioner: (overrides?.role ?? 'MEMBER') === 'COMMISSIONER',
-        },
-        isRootAdmin: overrides?.isRootAdmin ?? false,
-      },
     },
   });
 }
 
-describe('ContestDetailPage', () => {
+describe('ContestDetailPage (Contest Board)', () => {
   afterEach(() => {
     enterContestMock.mockReset();
     getContestMock.mockReset();
-    getContestEntryMock.mockReset();
-    getLeagueMock.mockReset();
-    getStandingsMock.mockReset();
-    leaveContestMock.mockReset();
     listContestEntriesMock.mockReset();
+    listLeagueSquadsMock.mockReset();
     updateContestEntryMock.mockReset();
     mockLogger.debug.mockReset();
     mockLogger.info.mockReset();
     mockLogger.warn.mockReset();
     mockLogger.error.mockReset();
+    mockLogger.fatal.mockReset();
+    mockLogger.child.mockClear();
   });
 
-  it('links members to the dedicated My Entries page instead of rendering a personal entry tile', async () => {
-    primeCommonMocks();
-    listContestEntriesMock.mockResolvedValueOnce({
-      data: {
-        contestId: 'contest-1',
-        total: 0,
-        isJoined: false,
-        myEntryId: '',
-        entries: [],
-      },
+  // pool-master-dxd.13 — header summary counts ('My Entries: N · Total Entries: M').
+  it('renders header counts for my entries and total entries', async () => {
+    primeMocks({
+      entries: [
+        buildEntry({ id: 'entry-1', squadId: 'squad-1' }),
+        buildEntry({ id: 'entry-2', squadId: 'squad-1', entryNumber: 2, name: 'Birdie Hunters Entry 2' }),
+        buildEntry({ id: 'entry-3', squadId: 'squad-other', squadName: 'Other Team', name: 'Other Team Entry 1' }),
+      ],
     });
-    renderContestDetailPage();
 
-    expect(await screen.findByTestId('contest-open-my-entries')).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS/entries',
-    );
-    expect(screen.queryByTestId('contest-my-entry')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('contest-enter-entry')).not.toBeInTheDocument();
+    renderContestBoard();
+
+    // myTeamId derives from listLeagueSquads which resolves after the initial
+    // render. Wait for the count to update from the initial 0 to 2.
+    await waitFor(() => {
+      expect(screen.getByTestId('contest-board-my-count')).toHaveTextContent('My Entries: 2');
+    });
+    expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Total Entries: 3');
   });
 
-  it('shows the contest load failure state when the contest query fails', async () => {
-    getContestMock.mockRejectedValue(new Error('Contest missing'));
-    listContestEntriesMock.mockResolvedValue({
-      data: {
-        contestId: 'contest-1',
-        total: 0,
-        isJoined: false,
-        myEntryId: '',
-        entries: [],
-      },
-    });
-    getStandingsMock.mockResolvedValue({
-      data: {
-        standings: [],
-        total: 0,
-        page: 1,
-        pageSize: 50,
-        contestId: 'contest-1',
-      },
+  // pool-master-dxd.13 — MY filter is client-side; total count stays unfiltered.
+  it('filters rows when "My entries only" is toggled on', async () => {
+    primeMocks({
+      entries: [
+        buildEntry({ id: 'entry-1', squadId: 'squad-1' }),
+        buildEntry({ id: 'entry-3', squadId: 'squad-other', squadName: 'Other Team', name: 'Other Team Entry 1' }),
+      ],
     });
 
-    renderContestDetailPage();
+    renderContestBoard();
 
-    await screen.findByText("We couldn't load this contest.");
-    expect(mockLogger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'contestDetail.contest.failed',
-      }),
-      expect.any(String),
-    );
+    expect(await screen.findByTestId('contest-board-entry-entry-1')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-board-entry-entry-3')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-board-my-only-toggle'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('contest-board-entry-entry-3')).not.toBeInTheDocument();
+    });
+    expect(screen.getByTestId('contest-board-entry-entry-1')).toBeInTheDocument();
+
+    // Header counts must NOT change with the toggle.
+    expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Total Entries: 2');
   });
 
-  it('highlights the current team entries in the list and supports multiple entries while open', async () => {
-    primeCommonMocks();
-    listContestEntriesMock.mockResolvedValue({
-      data: {
-        contestId: 'contest-1',
-        total: 3,
-        isJoined: true,
-        myEntryId: 'entry-1',
-        myEntryIds: ['entry-1', 'entry-3'],
-        entries: [
-          {
-            id: 'entry-1',
-            contestId: 'contest-1',
-            squadId: 'squad-1',
-            squadName: 'Birdie Hunters',
-            entryNumber: 1,
-            name: 'Birdie Hunters Entry 1',
-            status: 'ACTIVE',
-            totalScore: 12,
-            standingsPosition: 2,
-            isEliminated: false,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-15T00:00:00.000Z',
-          },
-          {
-            id: 'entry-3',
-            contestId: 'contest-1',
-            squadId: 'squad-1',
-            squadName: 'Birdie Hunters',
-            entryNumber: 2,
-            name: 'Birdie Hunters Entry 2',
-            status: 'ACTIVE',
-            totalScore: 9,
-            standingsPosition: 1,
-            isEliminated: false,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-15T00:00:00.000Z',
-          },
-          {
-            id: 'entry-2',
-            contestId: 'contest-1',
-            squadId: 'squad-2',
-            squadName: 'Fairway Finders',
-            entryNumber: 1,
-            name: 'Fairway Finders Entry 1',
-            status: 'ACTIVE',
-            totalScore: 18,
-            standingsPosition: 4,
-            isEliminated: false,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-15T00:00:00.000Z',
-          },
-        ],
-      },
+  // pool-master-dxd.13 — own entries get the spotlight regardless of toggle state.
+  it('spotlights the requester’s own entries', async () => {
+    primeMocks({
+      entries: [
+        buildEntry({ id: 'entry-1', squadId: 'squad-1' }),
+        buildEntry({ id: 'entry-3', squadId: 'squad-other', squadName: 'Other Team', name: 'Other Team Entry 1' }),
+      ],
     });
 
-    renderContestDetailPage();
+    renderContestBoard();
 
-    expect(await screen.findByTestId('contest-entry-entry-1')).toHaveTextContent('Birdie Hunters Entry 1');
-    expect(screen.getByTestId('contest-entry-entry-3')).toHaveTextContent('Birdie Hunters Entry 2');
-    expect(screen.getAllByText('Your team')).toHaveLength(2);
-    expect(screen.getByTestId('contest-entry-open-my-entries-entry-1')).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS/entries',
-    );
-    expect(screen.getByTestId('contest-entry-open-my-entries-entry-3')).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS/entries',
-    );
-    expect(screen.queryByTestId('contest-entry-open-my-entries-entry-2')).not.toBeInTheDocument();
-    expect(screen.getByTestId('contest-entry-entry-2')).toHaveTextContent('Fairway Finders Entry 1');
-    expect(screen.queryByTestId('contest-leaderboard')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('contest-board-entry-spotlight-entry-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-board-entry-spotlight-entry-3')).not.toBeInTheDocument();
   });
 
-  it('expands leaderboard details when requested', async () => {
-    primeCommonMocks({ contestStatus: 'ACTIVE' });
-    listContestEntriesMock.mockResolvedValue({
-      data: {
-        contestId: 'contest-1',
-        total: 1,
-        isJoined: true,
-        myEntryId: 'entry-1',
-        myEntryIds: ['entry-1'],
-        entries: [
-          {
-            id: 'entry-1',
-            contestId: 'contest-1',
-            squadId: 'squad-1',
-            squadName: 'Birdie Hunters',
-            entryNumber: 1,
-            name: 'Birdie Hunters Entry 1',
-            status: 'ACTIVE',
-            totalScore: 42,
-            standingsPosition: 1,
-            isEliminated: false,
-            createdAt: '2026-04-15T00:00:00.000Z',
-            updatedAt: '2026-04-15T00:00:00.000Z',
-          },
-        ],
-      },
+  // pool-master-dxd.13 — pre-event-start + non-owner: expand renders the
+  // 'Picks hidden' placeholder and surfaces picksCount.
+  it('renders the picks-hidden placeholder when expanding a non-owner row pre-event-start', async () => {
+    primeMocks({
+      contestStatus: 'OPEN',
+      picksRevealed: false,
+      entries: [
+        buildEntry({
+          id: 'entry-3',
+          squadId: 'squad-other',
+          squadName: 'Other Team',
+          name: 'Other Team Entry 1',
+          picksCount: 5,
+        }),
+      ],
     });
 
-    renderContestDetailPage();
+    renderContestBoard();
 
-    expect(await screen.findByTestId('contest-leaderboard-entry-entry-1')).toHaveTextContent(
-      'Birdie Hunters Entry 1',
+    fireEvent.click(await screen.findByTestId('contest-board-toggle-entry-3'));
+
+    expect(await screen.findByTestId('contest-board-picks-hidden-entry-3')).toHaveTextContent(
+      '5 picks made',
     );
-
-    expect(screen.queryByTestId('contest-entry-list')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId('contest-leaderboard-toggle-entry-1'));
-
-    expect(await screen.findByTestId('contest-leaderboard-participant-entry-1-participant-1')).toHaveTextContent(
-      'Scottie Scheffler',
-    );
-    expect(getContestEntryMock).toHaveBeenCalledWith({
-      path: { contestId: 'contest-1', entryId: 'entry-1' },
-    });
+    expect(screen.queryByTestId(/contest-leaderboard-participant-entry-3-/)).not.toBeInTheDocument();
   });
 
-  it('shows truthful locked-state copy when entry creation is no longer available', async () => {
-    primeCommonMocks({ contestStatus: 'LOCKED', selectionType: 'PICK_EM' });
-    listContestEntriesMock.mockResolvedValue({
-      data: {
-        contestId: 'contest-1',
-        total: 3,
-        isJoined: false,
-        myEntryId: '',
-        entries: [],
-      },
+  // pool-master-dxd.13 — pre-event-start + owner: expand reveals owner's own picks.
+  it('renders the owner’s own picks even when picks are not yet revealed league-wide', async () => {
+    primeMocks({
+      contestStatus: 'OPEN',
+      picksRevealed: false,
+      entries: [
+        buildEntry({
+          id: 'entry-1',
+          squadId: 'squad-1',
+          picksCount: 1,
+          participants: [
+            {
+              rosterPickId: 'pick-1',
+              sportEventParticipantId: 'sep-1',
+              participantId: 'participant-1',
+              participantName: 'Tiger Woods',
+              contestPoints: 0,
+              pickedAt: '2026-04-15T00:00:00.000Z',
+              latestPerformance: {},
+            },
+          ],
+        }),
+      ],
     });
 
-    renderContestDetailPage();
+    renderContestBoard();
 
-    expect(await screen.findByTestId('contest-open-my-entries')).toBeInTheDocument();
-    expect(screen.queryByTestId('contest-enter-entry')).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByTestId('contest-board-toggle-entry-1'));
+
     expect(
-      screen.getByText(/Contest Home keeps the full entry directory here until scoring begins/),
-    ).toBeInTheDocument();
+      await screen.findByTestId('contest-leaderboard-participant-entry-1-participant-1'),
+    ).toHaveTextContent('Tiger Woods');
+    expect(screen.queryByTestId('contest-board-picks-hidden-entry-1')).not.toBeInTheDocument();
+  });
+
+  // pool-master-dxd.13 — post-event-start: picks are revealed for every row.
+  it('reveals participant picks on every row once contest status moves past OPEN', async () => {
+    primeMocks({
+      contestStatus: 'LOCKED',
+      picksRevealed: true,
+      entries: [
+        buildEntry({
+          id: 'entry-3',
+          squadId: 'squad-other',
+          squadName: 'Other Team',
+          name: 'Other Team Entry 1',
+          picksCount: 1,
+          participants: [
+            {
+              rosterPickId: 'pick-3',
+              sportEventParticipantId: 'sep-3',
+              participantId: 'participant-3',
+              participantName: 'Phil Mickelson',
+              contestPoints: 0,
+              pickedAt: '2026-04-15T00:00:00.000Z',
+              latestPerformance: {},
+            },
+          ],
+        }),
+      ],
+    });
+
+    renderContestBoard();
+
+    fireEvent.click(await screen.findByTestId('contest-board-toggle-entry-3'));
+
+    expect(
+      await screen.findByTestId('contest-leaderboard-participant-entry-3-participant-3'),
+    ).toHaveTextContent('Phil Mickelson');
+    expect(screen.queryByTestId('contest-board-picks-hidden-entry-3')).not.toBeInTheDocument();
+  });
+
+  // pool-master-dxd.13 — create-entry affordance: visible when contest is OPEN
+  // and the viewer's team is in the league.
+  it('shows the create-entry button when the contest is OPEN and the viewer has a team', async () => {
+    primeMocks({ contestStatus: 'OPEN', entries: [] });
+
+    renderContestBoard();
+
+    expect(await screen.findByTestId('contest-board-create-entry')).toBeInTheDocument();
+  });
+
+  it('hides the create-entry button when the contest is not OPEN', async () => {
+    primeMocks({
+      contestStatus: 'LOCKED',
+      picksRevealed: true,
+      entries: [],
+    });
+
+    renderContestBoard();
+
+    await screen.findByTestId('contest-board-total-count');
+    expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
+  });
+
+  // pool-master-dxd.13 — inline rename for the requester's own entries while OPEN.
+  it('lets the owner rename their own entry inline while contest is OPEN', async () => {
+    primeMocks({
+      contestStatus: 'OPEN',
+      picksRevealed: false,
+      entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1' })],
+    });
+    updateContestEntryMock.mockResolvedValue({
+      data: { entry: { id: 'entry-1', name: 'My Renamed Entry' } },
+    });
+
+    renderContestBoard();
+
+    fireEvent.click(await screen.findByTestId('contest-board-rename-entry-1'));
+
+    const input = await screen.findByTestId('contest-board-rename-input-entry-1');
+    fireEvent.change(input, { target: { value: 'My Renamed Entry' } });
+    fireEvent.click(screen.getByTestId('contest-board-rename-save-entry-1'));
+
+    await waitFor(() => {
+      expect(updateContestEntryMock).toHaveBeenCalledWith({
+        path: { contestId: 'contest-1', entryId: 'entry-1' },
+        body: { name: 'My Renamed Entry' },
+      });
+    });
   });
 });
