@@ -90,13 +90,15 @@ function renderAuthProvider() {
     },
   });
 
-  return render(
+  const utils = render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AuthProbe />
       </AuthProvider>
     </QueryClientProvider>,
   );
+
+  return { ...utils, queryClient };
 }
 
 describe('AuthProvider', () => {
@@ -189,6 +191,53 @@ describe('AuthProvider', () => {
       }),
       expect.any(String),
     );
+  });
+
+  // pool-master-dxd.12 — Auth refresh guard re-arms whenever meQuery.error
+  // transitions, allowing repeated refresh attempts. The guard must stay armed
+  // across me-query flaps that do NOT pass through a successful
+  // refresh+refetch recovery — otherwise a flaky /auth/me endpoint will
+  // repeatedly fire /auth/refresh and clear the user's local session each time
+  // refresh fails.
+  it('does not re-fire refresh on a me-query flap once the initial refresh attempt has resolved', async () => {
+    getCurrentUserMock
+      .mockRejectedValueOnce(new Error('Unauthorized'))
+      .mockResolvedValueOnce({
+        data: {
+          user: buildUser(),
+        },
+      })
+      .mockRejectedValueOnce(new Error('Unauthorized'));
+    refreshTokenMock.mockResolvedValue({
+      data: null,
+    });
+
+    const { queryClient } = renderAuthProvider();
+
+    // Step 1: initial me failure → first refresh attempt (resolves with no
+    // session data → clearSessionState).
+    await waitFor(() => {
+      expect(refreshTokenMock).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(useSessionStore.getState().user).toBeNull();
+    });
+
+    // Step 2: external invalidation that succeeds. This is the "recovery
+    // without refresh" the bug used to re-arm on. The guard must absorb it.
+    await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'auth', 'me'] });
+    await waitFor(() => {
+      expect(useSessionStore.getState().user?.id).toBe('user-1');
+    });
+
+    // Step 3: external invalidation that fails. With the broken guard this
+    // triggers a second refresh attempt. With the fix the guard stays armed.
+    await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'auth', 'me'] });
+
+    // Allow any pending effects to flush before asserting the count.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(refreshTokenMock).toHaveBeenCalledTimes(1);
   });
 
   it('clears local state even when the logout request fails', async () => {

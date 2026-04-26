@@ -22,6 +22,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setSession = useSessionStore((state) => state.setSession);
   const setSessionId = useSessionStore((state) => state.setSessionId);
   const clearSessionState = useSessionStore((state) => state.clearSession);
+  // The refresh-guard ref intentionally only resets in the refresh-success
+  // path (after a /auth/refresh attempt that recovers a valid session). It is
+  // not reset on me-query data updates or error-to-null transitions, because
+  // that would let a flapping /auth/me endpoint repeatedly fire /auth/refresh
+  // and clear the local session each time refresh fails. See pool-master-dxd.12.
   const attemptedRefreshRef = useRef(false);
 
   const meQuery = useQuery({
@@ -65,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    attemptedRefreshRef.current = false;
     setSession(meQuery.data);
     logger.info(
       {
@@ -81,7 +85,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!meQuery.error) {
-      attemptedRefreshRef.current = false;
       return;
     }
     if (attemptedRefreshRef.current) {
@@ -138,6 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        attemptedRefreshRef.current = false;
         logger.info(
           {
             action: 'auth.refresh.succeeded',
