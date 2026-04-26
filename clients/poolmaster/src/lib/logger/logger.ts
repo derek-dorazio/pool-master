@@ -86,6 +86,23 @@ export function resolveDefaultLogLevel(mode: string): LogLevel {
   return 'info';
 }
 
+export function resolveConfiguredLogLevel(
+  configuredLevel: string | undefined,
+  mode: string,
+): LogLevel {
+  if (
+    configuredLevel === 'debug'
+    || configuredLevel === 'info'
+    || configuredLevel === 'warn'
+    || configuredLevel === 'error'
+    || configuredLevel === 'fatal'
+  ) {
+    return configuredLevel;
+  }
+
+  return resolveDefaultLogLevel(mode);
+}
+
 type CreateLoggerOptions = {
   sinks: LogSink[];
   minLevel: LogLevel;

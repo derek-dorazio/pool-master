@@ -488,6 +488,7 @@ locals {
 
   common_env = [
     { name = "NODE_ENV", value = var.environment },
+    { name = "LOG_LEVEL", value = var.core_api_log_level },
     { name = "DATABASE_URL", value = local.db_url },
     { name = "SPORT_DATA_DEFAULT_PROVIDER", value = local.resolved_sport_data_default_provider },
     { name = "SPORT_DATA_PROVIDER_BINDINGS_JSON", value = local.resolved_sport_data_provider_bindings_json },

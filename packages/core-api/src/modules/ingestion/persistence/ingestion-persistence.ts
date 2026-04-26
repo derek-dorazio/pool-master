@@ -6,6 +6,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
 import type {
   SportEvent,
@@ -19,7 +20,10 @@ import {
 } from '../../events/operational-timing';
 
 export class IngestionPersistence {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly logger?: FastifyBaseLogger,
+  ) {}
 
   /**
    * Upsert sport events by (providerId, externalId).
@@ -27,6 +31,19 @@ export class IngestionPersistence {
    */
   async persistEvents(events: SportEvent[]): Promise<number> {
     let count = 0;
+    this.logger?.debug({
+      count: events.length,
+      events: events.slice(0, 10).map((event) => ({
+        providerId: event.providerId,
+        externalId: event.externalId,
+        sport: event.sport,
+        name: event.name,
+        status: event.status,
+        startDate: event.startDate.toISOString(),
+        releaseAt: event.metadata.releaseAt ?? null,
+        fieldLocksAt: event.metadata.fieldLocksAt ?? null,
+      })),
+    }, 'Persisting sport events from ingestion');
 
     for (const event of events) {
       const timingPolicy = await this.resolveTimingPolicy(event.sport, event.metadata);
@@ -76,8 +93,18 @@ export class IngestionPersistence {
         },
       });
       count++;
+      this.logger?.debug({
+        providerId: event.providerId,
+        externalId: event.externalId,
+        sport: event.sport,
+        name: event.name,
+        releaseAt: resolvedTiming.releaseAt.toISOString(),
+        fieldLocksAt: resolvedTiming.fieldLocksAt.toISOString(),
+        providerFieldLocked: event.fieldLocked,
+      }, 'Persisted sport event from ingestion');
     }
 
+    this.logger?.info({ count }, 'Persisted sport events from ingestion');
     return count;
   }
 
@@ -114,6 +141,16 @@ export class IngestionPersistence {
    */
   async persistParticipants(participants: ProviderParticipant[]): Promise<number> {
     let count = 0;
+    this.logger?.debug({
+      count: participants.length,
+      participants: participants.slice(0, 10).map((participant) => ({
+        providerId: participant.providerId,
+        externalId: participant.externalId,
+        sport: participant.sport,
+        name: participant.name,
+        active: participant.active,
+      })),
+    }, 'Persisting participants from ingestion');
 
     for (const p of participants) {
       const mapping = await this.prisma.participantProviderMapping.findUnique({
@@ -186,6 +223,7 @@ export class IngestionPersistence {
       count++;
     }
 
+    this.logger?.info({ count }, 'Persisted participants from ingestion');
     return count;
   }
 
@@ -201,6 +239,13 @@ export class IngestionPersistence {
     sportEventParticipantsPersisted: number;
     sourceDataPersisted: number;
   }> {
+    this.logger?.debug({
+      providerId: detail.providerId,
+      externalId: detail.externalId,
+      sport: detail.sport,
+      name: detail.name,
+      participantCount: detail.participants.length,
+    }, 'Persisting event detail from ingestion');
     const eventsPersisted = await this.persistEvents([detail]);
     const participantsPersisted = await this.persistParticipants(detail.participants);
 
@@ -281,6 +326,16 @@ export class IngestionPersistence {
       sourceDataPersisted++;
     }
 
+    this.logger?.info({
+      providerId: detail.providerId,
+      externalId: detail.externalId,
+      sport: detail.sport,
+      eventsPersisted,
+      participantsPersisted,
+      sportEventParticipantsPersisted,
+      sourceDataPersisted,
+    }, 'Persisted event detail from ingestion');
+
     return {
       eventsPersisted,
       participantsPersisted,
@@ -301,6 +356,15 @@ export class IngestionPersistence {
    */
   async persistRankings(rankings: ProviderRanking[]): Promise<number> {
     let count = 0;
+    this.logger?.debug({
+      count: rankings.length,
+      rankings: rankings.slice(0, 10).map((ranking) => ({
+        participantExternalId: ranking.participantExternalId,
+        rankingType: ranking.rankingType,
+        rank: ranking.rank,
+        asOfDate: ranking.asOfDate.toISOString(),
+      })),
+    }, 'Persisting rankings from ingestion');
 
     for (const r of rankings) {
       // We need the providerId from context — rankings reference participantExternalId
@@ -371,6 +435,7 @@ export class IngestionPersistence {
       count++;
     }
 
+    this.logger?.info({ count }, 'Persisted rankings from ingestion');
     return count;
   }
 }

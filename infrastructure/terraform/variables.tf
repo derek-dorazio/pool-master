@@ -104,6 +104,17 @@ variable "ecs_memory" {
   default     = 512
 }
 
+variable "core_api_log_level" {
+  description = "Runtime LOG_LEVEL for the core-api container."
+  type        = string
+  default     = "info"
+
+  validation {
+    condition     = contains(["debug", "info", "warn", "error", "fatal"], var.core_api_log_level)
+    error_message = "core_api_log_level must be one of debug, info, warn, error, or fatal."
+  }
+}
+
 variable "core_api_bootstrap_image_tag" {
   description = "Immutable bootstrap image tag for the initial core-api and migrate task definitions. CI/CD registers later revisions from released images."
   type        = string

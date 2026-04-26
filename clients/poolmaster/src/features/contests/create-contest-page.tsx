@@ -604,6 +604,39 @@ export function CreateContestPage() {
   }, [eventsQuery.error, eventsQuery.isError, isEditMode, leagueCode, logger]);
 
   useEffect(() => {
+    if (!eventsQuery.data) {
+      return;
+    }
+
+    logger.info(
+      {
+        action: 'contestCreate.events.loaded',
+        data: {
+          leagueCode,
+          eventCount: eventsQuery.data.length,
+          eligibleCount: eligibleEvents.length,
+          unavailableCount: unavailableEvents.length,
+          events: eventsQuery.data.map((event) => ({
+            id: event.id,
+            sport: event.sport,
+            name: event.name,
+            status: event.status,
+            startDate: event.startDate,
+            releaseAt: event.releaseAt,
+            fieldLocksAt: event.fieldLocksAt,
+            participantCount: event.participantCount,
+            fieldLocked: event.fieldLocked,
+            readinessStatus: event.readinessStatus,
+            readinessReasons: event.readinessReasons,
+            contestEligible: event.contestEligible,
+          })),
+        },
+      },
+      'Contest create page loaded sport events',
+    );
+  }, [eligibleEvents.length, eventsQuery.data, leagueCode, logger, unavailableEvents.length]);
+
+  useEffect(() => {
     if (!leagueQuery.data || !eventsQuery.data) {
       return;
     }
@@ -615,13 +648,24 @@ export function CreateContestPage() {
           leagueCode,
           leagueId: leagueQuery.data.id,
           eventCount: eventsQuery.data.length,
+          eligibleEventCount: eligibleEvents.length,
+          unavailableEventCount: unavailableEvents.length,
           templateCount: visibleTemplates.length,
           isEditMode,
         },
       },
       'Contest create page loaded',
     );
-  }, [eventsQuery.data, isEditMode, leagueCode, leagueQuery.data, logger, visibleTemplates.length]);
+  }, [
+    eligibleEvents.length,
+    eventsQuery.data,
+    isEditMode,
+    leagueCode,
+    leagueQuery.data,
+    logger,
+    unavailableEvents.length,
+    visibleTemplates.length,
+  ]);
 
   const saveContestMutation = useMutation({
     mutationFn: async () => {

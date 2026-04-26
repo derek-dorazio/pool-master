@@ -2,7 +2,7 @@ import { useSessionStore } from '@/features/auth/session-store';
 import { getEmbeddedVersionInfo } from '@/lib/version-info';
 import { consoleSink } from './console-sink';
 import { createNetworkSink } from './network-sink';
-import { createLogger, resolveDefaultLogLevel } from './logger';
+import { createLogger, resolveConfiguredLogLevel } from './logger';
 
 function getLoggerContext() {
   const { sessionId, user } = useSessionStore.getState();
@@ -19,7 +19,7 @@ export const logger = createLogger({
   sinks: import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test'
     ? [consoleSink]
     : [consoleSink, createNetworkSink()],
-  minLevel: resolveDefaultLogLevel(import.meta.env.MODE),
+  minLevel: resolveConfiguredLogLevel(import.meta.env.VITE_LOG_LEVEL, import.meta.env.MODE),
   getContext: getLoggerContext,
 });
 

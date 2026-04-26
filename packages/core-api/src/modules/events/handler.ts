@@ -41,6 +41,7 @@ export function createEventHandlers(eventService: EventService) {
           action: 'events.route.list.success',
           data: {
             count: response.events.length,
+            contestEligibleCount: response.events.filter((event) => event.contestEligible).length,
           },
         },
         'Listed events response',
@@ -51,6 +52,20 @@ export function createEventHandlers(eventService: EventService) {
           action: 'events.route.list.complete',
           data: {
             count: response.events.length,
+            events: response.events.slice(0, 25).map((event) => ({
+              id: event.id,
+              sport: event.sport,
+              name: event.name,
+              status: event.status,
+              startDate: event.startDate,
+              releaseAt: event.releaseAt,
+              fieldLocksAt: event.fieldLocksAt,
+              participantCount: event.participantCount,
+              fieldLocked: event.fieldLocked,
+              readinessStatus: event.readinessStatus,
+              readinessReasons: event.readinessReasons,
+              contestEligible: event.contestEligible,
+            })),
           },
         },
         'Completed list events request',

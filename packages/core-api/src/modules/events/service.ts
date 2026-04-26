@@ -93,6 +93,18 @@ export class EventService {
           action: 'events.list.complete',
           data: {
             count: mappedEvents.length,
+            events: mappedEvents.slice(0, 25).map((event) => ({
+              id: event.id,
+              sport: event.sport,
+              name: event.name,
+              status: event.status,
+              startDate: event.startDate.toISOString(),
+              releaseAt: event.releaseAt.toISOString(),
+              fieldLocksAt: event.fieldLocksAt.toISOString(),
+              participantCount: event.participantCount,
+              loadedParticipantCount: event.loadedParticipantCount,
+              providerFieldLocked: event.providerFieldLocked,
+            })),
           },
         },
         'Completed events listing',

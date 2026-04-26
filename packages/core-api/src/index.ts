@@ -68,7 +68,7 @@ export function buildApp() {
   const registry = new ProviderRegistry();
   registerConfiguredProviders(registry, process.env, app.log);
   const oddsAdapter = new OddsApiAdapter();
-  const ingestionPersistence = new IngestionPersistence(prisma);
+  const ingestionPersistence = new IngestionPersistence(prisma, app.log);
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
   const pollConfigService = new PollConfigService(runtimeConfigRepository, app.log);
   const ingestionConfigService = new IngestionConfigService(runtimeConfigRepository, app.log);
@@ -97,26 +97,70 @@ export function buildApp() {
 
   const ingestionCallbacks: IngestionCallbacks = {
     async onEvents(events: SportEvent[]) {
-      app.log.info({ count: events.length }, 'Ingested events');
+      app.log.info({
+        count: events.length,
+        events: events.slice(0, 10).map((event) => ({
+          providerId: event.providerId,
+          externalId: event.externalId,
+          sport: event.sport,
+          name: event.name,
+          status: event.status,
+          startDate: event.startDate.toISOString(),
+          participantCount: event.participantCount ?? null,
+        })),
+      }, 'Ingested events');
       const persisted = await ingestionPersistence.persistEvents(events);
       app.log.info({ persisted }, 'Persisted sport events');
     },
     async onEventDetail(detail: SportEventDetail) {
-      app.log.info({ eventExternalId: detail.externalId, participantCount: detail.participants.length }, 'Ingested event detail');
+      app.log.info({
+        providerId: detail.providerId,
+        eventExternalId: detail.externalId,
+        sport: detail.sport,
+        name: detail.name,
+        startDate: detail.startDate.toISOString(),
+        participantCount: detail.participants.length,
+      }, 'Ingested event detail');
       const persisted = await ingestionPersistence.persistEventDetail(detail);
       app.log.info({ persisted }, 'Persisted event detail');
     },
     async onRankings(rankings: ProviderRanking[]) {
-      app.log.info({ count: rankings.length }, 'Ingested rankings');
+      app.log.info({
+        count: rankings.length,
+        rankings: rankings.slice(0, 10).map((ranking) => ({
+          participantExternalId: ranking.participantExternalId,
+          rankingType: ranking.rankingType,
+          rank: ranking.rank,
+        })),
+      }, 'Ingested rankings');
       const persisted = await ingestionPersistence.persistRankings(rankings);
       app.log.info({ persisted }, 'Persisted rankings');
     },
     async onLiveScores(scores: ProviderStatEvent[]) {
-      app.log.info({ count: scores.length }, 'Ingested live scores');
+      app.log.info({
+        count: scores.length,
+        scores: scores.slice(0, 10).map((score) => ({
+          providerId: score.providerId,
+          eventExternalId: score.eventExternalId,
+          participantExternalId: score.participantExternalId,
+          statKey: score.statKey,
+          timestamp: score.timestamp.toISOString(),
+        })),
+      }, 'Ingested live scores');
       await publishStatEvents(scores);
     },
     async onJobComplete(job: IngestionJobRecord) {
-      app.log.info({ jobType: job.jobType, provider: job.providerId, status: job.status, records: job.recordsProcessed }, 'Job complete');
+      app.log.info({
+        jobType: job.jobType,
+        providerId: job.providerId,
+        sport: job.sport,
+        eventExternalId: job.eventExternalId ?? null,
+        status: job.status,
+        recordsProcessed: job.recordsProcessed,
+        errors: job.errors,
+        startedAt: job.startedAt?.toISOString() ?? null,
+        completedAt: job.completedAt?.toISOString() ?? null,
+      }, 'Job complete');
     },
   };
 
@@ -124,6 +168,11 @@ export function buildApp() {
     configReader: ingestionConfigService,
     eventReader: {
       async listEventIdsForFeed({ sport, feed, now }) {
+        app.log.debug({
+          sport,
+          feed,
+          now: now.toISOString(),
+        }, 'Listing sport event ids for scheduled ingestion feed');
         const rows = await prisma.sportEvent.findMany({
           where: {
             sport,
@@ -143,6 +192,12 @@ export function buildApp() {
             externalId: true,
           },
         });
+        app.log.debug({
+          sport,
+          feed,
+          eventCount: rows.length,
+          eventExternalIds: rows.map((row) => row.externalId),
+        }, 'Listed sport event ids for scheduled ingestion feed');
         return rows.map((row) => row.externalId);
       },
     },

@@ -325,7 +325,7 @@ export class ProviderService {
     private readonly scheduler?: IngestionScheduler,
     private readonly logger?: FastifyBaseLogger,
   ) {
-    this.ingestionPersistence = new IngestionPersistence(prisma);
+    this.ingestionPersistence = new IngestionPersistence(prisma, logger);
   }
 
   private getProviderOrThrow(providerId: string): SportDataProvider {
@@ -699,7 +699,13 @@ export class ProviderService {
     rootAdminEmail: string,
   ): Promise<ProviderManualSyncSubmissionResult> {
     const { sport } = request;
-    this.logger?.debug({ sport, requestedFeeds: request.feeds }, 'Submitting manual sport sync');
+    this.logger?.info({
+      sport,
+      requestedFeeds: request.feeds,
+      from: request.from?.toISOString() ?? null,
+      to: request.to?.toISOString() ?? null,
+      rootAdminUserId,
+    }, 'Submitting manual sport sync');
     const provider = this.registry.getProvider(sport);
     if (!provider) {
       this.logger?.error({ sport }, 'Manual sport sync was requested without a configured provider');
@@ -749,6 +755,8 @@ export class ProviderService {
       sport,
       providerId: provider.providerId,
       requestedFeeds: request.feeds,
+      from: request.from?.toISOString() ?? null,
+      to: request.to?.toISOString() ?? null,
       syncRunIds: syncRuns.map((run) => run.id),
     }, 'Submitted manual sport sync');
     return {
@@ -779,6 +787,13 @@ export class ProviderService {
     }
 
     const submittedAt = new Date();
+    this.logger?.info({
+      sport: request.sport,
+      eventId: request.eventId,
+      requestedFeeds: request.feeds,
+      providerId: provider.providerId,
+      rootAdminUserId,
+    }, 'Submitting manual event sync');
     const syncRuns = await this.createManualSyncRunSubmissions({
       sport: request.sport,
       eventId: request.eventId,
@@ -906,6 +921,13 @@ export class ProviderService {
     request: SportSyncRequest;
     syncRuns: ProviderSyncRun[];
   }): Promise<void> {
+    this.logger?.debug({
+      sport: input.sport,
+      requestedFeeds: input.request.feeds,
+      syncRunIds: input.syncRuns.map((run) => run.id),
+      from: input.request.from?.toISOString() ?? null,
+      to: input.request.to?.toISOString() ?? null,
+    }, 'Executing submitted manual sport sync');
     for (const syncRun of input.syncRuns) {
       const requestedFeed = syncRun.payload.requestedFeed;
       if (!isSportSyncFeedType(requestedFeed)) {
@@ -928,6 +950,12 @@ export class ProviderService {
     request: EventSyncRequest;
     syncRuns: ProviderSyncRun[];
   }): Promise<void> {
+    this.logger?.debug({
+      sport: input.request.sport,
+      eventId: input.request.eventId,
+      requestedFeeds: input.request.feeds,
+      syncRunIds: input.syncRuns.map((run) => run.id),
+    }, 'Executing submitted manual event sync');
     for (const syncRun of input.syncRuns) {
       const requestedFeed = syncRun.payload.requestedFeed;
       if (!isEventSyncFeedType(requestedFeed)) {
@@ -963,6 +991,14 @@ export class ProviderService {
       completedAt: null,
       payload: startedPayload,
     });
+    this.logger?.debug({
+      syncRunId: syncRun.id,
+      providerId: syncRun.providerId,
+      sport: syncRun.sport,
+      eventId: syncRun.eventId,
+      requestedFeed,
+      startedAt: startedAt.toISOString(),
+    }, 'Manual sync feed run started');
 
     try {
       const [job] = await run();

@@ -460,6 +460,7 @@ jobs:
           CORE_SERVICE="poolmaster-qa-core-api"
           MOCK_PROVIDER_SERVICE="poolmaster-qa-mock-contest-feed-provider"
           MIGRATE_FAMILY="poolmaster-qa-migrate"
+          CORE_API_LOG_LEVEL="debug"
           QA_CORE_API_TASK_DEF=""
           QA_MIGRATE_TASK_DEF=""
           QA_MOCK_PROVIDER_TASK_DEF=""
@@ -475,7 +476,7 @@ jobs:
               --task-definition "$CORE_SERVICE_TASK_DEF" \
               --query 'taskDefinition' \
               --output json \
-              | jq --arg IMAGE "$CORE_API_IMAGE" '
+              | jq --arg IMAGE "$CORE_API_IMAGE" --arg LOG_LEVEL "$CORE_API_LOG_LEVEL" '
                   del(
                     .taskDefinitionArn,
                     .revision,
@@ -486,7 +487,13 @@ jobs:
                     .registeredBy
                   )
                   | .containerDefinitions |= map(
-                      if .name == "core-api" then .image = $IMAGE else . end
+                      if .name == "core-api"
+                      then
+                        .image = $IMAGE
+                        | .environment = ((.environment // [])
+                          | map(select(.name != "LOG_LEVEL"))
+                          + [{ name: "LOG_LEVEL", value: $LOG_LEVEL }])
+                      else . end
                     )
                 ' > /tmp/qa-core-api-task-def.json
 
@@ -578,6 +585,7 @@ jobs:
           cd clients/poolmaster
           APP_ASSET_BASE="/${WEB_RELEASE_PREFIX}/" \
           POOLMASTER_ENVIRONMENT="qa" \
+          VITE_LOG_LEVEL="debug" \
           POOLMASTER_RELEASE_PREFIX="${WEB_RELEASE_PREFIX}" \
           POOLMASTER_BUILD_TIME_UTC="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
           POOLMASTER_GIT_REF="${GITHUB_REF_NAME}" \

@@ -73,12 +73,30 @@ export async function ingestionModule(
     },
   }, async (request) => {
     const sport = request.params.sport as Sport;
+    const logger = request.contextLogger ?? request.log;
+    logger.info({
+      sport,
+      feeds: request.body.feeds,
+      from: request.body.from ?? null,
+      to: request.body.to ?? null,
+    }, 'Direct ingestion sport sync route requested');
     const jobs = await scheduler.runSportSync({
       sport,
       feeds: request.body.feeds,
       from: request.body.from ? new Date(request.body.from) : undefined,
       to: request.body.to ? new Date(request.body.to) : undefined,
     });
+    logger.info({
+      sport,
+      feeds: request.body.feeds,
+      jobs: jobs.map((job) => ({
+        jobType: job.jobType,
+        providerId: job.providerId,
+        status: job.status,
+        recordsProcessed: job.recordsProcessed,
+        errors: job.errors,
+      })),
+    }, 'Direct ingestion sport sync route completed');
     return { jobs };
   });
 
@@ -104,11 +122,29 @@ export async function ingestionModule(
       },
     },
     async (request) => {
+      const logger = request.contextLogger ?? request.log;
+      logger.info({
+        sport: request.params.sport,
+        eventId: request.params.eventId,
+        feeds: request.body.feeds,
+      }, 'Direct ingestion event sync route requested');
       const jobs = await scheduler.runEventSync({
         sport: request.params.sport as Sport,
         eventId: request.params.eventId,
         feeds: request.body.feeds,
       });
+      logger.info({
+        sport: request.params.sport,
+        eventId: request.params.eventId,
+        feeds: request.body.feeds,
+        jobs: jobs.map((job) => ({
+          jobType: job.jobType,
+          providerId: job.providerId,
+          status: job.status,
+          recordsProcessed: job.recordsProcessed,
+          errors: job.errors,
+        })),
+      }, 'Direct ingestion event sync route completed');
       return { jobs };
     },
   );

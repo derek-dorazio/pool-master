@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createLogger } from './logger';
+import { createLogger, resolveConfiguredLogLevel } from './logger';
 import type { LogSink } from './types';
 import { resetClientTraceIdForTests } from './client-trace-id';
 
@@ -155,5 +155,10 @@ describe('logger', () => {
         route: '/league/abc',
       }),
     );
+  });
+
+  it('honors an explicit configured log level', () => {
+    expect(resolveConfiguredLogLevel('debug', 'production')).toBe('debug');
+    expect(resolveConfiguredLogLevel('verbose', 'production')).toBe('info');
   });
 });

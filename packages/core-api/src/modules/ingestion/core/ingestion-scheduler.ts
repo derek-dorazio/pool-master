@@ -159,6 +159,12 @@ export class IngestionScheduler {
   /** Runs a one-off sport sync for explicit feed types. */
   async runSportSync(request: SportSyncRequest): Promise<IngestionJobRecord[]> {
     const jobs: IngestionJobRecord[] = [];
+    this.logger?.info({
+      sport: request.sport,
+      feeds: request.feeds,
+      from: request.from?.toISOString() ?? null,
+      to: request.to?.toISOString() ?? null,
+    }, 'Manual or direct sport sync requested');
 
     for (const feed of dedupe(request.feeds)) {
       if (feed === 'EVENTSCHEDULE') {
@@ -174,12 +180,23 @@ export class IngestionScheduler {
       jobs.push(await this.runRankingSync(request.sport));
     }
 
+    this.logger?.info({
+      sport: request.sport,
+      feeds: request.feeds,
+      jobs: jobs.map(toJobLogPayload),
+    }, 'Manual or direct sport sync completed');
+
     return jobs;
   }
 
   /** Runs a one-off event sync for explicit feed types. */
   async runEventSync(request: EventSyncRequest): Promise<IngestionJobRecord[]> {
     const jobs: IngestionJobRecord[] = [];
+    this.logger?.info({
+      sport: request.sport,
+      eventId: request.eventId,
+      feeds: request.feeds,
+    }, 'Manual or direct event sync requested');
 
     for (const feed of dedupe(request.feeds)) {
       if (feed === 'EVENTPARTICIPANTS') {
@@ -195,6 +212,13 @@ export class IngestionScheduler {
       jobs.push(await this.fetchEventResults(request.sport, request.eventId));
     }
 
+    this.logger?.info({
+      sport: request.sport,
+      eventId: request.eventId,
+      feeds: request.feeds,
+      jobs: jobs.map(toJobLogPayload),
+    }, 'Manual or direct event sync completed');
+
     return jobs;
   }
 
@@ -209,6 +233,12 @@ export class IngestionScheduler {
 
     return this.runJob('EVENT_LIVE_SCORES_SYNC', provider.providerId, sport, async () => {
       const scores = await provider.getLiveScores(eventId);
+      this.logger?.debug({
+        sport,
+        eventId,
+        providerId: provider.providerId,
+        scoresReturned: scores.length,
+      }, 'Provider returned live scores');
       await this.callbacks.onLiveScores(scores);
       this.logger?.info({
         sport,
@@ -246,6 +276,12 @@ export class IngestionScheduler {
         isCorrection: false,
         providerId: provider.providerId,
       }));
+      this.logger?.debug({
+        sport,
+        eventId,
+        providerId: provider.providerId,
+        resultsReturned: results.results.length,
+      }, 'Provider returned event results');
       await this.callbacks.onLiveScores(statEvents);
       this.logger?.info({
         sport,
@@ -296,6 +332,7 @@ export class IngestionScheduler {
   private async runConfiguredSportScheduleSync(sport: Sport): Promise<void> {
     const config = await this.getSportConfig(sport);
     if (!config.eventSchedule.enabled) {
+      this.logger?.debug({ sport }, 'Skipping scheduled sport schedule sync because it is disabled');
       return;
     }
 
@@ -303,12 +340,19 @@ export class IngestionScheduler {
     const lookaheadDays = config.eventSchedule.lookaheadDays ?? 30;
     const from = now;
     const to = addDays(now, lookaheadDays);
+    this.logger?.debug({
+      sport,
+      from: from.toISOString(),
+      to: to.toISOString(),
+      lookaheadDays,
+    }, 'Running configured sport schedule sync');
     await this.runScheduleSync(sport, from, to);
   }
 
   private async runConfiguredSportFieldSync(sport: Sport): Promise<void> {
     const config = await this.getSportConfig(sport);
     if (!config.eventParticipants.enabled) {
+      this.logger?.debug({ sport }, 'Skipping scheduled participant sync because it is disabled');
       return;
     }
 
@@ -316,15 +360,23 @@ export class IngestionScheduler {
     const leadDays = config.eventParticipants.leadDaysBeforeStart ?? config.eventSchedule.lookaheadDays ?? 7;
     const from = now;
     const to = addDays(now, leadDays);
+    this.logger?.debug({
+      sport,
+      from: from.toISOString(),
+      to: to.toISOString(),
+      leadDays,
+    }, 'Running configured sport participant sync');
     await this.runFieldSync(sport, from, to);
   }
 
   private async runConfiguredSportRankingSync(sport: Sport): Promise<void> {
     const config = await this.getSportConfig(sport);
     if (!config.participantRankings.enabled) {
+      this.logger?.debug({ sport }, 'Skipping scheduled ranking sync because it is disabled');
       return;
     }
 
+    this.logger?.debug({ sport }, 'Running configured sport ranking sync');
     await this.runRankingSync(sport);
   }
 
@@ -335,6 +387,7 @@ export class IngestionScheduler {
     const config = await this.getSportConfig(sport);
     const policy = feed === 'EVENTLIVESCORES' ? config.eventLiveScores : config.eventResults;
     if (!policy.enabled) {
+      this.logger?.debug({ sport, feed }, 'Skipping scheduled event sync sweep because it is disabled');
       return;
     }
 
@@ -349,6 +402,13 @@ export class IngestionScheduler {
       feed,
       now: this.getNow(),
     });
+
+    this.logger?.debug({
+      sport,
+      feed,
+      eventCount: eventIds.length,
+      eventIds,
+    }, 'Resolved scheduled event sync candidates');
 
     for (const eventId of eventIds) {
       if (feed === 'EVENTLIVESCORES') {
@@ -388,7 +448,12 @@ export class IngestionScheduler {
     from?: Date,
     to?: Date,
   ): Promise<IngestionJobRecord> {
-    this.logger?.debug({ sport }, 'Running schedule sync for sport');
+    const dateRange = resolveDateRange(from, to);
+    this.logger?.debug({
+      sport,
+      from: dateRange.from.toISOString(),
+      to: dateRange.to.toISOString(),
+    }, 'Running schedule sync for sport');
     const provider = this.registry.getProvider(sport);
     if (!provider) {
       this.logger?.warn({ sport }, 'No provider registered for schedule sync');
@@ -396,13 +461,28 @@ export class IngestionScheduler {
     }
 
     return this.runJob('EVENT_SCHEDULE_SYNC', provider.providerId, sport, async () => {
-      const dateRange = resolveDateRange(from, to);
       const events = await provider.getUpcomingEvents(sport, dateRange);
+      this.logger?.debug({
+        sport,
+        providerId: provider.providerId,
+        eventsReturned: events.length,
+        eventSample: events.slice(0, 10).map(toEventSample),
+      }, 'Provider returned upcoming events');
+      if (events.length === 0) {
+        this.logger?.warn({
+          sport,
+          providerId: provider.providerId,
+          from: dateRange.from.toISOString(),
+          to: dateRange.to.toISOString(),
+        }, 'Provider returned no upcoming events for schedule sync');
+      }
       await this.callbacks.onEvents(events);
       this.logger?.info({
         sport,
         providerId: provider.providerId,
         eventsProcessed: events.length,
+        from: dateRange.from.toISOString(),
+        to: dateRange.to.toISOString(),
       }, 'Completed schedule sync for sport');
       return events.length;
     });
@@ -413,7 +493,12 @@ export class IngestionScheduler {
     from?: Date,
     to?: Date,
   ): Promise<IngestionJobRecord> {
-    this.logger?.debug({ sport }, 'Running participant sync for sport');
+    const dateRange = resolveDateRange(from, to);
+    this.logger?.debug({
+      sport,
+      from: dateRange.from.toISOString(),
+      to: dateRange.to.toISOString(),
+    }, 'Running participant sync for sport');
     const provider = this.registry.getProvider(sport);
     if (!provider) {
       this.logger?.warn({ sport }, 'No provider registered for participant sync');
@@ -421,16 +506,49 @@ export class IngestionScheduler {
     }
 
     return this.runJob('EVENT_PARTICIPANTS_SYNC', provider.providerId, sport, async () => {
-      const dateRange = resolveDateRange(from, to);
       const events = await provider.getUpcomingEvents(sport, dateRange);
+      this.logger?.debug({
+        sport,
+        providerId: provider.providerId,
+        eventsDiscovered: events.length,
+        eventSample: events.slice(0, 10).map(toEventSample),
+      }, 'Provider returned participant sync event candidates');
+      if (events.length === 0) {
+        this.logger?.warn({
+          sport,
+          providerId: provider.providerId,
+          from: dateRange.from.toISOString(),
+          to: dateRange.to.toISOString(),
+        }, 'Provider returned no event candidates for participant sync');
+      }
       let hydratedCount = 0;
+      let participantsReturned = 0;
 
       for (const event of events) {
+        this.logger?.debug({
+          sport,
+          providerId: provider.providerId,
+          eventExternalId: event.externalId,
+          eventName: event.name,
+          startDate: event.startDate.toISOString(),
+        }, 'Fetching event detail for participant sync');
         const detail = await provider.getEventDetails(event.externalId);
         if (!detail) {
+          this.logger?.warn({
+            sport,
+            providerId: provider.providerId,
+            eventExternalId: event.externalId,
+          }, 'Provider returned no event detail for participant sync candidate');
           continue;
         }
 
+        participantsReturned += detail.participants.length;
+        this.logger?.debug({
+          sport,
+          providerId: provider.providerId,
+          eventExternalId: detail.externalId,
+          participantCount: detail.participants.length,
+        }, 'Provider returned event detail for participant sync');
         await this.callbacks.onEventDetail(detail);
         hydratedCount += 1;
       }
@@ -440,6 +558,9 @@ export class IngestionScheduler {
         providerId: provider.providerId,
         eventsDiscovered: events.length,
         eventsHydrated: hydratedCount,
+        participantsReturned,
+        from: dateRange.from.toISOString(),
+        to: dateRange.to.toISOString(),
       }, 'Completed participant sync for sport');
       return hydratedCount;
     });
@@ -483,6 +604,11 @@ export class IngestionScheduler {
 
     return this.runJob('PARTICIPANT_RANKINGS_SYNC', provider.providerId, sport, async () => {
       const rankings = await provider.getRankings(sport, 'default');
+      this.logger?.debug({
+        sport,
+        providerId: provider.providerId,
+        rankingsReturned: rankings.length,
+      }, 'Provider returned rankings');
       await this.callbacks.onRankings(rankings);
       this.logger?.info({
         sport,
@@ -513,6 +639,13 @@ export class IngestionScheduler {
     };
 
     try {
+      this.logger?.debug({
+        jobType,
+        providerId,
+        sport,
+        eventExternalId: eventExternalId ?? null,
+        startedAt: job.startedAt?.toISOString() ?? null,
+      }, 'Ingestion job started');
       job.recordsProcessed = await work();
       job.status = 'COMPLETED';
       job.completedAt = new Date();
@@ -531,6 +664,12 @@ export class IngestionScheduler {
     }
 
     await this.callbacks.onJobComplete(job);
+    this.logger?.info({
+      ...toJobLogPayload(job),
+      durationMs: job.completedAt && job.startedAt
+        ? job.completedAt.getTime() - job.startedAt.getTime()
+        : null,
+    }, 'Ingestion job completed');
     return job;
   }
 
@@ -545,6 +684,7 @@ export class IngestionScheduler {
       }
 
       try {
+        this.logger?.debug({ label }, 'Recurring ingestion loop tick started');
         await runner();
       } catch (error) {
         this.logger?.error({ error, label }, 'Recurring ingestion loop failed');
@@ -559,6 +699,7 @@ export class IngestionScheduler {
         void tick();
       }, delayMs);
       this.timers.push(timer);
+      this.logger?.debug({ label, delayMs }, 'Recurring ingestion loop scheduled next tick');
     };
 
     void tick();
@@ -641,6 +782,34 @@ function createFailedJob(
 
 function dedupe<T extends string>(items: readonly T[]): T[] {
   return Array.from(new Set(items));
+}
+
+function toEventSample(event: SportEvent): Record<string, unknown> {
+  return {
+    externalId: event.externalId,
+    providerId: event.providerId,
+    name: event.name,
+    status: event.status,
+    startDate: event.startDate.toISOString(),
+    endDate: event.endDate?.toISOString() ?? null,
+    participantCount: event.participantCount ?? null,
+    releaseAt: event.metadata.releaseAt ?? null,
+    fieldLocksAt: event.metadata.fieldLocksAt ?? null,
+  };
+}
+
+function toJobLogPayload(job: IngestionJobRecord): Record<string, unknown> {
+  return {
+    jobType: job.jobType,
+    providerId: job.providerId,
+    sport: job.sport,
+    eventExternalId: job.eventExternalId ?? null,
+    status: job.status,
+    recordsProcessed: job.recordsProcessed,
+    errors: job.errors,
+    startedAt: job.startedAt?.toISOString() ?? null,
+    completedAt: job.completedAt?.toISOString() ?? null,
+  };
 }
 
 const CONFIG_RECHECK_MS = 60 * 1000;
