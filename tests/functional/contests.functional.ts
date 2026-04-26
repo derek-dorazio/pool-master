@@ -1382,4 +1382,375 @@ describe('SDK Functional: Contests and Entries', () => {
       code: 'CONTEST_ENTRY_SELECTIONS_EXIST',
     });
   });
+
+  // pool-master-dxd.13 — pre-event-start, non-owning squad members must not
+  // see another team's roster picks via getContestEntry. Owners still see
+  // their own picks. Once the contest progresses past the joinable phase,
+  // picks become visible to every league member.
+  it('redacts contest-entry picks from non-owners while contest is OPEN, reveals after status moves past OPEN', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({
+      displayName: 'Visibility Commissioner',
+      leagueName: 'Visibility Functional League',
+    });
+    const member = await buildRegisteredUser({
+      displayName: 'Visibility Member',
+    });
+
+    const { acceptInvitation, generateInviteLink } = await import('@poolmaster/shared/generated/hey-api');
+
+    const inviteLinkResponse = await generateInviteLink({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: { maxUses: 1 },
+    });
+    const acceptResponse = await acceptInvitation({
+      client: member.client,
+      body: {
+        inviteCode: inviteLinkResponse.data?.invitation.inviteCode as string,
+      },
+    });
+    expect(acceptResponse.data?.membership.userId).toBe(member.userId);
+
+    const createResponse = await createContest({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: {
+        name: 'Visibility Contest',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.TIERED,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
+        contestConfiguration: {
+          rounds: 1,
+          tierAssignmentMethod: TierAssignmentMethod.ODDS,
+          tierConfig: [
+            {
+              tierId: 'tier-1',
+              tierName: 'Tier 1',
+              tierNumber: 1,
+              picksFromTier: 1,
+              participantIds: [],
+            },
+          ],
+        },
+      },
+    });
+
+    const contestId = createResponse.data?.contest.id;
+    expect(contestId).toBeTruthy();
+
+    const prisma = getFunctionalPrisma();
+    await prisma.contest.update({
+      where: { id: contestId as string },
+      data: { status: ContestStatus.OPEN },
+    });
+
+    const sport = await prisma.sport.create({
+      data: {
+        name: `VisibilitySport-${randomUUID().slice(0, 8)}`,
+        participantType: ParticipantType.INDIVIDUAL,
+        statSchema: {},
+      },
+    });
+    createdSportIds.push(sport.id);
+
+    const participant = await prisma.participant.create({
+      data: {
+        sportId: sport.id,
+        name: `Visibility Golfer ${randomUUID().slice(0, 8)}`,
+        participantType: ParticipantType.INDIVIDUAL,
+        externalIds: {},
+        metadata: {},
+        position: 'GOLFER',
+        teamAffiliation: 'USA',
+      },
+    });
+    createdParticipantIds.push(participant.id);
+
+    const sportEvent = await prisma.sportEvent.create({
+      data: {
+        externalId: `visibility-event-${randomUUID().slice(0, 8)}`,
+        providerId: 'functional-test',
+        sport: Sport.GOLF,
+        name: 'Visibility Event',
+        startDate: new Date('2026-04-10T12:00:00.000Z'),
+        releaseAt: new Date('2026-04-10T12:00:00.000Z'),
+        fieldLocksAt: new Date('2026-04-10T12:00:00.000Z'),
+        status: 'SCHEDULED',
+      },
+    });
+    createdSportEventIds.push(sportEvent.id);
+
+    const sportEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: sportEvent.id,
+        participantId: participant.id,
+        status: 'ACTIVE',
+      },
+    });
+    createdSportEventParticipantIds.push(sportEventParticipant.id);
+
+    await prisma.contest.update({
+      where: { id: contestId as string },
+      data: { sportEventId: sportEvent.id },
+    });
+
+    await prisma.contestConfiguration.update({
+      where: { contestId: contestId as string },
+      data: {
+        tierConfig: [
+          {
+            tierId: 'tier-1',
+            tierName: 'Tier 1',
+            tierNumber: 1,
+            picksFromTier: 1,
+            participantIds: [participant.id],
+          },
+        ],
+      },
+    });
+
+    // Member enters and adds a roster pick.
+    const memberEntryResponse = await enterContest({
+      client: member.client,
+      path: { contestId: contestId as string },
+    });
+    const memberEntryId = memberEntryResponse.data?.entry.id;
+    expect(memberEntryId).toBeTruthy();
+
+    await prisma.rosterPick.create({
+      data: {
+        entryId: memberEntryId as string,
+        sportEventParticipantId: sportEventParticipant.id,
+        autoPicked: false,
+      },
+    });
+
+    // 1) Commissioner viewing the member's entry while contest is OPEN
+    //    must NOT receive participant picks. Defect this test catches:
+    //    pre-event-start picks were visible to anyone in the league.
+    const preEventNonOwnerResponse = await getContestEntry({
+      client: commissioner.client,
+      path: {
+        contestId: contestId as string,
+        entryId: memberEntryId as string,
+      },
+    });
+    expect(preEventNonOwnerResponse.data?.picksRevealed).toBe(false);
+    expect(preEventNonOwnerResponse.data?.entry.id).toBe(memberEntryId);
+    expect(preEventNonOwnerResponse.data?.entry.picksCount).toBe(1);
+    expect(preEventNonOwnerResponse.data?.entry.participants).toBeUndefined();
+
+    // 2) Member viewing their OWN entry while contest is OPEN must see picks.
+    const preEventOwnerResponse = await getContestEntry({
+      client: member.client,
+      path: {
+        contestId: contestId as string,
+        entryId: memberEntryId as string,
+      },
+    });
+    expect(preEventOwnerResponse.data?.picksRevealed).toBe(false);
+    expect(preEventOwnerResponse.data?.entry.picksCount).toBe(1);
+    expect(preEventOwnerResponse.data?.entry.participants?.length).toBe(1);
+    expect(preEventOwnerResponse.data?.entry.participants?.[0]?.participantId).toBe(participant.id);
+
+    // 3) Move contest past OPEN, then non-owner viewing must see picks.
+    await prisma.contest.update({
+      where: { id: contestId as string },
+      data: { status: ContestStatus.LOCKED },
+    });
+    const postEventNonOwnerResponse = await getContestEntry({
+      client: commissioner.client,
+      path: {
+        contestId: contestId as string,
+        entryId: memberEntryId as string,
+      },
+    });
+    expect(postEventNonOwnerResponse.data?.picksRevealed).toBe(true);
+    expect(postEventNonOwnerResponse.data?.entry.picksCount).toBe(1);
+    expect(postEventNonOwnerResponse.data?.entry.participants?.length).toBe(1);
+    expect(postEventNonOwnerResponse.data?.entry.participants?.[0]?.participantId).toBe(participant.id);
+  });
+
+  // pool-master-dxd.13 — listContestEntries must mirror the same redaction
+  // contract: pre-event-start the response carries picksRevealed=false,
+  // entries[].participants is omitted for non-owning entries, and the
+  // requester's own entries still bundle participants. Post-event-start
+  // every entry includes participants[].
+  it('listContestEntries redacts non-owner picks pre-event and reveals all picks once contest moves past OPEN', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({
+      displayName: 'List Visibility Commissioner',
+      leagueName: 'List Visibility Functional League',
+    });
+    const member = await buildRegisteredUser({
+      displayName: 'List Visibility Member',
+    });
+
+    const { acceptInvitation, generateInviteLink, listContestEntries: listContestEntriesOp } = await import('@poolmaster/shared/generated/hey-api');
+
+    const inviteLinkResponse = await generateInviteLink({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: { maxUses: 1 },
+    });
+    await acceptInvitation({
+      client: member.client,
+      body: {
+        inviteCode: inviteLinkResponse.data?.invitation.inviteCode as string,
+      },
+    });
+
+    const createResponse = await createContest({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: {
+        name: 'List Visibility Contest',
+        contestType: ContestType.SINGLE_EVENT,
+        selectionType: SelectionType.TIERED,
+        scoringEngine: ScoringEngine.STROKE_PLAY,
+        contestConfiguration: {
+          rounds: 1,
+          tierAssignmentMethod: TierAssignmentMethod.ODDS,
+          tierConfig: [
+            {
+              tierId: 'tier-1',
+              tierName: 'Tier 1',
+              tierNumber: 1,
+              picksFromTier: 1,
+              participantIds: [],
+            },
+          ],
+        },
+      },
+    });
+    const contestId = createResponse.data?.contest.id;
+    expect(contestId).toBeTruthy();
+
+    const prisma = getFunctionalPrisma();
+    await prisma.contest.update({
+      where: { id: contestId as string },
+      data: { status: ContestStatus.OPEN },
+    });
+
+    const sport = await prisma.sport.create({
+      data: {
+        name: `ListVisibilitySport-${randomUUID().slice(0, 8)}`,
+        participantType: ParticipantType.INDIVIDUAL,
+        statSchema: {},
+      },
+    });
+    createdSportIds.push(sport.id);
+
+    const participant = await prisma.participant.create({
+      data: {
+        sportId: sport.id,
+        name: `List Visibility Golfer ${randomUUID().slice(0, 8)}`,
+        participantType: ParticipantType.INDIVIDUAL,
+        externalIds: {},
+        metadata: {},
+        position: 'GOLFER',
+        teamAffiliation: 'USA',
+      },
+    });
+    createdParticipantIds.push(participant.id);
+
+    const sportEvent = await prisma.sportEvent.create({
+      data: {
+        externalId: `list-visibility-event-${randomUUID().slice(0, 8)}`,
+        providerId: 'functional-test',
+        sport: Sport.GOLF,
+        name: 'List Visibility Event',
+        startDate: new Date('2026-04-10T12:00:00.000Z'),
+        releaseAt: new Date('2026-04-10T12:00:00.000Z'),
+        fieldLocksAt: new Date('2026-04-10T12:00:00.000Z'),
+        status: 'SCHEDULED',
+      },
+    });
+    createdSportEventIds.push(sportEvent.id);
+
+    const sportEventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: sportEvent.id,
+        participantId: participant.id,
+        status: 'ACTIVE',
+      },
+    });
+    createdSportEventParticipantIds.push(sportEventParticipant.id);
+
+    await prisma.contest.update({
+      where: { id: contestId as string },
+      data: { sportEventId: sportEvent.id },
+    });
+    await prisma.contestConfiguration.update({
+      where: { contestId: contestId as string },
+      data: {
+        tierConfig: [
+          {
+            tierId: 'tier-1',
+            tierName: 'Tier 1',
+            tierNumber: 1,
+            picksFromTier: 1,
+            participantIds: [participant.id],
+          },
+        ],
+      },
+    });
+
+    // Both squads enter and pick.
+    const commissionerEntryResponse = await enterContest({
+      client: commissioner.client,
+      path: { contestId: contestId as string },
+    });
+    const memberEntryResponse = await enterContest({
+      client: member.client,
+      path: { contestId: contestId as string },
+    });
+    const commissionerEntryId = commissionerEntryResponse.data?.entry.id as string;
+    const memberEntryId = memberEntryResponse.data?.entry.id as string;
+
+    await prisma.rosterPick.create({
+      data: {
+        entryId: commissionerEntryId,
+        sportEventParticipantId: sportEventParticipant.id,
+        autoPicked: false,
+      },
+    });
+    await prisma.rosterPick.create({
+      data: {
+        entryId: memberEntryId,
+        sportEventParticipantId: sportEventParticipant.id,
+        autoPicked: false,
+      },
+    });
+
+    // Pre-event-start, member's perspective:
+    // - picksRevealed=false at the response level.
+    // - the member's own entry has participants[].
+    // - the commissioner's entry has picksCount but no participants[].
+    const preEventListResponse = await listContestEntriesOp({
+      client: member.client,
+      path: { contestId: contestId as string },
+    });
+    expect(preEventListResponse.data?.picksRevealed).toBe(false);
+    const preEntries = preEventListResponse.data?.entries ?? [];
+    const preMemberEntry = preEntries.find((entry) => entry.id === memberEntryId);
+    const preCommissionerEntry = preEntries.find((entry) => entry.id === commissionerEntryId);
+    expect(preMemberEntry?.picksCount).toBe(1);
+    expect(preMemberEntry?.participants?.length).toBe(1);
+    expect(preCommissionerEntry?.picksCount).toBe(1);
+    expect(preCommissionerEntry?.participants).toBeUndefined();
+
+    // Move contest past OPEN. Now member's perspective sees both squads' picks.
+    await prisma.contest.update({
+      where: { id: contestId as string },
+      data: { status: ContestStatus.LOCKED },
+    });
+    const postEventListResponse = await listContestEntriesOp({
+      client: member.client,
+      path: { contestId: contestId as string },
+    });
+    expect(postEventListResponse.data?.picksRevealed).toBe(true);
+    const postEntries = postEventListResponse.data?.entries ?? [];
+    expect(postEntries.find((entry) => entry.id === memberEntryId)?.participants?.length).toBe(1);
+    expect(postEntries.find((entry) => entry.id === commissionerEntryId)?.participants?.length).toBe(1);
+  });
 });

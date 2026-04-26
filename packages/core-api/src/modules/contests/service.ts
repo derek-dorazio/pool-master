@@ -32,6 +32,7 @@ import type { ContestEntryDetailDto, ContestEntryDto } from '@poolmaster/shared/
 import {
   toContestEntryDto,
   toContestEntryDetailDto,
+  type ContestEntryParticipantRow,
 } from '../../mappers/contests.mapper';
 export interface CreateContestInput {
   leagueId: string;
@@ -198,14 +199,19 @@ export class ContestService {
     contestId: string,
     userId: string,
   ): Promise<{
-    entries: ContestEntryDto[];
+    entries: ContestEntryDetailDto[];
     isJoined: boolean;
     myEntryId: string | null;
     myEntryIds: string[];
+    picksRevealed: boolean;
   }> {
     const context = await this.getEntryContext(contestId, userId);
     const squadId = context.squadMembership?.squadId ?? null;
-    const entries = await this.loadEntryDtos(contestId);
+    const picksRevealed = contestPicksRevealed(context.contest.status);
+    const entries = await this.loadEntryDetailDtos(contestId, {
+      requesterSquadId: squadId,
+      revealAll: picksRevealed,
+    });
     const myEntries = squadId
       ? entries.filter((entry) => entry.squadId === squadId)
       : [];
@@ -220,6 +226,7 @@ export class ContestService {
       isJoined: myEntry !== null,
       myEntryId: myEntry?.id ?? null,
       myEntryIds: myEntries.map((entry) => entry.id),
+      picksRevealed,
     };
   }
 
@@ -238,7 +245,12 @@ export class ContestService {
   async getEntryDetail(
     contestId: string,
     entryId: string,
-  ): Promise<ContestEntryDetailDto> {
+    requesterUserId: string,
+  ): Promise<{ entry: ContestEntryDetailDto; picksRevealed: boolean }> {
+    const context = await this.getEntryContext(contestId, requesterUserId);
+    const requesterSquadId = context.squadMembership?.squadId ?? null;
+    const picksRevealed = contestPicksRevealed(context.contest.status);
+
     const prisma = this.requirePrisma();
     const row = await prisma.contestEntry.findFirst({
       where: {
@@ -269,29 +281,40 @@ export class ContestService {
       throw new ContestEntryNotFoundError(contestId, entryId);
     }
 
-    return toContestEntryDetailDto(
+    // pool-master-dxd.13 — non-owning squad members cannot see picks while the
+    // contest is still joinable; owning squad members see their own picks
+    // regardless of contest status.
+    const isOwner = requesterSquadId !== null && row.squadId === requesterSquadId;
+    const includeParticipants = picksRevealed || isOwner;
+
+    const entry = toContestEntryDetailDto(
       {
         ...row,
         status: row.status as ContestEntry['status'],
+        picksCount: row.rosterPicks.length,
       },
       {
         name: row.squad.name,
       },
-      row.rosterPicks.map((pick) => ({
-        rosterPickId: pick.id,
-        sportEventParticipantId: pick.sportEventParticipantId,
-        participantId: pick.sportEventParticipant.participantId,
-        participantName: pick.sportEventParticipant.participant.name,
-        participantStatus: pick.sportEventParticipant.status ?? null,
-        position: pick.sportEventParticipant.participant.position ?? null,
-        teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
-        contestPoints: pick.participantScores.reduce((sum, score) => sum + score.pointsEarned, 0),
-        pickedAt: pick.pickedAt,
-        latestPerformance: normalizeLatestPerformance(
-          pick.sportEventParticipant.sourceData[0]?.normalizedData,
-        ),
-      })),
+      includeParticipants
+        ? row.rosterPicks.map((pick) => ({
+          rosterPickId: pick.id,
+          sportEventParticipantId: pick.sportEventParticipantId,
+          participantId: pick.sportEventParticipant.participantId,
+          participantName: pick.sportEventParticipant.participant.name,
+          participantStatus: pick.sportEventParticipant.status ?? null,
+          position: pick.sportEventParticipant.participant.position ?? null,
+          teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
+          contestPoints: pick.participantScores.reduce((sum, score) => sum + score.pointsEarned, 0),
+          pickedAt: pick.pickedAt,
+          latestPerformance: normalizeLatestPerformance(
+            pick.sportEventParticipant.sourceData[0]?.normalizedData,
+          ),
+        }))
+        : null,
     );
+
+    return { entry, picksRevealed };
   }
 
   async createEntry(
@@ -539,14 +562,121 @@ export class ContestService {
       ],
     });
 
+    const pickCountByEntry = await this.loadPickCountsForEntries(rows.map((row) => row.id));
+
     return rows.map((row) =>
       toContestEntryDto({
         ...row,
         status: row.status as ContestEntry['status'],
+        picksCount: pickCountByEntry.get(row.id) ?? 0,
       }, {
         name: row.squad.name,
       }),
     );
+  }
+
+  private async loadEntryDetailDtos(
+    contestId: string,
+    options: { requesterSquadId: string | null; revealAll: boolean },
+  ): Promise<ContestEntryDetailDto[]> {
+    const prisma = this.requirePrisma();
+    const rows = await prisma.contestEntry.findMany({
+      where: { contestId },
+      include: {
+        squad: true,
+      },
+      orderBy: [
+        { standingsPosition: 'asc' },
+        { entryNumber: 'asc' },
+        { createdAt: 'asc' },
+      ],
+    });
+
+    const entryIds = rows.map((row) => row.id);
+    const pickCountByEntry = await this.loadPickCountsForEntries(entryIds);
+
+    // Determine which entries get participant detail bundled in.
+    // - Always include for the requester's own squad (owners see their picks pre-reveal).
+    // - When revealAll (post-event-start), include for every entry.
+    const ownEntryIds = options.requesterSquadId
+      ? rows.filter((row) => row.squadId === options.requesterSquadId).map((row) => row.id)
+      : [];
+    const entryIdsWithParticipants = new Set<string>(
+      options.revealAll ? entryIds : ownEntryIds,
+    );
+
+    const participantsByEntry = entryIdsWithParticipants.size === 0
+      ? new Map<string, ContestEntryParticipantRow[]>()
+      : await this.loadParticipantsForEntries([...entryIdsWithParticipants]);
+
+    return rows.map((row) => {
+      const includeParticipants = entryIdsWithParticipants.has(row.id);
+      return toContestEntryDetailDto(
+        {
+          ...row,
+          status: row.status as ContestEntry['status'],
+          picksCount: pickCountByEntry.get(row.id) ?? 0,
+        },
+        { name: row.squad.name },
+        includeParticipants ? (participantsByEntry.get(row.id) ?? []) : null,
+      );
+    });
+  }
+
+  private async loadPickCountsForEntries(entryIds: string[]): Promise<Map<string, number>> {
+    if (entryIds.length === 0) {
+      return new Map();
+    }
+    const prisma = this.requirePrisma();
+    const rows = await prisma.rosterPick.groupBy({
+      by: ['entryId'],
+      where: { entryId: { in: entryIds } },
+      _count: { id: true },
+    });
+    return new Map(rows.map((row) => [row.entryId, row._count.id]));
+  }
+
+  private async loadParticipantsForEntries(
+    entryIds: string[],
+  ): Promise<Map<string, ContestEntryParticipantRow[]>> {
+    const prisma = this.requirePrisma();
+    const picks = await prisma.rosterPick.findMany({
+      where: { entryId: { in: entryIds } },
+      include: {
+        participantScores: true,
+        sportEventParticipant: {
+          include: {
+            participant: true,
+            sourceData: {
+              orderBy: [{ receivedAt: 'desc' }, { createdAt: 'desc' }],
+              take: 1,
+            },
+          },
+        },
+      },
+      orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
+    });
+
+    const grouped = new Map<string, ContestEntryParticipantRow[]>();
+    for (const pick of picks) {
+      const list = grouped.get(pick.entryId) ?? [];
+      list.push({
+        rosterPickId: pick.id,
+        sportEventParticipantId: pick.sportEventParticipantId,
+        participantId: pick.sportEventParticipant.participantId,
+        participantName: pick.sportEventParticipant.participant.name,
+        participantStatus: pick.sportEventParticipant.status ?? null,
+        position: pick.sportEventParticipant.participant.position ?? null,
+        teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
+        contestPoints: pick.participantScores.reduce((sum, score) => sum + score.pointsEarned, 0),
+        pickedAt: pick.pickedAt,
+        latestPerformance: normalizeLatestPerformance(
+          pick.sportEventParticipant.sourceData[0]?.normalizedData,
+        ),
+      });
+      grouped.set(pick.entryId, list);
+    }
+    return grouped;
   }
 
   private async loadEntryDtoById(entryId: string): Promise<ContestEntryDto> {
@@ -565,9 +695,14 @@ export class ContestService {
       );
     }
 
+    const pickCount = await this.requirePrisma().rosterPick.count({
+      where: { entryId: row.id },
+    });
+
     return toContestEntryDto({
       ...row,
       status: row.status as ContestEntry['status'],
+      picksCount: pickCount,
     }, {
       name: row.squad.name,
     });
@@ -705,4 +840,16 @@ function normalizeLatestPerformance(value: unknown): Record<string, unknown> {
 
 function isContestJoinable(status: ContestStatus): boolean {
   return status === ContestStatus.DRAFT || status === ContestStatus.OPEN;
+}
+
+/**
+ * Whether participant picks on a contest are visible to non-owning squad members.
+ *
+ * pool-master-dxd.13 — picks are hidden from non-owners while the contest is
+ * still in its joinable phase (DRAFT or OPEN). Once the contest progresses past
+ * that phase (DRAFTING, LOCKED, ACTIVE, COMPLETED, CANCELLED), picks are public
+ * to every league member.
+ */
+export function contestPicksRevealed(status: ContestStatus): boolean {
+  return !isContestJoinable(status);
 }

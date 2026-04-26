@@ -7525,7 +7525,11 @@ export type ListContestEntriesResponses = {
          */
         myEntryIds?: Array<string>;
         /**
-         * Entry page or slice returned by the API.
+         * Whether participant picks are visible to non-owners on this contest. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase.
+         */
+        picksRevealed: boolean;
+        /**
+         * Entries for the contest. Each entry includes participants[] when picksRevealed is true (or when the entry belongs to the requester regardless of contest status); otherwise participants is omitted.
          */
         entries: Array<{
             id: string;
@@ -7540,6 +7544,10 @@ export type ListContestEntriesResponses = {
             standingsPosition?: number;
             isEliminated: boolean;
             /**
+             * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
+             */
+            picksCount: number;
+            /**
              * When the contest entry was created.
              */
             createdAt: string;
@@ -7547,6 +7555,32 @@ export type ListContestEntriesResponses = {
              * When the contest entry was last updated.
              */
             updatedAt: string;
+            /**
+             * Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad).
+             */
+            participants?: Array<{
+                rosterPickId: string;
+                sportEventParticipantId: string;
+                participantId: string;
+                participantName: string;
+                participantStatus?: string;
+                position?: string;
+                teamAffiliation?: string;
+                /**
+                 * Current points earned within the contest for this picked participant.
+                 */
+                contestPoints: number;
+                /**
+                 * When the participant was added to the contest entry.
+                 */
+                pickedAt: string;
+                /**
+                 * Latest provider-backed performance snapshot available for the picked participant.
+                 */
+                latestPerformance: {
+                    [key: string]: unknown;
+                };
+            }>;
         }>;
     };
 };
@@ -7622,6 +7656,10 @@ export type GetContestEntryResponses = {
          */
         contestId: string;
         /**
+         * Whether participant picks are visible to non-owners on this entry. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase.
+         */
+        picksRevealed: boolean;
+        /**
          * Expanded contest entry detail.
          */
         entry: {
@@ -7637,6 +7675,10 @@ export type GetContestEntryResponses = {
             standingsPosition?: number;
             isEliminated: boolean;
             /**
+             * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
+             */
+            picksCount: number;
+            /**
              * When the contest entry was created.
              */
             createdAt: string;
@@ -7645,9 +7687,9 @@ export type GetContestEntryResponses = {
              */
             updatedAt: string;
             /**
-             * Current picked participants for the contest entry.
+             * Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad).
              */
-            participants: Array<{
+            participants?: Array<{
                 rosterPickId: string;
                 sportEventParticipantId: string;
                 participantId: string;
@@ -7771,6 +7813,10 @@ export type UpdateContestEntryResponses = {
             totalScore: number;
             standingsPosition?: number;
             isEliminated: boolean;
+            /**
+             * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
+             */
+            picksCount: number;
             /**
              * When the contest entry was created.
              */
@@ -7944,6 +7990,10 @@ export type GetMyContestEntryResponses = {
             standingsPosition?: number;
             isEliminated: boolean;
             /**
+             * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
+             */
+            picksCount: number;
+            /**
              * When the contest entry was created.
              */
             createdAt: string;
@@ -8061,6 +8111,10 @@ export type EnterContestResponses = {
             totalScore: number;
             standingsPosition?: number;
             isEliminated: boolean;
+            /**
+             * Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.
+             */
+            picksCount: number;
             /**
              * When the contest entry was created.
              */

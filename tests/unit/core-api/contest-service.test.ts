@@ -203,7 +203,11 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
         squad: { id: 'squad-1', name: "Derek's Squad" },
       }),
     },
-    rosterPick: { count: jest.fn().mockResolvedValue(0) },
+    rosterPick: {
+      count: jest.fn().mockResolvedValue(0),
+      groupBy: jest.fn().mockResolvedValue([]),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
     contestPick: { count: jest.fn().mockResolvedValue(0) },
     bracketPrediction: { count: jest.fn().mockResolvedValue(0) },
     draftPickHistory: { count: jest.fn().mockResolvedValue(0) },

@@ -49,7 +49,7 @@ function readLatestPerformanceMetric(
 }
 
 function getParticipantPerformanceView(
-  participant: ContestEntryDetail['participants'][number],
+  participant: NonNullable<ContestEntryDetail['participants']>[number],
 ) {
   const latestPerformance = participant.latestPerformance ?? {};
   const scoreToPar = formatRelativeToPar(
@@ -73,9 +73,9 @@ function getParticipantPerformanceView(
 }
 
 function sortDetailedParticipants(
-  participants: ContestEntryDetail['participants'],
+  participants: ContestEntryDetail['participants'] | undefined,
 ) {
-  return [...participants].sort((left, right) => {
+  return [...(participants ?? [])].sort((left, right) => {
     const leftPerformance = getParticipantPerformanceView(left);
     const rightPerformance = getParticipantPerformanceView(right);
 

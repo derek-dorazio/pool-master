@@ -210,6 +210,7 @@ export function createContestHandlers(contestService: ContestService) {
         isJoined: result.isJoined,
         myEntryId: result.myEntryId,
         myEntryIds: result.myEntryIds,
+        picksRevealed: result.picksRevealed,
       }));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
@@ -230,25 +231,36 @@ export function createContestHandlers(contestService: ContestService) {
     reply: FastifyReply,
   ): Promise<void> {
     const logger = createRequestContextLogger(request);
+    const userId = request.authUser?.userId as string;
     try {
-      const entry = await contestService.getEntryDetail(
+      const result = await contestService.getEntryDetail(
         request.params.contestId,
         request.params.entryId,
+        userId,
       );
-      logger.info({ contestId: request.params.contestId, entryId: request.params.entryId }, 'contest entry detail route completed');
+      logger.info({
+        contestId: request.params.contestId,
+        entryId: request.params.entryId,
+        userId,
+        picksRevealed: result.picksRevealed,
+      }, 'contest entry detail route completed');
       return reply.send(
-        toContestEntryDetailResponse(request.params.contestId, entry),
+        toContestEntryDetailResponse(
+          request.params.contestId,
+          result.entry,
+          result.picksRevealed,
+        ),
       );
     } catch (err) {
       if (err instanceof ContestNotFoundError || err instanceof ContestEntryNotFoundError) {
-        logger.warn({ contestId: request.params.contestId, entryId: request.params.entryId }, 'contest entry detail route missing entry');
+        logger.warn({ contestId: request.params.contestId, entryId: request.params.entryId, userId }, 'contest entry detail route missing entry');
         return sendError(reply, 404, 'CONTEST_ENTRY_NOT_FOUND', err.message);
       }
       if (err instanceof ContestEntryOperationError) {
-        logger.warn({ contestId: request.params.contestId, entryId: request.params.entryId, code: err.code }, 'contest entry detail route rejected');
+        logger.warn({ contestId: request.params.contestId, entryId: request.params.entryId, userId, code: err.code }, 'contest entry detail route rejected');
         return sendError(reply, 400, err.code, err.message);
       }
-      logger.error({ contestId: request.params.contestId, entryId: request.params.entryId, err }, 'contest entry detail route failed');
+      logger.error({ contestId: request.params.contestId, entryId: request.params.entryId, userId, err }, 'contest entry detail route failed');
       throw err;
     }
   }

@@ -54,11 +54,12 @@ interface ContestEntryRow {
   totalScore: number;
   standingsPosition?: number | null;
   isEliminated: boolean;
+  picksCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
 
-interface ContestEntryParticipantRow {
+export interface ContestEntryParticipantRow {
   rosterPickId: string;
   sportEventParticipantId: string;
   participantId: string;
@@ -184,6 +185,7 @@ export function toContestEntryDto(
     totalScore: entry.totalScore,
     standingsPosition: entry.standingsPosition ?? null,
     isEliminated: entry.isEliminated,
+    picksCount: entry.picksCount,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
   };
@@ -213,10 +215,14 @@ export function toContestEntryParticipantDetailDto(
 export function toContestEntryDetailDto(
   entry: ContestEntryRow,
   squad: { name: string },
-  participants: ContestEntryParticipantRow[],
+  participants: ContestEntryParticipantRow[] | null,
 ): ContestEntryDetailDto {
+  const summary = toContestEntryDto(entry, squad);
+  if (participants === null) {
+    return summary;
+  }
   return {
-    ...toContestEntryDto(entry, squad),
+    ...summary,
     participants: participants.map(toContestEntryParticipantDetailDto),
   };
 }
@@ -224,16 +230,18 @@ export function toContestEntryDetailDto(
 export function toContestEntryDetailResponse(
   contestId: string,
   entry: ContestEntryDetailDto,
+  picksRevealed: boolean,
 ): ContestEntryDetailResponse {
-  return { contestId, entry };
+  return { contestId, picksRevealed, entry };
 }
 
 export function toContestEntryListResponse(input: {
   contestId: string;
-  entries: ContestEntryDto[];
+  entries: ContestEntryDetailDto[];
   isJoined: boolean;
   myEntryId: string | null;
   myEntryIds?: string[];
+  picksRevealed: boolean;
 }): ContestEntryListResponse {
   return {
     contestId: input.contestId,
@@ -241,6 +249,7 @@ export function toContestEntryListResponse(input: {
     isJoined: input.isJoined,
     myEntryId: input.myEntryId,
     myEntryIds: input.myEntryIds,
+    picksRevealed: input.picksRevealed,
     entries: input.entries,
   };
 }

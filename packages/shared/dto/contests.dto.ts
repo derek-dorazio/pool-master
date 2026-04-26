@@ -201,6 +201,7 @@ export const ContestEntryDtoSchema = z.object({
   totalScore: z.number(),
   standingsPosition: z.number().nullable().optional(),
   isEliminated: z.boolean(),
+  picksCount: z.number().int().min(0).describe('Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.'),
   createdAt: z.string().datetime().describe('When the contest entry was created.'),
   updatedAt: z.string().datetime().describe('When the contest entry was last updated.'),
 }).describe('Contest entry summary.');
@@ -221,7 +222,7 @@ export const ContestEntryParticipantDetailDtoSchema = z.object({
 export type ContestEntryParticipantDetailDto = z.infer<typeof ContestEntryParticipantDetailDtoSchema>;
 
 export const ContestEntryDetailDtoSchema = ContestEntryDtoSchema.extend({
-  participants: z.array(ContestEntryParticipantDetailDtoSchema).describe('Current picked participants for the contest entry.'),
+  participants: z.array(ContestEntryParticipantDetailDtoSchema).optional().describe('Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad).'),
 }).describe('Expanded contest entry detail.');
 export type ContestEntryDetailDto = z.infer<typeof ContestEntryDetailDtoSchema>;
 
@@ -276,6 +277,7 @@ export type ContestEntryResponse = z.infer<typeof ContestEntryResponseSchema>;
 
 export const ContestEntryDetailResponseSchema = z.object({
   contestId: z.string().describe('Contest that owns the entry.'),
+  picksRevealed: z.boolean().describe('Whether participant picks are visible to non-owners on this entry. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase.'),
   entry: ContestEntryDetailDtoSchema,
 }).describe('Expanded contest-entry detail response.');
 export type ContestEntryDetailResponse = z.infer<typeof ContestEntryDetailResponseSchema>;
@@ -286,7 +288,8 @@ export const ContestEntryListResponseSchema = z.object({
   isJoined: z.boolean().describe('Whether the current user has at least one active entry in the contest.'),
   myEntryId: z.string().nullable().describe('Primary current-user entry when the contest allows a single active entry.'),
   myEntryIds: z.array(z.string()).optional().describe('All current-user entry identifiers when multiple entries are allowed.'),
-  entries: z.array(ContestEntryDtoSchema).describe('Entry page or slice returned by the API.'),
+  picksRevealed: z.boolean().describe('Whether participant picks are visible to non-owners on this contest. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase.'),
+  entries: z.array(ContestEntryDetailDtoSchema).describe('Entries for the contest. Each entry includes participants[] when picksRevealed is true (or when the entry belongs to the requester regardless of contest status); otherwise participants is omitted.'),
 }).describe('Contest-entry list response.');
 export type ContestEntryListResponse = z.infer<typeof ContestEntryListResponseSchema>;
 

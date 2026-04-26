@@ -15902,6 +15902,10 @@
                       },
                       "description": "All current-user entry identifiers when multiple entries are allowed."
                     },
+                    "picksRevealed": {
+                      "type": "boolean",
+                      "description": "Whether participant picks are visible to non-owners on this contest. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase."
+                    },
                     "entries": {
                       "type": "array",
                       "items": {
@@ -15947,6 +15951,11 @@
                           "isEliminated": {
                             "type": "boolean"
                           },
+                          "picksCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners."
+                          },
                           "createdAt": {
                             "type": "string",
                             "format": "date-time",
@@ -15956,6 +15965,64 @@
                             "type": "string",
                             "format": "date-time",
                             "description": "When the contest entry was last updated."
+                          },
+                          "participants": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "rosterPickId": {
+                                  "type": "string"
+                                },
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "participantName": {
+                                  "type": "string"
+                                },
+                                "participantStatus": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "position": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "teamAffiliation": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "contestPoints": {
+                                  "type": "number",
+                                  "description": "Current points earned within the contest for this picked participant."
+                                },
+                                "pickedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "description": "When the participant was added to the contest entry."
+                                },
+                                "latestPerformance": {
+                                  "type": "object",
+                                  "additionalProperties": {},
+                                  "description": "Latest provider-backed performance snapshot available for the picked participant."
+                                }
+                              },
+                              "required": [
+                                "rosterPickId",
+                                "sportEventParticipantId",
+                                "participantId",
+                                "participantName",
+                                "contestPoints",
+                                "pickedAt",
+                                "latestPerformance"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Contest entry participant detail used by entry-detail and expanded leaderboard surfaces."
+                            },
+                            "description": "Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad)."
                           }
                         },
                         "required": [
@@ -15968,13 +16035,14 @@
                           "status",
                           "totalScore",
                           "isEliminated",
+                          "picksCount",
                           "createdAt",
                           "updatedAt"
                         ],
                         "additionalProperties": false,
-                        "description": "Contest entry summary."
+                        "description": "Expanded contest entry detail."
                       },
-                      "description": "Entry page or slice returned by the API."
+                      "description": "Entries for the contest. Each entry includes participants[] when picksRevealed is true (or when the entry belongs to the requester regardless of contest status); otherwise participants is omitted."
                     }
                   },
                   "required": [
@@ -15982,6 +16050,7 @@
                     "total",
                     "isJoined",
                     "myEntryId",
+                    "picksRevealed",
                     "entries"
                   ],
                   "additionalProperties": false,
@@ -16109,6 +16178,10 @@
                       "type": "string",
                       "description": "Contest that owns the entry."
                     },
+                    "picksRevealed": {
+                      "type": "boolean",
+                      "description": "Whether participant picks are visible to non-owners on this entry. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase."
+                    },
                     "entry": {
                       "type": "object",
                       "properties": {
@@ -16151,6 +16224,11 @@
                         },
                         "isEliminated": {
                           "type": "boolean"
+                        },
+                        "picksCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners."
                         },
                         "createdAt": {
                           "type": "string",
@@ -16218,7 +16296,7 @@
                             "additionalProperties": false,
                             "description": "Contest entry participant detail used by entry-detail and expanded leaderboard surfaces."
                           },
-                          "description": "Current picked participants for the contest entry."
+                          "description": "Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad)."
                         }
                       },
                       "required": [
@@ -16231,9 +16309,9 @@
                         "status",
                         "totalScore",
                         "isEliminated",
+                        "picksCount",
                         "createdAt",
-                        "updatedAt",
-                        "participants"
+                        "updatedAt"
                       ],
                       "additionalProperties": false,
                       "description": "Expanded contest entry detail."
@@ -16241,6 +16319,7 @@
                   },
                   "required": [
                     "contestId",
+                    "picksRevealed",
                     "entry"
                   ],
                   "additionalProperties": false,
@@ -16435,6 +16514,11 @@
                         "isEliminated": {
                           "type": "boolean"
                         },
+                        "picksCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners."
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time",
@@ -16456,6 +16540,7 @@
                         "status",
                         "totalScore",
                         "isEliminated",
+                        "picksCount",
                         "createdAt",
                         "updatedAt"
                       ],
@@ -16627,6 +16712,11 @@
                         "isEliminated": {
                           "type": "boolean"
                         },
+                        "picksCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners."
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time",
@@ -16648,6 +16738,7 @@
                         "status",
                         "totalScore",
                         "isEliminated",
+                        "picksCount",
                         "createdAt",
                         "updatedAt"
                       ],
@@ -16818,6 +16909,11 @@
                         "isEliminated": {
                           "type": "boolean"
                         },
+                        "picksCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners."
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time",
@@ -16839,6 +16935,7 @@
                         "status",
                         "totalScore",
                         "isEliminated",
+                        "picksCount",
                         "createdAt",
                         "updatedAt"
                       ],
