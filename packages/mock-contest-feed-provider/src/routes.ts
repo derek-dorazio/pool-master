@@ -18,8 +18,66 @@ function buildScenarioStore(fastify: FastifyInstance): ScenarioStore {
   return new ScenarioStore(scenarioDir, fastify.log);
 }
 
+function logRoutePayload(
+  fastify: FastifyInstance,
+  action: string,
+  data: Record<string, unknown>,
+  payload: unknown,
+  message: string,
+): void {
+  fastify.log.info({ action, data }, message);
+  fastify.log.debug({ action: `${action}.payload`, data: { ...data, payload } }, `${message} payload`);
+}
+
 export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<void> {
   const store = buildScenarioStore(fastify);
+
+  fastify.addHook('preHandler', async (request) => {
+    request.log.debug(
+      {
+        action: 'mockFeedRoute.request.start',
+        data: {
+          method: request.method,
+          url: request.url,
+          route: request.routeOptions.url,
+          params: request.params,
+          query: request.query,
+        },
+      },
+      'Mock contest-feed request started',
+    );
+  });
+
+  fastify.addHook('onResponse', async (request, reply) => {
+    request.log.info(
+      {
+        action: 'mockFeedRoute.request.complete',
+        data: {
+          method: request.method,
+          url: request.url,
+          route: request.routeOptions.url,
+          statusCode: reply.statusCode,
+        },
+      },
+      'Mock contest-feed request completed',
+    );
+  });
+
+  fastify.addHook('onError', async (request, reply, error) => {
+    request.log.error(
+      {
+        action: 'mockFeedRoute.request.failed',
+        data: {
+          method: request.method,
+          url: request.url,
+          route: request.routeOptions.url,
+          statusCode: reply.statusCode,
+        },
+        err: error,
+      },
+      'Mock contest-feed request failed',
+    );
+  });
 
   fastify.get(
     '/health',
@@ -56,6 +114,10 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         { action: 'mockFeedRoute.health', data: { scenarioCount: payload.scenarioCount, eventCount: payload.eventCount } },
         'Served mock contest-feed health response',
       );
+      fastify.log.debug(
+        { action: 'mockFeedRoute.health.payload', data: { payload } },
+        'Served mock contest-feed health response payload',
+      );
       return payload;
     },
   );
@@ -81,11 +143,15 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
     },
     async () => {
       const scenarios = store.listScenarios();
-      fastify.log.info(
-        { action: 'mockFeedRoute.listScenarios', data: { scenarioCount: scenarios.length } },
+      const payload = { scenarios };
+      logRoutePayload(
+        fastify,
+        'mockFeedRoute.listScenarios',
+        { scenarioCount: scenarios.length },
+        payload,
         'Served mock contest-feed scenario list',
       );
-      return { scenarios };
+      return payload;
     },
   );
 
@@ -120,9 +186,20 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         { action: 'mockFeedRoute.getScenario.start', data: request.params },
         'Serving mock contest-feed scenario detail',
       );
-      return {
+      const payload = {
         scenario: store.getScenario(request.params.scenarioId),
       };
+      logRoutePayload(
+        fastify,
+        'mockFeedRoute.getScenario',
+        {
+          scenarioId: request.params.scenarioId,
+          eventCount: payload.scenario.events.length,
+        },
+        payload,
+        'Served mock contest-feed scenario detail',
+      );
+      return payload;
     },
   );
 
@@ -155,14 +232,18 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
     },
     async (request) => {
       const events = store.listEvents(request.params.scenarioId);
-      fastify.log.info(
-        { action: 'mockFeedRoute.listEvents', data: { scenarioId: request.params.scenarioId, eventCount: events.length } },
-        'Served mock contest-feed event list',
-      );
-      return {
+      const payload = {
         scenarioId: request.params.scenarioId,
         events,
       };
+      logRoutePayload(
+        fastify,
+        'mockFeedRoute.listEvents',
+        { scenarioId: request.params.scenarioId, eventCount: events.length },
+        payload,
+        'Served mock contest-feed event list',
+      );
+      return payload;
     },
   );
 
@@ -198,9 +279,17 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         { action: 'mockFeedRoute.getEvent.start', data: request.params },
         'Serving mock contest-feed event detail',
       );
-      return {
+      const payload = {
         event: store.getEvent(request.params.scenarioId, request.params.eventId),
       };
+      logRoutePayload(
+        fastify,
+        'mockFeedRoute.getEvent',
+        request.params,
+        payload,
+        'Served mock contest-feed event detail',
+      );
+      return payload;
     },
   );
 
@@ -229,7 +318,19 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         { action: 'mockFeedRoute.getEventDetail.start', data: request.params },
         'Serving mock contest-feed event detail with season context',
       );
-      return store.getEventResponse(request.params.scenarioId, request.params.eventId);
+      const payload = store.getEventResponse(request.params.scenarioId, request.params.eventId);
+      logRoutePayload(
+        fastify,
+        'mockFeedRoute.getEventDetail',
+        {
+          scenarioId: request.params.scenarioId,
+          eventId: request.params.eventId,
+          contestantCount: payload.event.field.contestants.length,
+        },
+        payload,
+        'Served mock contest-feed event detail with season context',
+      );
+      return payload;
     },
   );
 
@@ -253,7 +354,25 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         },
       },
     },
-    async (request) => store.getEventResponse(request.params.scenarioId, request.params.eventId),
+    async (request) => {
+      fastify.log.debug(
+        { action: 'mockFeedRoute.getPreEventDetail.start', data: request.params },
+        'Serving mock contest-feed pre-event detail',
+      );
+      const payload = store.getEventResponse(request.params.scenarioId, request.params.eventId);
+      logRoutePayload(
+        fastify,
+        'mockFeedRoute.getPreEventDetail',
+        {
+          scenarioId: request.params.scenarioId,
+          eventId: request.params.eventId,
+          contestantCount: payload.event.field.contestants.length,
+        },
+        payload,
+        'Served mock contest-feed pre-event detail',
+      );
+      return payload;
+    },
   );
 
   for (const feedKind of ['field', 'odds', 'rankings', 'results'] as const) {
@@ -291,7 +410,20 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
           { action: 'mockFeedRoute.getSnapshot.start', data: { ...request.params, feedKind } },
           'Serving mock contest-feed snapshot',
         );
-        return store.getSnapshot(request.params.scenarioId, request.params.eventId, feedKind);
+        const payload = store.getSnapshot(request.params.scenarioId, request.params.eventId, feedKind);
+        logRoutePayload(
+          fastify,
+          'mockFeedRoute.getSnapshot',
+          {
+            scenarioId: request.params.scenarioId,
+            eventId: request.params.eventId,
+            feedKind,
+            contestantCount: payload.contestants.length,
+          },
+          payload,
+          'Served mock contest-feed snapshot',
+        );
+        return payload;
       },
     );
   }
@@ -324,7 +456,26 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
           },
         },
       },
-      async (request) => store.getSnapshot(request.params.scenarioId, request.params.eventId, feedKind),
+      async (request) => {
+        fastify.log.debug(
+          { action: 'mockFeedRoute.getPreEventSnapshot.start', data: { ...request.params, feedKind } },
+          'Serving mock contest-feed pre-event snapshot',
+        );
+        const payload = store.getSnapshot(request.params.scenarioId, request.params.eventId, feedKind);
+        logRoutePayload(
+          fastify,
+          'mockFeedRoute.getPreEventSnapshot',
+          {
+            scenarioId: request.params.scenarioId,
+            eventId: request.params.eventId,
+            feedKind,
+            contestantCount: payload.contestants.length,
+          },
+          payload,
+          'Served mock contest-feed pre-event snapshot',
+        );
+        return payload;
+      },
     );
   }
 
@@ -355,11 +506,30 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         },
       },
     },
-    async (request) => store.getLiveScores(
-      request.params.scenarioId,
-      request.params.eventId,
-      request.query.tick,
-    ),
+    async (request) => {
+      fastify.log.debug(
+        { action: 'mockFeedRoute.getLiveScores.start', data: { ...request.params, tick: request.query.tick ?? null } },
+        'Serving mock contest-feed live scores',
+      );
+      const payload = store.getLiveScores(
+        request.params.scenarioId,
+        request.params.eventId,
+        request.query.tick,
+      );
+      logRoutePayload(
+        fastify,
+        'mockFeedRoute.getLiveScores',
+        {
+          scenarioId: request.params.scenarioId,
+          eventId: request.params.eventId,
+          tick: request.query.tick ?? null,
+          contestantCount: payload.contestants.length,
+        },
+        payload,
+        'Served mock contest-feed live scores',
+      );
+      return payload;
+    },
   );
 
   fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
@@ -382,7 +552,25 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         },
       },
     },
-    async (request) => store.getSnapshot(request.params.scenarioId, request.params.eventId, 'results'),
+    async (request) => {
+      fastify.log.debug(
+        { action: 'mockFeedRoute.getLiveResults.start', data: request.params },
+        'Serving mock contest-feed live results',
+      );
+      const payload = store.getSnapshot(request.params.scenarioId, request.params.eventId, 'results');
+      logRoutePayload(
+        fastify,
+        'mockFeedRoute.getLiveResults',
+        {
+          scenarioId: request.params.scenarioId,
+          eventId: request.params.eventId,
+          contestantCount: payload.contestants.length,
+        },
+        payload,
+        'Served mock contest-feed live results',
+      );
+      return payload;
+    },
   );
 
   fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
@@ -410,7 +598,19 @@ export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<v
         { action: 'mockFeedRoute.getUpdates.start', data: request.params },
         'Serving mock contest-feed event updates',
       );
-      return store.getUpdates(request.params.scenarioId, request.params.eventId);
+      const payload = store.getUpdates(request.params.scenarioId, request.params.eventId);
+      logRoutePayload(
+        fastify,
+        'mockFeedRoute.getUpdates',
+        {
+          scenarioId: request.params.scenarioId,
+          eventId: request.params.eventId,
+          updateCount: payload.updates.length,
+        },
+        payload,
+        'Served mock contest-feed event updates',
+      );
+      return payload;
     },
   );
 }

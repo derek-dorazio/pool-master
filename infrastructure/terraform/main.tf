@@ -582,6 +582,7 @@ resource "aws_ecs_task_definition" "mock_contest_feed_provider" {
     portMappings = [{ containerPort = 3105, protocol = "tcp" }]
     environment = [
       { name = "NODE_ENV", value = var.environment },
+      { name = "LOG_LEVEL", value = var.mock_contest_feed_provider_log_level },
       { name = "PORT", value = "3105" },
       { name = "PROVIDER_ID", value = "mock-contest-feed" },
       { name = "SERVICE_NAME", value = "mock-contest-feed-provider" },

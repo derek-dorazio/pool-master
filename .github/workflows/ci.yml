@@ -461,6 +461,7 @@ jobs:
           MOCK_PROVIDER_SERVICE="poolmaster-qa-mock-contest-feed-provider"
           MIGRATE_FAMILY="poolmaster-qa-migrate"
           CORE_API_LOG_LEVEL="debug"
+          MOCK_PROVIDER_LOG_LEVEL="debug"
           QA_CORE_API_TASK_DEF=""
           QA_MIGRATE_TASK_DEF=""
           QA_MOCK_PROVIDER_TASK_DEF=""
@@ -540,7 +541,7 @@ jobs:
               --task-definition "$MOCK_PROVIDER_SERVICE_TASK_DEF" \
               --query 'taskDefinition' \
               --output json \
-              | jq --arg IMAGE "$MOCK_PROVIDER_IMAGE" '
+              | jq --arg IMAGE "$MOCK_PROVIDER_IMAGE" --arg LOG_LEVEL "$MOCK_PROVIDER_LOG_LEVEL" '
                   del(
                     .taskDefinitionArn,
                     .revision,
@@ -551,7 +552,13 @@ jobs:
                     .registeredBy
                   )
                   | .containerDefinitions |= map(
-                      if .name == "mock-contest-feed-provider" then .image = $IMAGE else . end
+                      if .name == "mock-contest-feed-provider"
+                      then
+                        .image = $IMAGE
+                        | .environment = ((.environment // [])
+                          | map(select(.name != "LOG_LEVEL"))
+                          + [{ name: "LOG_LEVEL", value: $LOG_LEVEL }])
+                      else . end
                     )
                 ' > /tmp/qa-mock-provider-task-def.json
 

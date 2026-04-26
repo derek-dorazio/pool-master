@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import test from 'node:test';
 import { buildApp } from './app';
-import { ScenarioStore } from './scenario-store';
+import { ScenarioStore, buildRelativeTodayGolfScenario } from './scenario-store';
 
 const scenarioDir = resolve(process.cwd(), 'contest-feed-scenarios');
 
@@ -12,7 +12,7 @@ test('ScenarioStore loads event-first scenarios and exposes field snapshots', ()
   const store = new ScenarioStore(scenarioDir);
 
   const scenarios = store.listScenarios();
-  assert.ok(scenarios.length >= 4);
+  assert.ok(scenarios.length >= 5);
 
   const golfScenario = store.getScenario('golf-major-2026');
   assert.equal(golfScenario.season.year, 2026);
@@ -27,6 +27,67 @@ test('ScenarioStore loads event-first scenarios and exposes field snapshots', ()
   assert.equal(resultUpdates.updates[0]?.feedKind, 'field');
   assert.equal(resultUpdates.updates[1]?.feedKind, 'odds');
   assert.equal(resultUpdates.updates[2]?.feedKind, 'results');
+});
+
+test('ScenarioStore generates relative today golf events for QA lifecycle coverage', () => {
+  const now = new Date('2026-04-26T21:00:00.000Z');
+  const scenario = buildRelativeTodayGolfScenario(now);
+
+  assert.equal(scenario.scenarioId, 'golf-relative-today');
+  assert.deepEqual(
+    scenario.events.map((event) => event.eventId),
+    [
+      'golf-relative-live-now',
+      'golf-relative-locked-tomorrow',
+      'golf-relative-ready-5d',
+      'golf-relative-field-pending-6d',
+      'golf-relative-participant-boundary-7d',
+      'golf-relative-schedule-boundary-30d',
+    ],
+  );
+
+  const liveNow = scenario.events.find((event) => event.eventId === 'golf-relative-live-now');
+  assert.equal(liveNow?.status, 'in_progress');
+  assert.equal(liveNow?.field.status, 'locked');
+  assert.equal(liveNow?.field.contestants.length, 80);
+
+  const lockedTomorrow = scenario.events.find((event) => event.eventId === 'golf-relative-locked-tomorrow');
+  assert.equal(lockedTomorrow?.schedule.startsAt, '2026-04-27T12:00:00.000Z');
+  assert.ok(Date.parse(lockedTomorrow?.schedule.fieldLocksAt ?? '') < now.getTime());
+
+  const ready = scenario.events.find((event) => event.eventId === 'golf-relative-ready-5d');
+  assert.equal(ready?.schedule.startsAt, '2026-05-01T12:00:00.000Z');
+  assert.ok(Date.parse(ready?.schedule.releaseAt ?? '') < now.getTime());
+  assert.ok(Date.parse(ready?.schedule.fieldLocksAt ?? '') > now.getTime());
+  assert.equal(ready?.field.contestants.length, 80);
+
+  const pending = scenario.events.find((event) => event.eventId === 'golf-relative-field-pending-6d');
+  assert.equal(pending?.schedule.startsAt, '2026-05-02T12:00:00.000Z');
+  assert.ok(Date.parse(pending?.schedule.releaseAt ?? '') > now.getTime());
+
+  const participantBoundary = scenario.events.find((event) => event.eventId === 'golf-relative-participant-boundary-7d');
+  assert.equal(participantBoundary?.schedule.startsAt, '2026-05-03T12:00:00.000Z');
+
+  const scheduleBoundary = scenario.events.find((event) => event.eventId === 'golf-relative-schedule-boundary-30d');
+  assert.equal(scheduleBoundary?.schedule.startsAt, '2026-05-26T11:00:00.000Z');
+});
+
+test('ScenarioStore includes generated relative today events in the scenario catalog', () => {
+  const store = new ScenarioStore(
+    scenarioDir,
+    undefined,
+    { now: () => new Date('2026-04-26T21:00:00.000Z') },
+  );
+
+  const relativeScenario = store.getScenario('golf-relative-today');
+  assert.equal(relativeScenario.events.length, 6);
+
+  const events = store.listEvents('golf-relative-today');
+  assert.equal(events[0]?.eventId, 'golf-relative-live-now');
+  assert.equal(events.at(-1)?.eventId, 'golf-relative-schedule-boundary-30d');
+
+  const readyDetail = store.getEventResponse('golf-relative-today', 'golf-relative-ready-5d');
+  assert.equal(readyDetail.event.field.contestants.length, 80);
 });
 
 test('ScenarioStore rejects new contestants in deltas unless they include a name', () => {

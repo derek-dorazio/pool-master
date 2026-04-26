@@ -14,6 +14,7 @@ db_allowed_cidr_blocks = ["YOUR_PUBLIC_IP/32"]
 ecs_cpu    = 256
 ecs_memory = 512
 core_api_log_level = "debug"
+mock_contest_feed_provider_log_level = "debug"
 core_api_bootstrap_image_tag = "bootstrap"
 mock_contest_feed_provider_bootstrap_image_tag = "bootstrap"
 

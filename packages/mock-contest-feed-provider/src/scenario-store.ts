@@ -744,9 +744,191 @@ function buildGolfResultFeed(
   }));
 }
 
+function addDays(base: Date, days: number): Date {
+  return new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+function addHours(base: Date, hours: number): Date {
+  return new Date(base.getTime() + hours * 60 * 60 * 1000);
+}
+
+function startOfUtcDay(base: Date): Date {
+  return new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate()));
+}
+
+function atUtcDayOffset(base: Date, days: number, hour: number): Date {
+  return addHours(addDays(startOfUtcDay(base), days), hour);
+}
+
+function emptyFeeds(asOf: string): EventFeedsRecord {
+  return {
+    odds: {
+      asOf,
+      contestants: [],
+    },
+    rankings: {
+      asOf,
+      contestants: [],
+    },
+    results: {
+      asOf,
+      contestants: [],
+    },
+  };
+}
+
+function buildRelativeGolfEvent(input: {
+  eventId: string;
+  name: string;
+  status: ContestFeedEventRecord['status'];
+  startsAt: Date;
+  releaseAt: Date;
+  fieldLocksAt: Date;
+  notes: readonly string[];
+}): ContestFeedEventRecord {
+  const endsAt = addDays(input.startsAt, 4);
+  const fieldAsOf = input.releaseAt.toISOString();
+
+  return {
+    eventId: input.eventId,
+    name: input.name,
+    status: input.status,
+    schedule: {
+      startsAt: input.startsAt.toISOString(),
+      endsAt: endsAt.toISOString(),
+      releaseAt: input.releaseAt.toISOString(),
+      fieldLocksAt: input.fieldLocksAt.toISOString(),
+    },
+    venue: {
+      name: 'PoolMaster QA Links',
+      city: 'Cincinnati',
+      region: 'OH',
+      countryCode: 'US',
+      timeZone: 'America/New_York',
+    },
+    metadata: {
+      officialName: input.name,
+      eventType: 'relative-qa',
+      tour: 'PoolMaster QA',
+      externalEventId: input.eventId,
+      notes: input.notes,
+    },
+    field: {
+      asOf: fieldAsOf,
+      status: input.status === 'in_progress' ? 'locked' : 'announced',
+      note: input.notes[0],
+      contestants: [],
+    },
+    feeds: emptyFeeds(fieldAsOf),
+    updates: [],
+  };
+}
+
+export function buildRelativeTodayGolfScenario(now = new Date()): ContestFeedScenarioRecord {
+  const relativeEvents = [
+    buildRelativeGolfEvent({
+      eventId: 'golf-relative-live-now',
+      name: 'Relative QA Live Score Open',
+      status: 'in_progress',
+      startsAt: addHours(now, 0.5),
+      releaseAt: addDays(now, -8),
+      fieldLocksAt: addHours(now, -1),
+      notes: ['Relative event that keeps the live-score workflow active today.'],
+    }),
+    buildRelativeGolfEvent({
+      eventId: 'golf-relative-locked-tomorrow',
+      name: 'Relative QA Locked Tomorrow Invitational',
+      status: 'field_announced',
+      startsAt: atUtcDayOffset(now, 1, 12),
+      releaseAt: atUtcDayOffset(now, -6, 16),
+      fieldLocksAt: addHours(now, -1),
+      notes: ['Relative event that starts tomorrow with the field already locked.'],
+    }),
+    buildRelativeGolfEvent({
+      eventId: 'golf-relative-ready-5d',
+      name: 'Relative QA Contest Ready Classic',
+      status: 'field_announced',
+      startsAt: atUtcDayOffset(now, 5, 12),
+      releaseAt: atUtcDayOffset(now, -1, 16),
+      fieldLocksAt: atUtcDayOffset(now, 4, 16),
+      notes: ['Relative event inside the participant lead window with participants available.'],
+    }),
+    buildRelativeGolfEvent({
+      eventId: 'golf-relative-field-pending-6d',
+      name: 'Relative QA Field Pending Open',
+      status: 'scheduled',
+      startsAt: atUtcDayOffset(now, 6, 12),
+      releaseAt: atUtcDayOffset(now, 2, 16),
+      fieldLocksAt: atUtcDayOffset(now, 5, 16),
+      notes: ['Relative event inside seven days but not released yet for field-availability testing.'],
+    }),
+    buildRelativeGolfEvent({
+      eventId: 'golf-relative-participant-boundary-7d',
+      name: 'Relative QA Participant Boundary Championship',
+      status: 'field_announced',
+      startsAt: atUtcDayOffset(now, 7, 12),
+      releaseAt: atUtcDayOffset(now, -1, 16),
+      fieldLocksAt: atUtcDayOffset(now, 6, 16),
+      notes: ['Relative event at the seven-day participant lead boundary.'],
+    }),
+    buildRelativeGolfEvent({
+      eventId: 'golf-relative-schedule-boundary-30d',
+      name: 'Relative QA Schedule Boundary Cup',
+      status: 'scheduled',
+      startsAt: atUtcDayOffset(now, 30, 11),
+      releaseAt: atUtcDayOffset(now, 22, 16),
+      fieldLocksAt: atUtcDayOffset(now, 29, 16),
+      notes: ['Relative event at the thirty-day schedule lookahead boundary.'],
+    }),
+  ];
+
+  return normalizeScenario({
+    scenarioId: 'golf-relative-today',
+    sport: 'GOLF',
+    provider: mockFeedProviderId,
+    description: 'Generated rolling golf lifecycle events anchored to the current UTC day for QA sync testing.',
+    season: {
+      seasonId: `golf-relative-${now.getUTCFullYear()}`,
+      name: 'Relative QA Golf Season',
+      year: now.getUTCFullYear(),
+    },
+    events: relativeEvents,
+  });
+}
+
+function summarizeEvent(
+  event: ContestFeedEventRecord,
+  sport: ContestFeedScenarioRecord['sport'],
+): Record<string, unknown> {
+  return {
+    eventId: event.eventId,
+    name: event.name,
+    status: event.status,
+    startsAt: event.schedule.startsAt,
+    releaseAt: event.schedule.releaseAt,
+    fieldLocksAt: event.schedule.fieldLocksAt,
+    fieldStatus: event.field.status,
+    contestantCount: resolveContestantsForFeed(sport, event).length,
+  };
+}
+
+function summarizeScenario(scenario: ContestFeedScenarioRecord): Record<string, unknown> {
+  return {
+    scenarioId: scenario.scenarioId,
+    sport: scenario.sport,
+    eventCount: scenario.events.length,
+    events: scenario.events.map((event) => summarizeEvent(event, scenario.sport)),
+  };
+}
+
 function loadJsonFile(filePath: string): ContestFeedScenarioRecord {
   const contents = readFileSync(filePath, 'utf8');
   return normalizeScenario(validateScenario(JSON.parse(contents) as unknown));
+}
+
+export interface ScenarioStoreOptions {
+  readonly now?: () => Date;
+  readonly includeRelativeTodayGolfScenario?: boolean;
 }
 
 export class ScenarioStore {
@@ -756,23 +938,48 @@ export class ScenarioStore {
   public constructor(
     scenarioDir: string,
     private readonly logger?: FastifyBaseLogger,
+    private readonly options: ScenarioStoreOptions = {},
   ) {
     const entries = readdirSync(scenarioDir, { withFileTypes: true })
       .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
       .map((entry) => loadJsonFile(join(scenarioDir, entry.name)));
+    const generatedScenarios =
+      options.includeRelativeTodayGolfScenario === false
+        ? []
+        : [buildRelativeTodayGolfScenario(options.now?.() ?? new Date())];
+    const allScenarios = [...entries, ...generatedScenarios];
 
     ensureUniqueIds(
-      entries.map((scenario) => scenario.scenarioId),
+      allScenarios.map((scenario) => scenario.scenarioId),
       'scenarioId',
     );
 
-    this.scenarios = entries.sort((left, right) => left.scenarioId.localeCompare(right.scenarioId));
+    this.scenarios = allScenarios.sort((left, right) => left.scenarioId.localeCompare(right.scenarioId));
     this.logger?.info(
       {
         action: 'mockScenarioStore.load.success',
-        data: { scenarioDir, scenarioCount: this.scenarios.length, eventCount: this.getEventCount() },
+        data: {
+          scenarioDir,
+          staticScenarioCount: entries.length,
+          generatedScenarioCount: generatedScenarios.length,
+          scenarioCount: this.scenarios.length,
+          eventCount: this.getEventCount(),
+          generatedScenarios: generatedScenarios.map((scenario) => ({
+            scenarioId: scenario.scenarioId,
+            eventCount: scenario.events.length,
+          })),
+        },
       },
       'Loaded mock contest-feed scenarios',
+    );
+    this.logger?.debug(
+      {
+        action: 'mockScenarioStore.load.payload',
+        data: {
+          scenarios: this.scenarios.map((scenario) => summarizeScenario(scenario)),
+        },
+      },
+      'Loaded mock contest-feed scenario payload',
     );
   }
 
@@ -788,7 +995,7 @@ export class ScenarioStore {
       eventCount: scenario.events.length,
     }));
     this.logger?.debug(
-      { action: 'mockScenarioStore.listScenarios', data: { scenarioCount: scenarios.length } },
+      { action: 'mockScenarioStore.listScenarios', data: { scenarioCount: scenarios.length, scenarios } },
       'Listed mock contest-feed scenarios',
     );
     return scenarios;
@@ -804,7 +1011,7 @@ export class ScenarioStore {
       throw new Error(`Scenario not found: ${scenarioId}`);
     }
     this.logger?.debug(
-      { action: 'mockScenarioStore.getScenario.success', data: { scenarioId } },
+      { action: 'mockScenarioStore.getScenario.success', data: { scenarioId, scenario: summarizeScenario(scenario) } },
       'Loaded mock contest-feed scenario',
     );
     return scenario;
@@ -833,6 +1040,10 @@ export class ScenarioStore {
       { action: 'mockScenarioStore.listEvents', data: { scenarioId, eventCount: events.length } },
       'Listed mock contest-feed scenario events',
     );
+    this.logger?.debug(
+      { action: 'mockScenarioStore.listEvents.payload', data: { scenarioId, events } },
+      'Listed mock contest-feed scenario event payload',
+    );
     return events;
   }
 
@@ -847,7 +1058,10 @@ export class ScenarioStore {
       throw new Error(`Event not found: ${scenarioId}/${eventId}`);
     }
     this.logger?.debug(
-      { action: 'mockScenarioStore.getEvent.success', data: { scenarioId, eventId } },
+      {
+        action: 'mockScenarioStore.getEvent.success',
+        data: { scenarioId, eventId, event: summarizeEvent(event, scenario.sport) },
+      },
       'Loaded mock contest-feed event',
     );
     return event;
@@ -855,7 +1069,7 @@ export class ScenarioStore {
 
   public getEventResponse(scenarioId: string, eventId: string): ContestFeedEventResponse {
     const scenario = this.getScenario(scenarioId);
-    const response = {
+    const response: ContestFeedEventResponse = {
       scenarioId,
       sport: scenario.sport,
       provider: scenario.provider,
@@ -864,8 +1078,19 @@ export class ScenarioStore {
       event: this.getEvent(scenarioId, eventId),
     };
     this.logger?.info(
-      { action: 'mockScenarioStore.getEventResponse', data: { scenarioId, eventId } },
+      {
+        action: 'mockScenarioStore.getEventResponse',
+        data: {
+          scenarioId,
+          eventId,
+          participantCount: resolveContestantsForFeed(scenario.sport, response.event).length,
+        },
+      },
       'Built mock contest-feed event detail response',
+    );
+    this.logger?.debug(
+      { action: 'mockScenarioStore.getEventResponse.payload', data: { response } },
+      'Built mock contest-feed event detail response payload',
     );
     return response;
   }
@@ -889,6 +1114,10 @@ export class ScenarioStore {
         { action: 'mockScenarioStore.getSnapshot.field', data: { scenarioId, eventId, contestantCount: fieldSnapshot.contestants.length } },
         'Built mock field snapshot response',
       );
+      this.logger?.debug(
+        { action: 'mockScenarioStore.getSnapshot.field.payload', data: { snapshot: fieldSnapshot } },
+        'Built mock field snapshot response payload',
+      );
       return fieldSnapshot;
     }
 
@@ -911,6 +1140,10 @@ export class ScenarioStore {
       { action: 'mockScenarioStore.getSnapshot.feed', data: { scenarioId, eventId, feedKind, contestantCount: contestants.length } },
       'Built mock feed snapshot response',
     );
+    this.logger?.debug(
+      { action: 'mockScenarioStore.getSnapshot.feed.payload', data: { snapshot } },
+      'Built mock feed snapshot response payload',
+    );
     return snapshot;
   }
 
@@ -918,7 +1151,7 @@ export class ScenarioStore {
     const scenario = this.getScenario(scenarioId);
     const event = this.getEvent(scenarioId, eventId);
     const baselineContestants = resolveContestantsForFeed(scenario.sport, event);
-    const response = {
+    const response: ContestFeedUpdateResponse = {
       scenarioId,
       eventId,
       eventName: event.name,
@@ -930,6 +1163,16 @@ export class ScenarioStore {
     this.logger?.info(
       { action: 'mockScenarioStore.getUpdates', data: { scenarioId, eventId, updateCount: response.updates.length } },
       'Built mock contest-feed updates response',
+    );
+    if (response.updates.length === 0) {
+      this.logger?.warn(
+        { action: 'mockScenarioStore.getUpdates.empty', data: { scenarioId, eventId } },
+        'Mock contest-feed event has no staged updates',
+      );
+    }
+    this.logger?.debug(
+      { action: 'mockScenarioStore.getUpdates.payload', data: { response } },
+      'Built mock contest-feed updates response payload',
     );
     return response;
   }
@@ -963,7 +1206,7 @@ export class ScenarioStore {
           event.feeds.results.contestants,
         );
 
-    return {
+    const response: ContestFeedSnapshotResponse = {
       scenarioId,
       eventId,
       eventName: event.name,
@@ -972,6 +1215,24 @@ export class ScenarioStore {
       note: `Live scoring tick ${tick}`,
       contestants,
     };
+    this.logger?.info(
+      {
+        action: 'mockScenarioStore.getLiveScores',
+        data: {
+          scenarioId,
+          eventId,
+          tick,
+          explicitTick: explicitTick ?? null,
+          contestantCount: contestants.length,
+        },
+      },
+      'Built mock live score response',
+    );
+    this.logger?.debug(
+      { action: 'mockScenarioStore.getLiveScores.payload', data: { response } },
+      'Built mock live score response payload',
+    );
+    return response;
   }
 }
 
