@@ -852,7 +852,7 @@ export function MyTeamPage() {
           <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
           <Dialog.Content
             aria-describedby="my-team-icon-modal-description"
-            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
+            className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[2rem] border border-border bg-card p-5 shadow-2xl sm:p-6"
             data-testid="my-team-icon-modal"
           >
             <div className="flex items-start justify-between gap-4">
@@ -878,9 +878,9 @@ export function MyTeamPage() {
               </button>
             </div>
 
-            <div className="mt-5 rounded-[1.5rem] border border-border bg-background p-5">
+            <div className="mt-4 rounded-[1.5rem] border border-border bg-background p-4 sm:p-5">
               <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card px-4 py-4">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${draftIcon.surfaceClass} ${draftIcon.accentClass}`}>
+                <div className={`flex h-16 w-16 items-center justify-center rounded-[1.25rem] ${draftIcon.surfaceClass} ${draftIcon.accentClass}`}>
                   <TeamIcon iconKey={iconDraftKey} size="lg" />
                 </div>
                 <div>
@@ -891,12 +891,12 @@ export function MyTeamPage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-4 xl:grid-cols-5">
+              <div className="mt-4 grid max-h-80 gap-2 overflow-y-auto pr-1 sm:grid-cols-4" data-testid="my-team-icon-palette">
                 {TEAM_ICON_OPTIONS.map((icon) => {
                   const isSelected = iconDraftKey === icon.key;
                   return (
                     <button
-                      className={`rounded-[1.1rem] border px-3 py-4 text-center transition ${
+                      className={`rounded-[1rem] border px-2 py-3 text-center transition ${
                         isSelected
                           ? 'border-primary bg-primary/10 text-foreground'
                           : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
@@ -907,10 +907,10 @@ export function MyTeamPage() {
                       onClick={() => setIconDraftKey(icon.key)}
                       type="button"
                     >
-                      <div className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full ${icon.surfaceClass} ${icon.accentClass}`}>
+                      <div className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full ${icon.surfaceClass} ${icon.accentClass}`}>
                         <TeamIcon iconKey={icon.key} size="md" />
                       </div>
-                      <div className="mt-3 text-xs font-medium">{icon.label}</div>
+                      <div className="mt-2 text-xs font-medium">{icon.label}</div>
                     </button>
                   );
                 })}
@@ -920,7 +920,7 @@ export function MyTeamPage() {
                 <p className="mt-4 text-sm text-destructive">{extractErrorMessage(updateTeamIconMutation.error)}</p>
               ) : null}
 
-              <div className="mt-5 flex justify-end gap-3">
+              <div className="mt-4 flex justify-end gap-3">
                 <button
                   className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={updateTeamIconMutation.isPending}

@@ -385,6 +385,76 @@ describe('MyTeamPage', () => {
     expect(screen.getByTestId('my-team-current-icon-label')).toHaveTextContent('Turbo Turtle Midnight');
   });
 
+  // pool-master-dxd.31 — Team has many more icon variants than League, so the
+  // modal and palette must stay constrained and scrollable with actions reachable.
+  it('keeps the team icon picker constrained and scrollable like the league icon picker', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        league: buildLeagueDetail('MEMBER'),
+      },
+    });
+    listLeagueSquadsMock.mockResolvedValue({
+      data: {
+        squads: [buildTeamSummary()],
+      },
+    });
+    listLeagueMembersMock.mockResolvedValue({
+      data: {
+        members: [
+          {
+            id: 'league-member-1',
+            userId: 'user-1',
+            email: 'derek@example.com',
+            firstName: 'Derek',
+            lastName: 'Dorazio',
+            role: 'MEMBER',
+            joinedAt: '2026-04-15T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+    listContestsMock.mockResolvedValue({
+      data: {
+        contests: [],
+      },
+    });
+    listSquadOwnerInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [],
+      },
+    });
+
+    renderMyTeamPage();
+
+    await screen.findByDisplayValue('Derek Squad');
+    fireEvent.click(screen.getByTestId('my-team-change-icon'));
+
+    expect(await screen.findByTestId('my-team-icon-modal')).toHaveClass(
+      'max-h-[calc(100vh-2rem)]',
+      'max-w-3xl',
+      'overflow-y-auto',
+    );
+    expect(screen.getByTestId('my-team-icon-palette')).toHaveClass(
+      'max-h-80',
+      'overflow-y-auto',
+      'sm:grid-cols-4',
+    );
+  });
+
   it('creates, replaces, removes, and revokes owner invites for an existing team', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {

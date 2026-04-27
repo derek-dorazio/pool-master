@@ -833,7 +833,7 @@ export function LeagueDetailPage() {
           <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
           <Dialog.Content
             aria-describedby="league-icon-modal-description"
-            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
+            className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[2rem] border border-border bg-card p-5 shadow-2xl sm:p-6"
             data-testid="league-icon-modal"
           >
             <div className="flex items-start justify-between gap-4">
@@ -859,7 +859,7 @@ export function LeagueDetailPage() {
               </button>
             </div>
 
-            <div className="mt-5 rounded-[1.5rem] border border-border bg-background p-5">
+            <div className="mt-4 rounded-[1.5rem] border border-border bg-background p-4 sm:p-5">
               <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card px-4 py-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-primary/10 text-primary">
                   <LeagueIcon iconKey={iconDraftKey} size="lg" />
@@ -872,12 +872,12 @@ export function LeagueDetailPage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-4">
+              <div className="mt-4 grid max-h-80 gap-2 overflow-y-auto pr-1 sm:grid-cols-4" data-testid="league-icon-palette">
                 {LEAGUE_ICON_OPTIONS.map((icon) => {
                   const isSelected = iconDraftKey === icon.key;
                   return (
                     <button
-                      className={`rounded-[1.25rem] border px-3 py-4 text-center transition ${
+                      className={`rounded-[1rem] border px-2 py-3 text-center transition ${
                         isSelected
                           ? 'border-primary bg-primary/10 text-foreground'
                           : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
@@ -891,7 +891,7 @@ export function LeagueDetailPage() {
                       <div className="flex justify-center text-primary">
                         <LeagueIcon iconKey={icon.key} size="md" />
                       </div>
-                      <div className="mt-3 text-xs font-medium">{icon.label}</div>
+                      <div className="mt-2 text-xs font-medium">{icon.label}</div>
                     </button>
                   );
                 })}
@@ -903,7 +903,7 @@ export function LeagueDetailPage() {
                 </p>
               ) : null}
 
-              <div className="mt-5 flex justify-end gap-3">
+              <div className="mt-4 flex justify-end gap-3">
                 <button
                   className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={updateIconMutation.isPending}
