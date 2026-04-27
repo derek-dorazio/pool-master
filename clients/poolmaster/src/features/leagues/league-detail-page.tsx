@@ -1,5 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Check, Copy } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -75,6 +76,7 @@ export function LeagueDetailPage() {
   });
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLink, setInviteLink] = useState('');
+  const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
   const [leaveActionError, setLeaveActionError] = useState<string | null>(null);
   const [detailsName, setDetailsName] = useState('');
   const [detailsDescription, setDetailsDescription] = useState('');
@@ -352,6 +354,7 @@ export function LeagueDetailPage() {
 
     const nextLink = await inviteLinkMutation.mutateAsync();
     setInviteLink(nextLink);
+    setInviteLinkCopied(false);
   }
 
   async function handleCopyInviteLink() {
@@ -361,6 +364,7 @@ export function LeagueDetailPage() {
 
     try {
       await navigator.clipboard.writeText(inviteLink);
+      setInviteLinkCopied(true);
     } catch {
       // Keep the link visible for manual copy when clipboard access is unavailable.
     }
@@ -544,6 +548,49 @@ export function LeagueDetailPage() {
                 <div className="mt-1 font-mono text-base font-medium">{leagueQuery.data.leagueCode}</div>
               </div>
 
+              <div className="sm:col-span-2">
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Join URL
+                </div>
+                <div className="mt-2 flex flex-col gap-3 sm:flex-row">
+                  <input
+                    className="min-w-0 flex-1 rounded-2xl border border-border bg-card px-4 py-3 font-mono text-sm disabled:cursor-not-allowed disabled:opacity-70"
+                    data-testid="league-join-url"
+                    disabled={isInactiveLeague}
+                    placeholder="Create a join URL"
+                    readOnly
+                    value={inviteLink}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                      data-testid="league-create-join-url"
+                      disabled={inviteLinkMutation.isPending || isInactiveLeague}
+                      onClick={() => void handleGenerateInviteLink()}
+                      type="button"
+                    >
+                      {inviteLinkMutation.isPending ? 'Creating...' : inviteLink ? 'Refresh URL' : 'Create URL'}
+                    </button>
+                    <button
+                      aria-label="Copy join URL"
+                      className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                      data-testid="league-copy-join-url"
+                      disabled={!inviteLink || isInactiveLeague}
+                      onClick={() => void handleCopyInviteLink()}
+                      title="Copy join URL"
+                      type="button"
+                    >
+                      {inviteLinkCopied ? <Check aria-hidden size={18} /> : <Copy aria-hidden size={18} />}
+                    </button>
+                  </div>
+                </div>
+                {inviteLinkMutation.isError ? (
+                  <p className="mt-2 text-sm text-destructive">
+                    {extractErrorMessage(inviteLinkMutation.error, 'We could not create a join URL.')}
+                  </p>
+                ) : null}
+              </div>
+
               <div>
                 <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   Created
@@ -631,11 +678,6 @@ export function LeagueDetailPage() {
               data-testid="league-invitations-section"
             >
               <h4 className="text-lg font-semibold">Commissioner invitations</h4>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Generate a shareable invite link or send invitation emails through the current
-                backend invitation flow.
-              </p>
-
               <div className="mt-5 rounded-2xl border border-border bg-card p-4">
                 <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   Join policy
@@ -646,40 +688,6 @@ export function LeagueDetailPage() {
               </div>
 
               <div className="mt-5 space-y-4">
-                <div className="rounded-2xl border border-border bg-card p-4">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <button
-                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                      data-testid="league-generate-invite-link"
-                      disabled={inviteLinkMutation.isPending || isInactiveLeague}
-                      onClick={() => void handleGenerateInviteLink()}
-                      type="button"
-                    >
-                      {isInactiveLeague
-                        ? 'League inactive'
-                        : inviteLinkMutation.isPending
-                          ? 'Generating...'
-                          : 'Generate invite link'}
-                    </button>
-                    <button
-                      className="rounded-2xl border border-border px-4 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
-                      data-testid="league-copy-invite-link"
-                      disabled={!inviteLink || isInactiveLeague}
-                      onClick={() => void handleCopyInviteLink()}
-                      type="button"
-                    >
-                      Copy link
-                    </button>
-                  </div>
-                  <input
-                    className="mt-3 w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-70"
-                    data-testid="league-invite-link"
-                    disabled={isInactiveLeague}
-                    readOnly
-                    value={inviteLink}
-                  />
-                </div>
-
                 <div className="rounded-2xl border border-border bg-card p-4">
                   <label className="block space-y-2">
                     <span className="text-sm font-medium">Invite by email</span>

@@ -317,6 +317,45 @@ describe('LeagueDetailPage', () => {
     expect(screen.getByTestId('league-lifecycle-status')).toHaveTextContent('Active');
   });
 
+  // pool-master-8lt — commissioners can create and copy a join URL without email delivery.
+  it('creates a copyable join URL from League details', async () => {
+    primeCommonMocks();
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: { writeText: writeTextMock },
+    });
+    generateInviteLinkMock.mockResolvedValue({
+      data: {
+        invitation: {
+          inviteCode: 'invite-abc',
+        },
+      },
+    });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    expect(screen.getByTestId('league-join-url')).toHaveValue('');
+
+    fireEvent.click(screen.getByTestId('league-create-join-url'));
+
+    await waitFor(() =>
+      expect(generateInviteLinkMock).toHaveBeenCalledWith({
+        path: { id: 'league-1' },
+        body: {},
+      }),
+    );
+    expect(screen.getByTestId('league-join-url')).toHaveValue(
+      'http://localhost:3000/invite/invite-abc',
+    );
+
+    fireEvent.click(screen.getByTestId('league-copy-join-url'));
+
+    await waitFor(() =>
+      expect(writeTextMock).toHaveBeenCalledWith(expect.stringContaining('/invite/invite-abc')),
+    );
+  });
+
   it('updates the league icon from a modal and returns to League Home with the new icon', async () => {
     primeCommonMocks();
     updateLeagueIconMock.mockResolvedValue({
