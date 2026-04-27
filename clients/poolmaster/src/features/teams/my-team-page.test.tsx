@@ -9,6 +9,7 @@ import { MyTeamPage } from './my-team-page';
 
 const changeMemberRoleMock = vi.fn();
 const createLeagueSquadMock = vi.fn();
+const deleteLeagueSquadMock = vi.fn();
 const enterContestMock = vi.fn();
 const createSquadOwnerInvitationMock = vi.fn();
 const getCurrentUserMock = vi.fn();
@@ -30,6 +31,7 @@ const updateLeagueSquadMock = vi.fn();
 vi.mock('@/lib/api', () => ({
   changeMemberRole: (...args: unknown[]) => changeMemberRoleMock(...args),
   createLeagueSquad: (...args: unknown[]) => createLeagueSquadMock(...args),
+  deleteLeagueSquad: (...args: unknown[]) => deleteLeagueSquadMock(...args),
   enterContest: (...args: unknown[]) => enterContestMock(...args),
   createSquadOwnerInvitation: (...args: unknown[]) => createSquadOwnerInvitationMock(...args),
   getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
@@ -99,7 +101,7 @@ function buildTeamSummary(overrides: Record<string, unknown> = {}) {
     createdBy: 'user-1',
     name: 'Derek Squad',
     iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-    status: 'ACTIVE',
+    isActive: true,
     memberCount: 1,
     createdAt: '2026-04-15T00:00:00.000Z',
     updatedAt: '2026-04-15T00:00:00.000Z',
@@ -135,6 +137,7 @@ describe('MyTeamPage', () => {
   afterEach(() => {
     changeMemberRoleMock.mockReset();
     createLeagueSquadMock.mockReset();
+    deleteLeagueSquadMock.mockReset();
     enterContestMock.mockReset();
     createSquadOwnerInvitationMock.mockReset();
     getCurrentUserMock.mockReset();
@@ -750,7 +753,7 @@ describe('MyTeamPage', () => {
       data: {
         squad: buildTeamSummary({
           name: 'Original Team',
-          status: 'INACTIVE',
+          isActive: false,
           memberCount: 0,
           members: [],
         }),
@@ -764,6 +767,82 @@ describe('MyTeamPage', () => {
 
     await waitFor(() =>
       expect(inactivateLeagueSquadMock).toHaveBeenCalledWith({
+        path: { id: 'league-1', squadId: 'team-1' },
+      }),
+    );
+  });
+
+  // pool-master-dxd.32 — inactive teams should show their lifecycle and advance
+  // to the delete workflow instead of offering another inactivation.
+  it('shows inactive lifecycle and deletes an inactive team from Team Home', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'root@example.com',
+          firstName: 'Root',
+          lastName: 'Admin',
+          isActive: true,
+          isRootAdmin: true,
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        league: buildLeagueDetail('MEMBER', true),
+      },
+    });
+    listLeagueSquadsMock.mockResolvedValue({
+      data: {
+        squads: [
+          buildTeamSummary({
+            name: 'Inactive Team',
+            isActive: false,
+            memberCount: 0,
+            members: [],
+            isRootAdmin: true,
+            teamRelationship: {
+              leagueMember: false,
+              owner: false,
+              commissioner: false,
+            },
+          }),
+        ],
+      },
+    });
+    listLeagueMembersMock.mockResolvedValue({
+      data: {
+        members: [],
+      },
+    });
+    listContestsMock.mockResolvedValue({
+      data: {
+        contests: [],
+      },
+    });
+    listSquadOwnerInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [],
+      },
+    });
+    deleteLeagueSquadMock.mockResolvedValue({
+      data: {
+        success: true,
+      },
+    });
+
+    renderMyTeamPage('/league/BIGDAWGS/team?teamId=team-1');
+
+    await screen.findByDisplayValue('Inactive Team');
+    expect(screen.getByTestId('my-team-lifecycle-status')).toHaveTextContent('Inactive');
+    expect(screen.queryByTestId('my-team-inactivate')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('my-team-delete'));
+
+    await waitFor(() =>
+      expect(deleteLeagueSquadMock).toHaveBeenCalledWith({
         path: { id: 'league-1', squadId: 'team-1' },
       }),
     );

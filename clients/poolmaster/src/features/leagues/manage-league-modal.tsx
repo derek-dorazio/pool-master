@@ -464,8 +464,7 @@ export function ManageLeagueModal({
                   <div>
                     <h3 className="text-xl font-semibold">League icon</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Choose from the built-in PoolMaster icon catalog for now. Custom uploads stay
-                      deferred until a later slice.
+                      Choose from the built-in PoolMaster icon catalog.
                     </p>
                   </div>
                   <div className="rounded-[1.5rem] border border-border bg-card p-5">
@@ -549,8 +548,7 @@ export function ManageLeagueModal({
                   <div>
                     <h3 className="text-xl font-semibold">League settings</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      This first pass stays intentionally small. Join policy is shown here for
-                      context, but broader settings remain a follow-on slice.
+                      Review the current league settings.
                     </p>
                   </div>
                   <div className="rounded-[1.5rem] border border-border bg-card p-5">
@@ -561,8 +559,7 @@ export function ManageLeagueModal({
                       {currentJoinPolicy ?? 'Loading...'}
                     </div>
                     <p className="mt-3 text-sm text-muted-foreground">
-                      Join policy editing is deferred until invite and open-league product flows are
-                      reviewed. This surface stays read-only and truthful for now.
+                      Join policy editing is not available from this page.
                     </p>
                   </div>
                 </div>

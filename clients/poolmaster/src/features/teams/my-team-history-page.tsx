@@ -208,8 +208,7 @@ export function MyTeamHistoryPage() {
           My Contest History
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          This dedicated route now owns historical contest results for your team. Richer grouped
-          history views can layer on later without putting the old history tile back onto Team Home.
+          View completed contests and previous results for your team.
         </p>
       </div>
 

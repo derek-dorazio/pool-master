@@ -437,8 +437,7 @@ export function LeagueDetailPage() {
           <h2 className="text-xl font-semibold">This league is not currently active.</h2>
           <p className="mt-2 text-sm text-amber-900/90">
             League Home stays available in read-only mode while the league is inactive.
-            Commissioner edits and invites are disabled until the league is reactivated in a later
-            lifecycle slice.
+            Commissioner edits and invites are disabled while the league is inactive.
           </p>
         </div>
       ) : null}
@@ -457,7 +456,7 @@ export function LeagueDetailPage() {
                 <h2 className="text-3xl font-semibold tracking-tight">{leagueQuery.data.name}</h2>
                 <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                   {leagueQuery.data.description?.trim() ||
-                    'This league home is the canonical place for league identity, commissioner controls, and member leave actions.'}
+                    'Manage league identity, commissioner controls, and member actions here.'}
                 </p>
               </div>
             </div>

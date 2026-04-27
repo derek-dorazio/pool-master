@@ -597,7 +597,7 @@ export function ContestEntryPage() {
       <section className="rounded-[2rem] border border-border bg-card p-8">
         <h2 className="text-2xl font-semibold">We couldn&apos;t load this contest entry.</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The entry route depends on the live draft-state and contest entry contracts.
+          Try refreshing or return to the contest board.
         </p>
       </section>
     );

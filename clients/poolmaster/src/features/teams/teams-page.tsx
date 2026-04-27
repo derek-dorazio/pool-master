@@ -279,7 +279,7 @@ export function TeamsPage() {
                         ) : null}
                       </div>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Team Home is the canonical place for owner and lifecycle actions.
+                        Open Team Home for owner and lifecycle actions.
                       </p>
                     </div>
                   </div>

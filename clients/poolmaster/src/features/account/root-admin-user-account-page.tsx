@@ -426,7 +426,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
                   {isInactive ? 'Reactivate account' : 'Inactivate account'}
                 </span>
                 <span className="mt-1 block text-sm text-muted-foreground">
-                  Lifecycle stays account-scoped on the canonical user page.
+                  Manage whether this account can sign in.
                 </span>
               </span>
               <span className="text-sm font-medium text-muted-foreground">Open</span>

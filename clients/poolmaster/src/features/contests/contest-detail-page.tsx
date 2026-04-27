@@ -319,7 +319,7 @@ export function ContestDetailPage() {
       <section className="rounded-[2rem] border border-border bg-card p-8">
         <h2 className="text-2xl font-semibold">We couldn&apos;t load this contest.</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          This route is already reading from the generated SDK and current service contract.
+          Try refreshing or return to League Home.
         </p>
       </section>
     );

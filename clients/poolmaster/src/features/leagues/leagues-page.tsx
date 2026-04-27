@@ -43,7 +43,6 @@ export function WelcomePage() {
       >
         <h2 className="text-xl font-semibold">We couldn&apos;t load your leagues.</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          This route is wired to the generated SDK and current backend contracts.
           Try refreshing after signing in again.
         </p>
       </section>
@@ -65,9 +64,7 @@ export function WelcomePage() {
           {formatUserName(auth.user?.firstName, auth.user?.lastName)}.
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          This is your normal app home. Once you create leagues, they&apos;ll
-          appear here. For a brand-new commissioner account, the next step is
-          creating your first league.
+          Once you create leagues, they&apos;ll appear here.
         </p>
         <div className="mt-6 rounded-[1.5rem] border border-dashed border-border bg-background p-5">
           <h3 className="text-lg font-semibold">Create your first league</h3>

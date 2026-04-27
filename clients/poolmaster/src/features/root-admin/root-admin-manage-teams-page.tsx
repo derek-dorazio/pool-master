@@ -110,7 +110,7 @@ export function RootAdminManageTeamsPage() {
               <div className="min-w-0">
                 <div className="truncate font-medium text-foreground">{row.original.name}</div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Team Home is the canonical place for lifecycle work.
+                  Open Team Home to manage lifecycle.
                 </div>
               </div>
             </div>
@@ -173,9 +173,8 @@ export function RootAdminManageTeamsPage() {
             </Link>
             <h2 className="mt-3 text-2xl font-semibold text-foreground">Teams</h2>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-              Search teams across leagues, sort the results locally, and open canonical
-              Team Home for owner and lifecycle actions. Hard delete remains a Team Home
-              action and only appears for inactive teams under root-admin controls.
+              Search teams across leagues, sort results, and open Team Home for owner and
+              lifecycle actions.
             </p>
           </div>
 

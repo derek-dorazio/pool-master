@@ -69,8 +69,7 @@ export function RootAdminContentConfigurationListPage() {
               Content Configuration
             </h2>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-              Root-admin control over the persisted contest templates used by future
-              commissioner create flows.
+              Manage the persisted contest templates available to commissioner contest setup.
             </p>
           </div>
         </div>

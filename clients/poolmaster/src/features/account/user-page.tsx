@@ -324,12 +324,10 @@ export function UserPage() {
             User
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
-            Cross-user profile views land next
+            User profile unavailable
           </h1>
           <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-            The canonical user route now owns self-service account actions, but non-root-admin
-            viewer detail still depends on the broader user-detail contract in the next slice.
-            This page stays truthful until that contract lands.
+            You do not have access to view this user profile.
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
             Requested user id: <span className="font-medium text-foreground">{userId}</span>
@@ -370,8 +368,7 @@ export function UserPage() {
           My profile
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          The canonical user route now owns your self-service account actions. Cross-user detail
-          and admin-authority tools will land in the next slices.
+          Manage your profile, preferences, password, and account lifecycle.
         </p>
         {isInactive ? (
           <div
@@ -516,7 +513,7 @@ export function UserPage() {
                   {isInactive ? 'Reactivate account' : 'Inactivate account'}
                 </span>
                 <span className="mt-1 block text-sm text-muted-foreground">
-                  Account lifecycle stays on your canonical user page now.
+                  Manage whether your account can sign in.
                 </span>
               </span>
               <span className="text-sm font-medium text-muted-foreground">Open</span>

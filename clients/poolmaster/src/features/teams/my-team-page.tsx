@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   createSquadOwnerInvitation,
   createLeagueSquad,
+  deleteLeagueSquad,
   getLeagueByCode,
   inactivateLeagueSquad,
   listLeagueMembers,
@@ -61,6 +62,7 @@ export function MyTeamPage() {
   const [iconDraftKey, setIconDraftKey] = useState<TeamIconKey>(TeamIconKey.CAPTAIN_SMILE_FIELD);
   const [coOwnerEmail, setCoOwnerEmail] = useState('');
   const [teamInactivationNotice, setTeamInactivationNotice] = useState<string | null>(null);
+  const [teamDeletionNotice, setTeamDeletionNotice] = useState<string | null>(null);
   const [replaceTargetUserId, setReplaceTargetUserId] = useState<string | null>(null);
   const [replaceEmail, setReplaceEmail] = useState('');
 
@@ -178,6 +180,7 @@ export function MyTeamPage() {
       setSelectedIconKey(selectedTeam.iconKey);
       setIconDraftKey(selectedTeam.iconKey);
       setTeamInactivationNotice(null);
+      setTeamDeletionNotice(null);
       return;
     }
 
@@ -185,6 +188,7 @@ export function MyTeamPage() {
     setSelectedIconKey(TeamIconKey.CAPTAIN_SMILE_FIELD);
     setIconDraftKey(TeamIconKey.CAPTAIN_SMILE_FIELD);
     setTeamInactivationNotice(null);
+    setTeamDeletionNotice(null);
   }, [auth.user?.firstName, auth.user?.lastName, selectedTeam]);
 
   const createTeamMutation = useMutation({
@@ -345,6 +349,34 @@ export function MyTeamPage() {
     },
   });
 
+  const deleteTeamMutation = useMutation({
+    mutationFn: async () => {
+      const squadId = selectedTeam?.id;
+      if (!squadId) {
+        throw new Error('A team must exist before it can be deleted.');
+      }
+
+      const response = await deleteLeagueSquad({
+        path: { id: leagueId, squadId },
+      });
+
+      if (!response.data?.success) {
+        throw response.error ?? new Error('Team deletion response is missing data.');
+      }
+
+      return selectedTeam.name;
+    },
+    onSuccess: async (teamNameDeleted) => {
+      setTeamDeletionNotice(`${teamNameDeleted} was deleted.`);
+      setTeamInactivationNotice(null);
+      setReplaceTargetUserId(null);
+      setReplaceEmail('');
+      setCoOwnerEmail('');
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-team-owner-invitations', leagueId] });
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
+    },
+  });
+
   async function handleSaveTeam() {
     const nextTeamName = teamName.trim();
     if (!nextTeamName || !leagueId || leagueQuery.data?.isActive === false) {
@@ -386,7 +418,7 @@ export function MyTeamPage() {
 
   async function handleSaveTeamIcon() {
     if (selectedTeam) {
-      if (!canManageSelectedTeam || leagueQuery.data?.isActive === false) {
+      if (!canManageSelectedTeam || leagueQuery.data?.isActive === false || isInactiveTeam) {
         return;
       }
 
@@ -428,6 +460,7 @@ export function MyTeamPage() {
   }
 
   const isInactiveLeague = leagueQuery.data.isActive === false;
+  const isInactiveTeam = selectedTeam?.isActive === false;
   const canCreateOwnTeam = leagueQuery.data.leagueRelationship.leagueMember;
   const canManageSelectedTeam = Boolean(
     selectedTeam
@@ -435,6 +468,7 @@ export function MyTeamPage() {
       || selectedTeam.teamRelationship.commissioner
       || selectedTeam.isRootAdmin),
   );
+  const canDeleteSelectedTeam = Boolean(selectedTeam && isInactiveTeam && selectedTeam.isRootAdmin);
   const isManagingAnotherTeam = Boolean(
     selectedTeam
     && myTeam
@@ -448,10 +482,12 @@ export function MyTeamPage() {
     || createOwnerInvitationMutation.isPending
     || replaceOwnerMutation.isPending
     || revokeOwnerInvitationMutation.isPending
-    || inactivateTeamMutation.isPending;
+    || inactivateTeamMutation.isPending
+    || deleteTeamMutation.isPending;
   const activeMembers = (selectedTeam?.members ?? []).filter((member) => member.status === 'ACTIVE');
   const selectedIcon = getTeamIconOption(selectedIconKey);
   const draftIcon = getTeamIconOption(iconDraftKey);
+  const teamLifecycleLabel = selectedTeam?.isActive === false ? 'Inactive' : 'Active';
   const teamOwnerInvitations = ownerInvitationsQuery.data?.filter(
     (invitation) => invitation.squadId === selectedTeam?.id,
   ) ?? [];
@@ -473,10 +509,10 @@ export function MyTeamPage() {
               </h2>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                 {isManagingAnotherTeam
-                  ? 'Commissioners and root admins can use this same team surface to review and update any team in the league.'
+                  ? 'Review this team, update its details, and manage its owners.'
                   : !selectedTeam && !canCreateOwnTeam
                     ? 'Select a team from Teams and Owners to manage it here. Root admins can review any team without becoming league members.'
-                    : 'Team identity lives inside the league context. This slice adds the built-in icon catalog so your Team can look distinct before owner controls expand.'}
+                    : 'Manage your team name, icon, owners, and lifecycle.'}
               </p>
             </div>
           </div>
@@ -514,7 +550,7 @@ export function MyTeamPage() {
               <input
                 className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
                 data-testid="my-team-name"
-                disabled={isInactiveLeague || isBusy || (selectedTeam ? !canManageSelectedTeam : !canCreateOwnTeam)}
+                disabled={isInactiveLeague || isInactiveTeam || isBusy || (selectedTeam ? !canManageSelectedTeam : !canCreateOwnTeam)}
                 maxLength={100}
                 onChange={(event) => setTeamName(event.target.value)}
                 value={teamName}
@@ -527,7 +563,7 @@ export function MyTeamPage() {
                 <button
                   className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
                   data-testid="my-team-change-icon"
-                  disabled={isInactiveLeague || isBusy || (selectedTeam ? !canManageSelectedTeam : !canCreateOwnTeam)}
+                  disabled={isInactiveLeague || isInactiveTeam || isBusy || (selectedTeam ? !canManageSelectedTeam : !canCreateOwnTeam)}
                   onClick={handleOpenIconModal}
                   type="button"
                 >
@@ -552,7 +588,7 @@ export function MyTeamPage() {
             <button
               className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
               data-testid="my-team-save"
-                disabled={!teamName.trim() || isInactiveLeague || isBusy || (selectedTeam ? !canManageSelectedTeam : !canCreateOwnTeam)}
+              disabled={!teamName.trim() || isInactiveLeague || isInactiveTeam || isBusy || (selectedTeam ? !canManageSelectedTeam : !canCreateOwnTeam)}
               onClick={() => void handleSaveTeam()}
               type="button"
             >
@@ -610,7 +646,7 @@ export function MyTeamPage() {
             <h3 className="text-xl font-semibold">Active team members</h3>
             <p className="mt-2 text-sm text-muted-foreground">
               Teams support one or more owners. Add co-owners by email, replace an existing owner,
-              or remove an owner when the backend rules allow it.
+              or remove an owner when you have permission.
             </p>
 
             {selectedTeam ? (
@@ -623,7 +659,7 @@ export function MyTeamPage() {
                   <input
                     className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
                     data-testid="my-team-owner-email"
-                    disabled={isInactiveLeague || isBusy || !canManageSelectedTeam}
+                    disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
                     onChange={(event) => setCoOwnerEmail(event.target.value)}
                     placeholder="owner@example.com"
                     type="email"
@@ -632,7 +668,7 @@ export function MyTeamPage() {
                   <button
                     className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
                     data-testid="my-team-owner-invite"
-                    disabled={isInactiveLeague || isBusy || !canManageSelectedTeam || !coOwnerEmail.trim()}
+                    disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam || !coOwnerEmail.trim()}
                     onClick={() => void createOwnerInvitationMutation.mutateAsync(coOwnerEmail.trim())}
                     type="button"
                   >
@@ -711,7 +747,7 @@ export function MyTeamPage() {
                         <button
                           className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
                           data-testid={`my-team-open-replace-${member.userId}`}
-                          disabled={isInactiveLeague || isBusy || !canManageSelectedTeam}
+                          disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
                           onClick={() => {
                             setReplaceTargetUserId((current) => current === member.userId ? null : member.userId);
                             setReplaceEmail('');
@@ -746,7 +782,7 @@ export function MyTeamPage() {
                         <button
                           className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
                           data-testid={`my-team-revoke-owner-invitation-${invitation.id}`}
-                          disabled={isInactiveLeague || isBusy || !canManageSelectedTeam}
+                          disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
                           onClick={() => void revokeOwnerInvitationMutation.mutateAsync(invitation.id)}
                           type="button"
                         >
@@ -768,7 +804,7 @@ export function MyTeamPage() {
                   <input
                     className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
                     data-testid="my-team-replace-email"
-                    disabled={isInactiveLeague || isBusy || !canManageSelectedTeam}
+                    disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
                     onChange={(event) => setReplaceEmail(event.target.value)}
                     placeholder="replacement@example.com"
                     type="email"
@@ -777,7 +813,7 @@ export function MyTeamPage() {
                   <button
                     className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
                     data-testid="my-team-replace-submit"
-                    disabled={isInactiveLeague || isBusy || !canManageSelectedTeam || !replaceEmail.trim()}
+                    disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam || !replaceEmail.trim()}
                     onClick={() =>
                       void replaceOwnerMutation.mutateAsync({
                         userId: replaceTargetUserId,
@@ -810,8 +846,14 @@ export function MyTeamPage() {
             {teamInactivationNotice ? (
               <p className="mt-4 text-sm text-emerald-700">{teamInactivationNotice}</p>
             ) : null}
+            {teamDeletionNotice ? (
+              <p className="mt-4 text-sm text-emerald-700">{teamDeletionNotice}</p>
+            ) : null}
             {inactivateTeamMutation.isError ? (
               <p className="mt-4 text-sm text-destructive">{extractErrorMessage(inactivateTeamMutation.error)}</p>
+            ) : null}
+            {deleteTeamMutation.isError ? (
+              <p className="mt-4 text-sm text-destructive">{extractErrorMessage(deleteTeamMutation.error)}</p>
             ) : null}
           </div>
 
@@ -820,19 +862,37 @@ export function MyTeamPage() {
             <p className="mt-2 text-sm text-muted-foreground">
               Inactivating a team preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any other active leagues.
             </p>
-            <button
-              className="mt-4 rounded-2xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-60"
-              data-testid="my-team-inactivate"
-              disabled={!selectedTeam || isInactiveLeague || isBusy || !canManageSelectedTeam}
-              onClick={() => void inactivateTeamMutation.mutateAsync()}
-              type="button"
-            >
-              {inactivateTeamMutation.isPending ? 'Inactivating...' : 'Inactivate team'}
-            </button>
-            <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
-              <li>Commissioner and owner tooling share the same team page so the surface stays honest and small.</li>
-              <li>League home and Teams keep this page easy to reach as team management grows.</li>
-            </ul>
+            {selectedTeam ? (
+              <div className="mt-5 rounded-[1.5rem] border border-border bg-background p-5">
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Current status
+                </div>
+                <div className="mt-2 text-lg font-semibold text-foreground" data-testid="my-team-lifecycle-status">
+                  {teamLifecycleLabel}
+                </div>
+              </div>
+            ) : null}
+            {isInactiveTeam ? (
+              <button
+                className="mt-4 rounded-2xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-60"
+                data-testid="my-team-delete"
+                disabled={!canDeleteSelectedTeam || isInactiveLeague || isBusy}
+                onClick={() => void deleteTeamMutation.mutateAsync()}
+                type="button"
+              >
+                {deleteTeamMutation.isPending ? 'Deleting...' : 'Delete team'}
+              </button>
+            ) : (
+              <button
+                className="mt-4 rounded-2xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-60"
+                data-testid="my-team-inactivate"
+                disabled={!selectedTeam || isInactiveLeague || isBusy || !canManageSelectedTeam}
+                onClick={() => void inactivateTeamMutation.mutateAsync()}
+                type="button"
+              >
+                {inactivateTeamMutation.isPending ? 'Inactivating...' : 'Inactivate team'}
+              </button>
+            )}
           </div>
         </div>
       </div>

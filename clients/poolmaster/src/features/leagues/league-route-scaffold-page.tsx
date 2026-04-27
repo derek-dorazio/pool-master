@@ -20,8 +20,8 @@ const LEAGUE_ROUTE_SCAFFOLDS: Record<
   contests: {
     title: 'League Contests',
     description:
-      'This route is the future canonical contest-list destination. Until the dedicated list page lands, use League Home for the live contest cards and commissioner actions.',
-    fallbackLabel: 'Open current League Home',
+      'Contest cards and commissioner contest actions are available from League Home.',
+    fallbackLabel: 'Open League Home',
     buildFallbackPath: buildLeaguePath,
   },
 };
@@ -59,8 +59,7 @@ export function LeagueRouteScaffoldPage({
 
       <section className="rounded-[2rem] border border-border bg-card p-6">
         <p className="text-sm text-muted-foreground">
-          This is a truthful scaffold page. The canonical route now exists, but
-          the dedicated page decomposition has not landed yet.
+          Use League Home to view contests, open contest boards, and manage contest setup.
         </p>
         <Link
           className="mt-5 inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"

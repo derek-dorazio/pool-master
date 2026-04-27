@@ -84,9 +84,7 @@ export function RootAdminManageUsersPage() {
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
           Search user accounts, review root-admin and lifecycle status, and open
-          the canonical user page for account-scope actions. Role elevation,
-          password reset, inactivation, and delete all live on `/users/:userId`,
-          not on this list.
+          user pages for account actions.
         </p>
       </div>
 
@@ -97,8 +95,7 @@ export function RootAdminManageUsersPage() {
               User directory
             </h2>
             <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-              Search by email, username, first name, or last name, then move
-              into the canonical user page to act.
+              Search by email, username, first name, or last name.
             </p>
           </div>
 

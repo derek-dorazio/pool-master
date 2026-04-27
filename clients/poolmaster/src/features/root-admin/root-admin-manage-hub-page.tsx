@@ -15,8 +15,7 @@ export function RootAdminManageHubPage() {
           Manage
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          Choose a focused operational area from the canonical manage hub and
-          route directly into the dedicated admin pages for each workflow.
+          Choose an operational area and open the admin page for that workflow.
         </p>
       </div>
 

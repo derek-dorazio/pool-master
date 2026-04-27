@@ -362,7 +362,7 @@ export function CreateLeagueModal({ isOpen, onClose, onCreated }: CreateLeagueMo
                     placeholder="Weekend pool for the neighborhood group chat."
                   />
                   <p className="text-xs text-muted-foreground">
-                    Optional for now. You can refine the rest of your league setup after creation.
+                    Optional. You can update league details after creation.
                   </p>
                   {form.formState.errors.description ? (
                     <span className="text-sm text-destructive">

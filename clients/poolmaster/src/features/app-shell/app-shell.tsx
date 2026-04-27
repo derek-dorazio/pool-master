@@ -161,7 +161,7 @@ export function AppShell() {
                   aria-label="Notifications"
                   className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
                   disabled
-                  title="Notifications will be designed next."
+                  title="Notifications are not available yet."
                   type="button"
                 >
                   Notifications
@@ -169,7 +169,7 @@ export function AppShell() {
                 <button
                   className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
                   disabled
-                  title="Help content will be designed next."
+                  title="Help is not available yet."
                   type="button"
                 >
                   Help

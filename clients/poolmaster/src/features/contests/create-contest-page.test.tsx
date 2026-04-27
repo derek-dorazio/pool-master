@@ -300,14 +300,14 @@ describe('CreateContestPage', () => {
     );
   });
 
-  it('keeps category picks unavailable in the first-pass create flow', async () => {
+  it('keeps category picks unavailable in the new-contest create flow', async () => {
     primeCommonMocks();
 
     renderCreateContestPage();
 
     expect(await screen.findByTestId('contest-mode-category')).toBeDisabled();
     expect(screen.queryByTestId('contest-template-golf-category-picks')).not.toBeInTheDocument();
-    expect(screen.getByText(/tiered-only for this first pass/i)).toBeInTheDocument();
+    expect(screen.getByText(/new contests currently use tiered entry/i)).toBeInTheDocument();
     expect(createManagedContestMock).not.toHaveBeenCalled();
   });
 

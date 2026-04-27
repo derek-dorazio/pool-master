@@ -18,28 +18,28 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     key: 'leagues',
     title: 'Leagues',
     description:
-      'Search leagues and open the canonical League Home to act on them. Commissioner and root-admin lifecycle controls live on League Home under authority-gated sections.',
+      'Search leagues and open League Home to manage league details, members, and lifecycle actions.',
     to: '/manage/leagues',
   },
   {
     key: 'teams',
     title: 'Teams',
     description:
-      'Search teams across leagues, then open canonical Team Home for owner and lifecycle actions.',
+      'Search teams across leagues, then open Team Home for owner and lifecycle actions.',
     to: '/manage/teams',
   },
   {
     key: 'users',
     title: 'Users',
     description:
-      'Search user accounts and move into canonical user pages for root-admin account actions.',
+      'Search user accounts and open user pages for root-admin account actions.',
     to: '/manage/users',
   },
   {
     key: 'content-configuration',
     title: 'Content Configuration',
     description:
-      'Manage the persisted global contest-default templates used by future commissioner create flows.',
+      'Manage the persisted contest templates available to commissioner contest setup.',
     to: '/manage/content-configuration',
   },
   {

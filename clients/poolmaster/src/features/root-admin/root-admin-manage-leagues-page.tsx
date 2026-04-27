@@ -82,9 +82,8 @@ export function RootAdminManageLeaguesPage() {
             </Link>
             <h2 className="mt-3 text-2xl font-semibold text-foreground">Leagues</h2>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-              Search leagues and open the canonical League Home to act on them. Commissioner
-              and root-admin lifecycle controls (inactivate, permanent delete) live on League
-              Home under authority-gated sections.
+              Search leagues and open League Home to manage league details, members, and
+              lifecycle actions.
             </p>
           </div>
 

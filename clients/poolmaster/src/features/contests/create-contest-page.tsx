@@ -1135,7 +1135,7 @@ export function CreateContestPage() {
               title={
                 isEditMode
                   ? undefined
-                  : 'Category-picks web entry flow will be enabled in a later slice.'
+                  : 'Category picks are available when editing a category-picks contest.'
               }
               type="button"
             >
@@ -1204,8 +1204,8 @@ export function CreateContestPage() {
                 </div>
                 {!isEditMode ? (
                   <div className="rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm text-muted-foreground">
-                    Category-picks contests remain part of the overall design, but the current web
-                    entry flow is tiered-only for this first pass.
+                    New contests currently use tiered entry. Existing category-picks contests can
+                    still be edited here.
                   </div>
                 ) : null}
               </div>
