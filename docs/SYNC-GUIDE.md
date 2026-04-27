@@ -295,6 +295,5 @@ For a healthy QA sync run with the mock provider:
    `ACTIVE` status that contain roster picks for the scored participants.
 
 If schedule and participant logs show records but the root-admin dashboard shows
-all-zero scheduled job stats, check `pool-master-8yh`: scheduled job completion
-is currently logged but not persisted into the dashboard's `ingestion_jobs`
-history source.
+all-zero scheduled job stats, that is a regression: scheduled job completions
+should now persist into the dashboard's `ingestion_jobs` history source.
