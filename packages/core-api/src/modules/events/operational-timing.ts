@@ -25,13 +25,32 @@ export function resolveEventTiming(
   input: EventTimingInput,
   policy?: Pick<ContestTimingPolicy, 'releaseRule' | 'fieldLockRule'> | null,
 ): ResolvedEventTiming {
-  const releaseAt = applyRelativeRule(input.startDate, policy?.releaseRule);
-  const fieldLocksAt = applyRelativeRule(input.startDate, policy?.fieldLockRule);
+  const releaseAt = readMetadataDate(input.metadata, 'releaseAt')
+    ?? applyRelativeRule(input.startDate, policy?.releaseRule);
+  const fieldLocksAt = readMetadataDate(input.metadata, 'fieldLocksAt')
+    ?? applyRelativeRule(input.startDate, policy?.fieldLockRule);
 
   return {
     releaseAt,
     fieldLocksAt,
   };
+}
+
+function readMetadataDate(
+  metadata: Record<string, unknown>,
+  key: 'releaseAt' | 'fieldLocksAt',
+): Date | null {
+  const value = metadata[key];
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value;
+  }
+
+  if (typeof value !== 'string' || value.trim() === '') {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 export function evaluateEventOperationalState(input: {

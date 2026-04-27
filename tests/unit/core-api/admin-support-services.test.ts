@@ -8,7 +8,9 @@ import {
 import { HealthService } from '../../../packages/core-api/src/modules/admin/health-service';
 import { IngestionConfigService } from '../../../packages/core-api/src/modules/admin/ingestion-config-service';
 import { PollConfigService } from '../../../packages/core-api/src/modules/admin/poll-config-service';
+import { ProviderService } from '../../../packages/core-api/src/modules/admin/provider-service';
 import { UserNotFoundError, UserService } from '../../../packages/core-api/src/modules/admin/user-service';
+import { Sport } from '../../../packages/shared/domain';
 
 jest.mock('../../../packages/core-api/src/modules/admin/admin-audit-service', () => ({
   logAdminAction: jest.fn().mockResolvedValue(undefined),
@@ -274,8 +276,12 @@ describe('admin support services', () => {
       const service = new IngestionConfigService(createLogger() as any);
 
       await expect(
-        service.updateConfig({ eventLiveScores: { intervalSeconds: 45 } }, 'admin-1', 'admin@example.com'),
+        service.updateConfig({
+          scheduledSports: ['GOLF', 'TENNIS'],
+          eventLiveScores: { intervalSeconds: 45 },
+        }, 'admin-1', 'admin@example.com'),
       ).resolves.toEqual(expect.objectContaining({
+        scheduledSports: ['GOLF', 'TENNIS'],
         eventLiveScores: expect.objectContaining({ intervalSeconds: 45 }),
       }));
       await expect(
@@ -294,9 +300,47 @@ describe('admin support services', () => {
       );
       await expect(service.resetDefaults('admin-1', 'admin@example.com')).resolves.toEqual(
         expect.objectContaining({
+          scheduledSports: ['GOLF'],
           eventLiveScores: expect.objectContaining({ intervalSeconds: 30 }),
         }),
       );
+    });
+
+    it('pool-master-r04 rejects manual sync for sports outside ingestion scheduledSports config', async () => {
+      const registry = {
+        getProvider: jest.fn().mockReturnValue({
+          providerId: 'mock-contest-feed',
+          providerName: 'Mock Contest Feed Provider',
+          sportsCovered: [Sport.GOLF, Sport.TENNIS],
+        }),
+      };
+      const ingestionConfigReader = {
+        getConfig: jest.fn().mockResolvedValue({
+          scheduledSports: [Sport.GOLF],
+          healthCheck: { enabled: true, intervalMinutes: 5 },
+          eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 30 },
+          eventParticipants: { enabled: true, intervalMinutes: 720, leadDaysBeforeStart: 7 },
+          participantRankings: { enabled: true, intervalMinutes: 1440 },
+          eventLiveScores: { enabled: true, intervalSeconds: 30 },
+          eventResults: { enabled: true, intervalMinutes: 30 },
+          perSportOverrides: {},
+        }),
+        getPerSportConfig: jest.fn(),
+      };
+      const service = new ProviderService(
+        {} as any,
+        registry as any,
+        {} as any,
+        createLogger() as any,
+        ingestionConfigReader,
+      );
+
+      await expect(service.prepareSportSync({
+        sport: Sport.TENNIS,
+        feeds: ['EVENTSCHEDULE'],
+      }, 'admin-1', 'admin@example.com')).rejects.toMatchObject({
+        name: 'SportSyncNotConfiguredError',
+      });
     });
   });
 });

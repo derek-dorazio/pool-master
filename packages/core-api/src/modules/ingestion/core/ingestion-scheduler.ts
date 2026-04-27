@@ -91,6 +91,7 @@ export interface IngestionSchedulerOptions {
 export class IngestionScheduler {
   private timers: NodeJS.Timeout[] = [];
   private running = false;
+  private readonly startedSportLoops = new Set<Sport>();
 
   constructor(
     private readonly registry: ProviderRegistry,
@@ -110,35 +111,61 @@ export class IngestionScheduler {
       async () => this.getGlobalDelayMs('healthCheck'),
     );
 
-    for (const sport of this.registry.getSupportedSports()) {
-      this.startRecurringLoop(
-        `${sport} schedule sync`,
-        async () => this.runConfiguredSportScheduleSync(sport),
-        async () => this.getSportDelayMs(sport, 'eventSchedule'),
-      );
-      this.startRecurringLoop(
-        `${sport} participant sync`,
-        async () => this.runConfiguredSportFieldSync(sport),
-        async () => this.getSportDelayMs(sport, 'eventParticipants'),
-      );
-      this.startRecurringLoop(
-        `${sport} ranking sync`,
-        async () => this.runConfiguredSportRankingSync(sport),
-        async () => this.getSportDelayMs(sport, 'participantRankings'),
-      );
-      this.startRecurringLoop(
-        `${sport} live score sync`,
-        async () => this.runConfiguredEventSyncSweep(sport, 'EVENTLIVESCORES'),
-        async () => this.getSportDelayMs(sport, 'eventLiveScores'),
-      );
-      this.startRecurringLoop(
-        `${sport} results sync`,
-        async () => this.runConfiguredEventSyncSweep(sport, 'EVENTRESULTS'),
-        async () => this.getSportDelayMs(sport, 'eventResults'),
-      );
-    }
+    this.startRecurringLoop(
+      'configured sport loop reconciliation',
+      async () => this.reconcileConfiguredSportLoops(),
+      async () => CONFIG_RECHECK_MS,
+    );
 
     this.logger?.info('Ingestion scheduler started');
+  }
+
+  private async reconcileConfiguredSportLoops(): Promise<void> {
+    try {
+      const sports = await this.getConfiguredScheduledSports();
+      if (!this.running) {
+        return;
+      }
+      for (const sport of sports) {
+        if (this.startedSportLoops.has(sport)) {
+          continue;
+        }
+
+        this.startRecurringLoop(
+          `${sport} schedule sync`,
+          async () => this.runConfiguredSportScheduleSync(sport),
+          async () => this.getSportDelayMs(sport, 'eventSchedule'),
+        );
+        this.startRecurringLoop(
+          `${sport} participant sync`,
+          async () => this.runConfiguredSportFieldSync(sport),
+          async () => this.getSportDelayMs(sport, 'eventParticipants'),
+        );
+        this.startRecurringLoop(
+          `${sport} ranking sync`,
+          async () => this.runConfiguredSportRankingSync(sport),
+          async () => this.getSportDelayMs(sport, 'participantRankings'),
+        );
+        this.startRecurringLoop(
+          `${sport} live score sync`,
+          async () => this.runConfiguredEventSyncSweep(sport, 'EVENTLIVESCORES'),
+          async () => this.getSportDelayMs(sport, 'eventLiveScores'),
+        );
+        this.startRecurringLoop(
+          `${sport} results sync`,
+          async () => this.runConfiguredEventSyncSweep(sport, 'EVENTRESULTS'),
+          async () => this.getSportDelayMs(sport, 'eventResults'),
+        );
+        this.startedSportLoops.add(sport);
+      }
+
+      this.logger?.info({
+        sports,
+        startedSports: Array.from(this.startedSportLoops),
+      }, 'Reconciled configured sport ingestion loops');
+    } catch (error) {
+      this.logger?.error({ error }, 'Failed to reconcile configured sport ingestion loops');
+    }
   }
 
   /** Stops all scheduled jobs. */
@@ -146,8 +173,10 @@ export class IngestionScheduler {
     this.running = false;
     for (const timer of this.timers) {
       clearInterval(timer);
+      clearTimeout(timer);
     }
     this.timers = [];
+    this.startedSportLoops.clear();
     this.logger?.info('Ingestion scheduler stopped');
   }
 
@@ -330,6 +359,11 @@ export class IngestionScheduler {
   }
 
   private async runConfiguredSportScheduleSync(sport: Sport): Promise<void> {
+    if (!(await this.isSportScheduled(sport))) {
+      this.logger?.debug({ sport }, 'Skipping scheduled sport schedule sync because sport is not configured');
+      return;
+    }
+
     const config = await this.getSportConfig(sport);
     if (!config.eventSchedule.enabled) {
       this.logger?.debug({ sport }, 'Skipping scheduled sport schedule sync because it is disabled');
@@ -350,6 +384,11 @@ export class IngestionScheduler {
   }
 
   private async runConfiguredSportFieldSync(sport: Sport): Promise<void> {
+    if (!(await this.isSportScheduled(sport))) {
+      this.logger?.debug({ sport }, 'Skipping scheduled participant sync because sport is not configured');
+      return;
+    }
+
     const config = await this.getSportConfig(sport);
     if (!config.eventParticipants.enabled) {
       this.logger?.debug({ sport }, 'Skipping scheduled participant sync because it is disabled');
@@ -370,6 +409,11 @@ export class IngestionScheduler {
   }
 
   private async runConfiguredSportRankingSync(sport: Sport): Promise<void> {
+    if (!(await this.isSportScheduled(sport))) {
+      this.logger?.debug({ sport }, 'Skipping scheduled ranking sync because sport is not configured');
+      return;
+    }
+
     const config = await this.getSportConfig(sport);
     if (!config.participantRankings.enabled) {
       this.logger?.debug({ sport }, 'Skipping scheduled ranking sync because it is disabled');
@@ -384,6 +428,11 @@ export class IngestionScheduler {
     sport: Sport,
     feed: 'EVENTLIVESCORES' | 'EVENTRESULTS',
   ): Promise<void> {
+    if (!(await this.isSportScheduled(sport))) {
+      this.logger?.debug({ sport, feed }, 'Skipping scheduled event sync sweep because sport is not configured');
+      return;
+    }
+
     const config = await this.getSportConfig(sport);
     const policy = feed === 'EVENTLIVESCORES' ? config.eventLiveScores : config.eventResults;
     if (!policy.enabled) {
@@ -714,7 +763,7 @@ export class IngestionScheduler {
 
   private async getSportDelayMs(
     sport: Sport,
-    feed: keyof Omit<IngestionScheduleConfig, 'perSportOverrides'>,
+    feed: keyof Omit<IngestionScheduleConfig, 'perSportOverrides' | 'scheduledSports'>,
   ): Promise<number> {
     const config = await this.getSportConfig(sport);
     return toDelayMs(config[feed]);
@@ -726,6 +775,26 @@ export class IngestionScheduler {
     }
 
     return this.options.configReader.getConfig();
+  }
+
+  private async getConfiguredScheduledSports(): Promise<Sport[]> {
+    const config = await this.getGlobalConfig();
+    const registeredSports = new Set(this.registry.getSupportedSports());
+    const configuredSports = Array.from(new Set(config.scheduledSports));
+    const unregisteredSports = configuredSports.filter((sport) => !registeredSports.has(sport));
+    if (unregisteredSports.length > 0) {
+      this.logger?.warn({
+        configuredSports,
+        unregisteredSports,
+      }, 'Configured scheduled ingestion sports have no registered provider');
+    }
+
+    return configuredSports.filter((sport) => registeredSports.has(sport));
+  }
+
+  private async isSportScheduled(sport: Sport): Promise<boolean> {
+    const sports = await this.getConfiguredScheduledSports();
+    return sports.includes(sport);
   }
 
   private async getSportConfig(sport: Sport): Promise<IngestionScheduleConfig> {
@@ -816,6 +885,7 @@ const CONFIG_RECHECK_MS = 60 * 1000;
 
 function defaultIngestionScheduleConfig(): IngestionScheduleConfig {
     return {
+      scheduledSports: ['GOLF' as Sport],
       healthCheck: {
         enabled: true,
         intervalMinutes: 5,
@@ -846,7 +916,9 @@ function defaultIngestionScheduleConfig(): IngestionScheduleConfig {
   };
 }
 
-function toDelayMs(policy: IngestionScheduleConfig[keyof Omit<IngestionScheduleConfig, 'perSportOverrides'>]): number {
+function toDelayMs(
+  policy: IngestionScheduleConfig[keyof Omit<IngestionScheduleConfig, 'perSportOverrides' | 'scheduledSports'>],
+): number {
   if (!policy.enabled) {
     return CONFIG_RECHECK_MS;
   }

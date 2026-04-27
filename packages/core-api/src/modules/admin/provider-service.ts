@@ -20,6 +20,7 @@ import type {
   EventSyncRequest,
   IngestionFeedType,
   IngestionJobRecord,
+  IngestionScheduleConfigReader,
   IngestionScheduler,
   SportSyncRequest,
 } from '../ingestion/core/ingestion-scheduler';
@@ -163,6 +164,13 @@ export class SportProviderNotFoundError extends Error {
   constructor(sport: Sport) {
     super(`No provider is registered for sport ${sport}`);
     this.name = 'SportProviderNotFoundError';
+  }
+}
+
+export class SportSyncNotConfiguredError extends Error {
+  constructor(sport: Sport) {
+    super(`Sport ${sport} is not enabled in ingestion scheduledSports config`);
+    this.name = 'SportSyncNotConfiguredError';
   }
 }
 
@@ -324,6 +332,7 @@ export class ProviderService {
     private readonly registry: ProviderRegistry = new ProviderRegistry(),
     private readonly scheduler?: IngestionScheduler,
     private readonly logger?: FastifyBaseLogger,
+    private readonly ingestionConfigReader?: IngestionScheduleConfigReader,
   ) {
     this.ingestionPersistence = new IngestionPersistence(prisma, logger);
   }
@@ -370,6 +379,7 @@ export class ProviderService {
 
   private async buildProviderSummary(provider: SportDataProvider): Promise<ProviderSummary> {
     const healthResult = await this.fetchProviderHealth(provider);
+    const sportsCovered = await this.getConfiguredSportsForProvider(provider);
     const [lastEvent, activeEvents] = await Promise.all([
       this.prisma.sportEvent.findFirst({
         where: { providerId: provider.providerId },
@@ -391,9 +401,34 @@ export class ProviderService {
       errorRate: healthResult.health.errorRateLastHour,
       latencyMs: healthResult.health.latencyMsP95,
       lastEventAt: lastEvent?.updatedAt ?? lastEvent?.createdAt ?? healthResult.health.lastSuccessfulPoll ?? null,
-      sportsCovered: provider.sportsCovered,
+      sportsCovered,
       activeEventCount: activeEvents,
     };
+  }
+
+  private async getConfiguredSportsForProvider(provider: SportDataProvider): Promise<Sport[]> {
+    if (!this.ingestionConfigReader) {
+      return provider.sportsCovered;
+    }
+
+    const config = await this.ingestionConfigReader.getConfig();
+    const configuredSports = new Set(config.scheduledSports);
+    return provider.sportsCovered.filter((sport) => configuredSports.has(sport));
+  }
+
+  private async assertSportSyncConfigured(sport: Sport): Promise<void> {
+    if (!this.ingestionConfigReader) {
+      return;
+    }
+
+    const config = await this.ingestionConfigReader.getConfig();
+    if (!config.scheduledSports.includes(sport)) {
+      this.logger?.warn({
+        sport,
+        scheduledSports: config.scheduledSports,
+      }, 'Sync requested for sport that is not enabled in ingestion config');
+      throw new SportSyncNotConfiguredError(sport);
+    }
   }
 
   private async buildIngestionStat(
@@ -518,7 +553,7 @@ export class ProviderService {
     const mappedIds = new Set(mappings.map((row) => row.externalId));
     const results: UnmappedParticipant[] = [];
 
-    for (const sport of provider.sportsCovered) {
+    for (const sport of await this.getConfiguredSportsForProvider(provider)) {
       const participants = await provider.getParticipants(sport);
       for (const participant of participants) {
         if (mappedIds.has(participant.externalId)) {
@@ -559,7 +594,7 @@ export class ProviderService {
     });
 
     const ingestionStats = await Promise.all(
-      provider.sportsCovered.map((sport) => this.buildIngestionStat(provider, sport)),
+      (await this.getConfiguredSportsForProvider(provider)).map((sport) => this.buildIngestionStat(provider, sport)),
     );
 
     const recentJobsRows = await this.prisma.ingestionJob.findMany({
@@ -711,6 +746,7 @@ export class ProviderService {
       this.logger?.error({ sport }, 'Manual sport sync was requested without a configured provider');
       throw new SportProviderNotFoundError(sport);
     }
+    await this.assertSportSyncConfigured(sport);
     if (!this.scheduler) {
       throw new Error('Ingestion scheduler is required for manual sport sync');
     }
@@ -785,6 +821,7 @@ export class ProviderService {
       );
       throw new SportProviderNotFoundError(request.sport);
     }
+    await this.assertSportSyncConfigured(request.sport);
 
     const submittedAt = new Date();
     this.logger?.info({
@@ -1086,8 +1123,13 @@ export class ProviderService {
   async getIngestionDashboard(): Promise<IngestionDashboard> {
     const providers = this.registry.getAllProviders();
     const sportProviderStatus = (await Promise.all(
-      providers.flatMap((provider) => provider.sportsCovered.map((sport) => this.buildIngestionStat(provider, sport))),
-    )).sort((a, b) => `${a.providerId}:${a.sport}`.localeCompare(`${b.providerId}:${b.sport}`));
+      providers.map(async (provider) => {
+        const sports = await this.getConfiguredSportsForProvider(provider);
+        return Promise.all(sports.map((sport) => this.buildIngestionStat(provider, sport)));
+      }),
+    ))
+      .flat()
+      .sort((a, b) => `${a.providerId}:${a.sport}`.localeCompare(`${b.providerId}:${b.sport}`));
 
     const activeJobsRows = await this.prisma.ingestionJob.findMany({
       where: { status: { in: ['PENDING', 'RUNNING'] } },

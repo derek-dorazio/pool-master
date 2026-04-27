@@ -526,12 +526,14 @@ describe('Contract verification (root admin)', () => {
     });
     expect(ingestionReadRes.statusCode).toBe(200);
     expect(IngestionScheduleConfigSchema.safeParse(ingestionReadRes.json()).success).toBe(true);
+    expect(ingestionReadRes.json().scheduledSports).toEqual(['GOLF']);
 
     const ingestionUpdateRes = await getApp().inject({
       method: 'PUT',
       url: '/api/v1/admin/config/ingestion-schedule',
       headers: rootAdmin.headers,
       payload: {
+        scheduledSports: ['GOLF', 'TENNIS'],
         eventLiveScores: {
           intervalSeconds: 45,
         },
@@ -539,6 +541,7 @@ describe('Contract verification (root admin)', () => {
     });
     expect(ingestionUpdateRes.statusCode).toBe(200);
     expect(IngestionScheduleConfigSchema.safeParse(ingestionUpdateRes.json()).success).toBe(true);
+    expect(ingestionUpdateRes.json().scheduledSports).toEqual(['GOLF', 'TENNIS']);
     expect(ingestionUpdateRes.json().eventLiveScores.intervalSeconds).toBe(45);
 
     const templateListRes = await getApp().inject({

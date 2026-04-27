@@ -13210,6 +13210,28 @@ export type AdminPrepareSportSyncErrors = {
             details?: unknown;
         };
     };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
 };
 
 export type AdminPrepareSportSyncError = AdminPrepareSportSyncErrors[keyof AdminPrepareSportSyncErrors];
@@ -13289,6 +13311,28 @@ export type AdminSyncProviderEventDataErrors = {
      * Standard API error envelope.
      */
     404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
         /**
          * Error payload object.
          */
@@ -15729,6 +15773,10 @@ export type AdminGetIngestionScheduleResponses = {
      */
     200: {
         /**
+         * Sports that scheduled ingestion is allowed to run automatically.
+         */
+        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
+        /**
          * Scheduling policy for provider health checks.
          */
         healthCheck: {
@@ -15883,6 +15931,7 @@ export type AdminGetIngestionScheduleResponses = {
          */
         perSportOverrides: {
             [key: string]: {
+                scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -16045,6 +16094,7 @@ export type AdminUpdateIngestionScheduleData = {
      * Partial ingestion scheduling override used for global updates and per-sport overrides.
      */
     body: {
+        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
         /**
          * Partial feed-scheduling override payload.
          */
@@ -16234,6 +16284,10 @@ export type AdminUpdateIngestionScheduleResponses = {
      */
     200: {
         /**
+         * Sports that scheduled ingestion is allowed to run automatically.
+         */
+        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
+        /**
          * Scheduling policy for provider health checks.
          */
         healthCheck: {
@@ -16388,6 +16442,7 @@ export type AdminUpdateIngestionScheduleResponses = {
          */
         perSportOverrides: {
             [key: string]: {
+                scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -16550,6 +16605,7 @@ export type AdminSetSportIngestionOverrideData = {
      * Partial ingestion scheduling override used for global updates and per-sport overrides.
      */
     body: {
+        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
         /**
          * Partial feed-scheduling override payload.
          */
@@ -16741,6 +16797,10 @@ export type AdminSetSportIngestionOverrideResponses = {
      */
     200: {
         /**
+         * Sports that scheduled ingestion is allowed to run automatically.
+         */
+        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
+        /**
          * Scheduling policy for provider health checks.
          */
         healthCheck: {
@@ -16895,6 +16955,7 @@ export type AdminSetSportIngestionOverrideResponses = {
          */
         perSportOverrides: {
             [key: string]: {
+                scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -17094,6 +17155,10 @@ export type AdminResetSportIngestionOverrideResponses = {
      */
     200: {
         /**
+         * Sports that scheduled ingestion is allowed to run automatically.
+         */
+        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
+        /**
          * Scheduling policy for provider health checks.
          */
         healthCheck: {
@@ -17248,6 +17313,7 @@ export type AdminResetSportIngestionOverrideResponses = {
          */
         perSportOverrides: {
             [key: string]: {
+                scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */
@@ -17418,6 +17484,10 @@ export type AdminResetIngestionScheduleResponses = {
      */
     200: {
         /**
+         * Sports that scheduled ingestion is allowed to run automatically.
+         */
+        scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
+        /**
          * Scheduling policy for provider health checks.
          */
         healthCheck: {
@@ -17572,6 +17642,7 @@ export type AdminResetIngestionScheduleResponses = {
          */
         perSportOverrides: {
             [key: string]: {
+                scheduledSports?: Array<'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC'>;
                 /**
                  * Partial feed-scheduling override payload.
                  */

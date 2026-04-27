@@ -14,6 +14,7 @@ import type {
   ProviderParticipant,
   ProviderRanking,
 } from '../core/provider-interface';
+import type { IngestionJobRecord } from '../core/ingestion-scheduler';
 import {
   resolveEventTiming,
   selectTimingPolicy,
@@ -106,6 +107,45 @@ export class IngestionPersistence {
 
     this.logger?.info({ count }, 'Persisted sport events from ingestion');
     return count;
+  }
+
+  async persistIngestionJob(job: IngestionJobRecord): Promise<void> {
+    this.logger?.debug({
+      jobType: job.jobType,
+      providerId: job.providerId,
+      sport: job.sport,
+      eventExternalId: job.eventExternalId ?? null,
+      status: job.status,
+      recordsProcessed: job.recordsProcessed,
+      errors: job.errors,
+      startedAt: job.startedAt?.toISOString() ?? null,
+      completedAt: job.completedAt?.toISOString() ?? null,
+    }, 'Persisting ingestion job completion');
+
+    await this.prisma.ingestionJob.create({
+      data: {
+        jobType: job.jobType,
+        providerId: job.providerId,
+        sport: job.sport,
+        eventExternalId: job.eventExternalId ?? null,
+        status: job.status,
+        startedAt: job.startedAt ?? null,
+        completedAt: job.completedAt ?? null,
+        recordsProcessed: job.recordsProcessed,
+        errors: job.errors,
+        errorLog: job.errorLog as any,
+      },
+    });
+
+    this.logger?.info({
+      jobType: job.jobType,
+      providerId: job.providerId,
+      sport: job.sport,
+      eventExternalId: job.eventExternalId ?? null,
+      status: job.status,
+      recordsProcessed: job.recordsProcessed,
+      errors: job.errors,
+    }, 'Persisted ingestion job completion');
   }
 
   private async resolveTimingPolicy(

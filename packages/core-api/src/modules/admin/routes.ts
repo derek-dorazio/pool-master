@@ -346,7 +346,7 @@ export async function adminModule(
       body: zodToJsonSchema(SportSyncRequestSchema),
       response: withAdminErrorResponses({
         202: zodToJsonSchema(ProviderManualSyncSubmissionResponseSchema),
-      }, [404]),
+      }, [404, 422]),
     },
     handler: provider.prepareSportSync,
   });
@@ -360,7 +360,7 @@ export async function adminModule(
       body: zodToJsonSchema(EventSyncRequestSchema),
       response: withAdminErrorResponses({
         202: zodToJsonSchema(ProviderManualSyncSubmissionResponseSchema),
-      }, [404]),
+      }, [404, 422]),
     },
     handler: provider.syncEventData,
   });

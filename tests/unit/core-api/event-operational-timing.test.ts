@@ -37,6 +37,22 @@ describe('event operational timing', () => {
     expect(resolved.fieldLocksAt.toISOString()).toBe(startDate.toISOString());
   });
 
+  it('pool-master-940 honors provider release and field-lock timestamps when no timing policy exists', () => {
+    const startDate = new Date('2026-05-01T14:00:00.000Z');
+
+    const resolved = resolveEventTiming({
+      sport: 'GOLF',
+      startDate,
+      metadata: {
+        releaseAt: '2026-04-26T16:00:00.000Z',
+        fieldLocksAt: '2026-04-30T16:00:00.000Z',
+      },
+    });
+
+    expect(resolved.releaseAt.toISOString()).toBe('2026-04-26T16:00:00.000Z');
+    expect(resolved.fieldLocksAt.toISOString()).toBe('2026-04-30T16:00:00.000Z');
+  });
+
   it('falls back to the event start date when a timing rule is invalid', () => {
     const startDate = new Date('2026-05-01T14:00:00.000Z');
 

@@ -18,17 +18,19 @@ There are three ways sync work runs.
 
 | Entry point | Who starts it | What it returns |
 |---|---|---|
-| Scheduled scheduler | Core API `onReady`, unless `AUTO_START_SCHEDULER=false` | Logs an `IngestionJobRecord` for each job through the scheduler callback. Current known gap: scheduled completions are logged but not persisted to `ingestion_jobs`; see `pool-master-8yh`. |
+| Scheduled scheduler | Core API `onReady`, unless `AUTO_START_SCHEDULER=false` | Persists an `ingestion_jobs` row and logs an `IngestionJobRecord` for each completed job. |
 | Root-admin manual sync pages | Root-admin manage UI through admin provider service | Immediately creates `provider_sync_runs` as `SUBMITTED`, then runs each feed asynchronously and updates each run to `IN_PROGRESS`, `COMPLETED`, or `FAILED`. |
 | Direct ingestion API routes | `/api/v1/ingestion/*` admin routes | Synchronously returns `{ job }` or `{ jobs }` with scheduler job records. |
 
-Manual sport syncs can request only sport-level feeds:
+Manual sport syncs can request only sport-level feeds, and the requested sport
+must be present in `scheduledSports`:
 
 - `EVENTSCHEDULE`
 - `EVENTPARTICIPANTS`
 - `PARTICIPANTRANKINGS`
 
-Manual event syncs can request only event-level feeds:
+Manual event syncs can request only event-level feeds, and the requested sport
+must be present in `scheduledSports`:
 
 - `EVENTPARTICIPANTS`
 - `EVENTLIVESCORES`
@@ -37,6 +39,10 @@ Manual event syncs can request only event-level feeds:
 ## Default Schedule Configuration
 
 The default global ingestion schedule is:
+
+| Config field | Default |
+|---|---|
+| `scheduledSports` | `["GOLF"]` |
 
 | Feed | Default cadence | Default window |
 |---|---:|---|
@@ -47,9 +53,13 @@ The default global ingestion schedule is:
 | Event live scores | 30 seconds | Persisted events with status `IN_PROGRESS` |
 | Event results | 30 minutes | Persisted events with status `COMPLETED` or `OFFICIAL`, updated in the last 24 hours |
 
-Root-admin schedule config can override these globally or per sport. The
-scheduler uses the per-sport merged config at each tick, so changing the config
-does not require a redeploy.
+Root-admin schedule config can override `scheduledSports` globally and feed
+cadence/window settings globally or per sport. The scheduler starts automatic
+sport loops only for sports listed in `scheduledSports` and backed by a
+registered provider. It reconciles the configured sport set periodically, so
+adding a sport can start its loops without a redeploy; removing a sport causes
+existing loops to skip provider calls. Per-sport feed settings are read at each
+tick, so changing cadence or windows does not require a redeploy.
 
 ## What Each Sync Does
 
@@ -266,9 +276,9 @@ Boundary note: because the scheduler computes `to = now + N days` using the
 current timestamp, not end-of-day, UTC-day generated boundary events can sit just
 inside or just outside the window depending on the exact time of the run.
 
-Timing note: the table describes the mock provider's intended timing. Due to
-`pool-master-940`, the persisted PoolMaster timing may currently fall back to
-the event start date unless a matching `contest_timing_policies` row exists.
+Timing note: provider `releaseAt` and `fieldLocksAt` values are honored when
+present. Timing policies remain the fallback for providers that do not return
+explicit event timing.
 
 ## What To Expect During QA
 

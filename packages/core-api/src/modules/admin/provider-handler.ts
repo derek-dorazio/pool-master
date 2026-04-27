@@ -15,6 +15,7 @@ import {
   ProviderEventNotFoundError,
   ProviderNotFoundError,
   ProviderSportCoverageError,
+  SportSyncNotConfiguredError,
   SportProviderNotFoundError,
 } from './provider-service';
 import { sendError } from '../../core/error-handler';
@@ -224,6 +225,10 @@ export function createProviderHandlers(providerService: ProviderService) {
         logger.warn({ sport: request.params.sport }, 'Sport sync preparation failed because no providers were registered');
         return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
       }
+      if (err instanceof SportSyncNotConfiguredError) {
+        logger.warn({ sport: request.params.sport }, 'Sport sync preparation failed because sport is not enabled in ingestion config');
+        return sendError(reply, 422, 'SPORT_SYNC_NOT_CONFIGURED', err.message);
+      }
       throw err;
     }
   }
@@ -274,6 +279,13 @@ export function createProviderHandlers(providerService: ProviderService) {
           eventId: request.params.eventId,
         }, 'Manual event sync failed because no providers were registered');
         return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
+      }
+      if (err instanceof SportSyncNotConfiguredError) {
+        logger.warn({
+          sport: request.params.sport,
+          eventId: request.params.eventId,
+        }, 'Manual event sync failed because sport is not enabled in ingestion config');
+        return sendError(reply, 422, 'SPORT_SYNC_NOT_CONFIGURED', err.message);
       }
       throw err;
     }

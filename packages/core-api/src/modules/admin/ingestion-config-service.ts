@@ -4,6 +4,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
+import { Sport } from '@poolmaster/shared/domain';
 import type {
   IngestionFeedSchedulePolicy,
   IngestionScheduleConfig,
@@ -14,9 +15,10 @@ import { IngestionScheduleConfigSchema } from '@poolmaster/shared/dto/config.dto
 import { logAdminAction } from './admin-audit-service';
 import type { PrismaPlatformRuntimeConfigRepository } from './platform-runtime-config-repository';
 
-type FeedPolicyKey = keyof IngestionScheduleConfigBody;
+type FeedPolicyKey = keyof Omit<IngestionScheduleConfigBody, 'scheduledSports'>;
 
 const DEFAULT_INGESTION_CONFIG: IngestionScheduleConfig = {
+  scheduledSports: [Sport.GOLF],
   healthCheck: {
     enabled: true,
     intervalMinutes: 5,
@@ -323,6 +325,7 @@ export class IngestionConfigService {
 function deepCopy(config: IngestionScheduleConfig): IngestionScheduleConfig {
   return {
     healthCheck: { ...config.healthCheck },
+    scheduledSports: [...config.scheduledSports],
     eventSchedule: { ...config.eventSchedule },
     eventParticipants: { ...config.eventParticipants },
     participantRankings: { ...config.participantRankings },
@@ -342,6 +345,9 @@ function mergeBasePolicies(
   override: IngestionScheduleConfigOverride,
 ): IngestionScheduleConfigBody {
   return {
+    scheduledSports: override.scheduledSports
+      ? [...override.scheduledSports]
+      : [...config.scheduledSports],
     healthCheck: mergePolicy(config.healthCheck, override.healthCheck),
     eventSchedule: mergePolicy(config.eventSchedule, override.eventSchedule),
     eventParticipants: mergePolicy(config.eventParticipants, override.eventParticipants),

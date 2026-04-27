@@ -162,6 +162,17 @@ export function buildApp() {
         startedAt: job.startedAt?.toISOString() ?? null,
         completedAt: job.completedAt?.toISOString() ?? null,
       }, 'Job complete');
+      try {
+        await ingestionPersistence.persistIngestionJob(job);
+      } catch (error) {
+        app.log.error({
+          error,
+          jobType: job.jobType,
+          providerId: job.providerId,
+          sport: job.sport,
+          eventExternalId: job.eventExternalId ?? null,
+        }, 'Failed to persist ingestion job completion');
+      }
     },
   };
 
@@ -174,6 +185,7 @@ export function buildApp() {
     registry,
     ingestionScheduler,
     app.log,
+    ingestionConfigService,
   );
 
   // =========================================================================

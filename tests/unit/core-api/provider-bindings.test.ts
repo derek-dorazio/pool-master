@@ -24,7 +24,7 @@ describe('provider bindings', () => {
     );
   });
 
-  it('registers the mock provider as primary for configured sports when selected', () => {
+  it('registers the mock provider as primary for all provider-supported sports when selected', () => {
     const registry = new ProviderRegistry();
 
     registerConfiguredProviders(registry, {

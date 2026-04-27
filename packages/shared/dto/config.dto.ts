@@ -3,6 +3,24 @@
  * runtime configuration endpoints.
  */
 import { z } from 'zod';
+import { Sport } from '@poolmaster/shared/domain';
+
+const SportSchema = z.enum([
+  Sport.GOLF,
+  Sport.NFL,
+  Sport.NBA,
+  Sport.F1,
+  Sport.NASCAR,
+  Sport.NCAA_BASKETBALL,
+  Sport.NCAA_HOCKEY,
+  Sport.NCAA_FOOTBALL,
+  Sport.TENNIS,
+  Sport.HORSE_RACING,
+  Sport.SOCCER,
+  Sport.NHL,
+  Sport.MLB,
+  Sport.UFC,
+]);
 
 const PollIntervalMsSchema = z.number().int().min(1000).describe(
   'Recommended poll interval in milliseconds.',
@@ -59,6 +77,9 @@ export const IngestionFeedSchedulePolicyPatchSchema = IngestionFeedSchedulePolic
 export type IngestionFeedSchedulePolicyPatch = z.infer<typeof IngestionFeedSchedulePolicyPatchSchema>;
 
 export const IngestionScheduleConfigBodySchema = z.object({
+  scheduledSports: z.array(SportSchema).min(1).default([Sport.GOLF]).describe(
+    'Sports that scheduled ingestion is allowed to run automatically.',
+  ),
   healthCheck: IngestionFeedSchedulePolicySchema.describe(
     'Scheduling policy for provider health checks.',
   ),
@@ -81,6 +102,7 @@ export const IngestionScheduleConfigBodySchema = z.object({
 export type IngestionScheduleConfigBody = z.infer<typeof IngestionScheduleConfigBodySchema>;
 
 export const IngestionScheduleConfigOverrideSchema = z.object({
+  scheduledSports: z.array(SportSchema).min(1).optional(),
   healthCheck: IngestionFeedSchedulePolicyPatchSchema.optional(),
   eventSchedule: IngestionFeedSchedulePolicyPatchSchema.optional(),
   eventParticipants: IngestionFeedSchedulePolicyPatchSchema.optional(),

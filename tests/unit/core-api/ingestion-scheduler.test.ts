@@ -533,6 +533,54 @@ describe('IngestionScheduler', () => {
       expect(mockCallbacks.onRankings).toHaveBeenCalled();
     });
 
+    it('pool-master-r04 schedules only sports enabled by ingestion sync config', async () => {
+      const provider = createMockProvider({
+        getUpcomingEvents: jest.fn().mockResolvedValue([]),
+      });
+      const registry = createMockRegistry(provider, [
+        'GOLF' as Sport,
+        'TENNIS' as Sport,
+        'NCAA_BASKETBALL' as Sport,
+      ]);
+      const configReader = {
+        getConfig: jest.fn().mockResolvedValue({
+          scheduledSports: ['GOLF'],
+          healthCheck: { enabled: true, intervalMinutes: 5 },
+          eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 30 },
+          eventParticipants: { enabled: true, intervalMinutes: 720, leadDaysBeforeStart: 7 },
+          participantRankings: { enabled: true, intervalMinutes: 1440 },
+          eventLiveScores: { enabled: false, intervalSeconds: 30 },
+          eventResults: { enabled: false, intervalMinutes: 30 },
+          perSportOverrides: {},
+        }),
+        getPerSportConfig: jest.fn().mockResolvedValue({
+          scheduledSports: ['GOLF'],
+          healthCheck: { enabled: true, intervalMinutes: 5 },
+          eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 30 },
+          eventParticipants: { enabled: true, intervalMinutes: 720, leadDaysBeforeStart: 7 },
+          participantRankings: { enabled: true, intervalMinutes: 1440 },
+          eventLiveScores: { enabled: false, intervalSeconds: 30 },
+          eventResults: { enabled: false, intervalMinutes: 30 },
+          perSportOverrides: {},
+        }),
+      };
+      const scheduler = new IngestionScheduler(registry, mockCallbacks, undefined, {
+        configReader,
+      });
+
+      scheduler.start();
+
+      await Promise.resolve();
+      await Promise.resolve();
+      await jest.runOnlyPendingTimersAsync();
+
+      expect(provider.getUpcomingEvents).toHaveBeenCalled();
+      const requestedSports = (provider.getUpcomingEvents as jest.Mock).mock.calls.map((call) => call[0]);
+      expect(requestedSports).toContain('GOLF');
+      expect(requestedSports).not.toContain('TENNIS');
+      expect(requestedSports).not.toContain('NCAA_BASKETBALL');
+    });
+
     it('start() is idempotent — calling twice does not double timers', () => {
       const provider = createMockProvider();
       const registry = createMockRegistry(provider, ['GOLF' as Sport]);
