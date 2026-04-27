@@ -287,6 +287,43 @@ describe('LeagueService', () => {
     });
   });
 
+  describe('activateLeague', () => {
+    it('pool-master-4uq: marks an inactive league active', async () => {
+      const existingLeague = buildLeague({
+        id: 'league-1',
+        isActive: false,
+      });
+      const leagueRepo = createMockLeagueRepo({
+        findById: jest.fn().mockResolvedValue(existingLeague),
+      });
+      const service = new LeagueService(leagueRepo, createMockMembershipRepo());
+
+      await service.activateLeague('league-1');
+
+      expect(leagueRepo.update).toHaveBeenCalledWith(
+        'league-1',
+        expect.objectContaining({
+          isActive: true,
+        }),
+      );
+    });
+
+    it('pool-master-4uq: rejects activation when the league is already active', async () => {
+      const leagueRepo = createMockLeagueRepo({
+        findById: jest.fn().mockResolvedValue(buildLeague({
+          id: 'league-1',
+          isActive: true,
+        })),
+      });
+      const service = new LeagueService(leagueRepo, createMockMembershipRepo());
+
+      await expect(service.activateLeague('league-1')).rejects.toMatchObject({
+        code: 'LEAGUE_ALREADY_ACTIVE',
+        statusCode: 400,
+      });
+    });
+  });
+
   describe('updateLeagueDetails', () => {
     it('updates name and description for an active league', async () => {
       const leagueRepo = createMockLeagueRepo({

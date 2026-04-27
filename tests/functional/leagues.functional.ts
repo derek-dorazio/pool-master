@@ -1,5 +1,6 @@
 import {
   acceptInvitation,
+  activateLeague,
   changeMemberRole,
   createLeague,
   deleteLeague,
@@ -894,6 +895,20 @@ describe('SDK Functional: Leagues', () => {
     });
 
     expect(inactivateResponse.data?.league.isActive).toBe(false);
+
+    const activateResponse = await activateLeague({
+      client: commissioner.client,
+      path: { id: leagueId },
+    });
+
+    expect(activateResponse.data?.league.isActive).toBe(true);
+
+    const reinactivateResponse = await inactivateLeague({
+      client: commissioner.client,
+      path: { id: leagueId },
+    });
+
+    expect(reinactivateResponse.data?.league.isActive).toBe(false);
 
     const wrongCodeDeleteResponse = await deleteLeague({
       client: commissioner.client,

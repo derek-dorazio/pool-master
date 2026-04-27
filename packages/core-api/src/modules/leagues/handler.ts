@@ -26,6 +26,7 @@ export function createLeagueHandlers(
     updateLeagueDetails,
     updateLeagueIcon,
     inactivateLeague,
+    activateLeague,
     deleteLeague,
   };
 
@@ -294,6 +295,49 @@ export function createLeagueHandlers(
           action: 'leagueRoute.inactivate.invalid',
           data: { leagueId: request.params.id, errorCode: err.code },
         }, 'Rejected league inactivation');
+        return sendError(reply, err.statusCode, err.code, err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function activateLeague(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({
+      action: 'leagueRoute.activate.enter',
+      data: { leagueId: request.params.id },
+    }, 'Handling activate league request');
+    try {
+      const league = await leagueService.activateLeague(request.params.id);
+      const membership = request.authUser?.userId
+        ? await membershipRepo.findByLeagueAndUser(request.params.id, request.authUser.userId)
+        : null;
+      logger.info({
+        action: 'leagueRoute.activate.success',
+        data: { leagueId: request.params.id },
+      }, 'Activated league');
+      return reply.send({
+        league: toLeagueDetailDto(
+          league,
+          getLeagueViewerShape(membership, request.authUser?.isRootAdmin === true),
+        ),
+      });
+    } catch (err) {
+      if (err instanceof LeagueNotFoundError) {
+        logger.warn({
+          action: 'leagueRoute.activate.notFound',
+          data: { leagueId: request.params.id, errorName: err.name },
+        }, 'Cannot activate missing league');
+        return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
+      }
+      if (err instanceof LeagueOperationError) {
+        logger.warn({
+          action: 'leagueRoute.activate.invalid',
+          data: { leagueId: request.params.id, errorCode: err.code },
+        }, 'Rejected league activation');
         return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;

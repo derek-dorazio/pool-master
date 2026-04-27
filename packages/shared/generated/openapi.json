@@ -2865,6 +2865,244 @@
         }
       }
     },
+    "/api/v1/leagues/{id}/activate": {
+      "post": {
+        "operationId": "activateLeague",
+        "summary": "Activate a league",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Allows a commissioner to reactivate an inactive league so normal league usage and commissioner edits become available again.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single-league detail response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "league": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Internal league identifier used for authenticated management APIs."
+                        },
+                        "leagueCode": {
+                          "type": "string",
+                          "description": "Stable short code used in bookmarkable league-home routes and invite context."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Primary display name for the league."
+                        },
+                        "description": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Optional short league description."
+                        },
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the league is currently active for normal write interactions."
+                        },
+                        "iconKey": {
+                          "type": "string",
+                          "enum": [
+                            "GOLF_FLAG",
+                            "GOLF_BALL",
+                            "FOOTBALL",
+                            "FOOTBALL_HELMET",
+                            "BASKETBALL",
+                            "BASKETBALL_HOOP",
+                            "CHECKERED_FLAG",
+                            "RACING_WHEEL",
+                            "TENNIS_BALL",
+                            "TENNIS_RACKET",
+                            "HORSESHOE",
+                            "SOCCER_BALL",
+                            "HOCKEY_STICK",
+                            "HOCKEY_PUCK",
+                            "BASEBALL",
+                            "BASEBALL_BAT",
+                            "FIGHT_GLOVE",
+                            "TROPHY",
+                            "WHISTLE",
+                            "STOPWATCH"
+                          ],
+                          "description": "Selected built-in league icon key from the curated PoolMaster icon catalog."
+                        },
+                        "memberCount": {
+                          "type": "number",
+                          "description": "Current number of memberships in the league."
+                        },
+                        "activeContestCount": {
+                          "type": "number",
+                          "description": "Number of currently active contests associated with the league."
+                        },
+                        "memberType": {
+                          "type": "string",
+                          "enum": [
+                            "COMMISSIONER",
+                            "MEMBER"
+                          ],
+                          "nullable": true,
+                          "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
+                        },
+                        "leagueRelationship": {
+                          "type": "object",
+                          "properties": {
+                            "leagueMember": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active member of this league."
+                            },
+                            "commissioner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active commissioner of this league."
+                            }
+                          },
+                          "required": [
+                            "leagueMember",
+                            "commissioner"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "League creation timestamp in ISO 8601 format."
+                        },
+                        "joinPolicy": {
+                          "type": "string",
+                          "enum": [
+                            "COMMISSIONER_ONLY",
+                            "LINK_INVITE",
+                            "OPEN"
+                          ],
+                          "description": "League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueCode",
+                        "name",
+                        "isActive",
+                        "iconKey",
+                        "memberCount",
+                        "activeContestCount",
+                        "memberType",
+                        "leagueRelationship",
+                        "isRootAdmin",
+                        "joinPolicy"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Detailed league payload used by league-home and commissioner-management surfaces."
+                    }
+                  },
+                  "required": [
+                    "league"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Single-league detail response."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/leagues/{id}/invitations": {
       "post": {
         "operationId": "sendLeagueInvitations",

@@ -226,6 +226,23 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     handler: league.inactivateLeague,
   });
 
+  fastify.post('/:id/activate', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Activate a league',
+      description:
+        'Allows a commissioner to reactivate an inactive league so normal league usage and commissioner edits become available again.',
+      operationId: 'activateLeague',
+      response: {
+        200: zodToJsonSchema(LeagueResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: league.activateLeague,
+  });
+
   fastify.delete('/:id', {
     schema: {
       tags: ['Leagues'],

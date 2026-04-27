@@ -1670,6 +1670,140 @@ export type InactivateLeagueResponses = {
 
 export type InactivateLeagueResponse = InactivateLeagueResponses[keyof InactivateLeagueResponses];
 
+export type ActivateLeagueData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/activate';
+};
+
+export type ActivateLeagueErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type ActivateLeagueError = ActivateLeagueErrors[keyof ActivateLeagueErrors];
+
+export type ActivateLeagueResponses = {
+    /**
+     * Single-league detail response.
+     */
+    200: {
+        /**
+         * Detailed league payload used by league-home and commissioner-management surfaces.
+         */
+        league: {
+            /**
+             * Internal league identifier used for authenticated management APIs.
+             */
+            id: string;
+            /**
+             * Stable short code used in bookmarkable league-home routes and invite context.
+             */
+            leagueCode: string;
+            /**
+             * Primary display name for the league.
+             */
+            name: string;
+            /**
+             * Optional short league description.
+             */
+            description?: string;
+            /**
+             * Whether the league is currently active for normal write interactions.
+             */
+            isActive: boolean;
+            /**
+             * Selected built-in league icon key from the curated PoolMaster icon catalog.
+             */
+            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+            /**
+             * Current number of memberships in the league.
+             */
+            memberCount: number;
+            /**
+             * Number of currently active contests associated with the league.
+             */
+            activeContestCount: number;
+            /**
+             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+             */
+            memberType: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+             */
+            leagueRelationship: {
+                /**
+                 * Whether the current requester is an active member of this league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active commissioner of this league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+             */
+            isRootAdmin: boolean;
+            /**
+             * League creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+            /**
+             * League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+             */
+            joinPolicy: 'COMMISSIONER_ONLY' | 'LINK_INVITE' | 'OPEN';
+        };
+    };
+};
+
+export type ActivateLeagueResponse = ActivateLeagueResponses[keyof ActivateLeagueResponses];
+
 export type SendLeagueInvitationsData = {
     /**
      * Commissioner request payload for sending direct email invites.

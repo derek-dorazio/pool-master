@@ -183,6 +183,39 @@ export class LeagueService {
     return updatedLeague;
   }
 
+  async activateLeague(leagueId: string): Promise<League> {
+    this.logger?.debug({
+      action: 'league.activate.enter',
+      data: { leagueId },
+    }, 'Activating league');
+    const league = await this.leagueRepo.findById(leagueId);
+    if (!league) {
+      this.logger?.warn({
+        action: 'league.activate.notFound',
+        data: { leagueId },
+      }, 'Cannot activate missing league');
+      throw new LeagueNotFoundError(leagueId);
+    }
+
+    if (league.isActive) {
+      this.logger?.warn({
+        action: 'league.activate.alreadyActive',
+        data: { leagueId },
+      }, 'League already active');
+      throw new LeagueOperationError(
+        'League is already active',
+        'LEAGUE_ALREADY_ACTIVE',
+      );
+    }
+
+    const updatedLeague = await this.leagueRepo.update(leagueId, { isActive: true });
+    this.logger?.info({
+      action: 'league.activate.success',
+      data: { leagueId },
+    }, 'Activated league');
+    return updatedLeague;
+  }
+
   async updateLeagueDetails(leagueId: string, updates: UpdateLeagueDetailsInput): Promise<League> {
     this.logger?.debug({
       action: 'league.updateDetails.enter',

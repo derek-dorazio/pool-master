@@ -4,6 +4,7 @@ import { Check, Copy } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  activateLeague,
   deleteLeague,
   generateInviteLink,
   getLeagueByCode,
@@ -83,6 +84,7 @@ export function LeagueDetailPage() {
   const [iconModalOpen, setIconModalOpen] = useState(false);
   const [selectedIconKey, setSelectedIconKey] = useState<LeagueDetail['iconKey']>('TROPHY');
   const [iconDraftKey, setIconDraftKey] = useState<LeagueDetail['iconKey']>('TROPHY');
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   const leagueQuery = useQuery({
@@ -296,6 +298,23 @@ export function LeagueDetailPage() {
     },
   });
 
+  const activateLeagueMutation = useMutation({
+    mutationFn: async () => {
+      const response = await activateLeague({
+        path: { id: leagueId },
+      });
+
+      if (!response.data?.league) {
+        throw response.error ?? new Error('League activation response is missing data.');
+      }
+
+      return response.data.league;
+    },
+    onSuccess: async (league) => {
+      syncLeagueCaches(queryClient, league);
+    },
+  });
+
   const deleteLeagueMutation = useMutation({
     mutationFn: async () => {
       if (!leagueQuery.data) {
@@ -314,6 +333,7 @@ export function LeagueDetailPage() {
       return response.data;
     },
     onSuccess: async () => {
+      setDeleteModalOpen(false);
       queryClient.setQueryData(['poolmaster', 'leagues'], (current: LeagueSummary[] | undefined) =>
         removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
       );
@@ -412,9 +432,10 @@ export function LeagueDetailPage() {
 
   const canEditLeague = canManageLeague && !isInactiveLeague;
   const canDeleteLeague =
-    leagueQuery.data.isRootAdmin
+    canManageLeague
     && isInactiveLeague
     && deleteConfirmation.trim().toUpperCase() === leagueQuery.data.leagueCode;
+  const lifecycleStatusLabel = leagueQuery.data.isActive ? 'Active' : 'Inactive';
 
   function handleOpenIconModal() {
     setIconDraftKey(selectedIconKey);
@@ -429,6 +450,16 @@ export function LeagueDetailPage() {
     setIconDraftKey(selectedIconKey);
     setIconModalOpen(false);
     updateIconMutation.reset();
+  }
+
+  function handleCloseDeleteModal() {
+    if (deleteLeagueMutation.isPending) {
+      return;
+    }
+
+    setDeleteModalOpen(false);
+    setDeleteConfirmation('');
+    deleteLeagueMutation.reset();
   }
 
   return (
@@ -722,75 +753,79 @@ export function LeagueDetailPage() {
             data-testid="league-lifecycle-section"
           >
             <h3 className="text-xl font-semibold">League lifecycle</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Lifecycle stays inline on League Home: commissioners and root admins can inactivate,
-              and root admins can permanently delete once the league is inactive.
+            <p className="mt-2 text-sm text-muted-foreground" data-testid="league-lifecycle-helper">
+              {leagueQuery.data.isActive ? (
+                <>
+                  The league is currently <span className="font-medium text-foreground">Active</span>,
+                  inactivating the league will prevent further usage but will maintain history. The
+                  league can be deleted after being made inactive.
+                </>
+              ) : (
+                <>
+                  The league is currently <span className="font-medium text-destructive">Inactive</span>,
+                  click Activate to reactivate your league.
+                </>
+              )}
             </p>
 
-            <div className="mt-5 rounded-[1.5rem] border border-border bg-background p-5">
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Current status
-              </div>
-              <div className="mt-2 text-lg font-semibold text-foreground" data-testid="league-lifecycle-status">
-                {leagueQuery.data.isActive ? 'Active' : 'Inactive'}
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_1fr]">
-              <div className="rounded-[1.5rem] border border-border bg-background p-5">
-                <h4 className="text-lg font-semibold">Inactivate league</h4>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Inactivation is the normal reversible lifecycle action for a league that is no
-                  longer active day to day.
-                </p>
-                <button
-                  className="mt-5 rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                  data-testid="league-inactivate"
-                  disabled={isInactiveLeague || inactivateLeagueMutation.isPending}
-                  onClick={() => void inactivateLeagueMutation.mutateAsync()}
-                  type="button"
+            <div className="mt-5 flex flex-col gap-4 rounded-[1.5rem] border border-border bg-background p-5 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Current status
+                </div>
+                <div
+                  className={`mt-2 text-lg font-semibold ${isInactiveLeague ? 'text-destructive' : 'text-foreground'}`}
+                  data-testid="league-lifecycle-status"
                 >
-                  {isInactiveLeague
-                    ? 'League inactive'
-                    : inactivateLeagueMutation.isPending
-                      ? 'Inactivating...'
-                      : 'Inactivate league'}
-                </button>
+                  {lifecycleStatusLabel}
+                </div>
               </div>
-
-              {leagueQuery.data.isRootAdmin ? (
-                <div className="rounded-[1.5rem] border border-red-300 bg-red-50/80 p-5">
-                  <h4 className="text-lg font-semibold text-red-950">Delete league</h4>
-                  <p className="mt-2 text-sm text-red-900">
-                    Root admins can permanently delete inactive leagues after confirming the league
-                    code. This remains intentionally unavailable while the league is still active.
-                  </p>
-
-                  <label className="mt-4 block space-y-2">
-                    <span className="text-sm font-medium text-red-950">Confirmation code</span>
-                    <input
-                      className="w-full rounded-2xl border border-red-200 bg-white px-4 py-3 font-mono text-sm uppercase outline-none transition focus:border-red-500"
-                      data-testid="league-delete-confirmation"
-                      disabled={!isInactiveLeague || deleteLeagueMutation.isPending}
-                      onChange={(event) => setDeleteConfirmation(event.target.value)}
-                      placeholder={leagueQuery.data.leagueCode}
-                      type="text"
-                      value={deleteConfirmation}
-                    />
-                  </label>
-
+              <div className="flex flex-wrap gap-3">
+                {isInactiveLeague ? (
+                  <>
+                    <button
+                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                      data-testid="league-activate"
+                      disabled={activateLeagueMutation.isPending}
+                      onClick={() => void activateLeagueMutation.mutateAsync()}
+                      type="button"
+                    >
+                      {activateLeagueMutation.isPending ? 'Activating...' : 'Activate'}
+                    </button>
+                    <button
+                      className="rounded-2xl border border-destructive/40 px-4 py-3 text-sm font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-60"
+                      data-testid="league-delete-open"
+                      disabled={deleteLeagueMutation.isPending}
+                      onClick={() => setDeleteModalOpen(true)}
+                      type="button"
+                    >
+                      Delete
+                    </button>
+                  </>
+                ) : (
                   <button
-                    className="mt-5 rounded-2xl bg-red-700 px-4 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-red-300"
-                    data-testid="league-delete-submit"
-                    disabled={!canDeleteLeague || deleteLeagueMutation.isPending}
-                    onClick={() => void deleteLeagueMutation.mutateAsync()}
+                    className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                    data-testid="league-inactivate"
+                    disabled={inactivateLeagueMutation.isPending}
+                    onClick={() => void inactivateLeagueMutation.mutateAsync()}
                     type="button"
                   >
-                    {deleteLeagueMutation.isPending ? 'Deleting...' : 'Delete league'}
+                    {inactivateLeagueMutation.isPending ? 'Inactivating...' : 'Inactivate'}
                   </button>
-                </div>
-              ) : null}
+                )}
+              </div>
             </div>
+
+            {activateLeagueMutation.isError ? (
+              <p className="mt-3 text-sm text-destructive">
+                {extractErrorMessage(activateLeagueMutation.error, 'We could not activate this league.')}
+              </p>
+            ) : null}
+            {inactivateLeagueMutation.isError ? (
+              <p className="mt-3 text-sm text-destructive">
+                {extractErrorMessage(inactivateLeagueMutation.error, 'We could not inactivate this league.')}
+              </p>
+            ) : null}
           </section>
         </div>
       ) : null}
@@ -824,6 +859,89 @@ export function LeagueDetailPage() {
           </div>
         </div>
       ) : null}
+
+      <Dialog.Root
+        onOpenChange={(open) => {
+          if (open) {
+            setDeleteModalOpen(true);
+            return;
+          }
+
+          handleCloseDeleteModal();
+        }}
+        open={deleteModalOpen}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
+          <Dialog.Content
+            aria-describedby="league-delete-modal-description"
+            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
+            data-testid="league-delete-modal"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <Dialog.Title className="text-2xl font-semibold tracking-tight">
+                  Delete league
+                </Dialog.Title>
+                <Dialog.Description
+                  className="mt-2 text-sm text-muted-foreground"
+                  id="league-delete-modal-description"
+                >
+                  Enter the league code to permanently delete this inactive league.
+                </Dialog.Description>
+              </div>
+              <button
+                aria-label="Close delete league modal"
+                className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-70"
+                disabled={deleteLeagueMutation.isPending}
+                onClick={handleCloseDeleteModal}
+                type="button"
+              >
+                Close
+              </button>
+            </div>
+
+            <label className="mt-5 block space-y-2">
+              <span className="text-sm font-medium text-foreground">League code</span>
+              <input
+                className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-mono text-sm uppercase outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
+                data-testid="league-delete-confirmation"
+                disabled={deleteLeagueMutation.isPending}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                placeholder={leagueQuery.data.leagueCode}
+                type="text"
+                value={deleteConfirmation}
+              />
+            </label>
+
+            {deleteLeagueMutation.isError ? (
+              <p className="mt-4 text-sm text-destructive">
+                {extractErrorMessage(deleteLeagueMutation.error, 'We could not delete this league.')}
+              </p>
+            ) : null}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={deleteLeagueMutation.isPending}
+                onClick={handleCloseDeleteModal}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="rounded-2xl bg-red-700 px-4 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-red-300"
+                data-testid="league-delete-submit"
+                disabled={!canDeleteLeague || deleteLeagueMutation.isPending}
+                onClick={() => void deleteLeagueMutation.mutateAsync()}
+                type="button"
+              >
+                {deleteLeagueMutation.isPending ? 'Deleting...' : 'Delete league'}
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       <Dialog.Root
         onOpenChange={(open) => {

@@ -204,6 +204,24 @@ describe('Contract verification (web)', () => {
     expect(inactivateRes.statusCode).toBe(200);
     expect(LeagueResponseSchema.safeParse(inactivateRes.json()).success).toBe(true);
 
+    const activateRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.activate(leagueId),
+      headers: withoutJsonBodyHeaders(owner.headers),
+    });
+
+    expect(activateRes.statusCode).toBe(200);
+    expect(LeagueResponseSchema.safeParse(activateRes.json()).success).toBe(true);
+
+    const reinactivateRes = await getApp().inject({
+      method: 'POST',
+      url: API_ROUTES.leagues.inactivate(leagueId),
+      headers: withoutJsonBodyHeaders(owner.headers),
+    });
+
+    expect(reinactivateRes.statusCode).toBe(200);
+    expect(LeagueResponseSchema.safeParse(reinactivateRes.json()).success).toBe(true);
+
     const deleteRes = await getApp().inject({
       method: 'DELETE',
       url: API_ROUTES.leagues.detail(leagueId),

@@ -12,6 +12,7 @@ const generateInviteLinkMock = vi.fn();
 const getContestMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
+const activateLeagueMock = vi.fn();
 const inactivateLeagueMock = vi.fn();
 const leaveLeagueMock = vi.fn();
 const listContestEntriesMock = vi.fn();
@@ -24,6 +25,7 @@ const updateLeagueDetailsMock = vi.fn();
 const updateLeagueIconMock = vi.fn();
 
 vi.mock('@/lib/api', () => ({
+  activateLeague: (...args: unknown[]) => activateLeagueMock(...args),
   deleteLeague: (...args: unknown[]) => deleteLeagueMock(...args),
   enterContest: (...args: unknown[]) => enterContestMock(...args),
   generateInviteLink: (...args: unknown[]) => generateInviteLinkMock(...args),
@@ -160,6 +162,7 @@ function primeCommonMocks({
 
 describe('LeagueDetailPage', () => {
   afterEach(() => {
+    activateLeagueMock.mockReset();
     deleteLeagueMock.mockReset();
     enterContestMock.mockReset();
     generateInviteLinkMock.mockReset();
@@ -315,6 +318,61 @@ describe('LeagueDetailPage', () => {
 
     expect(screen.getByTestId('league-lifecycle-section')).toHaveTextContent('Current status');
     expect(screen.getByTestId('league-lifecycle-status')).toHaveTextContent('Active');
+    expect(screen.getByTestId('league-lifecycle-helper')).toHaveTextContent(
+      'The league is currently Active, inactivating the league will prevent further usage but will maintain history. The league can be deleted after being made inactive.',
+    );
+    expect(screen.getByTestId('league-inactivate')).toHaveTextContent('Inactivate');
+    expect(screen.queryByTestId('league-activate')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('league-delete-open')).not.toBeInTheDocument();
+    expect(screen.getByTestId('league-lifecycle-section')).not.toHaveTextContent(
+      'Lifecycle stays inline on League Home',
+    );
+  });
+
+  // pool-master-4uq — inactive leagues expose activate/delete in the compact lifecycle row.
+  it('shows inactive lifecycle actions and activates immediately', async () => {
+    primeCommonMocks({ isActive: false });
+    activateLeagueMock.mockResolvedValue({
+      data: {
+        league: {
+          id: 'league-1',
+          leagueCode: 'BIGDAWGS',
+          name: 'Big Dawgs',
+          description: 'A test league',
+          isActive: true,
+          iconKey: 'TROPHY',
+          memberCount: 2,
+          activeContestCount: 1,
+          memberType: 'COMMISSIONER',
+          leagueRelationship: {
+            leagueMember: true,
+            commissioner: true,
+          },
+          isRootAdmin: false,
+          joinPolicy: 'COMMISSIONER_ONLY',
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    expect(screen.getByTestId('league-lifecycle-status')).toHaveTextContent('Inactive');
+    expect(screen.getByTestId('league-lifecycle-status')).toHaveClass('text-destructive');
+    expect(screen.getByTestId('league-lifecycle-helper')).toHaveTextContent(
+      'The league is currently Inactive, click Activate to reactivate your league.',
+    );
+    expect(screen.getByTestId('league-activate')).toBeInTheDocument();
+    expect(screen.getByTestId('league-delete-open')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('league-activate'));
+
+    await waitFor(() =>
+      expect(activateLeagueMock).toHaveBeenCalledWith({
+        path: { id: 'league-1' },
+      }),
+    );
   });
 
   // pool-master-8lt — commissioners can create and copy a join URL without email delivery.
@@ -402,8 +460,8 @@ describe('LeagueDetailPage', () => {
     expect(screen.getByTestId('league-current-icon-label')).toHaveTextContent('Golf Ball');
   });
 
-  it('lets a root admin delete an inactive league after confirmation', async () => {
-    primeCommonMocks({ isRootAdmin: true, leagueRole: 'MEMBER', isActive: false });
+  it('lets a commissioner delete an inactive league after modal confirmation', async () => {
+    primeCommonMocks({ isActive: false });
     deleteLeagueMock.mockResolvedValue({
       data: {
         success: true,
@@ -413,6 +471,8 @@ describe('LeagueDetailPage', () => {
     renderLeagueDetailPage();
 
     await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByTestId('league-delete-open'));
+    expect(await screen.findByTestId('league-delete-modal')).toBeInTheDocument();
     fireEvent.change(screen.getByTestId('league-delete-confirmation'), {
       target: { value: 'BIGDAWGS' },
     });

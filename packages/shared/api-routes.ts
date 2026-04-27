@@ -31,6 +31,7 @@ export const API_ROUTES = {
     details: (id: string) => `/api/v1/leagues/${id}/details`,
     icon: (id: string) => `/api/v1/leagues/${id}/icon`,
     inactivate: (id: string) => `/api/v1/leagues/${id}/inactivate`,
+    activate: (id: string) => `/api/v1/leagues/${id}/activate`,
     byCode: (leagueCode: string) => `/api/v1/leagues/code/${leagueCode}`,
     members: (id: string) => `/api/v1/leagues/${id}/members`,
     leave: (id: string) => `/api/v1/leagues/${id}/members/me`,
