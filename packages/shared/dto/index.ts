@@ -18,5 +18,6 @@ export * from './history.dto';
 export * from './events.dto';
 export * from './ingestion.dto';
 export * from './client-logs.dto';
+export * from './version.dto';
 export * from './errors.dto';
 export { zodToJsonSchema } from './json-schema';

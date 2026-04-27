@@ -9,3 +9,4 @@ export * from './notifications.mapper';
 export * from './leagues-extra.mapper';
 export * from './events.mapper';
 export * from './contest-management.mapper';
+export * from './version.mapper';

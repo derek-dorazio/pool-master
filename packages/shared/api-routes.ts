@@ -145,4 +145,6 @@ export const API_ROUTES = {
 
   // Health
   health: '/health',
+  version: '/api/v1/version',
+  rootVersion: '/version',
 } as const;

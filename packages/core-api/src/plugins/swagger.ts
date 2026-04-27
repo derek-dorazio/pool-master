@@ -48,6 +48,7 @@ export const swaggerPlugin = fp(async (fastify) => {
         { name: 'Config', description: 'Platform and sports configuration' },
         { name: 'History', description: 'League history, records, and analytics' },
         { name: 'Health', description: 'Service health checks' },
+        { name: 'Version', description: 'Deployment version and build provenance metadata' },
       ],
     },
   });

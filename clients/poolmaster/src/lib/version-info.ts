@@ -9,11 +9,21 @@ export interface PoolMasterVersionInfo {
     name: string;
     version: string;
     gitSha: string;
+    buildNumber: string | null;
+  };
+  clientSdk: {
+    name: string;
+    packageName: string;
+    packageVersion: string;
+    clientFetchVersion: string | null;
+    generator: string;
+    generatorVersion: string | null;
   };
   service: {
     name: string;
     version: string;
     gitSha: string;
+    buildNumber: string | null;
   };
 }
 

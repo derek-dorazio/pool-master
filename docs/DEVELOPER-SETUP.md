@@ -257,7 +257,7 @@ npm run test:poolmaster:unit
 
 The active browser lane is the deployed Playwright journey suite for PoolMaster onboarding and league flows. It currently covers registration, explicit league creation, league-list navigation, multi-league switching, and invite/join behavior on the deployed QA environment.
 
-PoolMaster production builds also emit `clients/poolmaster/dist/version-info.json` so deployed environments can expose the webapp version, service version, git SHAs, and build metadata.
+PoolMaster production builds emit `clients/poolmaster/dist/version-info.json` so deployed environments can expose the webapp version, generated client SDK version, service version, git SHAs, and build metadata. The core API also exposes public service build metadata at `/version` and `/api/v1/version` for QA stale-release and SHA-mismatch debugging.
 
 When the backend service is running, interactive API documentation is available
 at `/apidoc`. After Terraform is applied in deployed environments, CloudFront

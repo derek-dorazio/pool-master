@@ -21,7 +21,7 @@ npm run test:coverage --workspace=@poolmaster/poolmaster
 ## Build Metadata
 
 - Production builds emit `dist/version-info.json`.
-- The file records the deployed webapp version, service version, git SHAs, build time, and release-prefix context.
+- The file records the deployed webapp version, generated client SDK version, service version, git SHAs, build number, build time, and release-prefix context.
 - App code can read the deployed metadata via `getVersionInfo()` from [src/lib/version-info.ts](./src/lib/version-info.ts).
 
 ## Important

@@ -58,6 +58,10 @@ function isPublicRoute(method: string, url: string): boolean {
   const path = url.split('?')[0] ?? url;
   const signature = `${method.toUpperCase()} ${path}`;
   return path.startsWith('/health')
+    || path === '/version'
+    || path === '/version/'
+    || path === '/api/v1/version'
+    || path === '/api/v1/version/'
     || PUBLIC_ROUTES.has(signature)
     || PUBLIC_ROUTE_PATTERNS.some((pattern) => pattern.test(signature));
 }

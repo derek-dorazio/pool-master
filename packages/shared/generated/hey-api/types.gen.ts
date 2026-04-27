@@ -18,6 +18,69 @@ export type GetHealthResponses = {
     200: unknown;
 };
 
+export type GetRootVersionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/version/';
+};
+
+export type GetRootVersionResponses = {
+    /**
+     * Public service version metadata for deployment and stale-release diagnostics.
+     */
+    200: {
+        /**
+         * Version metadata response schema version.
+         */
+        schemaVersion: 1;
+        /**
+         * Runtime environment name such as development, qa, staging, or production.
+         */
+        environment: string;
+        /**
+         * UTC build timestamp supplied by CI, when available.
+         */
+        buildTimeUtc: string;
+        /**
+         * Git branch or ref name supplied by CI, when available.
+         */
+        gitRef: string;
+        /**
+         * Core API service version metadata.
+         */
+        service: {
+            /**
+             * Package or runtime component name.
+             */
+            name: string;
+            /**
+             * Semantic package version or deployment version label.
+             */
+            version: string;
+            /**
+             * Git SHA for this component build, when supplied by CI.
+             */
+            gitSha: string;
+            /**
+             * CI build or run number for this component build, when supplied by CI.
+             */
+            buildNumber: string;
+        };
+        /**
+         * Non-secret runtime metadata useful during operational debugging.
+         */
+        runtime: {
+            /**
+             * Node.js runtime version running the service.
+             */
+            nodeVersion: string;
+        };
+    };
+};
+
+export type GetRootVersionResponse = GetRootVersionResponses[keyof GetRootVersionResponses];
+
 export type RegisterUserData = {
     /**
      * Create-account payload for a new username/email/password user.
@@ -566,6 +629,69 @@ export type GetCurrentUserResponses = {
 };
 
 export type GetCurrentUserResponse = GetCurrentUserResponses[keyof GetCurrentUserResponses];
+
+export type GetVersionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/version/';
+};
+
+export type GetVersionResponses = {
+    /**
+     * Public service version metadata for deployment and stale-release diagnostics.
+     */
+    200: {
+        /**
+         * Version metadata response schema version.
+         */
+        schemaVersion: 1;
+        /**
+         * Runtime environment name such as development, qa, staging, or production.
+         */
+        environment: string;
+        /**
+         * UTC build timestamp supplied by CI, when available.
+         */
+        buildTimeUtc: string;
+        /**
+         * Git branch or ref name supplied by CI, when available.
+         */
+        gitRef: string;
+        /**
+         * Core API service version metadata.
+         */
+        service: {
+            /**
+             * Package or runtime component name.
+             */
+            name: string;
+            /**
+             * Semantic package version or deployment version label.
+             */
+            version: string;
+            /**
+             * Git SHA for this component build, when supplied by CI.
+             */
+            gitSha: string;
+            /**
+             * CI build or run number for this component build, when supplied by CI.
+             */
+            buildNumber: string;
+        };
+        /**
+         * Non-secret runtime metadata useful during operational debugging.
+         */
+        runtime: {
+            /**
+             * Node.js runtime version running the service.
+             */
+            nodeVersion: string;
+        };
+    };
+};
+
+export type GetVersionResponse = GetVersionResponses[keyof GetVersionResponses];
 
 export type ListLeaguesData = {
     body?: never;

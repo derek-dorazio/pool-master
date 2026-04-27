@@ -29,6 +29,107 @@
         }
       }
     },
+    "/version/": {
+      "get": {
+        "operationId": "getRootVersion",
+        "summary": "Get service version metadata",
+        "tags": [
+          "Version"
+        ],
+        "description": "Returns non-secret deployment metadata for the core API service so QA and operators can diagnose stale releases, SHA mismatches, and build provenance.",
+        "responses": {
+          "200": {
+            "description": "Public service version metadata for deployment and stale-release diagnostics.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schemaVersion": {
+                      "type": "number",
+                      "enum": [
+                        1
+                      ],
+                      "description": "Version metadata response schema version."
+                    },
+                    "environment": {
+                      "type": "string",
+                      "description": "Runtime environment name such as development, qa, staging, or production."
+                    },
+                    "buildTimeUtc": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "UTC build timestamp supplied by CI, when available.",
+                      "nullable": true
+                    },
+                    "gitRef": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Git branch or ref name supplied by CI, when available."
+                    },
+                    "service": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "Package or runtime component name."
+                        },
+                        "version": {
+                          "type": "string",
+                          "description": "Semantic package version or deployment version label."
+                        },
+                        "gitSha": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Git SHA for this component build, when supplied by CI."
+                        },
+                        "buildNumber": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "CI build or run number for this component build, when supplied by CI."
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "version",
+                        "gitSha",
+                        "buildNumber"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Core API service version metadata."
+                    },
+                    "runtime": {
+                      "type": "object",
+                      "properties": {
+                        "nodeVersion": {
+                          "type": "string",
+                          "description": "Node.js runtime version running the service."
+                        }
+                      },
+                      "required": [
+                        "nodeVersion"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Non-secret runtime metadata useful during operational debugging."
+                    }
+                  },
+                  "required": [
+                    "schemaVersion",
+                    "environment",
+                    "buildTimeUtc",
+                    "gitRef",
+                    "service",
+                    "runtime"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Public service version metadata for deployment and stale-release diagnostics."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "operationId": "registerUser",
@@ -883,6 +984,107 @@
                   ],
                   "additionalProperties": false,
                   "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/version/": {
+      "get": {
+        "operationId": "getVersion",
+        "summary": "Get service version metadata",
+        "tags": [
+          "Version"
+        ],
+        "description": "Returns non-secret deployment metadata for the core API service so QA and operators can diagnose stale releases, SHA mismatches, and build provenance.",
+        "responses": {
+          "200": {
+            "description": "Public service version metadata for deployment and stale-release diagnostics.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schemaVersion": {
+                      "type": "number",
+                      "enum": [
+                        1
+                      ],
+                      "description": "Version metadata response schema version."
+                    },
+                    "environment": {
+                      "type": "string",
+                      "description": "Runtime environment name such as development, qa, staging, or production."
+                    },
+                    "buildTimeUtc": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "UTC build timestamp supplied by CI, when available.",
+                      "nullable": true
+                    },
+                    "gitRef": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Git branch or ref name supplied by CI, when available."
+                    },
+                    "service": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "Package or runtime component name."
+                        },
+                        "version": {
+                          "type": "string",
+                          "description": "Semantic package version or deployment version label."
+                        },
+                        "gitSha": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Git SHA for this component build, when supplied by CI."
+                        },
+                        "buildNumber": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "CI build or run number for this component build, when supplied by CI."
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "version",
+                        "gitSha",
+                        "buildNumber"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Core API service version metadata."
+                    },
+                    "runtime": {
+                      "type": "object",
+                      "properties": {
+                        "nodeVersion": {
+                          "type": "string",
+                          "description": "Node.js runtime version running the service."
+                        }
+                      },
+                      "required": [
+                        "nodeVersion"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Non-secret runtime metadata useful during operational debugging."
+                    }
+                  },
+                  "required": [
+                    "schemaVersion",
+                    "environment",
+                    "buildTimeUtc",
+                    "gitRef",
+                    "service",
+                    "runtime"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Public service version metadata for deployment and stale-release diagnostics."
                 }
               }
             }
@@ -44464,6 +44666,10 @@
     {
       "name": "Health",
       "description": "Service health checks"
+    },
+    {
+      "name": "Version",
+      "description": "Deployment version and build provenance metadata"
     }
   ]
 }

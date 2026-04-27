@@ -34,6 +34,7 @@ import { PrismaPlatformRuntimeConfigRepository } from './modules/admin/platform-
 import { ProviderService } from './modules/admin/provider-service';
 import { configModule } from './modules/config/routes';
 import { clientLogsModule } from './modules/client-logs/routes';
+import { versionModule } from './modules/version/routes';
 
 // Draft module
 import { draftsModule } from './modules/drafts/routes';
@@ -85,6 +86,7 @@ export function buildApp() {
   // =========================================================================
   app.register(swaggerPlugin);
   app.register(healthPlugin);
+  app.register(versionModule, { prefix: '/version', operationId: 'getRootVersion' });
   app.register(etagPlugin);
   app.register(pollConfigPlugin);
   app.register(authGuard);
@@ -95,6 +97,7 @@ export function buildApp() {
   // Auth (public routes — no JWT required)
   // =========================================================================
   app.register(authModule, { prefix: '/api/v1/auth' });
+  app.register(versionModule, { prefix: '/api/v1/version', operationId: 'getVersion' });
 
   const ingestionCallbacks: IngestionCallbacks = {
     async onEvents(events: SportEvent[]) {

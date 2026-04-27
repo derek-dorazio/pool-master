@@ -7,7 +7,13 @@ export default defineConfig(() => {
   const assetBase = process.env.APP_ASSET_BASE ?? '/';
   const packageJson = JSON.parse(
     fs.readFileSync(path.resolve(__dirname, './package.json'), 'utf8'),
+  ) as { dependencies?: Record<string, string>; name: string; version: string };
+  const sharedPackageJson = JSON.parse(
+    fs.readFileSync(path.resolve(__dirname, '../../packages/shared/package.json'), 'utf8'),
   ) as { name: string; version: string };
+  const rootPackageJson = JSON.parse(
+    fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8'),
+  ) as { devDependencies?: Record<string, string> };
   const versionInfoFallback = {
     schemaVersion: 1,
     environment: process.env.POOLMASTER_ENVIRONMENT ?? process.env.NODE_ENV ?? 'development',
@@ -19,6 +25,15 @@ export default defineConfig(() => {
       name: packageJson.name,
       version: process.env.POOLMASTER_WEBAPP_VERSION ?? packageJson.version,
       gitSha: process.env.POOLMASTER_WEBAPP_GIT_SHA ?? process.env.GITHUB_SHA ?? 'local',
+      buildNumber: process.env.POOLMASTER_BUILD_NUMBER ?? process.env.GITHUB_RUN_NUMBER ?? null,
+    },
+    clientSdk: {
+      name: '@poolmaster/shared/generated/hey-api',
+      packageName: sharedPackageJson.name,
+      packageVersion: sharedPackageJson.version,
+      clientFetchVersion: packageJson.dependencies?.['@hey-api/client-fetch'] ?? null,
+      generator: '@hey-api/openapi-ts',
+      generatorVersion: rootPackageJson.devDependencies?.['@hey-api/openapi-ts'] ?? null,
     },
     service: {
       name: '@poolmaster/core-api',
@@ -32,6 +47,7 @@ export default defineConfig(() => {
         ?? process.env.POOLMASTER_SERVICE_VERSION
         ?? process.env.GITHUB_SHA
         ?? 'local',
+      buildNumber: process.env.POOLMASTER_BUILD_NUMBER ?? process.env.GITHUB_RUN_NUMBER ?? null,
     },
   };
 

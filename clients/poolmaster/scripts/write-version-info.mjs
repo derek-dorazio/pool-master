@@ -6,15 +6,20 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const appRoot = path.resolve(__dirname, '..');
 const packageJsonPath = path.join(appRoot, 'package.json');
+const sharedPackageJsonPath = path.resolve(appRoot, '../../packages/shared/package.json');
+const rootPackageJsonPath = path.resolve(appRoot, '../../package.json');
 const distPath = path.join(appRoot, 'dist');
 const versionInfoPath = path.join(distPath, 'version-info.json');
 
 const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+const sharedPackageJson = JSON.parse(await fs.readFile(sharedPackageJsonPath, 'utf8'));
+const rootPackageJson = JSON.parse(await fs.readFile(rootPackageJsonPath, 'utf8'));
 
 const webappVersion = process.env.POOLMASTER_WEBAPP_VERSION ?? packageJson.version;
 const webappGitSha = process.env.POOLMASTER_WEBAPP_GIT_SHA ?? process.env.GITHUB_SHA ?? 'local';
 const serviceVersion = process.env.POOLMASTER_SERVICE_VERSION ?? webappGitSha;
 const serviceGitSha = process.env.POOLMASTER_SERVICE_GIT_SHA ?? serviceVersion;
+const buildNumber = process.env.POOLMASTER_BUILD_NUMBER ?? process.env.GITHUB_RUN_NUMBER ?? null;
 const buildTimeUtc = process.env.POOLMASTER_BUILD_TIME_UTC ?? new Date().toISOString();
 const environment = process.env.POOLMASTER_ENVIRONMENT ?? process.env.NODE_ENV ?? 'development';
 const releasePrefix = process.env.POOLMASTER_RELEASE_PREFIX ?? null;
@@ -32,11 +37,21 @@ const versionInfo = {
     name: packageJson.name,
     version: webappVersion,
     gitSha: webappGitSha,
+    buildNumber,
+  },
+  clientSdk: {
+    name: '@poolmaster/shared/generated/hey-api',
+    packageName: sharedPackageJson.name,
+    packageVersion: sharedPackageJson.version,
+    clientFetchVersion: packageJson.dependencies?.['@hey-api/client-fetch'] ?? null,
+    generator: '@hey-api/openapi-ts',
+    generatorVersion: rootPackageJson.devDependencies?.['@hey-api/openapi-ts'] ?? null,
   },
   service: {
     name: '@poolmaster/core-api',
     version: serviceVersion,
     gitSha: serviceGitSha,
+    buildNumber,
   },
 };
 

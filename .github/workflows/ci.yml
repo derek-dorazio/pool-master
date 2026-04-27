@@ -462,6 +462,11 @@ jobs:
           MIGRATE_FAMILY="poolmaster-qa-migrate"
           CORE_API_LOG_LEVEL="debug"
           MOCK_PROVIDER_LOG_LEVEL="debug"
+          SERVICE_BUILD_NUMBER="${{ github.run_number }}"
+          SERVICE_BUILD_TIME_UTC="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          SERVICE_GIT_REF="${GITHUB_REF_NAME}"
+          SERVICE_GIT_SHA="${{ steps.tags.outputs.full_sha }}"
+          SERVICE_VERSION="${{ steps.tags.outputs.full_sha }}"
           QA_CORE_API_TASK_DEF=""
           QA_MIGRATE_TASK_DEF=""
           QA_MOCK_PROVIDER_TASK_DEF=""
@@ -477,7 +482,14 @@ jobs:
               --task-definition "$CORE_SERVICE_TASK_DEF" \
               --query 'taskDefinition' \
               --output json \
-              | jq --arg IMAGE "$CORE_API_IMAGE" --arg LOG_LEVEL "$CORE_API_LOG_LEVEL" '
+              | jq \
+                  --arg IMAGE "$CORE_API_IMAGE" \
+                  --arg LOG_LEVEL "$CORE_API_LOG_LEVEL" \
+                  --arg BUILD_NUMBER "$SERVICE_BUILD_NUMBER" \
+                  --arg BUILD_TIME_UTC "$SERVICE_BUILD_TIME_UTC" \
+                  --arg GIT_REF "$SERVICE_GIT_REF" \
+                  --arg SERVICE_GIT_SHA "$SERVICE_GIT_SHA" \
+                  --arg SERVICE_VERSION "$SERVICE_VERSION" '
                   del(
                     .taskDefinitionArn,
                     .revision,
@@ -492,8 +504,22 @@ jobs:
                       then
                         .image = $IMAGE
                         | .environment = ((.environment // [])
-                          | map(select(.name != "LOG_LEVEL"))
-                          + [{ name: "LOG_LEVEL", value: $LOG_LEVEL }])
+                          | map(select(.name as $name | [
+                            "LOG_LEVEL",
+                            "POOLMASTER_BUILD_NUMBER",
+                            "POOLMASTER_BUILD_TIME_UTC",
+                            "POOLMASTER_GIT_REF",
+                            "POOLMASTER_SERVICE_GIT_SHA",
+                            "POOLMASTER_SERVICE_VERSION"
+                          ] | index($name) | not))
+                          + [
+                            { name: "LOG_LEVEL", value: $LOG_LEVEL },
+                            { name: "POOLMASTER_BUILD_NUMBER", value: $BUILD_NUMBER },
+                            { name: "POOLMASTER_BUILD_TIME_UTC", value: $BUILD_TIME_UTC },
+                            { name: "POOLMASTER_GIT_REF", value: $GIT_REF },
+                            { name: "POOLMASTER_SERVICE_GIT_SHA", value: $SERVICE_GIT_SHA },
+                            { name: "POOLMASTER_SERVICE_VERSION", value: $SERVICE_VERSION }
+                          ])
                       else . end
                     )
                 ' > /tmp/qa-core-api-task-def.json
@@ -595,6 +621,7 @@ jobs:
           VITE_LOG_LEVEL="debug" \
           POOLMASTER_RELEASE_PREFIX="${WEB_RELEASE_PREFIX}" \
           POOLMASTER_BUILD_TIME_UTC="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+          POOLMASTER_BUILD_NUMBER="${{ github.run_number }}" \
           POOLMASTER_GIT_REF="${GITHUB_REF_NAME}" \
           POOLMASTER_WEBAPP_GIT_SHA="${{ steps.tags.outputs.full_sha }}" \
           POOLMASTER_SERVICE_VERSION="${{ steps.tags.outputs.full_sha }}" \
