@@ -36,6 +36,12 @@ must be present in `scheduledSports`:
 - `EVENTLIVESCORES`
 - `EVENTRESULTS`
 
+`EVENTPARTICIPANTS` appears in both manual sync sets because it is the same
+field-hydration feed at two different scopes. Sport-level participant sync
+discovers eligible events in the participant lead window and hydrates each one.
+Event-level participant sync skips discovery and hydrates only the requested
+event ID.
+
 ## Default Schedule Configuration
 
 The default global ingestion schedule is:
