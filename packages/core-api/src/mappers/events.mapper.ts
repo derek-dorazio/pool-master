@@ -11,6 +11,7 @@ type EventStatus = EventStatusDto;
 
 interface EventRow {
   id: string;
+  externalId: string;
   sport: Sport;
   name: string;
   venue: string | null;
@@ -35,6 +36,7 @@ export function toEventSummaryDto(event: EventRow): EventSummaryDto {
 
   return {
     id: event.id,
+    externalId: event.externalId,
     sport: event.sport,
     name: event.name,
     venue: event.venue ?? null,

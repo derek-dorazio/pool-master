@@ -101,6 +101,7 @@ describe('events routes', () => {
         events: [
           expect.objectContaining({
             id: eligibleEventId,
+            externalId: `events-eligible-${eligibleEventId}`,
             sport: Sport.UFC,
             readinessStatus: 'CONTEST_ELIGIBLE',
             readinessReasons: [],

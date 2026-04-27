@@ -7,6 +7,7 @@ describe('event service and handler', () => {
     const findMany = jest.fn().mockResolvedValue([
       {
         id: randomUUID(),
+        externalId: 'mock-major-2026',
         sport: 'GOLF',
         name: 'Mock Major',
         venue: null,
@@ -36,6 +37,7 @@ describe('event service and handler', () => {
       }),
     );
     expect(result[0]).toMatchObject({
+      externalId: 'mock-major-2026',
       loadedParticipantCount: 72,
       providerFieldLocked: false,
     });
@@ -67,6 +69,7 @@ describe('event service and handler', () => {
       listEvents: jest.fn().mockResolvedValue([
         {
           id: 'event-1',
+          externalId: 'ready-event-1',
           sport: 'GOLF',
           name: 'Ready Event',
           venue: null,
@@ -97,6 +100,7 @@ describe('event service and handler', () => {
     expect(response.events).toEqual([
       expect.objectContaining({
         id: 'event-1',
+        externalId: 'ready-event-1',
         readinessStatus: 'FIELD_LOCKED',
         contestEligible: false,
       }),

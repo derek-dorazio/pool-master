@@ -19845,6 +19845,10 @@
                             "type": "string",
                             "description": "Sport-event identifier."
                           },
+                          "externalId": {
+                            "type": "string",
+                            "description": "Provider event identifier used by event-level sync operations."
+                          },
                           "sport": {
                             "type": "string",
                             "enum": [
@@ -19885,6 +19889,7 @@
                               "SCHEDULED",
                               "IN_PROGRESS",
                               "COMPLETED",
+                              "OFFICIAL",
                               "CANCELLED",
                               "POSTPONED"
                             ],
@@ -19949,6 +19954,7 @@
                         },
                         "required": [
                           "id",
+                          "externalId",
                           "sport",
                           "name",
                           "status",

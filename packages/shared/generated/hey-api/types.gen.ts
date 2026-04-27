@@ -9342,6 +9342,10 @@ export type ListEventsResponses = {
              */
             id: string;
             /**
+             * Provider event identifier used by event-level sync operations.
+             */
+            externalId: string;
+            /**
              * Sport associated with the event.
              */
             sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
@@ -9360,7 +9364,7 @@ export type ListEventsResponses = {
             /**
              * Provider-normalized event status.
              */
-            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'OFFICIAL' | 'CANCELLED' | 'POSTPONED';
             /**
              * Scheduled or actual event start time.
              */

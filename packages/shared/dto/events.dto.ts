@@ -6,6 +6,7 @@ export const EventStatusDtoSchema = z.enum([
   'SCHEDULED',
   'IN_PROGRESS',
   'COMPLETED',
+  'OFFICIAL',
   'CANCELLED',
   'POSTPONED',
 ]);
@@ -35,6 +36,7 @@ export type EventListQuery = z.infer<typeof EventListQuerySchema>;
 
 export const EventSummaryDtoSchema = z.object({
   id: z.string().describe('Sport-event identifier.'),
+  externalId: z.string().describe('Provider event identifier used by event-level sync operations.'),
   sport: z.enum([
     Sport.GOLF,
     Sport.NFL,

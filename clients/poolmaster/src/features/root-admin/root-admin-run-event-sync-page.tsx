@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import {
   adminListProviders,
   adminSyncProviderEventData,
+  listEvents,
+  type ListEventsResponses,
 } from '@/lib/api';
 import { useLogger } from '@/lib/logger';
 import {
@@ -16,6 +18,8 @@ import {
   type ProviderSummary,
   type SyncSport,
 } from './root-admin-sync-utils';
+
+type EventSyncEvent = ListEventsResponses[200]['events'][number];
 
 function extractErrorMessage(error: unknown, fallback: string) {
   if (!error || typeof error !== 'object') {
@@ -38,6 +42,41 @@ function extractErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+function getValidEventStatusesForPreset(
+  presetId: EventSyncPresetId,
+): EventSyncEvent['status'][] {
+  switch (presetId) {
+    case 'EVENTLIVESCORES':
+      return ['IN_PROGRESS'];
+    case 'EVENTRESULTS':
+      return ['COMPLETED', 'OFFICIAL'];
+    case 'EVENTPARTICIPANTS':
+      return ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'OFFICIAL'];
+  }
+}
+
+function formatEventStartDate(startDate: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(startDate));
+}
+
+function formatEventOptionLabel(event: EventSyncEvent) {
+  const participantText = typeof event.participantCount === 'number'
+    ? `${event.participantCount} participants`
+    : 'participants unknown';
+
+  return [
+    event.name,
+    event.status,
+    event.readinessStatus,
+    formatEventStartDate(event.startDate),
+    participantText,
+    event.externalId,
+  ].join(' · ');
+}
+
 export function RootAdminRunEventSyncPage() {
   const logger = useLogger().child({
     feature: 'root-admin-run-event-sync-page',
@@ -47,7 +86,7 @@ export function RootAdminRunEventSyncPage() {
   const [eventSyncPresetId, setEventSyncPresetId] = useState<EventSyncPresetId>(
     'EVENTPARTICIPANTS',
   );
-  const [eventSyncEventId, setEventSyncEventId] = useState('');
+  const [selectedEventExternalId, setSelectedEventExternalId] = useState('');
 
   const providersQuery = useQuery({
     queryKey: ['poolmaster', 'root-admin', 'providers'],
@@ -74,6 +113,46 @@ export function RootAdminRunEventSyncPage() {
       }
     }
   }, [eventSyncSport, supportedSyncSports]);
+
+  const eventsQuery = useQuery({
+    queryKey: ['poolmaster', 'root-admin', 'event-sync-events', eventSyncSport],
+    queryFn: async (): Promise<EventSyncEvent[]> => {
+      const response = await listEvents({
+        query: {
+          sport: eventSyncSport,
+          limit: 100,
+        },
+      });
+
+      if (!response.data?.events) {
+        throw response.error ?? new Error('Event list response is missing data.');
+      }
+
+      return response.data.events;
+    },
+    enabled: supportedSyncSports.includes(eventSyncSport),
+    retry: false,
+  });
+
+  const selectedPreset = getEventSyncPreset(eventSyncPresetId);
+  const selectableEvents = useMemo(() => {
+    const validStatuses = getValidEventStatusesForPreset(eventSyncPresetId);
+    return (eventsQuery.data ?? []).filter((event) =>
+      validStatuses.includes(event.status),
+    );
+  }, [eventSyncPresetId, eventsQuery.data]);
+  const selectedEvent = selectableEvents.find((event) =>
+    event.externalId === selectedEventExternalId,
+  );
+
+  useEffect(() => {
+    if (
+      selectedEventExternalId
+      && !selectableEvents.some((event) => event.externalId === selectedEventExternalId)
+    ) {
+      setSelectedEventExternalId('');
+    }
+  }, [selectableEvents, selectedEventExternalId]);
 
   const eventSyncMutation = useMutation({
     mutationFn: async (input: {
@@ -136,7 +215,7 @@ export function RootAdminRunEventSyncPage() {
             action: 'rootAdmin.eventSync.failed',
             data: {
               sport: eventSyncSport,
-              eventId: eventSyncEventId.trim(),
+              eventId: selectedEventExternalId,
             },
             err: error,
           },
@@ -150,15 +229,13 @@ export function RootAdminRunEventSyncPage() {
           action: 'rootAdmin.eventSync.failed',
           data: {
             sport: eventSyncSport,
-            eventId: eventSyncEventId.trim(),
+            eventId: selectedEventExternalId,
           },
         },
         'Manual provider event sync failed',
       );
     },
   });
-
-  const selectedPreset = getEventSyncPreset(eventSyncPresetId);
 
   return (
     <section
@@ -227,15 +304,23 @@ export function RootAdminRunEventSyncPage() {
           </label>
 
           <label className="text-sm text-muted-foreground">
-            <span className="mb-2 block font-medium text-foreground">Event ID</span>
-            <input
+            <span className="mb-2 block font-medium text-foreground">Event</span>
+            <select
               className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
               data-testid="root-admin-event-sync-event-id"
-              disabled={eventSyncMutation.isPending}
-              onChange={(event) => setEventSyncEventId(event.target.value)}
-              placeholder="golf-masters-2026"
-              value={eventSyncEventId}
-            />
+              disabled={eventSyncMutation.isPending || eventsQuery.isLoading}
+              onChange={(event) => setSelectedEventExternalId(event.target.value)}
+              value={selectedEventExternalId}
+            >
+              <option value="">
+                {eventsQuery.isLoading ? 'Loading events...' : 'Select a loaded event'}
+              </option>
+              {selectableEvents.map((event) => (
+                <option key={event.id} value={event.externalId}>
+                  {formatEventOptionLabel(event)}
+                </option>
+              ))}
+            </select>
           </label>
 
           <div className="rounded-[1.5rem] border border-border bg-background p-4 text-sm text-muted-foreground">
@@ -252,16 +337,33 @@ export function RootAdminRunEventSyncPage() {
             </p>
           ) : null}
 
+          {eventsQuery.isError ? (
+            <p className="text-sm text-muted-foreground">
+              {extractErrorMessage(
+                eventsQuery.error,
+                'Loaded events are unavailable right now.',
+              )}
+            </p>
+          ) : null}
+
+          {!eventsQuery.isLoading && !eventsQuery.isError && selectableEvents.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No loaded events match this sport and event-sync preset.
+            </p>
+          ) : null}
+
           <button
             className="rounded-2xl bg-foreground px-5 py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             data-testid="root-admin-event-sync-now"
-            disabled={eventSyncMutation.isPending || eventSyncEventId.trim().length === 0}
+            disabled={eventSyncMutation.isPending || !selectedEvent}
             onClick={() =>
-              eventSyncMutation.mutate({
-                sport: eventSyncSport,
-                eventId: eventSyncEventId.trim(),
-                presetId: eventSyncPresetId,
-              })}
+              selectedEvent
+                ? eventSyncMutation.mutate({
+                  sport: eventSyncSport,
+                  eventId: selectedEvent.externalId,
+                  presetId: eventSyncPresetId,
+                })
+                : undefined}
             type="button"
           >
             {eventSyncMutation.isPending ? 'Syncing...' : 'Run event sync'}

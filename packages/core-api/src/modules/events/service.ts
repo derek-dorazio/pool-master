@@ -11,6 +11,7 @@ export interface EventListQueryInput {
 
 export interface EventListItemRow {
   id: string;
+  externalId: string;
   sport: Sport;
   name: string;
   venue: string | null;
@@ -95,6 +96,7 @@ export class EventService {
             count: mappedEvents.length,
             events: mappedEvents.slice(0, 25).map((event) => ({
               id: event.id,
+              externalId: event.externalId,
               sport: event.sport,
               name: event.name,
               status: event.status,
