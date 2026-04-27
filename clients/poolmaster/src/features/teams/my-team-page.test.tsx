@@ -309,6 +309,8 @@ describe('MyTeamPage', () => {
     );
   });
 
+  // pool-master-dxd.14 — icon mutation response updates the query-owned team icon
+  // without relying on duplicated local selected-icon state.
   it('updates the team icon from a modal and returns to Team Home with the new icon', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {

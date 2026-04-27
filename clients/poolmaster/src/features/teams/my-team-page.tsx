@@ -58,7 +58,6 @@ export function MyTeamPage() {
   });
   const [teamName, setTeamName] = useState('');
   const [iconModalOpen, setIconModalOpen] = useState(false);
-  const [selectedIconKey, setSelectedIconKey] = useState<TeamIconKey>(TeamIconKey.CAPTAIN_SMILE_FIELD);
   const [iconDraftKey, setIconDraftKey] = useState<TeamIconKey>(TeamIconKey.CAPTAIN_SMILE_FIELD);
   const [coOwnerEmail, setCoOwnerEmail] = useState('');
   const [teamInactivationNotice, setTeamInactivationNotice] = useState<string | null>(null);
@@ -177,19 +176,23 @@ export function MyTeamPage() {
   useEffect(() => {
     if (selectedTeam) {
       setTeamName(selectedTeam.name);
-      setSelectedIconKey(selectedTeam.iconKey);
-      setIconDraftKey(selectedTeam.iconKey);
       setTeamInactivationNotice(null);
       setTeamDeletionNotice(null);
       return;
     }
 
     setTeamName(buildDefaultTeamName(auth.user?.firstName, auth.user?.lastName));
-    setSelectedIconKey(TeamIconKey.CAPTAIN_SMILE_FIELD);
-    setIconDraftKey(TeamIconKey.CAPTAIN_SMILE_FIELD);
     setTeamInactivationNotice(null);
     setTeamDeletionNotice(null);
   }, [auth.user?.firstName, auth.user?.lastName, selectedTeam]);
+
+  useEffect(() => {
+    if (iconModalOpen) {
+      return;
+    }
+
+    setIconDraftKey(selectedTeam?.iconKey ?? TeamIconKey.CAPTAIN_SMILE_FIELD);
+  }, [iconModalOpen, selectedTeam?.iconKey]);
 
   const createTeamMutation = useMutation({
     mutationFn: async ({ nextTeamName, nextIconKey }: { nextTeamName: string; nextIconKey: TeamIconKey }) => {
@@ -206,8 +209,9 @@ export function MyTeamPage() {
     },
     onSuccess: async (team) => {
       setTeamName(team.name);
-      setSelectedIconKey(team.iconKey);
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
+      queryClient.setQueryData<TeamSummary[]>(['poolmaster', 'league-teams', leagueId], (current) =>
+        current ? [...current.filter((candidate) => candidate.id !== team.id), team] : [team],
+      );
     },
   });
 
@@ -226,8 +230,9 @@ export function MyTeamPage() {
     },
     onSuccess: async (team) => {
       setTeamName(team.name);
-      setSelectedIconKey(team.iconKey);
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
+      queryClient.setQueryData<TeamSummary[]>(['poolmaster', 'league-teams', leagueId], (current) =>
+        current?.map((candidate) => (candidate.id === team.id ? team : candidate)) ?? [team],
+      );
     },
   });
 
@@ -245,10 +250,11 @@ export function MyTeamPage() {
       return response.data.squad;
     },
     onSuccess: async (team) => {
-      setSelectedIconKey(team.iconKey);
       setIconDraftKey(team.iconKey);
       setIconModalOpen(false);
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
+      queryClient.setQueryData<TeamSummary[]>(['poolmaster', 'league-teams', leagueId], (current) =>
+        current?.map((candidate) => (candidate.id === team.id ? team : candidate)) ?? [team],
+      );
     },
   });
 
@@ -390,7 +396,7 @@ export function MyTeamPage() {
       await updateTeamMutation.mutateAsync({
         teamId: selectedTeam.id,
         nextTeamName,
-        nextIconKey: selectedIconKey,
+        nextIconKey: selectedTeam.iconKey,
       });
       return;
     }
@@ -398,11 +404,11 @@ export function MyTeamPage() {
     if (!canCreateOwnTeam) {
       return;
     }
-    await createTeamMutation.mutateAsync({ nextTeamName, nextIconKey: selectedIconKey });
+    await createTeamMutation.mutateAsync({ nextTeamName, nextIconKey: iconDraftKey });
   }
 
   function handleOpenIconModal() {
-    setIconDraftKey(selectedIconKey);
+    setIconDraftKey(selectedTeam?.iconKey ?? iconDraftKey);
     setIconModalOpen(true);
   }
 
@@ -411,7 +417,7 @@ export function MyTeamPage() {
       return;
     }
 
-    setIconDraftKey(selectedIconKey);
+    setIconDraftKey(selectedTeam?.iconKey ?? iconDraftKey);
     setIconModalOpen(false);
     updateTeamIconMutation.reset();
   }
@@ -429,7 +435,6 @@ export function MyTeamPage() {
       return;
     }
 
-    setSelectedIconKey(iconDraftKey);
     setIconModalOpen(false);
   }
 
@@ -485,7 +490,8 @@ export function MyTeamPage() {
     || inactivateTeamMutation.isPending
     || deleteTeamMutation.isPending;
   const activeMembers = (selectedTeam?.members ?? []).filter((member) => member.status === 'ACTIVE');
-  const selectedIcon = getTeamIconOption(selectedIconKey);
+  const currentIconKey = selectedTeam?.iconKey ?? iconDraftKey;
+  const selectedIcon = getTeamIconOption(currentIconKey);
   const draftIcon = getTeamIconOption(iconDraftKey);
   const teamLifecycleLabel = selectedTeam?.isActive === false ? 'Inactive' : 'Active';
   const teamOwnerInvitations = ownerInvitationsQuery.data?.filter(
@@ -498,7 +504,7 @@ export function MyTeamPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className={`flex h-16 w-16 items-center justify-center rounded-[1.4rem] ${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`}>
-              <TeamIcon iconKey={selectedIconKey} size="lg" />
+              <TeamIcon iconKey={currentIconKey} size="lg" />
             </div>
             <div>
               <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
@@ -572,7 +578,7 @@ export function MyTeamPage() {
               </div>
               <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card px-4 py-4">
                 <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`}>
-                  <TeamIcon iconKey={selectedIconKey} size="lg" />
+                  <TeamIcon iconKey={currentIconKey} size="lg" />
                 </div>
                 <div>
                   <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
