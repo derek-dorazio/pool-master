@@ -6,6 +6,7 @@ describe('poolmaster API client correlation headers', () => {
     vi.resetModules();
     resetClientTraceIdForTests();
     window.sessionStorage.clear();
+    document.cookie = 'poolmaster_csrf=; Max-Age=0; path=/';
   });
 
   it('attaches stable client trace id and unique client request id to outbound requests', async () => {
@@ -67,6 +68,41 @@ describe('poolmaster API client correlation headers', () => {
       vi.restoreAllMocks();
       vi.unstubAllGlobals();
       vi.unstubAllEnvs();
+    }
+  });
+
+  it('pool-master-dxd.26 attaches the CSRF token cookie to mutating requests', async () => {
+    document.cookie = `poolmaster_csrf=${encodeURIComponent('csrf-token-123')}; path=/`;
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ league: { id: 'league-1' } }), {
+        status: 201,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }),
+    );
+
+    vi.stubGlobal('fetch', fetchSpy);
+
+    try {
+      const { createLeague } = await import('./api');
+
+      await createLeague({
+        body: {
+          name: 'CSRF League',
+          leagueCode: 'CSRF123',
+        },
+      });
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const request = fetchSpy.mock.calls[0]?.[0];
+      expect(request).toBeInstanceOf(Request);
+      expect((request as Request).method).toBe('POST');
+      expect((request as Request).headers.get('X-CSRF-Token')).toBe('csrf-token-123');
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+      document.cookie = 'poolmaster_csrf=; Max-Age=0; path=/';
     }
   });
 });
