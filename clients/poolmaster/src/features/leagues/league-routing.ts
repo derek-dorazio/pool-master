@@ -41,6 +41,10 @@ export function buildLeagueContestPath(leagueCode: string, contestId: string) {
   return `/league/${leagueCode}/contests/${contestId}`;
 }
 
+export function buildContestEntryPath(contestId: string, entryId: string) {
+  return `/contests/${contestId}/entries/${entryId}`;
+}
+
 export function buildLeagueContestsManagePath(leagueCode: string) {
   return `/league/${leagueCode}/contests/manage`;
 }

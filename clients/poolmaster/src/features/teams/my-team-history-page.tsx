@@ -12,9 +12,9 @@ import {
   type ListLeagueSquadsResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
-import { buildContestEntryPath } from '@/features/contests/contest-entry-page';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
+  buildContestEntryPath,
   buildLeagueContestPath,
   buildLeagueTeamPath,
   setRecentLeagueCode,

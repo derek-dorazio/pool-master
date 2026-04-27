@@ -153,9 +153,16 @@ describe('ContestEntryPage', () => {
     mockLogger.error.mockReset();
   });
 
-  it('renders tiered selection groups and saves entry details while open', async () => {
+  // pool-master-08k — guided entry selection advances through tiers and submits the completed lineup.
+  it('renders checkbox tier groups, advances focus, and submits the completed entry', async () => {
     primeCommonMocks();
-    getDraftStateMock.mockResolvedValue({
+    const selectedParticipantIdsByTier = new Map<string, string[]>([
+      ['tier-1', []],
+      ['tier-2', []],
+    ]);
+    const scrollIntoViewMock = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoViewMock;
+    getDraftStateMock.mockImplementation(() => Promise.resolve({
       data: {
         contestId: 'contest-1',
         contestName: 'Bohler Masters Tiered',
@@ -187,14 +194,14 @@ describe('ContestEntryPage', () => {
         ],
         selectedEntryId: 'entry-1',
         selectedEntryName: 'Birdie Hunters Entry 1',
-        tiebreakerValue: 271,
+        tiebreakerValue: null,
         selectionGroups: [
           {
             groupId: 'tier-1',
             groupName: 'Tier 1',
             groupNumber: 1,
             picksFromGroup: 1,
-            selectedParticipantIds: [],
+            selectedParticipantIds: selectedParticipantIdsByTier.get('tier-1') ?? [],
             participants: [
               {
                 sportEventParticipantId: 'sep-1',
@@ -208,7 +215,7 @@ describe('ContestEntryPage', () => {
                 orderIndex: 1,
                 isAvailable: true,
                 unavailableReason: null,
-                isSelected: false,
+                isSelected: selectedParticipantIdsByTier.get('tier-1')?.includes('sep-1') ?? false,
               },
             ],
           },
@@ -217,7 +224,7 @@ describe('ContestEntryPage', () => {
             groupName: 'Tier 2',
             groupNumber: 2,
             picksFromGroup: 1,
-            selectedParticipantIds: [],
+            selectedParticipantIds: selectedParticipantIdsByTier.get('tier-2') ?? [],
             participants: [
               {
                 sportEventParticipantId: 'sep-2',
@@ -231,16 +238,16 @@ describe('ContestEntryPage', () => {
                 orderIndex: 2,
                 isAvailable: true,
                 unavailableReason: null,
-                isSelected: false,
+                isSelected: selectedParticipantIdsByTier.get('tier-2')?.includes('sep-2') ?? false,
               },
             ],
           },
         ],
         draftPickHistories: [],
         availableParticipantIds: ['sep-1', 'sep-2'],
-        isComplete: false,
+        isComplete: Array.from(selectedParticipantIdsByTier.values()).every((ids) => ids.length > 0),
       },
-    });
+    }));
     updateContestEntryMock.mockResolvedValue({
       data: {
         contestId: 'contest-1',
@@ -252,7 +259,7 @@ describe('ContestEntryPage', () => {
           entryNumber: 1,
           name: 'Sunday Charge',
           status: 'ACTIVE',
-          tiebreakerValue: 269,
+          tiebreakerValue: -12,
           totalScore: 18,
           standingsPosition: 2,
           isEliminated: false,
@@ -261,10 +268,18 @@ describe('ContestEntryPage', () => {
         },
       },
     });
-    submitContestSelectionMock.mockResolvedValue({
-      data: {
-        contestId: 'contest-1',
-      },
+    submitContestSelectionMock.mockImplementation(({ body }: { body: { participantId: string } }) => {
+      if (body.participantId === 'sep-1') {
+        selectedParticipantIdsByTier.set('tier-1', ['sep-1']);
+      }
+      if (body.participantId === 'sep-2') {
+        selectedParticipantIdsByTier.set('tier-2', ['sep-2']);
+      }
+      return Promise.resolve({
+        data: {
+          contestId: 'contest-1',
+        },
+      });
     });
 
     renderContestEntryPage();
@@ -274,35 +289,13 @@ describe('ContestEntryPage', () => {
       'href',
       '/league/BIGDAWGS/contests/contest-1',
     );
-    expect(screen.getAllByText('0/2')).toHaveLength(2);
-    expect(screen.getByText('Winning score 271')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-tiebreaker-select')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toBeInTheDocument();
     expect(screen.queryByText('Rory McIlroy')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('contest-entry-group-toggle-tier-2'));
-    expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
-    expect(screen.getByText('World rank #2')).toBeInTheDocument();
-
-    fireEvent.change(screen.getByTestId('contest-entry-name-input'), {
-      target: { value: 'Sunday Charge' },
-    });
-    fireEvent.change(screen.getByTestId('contest-entry-tiebreaker-input'), {
-      target: { value: '269' },
-    });
-    fireEvent.click(screen.getByTestId('contest-entry-save-details'));
-
-    await waitFor(() =>
-      expect(updateContestEntryMock).toHaveBeenCalledWith({
-        path: { contestId: 'contest-1', entryId: 'entry-1' },
-        body: {
-          name: 'Sunday Charge',
-          tiebreakerValue: 269,
-        },
-      }),
-    );
-
-    fireEvent.click(screen.getByTestId('contest-entry-group-toggle-tier-1'));
-    fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-1'));
+    const scottieButton = await screen.findByTestId('contest-entry-participant-sep-1');
+    expect(scottieButton.querySelector('input[type="checkbox"]')).toBeInTheDocument();
+    fireEvent.click(scottieButton);
 
     await waitFor(() =>
       expect(submitContestSelectionMock).toHaveBeenCalledWith({
@@ -313,6 +306,31 @@ describe('ContestEntryPage', () => {
         },
       }),
     );
+    expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-group-toggle-tier-2')).toHaveFocus();
+    expect(screen.getByText('World rank #2')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-entry-participant-sep-2'));
+    expect(await screen.findByTestId('contest-entry-tiebreaker-select')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId('contest-entry-name-input'), {
+      target: { value: 'Sunday Charge' },
+    });
+    fireEvent.change(screen.getByTestId('contest-entry-tiebreaker-select'), {
+      target: { value: '-12' },
+    });
+    fireEvent.click(screen.getByTestId('contest-entry-submit'));
+
+    await waitFor(() =>
+      expect(updateContestEntryMock).toHaveBeenCalledWith({
+        path: { contestId: 'contest-1', entryId: 'entry-1' },
+        body: {
+          name: 'Sunday Charge',
+          tiebreakerValue: -12,
+        },
+      }),
+    );
+    expect(await screen.findByTestId('contest-page')).toBeInTheDocument();
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'contestEntry.selection.succeeded',
@@ -348,7 +366,7 @@ describe('ContestEntryPage', () => {
         ],
         selectedEntryId: 'entry-1',
         selectedEntryName: 'Birdie Hunters Entry 1',
-        tiebreakerValue: 271,
+        tiebreakerValue: -12,
         selectionGroups: [
           {
             groupId: 'tier-1',
@@ -384,7 +402,7 @@ describe('ContestEntryPage', () => {
 
     expect(await screen.findByText('Saved lineup detail')).toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-readonly-tiebreaker')).toHaveTextContent(
-      'Winning score prediction: 271',
+      'Winning score relative to par: -12',
     );
     expect(screen.getByTestId('contest-entry-selected-tier-1-sep-1')).toHaveTextContent(
       'Scottie Scheffler',

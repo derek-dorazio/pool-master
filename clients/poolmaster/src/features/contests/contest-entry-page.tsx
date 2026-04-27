@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   getContest,
   getDraftState,
@@ -25,9 +25,7 @@ type DraftState = GetDraftStateResponses[200];
 type SelectionGroup = NonNullable<DraftState['selectionGroups']>[number];
 type SelectionParticipant = SelectionGroup['participants'][number];
 
-function buildContestEntryPath(contestId: string, entryId: string) {
-  return `/contests/${contestId}/entries/${entryId}`;
-}
+const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
 
 function extractErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -61,6 +59,18 @@ function formatDateTimeDisplay(isoString: string | null | undefined) {
   }
 
   return new Date(parsed).toLocaleString();
+}
+
+function formatRelativeToPar(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return null;
+  }
+
+  if (value === 0) {
+    return 'E';
+  }
+
+  return value > 0 ? `+${value}` : `${value}`;
 }
 
 function getContestPhaseLabel(contest: ContestDetail) {
@@ -177,7 +187,7 @@ function SelectionParticipantCard({
 
   return (
     <button
-      className={`w-full rounded-[1.5rem] border px-4 py-4 text-left transition ${
+      className={`flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left transition ${
         isSelected
           ? 'border-primary bg-primary/5'
           : 'border-border bg-card hover:border-foreground/30'
@@ -187,21 +197,31 @@ function SelectionParticipantCard({
       onClick={() => onSelect(participant)}
       type="button"
     >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="font-medium text-foreground">{participant.participantName}</div>
-          <div className="mt-1 text-sm text-muted-foreground">
-            {participant.team ?? participant.position ?? 'Golf field participant'}
+      <input
+        aria-label={actionLabel}
+        checked={isSelected}
+        className="mt-1 h-4 w-4 accent-primary"
+        readOnly
+        tabIndex={-1}
+        type="checkbox"
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="font-medium text-foreground">{participant.participantName}</div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              {participant.team ?? participant.position ?? 'Golf field participant'}
+            </div>
           </div>
+          <span className="shrink-0 rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            {actionLabel}
+          </span>
         </div>
-        <span className="rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          {actionLabel}
-        </span>
-      </div>
-      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-        {getParticipantMetaSummary(participant).map((part) => (
-          <span key={`${participant.sportEventParticipantId}-${part}`}>{part}</span>
-        ))}
+        <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+          {getParticipantMetaSummary(participant).map((part) => (
+            <span key={`${participant.sportEventParticipantId}-${part}`}>{part}</span>
+          ))}
+        </div>
       </div>
     </button>
   );
@@ -280,8 +300,10 @@ export function ContestEntryPage() {
   });
   const { contestId = '', entryId = '' } = useParams<{ contestId: string; entryId: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const hintedLeagueCode = parseRouteState(location.state).leagueCode ?? null;
+  const groupToggleRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const [entryNameDraft, setEntryNameDraft] = useState('');
   const [tiebreakerDraft, setTiebreakerDraft] = useState('');
@@ -370,9 +392,32 @@ export function ContestEntryPage() {
         return current;
       }
 
-      return nextIncomplete ?? selectionGroups[0].groupId;
+      return nextIncomplete;
     });
   }, [draftStateQuery.data?.selectionGroups]);
+
+  useEffect(() => {
+    if (!expandedGroupId) {
+      return;
+    }
+
+    const groupToggle = groupToggleRefs.current[expandedGroupId];
+    if (!groupToggle) {
+      return;
+    }
+
+    const focusGroup = () => {
+      groupToggle.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+      groupToggle.focus();
+    };
+
+    if (typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(focusGroup);
+      return;
+    }
+
+    focusGroup();
+  }, [expandedGroupId]);
 
   useEffect(() => {
     if (
@@ -619,8 +664,33 @@ export function ContestEntryPage() {
   const selectionGroups = draftState.selectionGroups ?? [];
   const completionStats = getCompletionStats(selectionGroups);
   const nextIncompleteGroupId = getNextIncompleteGroupId(selectionGroups);
+  const lineupComplete =
+    completionStats.requiredSelections > 0
+    && completionStats.totalSelections >= completionStats.requiredSelections;
   const hasSavedTiebreaker =
     draftState.tiebreakerValue !== null && draftState.tiebreakerValue !== undefined;
+  const selectedTiebreakerValue =
+    tiebreakerDraft.trim().length > 0
+      ? Number.parseInt(tiebreakerDraft.trim(), 10)
+      : null;
+  const hasSelectedTiebreaker =
+    selectedTiebreakerValue !== null
+    && Number.isFinite(selectedTiebreakerValue)
+    && TIEBREAKER_OPTIONS.includes(selectedTiebreakerValue);
+  const finalSubmitDisabled =
+    !isMyEntry
+    || !isEditable
+    || !lineupComplete
+    || !hasSelectedTiebreaker
+    || saveEntryDetailsMutation.isPending
+    || submitSelectionMutation.isPending;
+
+  async function submitEntry() {
+    await saveEntryDetailsMutation.mutateAsync();
+    navigate(backToContestPath, {
+      state: { leagueCode: backLeagueCode },
+    });
+  }
 
   if (contest.selectionType !== 'TIERED') {
     return (
@@ -697,10 +767,10 @@ export function ContestEntryPage() {
             </div>
             <div className="mt-1 text-sm text-muted-foreground" data-testid="contest-entry-tiebreaker-summary">
               {hasSavedTiebreaker
-                ? `Winning score ${draftState.tiebreakerValue}`
+                ? `Relative to par ${formatRelativeToPar(draftState.tiebreakerValue) ?? draftState.tiebreakerValue}`
                 : isEditable
-                  ? 'Add your winning score prediction'
-                  : 'No tiebreaker prediction was saved'}
+                  ? 'Needed after lineup is complete'
+                  : 'No tiebreaker was saved'}
             </div>
           </div>
           <div className="rounded-[1.5rem] bg-background px-4 py-4">
@@ -725,11 +795,6 @@ export function ContestEntryPage() {
             <h3 className="text-xl font-semibold">
               {isEditable ? 'Entry details' : 'Entry summary'}
             </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {isEditable
-                ? 'Keep the default seeded name if you want, or personalize it and set a tiebreaker before the contest locks.'
-                : 'This contest entry is now read-only. The saved lineup and tiebreaker stay visible here for team-history context.'}
-            </p>
 
             <dl className="mt-5 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
               <div className="rounded-2xl bg-background px-4 py-4">
@@ -780,27 +845,6 @@ export function ContestEntryPage() {
                       value={entryNameDraft}
                     />
                   </label>
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium text-foreground">Winning score tiebreaker</span>
-                    <input
-                      className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
-                      data-testid="contest-entry-tiebreaker-input"
-                      disabled={saveEntryDetailsMutation.isPending}
-                      inputMode="numeric"
-                      onChange={(event) => setTiebreakerDraft(event.target.value)}
-                      placeholder="Optional"
-                      value={tiebreakerDraft}
-                    />
-                  </label>
-                  <button
-                    className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                    data-testid="contest-entry-save-details"
-                    disabled={saveEntryDetailsMutation.isPending}
-                    onClick={() => void saveEntryDetailsMutation.mutateAsync()}
-                    type="button"
-                  >
-                    {saveEntryDetailsMutation.isPending ? 'Saving...' : 'Save entry details'}
-                  </button>
                   {saveEntryDetailsMutation.isError ? (
                     <p className="text-sm text-destructive">
                       {extractErrorMessage(saveEntryDetailsMutation.error)}
@@ -816,7 +860,7 @@ export function ContestEntryPage() {
                   >
                     {draftState.tiebreakerValue === null || draftState.tiebreakerValue === undefined
                       ? 'No tiebreaker prediction was saved.'
-                      : `Winning score prediction: ${draftState.tiebreakerValue}`}
+                      : `Winning score relative to par: ${formatRelativeToPar(draftState.tiebreakerValue) ?? draftState.tiebreakerValue}`}
                   </div>
                 </div>
               )
@@ -894,11 +938,6 @@ export function ContestEntryPage() {
           <h3 className="text-xl font-semibold" data-testid="contest-entry-builder-heading">
             {isEditable ? 'Build your lineup' : 'Saved lineup detail'}
           </h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {isEditable
-              ? 'Each tier below uses the contest-ready field already frozen for this contest. Complete one tier at a time, save your tiebreaker, and your entry will be ready for lock.'
-              : 'These tiers now read like your team-specific leaderboard card: frozen picks, live scoring detail, and no editable controls.'}
-          </p>
           <div className="mt-5 space-y-5">
             {selectionGroups.map((group) => {
               if (!isEditable) {
@@ -920,6 +959,9 @@ export function ContestEntryPage() {
                     className="flex w-full flex-wrap items-start justify-between gap-3 text-left"
                     data-testid={`contest-entry-group-toggle-${group.groupId}`}
                     onClick={() => setExpandedGroupId(isExpanded ? null : group.groupId)}
+                    ref={(element) => {
+                      groupToggleRefs.current[group.groupId] = element;
+                    }}
                     type="button"
                   >
                     <div>
@@ -971,11 +1013,20 @@ export function ContestEntryPage() {
                               const currentIndex = selectionGroups.findIndex(
                                 (candidate) => candidate.groupId === group.groupId,
                               );
+                              const nextSelectedIds = group.picksFromGroup === 1
+                                ? [nextParticipant.sportEventParticipantId]
+                                : Array.from(new Set([
+                                  ...group.selectedParticipantIds,
+                                  nextParticipant.sportEventParticipantId,
+                                ]));
+                              if (nextSelectedIds.length < group.picksFromGroup) {
+                                return group.groupId;
+                              }
                               const nextGroup = selectionGroups
                                 .slice(currentIndex + 1)
                                 .find((candidate) => candidate.selectedParticipantIds.length < candidate.picksFromGroup);
 
-                              return nextGroup?.groupId ?? group.groupId;
+                              return nextGroup?.groupId ?? null;
                             });
                           }}
                           participant={participant}
@@ -992,11 +1043,40 @@ export function ContestEntryPage() {
                 {extractErrorMessage(submitSelectionMutation.error)}
               </p>
             ) : null}
+
+            {isEditable && isMyEntry && lineupComplete ? (
+              <div className="rounded-[1.75rem] border border-border bg-background p-4">
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-foreground">Winning Score Relative to Par</span>
+                  <select
+                    className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
+                    data-testid="contest-entry-tiebreaker-select"
+                    disabled={saveEntryDetailsMutation.isPending}
+                    onChange={(event) => setTiebreakerDraft(event.target.value)}
+                    value={hasSelectedTiebreaker ? String(selectedTiebreakerValue) : ''}
+                  >
+                    <option value="">Select score</option>
+                    {TIEBREAKER_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {formatRelativeToPar(option)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  className="mt-4 rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                  data-testid="contest-entry-submit"
+                  disabled={finalSubmitDisabled}
+                  onClick={() => void submitEntry()}
+                  type="button"
+                >
+                  {saveEntryDetailsMutation.isPending ? 'Submitting...' : 'Submit entry'}
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
     </section>
   );
 }
-
-export { buildContestEntryPath };

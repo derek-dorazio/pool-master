@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Pencil } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   enterContest,
   getContest,
@@ -14,6 +15,7 @@ import {
 import { useAuth } from '@/features/auth/auth-provider';
 import { extractErrorMessage } from '@/lib/errors';
 import {
+  buildContestEntryPath,
   buildLeagueContestManagePath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
@@ -155,6 +157,7 @@ function ParticipantsTable({
 export function ContestDetailPage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const logger = useLogger().child({
     feature: 'contest-board',
   });
@@ -238,8 +241,11 @@ export function ContestDetailPage() {
       }
       return response.data.entry;
     },
-    onSuccess: async () => {
+    onSuccess: async (entry) => {
       await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] });
+      navigate(buildContestEntryPath(contestId, entry.id), {
+        state: { leagueCode: hintedLeagueCode },
+      });
     },
   });
 
@@ -524,6 +530,18 @@ export function ContestDetailPage() {
                       >
                         {isExpanded ? 'Hide' : 'View'}
                       </button>
+                      {isOwnEntry && isOpen ? (
+                        <Link
+                          aria-label={`Edit ${entry.name}`}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-border text-foreground hover:border-foreground/30"
+                          data-testid={`contest-board-edit-entry-${entry.id}`}
+                          state={{ leagueCode: hintedLeagueCode }}
+                          title="Edit entry"
+                          to={buildContestEntryPath(contestId, entry.id)}
+                        >
+                          <Pencil aria-hidden size={16} />
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
 

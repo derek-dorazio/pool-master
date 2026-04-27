@@ -81,6 +81,10 @@ function renderContestBoard() {
       >
         <Routes>
           <Route element={<ContestDetailPage />} path="/league/:leagueCode/contests/:contestId" />
+          <Route
+            element={<div data-testid="contest-entry-page" />}
+            path="/contests/:contestId/entries/:entryId"
+          />
           <Route element={<div data-testid="league-page" />} path="/league/:leagueCode" />
         </Routes>
       </MemoryRouter>
@@ -368,6 +372,38 @@ describe('ContestDetailPage (Contest Board)', () => {
     renderContestBoard();
 
     expect(await screen.findByTestId('contest-board-create-entry')).toBeInTheDocument();
+  });
+
+  // pool-master-08k — creating an entry opens the guided selection flow immediately.
+  it('navigates to the entry builder after creating a contest entry', async () => {
+    primeMocks({ contestStatus: 'OPEN', entries: [] });
+    enterContestMock.mockResolvedValue({
+      data: {
+        entry: buildEntry({ id: 'entry-1' }),
+      },
+    });
+
+    renderContestBoard();
+
+    fireEvent.click(await screen.findByTestId('contest-board-create-entry'));
+
+    expect(await screen.findByTestId('contest-entry-page')).toBeInTheDocument();
+  });
+
+  // pool-master-08k — existing own entries can be reopened for selection edits while OPEN.
+  it('renders an edit entry icon for the owner while the contest is OPEN', async () => {
+    primeMocks({
+      contestStatus: 'OPEN',
+      picksRevealed: false,
+      entries: [buildEntry({ id: 'entry-1', squadId: 'squad-1' })],
+    });
+
+    renderContestBoard();
+
+    expect(await screen.findByTestId('contest-board-edit-entry-entry-1')).toHaveAttribute(
+      'href',
+      '/contests/contest-1/entries/entry-1',
+    );
   });
 
   it('hides the create-entry button when the contest is not OPEN', async () => {
