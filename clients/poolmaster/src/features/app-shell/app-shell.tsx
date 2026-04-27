@@ -29,7 +29,7 @@ export function AppShell() {
     feature: 'app-shell',
   });
   const isManageRoute = location.pathname === '/manage' || location.pathname.startsWith('/manage/');
-  const shouldLoadLeagueShell = auth.isAuthenticated && !isManageRoute;
+  const shouldLoadLeagueShell = auth.isAuthenticated && !auth.isRootAdmin && !isManageRoute;
   const leaguesQuery = useQuery({
     queryKey: ['poolmaster', 'leagues'],
     queryFn: async () => {

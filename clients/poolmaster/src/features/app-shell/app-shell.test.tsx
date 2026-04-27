@@ -287,6 +287,19 @@ describe('AppShell', () => {
     expect(screen.queryByTestId('app-nav-create-contest-disabled')).not.toBeInTheDocument();
   });
 
+  it('pool-master-dxd.33 does not load member league shell while a root admin login redirects from root', async () => {
+    clearSessionMock.mockResolvedValue(undefined);
+    authState.isRootAdmin = true;
+
+    renderAppShell(['/']);
+
+    expect(await screen.findByTestId('mock-account-menu-is-root-admin')).toHaveTextContent('true');
+    expect(listLeaguesMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('mock-league-selector-create')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('app-nav-league-home')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('app-nav-create-contest-disabled')).not.toBeInTheDocument();
+  });
+
   it('logs logout completion when the app-shell logout action succeeds', async () => {
     clearSessionMock.mockResolvedValue(undefined);
     listLeaguesMock.mockResolvedValue({
