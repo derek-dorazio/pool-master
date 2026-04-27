@@ -414,6 +414,8 @@ describe('LeagueDetailPage', () => {
     );
   });
 
+  // pool-master-dxd.16 — the current league icon is derived from query cache,
+  // with only the modal draft held locally while editing.
   it('updates the league icon from a modal and returns to League Home with the new icon', async () => {
     primeCommonMocks();
     updateLeagueIconMock.mockResolvedValue({

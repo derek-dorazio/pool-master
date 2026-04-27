@@ -82,7 +82,6 @@ export function LeagueDetailPage() {
   const [detailsName, setDetailsName] = useState('');
   const [detailsDescription, setDetailsDescription] = useState('');
   const [iconModalOpen, setIconModalOpen] = useState(false);
-  const [selectedIconKey, setSelectedIconKey] = useState<LeagueDetail['iconKey']>('TROPHY');
   const [iconDraftKey, setIconDraftKey] = useState<LeagueDetail['iconKey']>('TROPHY');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
@@ -115,9 +114,15 @@ export function LeagueDetailPage() {
 
     setDetailsName(leagueQuery.data.name);
     setDetailsDescription(leagueQuery.data.description ?? '');
-    setSelectedIconKey(leagueQuery.data.iconKey);
-    setIconDraftKey(leagueQuery.data.iconKey);
   }, [leagueQuery.data]);
+
+  useEffect(() => {
+    if (!leagueQuery.data || iconModalOpen) {
+      return;
+    }
+
+    setIconDraftKey(leagueQuery.data.iconKey);
+  }, [iconModalOpen, leagueQuery.data]);
 
   useEffect(() => {
     if (!leagueQuery.isError) {
@@ -172,7 +177,8 @@ export function LeagueDetailPage() {
     leagueQuery.data?.leagueRelationship.commissioner === true || leagueQuery.data?.isRootAdmin === true;
   const isInactiveLeague = leagueQuery.data?.isActive === false;
   const currentUserId = auth.user?.id;
-  const selectedLeagueIcon = getLeagueIconOption(selectedIconKey);
+  const currentLeagueIconKey = leagueQuery.data?.iconKey ?? iconDraftKey;
+  const selectedLeagueIcon = getLeagueIconOption(currentLeagueIconKey);
   const draftLeagueIcon = getLeagueIconOption(iconDraftKey);
 
   const myTeam = useMemo(() => {
@@ -266,7 +272,6 @@ export function LeagueDetailPage() {
       return response.data.league;
     },
     onSuccess: async (league) => {
-      setSelectedIconKey(league.iconKey);
       setIconDraftKey(league.iconKey);
       setIconModalOpen(false);
       syncLeagueCaches(queryClient, league);
@@ -438,7 +443,7 @@ export function LeagueDetailPage() {
   const lifecycleStatusLabel = leagueQuery.data.isActive ? 'Active' : 'Inactive';
 
   function handleOpenIconModal() {
-    setIconDraftKey(selectedIconKey);
+    setIconDraftKey(currentLeagueIconKey);
     setIconModalOpen(true);
   }
 
@@ -447,7 +452,7 @@ export function LeagueDetailPage() {
       return;
     }
 
-    setIconDraftKey(selectedIconKey);
+    setIconDraftKey(currentLeagueIconKey);
     setIconModalOpen(false);
     updateIconMutation.reset();
   }
@@ -640,7 +645,7 @@ export function LeagueDetailPage() {
                       className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-primary/10 text-primary"
                       data-testid="league-current-icon"
                     >
-                      <LeagueIcon iconKey={selectedIconKey} size="lg" />
+                      <LeagueIcon iconKey={currentLeagueIconKey} size="lg" />
                     </div>
                     <div>
                       <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
