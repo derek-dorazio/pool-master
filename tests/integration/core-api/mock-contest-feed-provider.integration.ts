@@ -391,4 +391,76 @@ describe('mock contest feed provider event-first verification', () => {
     });
     expect(latestJob.status).toBe('COMPLETED');
   });
+
+  it('pool-master-xw5.5: adapter observes manual relative event lifecycle through schedule detail live and results feeds', async () => {
+    const anchor = new Date();
+    let currentNow = anchor;
+    const lifecycleProvider = await startMockContestFeedProvider({
+      routes: {
+        scenarioStoreOptions: {
+          now: () => currentNow,
+        },
+      },
+    });
+
+    try {
+      const adapter = new MockContestFeedAdapter(lifecycleProvider.baseUrl);
+      const from = new Date(anchor.getTime() - 60_000);
+      const to = new Date(anchor.getTime() + 2 * 60 * 60 * 1000);
+
+      const openEvents = await adapter.getUpcomingEvents(Sport.GOLF, { from, to });
+      const manualEvent = openEvents.find((event) =>
+        event.name.startsWith('Manual Test Golf Tournament for '),
+      );
+      expect(manualEvent).toBeDefined();
+      expect(manualEvent?.status).toBe('SCHEDULED');
+      expect(manualEvent?.fieldLocked).toBe(false);
+
+      const manualEventId = manualEvent?.externalId ?? '';
+      const detail = await adapter.getEventDetails(manualEventId);
+      expect(detail?.name).toBe(manualEvent?.name);
+      expect(detail?.participants).toHaveLength(80);
+
+      const openScores = await adapter.getLiveScores(manualEventId);
+      expect(openScores).toHaveLength(0);
+
+      currentNow = new Date(anchor.getTime() + 45 * 60 * 1000);
+      const liveEvents = await adapter.getUpcomingEvents(Sport.GOLF, { from, to });
+      const liveManualEvent = liveEvents.find((event) => event.externalId === manualEventId);
+      expect(liveManualEvent?.status).toBe('IN_PROGRESS');
+
+      const liveScores = await adapter.getLiveScores(manualEventId);
+      expect(liveScores).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            eventExternalId: manualEventId,
+            providerId,
+            statKey: 'TOTAL_SCORE',
+          }),
+        ]),
+      );
+
+      currentNow = new Date(anchor.getTime() + 65 * 60 * 1000);
+      const completedEvents = await adapter.getUpcomingEvents(Sport.GOLF, { from, to });
+      const completedManualEvent = completedEvents.find((event) => event.externalId === manualEventId);
+      expect(completedManualEvent?.status).toBe('COMPLETED');
+
+      const results = await adapter.getEventResults(manualEventId);
+      expect(results).toMatchObject({
+        eventExternalId: manualEventId,
+        providerId,
+        status: 'OFFICIAL',
+      });
+      expect(results?.results).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            finishPosition: 1,
+            totalScore: expect.any(Number),
+          }),
+        ]),
+      );
+    } finally {
+      await lifecycleProvider.close();
+    }
+  });
 });

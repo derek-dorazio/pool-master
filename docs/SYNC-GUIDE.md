@@ -226,17 +226,9 @@ The readiness states are:
 Commissioner contest creation requires `CONTEST_ELIGIBLE`. It is blocked before
 release, before the field is loaded, and after the field locks.
 
-Timing is resolved when events are persisted. If a contest timing policy exists
-for the sport/event type, relative rules such as `3 days prior at 12:00` are
-applied against the event start date. If no valid policy exists, timing falls
-back to the event start date.
-
-Known gap: provider metadata can carry `releaseAt` and `fieldLocksAt`, and the
-mock provider does emit those timestamps, but current persistence does not use
-them when resolving operational timing. See `pool-master-940`. Until that is
-fixed or timing policies are seeded, verify the persisted `releaseAt` and
-`fieldLocksAt` values on the Events API before assuming the provider timing is
-the timing used for contest eligibility.
+Timing is resolved when events are persisted. Provider metadata `releaseAt` and
+`fieldLocksAt` values are honored when present. If a provider does not return
+explicit event timing, contest timing policies remain the fallback.
 
 ## When An Event Becomes In Progress
 
@@ -271,7 +263,7 @@ Default assumptions for this table:
 
 | Event ID | Provider state | Provider timing | Schedule sync | Participant sync | Intended contest creation window | Scheduled live scores |
 |---|---|---|---|---|---|---|
-| `golf-relative-live-now` | `in_progress` | Starts about 30 minutes after provider startup; release is 8 days ago; lock was 1 hour ago | Included while start is in `now..now+30d` | Included while start is in `now..now+7d` | Blocked because field is locked | Yes, after the event is persisted as `IN_PROGRESS`; returns 80 golf score stats |
+| `golf-relative-manual-test-<startDateTime>` | dynamic | Named `Manual Test Golf Tournament for <startDateTime>`; mock-clock anchored: 20 minutes contest-eligible/open, 20 minutes field locked, 20 minutes `in_progress`, 20 minutes `completed`, then the next provider call starts a new cycle | Included while start is in `now..now+30d` | Included while start is in `now..now+7d` | Eligible during the first 20 minutes of each cycle, blocked once the field-lock phase begins | Yes, after a sync persists the event as `IN_PROGRESS`; returns 80 deterministic randomized golf score stats during the 20-minute live window |
 | `golf-relative-locked-tomorrow` | `field_announced` | Starts tomorrow at 12:00 UTC; lock was 1 hour ago | Included | Included | Blocked because field is locked | No, because persisted status maps to `SCHEDULED` |
 | `golf-relative-ready-5d` | `field_announced` | Starts at 12:00 UTC about 5 days out; released yesterday; locks about 1 day before start | Included | Included | Eligible after participants are loaded and until lock time | No, because persisted status maps to `SCHEDULED` |
 | `golf-relative-field-pending-6d` | `scheduled` | Starts at 12:00 UTC about 6 days out; releases about 2 days from now; locks about 1 day before start | Included | Included while inside the 7-day lead window | Blocked until `releaseAt`; after release it can become eligible if participants are loaded and not locked | No, because persisted status maps to `SCHEDULED` |
@@ -286,6 +278,26 @@ Timing note: provider `releaseAt` and `fieldLocksAt` values are honored when
 present. Timing policies remain the fallback for providers that do not return
 explicit event timing.
 
+Manual-test lifecycle note: the manual-test event is anchored by the mock
+provider clock. The event ID and display name include the computed event start
+timestamp, so each cycle gives QA a uniquely identifiable event. The provider
+recomputes the event status from its current clock on each request:
+
+| Provider clock window | Provider status | PoolMaster effect after sync |
+|---|---|---|
+| Startup through +20 minutes | `field_announced`, field unlocked | Event is contest-eligible after schedule and participant sync hydrate it. |
+| +20 through +40 minutes | `field_announced`, field locked | Contest creation is blocked after the next sync persists the locked field. |
+| +40 through +60 minutes | `in_progress` | Live-score sync can poll the event and emit randomized score updates. |
+| +60 through +80 minutes | `completed` | Result sync can poll the event and emit final finish-position results. |
+
+After the completed window expires, the next provider request starts a fresh
+manual-test cycle from that request time. This keeps a morning manual-test event
+available even if the mock provider deployed overnight.
+
+Manual syncs are useful for this flow: if the scheduled cadence has not reached
+the next phase yet, run the relevant manual event or sport sync after the mock
+provider phase changes.
+
 ## What To Expect During QA
 
 For a healthy QA sync run with the mock provider:
@@ -296,7 +308,8 @@ For a healthy QA sync run with the mock provider:
 3. Ranking sync should return the mock golf rankings once participant mappings
    exist.
 4. The scheduled live-score loop should poll only persisted `IN_PROGRESS` events
-   for the active provider, currently the relative live event.
+   for the active provider, including the manual-test event after a sync
+   persists its live phase.
 5. Live stats should affect contest scoring only for contests in `LOCKED` or
    `ACTIVE` status that contain roster picks for the scored participants.
 

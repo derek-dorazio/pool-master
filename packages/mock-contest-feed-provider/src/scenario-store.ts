@@ -514,7 +514,7 @@ function normalizeGolfEvent(event: ContestFeedEventRecord): ContestFeedEventReco
     field: {
       ...event.field,
       asOf: fieldAsOf,
-      status: normalizeGolfFieldStatus(event.status),
+      status: isManualTestLifecycleEvent(event) ? event.field.status : normalizeGolfFieldStatus(event.status),
       contestants: fieldContestants,
     },
     feeds: {
@@ -713,7 +713,11 @@ function buildGolfResultFeed(
   const oddsValues = [...oddsByContestantId.values()];
   const minOdds = oddsValues.length > 0 ? Math.min(...oddsValues) : 1.01;
   const maxOdds = oddsValues.length > 0 ? Math.max(...oddsValues) : 100;
-  const terminalTick = event.status === 'in_progress' ? 12 : 72;
+  const terminalTick = isManualTestLifecycleEvent(event)
+    ? manualTestPhaseMinutes
+    : event.status === 'in_progress'
+      ? 12
+      : 72;
   const eventSeed = event.metadata?.externalEventId ?? event.eventId;
 
   const scored = fieldContestants
@@ -782,11 +786,15 @@ function buildRelativeGolfEvent(input: {
   name: string;
   status: ContestFeedEventRecord['status'];
   startsAt: Date;
+  endsAt?: Date;
   releaseAt: Date;
   fieldLocksAt: Date;
+  fieldStatus?: FieldSnapshotRecord['status'];
+  eventType?: string;
   notes: readonly string[];
+  updates?: readonly FeedUpdateRecord[];
 }): ContestFeedEventRecord {
-  const endsAt = addDays(input.startsAt, 4);
+  const endsAt = input.endsAt ?? addDays(input.startsAt, 4);
   const fieldAsOf = input.releaseAt.toISOString();
 
   return {
@@ -808,33 +816,125 @@ function buildRelativeGolfEvent(input: {
     },
     metadata: {
       officialName: input.name,
-      eventType: 'relative-qa',
+      eventType: input.eventType ?? 'relative-qa',
       tour: 'PoolMaster QA',
       externalEventId: input.eventId,
       notes: input.notes,
     },
     field: {
       asOf: fieldAsOf,
-      status: input.status === 'in_progress' ? 'locked' : 'announced',
+      status: input.fieldStatus ?? (input.status === 'in_progress' ? 'locked' : 'announced'),
       note: input.notes[0],
       contestants: [],
     },
     feeds: emptyFeeds(fieldAsOf),
-    updates: [],
+    updates: input.updates ?? [],
   };
 }
 
-export function buildRelativeTodayGolfScenario(now = new Date()): ContestFeedScenarioRecord {
+function toEventIdTimestamp(date: Date): string {
+  return date.toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}Z$/, 'z')
+    .toLowerCase();
+}
+
+function resolveManualLifecyclePhase(input: {
+  readonly now: Date;
+  readonly fieldLocksAt: Date;
+  readonly startsAt: Date;
+  readonly endsAt: Date;
+}): ManualTestLifecyclePhase {
+  const time = input.now.getTime();
+  if (time < input.fieldLocksAt.getTime()) {
+    return 'open';
+  }
+  if (time < input.startsAt.getTime()) {
+    return 'field_locked';
+  }
+  if (time < input.endsAt.getTime()) {
+    return 'in_progress';
+  }
+  return 'completed';
+}
+
+function buildManualLifecycleUpdates(input: {
+  readonly eventId: string;
+  readonly fieldLocksAt: Date;
+  readonly startsAt: Date;
+  readonly endsAt: Date;
+}): readonly FeedUpdateRecord[] {
+  return [
+    {
+      updateId: `${input.eventId}-field-locked`,
+      asOf: input.fieldLocksAt.toISOString(),
+      feedKind: 'field',
+      updateType: 'refresh',
+      note: 'Manual test field locked.',
+      contestants: [],
+    },
+    {
+      updateId: `${input.eventId}-live`,
+      asOf: input.startsAt.toISOString(),
+      feedKind: 'results',
+      updateType: 'live',
+      note: 'Manual test live scoring started.',
+      contestants: [],
+    },
+    {
+      updateId: `${input.eventId}-final`,
+      asOf: input.endsAt.toISOString(),
+      feedKind: 'results',
+      updateType: 'final',
+      note: 'Manual test final results available.',
+      contestants: [],
+    },
+  ];
+}
+
+function buildManualTestLifecycleEvent(anchor: Date, now: Date): ContestFeedEventRecord {
+  const fieldLocksAt = new Date(anchor.getTime() + manualTestPhaseMs);
+  const startsAt = new Date(fieldLocksAt.getTime() + manualTestPhaseMs);
+  const endsAt = new Date(startsAt.getTime() + manualTestPhaseMs);
+  const phase = resolveManualLifecyclePhase({ now, fieldLocksAt, startsAt, endsAt });
+  const eventId = `golf-relative-manual-test-${toEventIdTimestamp(startsAt)}`;
+  const status: ContestFeedEventRecord['status'] =
+    phase === 'in_progress'
+      ? 'in_progress'
+      : phase === 'completed'
+        ? 'completed'
+        : 'field_announced';
+
+  return buildRelativeGolfEvent({
+    eventId,
+    name: `Manual Test Golf Tournament for ${startsAt.toISOString()}`,
+    status,
+    startsAt,
+    endsAt,
+    releaseAt: new Date(anchor.getTime() - 5 * minuteMs),
+    fieldLocksAt,
+    fieldStatus:
+      phase === 'completed'
+        ? 'final'
+        : phase === 'open'
+          ? 'announced'
+          : 'locked',
+    eventType: manualTestEventType,
+    notes: [
+      `Manual test lifecycle phase: ${phase}.`,
+      `Open until ${fieldLocksAt.toISOString()}; locked until ${startsAt.toISOString()}; live until ${endsAt.toISOString()}.`,
+    ],
+    updates: buildManualLifecycleUpdates({ eventId, fieldLocksAt, startsAt, endsAt }),
+  });
+}
+
+export function buildRelativeTodayGolfScenario(
+  now = new Date(),
+  options: { readonly manualTestAnchor?: Date } = {},
+): ContestFeedScenarioRecord {
+  const manualTestEvent = buildManualTestLifecycleEvent(options.manualTestAnchor ?? now, now);
   const relativeEvents = [
-    buildRelativeGolfEvent({
-      eventId: 'golf-relative-live-now',
-      name: 'Relative QA Live Score Open',
-      status: 'in_progress',
-      startsAt: addHours(now, 0.5),
-      releaseAt: addDays(now, -8),
-      fieldLocksAt: addHours(now, -1),
-      notes: ['Relative event that keeps the live-score workflow active today.'],
-    }),
+    manualTestEvent,
     buildRelativeGolfEvent({
       eventId: 'golf-relative-locked-tomorrow',
       name: 'Relative QA Locked Tomorrow Invitational',
@@ -931,8 +1031,17 @@ export interface ScenarioStoreOptions {
   readonly includeRelativeTodayGolfScenario?: boolean;
 }
 
+const minuteMs = 60 * 1000;
+const manualTestPhaseMinutes = 20;
+const manualTestPhaseMs = manualTestPhaseMinutes * minuteMs;
+const manualTestCycleMs = manualTestPhaseMs * 4;
+const manualTestEventType = 'relative-manual-test';
+
+type ManualTestLifecyclePhase = 'open' | 'field_locked' | 'in_progress' | 'completed';
+
 export class ScenarioStore {
-  private readonly scenarios: readonly ContestFeedScenarioRecord[];
+  private readonly staticScenarios: readonly ContestFeedScenarioRecord[];
+  private manualTestAnchor: Date;
   private readonly liveScoreTicks = new Map<string, number>();
 
   public constructor(
@@ -940,13 +1049,14 @@ export class ScenarioStore {
     private readonly logger?: FastifyBaseLogger,
     private readonly options: ScenarioStoreOptions = {},
   ) {
+    this.manualTestAnchor = options.now?.() ?? new Date();
     const entries = readdirSync(scenarioDir, { withFileTypes: true })
       .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
       .map((entry) => loadJsonFile(join(scenarioDir, entry.name)));
     const generatedScenarios =
       options.includeRelativeTodayGolfScenario === false
         ? []
-        : [buildRelativeTodayGolfScenario(options.now?.() ?? new Date())];
+        : [this.buildRelativeTodayGolfScenario()];
     const allScenarios = [...entries, ...generatedScenarios];
 
     ensureUniqueIds(
@@ -954,7 +1064,7 @@ export class ScenarioStore {
       'scenarioId',
     );
 
-    this.scenarios = allScenarios.sort((left, right) => left.scenarioId.localeCompare(right.scenarioId));
+    this.staticScenarios = entries.sort((left, right) => left.scenarioId.localeCompare(right.scenarioId));
     this.logger?.info(
       {
         action: 'mockScenarioStore.load.success',
@@ -962,7 +1072,7 @@ export class ScenarioStore {
           scenarioDir,
           staticScenarioCount: entries.length,
           generatedScenarioCount: generatedScenarios.length,
-          scenarioCount: this.scenarios.length,
+          scenarioCount: allScenarios.length,
           eventCount: this.getEventCount(),
           generatedScenarios: generatedScenarios.map((scenario) => ({
             scenarioId: scenario.scenarioId,
@@ -976,15 +1086,57 @@ export class ScenarioStore {
       {
         action: 'mockScenarioStore.load.payload',
         data: {
-          scenarios: this.scenarios.map((scenario) => summarizeScenario(scenario)),
+          scenarios: allScenarios
+            .sort((left, right) => left.scenarioId.localeCompare(right.scenarioId))
+            .map((scenario) => summarizeScenario(scenario)),
         },
       },
       'Loaded mock contest-feed scenario payload',
     );
   }
 
+  private currentNow(): Date {
+    return this.options.now?.() ?? new Date();
+  }
+
+  private buildRelativeTodayGolfScenario(): ContestFeedScenarioRecord {
+    const now = this.currentNow();
+    return buildRelativeTodayGolfScenario(now, {
+      manualTestAnchor: this.currentManualTestAnchor(now),
+    });
+  }
+
+  private currentManualTestAnchor(now: Date): Date {
+    if (now.getTime() >= this.manualTestAnchor.getTime() + manualTestCycleMs) {
+      this.manualTestAnchor = now;
+      this.liveScoreTicks.clear();
+      this.logger?.info(
+        {
+          action: 'mockScenarioStore.manualTestLifecycle.rolled',
+          data: {
+            manualTestAnchor: this.manualTestAnchor.toISOString(),
+            cycleMinutes: manualTestPhaseMinutes * 4,
+          },
+        },
+        'Rolled mock manual-test lifecycle event',
+      );
+    }
+
+    return this.manualTestAnchor;
+  }
+
+  private getScenarios(): readonly ContestFeedScenarioRecord[] {
+    const generatedScenarios =
+      this.options.includeRelativeTodayGolfScenario === false
+        ? []
+        : [this.buildRelativeTodayGolfScenario()];
+
+    return [...this.staticScenarios, ...generatedScenarios]
+      .sort((left, right) => left.scenarioId.localeCompare(right.scenarioId));
+  }
+
   public listScenarios(): readonly ScenarioSummary[] {
-    const scenarios = this.scenarios.map((scenario) => ({
+    const scenarios = this.getScenarios().map((scenario) => ({
       scenarioId: scenario.scenarioId,
       sport: scenario.sport,
       provider: scenario.provider,
@@ -1002,7 +1154,7 @@ export class ScenarioStore {
   }
 
   public getScenario(scenarioId: string): ContestFeedScenarioRecord {
-    const scenario = this.scenarios.find((item) => item.scenarioId === scenarioId);
+    const scenario = this.getScenarios().find((item) => item.scenarioId === scenarioId);
     if (!scenario) {
       this.logger?.warn(
         { action: 'mockScenarioStore.getScenario.notFound', data: { scenarioId } },
@@ -1037,7 +1189,14 @@ export class ScenarioStore {
         contestantCount: resolveContestantsForFeed(scenario.sport, event).length,
       }));
     this.logger?.info(
-      { action: 'mockScenarioStore.listEvents', data: { scenarioId, eventCount: events.length } },
+      {
+        action: 'mockScenarioStore.listEvents',
+        data: {
+          scenarioId,
+          eventCount: events.length,
+          manualTestEvent: summarizeManualTestEvent(scenario.events, this.currentNow()),
+        },
+      },
       'Listed mock contest-feed scenario events',
     );
     this.logger?.debug(
@@ -1083,6 +1242,7 @@ export class ScenarioStore {
         data: {
           scenarioId,
           eventId,
+          manualLifecycle: summarizeManualLifecycle(response.event, this.currentNow()),
           participantCount: resolveContestantsForFeed(scenario.sport, response.event).length,
         },
       },
@@ -1111,7 +1271,15 @@ export class ScenarioStore {
         contestants,
       };
       this.logger?.info(
-        { action: 'mockScenarioStore.getSnapshot.field', data: { scenarioId, eventId, contestantCount: fieldSnapshot.contestants.length } },
+        {
+          action: 'mockScenarioStore.getSnapshot.field',
+          data: {
+            scenarioId,
+            eventId,
+            manualLifecycle: summarizeManualLifecycle(event, this.currentNow()),
+            contestantCount: fieldSnapshot.contestants.length,
+          },
+        },
         'Built mock field snapshot response',
       );
       this.logger?.debug(
@@ -1137,7 +1305,16 @@ export class ScenarioStore {
       contestants,
     };
     this.logger?.info(
-      { action: 'mockScenarioStore.getSnapshot.feed', data: { scenarioId, eventId, feedKind, contestantCount: contestants.length } },
+      {
+        action: 'mockScenarioStore.getSnapshot.feed',
+        data: {
+          scenarioId,
+          eventId,
+          feedKind,
+          manualLifecycle: summarizeManualLifecycle(event, this.currentNow()),
+          contestantCount: contestants.length,
+        },
+      },
       'Built mock feed snapshot response',
     );
     this.logger?.debug(
@@ -1178,11 +1355,11 @@ export class ScenarioStore {
   }
 
   public getScenarioCount(): number {
-    return this.scenarios.length;
+    return this.getScenarios().length;
   }
 
   public getEventCount(): number {
-    return this.scenarios.reduce((total, scenario) => total + scenario.events.length, 0);
+    return this.getScenarios().reduce((total, scenario) => total + scenario.events.length, 0);
   }
 
   public getLiveScores(
@@ -1193,26 +1370,40 @@ export class ScenarioStore {
     const scenario = this.getScenario(scenarioId);
     const event = this.getEvent(scenarioId, eventId);
     const tickKey = `${scenarioId}:${eventId}`;
-    const tick = explicitTick ?? ((this.liveScoreTicks.get(tickKey) ?? 0) + 1);
-    if (explicitTick === undefined) {
+    const now = this.currentNow();
+    const manualLifecycle = summarizeManualLifecycle(event, now);
+    const tick = explicitTick ?? (
+      isManualTestLifecycleEvent(event)
+        ? manualLiveScoreTick(event, now)
+        : (this.liveScoreTicks.get(tickKey) ?? 0) + 1
+    );
+    if (explicitTick === undefined && !isManualTestLifecycleEvent(event)) {
       this.liveScoreTicks.set(tickKey, tick);
     }
 
     const contestants =
-      scenario.sport === 'GOLF'
-        ? buildLiveGolfScores(scenario, event, tick)
-        : mergeContestants(
-          resolveContestantsForFeed(scenario.sport, event),
-          event.feeds.results.contestants,
-        );
+      isManualTestLifecycleEvent(event) && event.status !== 'in_progress'
+        ? []
+        : scenario.sport === 'GOLF'
+          ? buildLiveGolfScores(scenario, event, tick)
+          : mergeContestants(
+            resolveContestantsForFeed(scenario.sport, event),
+            event.feeds.results.contestants,
+          );
+
+    const asOf = isManualTestLifecycleEvent(event)
+      ? now.toISOString()
+      : new Date(Date.parse(event.schedule.startsAt) + tick * minuteMs).toISOString();
 
     const response: ContestFeedSnapshotResponse = {
       scenarioId,
       eventId,
       eventName: event.name,
       feedKind: 'results',
-      asOf: new Date(Date.parse(event.schedule.startsAt) + tick * 60 * 1000).toISOString(),
-      note: `Live scoring tick ${tick}`,
+      asOf,
+      note: isManualTestLifecycleEvent(event)
+        ? `Manual test lifecycle ${manualLifecycle?.phase ?? 'unknown'} tick ${tick}`
+        : `Live scoring tick ${tick}`,
       contestants,
     };
     this.logger?.info(
@@ -1223,6 +1414,7 @@ export class ScenarioStore {
           eventId,
           tick,
           explicitTick: explicitTick ?? null,
+          manualLifecycle,
           contestantCount: contestants.length,
         },
       },
@@ -1238,4 +1430,51 @@ export class ScenarioStore {
 
 export function listSupportedFeedKinds(): readonly FeedKind[] {
   return feedKinds;
+}
+
+function isManualTestLifecycleEvent(event: ContestFeedEventRecord): boolean {
+  return event.metadata?.eventType === manualTestEventType;
+}
+
+function summarizeManualTestEvent(
+  events: readonly ContestFeedEventRecord[],
+  now: Date,
+): Record<string, unknown> | null {
+  const event = events.find(isManualTestLifecycleEvent);
+  if (!event) {
+    return null;
+  }
+
+  return summarizeManualLifecycle(event, now);
+}
+
+function summarizeManualLifecycle(
+  event: ContestFeedEventRecord,
+  now: Date,
+): Record<string, unknown> | null {
+  if (!isManualTestLifecycleEvent(event)) {
+    return null;
+  }
+
+  const fieldLocksAt = new Date(event.schedule.fieldLocksAt ?? event.schedule.startsAt);
+  const startsAt = new Date(event.schedule.startsAt);
+  const endsAt = new Date(event.schedule.endsAt ?? event.schedule.startsAt);
+
+  return {
+    phase: resolveManualLifecyclePhase({ now, fieldLocksAt, startsAt, endsAt }),
+    eventId: event.eventId,
+    eventName: event.name,
+    startsAt: event.schedule.startsAt,
+    fieldLocksAt: event.schedule.fieldLocksAt,
+    endsAt: event.schedule.endsAt,
+  };
+}
+
+function manualLiveScoreTick(event: ContestFeedEventRecord, now: Date): number {
+  const startsAt = Date.parse(event.schedule.startsAt);
+  if (!Number.isFinite(startsAt)) {
+    return 1;
+  }
+
+  return Math.max(1, Math.floor((now.getTime() - startsAt) / minuteMs) + 1);
 }

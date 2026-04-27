@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { buildApp } from '../../packages/mock-contest-feed-provider/src/app';
+import { buildApp, type MockContestFeedAppOptions } from '../../packages/mock-contest-feed-provider/src/app';
 
 export interface RunningMockContestFeedProvider {
   app: FastifyInstance;
@@ -7,8 +7,10 @@ export interface RunningMockContestFeedProvider {
   close: () => Promise<void>;
 }
 
-export async function startMockContestFeedProvider(): Promise<RunningMockContestFeedProvider> {
-  const app = buildApp();
+export async function startMockContestFeedProvider(
+  options: MockContestFeedAppOptions = {},
+): Promise<RunningMockContestFeedProvider> {
+  const app = buildApp(options);
   await app.listen({ port: 0, host: '127.0.0.1' });
 
   const address = app.server.address();

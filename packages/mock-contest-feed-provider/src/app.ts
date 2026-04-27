@@ -1,8 +1,12 @@
 import Fastify from 'fastify';
-import { mockContestFeedRoutes } from './routes';
+import { mockContestFeedRoutes, type MockContestFeedRouteOptions } from './routes';
 import { swaggerPlugin } from './swagger';
 
-export function buildApp() {
+export interface MockContestFeedAppOptions {
+  readonly routes?: MockContestFeedRouteOptions;
+}
+
+export function buildApp(options: MockContestFeedAppOptions = {}) {
   const app = Fastify({
     logger: {
       level: process.env.LOG_LEVEL ?? 'info',
@@ -20,7 +24,7 @@ export function buildApp() {
   });
 
   app.register(swaggerPlugin);
-  app.register(mockContestFeedRoutes);
+  app.register(mockContestFeedRoutes, options.routes ?? {});
 
   return app;
 }

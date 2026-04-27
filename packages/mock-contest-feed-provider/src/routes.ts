@@ -11,11 +11,18 @@ import {
   snapshotResponseSchema,
   updatesResponseSchema,
 } from './contracts';
-import { ScenarioStore } from './scenario-store';
+import { ScenarioStore, type ScenarioStoreOptions } from './scenario-store';
 
-function buildScenarioStore(fastify: FastifyInstance): ScenarioStore {
+export interface MockContestFeedRouteOptions {
+  readonly scenarioStoreOptions?: ScenarioStoreOptions;
+}
+
+function buildScenarioStore(
+  fastify: FastifyInstance,
+  options: MockContestFeedRouteOptions = {},
+): ScenarioStore {
   const scenarioDir = process.env.SCENARIO_DIR ?? resolve(__dirname, '../contest-feed-scenarios');
-  return new ScenarioStore(scenarioDir, fastify.log);
+  return new ScenarioStore(scenarioDir, fastify.log, options.scenarioStoreOptions);
 }
 
 function logRoutePayload(
@@ -29,8 +36,11 @@ function logRoutePayload(
   fastify.log.debug({ action: `${action}.payload`, data: { ...data, payload } }, `${message} payload`);
 }
 
-export async function mockContestFeedRoutes(fastify: FastifyInstance): Promise<void> {
-  const store = buildScenarioStore(fastify);
+export async function mockContestFeedRoutes(
+  fastify: FastifyInstance,
+  options: MockContestFeedRouteOptions = {},
+): Promise<void> {
+  const store = buildScenarioStore(fastify, options);
 
   fastify.addHook('preHandler', async (request) => {
     request.log.debug(

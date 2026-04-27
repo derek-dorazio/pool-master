@@ -29,15 +29,16 @@ test('ScenarioStore loads event-first scenarios and exposes field snapshots', ()
   assert.equal(resultUpdates.updates[2]?.feedKind, 'results');
 });
 
-test('ScenarioStore generates relative today golf events for QA lifecycle coverage', () => {
+test('pool-master-xw5.5: ScenarioStore generates relative today golf events for QA lifecycle coverage', () => {
   const now = new Date('2026-04-26T21:00:00.000Z');
   const scenario = buildRelativeTodayGolfScenario(now);
 
   assert.equal(scenario.scenarioId, 'golf-relative-today');
+  const manualEventId = 'golf-relative-manual-test-20260426t214000z';
   assert.deepEqual(
     scenario.events.map((event) => event.eventId),
     [
-      'golf-relative-live-now',
+      manualEventId,
       'golf-relative-locked-tomorrow',
       'golf-relative-ready-5d',
       'golf-relative-field-pending-6d',
@@ -46,10 +47,15 @@ test('ScenarioStore generates relative today golf events for QA lifecycle covera
     ],
   );
 
-  const liveNow = scenario.events.find((event) => event.eventId === 'golf-relative-live-now');
-  assert.equal(liveNow?.status, 'in_progress');
-  assert.equal(liveNow?.field.status, 'locked');
-  assert.equal(liveNow?.field.contestants.length, 80);
+  const manualEvent = scenario.events.find((event) => event.eventId === manualEventId);
+  assert.equal(manualEvent?.name, 'Manual Test Golf Tournament for 2026-04-26T21:40:00.000Z');
+  assert.equal(manualEvent?.status, 'field_announced');
+  assert.equal(manualEvent?.field.status, 'announced');
+  assert.equal(manualEvent?.schedule.releaseAt, '2026-04-26T20:55:00.000Z');
+  assert.equal(manualEvent?.schedule.fieldLocksAt, '2026-04-26T21:20:00.000Z');
+  assert.equal(manualEvent?.schedule.startsAt, '2026-04-26T21:40:00.000Z');
+  assert.equal(manualEvent?.schedule.endsAt, '2026-04-26T22:00:00.000Z');
+  assert.equal(manualEvent?.field.contestants.length, 80);
 
   const lockedTomorrow = scenario.events.find((event) => event.eventId === 'golf-relative-locked-tomorrow');
   assert.equal(lockedTomorrow?.schedule.startsAt, '2026-04-27T12:00:00.000Z');
@@ -72,22 +78,83 @@ test('ScenarioStore generates relative today golf events for QA lifecycle covera
   assert.equal(scheduleBoundary?.schedule.startsAt, '2026-05-26T11:00:00.000Z');
 });
 
-test('ScenarioStore includes generated relative today events in the scenario catalog', () => {
+test('pool-master-xw5.5: relative manual-test event advances through 20-minute lifecycle windows', () => {
+  const anchor = new Date('2026-04-26T21:00:00.000Z');
+  const cases = [
+    {
+      now: new Date('2026-04-26T21:10:00.000Z'),
+      status: 'field_announced',
+      fieldStatus: 'announced',
+      result: 'pending',
+    },
+    {
+      now: new Date('2026-04-26T21:25:00.000Z'),
+      status: 'field_announced',
+      fieldStatus: 'locked',
+      result: 'pending',
+    },
+    {
+      now: new Date('2026-04-26T21:45:00.000Z'),
+      status: 'in_progress',
+      fieldStatus: 'locked',
+      result: 'pending',
+    },
+    {
+      now: new Date('2026-04-26T22:05:00.000Z'),
+      status: 'completed',
+      fieldStatus: 'final',
+      result: 'win',
+    },
+  ] as const;
+
+  for (const testCase of cases) {
+    const scenario = buildRelativeTodayGolfScenario(testCase.now, { manualTestAnchor: anchor });
+    const manualEvent = scenario.events.find((event) => event.metadata?.eventType === 'relative-manual-test');
+
+    assert.equal(manualEvent?.status, testCase.status);
+    assert.equal(manualEvent?.field.status, testCase.fieldStatus);
+    assert.equal(manualEvent?.field.contestants.length, 80);
+    assert.equal(manualEvent?.feeds.results.contestants[0]?.result, testCase.result);
+  }
+});
+
+test('pool-master-xw5.5: ScenarioStore includes generated relative today events in the scenario catalog', () => {
+  let currentNow = new Date('2026-04-26T21:00:00.000Z');
   const store = new ScenarioStore(
     scenarioDir,
     undefined,
-    { now: () => new Date('2026-04-26T21:00:00.000Z') },
+    { now: () => currentNow },
   );
 
   const relativeScenario = store.getScenario('golf-relative-today');
   assert.equal(relativeScenario.events.length, 6);
 
   const events = store.listEvents('golf-relative-today');
-  assert.equal(events[0]?.eventId, 'golf-relative-live-now');
+  assert.equal(events[0]?.eventId, 'golf-relative-manual-test-20260426t214000z');
+  assert.equal(events[0]?.status, 'field_announced');
   assert.equal(events.at(-1)?.eventId, 'golf-relative-schedule-boundary-30d');
 
   const readyDetail = store.getEventResponse('golf-relative-today', 'golf-relative-ready-5d');
   assert.equal(readyDetail.event.field.contestants.length, 80);
+
+  currentNow = new Date('2026-04-26T21:45:00.000Z');
+  const liveEvents = store.listEvents('golf-relative-today');
+  assert.equal(liveEvents[0]?.eventId, 'golf-relative-manual-test-20260426t214000z');
+  assert.equal(liveEvents[0]?.status, 'in_progress');
+
+  const liveScores = store.getLiveScores('golf-relative-today', 'golf-relative-manual-test-20260426t214000z');
+  assert.equal(liveScores.contestants.length, 80);
+  assert.equal(liveScores.contestants[0]?.result, 'pending');
+
+  currentNow = new Date('2026-04-26T22:05:00.000Z');
+  const results = store.getSnapshot('golf-relative-today', 'golf-relative-manual-test-20260426t214000z', 'results');
+  assert.equal(results.contestants.length, 80);
+  assert.ok(results.contestants.some((contestant) => contestant.result === 'win'));
+
+  currentNow = new Date('2026-04-26T22:25:00.000Z');
+  const nextCycleEvents = store.listEvents('golf-relative-today');
+  assert.equal(nextCycleEvents[0]?.eventId, 'golf-relative-manual-test-20260426t230500z');
+  assert.equal(nextCycleEvents[0]?.status, 'field_announced');
 });
 
 test('ScenarioStore rejects new contestants in deltas unless they include a name', () => {
