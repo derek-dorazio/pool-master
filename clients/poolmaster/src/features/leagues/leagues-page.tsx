@@ -1,28 +1,16 @@
-import { useQuery } from '@tanstack/react-query';
 import { Navigate, useSearchParams } from 'react-router-dom';
-import { listLeagues, type ListLeaguesResponses } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { formatUserName } from '@/features/account/user-name';
 import {
   buildLeaguePath,
   resolveDefaultLeagueCode,
 } from './league-routing';
-
-type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
+import { useLeaguesQuery } from './use-leagues-query';
 
 export function WelcomePage() {
   const auth = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const leaguesQuery = useQuery({
-    queryKey: ['poolmaster', 'leagues'],
-    queryFn: async (): Promise<LeagueSummary[]> => {
-      const response = await listLeagues();
-      if (!response.data) {
-        throw response.error ?? new Error('League list response is missing data.');
-      }
-      return response.data.leagues;
-    },
-  });
+  const leaguesQuery = useLeaguesQuery();
 
   if (leaguesQuery.isLoading) {
     return (

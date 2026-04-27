@@ -1,8 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/auth-provider';
-import { listLeagues } from '@/lib/api';
 import { useLogger } from '@/lib/logger';
 import { AccountMenu } from '@/features/account/account-menu';
 import { buildUserPath } from '@/features/account/user-routing';
@@ -18,6 +16,7 @@ import {
   buildLeagueHistoryPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
+import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
 import { LeagueSelector } from './league-selector';
 
 export function AppShell() {
@@ -30,17 +29,8 @@ export function AppShell() {
   });
   const isManageRoute = location.pathname === '/manage' || location.pathname.startsWith('/manage/');
   const shouldLoadLeagueShell = auth.isAuthenticated && !auth.isRootAdmin && !isManageRoute;
-  const leaguesQuery = useQuery({
-    queryKey: ['poolmaster', 'leagues'],
-    queryFn: async () => {
-      const response = await listLeagues();
-      if (!response.data) {
-        throw response.error ?? new Error('League list response is missing data.');
-      }
-      return response.data.leagues;
-    },
+  const leaguesQuery = useLeaguesQuery({
     enabled: shouldLoadLeagueShell,
-    retry: false,
   });
   const activeLeagueCode = useMemo(() => {
     const match = location.pathname.match(/^\/league\/([^/]+)/);

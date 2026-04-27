@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WelcomePage } from './leagues-page';
@@ -30,7 +30,8 @@ function renderWelcomePage(initialEntries = ['/welcome']) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        retry: false,
+        retry: 2,
+        retryDelay: 1,
       },
     },
   });
@@ -93,5 +94,14 @@ describe('WelcomePage', () => {
     renderWelcomePage();
 
     expect(await screen.findByTestId('league-home-destination')).toBeInTheDocument();
+  });
+
+  it('pool-master-dxd.15: uses the shared no-retry leagues query policy', async () => {
+    listLeaguesMock.mockRejectedValue(new Error('League list unavailable'));
+
+    renderWelcomePage();
+
+    expect(await screen.findByTestId('authenticated-landing-error')).toBeInTheDocument();
+    await waitFor(() => expect(listLeaguesMock).toHaveBeenCalledTimes(1));
   });
 });
