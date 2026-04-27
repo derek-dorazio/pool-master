@@ -1008,11 +1008,15 @@ export function CreateContestPage() {
     Boolean(leagueQuery.data?.leagueRelationship.commissioner) || Boolean(leagueQuery.data?.isRootAdmin);
   const isDraftEditable = !isEditMode || managedContestQuery.data?.status === 'DRAFT';
 
+  const isManagedContestHydrating =
+    isEditMode && Boolean(managedContestQuery.data) && !isHydratedFromManagedContest;
+
   if (
     leagueQuery.isLoading
     || eventsQuery.isLoading
     || managedContestQuery.isLoading
     || templatesQuery.isLoading
+    || isManagedContestHydrating
   ) {
     return (
       <section
