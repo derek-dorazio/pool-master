@@ -699,16 +699,17 @@ export class IngestionScheduler {
       job.status = 'COMPLETED';
       job.completedAt = new Date();
     } catch (err) {
+      const failure = toIngestionFailureLog(err);
       this.logger?.error({
         jobType,
         providerId,
         sport,
         eventExternalId,
-        error: err,
+        ...failure,
       }, 'Ingestion job failed');
       job.status = 'FAILED';
       job.errors = 1;
-      job.errorLog = [{ error: err instanceof Error ? err.message : String(err), at: new Date() }];
+      job.errorLog = [{ error: failure.errorMessage, at: new Date() }];
       job.completedAt = new Date();
     }
 
@@ -878,6 +879,25 @@ function toJobLogPayload(job: IngestionJobRecord): Record<string, unknown> {
     errors: job.errors,
     startedAt: job.startedAt?.toISOString() ?? null,
     completedAt: job.completedAt?.toISOString() ?? null,
+  };
+}
+
+function toIngestionFailureLog(error: unknown): {
+  err?: Error;
+  errorMessage: string;
+  errorName: string;
+} {
+  if (error instanceof Error) {
+    return {
+      err: error,
+      errorMessage: error.message,
+      errorName: error.name,
+    };
+  }
+
+  return {
+    errorMessage: String(error),
+    errorName: typeof error,
   };
 }
 

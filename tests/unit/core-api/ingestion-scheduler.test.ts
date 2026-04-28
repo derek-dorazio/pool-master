@@ -181,6 +181,33 @@ describe('IngestionScheduler', () => {
         expect.objectContaining({ status: 'FAILED' }),
       );
     });
+
+    it('pool-master-4k2 logs failed ingestion jobs with message fields', async () => {
+      const provider = createMockProvider({
+        getUpcomingEvents: jest.fn().mockRejectedValue(new Error('API timeout')),
+      });
+      const registry = createMockRegistry(provider);
+      const logger = {
+        debug: jest.fn(),
+        error: jest.fn(),
+        info: jest.fn(),
+        warn: jest.fn(),
+      } as any;
+      const scheduler = new IngestionScheduler(registry, mockCallbacks, logger);
+
+      await scheduler.syncSport('GOLF' as Sport);
+
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jobType: 'EVENT_SCHEDULE_SYNC',
+          providerId: 'mock-provider',
+          sport: 'GOLF',
+          errorMessage: 'API timeout',
+          errorName: 'Error',
+        }),
+        'Ingestion job failed',
+      );
+    });
   });
 
   describe('runSportSync', () => {
