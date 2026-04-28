@@ -143,6 +143,41 @@ function getNextSelectedParticipantIds(group: SelectionGroup, participantId: str
   return Array.from(new Set([...group.selectedParticipantIds, participantId]));
 }
 
+function applyOptimisticSelection(draftState: DraftState, participantId: string): DraftState {
+  const selectionGroups = draftState.selectionGroups ?? [];
+  const nextSelectionGroups = selectionGroups.map((group) => {
+    if (!group.participants.some((participant) => participant.sportEventParticipantId === participantId)) {
+      return group;
+    }
+
+    const selectedParticipantIds = getNextSelectedParticipantIds(group, participantId);
+    const selectedIdSet = new Set(selectedParticipantIds);
+
+    return {
+      ...group,
+      selectedParticipantIds,
+      participants: group.participants.map((participant) => ({
+        ...participant,
+        isSelected: selectedIdSet.has(participant.sportEventParticipantId),
+      })),
+    };
+  });
+  const totalSelections = nextSelectionGroups.reduce(
+    (sum, group) => sum + group.selectedParticipantIds.length,
+    0,
+  );
+  const requiredSelections = nextSelectionGroups.reduce(
+    (sum, group) => sum + group.picksFromGroup,
+    0,
+  );
+
+  return {
+    ...draftState,
+    selectionGroups: nextSelectionGroups,
+    isComplete: requiredSelections > 0 && totalSelections >= requiredSelections,
+  };
+}
+
 function getParticipantMetaSummary(participant: SelectionParticipant) {
   const parts: string[] = [];
 
@@ -318,6 +353,7 @@ export function ContestEntryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
+  const draftStateQueryKey = ['poolmaster', 'draft-state', contestId, entryId] as const;
   const groupToggleRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const [entryNameDraft, setEntryNameDraft] = useState('');
@@ -351,7 +387,7 @@ export function ContestEntryPage() {
   });
 
   const draftStateQuery = useQuery({
-    queryKey: ['poolmaster', 'draft-state', contestId, entryId],
+    queryKey: draftStateQueryKey,
     queryFn: async (): Promise<DraftState> => {
       const response = await getDraftState({
         path: { contestId },
@@ -552,7 +588,7 @@ export function ContestEntryPage() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest', contestId] }),
         queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] }),
-        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'draft-state', contestId, entryId] }),
+        queryClient.invalidateQueries({ queryKey: draftStateQueryKey }),
       ]);
     },
     onError: (error) => {
@@ -589,7 +625,7 @@ export function ContestEntryPage() {
 
       return response.data;
     },
-    onMutate: (participantId) => {
+    onMutate: async (participantId) => {
       logger.debug(
         {
           action: 'contestEntry.selection.started',
@@ -601,8 +637,19 @@ export function ContestEntryPage() {
         },
         'Starting contest selection submission',
       );
+      await queryClient.cancelQueries({ queryKey: draftStateQueryKey });
+      const previousDraftState = queryClient.getQueryData<DraftState>(draftStateQueryKey);
+
+      if (previousDraftState) {
+        queryClient.setQueryData<DraftState>(
+          draftStateQueryKey,
+          applyOptimisticSelection(previousDraftState, participantId),
+        );
+      }
+
+      return { previousDraftState };
     },
-    onSuccess: async () => {
+    onSuccess: (draftState) => {
       logger.info(
         {
           action: 'contestEntry.selection.succeeded',
@@ -613,13 +660,14 @@ export function ContestEntryPage() {
         },
         'Submitted contest selection successfully',
       );
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest', contestId] }),
-        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] }),
-        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'draft-state', contestId, entryId] }),
-      ]);
+      queryClient.setQueryData<DraftState>(draftStateQueryKey, draftState);
+      void queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest', contestId] });
+      void queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] });
     },
-    onError: (error, participantId) => {
+    onError: (error, participantId, context) => {
+      if (context?.previousDraftState) {
+        queryClient.setQueryData<DraftState>(draftStateQueryKey, context.previousDraftState);
+      }
       const payload = {
         action: 'contestEntry.selection.failed',
         data: {

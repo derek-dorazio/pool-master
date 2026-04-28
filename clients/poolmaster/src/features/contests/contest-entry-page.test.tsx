@@ -228,6 +228,17 @@ function buildGolfParticipant(id: string, name: string, orderIndex: number, isSe
   };
 }
 
+function createDeferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<T>((nextResolve, nextReject) => {
+    resolve = nextResolve;
+    reject = nextReject;
+  });
+
+  return { promise, resolve, reject };
+}
+
 describe('ContestEntryPage', () => {
   afterEach(() => {
     getContestMock.mockReset();
@@ -364,11 +375,7 @@ describe('ContestEntryPage', () => {
       if (body.participantId === 'sep-2') {
         selectedParticipantIdsByTier.set('tier-2', ['sep-2']);
       }
-      return Promise.resolve({
-        data: {
-          contestId: 'contest-1',
-        },
-      });
+      return getDraftStateMock();
     });
 
     renderContestEntryPage();
@@ -593,5 +600,42 @@ describe('ContestEntryPage', () => {
     );
     await waitFor(() => expect(screen.getByText('1/2 saved')).toBeInTheDocument());
     expect(screen.queryByTestId('contest-entry-selected-tier-1-sep-1')).not.toBeInTheDocument();
+  });
+
+  // pool-master-nt3 — entry selection must give immediate visual feedback while the save is in flight.
+  it('updates the selected participant state before the selection request completes', async () => {
+    primeCommonMocks();
+    let selectedParticipantIds: string[] = [];
+    const buildSelectionGroups = () => [
+      {
+        groupId: 'tier-1',
+        groupName: 'Tier A',
+        groupNumber: 1,
+        picksFromGroup: 1,
+        selectedParticipantIds,
+        participants: [
+          buildGolfParticipant('sep-1', 'Scottie Scheffler', 1, selectedParticipantIds.includes('sep-1')),
+        ],
+      },
+    ];
+    const deferredSelection = createDeferred<{ data: ReturnType<typeof buildDraftState> }>();
+
+    getDraftStateMock.mockImplementation(() =>
+      Promise.resolve({ data: buildDraftState(buildSelectionGroups()) }),
+    );
+    submitContestSelectionMock.mockImplementation(() => deferredSelection.promise);
+
+    renderContestEntryPage();
+
+    const scottieButton = await screen.findByTestId('contest-entry-participant-sep-1');
+    fireEvent.click(scottieButton);
+
+    await waitFor(() => {
+      expect(scottieButton.querySelector('input[type="checkbox"]')).toBeChecked();
+      expect(scottieButton).toHaveTextContent('Selected');
+    });
+
+    selectedParticipantIds = ['sep-1'];
+    deferredSelection.resolve({ data: buildDraftState(buildSelectionGroups()) });
   });
 });
