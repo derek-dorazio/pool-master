@@ -100,10 +100,11 @@ describe('RootAdminManageUsersPage', () => {
 
     expect(await screen.findByTestId('root-admin-manage-users-page')).toBeInTheDocument();
     expect(await screen.findByTestId('root-admin-manage-user-row-user-1')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-manage-user-link-user-1')).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Alex Admin' })).toHaveAttribute(
       'href',
       '/users/user-1',
     );
+    expect(screen.queryByRole('link', { name: 'Open user page' })).not.toBeInTheDocument();
     expect(screen.getByText('Active')).toBeInTheDocument();
     expect(screen.getByText('Inactive')).toBeInTheDocument();
   });

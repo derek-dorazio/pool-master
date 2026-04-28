@@ -89,6 +89,7 @@ describe('RootAdminManageTeamsPage', () => {
 
     const teamLink = await screen.findByRole('link', { name: /beer bellies/i });
     expect(teamLink).toHaveAttribute('href', '/league/BIGDAWGS/teams/team-active-1');
+    expect(screen.queryByText('Open Team Home to manage lifecycle.')).not.toBeInTheDocument();
     expect(screen.getByText('Derek Dorazio, Fran Lane')).toBeInTheDocument();
     expect(screen.getByText('Active')).toBeInTheDocument();
   });

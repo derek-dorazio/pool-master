@@ -109,9 +109,6 @@ export function RootAdminManageTeamsPage() {
               </div>
               <div className="min-w-0">
                 <div className="truncate font-medium text-foreground">{row.original.name}</div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Open Team Home to manage lifecycle.
-                </div>
               </div>
             </div>
           );

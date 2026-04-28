@@ -2,7 +2,6 @@ import { useDeferredValue, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { adminListUsers, type AdminListUsersResponses } from '@/lib/api';
-import { useLogger } from '@/lib/logger';
 
 type RootAdminUser = AdminListUsersResponses[200]['items'][number];
 
@@ -37,9 +36,6 @@ function buildUserDisplayName(user: RootAdminUser) {
 }
 
 export function RootAdminManageUsersPage() {
-  const logger = useLogger().child({
-    component: 'root-admin-manage-users-page',
-  });
   const [searchDraft, setSearchDraft] = useState('');
   const [page, setPage] = useState(1);
   const deferredSearch = useDeferredValue(searchDraft);
@@ -132,7 +128,6 @@ export function RootAdminManageUsersPage() {
                     <th className="px-4 py-3 font-medium">Email</th>
                     <th className="px-4 py-3 font-medium">Account</th>
                     <th className="px-4 py-3 font-medium">Root admin</th>
-                    <th className="px-4 py-3 font-medium text-right">Open</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -144,9 +139,13 @@ export function RootAdminManageUsersPage() {
                         key={user.id}
                       >
                         <td className="px-4 py-4">
-                          <div className="font-medium text-foreground">
+                          <Link
+                            className="font-medium text-primary transition hover:opacity-80"
+                            data-testid={`root-admin-manage-user-link-${user.id}`}
+                            to={`/users/${user.id}`}
+                          >
                             {buildUserDisplayName(user)}
-                          </div>
+                          </Link>
                           <div className="mt-1 text-xs text-muted-foreground">
                             @{user.username}
                           </div>
@@ -176,29 +175,11 @@ export function RootAdminManageUsersPage() {
                             {user.isRootAdmin ? 'Yes' : 'No'}
                           </span>
                         </td>
-                        <td className="px-4 py-4 text-right">
-                          <Link
-                            className="inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
-                            data-testid={`root-admin-manage-user-link-${user.id}`}
-                            onClick={() =>
-                              logger.info(
-                                {
-                                  action: 'rootAdmin.manageUsers.openUser',
-                                  data: { userId: user.id },
-                                },
-                                'Opening canonical user page from /manage/users',
-                              )
-                            }
-                            to={`/users/${user.id}`}
-                          >
-                            Open user page
-                          </Link>
-                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td className="px-4 py-6 text-muted-foreground" colSpan={5}>
+                      <td className="px-4 py-6 text-muted-foreground" colSpan={4}>
                         No users matched the current search.
                       </td>
                     </tr>
