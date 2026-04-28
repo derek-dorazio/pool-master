@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetClientTraceIdForTests } from './logger';
 
+function fetchCallUrl(callArg: unknown) {
+  if (callArg instanceof Request) {
+    return callArg.url;
+  }
+  return String(callArg);
+}
+
 describe('poolmaster API client correlation headers', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -103,6 +110,143 @@ describe('poolmaster API client correlation headers', () => {
       vi.restoreAllMocks();
       vi.unstubAllGlobals();
       document.cookie = 'poolmaster_csrf=; Max-Age=0; path=/';
+    }
+  });
+
+  it('pool-master-1rq refreshes and retries league requests when the access session expires', async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            error: {
+              code: 'AUTH_SESSION_REQUIRED',
+              message: 'Authenticated session required',
+            },
+          }),
+          {
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            accessToken: 'access-2',
+            refreshToken: 'refresh-2',
+            csrfToken: 'csrf-2',
+            sessionId: 'session-2',
+          }),
+          {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ leagues: [] }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }),
+      );
+
+    vi.stubGlobal('fetch', fetchSpy);
+
+    try {
+      const { listLeagues } = await import('./api');
+
+      const response = await listLeagues();
+
+      expect(response.data?.leagues).toEqual([]);
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
+      expect(new URL(fetchCallUrl(fetchSpy.mock.calls[1]?.[0])).pathname).toBe('/api/v1/auth/refresh');
+      expect(new URL(fetchCallUrl(fetchSpy.mock.calls[2]?.[0])).pathname).toBe('/api/v1/leagues/');
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('pool-master-h61 refreshes and retries root-admin requests when the root-admin access session expires', async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            error: {
+              code: 'ROOT_ADMIN_SESSION_REQUIRED',
+              message: 'Authenticated root-admin session required',
+            },
+          }),
+          {
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            accessToken: 'access-2',
+            refreshToken: 'refresh-2',
+            csrfToken: 'csrf-2',
+            sessionId: 'session-2',
+          }),
+          {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            items: [],
+            page: 1,
+            pageSize: 25,
+            total: 0,
+            totalPages: 1,
+          }),
+          {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        ),
+      );
+
+    vi.stubGlobal('fetch', fetchSpy);
+
+    try {
+      const { adminListUsers } = await import('./api');
+
+      const response = await adminListUsers({
+        query: {
+          search: 'Commis',
+          page: 1,
+          pageSize: 25,
+        },
+      });
+
+      expect(response.data?.items).toEqual([]);
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
+      expect(new URL(fetchCallUrl(fetchSpy.mock.calls[1]?.[0])).pathname).toBe('/api/v1/auth/refresh');
+      expect(new URL(fetchCallUrl(fetchSpy.mock.calls[2]?.[0])).pathname).toBe('/api/v1/admin/users');
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
     }
   });
 });
