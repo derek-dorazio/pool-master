@@ -100,7 +100,7 @@ describe('RootAdminManageUsersPage', () => {
 
     expect(await screen.findByTestId('root-admin-manage-users-page')).toBeInTheDocument();
     expect(await screen.findByTestId('root-admin-manage-user-row-user-1')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Alex Admin' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Alex Admin/ })).toHaveAttribute(
       'href',
       '/users/user-1',
     );
@@ -109,24 +109,26 @@ describe('RootAdminManageUsersPage', () => {
     expect(screen.getByText('Inactive')).toBeInTheDocument();
   });
 
-  it('passes search input through the admin list query', async () => {
+  it('pool-master-5fr filters users client-side through grid column filters', async () => {
     renderManageUsersPage();
 
-    const searchInput = await screen.findByTestId('root-admin-manage-users-search');
-    fireEvent.change(searchInput, {
+    await screen.findByTestId('root-admin-manage-user-row-user-1');
+    expect(screen.queryByTestId('root-admin-manage-users-search')).not.toBeInTheDocument();
+    expect(adminListUsersMock).toHaveBeenLastCalledWith({
+      query: {
+        page: 1,
+        pageSize: 100,
+      },
+    });
+
+    fireEvent.change(screen.getByTestId('admin-grid-filter-username'), {
       target: {
         value: 'jamie',
       },
     });
 
-    await waitFor(() =>
-      expect(adminListUsersMock).toHaveBeenLastCalledWith({
-        query: {
-          search: 'jamie',
-          page: 1,
-          pageSize: 25,
-        },
-      }),
-    );
+    expect(screen.queryByTestId('root-admin-manage-user-row-user-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-manage-user-row-user-2')).toBeInTheDocument();
+    expect(adminListUsersMock).toHaveBeenCalledTimes(1);
   });
 });

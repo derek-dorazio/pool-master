@@ -1,8 +1,10 @@
 import {
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getSortedRowModel,
   type ColumnDef,
+  type ColumnFiltersState,
   type SortingState,
   useReactTable,
 } from '@tanstack/react-table';
@@ -37,16 +39,20 @@ export function AdminDataGrid<TData>({
   getRowLink,
   rowTestId,
 }: AdminDataGridProps<TData>) {
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({
     data,
     columns,
     state: {
+      columnFilters,
       sorting,
     },
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    onColumnFiltersChange: setColumnFilters,
     onSortingChange: setSorting,
     getRowId,
   });
@@ -97,6 +103,27 @@ export function AdminDataGrid<TData>({
                   </th>
                 );
               })}
+            </tr>
+          ))}
+          {headerGroups.map((headerGroup) => (
+            <tr
+              className="border-b border-border bg-background/60 text-xs text-muted-foreground"
+              key={`${headerGroup.id}-filters`}
+            >
+              {headerGroup.headers.map((header) => (
+                <th className="px-4 py-3 font-medium" key={`${header.id}-filter`}>
+                  {header.isPlaceholder || !header.column.getCanFilter() ? null : (
+                    <input
+                      className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs normal-case tracking-normal text-foreground placeholder:text-muted-foreground"
+                      data-testid={`admin-grid-filter-${header.column.id}`}
+                      onChange={(event) => header.column.setFilterValue(event.target.value)}
+                      placeholder={`Filter ${header.column.columnDef.header?.toString() ?? header.column.id}`}
+                      type="search"
+                      value={(header.column.getFilterValue() ?? '') as string}
+                    />
+                  )}
+                </th>
+              ))}
             </tr>
           ))}
         </thead>

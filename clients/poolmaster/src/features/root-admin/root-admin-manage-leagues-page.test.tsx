@@ -91,19 +91,25 @@ describe('RootAdminManageLeaguesPage', () => {
 
     renderPage();
 
-    const activeLink = await screen.findByTestId(
+    const activeRow = await screen.findByTestId(
       'root-admin-manage-leagues-link-league-active-1',
     );
-    expect(activeLink).toHaveAttribute('href', '/league/ACTIVE01');
-    expect(activeLink).toHaveTextContent('Alpha League');
-    expect(activeLink).toHaveTextContent('Active');
-    expect(activeLink).toHaveTextContent('ACTIVE01');
+    expect(activeRow).toHaveTextContent('Alpha League');
+    expect(activeRow).toHaveTextContent('Active');
+    expect(activeRow).toHaveTextContent('ACTIVE01');
+    expect(screen.getByRole('link', { name: /Alpha League/ })).toHaveAttribute(
+      'href',
+      '/league/ACTIVE01',
+    );
 
-    const inactiveLink = screen.getByTestId(
+    const inactiveRow = screen.getByTestId(
       'root-admin-manage-leagues-link-league-inactive-1',
     );
-    expect(inactiveLink).toHaveAttribute('href', '/league/INACT001');
-    expect(inactiveLink).toHaveTextContent('Inactive');
+    expect(inactiveRow).toHaveTextContent('Inactive');
+    expect(screen.getByRole('link', { name: /Archive League/ })).toHaveAttribute(
+      'href',
+      '/league/INACT001',
+    );
   });
 
   it('does not render any lifecycle action controls on the admin list', async () => {
@@ -124,7 +130,7 @@ describe('RootAdminManageLeaguesPage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('sends the search query through to the admin list endpoint', async () => {
+  it('pool-master-xjj filters leagues client-side through grid column filters', async () => {
     seedLeagues();
 
     renderPage();
@@ -134,27 +140,31 @@ describe('RootAdminManageLeaguesPage', () => {
         query: {},
       }),
     );
+    await screen.findByTestId('root-admin-manage-leagues-link-league-active-1');
 
-    const search = screen.getByTestId('root-admin-manage-leagues-search');
-    fireEvent.change(search, { target: { value: 'Archive' } });
+    expect(
+      screen.queryByTestId('root-admin-manage-leagues-search'),
+    ).not.toBeInTheDocument();
 
-    await waitFor(() =>
-      expect(adminListLeaguesMock).toHaveBeenLastCalledWith({
-        query: {
-          search: 'Archive',
-        },
-      }),
-    );
+    fireEvent.change(screen.getByTestId('admin-grid-filter-name'), {
+      target: { value: 'Archive' },
+    });
+
+    expect(
+      screen.queryByTestId('root-admin-manage-leagues-link-league-active-1'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId('root-admin-manage-leagues-link-league-inactive-1'),
+    ).toBeInTheDocument();
+    expect(adminListLeaguesMock).toHaveBeenCalledTimes(1);
   });
 
-  it('renders the empty state when no leagues match the current search', async () => {
+  it('renders the empty state when no leagues match the current filters', async () => {
     adminListLeaguesMock.mockResolvedValue({ data: { leagues: [] } });
 
     renderPage();
 
-    expect(
-      await screen.findByTestId('root-admin-manage-leagues-empty'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('No leagues matched the current filters.')).toBeInTheDocument();
   });
 
   it('renders the error state when the admin list call fails', async () => {

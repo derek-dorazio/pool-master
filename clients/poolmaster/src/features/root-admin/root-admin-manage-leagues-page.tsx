@@ -1,11 +1,13 @@
-import { useDeferredValue, useState } from 'react';
+import { createColumnHelper } from '@tanstack/react-table';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { adminListLeagues, type AdminListLeaguesResponses } from '@/lib/api';
-import { useLogger } from '@/lib/logger';
 import { buildLeaguePath } from '@/features/leagues/league-routing';
+import { AdminDataGrid } from './admin-data-grid';
 
 type ManagedLeague = AdminListLeaguesResponses[200]['leagues'][number];
+const columnHelper = createColumnHelper<ManagedLeague>();
 
 function extractErrorMessage(error: unknown, fallback: string) {
   if (!error || typeof error !== 'object') {
@@ -28,10 +30,6 @@ function extractErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-function formatLeagueStatus(isActive: boolean) {
-  return isActive ? 'Active' : 'Inactive';
-}
-
 function getLeagueStatusClasses(isActive: boolean) {
   return isActive
     ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
@@ -39,25 +37,11 @@ function getLeagueStatusClasses(isActive: boolean) {
 }
 
 export function RootAdminManageLeaguesPage() {
-  const logger = useLogger().child({
-    feature: 'root-admin-manage-leagues-page',
-  });
-  const [leagueSearchDraft, setLeagueSearchDraft] = useState('');
-  const deferredLeagueSearch = useDeferredValue(leagueSearchDraft);
-
   const leaguesQuery = useQuery({
-    queryKey: [
-      'poolmaster',
-      'root-admin',
-      'manage-leagues',
-      deferredLeagueSearch.trim(),
-    ],
+    queryKey: ['poolmaster', 'root-admin', 'manage-leagues'],
     queryFn: async (): Promise<ManagedLeague[]> => {
-      const trimmedSearch = deferredLeagueSearch.trim();
       const response = await adminListLeagues({
-        query: {
-          search: trimmedSearch.length > 0 ? trimmedSearch : undefined,
-        },
+        query: {},
       });
 
       if (!response.data?.leagues) {
@@ -68,6 +52,58 @@ export function RootAdminManageLeaguesPage() {
     },
     retry: false,
   });
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('name', {
+        header: 'League',
+        cell: ({ row }) => (
+          <div>
+            <div className="font-medium text-primary">{row.original.name}</div>
+            {row.original.description ? (
+              <div className="mt-1 text-xs text-muted-foreground">{row.original.description}</div>
+            ) : null}
+          </div>
+        ),
+      }),
+      columnHelper.accessor('leagueCode', {
+        header: 'Code',
+        cell: ({ getValue }) => (
+          <span className="font-medium text-foreground">{getValue()}</span>
+        ),
+      }),
+      columnHelper.accessor((league) => (league.isActive ? 'Active' : 'Inactive'), {
+        id: 'lifecycle',
+        header: 'Lifecycle',
+        cell: ({ getValue }) => {
+          const isActive = getValue() === 'Active';
+
+          return (
+            <span
+              className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${getLeagueStatusClasses(isActive)}`}
+            >
+              {getValue()}
+            </span>
+          );
+        },
+      }),
+      columnHelper.accessor((league) => String(league.memberCount), {
+        id: 'memberCount',
+        header: 'Members',
+        cell: ({ row }) => (
+          <span className="font-medium text-foreground">{row.original.memberCount}</span>
+        ),
+      }),
+      columnHelper.accessor((league) => String(league.activeContestCount), {
+        id: 'activeContestCount',
+        header: 'Active contests',
+        cell: ({ row }) => (
+          <span className="font-medium text-foreground">{row.original.activeContestCount}</span>
+        ),
+      }),
+    ],
+    [],
+  );
 
   return (
     <section className="space-y-6" data-testid="root-admin-manage-leagues-page">
@@ -82,21 +118,10 @@ export function RootAdminManageLeaguesPage() {
             </Link>
             <h2 className="mt-3 text-2xl font-semibold text-foreground">Leagues</h2>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-              Search leagues and open League Home to manage league details, members, and
+              Filter leagues by column and open League Home to manage league details, members, and
               lifecycle actions.
             </p>
           </div>
-
-          <label className="text-sm text-muted-foreground lg:min-w-[22rem]">
-            <span className="mb-2 block font-medium text-foreground">Search by league name</span>
-            <input
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
-              data-testid="root-admin-manage-leagues-search"
-              onChange={(event) => setLeagueSearchDraft(event.target.value)}
-              placeholder="Search leagues"
-              value={leagueSearchDraft}
-            />
-          </label>
         </div>
       </div>
 
@@ -107,57 +132,15 @@ export function RootAdminManageLeaguesPage() {
           <p className="text-sm text-rose-700">
             {extractErrorMessage(leaguesQuery.error, 'We could not load leagues right now.')}
           </p>
-        ) : (leaguesQuery.data?.length ?? 0) === 0 ? (
-          <div
-            className="rounded-[1.5rem] border border-dashed border-border bg-background p-6 text-sm text-muted-foreground"
-            data-testid="root-admin-manage-leagues-empty"
-          >
-            No leagues matched the current search.
-          </div>
         ) : (
-          <div className="space-y-4" data-testid="root-admin-manage-leagues-list">
-            {leaguesQuery.data?.map((league) => (
-              <Link
-                className="block rounded-[1.5rem] border border-border bg-background p-5 transition hover:border-primary/40 hover:bg-card"
-                data-testid={`root-admin-manage-leagues-link-${league.id}`}
-                key={league.id}
-                onClick={() => {
-                  logger.info(
-                    {
-                      action: 'rootAdmin.manageLeagues.openLeague',
-                      data: {
-                        leagueId: league.id,
-                        leagueCode: league.leagueCode,
-                      },
-                    },
-                    'Opened league home from root-admin manage leagues list',
-                  );
-                }}
-                to={buildLeaguePath(league.leagueCode)}
-              >
-                <div className="flex flex-wrap items-center gap-3">
-                  <h4 className="text-lg font-semibold text-foreground">{league.name}</h4>
-                  <span
-                    className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${getLeagueStatusClasses(league.isActive)}`}
-                  >
-                    {formatLeagueStatus(league.isActive)}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Code: <span className="font-medium text-foreground">{league.leagueCode}</span>
-                  {' · '}
-                  Members:{' '}
-                  <span className="font-medium text-foreground">{league.memberCount}</span>
-                  {' · '}
-                  Active contests:{' '}
-                  <span className="font-medium text-foreground">{league.activeContestCount}</span>
-                </p>
-                {league.description ? (
-                  <p className="mt-2 text-sm text-muted-foreground">{league.description}</p>
-                ) : null}
-              </Link>
-            ))}
-          </div>
+          <AdminDataGrid
+            columns={columns}
+            data={leaguesQuery.data ?? []}
+            emptyMessage="No leagues matched the current filters."
+            getRowId={(league) => league.id}
+            getRowLink={(league) => buildLeaguePath(league.leagueCode)}
+            rowTestId={(league) => `root-admin-manage-leagues-link-${league.id}`}
+          />
         )}
       </section>
     </section>

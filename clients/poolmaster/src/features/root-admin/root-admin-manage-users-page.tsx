@@ -1,9 +1,11 @@
-import { useDeferredValue, useEffect, useState } from 'react';
+import { createColumnHelper } from '@tanstack/react-table';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { adminListUsers, type AdminListUsersResponses } from '@/lib/api';
+import { AdminDataGrid } from './admin-data-grid';
 
 type RootAdminUser = AdminListUsersResponses[200]['items'][number];
+const columnHelper = createColumnHelper<RootAdminUser>();
 
 function extractAdminError(error: unknown, fallback: string) {
   if (!error || typeof error !== 'object') {
@@ -36,23 +38,13 @@ function buildUserDisplayName(user: RootAdminUser) {
 }
 
 export function RootAdminManageUsersPage() {
-  const [searchDraft, setSearchDraft] = useState('');
-  const [page, setPage] = useState(1);
-  const deferredSearch = useDeferredValue(searchDraft);
-  const trimmedSearch = deferredSearch.trim();
-
-  useEffect(() => {
-    setPage(1);
-  }, [trimmedSearch]);
-
   const usersQuery = useQuery({
-    queryKey: ['poolmaster', 'manage', 'users', trimmedSearch, page],
+    queryKey: ['poolmaster', 'manage', 'users'],
     queryFn: async () => {
       const response = await adminListUsers({
         query: {
-          search: trimmedSearch.length > 0 ? trimmedSearch : undefined,
-          page,
-          pageSize: 25,
+          page: 1,
+          pageSize: 100,
         },
       });
 
@@ -64,7 +56,72 @@ export function RootAdminManageUsersPage() {
     },
   });
 
-  const totalPages = usersQuery.data?.totalPages ?? 1;
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor(
+        (user) => `${buildUserDisplayName(user)} ${user.username}`,
+        {
+          id: 'username',
+          header: 'User',
+          cell: ({ row }) => (
+            <div>
+              <div className="font-medium text-primary">
+                {buildUserDisplayName(row.original)}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                @{row.original.username}
+              </div>
+            </div>
+          ),
+        },
+      ),
+      columnHelper.accessor('email', {
+        header: 'Email',
+        cell: ({ getValue }) => (
+          <span className="text-muted-foreground">{getValue()}</span>
+        ),
+      }),
+      columnHelper.accessor((user) => (user.isActive ? 'Active' : 'Inactive'), {
+        id: 'account',
+        header: 'Account',
+        cell: ({ getValue }) => {
+          const isActive = getValue() === 'Active';
+
+          return (
+            <span
+              className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
+                isActive
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
+                  : 'border-border bg-background text-muted-foreground'
+              }`}
+            >
+              {getValue()}
+            </span>
+          );
+        },
+      }),
+      columnHelper.accessor((user) => (user.isRootAdmin ? 'Yes' : 'No'), {
+        id: 'rootAdmin',
+        header: 'Root admin',
+        cell: ({ getValue }) => {
+          const isRootAdmin = getValue() === 'Yes';
+
+          return (
+            <span
+              className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
+                isRootAdmin
+                  ? 'border-sky-300 bg-sky-50 text-sky-900'
+                  : 'border-border bg-background text-muted-foreground'
+              }`}
+            >
+              {getValue()}
+            </span>
+          );
+        },
+      }),
+    ],
+    [],
+  );
 
   return (
     <section
@@ -91,22 +148,9 @@ export function RootAdminManageUsersPage() {
               User directory
             </h2>
             <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-              Search by email, username, first name, or last name.
+              Filter by the columns below and open a user page from the name column.
             </p>
           </div>
-
-          <label className="text-sm text-muted-foreground lg:min-w-[22rem]">
-            <span className="mb-2 block font-medium text-foreground">
-              Search users
-            </span>
-            <input
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
-              data-testid="root-admin-manage-users-search"
-              onChange={(event) => setSearchDraft(event.target.value)}
-              placeholder="Search by email, username, first, or last name"
-              value={searchDraft}
-            />
-          </label>
         </div>
 
         {usersQuery.isLoading ? (
@@ -119,103 +163,16 @@ export function RootAdminManageUsersPage() {
             )}
           </p>
         ) : (
-          <>
-            <div className="mt-5 overflow-x-auto">
-              <table className="min-w-full border-collapse text-left text-sm">
-                <thead>
-                  <tr className="border-b border-border text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    <th className="px-4 py-3 font-medium">User</th>
-                    <th className="px-4 py-3 font-medium">Email</th>
-                    <th className="px-4 py-3 font-medium">Account</th>
-                    <th className="px-4 py-3 font-medium">Root admin</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {usersQuery.data && usersQuery.data.items.length > 0 ? (
-                    usersQuery.data.items.map((user) => (
-                      <tr
-                        className="border-b border-border/70 align-top text-foreground"
-                        data-testid={`root-admin-manage-user-row-${user.id}`}
-                        key={user.id}
-                      >
-                        <td className="px-4 py-4">
-                          <Link
-                            className="font-medium text-primary transition hover:opacity-80"
-                            data-testid={`root-admin-manage-user-link-${user.id}`}
-                            to={`/users/${user.id}`}
-                          >
-                            {buildUserDisplayName(user)}
-                          </Link>
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            @{user.username}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 text-muted-foreground">
-                          {user.email}
-                        </td>
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
-                              user.isActive
-                                ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
-                                : 'border-border bg-background text-muted-foreground'
-                            }`}
-                          >
-                            {user.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
-                              user.isRootAdmin
-                                ? 'border-sky-300 bg-sky-50 text-sky-900'
-                                : 'border-border bg-background text-muted-foreground'
-                            }`}
-                          >
-                            {user.isRootAdmin ? 'Yes' : 'No'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td className="px-4 py-6 text-muted-foreground" colSpan={4}>
-                        No users matched the current search.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between gap-4 text-sm text-muted-foreground">
-              <p>
-                Page {usersQuery.data?.page ?? 1} of {totalPages}
-                {' · '}
-                {usersQuery.data?.total ?? 0} users
-              </p>
-              <div className="flex gap-2">
-                <button
-                  className="rounded-full border border-border px-3 py-1 font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                  data-testid="root-admin-manage-users-prev"
-                  disabled={page <= 1}
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  type="button"
-                >
-                  Previous
-                </button>
-                <button
-                  className="rounded-full border border-border px-3 py-1 font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                  data-testid="root-admin-manage-users-next"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((current) => current + 1)}
-                  type="button"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </>
+          <div className="mt-5">
+            <AdminDataGrid
+              columns={columns}
+              data={usersQuery.data.items}
+              emptyMessage="No users matched the current filters."
+              getRowId={(user) => user.id}
+              getRowLink={(user) => `/users/${user.id}`}
+              rowTestId={(user) => `root-admin-manage-user-row-${user.id}`}
+            />
+          </div>
         )}
       </section>
     </section>
