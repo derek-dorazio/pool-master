@@ -65,15 +65,19 @@ function createPrismaMock() {
     },
     leagueMembership: {
       count: jest.fn().mockResolvedValue(0),
+      findFirst: jest.fn().mockResolvedValue(null),
     },
     squadMembership: {
       count: jest.fn().mockResolvedValue(0),
+      findFirst: jest.fn().mockResolvedValue(null),
     },
     league: {
       count: jest.fn().mockResolvedValue(0),
+      findFirst: jest.fn().mockResolvedValue(null),
     },
     squad: {
       count: jest.fn().mockResolvedValue(0),
+      findFirst: jest.fn().mockResolvedValue(null),
     },
     $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<void>) => callback(tx)),
   } as any;
@@ -360,5 +364,44 @@ describe('admin user service', () => {
     await expect(
       service.deleteUser('user-9', 'linked@example.com', 'admin-1', 'admin@example.com'),
     ).rejects.toBeInstanceOf(UserDeleteDependenciesExistError);
+  });
+
+  it('pool-master-6nl describes the blocking team dependency when admin delete is rejected', async () => {
+    const { prisma } = createPrismaMock();
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-10',
+      email: 'team.owner@example.com',
+      isActive: false,
+      isRootAdmin: false,
+    });
+    prisma.squad.count.mockResolvedValue(1);
+    prisma.squad.findFirst.mockResolvedValue({
+      id: 'team-1',
+      name: 'Birdie Hunters',
+      league: {
+        id: 'league-1',
+        name: 'Masters League',
+        leagueCode: 'MASTERS',
+      },
+    });
+
+    const service = new UserService(prisma, createLogger() as any);
+
+    await expect(
+      service.deleteUser('user-10', 'team.owner@example.com', 'admin-1', 'admin@example.com'),
+    ).rejects.toMatchObject({
+      details: {
+        dependencyType: 'TEAM_OWNER',
+        team: {
+          id: 'team-1',
+          name: 'Birdie Hunters',
+        },
+        league: {
+          id: 'league-1',
+          name: 'Masters League',
+          leagueCode: 'MASTERS',
+        },
+      },
+    });
   });
 });

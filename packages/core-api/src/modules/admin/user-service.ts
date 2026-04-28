@@ -98,8 +98,26 @@ export class UserDeleteRequiresInactiveError extends Error {
   }
 }
 
+export type UserDeleteDependencyDetails = {
+  dependencyType:
+    | 'TEAM_OWNER'
+    | 'TEAM_MEMBER'
+    | 'LEAGUE_MEMBER'
+    | 'LEAGUE_CREATOR';
+  userId: string;
+  team?: {
+    id: string;
+    name: string;
+  };
+  league?: {
+    id: string;
+    name: string;
+    leagueCode: string;
+  };
+};
+
 export class UserDeleteDependenciesExistError extends Error {
-  constructor(userId: string) {
+  constructor(userId: string, readonly details?: UserDeleteDependencyDetails) {
     super(`Account still owns or belongs to league-scoped data: ${userId}`);
     this.name = 'UserDeleteDependenciesExistError';
   }
@@ -572,6 +590,13 @@ export class UserService {
       ]);
 
     if (leagueCount > 0 || squadMembershipCount > 0 || createdLeagueCount > 0 || createdSquadCount > 0) {
+      const dependencyDetails = await this.findDeleteDependencyDetails(userId, {
+        createdLeagueCount,
+        createdSquadCount,
+        leagueCount,
+        squadMembershipCount,
+      });
+
       this.logger?.warn({
         action: 'adminUserService.delete.dependenciesExist',
         data: {
@@ -580,9 +605,10 @@ export class UserService {
           squadMembershipCount,
           createdLeagueCount,
           createdSquadCount,
+          dependencyDetails,
         },
       }, 'Rejected delete due to remaining dependencies');
-      throw new UserDeleteDependenciesExistError(userId);
+      throw new UserDeleteDependenciesExistError(userId, dependencyDetails);
     }
 
     const trimmedReason = reason?.trim() || undefined;
@@ -618,6 +644,122 @@ export class UserService {
       action: 'adminUserService.delete.success',
       data: { userId },
     }, 'Deleted user');
+  }
+
+  private async findDeleteDependencyDetails(
+    userId: string,
+    counts: {
+      createdLeagueCount: number;
+      createdSquadCount: number;
+      leagueCount: number;
+      squadMembershipCount: number;
+    },
+  ): Promise<UserDeleteDependencyDetails | undefined> {
+    if (counts.createdSquadCount > 0) {
+      const team = await this.prisma.squad.findFirst({
+        where: { createdBy: userId },
+        select: {
+          id: true,
+          name: true,
+          league: {
+            select: {
+              id: true,
+              leagueCode: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (team) {
+        return {
+          dependencyType: 'TEAM_OWNER',
+          userId,
+          team: {
+            id: team.id,
+            name: team.name,
+          },
+          league: team.league,
+        };
+      }
+    }
+
+    if (counts.squadMembershipCount > 0) {
+      const membership = await this.prisma.squadMembership.findFirst({
+        where: { userId },
+        select: {
+          squad: {
+            select: {
+              id: true,
+              name: true,
+              league: {
+                select: {
+                  id: true,
+                  leagueCode: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (membership?.squad) {
+        return {
+          dependencyType: 'TEAM_MEMBER',
+          userId,
+          team: {
+            id: membership.squad.id,
+            name: membership.squad.name,
+          },
+          league: membership.squad.league,
+        };
+      }
+    }
+
+    if (counts.leagueCount > 0) {
+      const membership = await this.prisma.leagueMembership.findFirst({
+        where: { userId },
+        select: {
+          league: {
+            select: {
+              id: true,
+              leagueCode: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (membership?.league) {
+        return {
+          dependencyType: 'LEAGUE_MEMBER',
+          userId,
+          league: membership.league,
+        };
+      }
+    }
+
+    if (counts.createdLeagueCount > 0) {
+      const league = await this.prisma.league.findFirst({
+        where: { createdBy: userId },
+        select: {
+          id: true,
+          leagueCode: true,
+          name: true,
+        },
+      });
+
+      if (league) {
+        return {
+          dependencyType: 'LEAGUE_CREATOR',
+          userId,
+          league,
+        };
+      }
+    }
+
+    return undefined;
   }
 }
 

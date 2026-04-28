@@ -248,7 +248,7 @@ export async function adminModule(
     schema: {
       tags: ['Admin'],
       summary: 'Delete an inactive user account as root admin',
-      description: 'Permanently deletes an inactive user account after confirming the exact email. Stable UI-handled errors include 404 USER_NOT_FOUND, 400 ACCOUNT_DELETE_CONFIRMATION_MISMATCH, 409 ACCOUNT_DELETE_REQUIRES_INACTIVE, 409 ACCOUNT_DELETE_DEPENDENCIES_EXIST, and 409 LAST_ROOT_ADMIN.',
+      description: 'Permanently deletes an inactive user account after confirming the exact email. Stable UI-handled errors include 404 USER_NOT_FOUND, 400 ACCOUNT_DELETE_CONFIRMATION_MISMATCH, 409 ACCOUNT_DELETE_REQUIRES_INACTIVE, 409 ACCOUNT_DELETE_DEPENDENCIES_EXIST, and 409 LAST_ROOT_ADMIN. ACCOUNT_DELETE_DEPENDENCIES_EXIST may include structured dependency details naming the blocking league and team so admins can navigate to resolve ownership before retrying.',
       operationId: 'adminDeleteUser',
       body: zodToJsonSchema(AdminDeleteUserRequestSchema),
       response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 404, 409]),

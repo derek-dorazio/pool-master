@@ -229,7 +229,7 @@ export function createUserHandlers(userService: UserService) {
         return sendError(reply, 409, 'ACCOUNT_DELETE_REQUIRES_INACTIVE', err.message);
       }
       if (err instanceof UserDeleteDependenciesExistError) {
-        return sendError(reply, 409, 'ACCOUNT_DELETE_DEPENDENCIES_EXIST', err.message);
+        return sendError(reply, 409, 'ACCOUNT_DELETE_DEPENDENCIES_EXIST', err.message, err.details);
       }
       if (err instanceof LastRootAdminError) {
         return sendError(reply, 409, 'LAST_ROOT_ADMIN', err.message);
