@@ -174,6 +174,66 @@ describe('MockContestFeedAdapter', () => {
     const health = await adapter.healthCheck();
     expect(health.status).toBe('HEALTHY');
   });
+
+  it('pool-master-s4y: resolves historical relative manual-test event details after provider list rolls forward', async () => {
+    const historicalEventId = 'golf-relative-manual-test-20260426t214000z';
+    const relativeScenarioResponse = {
+      scenarios: [{ scenarioId: 'golf-relative-today', sport: 'GOLF' }],
+    };
+    const rolledEventListResponse = {
+      scenarioId: 'golf-relative-today',
+      events: [
+        {
+          eventId: 'golf-relative-manual-test-20260426t230500z',
+          name: 'Manual Test Golf Tournament for 2026-04-26T23:05:00.000Z',
+          status: 'field_announced',
+          startsAt: '2026-04-26T23:05:00.000Z',
+          endsAt: '2026-04-26T23:25:00.000Z',
+          releaseAt: '2026-04-26T22:20:00.000Z',
+          fieldLocksAt: '2026-04-26T22:45:00.000Z',
+          fieldStatus: 'announced',
+          contestantCount: 2,
+        },
+      ],
+    };
+    const historicalDetailResponse = {
+      ...eventDetailResponse,
+      scenarioId: 'golf-relative-today',
+      event: {
+        ...eventDetailResponse.event,
+        eventId: historicalEventId,
+        name: 'Manual Test Golf Tournament for 2026-04-26T21:40:00.000Z',
+        metadata: {
+          ...eventDetailResponse.event.metadata,
+          eventType: 'relative-manual-test',
+          externalEventId: historicalEventId,
+        },
+      },
+    };
+
+    global.fetch = jest.fn(async (input: string | URL) => {
+      const url = String(input);
+
+      if (url.endsWith('/v1/scenarios')) {
+        return okJson(relativeScenarioResponse);
+      }
+      if (url.endsWith('/v1/scenarios/golf-relative-today/events')) {
+        return okJson(rolledEventListResponse);
+      }
+      if (url.endsWith(`/v1/pre-event/scenarios/golf-relative-today/events/${historicalEventId}/detail`)) {
+        return okJson(historicalDetailResponse);
+      }
+
+      throw new Error(`Unhandled fetch URL: ${url}`);
+    }) as typeof fetch;
+
+    const adapter = new MockContestFeedAdapter('http://mock-contest-feed-provider.qa.poolmaster.internal:3105');
+
+    const detail = await adapter.getEventDetails(historicalEventId);
+
+    expect(detail?.externalId).toBe(historicalEventId);
+    expect(detail?.participants).toHaveLength(2);
+  });
 });
 
 function okJson(body: unknown): Response {

@@ -839,6 +839,25 @@ function toEventIdTimestamp(date: Date): string {
     .toLowerCase();
 }
 
+function parseManualTestEventStartsAt(eventId: string): Date | null {
+  const match = /^golf-relative-manual-test-(\d{8})t(\d{6})z$/.exec(eventId);
+  if (!match) {
+    return null;
+  }
+
+  const [, datePart, timePart] = match;
+  const startsAt = new Date(
+    `${datePart.slice(0, 4)}-${datePart.slice(4, 6)}-${datePart.slice(6, 8)}`
+      + `T${timePart.slice(0, 2)}:${timePart.slice(2, 4)}:${timePart.slice(4, 6)}.000Z`,
+  );
+
+  if (Number.isNaN(startsAt.getTime())) {
+    return null;
+  }
+
+  return startsAt;
+}
+
 function resolveManualLifecyclePhase(input: {
   readonly now: Date;
   readonly fieldLocksAt: Date;
@@ -1208,7 +1227,8 @@ export class ScenarioStore {
 
   public getEvent(scenarioId: string, eventId: string): ContestFeedEventRecord {
     const scenario = this.getScenario(scenarioId);
-    const event = scenario.events.find((item) => item.eventId === eventId);
+    const event = scenario.events.find((item) => item.eventId === eventId)
+      ?? this.buildHistoricalManualTestEvent(scenario, eventId);
     if (!event) {
       this.logger?.warn(
         { action: 'mockScenarioStore.getEvent.notFound', data: { scenarioId, eventId } },
@@ -1222,6 +1242,35 @@ export class ScenarioStore {
         data: { scenarioId, eventId, event: summarizeEvent(event, scenario.sport) },
       },
       'Loaded mock contest-feed event',
+    );
+    return event;
+  }
+
+  private buildHistoricalManualTestEvent(
+    scenario: ContestFeedScenarioRecord,
+    eventId: string,
+  ): ContestFeedEventRecord | null {
+    if (scenario.scenarioId !== 'golf-relative-today') {
+      return null;
+    }
+
+    const startsAt = parseManualTestEventStartsAt(eventId);
+    if (!startsAt) {
+      return null;
+    }
+
+    const anchor = new Date(startsAt.getTime() - manualTestPhaseMs * 2);
+    const event = normalizeGolfEvent(buildManualTestLifecycleEvent(anchor, this.currentNow()));
+    this.logger?.info(
+      {
+        action: 'mockScenarioStore.getEvent.historicalManualTest',
+        data: {
+          scenarioId: scenario.scenarioId,
+          eventId,
+          startsAt: startsAt.toISOString(),
+        },
+      },
+      'Reconstructed historical mock manual-test event',
     );
     return event;
   }

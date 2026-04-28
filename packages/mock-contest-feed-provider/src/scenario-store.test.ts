@@ -157,6 +157,26 @@ test('pool-master-xw5.5: ScenarioStore includes generated relative today events 
   assert.equal(nextCycleEvents[0]?.status, 'field_announced');
 });
 
+test('pool-master-s4y: old relative manual-test event ids remain detail-resolvable after cycle rollover', () => {
+  let currentNow = new Date('2026-04-26T21:00:00.000Z');
+  const store = new ScenarioStore(
+    scenarioDir,
+    undefined,
+    { now: () => currentNow },
+  );
+
+  const originalEventId = 'golf-relative-manual-test-20260426t214000z';
+  assert.equal(store.getEventResponse('golf-relative-today', originalEventId).event.eventId, originalEventId);
+
+  currentNow = new Date('2026-04-26T22:25:00.000Z');
+  assert.equal(store.listEvents('golf-relative-today')[0]?.eventId, 'golf-relative-manual-test-20260426t230500z');
+
+  const originalDetail = store.getEventResponse('golf-relative-today', originalEventId);
+  assert.equal(originalDetail.event.eventId, originalEventId);
+  assert.equal(originalDetail.event.name, 'Manual Test Golf Tournament for 2026-04-26T21:40:00.000Z');
+  assert.equal(originalDetail.event.field.contestants.length, 80);
+});
+
 test('ScenarioStore rejects new contestants in deltas unless they include a name', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'mock-feed-scenario-'));
 

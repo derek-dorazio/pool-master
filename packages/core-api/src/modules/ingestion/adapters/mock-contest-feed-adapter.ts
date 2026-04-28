@@ -331,6 +331,9 @@ export class MockContestFeedAdapter implements SportDataProvider {
     eventId: string,
   ): Promise<{ scenarioId: string } | null> {
     const scenarios = await this.fetchJson<ScenarioSummaryResponse>('/v1/scenarios');
+    const relativeTodayScenario = scenarios.scenarios.find(
+      (scenario) => scenario.scenarioId === 'golf-relative-today',
+    );
 
     for (const scenario of scenarios.scenarios) {
       const events = await this.fetchJson<EventListResponse>(
@@ -340,6 +343,10 @@ export class MockContestFeedAdapter implements SportDataProvider {
       if (events.events.some((event) => event.eventId === eventId)) {
         return { scenarioId: scenario.scenarioId };
       }
+    }
+
+    if (relativeTodayScenario && isRelativeManualTestEventId(eventId)) {
+      return { scenarioId: relativeTodayScenario.scenarioId };
     }
 
     return null;
@@ -353,6 +360,10 @@ export class MockContestFeedAdapter implements SportDataProvider {
 
     return (await response.json()) as T;
   }
+}
+
+function isRelativeManualTestEventId(eventId: string): boolean {
+  return /^golf-relative-manual-test-\d{8}t\d{6}z$/.test(eventId);
 }
 
 function toDomainSport(sport: SupportedMockSport): Sport {
