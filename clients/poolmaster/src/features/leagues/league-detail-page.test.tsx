@@ -64,6 +64,7 @@ function renderLeagueDetailPage() {
               element={<div data-testid="contest-page" />}
               path="/league/:leagueCode/contests/:contestId"
             />
+            <Route element={<div data-testid="manage-leagues-page" />} path="/manage/leagues" />
             <Route element={<div data-testid="welcome-page" />} path="/welcome" />
           </Routes>
         </MemoryRouter>
@@ -486,5 +487,26 @@ describe('LeagueDetailPage', () => {
         body: { leagueCode: 'BIGDAWGS' },
       }),
     );
+  });
+
+  it('pool-master-hna returns root admins to Manage Leagues after deleting an inactive league', async () => {
+    primeCommonMocks({ isActive: false, isRootAdmin: true });
+    deleteLeagueMock.mockResolvedValue({
+      data: {
+        success: true,
+      },
+    });
+
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByTestId('league-delete-open'));
+    expect(await screen.findByTestId('league-delete-modal')).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('league-delete-confirmation'), {
+      target: { value: 'BIGDAWGS' },
+    });
+    fireEvent.click(screen.getByTestId('league-delete-submit'));
+
+    expect(await screen.findByTestId('manage-leagues-page')).toBeVisible();
   });
 });

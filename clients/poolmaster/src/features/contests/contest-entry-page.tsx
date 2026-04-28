@@ -932,57 +932,6 @@ export function ContestEntryPage() {
             )}
           </div>
 
-          <div className="rounded-[2rem] border border-border bg-card p-6">
-            <h3 className="text-xl font-semibold">Selection progress</h3>
-            <div className="mt-5 space-y-3">
-              {selectionGroups.map((group) => {
-                const selectedParticipants = getSelectedParticipants(group);
-                return (
-                  <div
-                    className="rounded-[1.5rem] border border-border bg-background p-4"
-                    data-testid={`contest-entry-summary-group-${group.groupId}`}
-                    key={group.groupId}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="font-medium text-foreground">{group.groupName}</div>
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          {selectedParticipants.length} of {group.picksFromGroup} saved
-                        </div>
-                      </div>
-                      <span className="rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                        Tier {group.groupNumber}
-                      </span>
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      {selectedParticipants.length ? (
-                        selectedParticipants.map((participant) => (
-                          <div
-                            className="rounded-2xl border border-border bg-card px-4 py-3"
-                            data-testid={`contest-entry-selected-${group.groupId}-${participant.sportEventParticipantId}`}
-                            key={participant.sportEventParticipantId}
-                          >
-                            <div className="font-medium text-foreground">{participant.participantName}</div>
-                            <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                              {getParticipantMetaSummary(participant).length
-                                ? getParticipantMetaSummary(participant).map((part) => (
-                                  <span key={`${participant.sportEventParticipantId}-${part}`}>{part}</span>
-                                ))
-                                : <span>Currently on this entry</span>}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          No golfer is saved from this tier yet.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
         <div className="rounded-[2rem] border border-border bg-card p-6">
@@ -1002,7 +951,11 @@ export function ContestEntryPage() {
 
               return (
                 <section
-                  className="rounded-[1.75rem] border border-border bg-background p-4"
+                  className={`rounded-[1.75rem] border bg-background p-4 ${
+                    isComplete
+                      ? 'border-border'
+                      : 'border-amber-300 bg-amber-50/40'
+                  }`}
                   data-testid={`contest-entry-group-${group.groupId}`}
                   key={group.groupId}
                 >
@@ -1034,7 +987,13 @@ export function ContestEntryPage() {
                       ) : null}
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <span className="rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                      <span
+                        className={`rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${
+                          isComplete
+                            ? 'border-border text-muted-foreground'
+                            : 'border-amber-300 bg-amber-100 text-amber-900'
+                        }`}
+                      >
                         {statusLabel}
                       </span>
                       <span className="text-sm text-muted-foreground">

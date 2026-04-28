@@ -342,7 +342,8 @@ export function LeagueDetailPage() {
       queryClient.setQueryData(['poolmaster', 'leagues'], (current: LeagueSummary[] | undefined) =>
         removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
       );
-      void navigate('/welcome');
+      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'root-admin', 'manage-leagues'] });
+      void navigate(auth.isRootAdmin ? '/manage/leagues' : '/welcome');
     },
   });
 

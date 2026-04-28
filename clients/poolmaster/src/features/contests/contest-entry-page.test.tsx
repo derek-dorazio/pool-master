@@ -381,6 +381,8 @@ describe('ContestEntryPage', () => {
     renderContestEntryPage();
 
     expect(await screen.findByText('Build your lineup')).toBeInTheDocument();
+    expect(screen.queryByText('Selection progress')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-group-tier-1')).toHaveClass('border-amber-300');
     expect(screen.getByTestId('contest-entry-back-to-contest')).toHaveAttribute(
       'href',
       '/league/BIGDAWGS/contests/contest-1',
@@ -501,9 +503,6 @@ describe('ContestEntryPage', () => {
     expect(screen.getByTestId('contest-entry-readonly-tiebreaker')).toHaveTextContent(
       'Winning score relative to par: -12',
     );
-    expect(screen.getByTestId('contest-entry-selected-tier-1-sep-1')).toHaveTextContent(
-      'Scottie Scheffler',
-    );
     expect(screen.getByTestId('contest-entry-locked-participant-tier-1-sep-1')).toHaveTextContent(
       'Scottie Scheffler',
     );
@@ -578,10 +577,10 @@ describe('ContestEntryPage', () => {
         },
       }),
     );
-    expect(await screen.findByTestId('contest-entry-selected-tier-1-sep-3')).toHaveTextContent(
-      'Jordan Spieth',
+    await waitFor(() =>
+      expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toHaveTextContent('Jordan Spieth'),
     );
-    expect(screen.queryByTestId('contest-entry-selected-tier-1-sep-2')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).not.toHaveTextContent('Rory McIlroy');
 
     fireEvent.click(screen.getByTestId('contest-entry-group-toggle-tier-1'));
     const scottieButton = screen.getByTestId('contest-entry-participant-sep-1');
@@ -600,7 +599,7 @@ describe('ContestEntryPage', () => {
       }),
     );
     await waitFor(() => expect(screen.getByText('1/2 saved')).toBeInTheDocument());
-    expect(screen.queryByTestId('contest-entry-selected-tier-1-sep-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-participant-sep-1')).toHaveTextContent('Select golfer');
   });
 
   // pool-master-nt3 — entry selection must give immediate visual feedback while the save is in flight.
