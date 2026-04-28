@@ -163,9 +163,14 @@ function toContestConfigurationDetailDto(
 
 export function toContestListResponse(
   contests: ContestRow[],
+  entryCounts?: Map<string, number>,
 ): ContestListResponse {
   return {
-    contests: contests.map((c) => toContestSummaryDto(c)),
+    contests: contests.map((c) =>
+      toContestSummaryDto(c, {
+        entryCount: entryCounts?.get(c.id),
+      }),
+    ),
   };
 }
 

@@ -170,8 +170,13 @@ export function createContestHandlers(contestService: ContestService) {
     const logger = createRequestContextLogger(request);
     logger.debug({ leagueId: request.params.id }, 'contest list route start');
     const contests = await contestService.listByLeague(request.params.id);
-    logger.info({ leagueId: request.params.id, contestCount: contests.length }, 'contest list route completed');
-    return toContestListResponse(contests);
+    const entryCounts = await contestService.countEntriesByContest(contests.map((contest) => contest.id));
+    logger.info({
+      leagueId: request.params.id,
+      contestCount: contests.length,
+      entryCount: Array.from(entryCounts.values()).reduce((sum, count) => sum + count, 0),
+    }, 'contest list route completed');
+    return toContestListResponse(contests, entryCounts);
   }
 
   async function getContest(

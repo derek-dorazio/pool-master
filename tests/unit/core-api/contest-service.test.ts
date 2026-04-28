@@ -389,6 +389,42 @@ describe('ContestService', () => {
       const result = await service.listByLeague('league-1');
       expect(result).toHaveLength(2);
     });
+
+    it('pool-master-d0v counts entries for league contest summaries', async () => {
+      const [firstContest, secondContest] = [
+        buildContest({ id: 'contest-1' }),
+        buildContest({ id: 'contest-2' }),
+      ];
+      const contestRepo = createMockContestRepo({
+        findByLeague: jest.fn().mockResolvedValue([firstContest, secondContest]),
+      });
+      const entryRepo = createMockEntryRepo({
+        findByContest: jest.fn()
+          .mockResolvedValueOnce([
+            { id: 'entry-1' },
+            { id: 'entry-2' },
+          ])
+          .mockResolvedValueOnce([{ id: 'entry-3' }]),
+      });
+      const service = new ContestService(
+        contestRepo,
+        createMockContestConfigurationRepo(),
+        createMockMembershipRepo(),
+        createMockLeagueRepo(),
+        undefined,
+        undefined,
+        entryRepo,
+      );
+
+      const counts = await service.countEntriesByContest(['contest-1', 'contest-2']);
+
+      expect(counts).toEqual(new Map([
+        ['contest-1', 2],
+        ['contest-2', 1],
+      ]));
+      expect(entryRepo.findByContest).toHaveBeenCalledWith('contest-1');
+      expect(entryRepo.findByContest).toHaveBeenCalledWith('contest-2');
+    });
   });
 
   describe('getContest', () => {

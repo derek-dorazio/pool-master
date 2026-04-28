@@ -153,6 +153,26 @@ export class ContestService {
     return this.contestRepo.findByLeague(leagueId);
   }
 
+  async countEntriesByContest(contestIds: string[]): Promise<Map<string, number>> {
+    const counts = new Map(contestIds.map((contestId) => [contestId, 0]));
+    if (!contestIds.length || !this.entryRepo) {
+      return counts;
+    }
+
+    const entryLists = await Promise.all(
+      contestIds.map(async (contestId) => ({
+        contestId,
+        entries: await this.entryRepo!.findByContest(contestId),
+      })),
+    );
+
+    for (const { contestId, entries } of entryLists) {
+      counts.set(contestId, entries.length);
+    }
+
+    return counts;
+  }
+
   /** Updates a contest. Only allowed when status is DRAFT. */
   async updateContest(
     contestId: string,
