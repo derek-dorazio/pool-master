@@ -77,7 +77,7 @@ export interface IngestionScheduleConfigReader {
 export interface IngestionScheduledEventReader {
   listEventIdsForFeed(input: {
     sport: Sport;
-    feed: 'EVENTLIVESCORES' | 'EVENTRESULTS';
+    feed: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
     now: Date;
   }): Promise<string[]>;
 }
@@ -396,16 +396,45 @@ export class IngestionScheduler {
     }
 
     const now = this.getNow();
-    const leadDays = config.eventParticipants.leadDaysBeforeStart ?? config.eventSchedule.lookaheadDays ?? 7;
+    const participantLeadDays = config.eventParticipants.leadDaysBeforeStart ?? 7;
+    const scheduleLookaheadDays = config.eventSchedule.lookaheadDays ?? 30;
+    const lookaheadDays = Math.max(scheduleLookaheadDays, participantLeadDays);
     const from = now;
-    const to = addDays(now, leadDays);
+    const to = addDays(now, lookaheadDays);
     this.logger?.debug({
       sport,
       from: from.toISOString(),
       to: to.toISOString(),
-      leadDays,
+      participantLeadDays,
+      scheduleLookaheadDays,
+      lookaheadDays,
     }, 'Running configured sport participant sync');
     await this.runFieldSync(sport, from, to);
+    await this.runConfiguredActiveFieldSync(sport);
+  }
+
+  private async runConfiguredActiveFieldSync(sport: Sport): Promise<void> {
+    const eventReader = this.options.eventReader;
+    if (!eventReader) {
+      this.logger?.debug({ sport }, 'Skipping active event participant sync because no event reader is configured');
+      return;
+    }
+
+    const eventIds = await eventReader.listEventIdsForFeed({
+      sport,
+      feed: 'EVENTPARTICIPANTS',
+      now: this.getNow(),
+    });
+
+    this.logger?.debug({
+      sport,
+      eventCount: eventIds.length,
+      eventIds,
+    }, 'Resolved active event participant sync candidates');
+
+    for (const eventId of eventIds) {
+      await this.runEventFieldSync(sport, eventId);
+    }
   }
 
   private async runConfiguredSportRankingSync(sport: Sport): Promise<void> {

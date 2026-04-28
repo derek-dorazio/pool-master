@@ -120,11 +120,16 @@ Scheduled range:
 
 ```text
 from = now
-to = now + eventParticipants.leadDaysBeforeStart
+to = now + max(eventSchedule.lookaheadDays, eventParticipants.leadDaysBeforeStart)
 ```
 
-If `leadDaysBeforeStart` is not configured, the scheduler falls back to
-`eventSchedule.lookaheadDays`, then `7`.
+If `eventSchedule.lookaheadDays` is not configured, scheduled participant sync
+uses `30`. If `leadDaysBeforeStart` is not configured, it uses `7`.
+
+After the future-window sweep, scheduled participant sync also asks PoolMaster
+for persisted `IN_PROGRESS` sport events for the same sport/provider and runs
+event-level participant hydration for each one. This keeps fields refreshed for
+active/live events whose start time is already in the past.
 
 For each hydrated event detail, Core API persists:
 
@@ -263,12 +268,12 @@ Default assumptions for this table:
 
 | Event ID | Provider state | Provider timing | Schedule sync | Participant sync | Intended contest creation window | Scheduled live scores |
 |---|---|---|---|---|---|---|
-| `golf-relative-manual-test-<startDateTime>` | dynamic | Named `Manual Test Golf Tournament for <startDateTime>`; mock-clock anchored: 20 minutes contest-eligible/open, 20 minutes field locked, 20 minutes `in_progress`, 20 minutes `completed`, then the next provider call starts a new cycle | Included while start is in `now..now+30d` | Included while start is in `now..now+7d` | Eligible during the first 20 minutes of each cycle, blocked once the field-lock phase begins | Yes, after a sync persists the event as `IN_PROGRESS`; returns 80 deterministic randomized golf score stats during the 20-minute live window |
+| `golf-relative-manual-test-<startDateTime>` | dynamic | Named `Manual Test Golf Tournament for <startDateTime>`; mock-clock anchored: 20 minutes contest-eligible/open, 20 minutes field locked, 20 minutes `in_progress`, 20 minutes `completed`, then the next provider call starts a new cycle | Included while start is in `now..now+30d` | Included while start is in `now..now+30d`; active persisted events are also refreshed after they become `IN_PROGRESS` | Eligible during the first 20 minutes of each cycle, blocked once the field-lock phase begins | Yes, after a sync persists the event as `IN_PROGRESS`; returns 80 deterministic randomized golf score stats during the 20-minute live window |
 | `golf-relative-locked-tomorrow` | `field_announced` | Starts tomorrow at 12:00 UTC; lock was 1 hour ago | Included | Included | Blocked because field is locked | No, because persisted status maps to `SCHEDULED` |
 | `golf-relative-ready-5d` | `field_announced` | Starts at 12:00 UTC about 5 days out; released yesterday; locks about 1 day before start | Included | Included | Eligible after participants are loaded and until lock time | No, because persisted status maps to `SCHEDULED` |
-| `golf-relative-field-pending-6d` | `scheduled` | Starts at 12:00 UTC about 6 days out; releases about 2 days from now; locks about 1 day before start | Included | Included while inside the 7-day lead window | Blocked until `releaseAt`; after release it can become eligible if participants are loaded and not locked | No, because persisted status maps to `SCHEDULED` |
-| `golf-relative-participant-boundary-7d` | `field_announced` | Starts at 12:00 UTC about 7 days out; released yesterday; locks about 1 day before start | Included | Boundary case for the 7-day participant window | Eligible after participants are loaded and until lock time | No, because persisted status maps to `SCHEDULED` |
-| `golf-relative-schedule-boundary-30d` | `scheduled` | Starts at 11:00 UTC about 30 days out; releases about 22 days from now; locks about 1 day before start | Boundary case for the 30-day schedule window | Not included until it enters the participant lead window | Blocked until release and participant load | No, because persisted status maps to `SCHEDULED` |
+| `golf-relative-field-pending-6d` | `scheduled` | Starts at 12:00 UTC about 6 days out; releases about 2 days from now; locks about 1 day before start | Included | Included | Blocked until `releaseAt`; after release it can become eligible if participants are loaded and not locked | No, because persisted status maps to `SCHEDULED` |
+| `golf-relative-participant-boundary-7d` | `field_announced` | Starts at 12:00 UTC about 7 days out; released yesterday; locks about 1 day before start | Included | Included | Eligible after participants are loaded and until lock time | No, because persisted status maps to `SCHEDULED` |
+| `golf-relative-schedule-boundary-30d` | `scheduled` | Starts at 11:00 UTC about 30 days out; releases about 22 days from now; locks about 1 day before start | Boundary case for the 30-day schedule window | Boundary case for the 30-day participant window | Blocked until release and participant load | No, because persisted status maps to `SCHEDULED` |
 
 Boundary note: because the scheduler computes `to = now + N days` using the
 current timestamp, not end-of-day, UTC-day generated boundary events can sit just
@@ -303,8 +308,9 @@ provider phase changes.
 For a healthy QA sync run with the mock provider:
 
 1. Schedule sync should import events in the configured lookahead window.
-2. Participant sync should hydrate event details for events in the lead window
-   and persist an 80-player golf field for each generated golf event.
+2. Participant sync should hydrate event details for events in the schedule
+   lookahead window, refresh persisted `IN_PROGRESS` events, and persist an
+   80-player golf field for each generated golf event.
 3. Ranking sync should return the mock golf rankings once participant mappings
    exist.
 4. The scheduled live-score loop should poll only persisted `IN_PROGRESS` events

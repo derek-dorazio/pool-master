@@ -84,4 +84,30 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
       },
     });
   });
+
+  it('pool-master-0pd lists in-progress events for scheduled participant hydration', async () => {
+    const prisma = createPrisma();
+    const registry = {
+      getProvider: jest.fn().mockReturnValue({ providerId: 'mock-contest-feed' }),
+    };
+    const reader = createScheduledEventReader({ prisma: prisma as never, registry: registry as never });
+
+    await reader.listEventIdsForFeed({
+      sport: 'GOLF' as Sport,
+      feed: 'EVENTPARTICIPANTS',
+      now: new Date('2026-04-26T22:30:00.000Z'),
+    });
+
+    expect(prisma.sportEvent.findMany).toHaveBeenCalledWith({
+      where: {
+        sport: 'GOLF',
+        providerId: 'mock-contest-feed',
+        externalId: { not: '' },
+        status: { in: ['IN_PROGRESS'] },
+      },
+      select: {
+        externalId: true,
+      },
+    });
+  });
 });

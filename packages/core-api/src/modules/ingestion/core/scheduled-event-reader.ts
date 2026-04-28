@@ -36,9 +36,9 @@ export function createScheduledEventReader({
             not: '',
           },
           status: {
-            in: feed === 'EVENTLIVESCORES'
-              ? ['IN_PROGRESS']
-              : ['COMPLETED', 'OFFICIAL'],
+            in: feed === 'EVENTRESULTS'
+              ? ['COMPLETED', 'OFFICIAL']
+              : ['IN_PROGRESS'],
           },
           ...(feed === 'EVENTRESULTS'
             ? { updatedAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) } }
