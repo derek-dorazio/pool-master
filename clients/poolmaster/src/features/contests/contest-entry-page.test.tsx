@@ -385,6 +385,7 @@ describe('ContestEntryPage', () => {
       'href',
       '/league/BIGDAWGS/contests/contest-1',
     );
+    expect(screen.queryByTestId('contest-entry-view-team-link')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-tiebreaker-select')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toBeInTheDocument();
     expect(screen.queryByText('Rory McIlroy')).not.toBeInTheDocument();

@@ -15,7 +15,6 @@ import {
 import {
   buildLeagueContestPath,
   buildLeaguePath,
-  buildLeagueTeamPath,
 } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
@@ -718,7 +717,6 @@ export function ContestEntryPage() {
     ? buildLeagueContestPath(backLeagueCode, contestId)
     : `/contests/${contestId}`;
   const backToLeaguePath = backLeagueCode ? buildLeaguePath(backLeagueCode) : '/welcome';
-  const teamPath = backLeagueCode ? buildLeagueTeamPath(backLeagueCode) : null;
   const entrySummary = contestEntriesQuery.data?.entries.find((entry) => entry.id === entryId) ?? null;
   const myEntryIds = contestEntriesQuery.data?.myEntryIds ?? [];
   const isMyEntry = myEntryIds.includes(entryId);
@@ -932,16 +930,6 @@ export function ContestEntryPage() {
                 This entry is not part of your current team context.
               </div>
             )}
-
-            {teamPath ? (
-              <Link
-                className="mt-4 inline-flex rounded-2xl border border-border px-4 py-3 text-sm font-medium"
-                data-testid="contest-entry-view-team-link"
-                to={teamPath}
-              >
-                View team home
-              </Link>
-            ) : null}
           </div>
 
           <div className="rounded-[2rem] border border-border bg-card p-6">
