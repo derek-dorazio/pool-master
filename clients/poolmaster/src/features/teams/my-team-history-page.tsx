@@ -20,15 +20,12 @@ import {
   setRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
+import { isHistoricalContest } from '@/features/contests/contest-status';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 type ContestSummary = ListContestsResponses[200]['contests'][number];
 type ContestEntrySummary = ListContestEntriesResponses[200]['entries'][number];
-
-function isHistoricalContest(status: ContestSummary['status']) {
-  return status === 'COMPLETED' || status === 'CANCELLED';
-}
 
 export function MyTeamHistoryPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();

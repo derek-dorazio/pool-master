@@ -190,8 +190,9 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     schema: {
       tags: ['Contests'],
       summary: 'Get the current user contest entry',
+      deprecated: true,
       description:
-        'Returns the contest entry owned by the authenticated user when one exists for the target contest.',
+        'Deprecated legacy helper. New clients should use listContestEntries and filter entries by squadId/client context; this operation remains for older clients through the next release boundary.',
       operationId: 'getMyContestEntry',
       response: {
         200: zodToJsonSchema(MyContestEntryResponseSchema),

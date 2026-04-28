@@ -17086,7 +17086,8 @@
         "tags": [
           "Contests"
         ],
-        "description": "Returns the contest entry owned by the authenticated user when one exists for the target contest.",
+        "description": "Deprecated legacy helper. New clients should use listContestEntries and filter entries by squadId/client context; this operation remains for older clients through the next release boundary.",
+        "deprecated": true,
         "parameters": [
           {
             "schema": {

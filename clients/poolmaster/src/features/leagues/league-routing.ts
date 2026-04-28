@@ -21,10 +21,6 @@ export function buildLeagueTeamsPath(leagueCode: string) {
   return `/league/${leagueCode}/teams`;
 }
 
-export function buildLeagueEntriesPath(leagueCode: string) {
-  return `/league/${leagueCode}/entries`;
-}
-
 export function buildLeagueHistoryPath(leagueCode: string) {
   return `/league/${leagueCode}/history`;
 }
@@ -69,6 +65,8 @@ export function getRecentLeagueCode() {
   return readCookie(RECENT_LEAGUE_COOKIE);
 }
 
+// Keep this signal fresh from league-scoped route entry points (selector, League Home,
+// Contest Board, contest management, My Team, joins) so deep links retain context.
 export function setRecentLeagueCode(leagueCode: string) {
   if (typeof document === 'undefined') {
     return;

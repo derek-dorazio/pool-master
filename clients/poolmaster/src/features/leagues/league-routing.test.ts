@@ -6,7 +6,6 @@ import {
   buildLeagueContestEntryPath,
   buildLeagueContestsManagePath,
   buildLeagueContestsPath,
-  buildLeagueEntriesPath,
   buildLeagueHistoryPath,
   buildLeagueTeamHomePath,
   getLeagueSelectorOptions,
@@ -92,7 +91,6 @@ describe('league routing helpers', () => {
     expect(buildLeagueTeamHomePath('BIGDOGS', 'team-1')).toBe(
       '/league/BIGDOGS/teams/team-1',
     );
-    expect(buildLeagueEntriesPath('BIGDOGS')).toBe('/league/BIGDOGS/entries');
     expect(buildLeagueHistoryPath('BIGDOGS')).toBe('/league/BIGDOGS/history');
     expect(buildLeagueContestsPath('BIGDOGS')).toBe('/league/BIGDOGS/contests');
     expect(buildLeagueContestsManagePath('BIGDOGS')).toBe(

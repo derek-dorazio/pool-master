@@ -22,6 +22,7 @@ import {
 } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
+import { shouldPollContestEntries } from './contest-status';
 
 type ContestDetail = GetContestResponses[200]['contest'];
 type ContestEntryDetail = ListContestEntriesResponses[200]['entries'][number];
@@ -201,6 +202,7 @@ export function ContestDetailPage() {
     },
     enabled: Boolean(contestId),
     retry: false,
+    refetchInterval: shouldPollContestEntries(contestQuery.data?.status) ? 30_000 : false,
   });
 
   const leagueId = contestQuery.data?.leagueId ?? '';

@@ -757,7 +757,9 @@ export const leaveContest = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Get the current user contest entry
  *
- * Returns the contest entry owned by the authenticated user when one exists for the target contest.
+ * Deprecated legacy helper. New clients should use listContestEntries and filter entries by squadId/client context; this operation remains for older clients through the next release boundary.
+ *
+ * @deprecated
  */
 export const getMyContestEntry = <ThrowOnError extends boolean = false>(options: Options<GetMyContestEntryData, ThrowOnError>) => (options.client ?? client).get<GetMyContestEntryResponses, GetMyContestEntryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
