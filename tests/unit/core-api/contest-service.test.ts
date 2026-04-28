@@ -211,6 +211,7 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
     contestPick: { count: jest.fn().mockResolvedValue(0) },
     bracketPrediction: { count: jest.fn().mockResolvedValue(0) },
     draftPickHistory: { count: jest.fn().mockResolvedValue(0) },
+    sportEventParticipant: { count: jest.fn().mockResolvedValue(1) },
     user: { findUnique: jest.fn().mockResolvedValue(user) },
     contestConfiguration: { findUnique: jest.fn().mockResolvedValue({ maxEntriesPerSquad: 1 }) },
     ...overrides,
@@ -552,6 +553,59 @@ describe('ContestService', () => {
 
       await expect(service.createEntry('contest-1', 'user-1')).rejects.toMatchObject({
         code: 'CONTEST_ENTRY_LIMIT_REACHED',
+      });
+      expect(entryRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('pool-master-284 rejects contest entry creation when the event field has not synced', async () => {
+      const contest = buildContest({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        sportEventId: 'sport-event-1',
+        status: ContestStatus.OPEN,
+      });
+      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
+      const contestRepo = createMockContestRepo({
+        findById: jest.fn().mockResolvedValue(contest),
+      });
+      const membershipRepo = createMockMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
+      });
+      const squadMembershipRepo = createMockSquadMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue({
+          id: 'squad-membership-1',
+          squadId: 'squad-1',
+          leagueId: 'league-1',
+          userId: 'user-1',
+          status: SquadMembershipStatus.ACTIVE,
+          joinedAt: new Date('2026-01-01'),
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-01'),
+        }),
+      });
+      const entryRepo = createMockEntryRepo({
+        findBySquad: jest.fn().mockResolvedValue([]),
+      });
+      const prisma = createMockPrisma({
+        sportEventParticipant: { count: jest.fn().mockResolvedValue(0) },
+      });
+      const service = new ContestService(
+        contestRepo,
+        createMockContestConfigurationRepo(),
+        membershipRepo,
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        squadMembershipRepo,
+        entryRepo,
+        prisma as any,
+      );
+
+      await expect(service.createEntry('contest-1', 'user-1')).rejects.toMatchObject({
+        code: 'CONTEST_ENTRY_FIELD_NOT_LOADED',
+        message: 'Contest entries are not available until the event participant field has loaded.',
+      });
+      expect(prisma.sportEventParticipant.count).toHaveBeenCalledWith({
+        where: { sportEventId: 'sport-event-1' },
       });
       expect(entryRepo.create).not.toHaveBeenCalled();
     });

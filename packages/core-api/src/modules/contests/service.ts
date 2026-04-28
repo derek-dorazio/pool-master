@@ -338,6 +338,7 @@ export class ContestService {
         'CONTEST_ENTRY_LOCKED',
       );
     }
+    await this.assertEntryFieldReady(context.contest, userId);
 
     const squad = await this.requireSquadForEntry(
       context.contest.leagueId,
@@ -706,6 +707,31 @@ export class ContestService {
     }, {
       name: row.squad.name,
     });
+  }
+
+  private async assertEntryFieldReady(contest: Contest, userId: string): Promise<void> {
+    if (!contest.sportEventId) {
+      return;
+    }
+
+    const loadedParticipantCount = await this.requirePrisma().sportEventParticipant.count({
+      where: {
+        sportEventId: contest.sportEventId,
+      },
+    });
+    if (loadedParticipantCount > 0) {
+      return;
+    }
+
+    this.logger.warn({
+      contestId: contest.id,
+      sportEventId: contest.sportEventId,
+      userId,
+    }, 'contest entry create rejected because event participant field is not loaded');
+    throw new ContestEntryOperationError(
+      'Contest entries are not available until the event participant field has loaded.',
+      'CONTEST_ENTRY_FIELD_NOT_LOADED',
+    );
   }
 
   private async entryHasSelections(entryId: string): Promise<boolean> {
