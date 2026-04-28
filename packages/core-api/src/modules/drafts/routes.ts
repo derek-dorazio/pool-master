@@ -1222,7 +1222,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         },
       });
 
-      return buildRosterSelectionResponse(prisma, context, requestUserId);
+      return buildRosterSelectionResponse(prisma, context, entryId, requestUserId);
     },
   });
 

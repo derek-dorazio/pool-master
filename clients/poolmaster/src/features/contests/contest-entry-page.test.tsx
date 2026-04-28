@@ -404,7 +404,7 @@ describe('ContestEntryPage', () => {
       }),
     );
     expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-entry-group-toggle-tier-2')).toHaveFocus();
+    await waitFor(() => expect(screen.getByTestId('contest-entry-group-toggle-tier-2')).toHaveFocus());
     expect(screen.getByText('World rank #2')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('contest-entry-participant-sep-2'));
