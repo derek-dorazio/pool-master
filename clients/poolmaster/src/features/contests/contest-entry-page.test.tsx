@@ -4,6 +4,28 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ContestEntryPage } from './contest-entry-page';
 
+type DraftSelectionGroup = {
+  groupId: string;
+  groupName: string;
+  groupNumber: number;
+  picksFromGroup: number;
+  selectedParticipantIds: string[];
+  participants: Array<{
+    sportEventParticipantId: string;
+    participantId: string;
+    participantName: string;
+    position: string;
+    team: string | null;
+    status: string;
+    price: number | null;
+    ranking: number | null;
+    orderIndex: number;
+    isAvailable: boolean;
+    unavailableReason: string | null;
+    isSelected: boolean;
+  }>;
+};
+
 const {
   getContestMock,
   getDraftStateMock,
@@ -137,6 +159,73 @@ function primeCommonMocks(overrides?: {
       ],
     },
   });
+}
+
+function buildDraftState(selectionGroups: DraftSelectionGroup[]) {
+  const totalPicks = selectionGroups.reduce((sum, group) => sum + group.picksFromGroup, 0);
+  const selectedPicks = selectionGroups.reduce(
+    (sum, group) => sum + group.selectedParticipantIds.length,
+    0,
+  );
+
+  return {
+    contestId: 'contest-1',
+    contestName: 'Bohler Masters Tiered',
+    selectionType: 'TIERED',
+    isTurnBased: false,
+    isCommissioner: false,
+    rosterSize: totalPicks,
+    contestConfiguration: {
+      isExclusive: false,
+      rosterSize: totalPicks,
+      tierConfig: selectionGroups.map((group) => ({
+        tierId: group.groupId,
+        tierName: group.groupName,
+        tierNumber: group.groupNumber,
+        picksFromTier: group.picksFromGroup,
+      })),
+    },
+    status: 'LIVE',
+    currentPickNumber: 1,
+    currentRound: 1,
+    totalPicks,
+    totalRounds: totalPicks,
+    currentEntryId: 'entry-1',
+    currentEntryName: 'Birdie Hunters Entry 1',
+    myEntryId: 'entry-1',
+    isMyPick: true,
+    currentTurnStartedAt: null,
+    timePerPickSeconds: 0,
+    entries: [
+      { id: 'entry-1', userId: 'user-1', name: 'Birdie Hunters Entry 1', isOnClock: false },
+    ],
+    selectedEntryId: 'entry-1',
+    selectedEntryName: 'Birdie Hunters Entry 1',
+    tiebreakerValue: null,
+    selectionGroups,
+    draftPickHistories: [],
+    availableParticipantIds: selectionGroups.flatMap((group) =>
+      group.participants.map((participant) => participant.sportEventParticipantId),
+    ),
+    isComplete: selectedPicks >= totalPicks,
+  };
+}
+
+function buildGolfParticipant(id: string, name: string, orderIndex: number, isSelected: boolean) {
+  return {
+    sportEventParticipantId: id,
+    participantId: `participant-${id}`,
+    participantName: name,
+    position: 'GOLFER',
+    team: null,
+    status: 'ACTIVE',
+    price: null,
+    ranking: orderIndex,
+    orderIndex,
+    isAvailable: true,
+    unavailableReason: null,
+    isSelected,
+  };
 }
 
 describe('ContestEntryPage', () => {
@@ -427,5 +516,82 @@ describe('ContestEntryPage', () => {
       }),
       expect.any(String),
     );
+  });
+
+  // pool-master-mab — completed tiered entry groups must allow replacing and unselecting saved golfers.
+  it('allows saved participants to be unselected and full tier selections to be replaced', async () => {
+    primeCommonMocks();
+    let selectedParticipantIds = ['sep-1', 'sep-2'];
+    const buildSelectionGroups = () => [
+      {
+        groupId: 'tier-1',
+        groupName: 'Tier A',
+        groupNumber: 1,
+        picksFromGroup: 2,
+        selectedParticipantIds,
+        participants: [
+          buildGolfParticipant('sep-1', 'Scottie Scheffler', 1, selectedParticipantIds.includes('sep-1')),
+          buildGolfParticipant('sep-2', 'Rory McIlroy', 2, selectedParticipantIds.includes('sep-2')),
+          buildGolfParticipant('sep-3', 'Jordan Spieth', 3, selectedParticipantIds.includes('sep-3')),
+        ],
+      },
+    ];
+
+    getDraftStateMock.mockImplementation(() =>
+      Promise.resolve({ data: buildDraftState(buildSelectionGroups()) }),
+    );
+    submitContestSelectionMock.mockImplementation(({ body }: { body: { participantId: string } }) => {
+      if (selectedParticipantIds.includes(body.participantId)) {
+        selectedParticipantIds = selectedParticipantIds.filter((id) => id !== body.participantId);
+      } else if (selectedParticipantIds.length >= 2) {
+        selectedParticipantIds = [selectedParticipantIds[0], body.participantId];
+      } else {
+        selectedParticipantIds = [...selectedParticipantIds, body.participantId];
+      }
+
+      return Promise.resolve({ data: buildDraftState(buildSelectionGroups()) });
+    });
+
+    renderContestEntryPage();
+
+    fireEvent.click(await screen.findByTestId('contest-entry-group-toggle-tier-1'));
+    const jordanButton = await screen.findByTestId('contest-entry-participant-sep-3');
+    expect(jordanButton).toBeEnabled();
+    expect(jordanButton).toHaveTextContent('Replace selection');
+
+    fireEvent.click(jordanButton);
+
+    await waitFor(() =>
+      expect(submitContestSelectionMock).toHaveBeenCalledWith({
+        path: { contestId: 'contest-1' },
+        body: {
+          entryId: 'entry-1',
+          participantId: 'sep-3',
+        },
+      }),
+    );
+    expect(await screen.findByTestId('contest-entry-selected-tier-1-sep-3')).toHaveTextContent(
+      'Jordan Spieth',
+    );
+    expect(screen.queryByTestId('contest-entry-selected-tier-1-sep-2')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-entry-group-toggle-tier-1'));
+    const scottieButton = screen.getByTestId('contest-entry-participant-sep-1');
+    expect(scottieButton).toBeEnabled();
+    expect(scottieButton).toHaveTextContent('Selected');
+
+    fireEvent.click(scottieButton);
+
+    await waitFor(() =>
+      expect(submitContestSelectionMock).toHaveBeenCalledWith({
+        path: { contestId: 'contest-1' },
+        body: {
+          entryId: 'entry-1',
+          participantId: 'sep-1',
+        },
+      }),
+    );
+    await waitFor(() => expect(screen.getByText('1/2 saved')).toBeInTheDocument());
+    expect(screen.queryByTestId('contest-entry-selected-tier-1-sep-1')).not.toBeInTheDocument();
   });
 });

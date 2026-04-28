@@ -1118,13 +1118,14 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         },
         orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
       });
-      if (existingEntryPicks.length >= rosterSize) {
-        return sendWithStatus(reply, 400, {
-          error: 'ENTRY_COMPLETE',
-          message: `Entry ${entryId} has already submitted all ${rosterSize} picks`,
+      const existingParticipantPick = existingEntryPicks.find((pick) => pick.sportEventParticipantId === participantId);
+      if (existingParticipantPick && context.contest.selectionType === SelectionType.TIERED) {
+        await prisma.rosterPick.delete({
+          where: { id: existingParticipantPick.id },
         });
+        return buildRosterSelectionResponse(prisma, context, entryId, requestUserId);
       }
-      if (existingEntryPicks.some((pick) => pick.sportEventParticipantId === participantId)) {
+      if (existingParticipantPick) {
         return sendWithStatus(reply, 400, {
           error: 'DUPLICATE_PICK',
           message: `SportEventParticipant ${participantId} is already on this entry`,
@@ -1150,6 +1151,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       }
 
       let draftRound = existingEntryPicks.length + 1;
+      let replacementPickId: string | null = null;
       if (context.contest.selectionType === SelectionType.TIERED) {
         const participantTier = selectionParticipant.tier;
         if (!participantTier) {
@@ -1172,28 +1174,34 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
           participantIdsInTier.has(pick.sportEventParticipant.participantId),
         );
         if (picksInTier.length >= tier.picksFromTier) {
-          if (tier.picksFromTier === 1 && picksInTier.length === 1) {
-            const existingTierPick = picksInTier[0];
-            if (existingTierPick.sportEventParticipantId === participantId) {
-              return buildRosterSelectionResponse(prisma, context, entryId, requestUserId);
-            }
-
-            await prisma.rosterPick.delete({
-              where: { id: existingTierPick.id },
-            });
-          } else {
-          return sendWithStatus(reply, 400, {
-            error: 'TIER_FULL',
-            message: `Entry ${entryId} has already filled ${tier.tierName}`,
-          });
-          }
+          replacementPickId = picksInTier[picksInTier.length - 1]?.id ?? null;
         }
 
-        const effectivePicksInTierCount = Math.min(picksInTier.length, tier.picksFromTier - 1);
+        if (existingEntryPicks.length >= rosterSize && !replacementPickId) {
+          return sendWithStatus(reply, 400, {
+            error: 'ENTRY_COMPLETE',
+            message: `Entry ${entryId} has already submitted all ${rosterSize} picks`,
+          });
+        }
+
+        if (replacementPickId) {
+          await prisma.rosterPick.delete({
+            where: { id: replacementPickId },
+          });
+        }
+
+        const effectivePicksInTierCount = replacementPickId
+          ? tier.picksFromTier - 1
+          : Math.min(picksInTier.length, tier.picksFromTier - 1);
         const roundsBeforeTier = tiers
           .filter((item) => item.tierNumber < tier.tierNumber)
           .reduce((sum, item) => sum + item.picksFromTier, 0);
         draftRound = roundsBeforeTier + effectivePicksInTierCount + 1;
+      } else if (existingEntryPicks.length >= rosterSize) {
+        return sendWithStatus(reply, 400, {
+          error: 'ENTRY_COMPLETE',
+          message: `Entry ${entryId} has already submitted all ${rosterSize} picks`,
+        });
       }
 
       const globalPickCount = await prisma.rosterPick.count({

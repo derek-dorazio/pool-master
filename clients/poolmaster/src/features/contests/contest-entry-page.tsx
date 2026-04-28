@@ -131,6 +131,18 @@ function getGroupStatusLabel(group: SelectionGroup) {
   return 'Next up';
 }
 
+function getNextSelectedParticipantIds(group: SelectionGroup, participantId: string) {
+  if (group.selectedParticipantIds.includes(participantId)) {
+    return group.selectedParticipantIds.filter((selectedParticipantId) => selectedParticipantId !== participantId);
+  }
+
+  if (group.selectedParticipantIds.length >= group.picksFromGroup) {
+    return [...group.selectedParticipantIds.slice(0, group.picksFromGroup - 1), participantId];
+  }
+
+  return Array.from(new Set([...group.selectedParticipantIds, participantId]));
+}
+
 function getParticipantMetaSummary(participant: SelectionParticipant) {
   const parts: string[] = [];
 
@@ -166,13 +178,12 @@ function SelectionParticipantCard({
   const selectedCount = group.selectedParticipantIds.length;
   const groupIsFull = selectedCount >= group.picksFromGroup;
   const isSelected = group.selectedParticipantIds.includes(participant.sportEventParticipantId);
-  const canReplace = group.picksFromGroup === 1 && selectedCount === 1 && !isSelected;
+  const canReplace = groupIsFull && !isSelected;
   const isDisabled =
     isBusy
     || !canSelect
-    || isSelected
     || !participant.isAvailable
-    || (groupIsFull && !canReplace);
+    || (groupIsFull && !canReplace && !isSelected);
 
   let actionLabel = 'Select golfer';
   if (isSelected) {
@@ -1017,12 +1028,10 @@ export function ContestEntryPage() {
                               const currentIndex = selectionGroups.findIndex(
                                 (candidate) => candidate.groupId === group.groupId,
                               );
-                              const nextSelectedIds = group.picksFromGroup === 1
-                                ? [nextParticipant.sportEventParticipantId]
-                                : Array.from(new Set([
-                                  ...group.selectedParticipantIds,
-                                  nextParticipant.sportEventParticipantId,
-                                ]));
+                              const nextSelectedIds = getNextSelectedParticipantIds(
+                                group,
+                                nextParticipant.sportEventParticipantId,
+                              );
                               if (nextSelectedIds.length < group.picksFromGroup) {
                                 return group.groupId;
                               }

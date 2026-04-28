@@ -431,7 +431,12 @@ async function seedBudgetPickFixture() {
   };
 }
 
-async function seedTieredDraftFixture() {
+async function seedTieredDraftFixture(options: {
+  participantCount?: number;
+  picksFromTier?: number;
+} = {}) {
+  const participantCount = options.participantCount ?? 1;
+  const picksFromTier = options.picksFromTier ?? 1;
   const { commissioner, league } = await buildLeagueWithCommissioner({
     displayName: 'Tiered Draft Commissioner',
     leagueName: 'Tiered Draft Functional League',
@@ -455,7 +460,7 @@ async function seedTieredDraftFixture() {
             tierId: 'tier-1',
             tierName: 'Tier 1',
             tierNumber: 1,
-            picksFromTier: 1,
+            picksFromTier,
             participantIds: [],
           },
         ],
@@ -490,19 +495,6 @@ async function seedTieredDraftFixture() {
   });
   createdSportIds.push(sport.id);
 
-  const participant = await prisma.participant.create({
-    data: {
-      sportId: sport.id,
-      name: `Draft Tiered Player ${randomUUID().slice(0, 8)}`,
-      participantType: 'INDIVIDUAL',
-      externalIds: {},
-      metadata: {},
-      position: 'GOLFER',
-      teamAffiliation: null,
-    },
-  });
-  createdParticipantIds.push(participant.id);
-
   const event = await prisma.sportEvent.create({
     data: {
       externalId: `tiered-functional-event-${randomUUID().slice(0, 8)}`,
@@ -517,22 +509,41 @@ async function seedTieredDraftFixture() {
   });
   createdSportEventIds.push(event.id);
 
-  const eventParticipant = await prisma.sportEventParticipant.create({
-    data: {
-      sportEventId: event.id,
-      participantId: participant.id,
-      status: 'ACTIVE',
-      valuations: {
-        create: {
-          price: 1200,
-          tier: 'tier-1',
-          orderIndex: 1,
-          valuationSource: 'functional-test',
+  const participantIds: string[] = [];
+  const eventParticipantIds: string[] = [];
+  for (let index = 0; index < participantCount; index += 1) {
+    const participant = await prisma.participant.create({
+      data: {
+        sportId: sport.id,
+        name: `Draft Tiered Player ${index + 1} ${randomUUID().slice(0, 8)}`,
+        participantType: 'INDIVIDUAL',
+        externalIds: {},
+        metadata: {},
+        position: 'GOLFER',
+        teamAffiliation: null,
+      },
+    });
+    createdParticipantIds.push(participant.id);
+    participantIds.push(participant.id);
+
+    const eventParticipant = await prisma.sportEventParticipant.create({
+      data: {
+        sportEventId: event.id,
+        participantId: participant.id,
+        status: 'ACTIVE',
+        valuations: {
+          create: {
+            price: 1200 + index,
+            tier: 'tier-1',
+            orderIndex: index + 1,
+            valuationSource: 'functional-test',
+          },
         },
       },
-    },
-  });
-  createdSportEventParticipantIds.push(eventParticipant.id);
+    });
+    createdSportEventParticipantIds.push(eventParticipant.id);
+    eventParticipantIds.push(eventParticipant.id);
+  }
 
   await prisma.contest.update({
     where: {
@@ -553,8 +564,8 @@ async function seedTieredDraftFixture() {
           tierId: 'tier-1',
           tierName: 'Tier 1',
           tierNumber: 1,
-          picksFromTier: 1,
-          participantIds: [participant.id],
+          picksFromTier,
+          participantIds,
         },
       ] as object[],
     },
@@ -564,7 +575,8 @@ async function seedTieredDraftFixture() {
     contestId,
     commissioner,
     entryId: entryResponse.data.entry.id,
-    sportEventParticipantId: eventParticipant.id,
+    sportEventParticipantId: eventParticipantIds[0],
+    sportEventParticipantIds: eventParticipantIds,
   };
 }
 
@@ -947,5 +959,49 @@ describe('SDK Functional: Drafts and Roster Selection', () => {
       fixture.sportEventParticipantId,
     ]);
     expect(afterPickStateResponse.data?.selectionGroups?.[0]?.participants[0]?.isSelected).toBe(true);
+  });
+
+  it('pool-master-mab replaces and unselects participants in a completed tiered entry group', async () => {
+    const fixture = await seedTieredDraftFixture({ participantCount: 3, picksFromTier: 2 });
+    const [firstParticipantId, secondParticipantId, replacementParticipantId] = fixture.sportEventParticipantIds;
+
+    await submitContestSelection({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: fixture.entryId, participantId: firstParticipantId },
+    });
+    const secondPickResponse = await submitContestSelection({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: fixture.entryId, participantId: secondParticipantId },
+    });
+
+    expect(secondPickResponse.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([
+      firstParticipantId,
+      secondParticipantId,
+    ]);
+
+    const replacementResponse = await submitContestSelection({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: fixture.entryId, participantId: replacementParticipantId },
+    });
+
+    expect(replacementResponse.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([
+      firstParticipantId,
+      replacementParticipantId,
+    ]);
+    expect(replacementResponse.data?.draftPickHistories).toHaveLength(2);
+
+    const unselectResponse = await submitContestSelection({
+      client: fixture.commissioner.client,
+      path: { contestId: fixture.contestId },
+      body: { entryId: fixture.entryId, participantId: firstParticipantId },
+    });
+
+    expect(unselectResponse.data?.selectionGroups?.[0]?.selectedParticipantIds).toEqual([
+      replacementParticipantId,
+    ]);
+    expect(unselectResponse.data?.draftPickHistories).toHaveLength(1);
   });
 });
