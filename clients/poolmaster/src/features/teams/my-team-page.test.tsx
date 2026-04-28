@@ -66,6 +66,7 @@ function renderMyTeamPage(initialEntry = '/league/BIGDAWGS/team') {
         <MemoryRouter initialEntries={[initialEntry]}>
           <Routes>
             <Route element={<MyTeamPage />} path="/league/:leagueCode/team" />
+            <Route element={<div data-testid="manage-teams-route-destination" />} path="/manage/teams" />
             <Route element={<div data-testid="user-route-destination" />} path="/users/:userId" />
           </Routes>
         </MemoryRouter>
@@ -848,6 +849,7 @@ describe('MyTeamPage', () => {
         path: { id: 'league-1', squadId: 'team-1' },
       }),
     );
+    expect(await screen.findByTestId('manage-teams-route-destination')).toBeInTheDocument();
   });
 
   it('routes active entry management and history to their dedicated pages', async () => {

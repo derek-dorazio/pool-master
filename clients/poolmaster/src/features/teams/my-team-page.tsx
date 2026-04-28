@@ -1,7 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import {
   createSquadOwnerInvitation,
@@ -51,6 +51,7 @@ function extractErrorMessage(error: unknown): string {
 export function MyTeamPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const auth = useAuth();
   const queryClient = useQueryClient();
   const logger = useLogger().child({
@@ -380,6 +381,7 @@ export function MyTeamPage() {
       setCoOwnerEmail('');
       await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-team-owner-invitations', leagueId] });
       await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
+      navigate('/manage/teams');
     },
   });
 
