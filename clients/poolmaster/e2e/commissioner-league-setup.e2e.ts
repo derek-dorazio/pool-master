@@ -27,6 +27,6 @@ test('commissioner can create a league and generate an invite link', async ({ pa
 
     expect(inviteLink).toContain('/invite/');
     expect(page.url()).toContain(`/league/${actualLeagueCode}`);
-    await expect(page.getByTestId('league-invite-link')).toHaveValue(inviteLink);
+    await expect(page.getByTestId('league-join-url')).toHaveValue(inviteLink);
   });
 });

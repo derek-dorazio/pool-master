@@ -72,10 +72,10 @@ export async function createLeague(
 }
 
 export async function generateInviteLink(page: Page) {
-  await expect(page.getByTestId('league-generate-invite-link')).toBeVisible();
-  await page.getByTestId('league-generate-invite-link').click();
+  await expect(page.getByTestId('league-create-join-url')).toBeVisible();
+  await page.getByTestId('league-create-join-url').click();
 
-  const inviteInput = page.getByTestId('league-invite-link');
+  const inviteInput = page.getByTestId('league-join-url');
   await expect(inviteInput).toHaveValue(/\/invite\//);
 
   return inviteInput.inputValue();
