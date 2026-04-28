@@ -1,4 +1,3 @@
-import * as Dialog from '@radix-ui/react-dialog';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -21,6 +20,7 @@ import {
   type ListLeagueSquadsResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
+import { IconPickerModal } from '@/features/shared/icon-picker-modal';
 import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
@@ -905,7 +905,20 @@ export function MyTeamPage() {
         </div>
       </div>
 
-      <Dialog.Root
+      <IconPickerModal
+        canSave={!isInactiveLeague && !isBusy && (selectedTeam ? canManageSelectedTeam : canCreateOwnTeam)}
+        canSelect={!isInactiveLeague && !isBusy}
+        closeLabel="Close team icon modal"
+        description="Pick a built-in icon and save it without leaving Team Home."
+        descriptionId="my-team-icon-modal-description"
+        errorMessage={
+          updateTeamIconMutation.isError
+            ? extractErrorMessage(updateTeamIconMutation.error)
+            : null
+        }
+        isPending={updateTeamIconMutation.isPending}
+        modalTestId="my-team-icon-modal"
+        onCancel={handleCloseIconModal}
         onOpenChange={(open) => {
           if (open) {
             handleOpenIconModal();
@@ -914,103 +927,27 @@ export function MyTeamPage() {
 
           handleCloseIconModal();
         }}
+        onSave={() => void handleSaveTeamIcon()}
+        onSelect={setIconDraftKey}
         open={iconModalOpen}
-      >
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
-          <Dialog.Content
-            aria-describedby="my-team-icon-modal-description"
-            className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[2rem] border border-border bg-card p-5 shadow-2xl sm:p-6"
-            data-testid="my-team-icon-modal"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <Dialog.Title className="text-2xl font-semibold tracking-tight">
-                  Change team icon
-                </Dialog.Title>
-                <Dialog.Description
-                  className="mt-2 text-sm text-muted-foreground"
-                  id="my-team-icon-modal-description"
-                >
-                  Pick a built-in icon and save it without leaving Team Home.
-                </Dialog.Description>
-              </div>
-              <button
-                aria-label="Close team icon modal"
-                className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-70"
-                disabled={updateTeamIconMutation.isPending}
-                onClick={handleCloseIconModal}
-                type="button"
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="mt-4 rounded-[1.5rem] border border-border bg-background p-4 sm:p-5">
-              <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card px-4 py-4">
-                <div className={`flex h-16 w-16 items-center justify-center rounded-[1.25rem] ${draftIcon.surfaceClass} ${draftIcon.accentClass}`}>
-                  <TeamIcon iconKey={iconDraftKey} size="lg" />
-                </div>
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Selected icon
-                  </div>
-                  <div className="mt-1 text-base font-medium">{draftIcon.label}</div>
-                </div>
-              </div>
-
-              <div className="mt-4 grid max-h-80 gap-2 overflow-y-auto pr-1 sm:grid-cols-4" data-testid="my-team-icon-palette">
-                {TEAM_ICON_OPTIONS.map((icon) => {
-                  const isSelected = iconDraftKey === icon.key;
-                  return (
-                    <button
-                      className={`rounded-[1rem] border px-2 py-3 text-center transition ${
-                        isSelected
-                          ? 'border-primary bg-primary/10 text-foreground'
-                          : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
-                      }`}
-                      data-testid={`my-team-icon-${icon.key}`}
-                      disabled={isInactiveLeague || isBusy}
-                      key={icon.key}
-                      onClick={() => setIconDraftKey(icon.key)}
-                      type="button"
-                    >
-                      <div className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full ${icon.surfaceClass} ${icon.accentClass}`}>
-                        <TeamIcon iconKey={icon.key} size="md" />
-                      </div>
-                      <div className="mt-2 text-xs font-medium">{icon.label}</div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {updateTeamIconMutation.isError ? (
-                <p className="mt-4 text-sm text-destructive">{extractErrorMessage(updateTeamIconMutation.error)}</p>
-              ) : null}
-
-              <div className="mt-4 flex justify-end gap-3">
-                <button
-                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={updateTeamIconMutation.isPending}
-                  onClick={handleCloseIconModal}
-                  type="button"
-                >
-                  Cancel
-                </button>
-                <button
-                  className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                  data-testid="my-team-save-icon"
-                  disabled={isInactiveLeague || isBusy || (selectedTeam ? !canManageSelectedTeam : !canCreateOwnTeam)}
-                  onClick={() => void handleSaveTeamIcon()}
-                  type="button"
-                >
-                  {updateTeamIconMutation.isPending ? 'Saving...' : 'Save icon'}
-                </button>
-              </div>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+        optionTestIdPrefix="my-team-icon"
+        options={TEAM_ICON_OPTIONS}
+        paletteTestId="my-team-icon-palette"
+        renderOptionIcon={(icon) => (
+          <div className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full ${icon.surfaceClass} ${icon.accentClass}`}>
+            <TeamIcon iconKey={icon.key} size="md" />
+          </div>
+        )}
+        renderSelectedIcon={() => (
+          <div className={`flex h-16 w-16 items-center justify-center rounded-[1.25rem] ${draftIcon.surfaceClass} ${draftIcon.accentClass}`}>
+            <TeamIcon iconKey={iconDraftKey} size="lg" />
+          </div>
+        )}
+        saveTestId="my-team-save-icon"
+        selectedLabel={draftIcon.label}
+        title="Change team icon"
+        value={iconDraftKey}
+      />
     </section>
   );
 }

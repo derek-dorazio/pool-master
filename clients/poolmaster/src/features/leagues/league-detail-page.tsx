@@ -19,6 +19,7 @@ import {
   type ListLeagueSquadsResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
+import { IconPickerModal } from '@/features/shared/icon-picker-modal';
 import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
 import { useLogger } from '@/lib/logger';
 import { removeLeagueSummary, syncLeagueCaches, type LeagueSummary } from './league-cache';
@@ -156,7 +157,6 @@ export function LeagueDetailPage() {
   const currentUserId = auth.user?.id;
   const currentLeagueIconKey = leagueQuery.data?.iconKey ?? iconDraftKey;
   const selectedLeagueIcon = getLeagueIconOption(currentLeagueIconKey);
-  const draftLeagueIcon = getLeagueIconOption(iconDraftKey);
 
   const myTeam = useMemo(() => {
     if (!currentUserId) {
@@ -915,7 +915,20 @@ export function LeagueDetailPage() {
         </Dialog.Portal>
       </Dialog.Root>
 
-      <Dialog.Root
+      <IconPickerModal
+        canSave={canEditLeague}
+        canSelect={canEditLeague}
+        closeLabel="Close league icon modal"
+        description="Pick a built-in icon and save it without leaving League Home."
+        descriptionId="league-icon-modal-description"
+        errorMessage={
+          updateIconMutation.isError
+            ? extractErrorMessage(updateIconMutation.error, 'We could not save the league icon.')
+            : null
+        }
+        isPending={updateIconMutation.isPending}
+        modalTestId="league-icon-modal"
+        onCancel={handleCloseIconModal}
         onOpenChange={(open) => {
           if (open) {
             handleOpenIconModal();
@@ -924,105 +937,27 @@ export function LeagueDetailPage() {
 
           handleCloseIconModal();
         }}
+        onSave={() => void updateIconMutation.mutateAsync(iconDraftKey)}
+        onSelect={setIconDraftKey}
         open={iconModalOpen}
-      >
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
-          <Dialog.Content
-            aria-describedby="league-icon-modal-description"
-            className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[2rem] border border-border bg-card p-5 shadow-2xl sm:p-6"
-            data-testid="league-icon-modal"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <Dialog.Title className="text-2xl font-semibold tracking-tight">
-                  Change league icon
-                </Dialog.Title>
-                <Dialog.Description
-                  className="mt-2 text-sm text-muted-foreground"
-                  id="league-icon-modal-description"
-                >
-                  Pick a built-in icon and save it without leaving League Home.
-                </Dialog.Description>
-              </div>
-              <button
-                aria-label="Close league icon modal"
-                className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-70"
-                disabled={updateIconMutation.isPending}
-                onClick={handleCloseIconModal}
-                type="button"
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="mt-4 rounded-[1.5rem] border border-border bg-background p-4 sm:p-5">
-              <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card px-4 py-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-primary/10 text-primary">
-                  <LeagueIcon iconKey={iconDraftKey} size="lg" />
-                </div>
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Selected icon
-                  </div>
-                  <div className="mt-1 text-base font-medium">{draftLeagueIcon.label}</div>
-                </div>
-              </div>
-
-              <div className="mt-4 grid max-h-80 gap-2 overflow-y-auto pr-1 sm:grid-cols-4" data-testid="league-icon-palette">
-                {LEAGUE_ICON_OPTIONS.map((icon) => {
-                  const isSelected = iconDraftKey === icon.key;
-                  return (
-                    <button
-                      className={`rounded-[1rem] border px-2 py-3 text-center transition ${
-                        isSelected
-                          ? 'border-primary bg-primary/10 text-foreground'
-                          : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
-                      }`}
-                      data-testid={`league-icon-${icon.key}`}
-                      disabled={!canEditLeague}
-                      key={icon.key}
-                      onClick={() => setIconDraftKey(icon.key)}
-                      type="button"
-                    >
-                      <div className="flex justify-center text-primary">
-                        <LeagueIcon iconKey={icon.key} size="md" />
-                      </div>
-                      <div className="mt-2 text-xs font-medium">{icon.label}</div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {updateIconMutation.isError ? (
-                <p className="mt-4 text-sm text-destructive">
-                  {extractErrorMessage(updateIconMutation.error, 'We could not save the league icon.')}
-                </p>
-              ) : null}
-
-              <div className="mt-4 flex justify-end gap-3">
-                <button
-                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={updateIconMutation.isPending}
-                  onClick={handleCloseIconModal}
-                  type="button"
-                >
-                  Cancel
-                </button>
-                <button
-                  className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                  data-testid="league-save-icon"
-                  disabled={!canEditLeague}
-                  onClick={() => void updateIconMutation.mutateAsync(iconDraftKey)}
-                  type="button"
-                >
-                  {updateIconMutation.isPending ? 'Saving...' : 'Save icon'}
-                </button>
-              </div>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+        optionTestIdPrefix="league-icon"
+        options={LEAGUE_ICON_OPTIONS}
+        paletteTestId="league-icon-palette"
+        renderOptionIcon={(icon) => (
+          <div className="flex justify-center text-primary">
+            <LeagueIcon iconKey={icon.key} size="md" />
+          </div>
+        )}
+        renderSelectedIcon={() => (
+          <div className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-primary/10 text-primary">
+            <LeagueIcon iconKey={iconDraftKey} size="lg" />
+          </div>
+        )}
+        saveTestId="league-save-icon"
+        selectedLabel={getLeagueIconOption(iconDraftKey).label}
+        title="Change league icon"
+        value={iconDraftKey}
+      />
     </section>
   );
 }
