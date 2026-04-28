@@ -298,11 +298,15 @@ export function ContestEntryPage() {
   const logger = useLogger().child({
     feature: 'contest-entry-page',
   });
-  const { contestId = '', entryId = '' } = useParams<{ contestId: string; entryId: string }>();
+  const { contestId = '', entryId = '', leagueCode: routeLeagueCode } = useParams<{
+    contestId: string;
+    entryId: string;
+    leagueCode?: string;
+  }>();
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const hintedLeagueCode = parseRouteState(location.state).leagueCode ?? null;
+  const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
   const groupToggleRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const [entryNameDraft, setEntryNameDraft] = useState('');

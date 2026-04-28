@@ -14,7 +14,7 @@ import {
 import { useAuth } from '@/features/auth/auth-provider';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
-  buildContestEntryPath,
+  buildLeagueContestEntryPath,
   buildLeagueContestPath,
   buildLeagueTeamPath,
   setRecentLeagueCode,
@@ -298,7 +298,7 @@ export function MyTeamHistoryPage() {
                           className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
                           data-testid={`my-team-history-entry-open-${entry.id}`}
                           state={{ leagueCode }}
-                          to={buildContestEntryPath(contest.id, entry.id)}
+                          to={buildLeagueContestEntryPath(leagueCode, contest.id, entry.id)}
                         >
                           View entry detail
                         </Link>

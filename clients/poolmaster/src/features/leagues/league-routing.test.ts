@@ -3,6 +3,7 @@ import { LeagueIconKey, LeagueRole } from '@poolmaster/shared/domain';
 import type { ListLeaguesResponses } from '@/lib/api';
 import {
   buildLeagueContestPath,
+  buildLeagueContestEntryPath,
   buildLeagueContestsManagePath,
   buildLeagueContestsPath,
   buildLeagueEntriesPath,
@@ -99,6 +100,9 @@ describe('league routing helpers', () => {
     );
     expect(buildLeagueContestPath('BIGDOGS', 'contest-9')).toBe(
       '/league/BIGDOGS/contests/contest-9',
+    );
+    expect(buildLeagueContestEntryPath('BIGDOGS', 'contest-9', 'entry-2')).toBe(
+      '/league/BIGDOGS/contests/contest-9/entries/entry-2',
     );
   });
 });

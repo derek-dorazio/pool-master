@@ -134,6 +134,10 @@ export const router = createBrowserRouter([
             element: <ContestDetailPage />,
           },
           {
+            path: 'league/:leagueCode/contests/:contestId/entries/:entryId',
+            element: <ContestEntryPage />,
+          },
+          {
             path: 'contests/:contestId/entries/:entryId',
             element: <ContestEntryPage />,
           },

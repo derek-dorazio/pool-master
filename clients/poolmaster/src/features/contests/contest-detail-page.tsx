@@ -16,6 +16,7 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { extractErrorMessage } from '@/lib/errors';
 import {
   buildContestEntryPath,
+  buildLeagueContestEntryPath,
   buildLeagueContestManagePath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
@@ -243,9 +244,14 @@ export function ContestDetailPage() {
     },
     onSuccess: async (entry) => {
       await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] });
-      navigate(buildContestEntryPath(contestId, entry.id), {
+      navigate(
+        hintedLeagueCode
+          ? buildLeagueContestEntryPath(hintedLeagueCode, contestId, entry.id)
+          : buildContestEntryPath(contestId, entry.id),
+        {
         state: { leagueCode: hintedLeagueCode },
-      });
+        },
+      );
     },
   });
 
@@ -537,7 +543,11 @@ export function ContestDetailPage() {
                           data-testid={`contest-board-edit-entry-${entry.id}`}
                           state={{ leagueCode: hintedLeagueCode }}
                           title="Edit entry"
-                          to={buildContestEntryPath(contestId, entry.id)}
+                          to={
+                            hintedLeagueCode
+                              ? buildLeagueContestEntryPath(hintedLeagueCode, contestId, entry.id)
+                              : buildContestEntryPath(contestId, entry.id)
+                          }
                         >
                           <Pencil aria-hidden size={16} />
                         </Link>

@@ -83,6 +83,10 @@ function renderContestBoard() {
           <Route element={<ContestDetailPage />} path="/league/:leagueCode/contests/:contestId" />
           <Route
             element={<div data-testid="contest-entry-page" />}
+            path="/league/:leagueCode/contests/:contestId/entries/:entryId"
+          />
+          <Route
+            element={<div data-testid="contest-entry-page" />}
             path="/contests/:contestId/entries/:entryId"
           />
           <Route element={<div data-testid="league-page" />} path="/league/:leagueCode" />
@@ -402,7 +406,7 @@ describe('ContestDetailPage (Contest Board)', () => {
 
     expect(await screen.findByTestId('contest-board-edit-entry-entry-1')).toHaveAttribute(
       'href',
-      '/contests/contest-1/entries/entry-1',
+      '/league/BIGDAWGS/contests/contest-1/entries/entry-1',
     );
   });
 
