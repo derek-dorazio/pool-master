@@ -166,7 +166,7 @@ export function RootAdminManageUsersPage() {
           <div className="mt-5">
             <AdminDataGrid
               columns={columns}
-              data={usersQuery.data.items}
+              data={usersQuery.data?.items ?? []}
               emptyMessage="No users matched the current filters."
               getRowId={(user) => user.id}
               getRowLink={(user) => `/users/${user.id}`}
