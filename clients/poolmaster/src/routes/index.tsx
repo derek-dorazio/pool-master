@@ -7,10 +7,10 @@ import { NotFoundPage } from '@/features/app-shell/not-found-page';
 import { CreateContestPage } from '@/features/contests/create-contest-page';
 import { ContestDetailPage } from '@/features/contests/contest-detail-page';
 import { ContestEntryPage } from '@/features/contests/contest-entry-page';
+import { LeagueContestsPage } from '@/features/contests/league-contests-page';
 import { ManageContestsPage } from '@/features/contests/manage-contests-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
-import { LeagueRouteScaffoldPage } from '@/features/leagues/league-route-scaffold-page';
 import { WelcomePage } from '@/features/leagues/leagues-page';
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminContentConfigurationListPage } from '@/features/root-admin/root-admin-content-configuration-list-page';
@@ -123,7 +123,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'league/:leagueCode/contests',
-            element: <LeagueRouteScaffoldPage scaffoldKey="contests" />,
+            element: <LeagueContestsPage />,
           },
           {
             path: 'league/:leagueCode/contests/manage',

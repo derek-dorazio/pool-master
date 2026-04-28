@@ -265,41 +265,18 @@ describe('LeagueDetailPage', () => {
     );
   });
 
-  // pool-master-dxd.13.2 — League Home renders a thin contest list. Per-contest
-  // entry detail moved to the Contest Board, so the previous fan-out (contest
-  // tiles showing team entries inline) is gone.
-  it('renders a thin contest card linking to the contest board (no per-contest fan-out)', async () => {
+  // pool-master-7j3 / pool-master-9r6 — League Home no longer owns contest
+  // lists or completed history; League Contests owns both surfaces.
+  it('does not load or render contest lists on League Home', async () => {
     primeCommonMocks();
-    listContestsMock.mockResolvedValue({
-      data: {
-        contests: [
-          {
-            id: 'contest-1',
-            name: 'Masters Pick 6',
-            status: 'OPEN',
-            contestType: 'SINGLE_EVENT',
-            selectionType: 'TIERED',
-            scoringEngine: 'STROKE_PLAY',
-            leagueId: 'league-1',
-            sport: 'GOLF',
-            entryCount: 4,
-          },
-        ],
-      },
-    });
 
     renderLeagueDetailPage();
 
-    const card = await screen.findByTestId('league-contest-contest-1');
-    expect(card).toHaveTextContent('Masters Pick 6');
-    expect(card).toHaveTextContent('4 entries');
-    expect(card).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
-
-    // The fan-out per-team-entry tiles must NOT render here anymore.
-    expect(screen.queryByTestId('league-contest-entry-entry-1')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('league-create-entry-contest-1')).not.toBeInTheDocument();
-
-    // listContestEntries / getContest are not called by this page anymore.
+    await screen.findByTestId('league-home');
+    expect(screen.queryByTestId('league-contest-contest-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('league-history-contest-contest-1')).not.toBeInTheDocument();
+    expect(screen.queryByText('Completed contest history')).not.toBeInTheDocument();
+    expect(listContestsMock).not.toHaveBeenCalled();
     expect(listContestEntriesMock).not.toHaveBeenCalled();
     expect(getContestMock).not.toHaveBeenCalled();
   });
