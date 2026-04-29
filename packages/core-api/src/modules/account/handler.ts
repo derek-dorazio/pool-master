@@ -13,6 +13,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
   return {
     reactivate: handleReactivate,
     updateProfile: handleUpdateProfile,
+    updateUsername: handleUpdateUsername,
     updatePreferences: handleUpdatePreferences,
     changePassword: handleChangePassword,
     inactivate: handleInactivate,
@@ -86,7 +87,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
 
   async function handleUpdateProfile(
     request: FastifyRequest<{
-      Body: { firstName: string; lastName: string };
+      Body: { firstName: string; lastName: string; email: string };
     }>,
     reply: FastifyReply,
   ): Promise<void> {
@@ -98,6 +99,7 @@ export function createAccountHandlers(accountService: AccountService, authServic
         action: 'account.profile_update.request',
         data: {
           userId: userId ?? null,
+          hasEmail: request.body.email.trim().length > 0,
           hasFirstName: request.body.firstName.trim().length > 0,
           hasLastName: request.body.lastName.trim().length > 0,
         },
@@ -129,6 +131,56 @@ export function createAccountHandlers(accountService: AccountService, authServic
             userId: request.authUser?.userId ?? null,
           },
         }, 'Account profile update rejected');
+        return sendError(reply, error.statusCode, error.code, error.message);
+      }
+      throw error;
+    }
+  }
+
+  async function handleUpdateUsername(
+    request: FastifyRequest<{
+      Body: { username: string };
+    }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = request.contextLogger ?? request.log;
+
+    try {
+      const userId = request.authUser?.userId;
+      logger.debug({
+        action: 'account.username_update.request',
+        data: {
+          userId: userId ?? null,
+          requestedUsernameLength: request.body.username.trim().length,
+        },
+      }, 'Handling account username update request');
+      if (!userId) {
+        logger.warn({
+          action: 'account.username_update.rejected',
+          errorCode: 'AUTH_SESSION_REQUIRED',
+          statusCode: 401,
+        }, 'Account username update rejected');
+        return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
+      }
+
+      const user = await accountService.updateOwnUsername(userId, request.body.username);
+      logger.info({
+        action: 'account.username_update.succeeded',
+        data: {
+          userId: user.id,
+        },
+      }, 'Updated account username');
+      return reply.send(mapAccountResponse(user, request.authUser?.sessionId ?? null));
+    } catch (error) {
+      if (error instanceof AccountLifecycleError) {
+        logger.warn({
+          action: 'account.username_update.rejected',
+          errorCode: error.code,
+          statusCode: error.statusCode,
+          data: {
+            userId: request.authUser?.userId ?? null,
+          },
+        }, 'Account username update rejected');
         return sendError(reply, error.statusCode, error.code, error.message);
       }
       throw error;

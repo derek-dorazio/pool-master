@@ -4,6 +4,7 @@ import {
   AccountPasswordChangeResponseSchema,
   AccountPreferencesUpdateRequestSchema,
   AccountProfileUpdateRequestSchema,
+  AccountUsernameUpdateRequestSchema,
   AccountDeleteRequestSchema,
   AccountDeleteResponseSchema,
   AccountResponseSchema,
@@ -43,17 +44,37 @@ export async function accountModule(fastify: FastifyInstance): Promise<void> {
       tags: ['Account'],
       summary: 'Update the authenticated account profile',
       description:
-        'Updates the authenticated account profile fields that are owned directly by the user profile: first name and last name.',
+        'Updates the authenticated account profile fields that are owned directly by the user profile: email, first name, and last name. Email must remain unique across account emails and usernames.',
       operationId: 'updateAccountProfile',
       body: zodToJsonSchema(AccountProfileUpdateRequestSchema),
       response: {
         200: zodToJsonSchema(AccountResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
         401: zodToJsonSchema(ErrorEnvelopeSchema),
         404: zodToJsonSchema(ErrorEnvelopeSchema),
         409: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     handler: handlers.updateProfile,
+  });
+
+  fastify.put('/username', {
+    schema: {
+      tags: ['Account'],
+      summary: 'Update the authenticated account username',
+      description:
+        'Updates the authenticated account login username after confirming it is unique across account usernames and emails.',
+      operationId: 'updateAccountUsername',
+      body: zodToJsonSchema(AccountUsernameUpdateRequestSchema),
+      response: {
+        200: zodToJsonSchema(AccountResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        401: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+        409: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handlers.updateUsername,
   });
 
   fastify.put('/preferences', {

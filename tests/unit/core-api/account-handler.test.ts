@@ -22,6 +22,7 @@ describe('account handlers', () => {
   const accountService = {
     reactivateOwnAccount: jest.fn(),
     updateOwnProfile: jest.fn(),
+    updateOwnUsername: jest.fn(),
     updateOwnPreferences: jest.fn(),
     changeOwnPassword: jest.fn(),
     inactivateOwnAccount: jest.fn(),
@@ -37,7 +38,8 @@ describe('account handlers', () => {
 
   it.each([
     ['reactivate', () => ({})],
-    ['updateProfile', () => ({ body: { firstName: 'Updated', lastName: 'User' } })],
+    ['updateProfile', () => ({ body: { email: 'updated@example.com', firstName: 'Updated', lastName: 'User' } })],
+    ['updateUsername', () => ({ body: { username: 'updated-user' } })],
     ['updatePreferences', () => ({ body: { timezone: 'America/New_York' } })],
     ['changePassword', () => ({ body: { currentPassword: 'CurrentPass123!', newPassword: 'NewPass456!', confirmNewPassword: 'NewPass456!' }, headers: {} })],
     ['inactivate', () => ({})],

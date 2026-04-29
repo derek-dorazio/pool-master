@@ -45,17 +45,20 @@ export class AccountService {
 
   async updateOwnProfile(
     userId: string,
-    updates: { firstName: string; lastName: string },
+    updates: { firstName: string; lastName: string; email: string },
   ): Promise<AccountUserRow> {
+    const normalizedEmail = normalizeEmail(updates.email);
     this.logger?.debug({
       action: 'accountService.updateProfile.start',
-      data: { userId },
+      data: { userId, emailDomain: normalizedEmail.split('@')[1] ?? null },
     }, 'Updating account profile');
     const user = await this.requireUserForMutableAccountAction(userId);
+    await this.assertEmailAvailableForUser(user.id, normalizedEmail);
 
     const updatedUser = await this.prisma.user.update({
       where: { id: user.id },
       data: {
+        email: normalizedEmail,
         firstName: updates.firstName.trim(),
         lastName: updates.lastName.trim(),
       },
@@ -64,6 +67,28 @@ export class AccountService {
       action: 'accountService.updateProfile.success',
       data: { userId: updatedUser.id },
     }, 'Updated account profile');
+    return updatedUser;
+  }
+
+  async updateOwnUsername(userId: string, username: string): Promise<AccountUserRow> {
+    const normalizedUsername = normalizeUsername(username);
+    this.logger?.debug({
+      action: 'accountService.updateUsername.start',
+      data: { userId, requestedUsernameLength: normalizedUsername.length },
+    }, 'Updating account username');
+    const user = await this.requireUserForMutableAccountAction(userId);
+    await this.assertUsernameAvailableForUser(user.id, normalizedUsername);
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        username: normalizedUsername,
+      },
+    });
+    this.logger?.info({
+      action: 'accountService.updateUsername.success',
+      data: { userId: updatedUser.id },
+    }, 'Updated account username');
     return updatedUser;
   }
 
@@ -403,6 +428,82 @@ export class AccountService {
     }, 'Mutable-account preconditions satisfied');
     return user;
   }
+
+  private async assertEmailAvailableForUser(userId: string, normalizedEmail: string): Promise<void> {
+    const collision = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: normalizedEmail },
+          { username: normalizedEmail },
+        ],
+        NOT: {
+          id: userId,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!collision) {
+      return;
+    }
+
+    this.logger?.warn({
+      action: 'accountService.updateProfile.emailTaken',
+      data: {
+        userId,
+        conflictingUserId: collision.id,
+      },
+    }, 'Rejected account profile update because the email is already in use');
+    throw new AccountLifecycleError(
+      'That email address is already in use. Choose another email address.',
+      'ACCOUNT_EMAIL_TAKEN',
+      409,
+    );
+  }
+
+  private async assertUsernameAvailableForUser(userId: string, normalizedUsername: string): Promise<void> {
+    const collision = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { username: normalizedUsername },
+          { email: normalizedUsername },
+        ],
+        NOT: {
+          id: userId,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!collision) {
+      return;
+    }
+
+    this.logger?.warn({
+      action: 'accountService.updateUsername.usernameTaken',
+      data: {
+        userId,
+        conflictingUserId: collision.id,
+      },
+    }, 'Rejected account username update because the username is already in use');
+    throw new AccountLifecycleError(
+      'That username is already taken. Choose another username.',
+      'ACCOUNT_USERNAME_TAKEN',
+      409,
+    );
+  }
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function normalizeUsername(username: string): string {
+  return username.trim().toLowerCase();
 }
 
 function normalizeOptionalString(value: string | null | undefined): string | null | undefined {

@@ -9,6 +9,7 @@ import {
   refreshToken,
   updateAccountPreferences,
   updateAccountProfile,
+  updateAccountUsername,
 } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser } from './builders';
 import {
@@ -37,13 +38,24 @@ describe('SDK Functional: Account Lifecycle', () => {
     const profileResponse = await updateAccountProfile({
       client: cookieClient,
       body: {
+        email: 'updated-account-profile@example.com',
         firstName: 'Updated',
         lastName: 'Person',
       },
     });
 
+    expect(profileResponse.data?.user.email).toBe('updated-account-profile@example.com');
     expect(profileResponse.data?.user.firstName).toBe('Updated');
     expect(profileResponse.data?.user.lastName).toBe('Person');
+
+    const usernameResponse = await updateAccountUsername({
+      client: cookieClient,
+      body: {
+        username: 'updated-account-profile-user',
+      },
+    });
+
+    expect(usernameResponse.data?.user.username).toBe('updated-account-profile-user');
 
     const preferencesResponse = await updateAccountPreferences({
       client: cookieClient,
@@ -74,7 +86,7 @@ describe('SDK Functional: Account Lifecycle', () => {
     const loginWithOldPassword = await loginUser({
       client: getSdkClient(),
       body: {
-        identifier: user.username,
+        identifier: 'updated-account-profile-user',
         password: user.password,
       },
     });
@@ -87,7 +99,7 @@ describe('SDK Functional: Account Lifecycle', () => {
     const loginWithNewPassword = await loginUser({
       client: getSdkClient(),
       body: {
-        identifier: user.email,
+        identifier: 'updated-account-profile@example.com',
         password: 'UpdatedPassword123!',
       },
     });

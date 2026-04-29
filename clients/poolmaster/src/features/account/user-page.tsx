@@ -9,6 +9,7 @@ import {
   reactivateAccount,
   updateAccountPreferences,
   updateAccountProfile,
+  updateAccountUsername,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
@@ -24,7 +25,7 @@ type AccountPreferencesFormState = {
   dateFormat: '' | 'MDY' | 'DMY' | 'YMD';
 };
 
-type ActiveDialog = 'profile' | 'preferences' | 'password' | 'lifecycle' | 'delete' | null;
+type ActiveDialog = 'profile' | 'username' | 'preferences' | 'password' | 'lifecycle' | 'delete' | null;
 
 function extractErrorMessage(error: unknown): string {
   if (!error || typeof error !== 'object') {
@@ -139,8 +140,12 @@ export function UserPage() {
   const [emailConfirmation, setEmailConfirmation] = useState('');
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [profileForm, setProfileForm] = useState({
+    email: '',
     firstName: '',
     lastName: '',
+  });
+  const [usernameForm, setUsernameForm] = useState({
+    username: '',
   });
   const [preferencesForm, setPreferencesForm] = useState<AccountPreferencesFormState>({
     timezone: '',
@@ -164,8 +169,12 @@ export function UserPage() {
     }
 
     setProfileForm({
+      email: user.email ?? '',
       firstName: user.firstName ?? '',
       lastName: user.lastName ?? '',
+    });
+    setUsernameForm({
+      username: user.username ?? '',
     });
     setPreferencesForm({
       timezone: user.timezone ?? '',
@@ -198,12 +207,30 @@ export function UserPage() {
     mutationFn: async () => {
       const response = await updateAccountProfile({
         body: {
+          email: profileForm.email.trim().toLowerCase(),
           firstName: profileForm.firstName.trim(),
           lastName: profileForm.lastName.trim(),
         },
       });
       if (!response.data?.user) {
         throw response.error ?? new Error('Profile update response is missing data.');
+      }
+      return response.data.user;
+    },
+    onSuccess: async (updatedUser) => {
+      await applyUserToSession(updatedUser);
+    },
+  });
+
+  const usernameMutation = useMutation({
+    mutationFn: async () => {
+      const response = await updateAccountUsername({
+        body: {
+          username: usernameForm.username.trim().toLowerCase(),
+        },
+      });
+      if (!response.data?.user) {
+        throw response.error ?? new Error('Username update response is missing data.');
       }
       return response.data.user;
     },
@@ -355,20 +382,18 @@ export function UserPage() {
   const isInactive = user.isActive === false;
   const memberSince = formatMemberSince(user.createdAt, user.dateFormat);
   const disableProfileEditing = isInactive || profileMutation.isPending;
+  const disableUsernameEditing = isInactive || usernameMutation.isPending;
   const disablePreferencesEditing = isInactive || preferencesMutation.isPending;
   const disablePasswordEditing = isInactive || passwordMutation.isPending;
 
   return (
     <section className="space-y-6" data-testid="user-page">
       <div className="rounded-[2rem] border border-border bg-card p-8">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          User
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           My profile
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          Manage your profile, preferences, password, and account lifecycle.
+          Manage your user profile, preferences, login, and account information.
         </p>
         {isInactive ? (
           <div
@@ -404,53 +429,73 @@ export function UserPage() {
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-        <section className="rounded-[1.75rem] border border-border bg-card p-6">
-          <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-            Account summary
-          </div>
-          <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Name</dt>
-              <dd className="mt-1 text-base font-medium text-foreground">
-                {formatUserName(user.firstName, user.lastName)}
-              </dd>
+        <div className="space-y-6">
+          <section
+            className="rounded-[1.75rem] border border-border bg-card p-6"
+            data-testid="user-page-identity-summary"
+          >
+            <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+              Account summary
             </div>
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Email</dt>
-              <dd className="mt-1 text-base font-medium text-foreground">{user.email}</dd>
+            <dl className="mt-4 grid gap-4">
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Name</dt>
+                <dd className="mt-1 break-words text-base font-medium text-foreground">
+                  {formatUserName(user.firstName, user.lastName)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Email</dt>
+                <dd className="mt-1 break-words text-base font-medium text-foreground">
+                  {user.email}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Username
+                </dt>
+                <dd className="mt-1 break-words text-base font-medium text-foreground">
+                  {user.username}
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <section
+            className="rounded-[1.75rem] border border-border bg-card p-6"
+            data-testid="user-page-account-details"
+          >
+            <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+              Account details
             </div>
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Username</dt>
-              <dd className="mt-1 text-base font-medium text-foreground">{user.username}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Status</dt>
-              <dd className="mt-1 text-base font-medium text-foreground">
-                {isInactive ? 'Inactive' : 'Active'}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Member since
-              </dt>
-              <dd className="mt-1 text-base font-medium text-foreground">{memberSince}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Auth provider
-              </dt>
-              <dd className="mt-1 text-base font-medium text-foreground">
-                {user.authProvider ?? 'EMAIL'}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Role</dt>
-              <dd className="mt-1 text-base font-medium text-foreground">
-                {user.isRootAdmin ? 'Root admin' : 'Member'}
-              </dd>
-            </div>
-          </dl>
-        </section>
+            <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Member since
+                </dt>
+                <dd className="mt-1 text-base font-medium text-foreground">{memberSince}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Status</dt>
+                <dd className="mt-1 text-base font-medium text-foreground">
+                  {isInactive ? 'Inactive' : 'Active'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Role</dt>
+                <dd className="mt-1 text-base font-medium text-foreground">
+                  {user.isRootAdmin ? 'Root admin' : 'Member'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Method</dt>
+                <dd className="mt-1 text-base font-medium text-foreground">
+                  {user.authProvider ?? 'EMAIL'}
+                </dd>
+              </div>
+            </dl>
+          </section>
+        </div>
 
         <section className="rounded-[1.75rem] border border-border bg-card p-6">
           <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Actions</div>
@@ -464,7 +509,24 @@ export function UserPage() {
               <span>
                 <span className="block text-base font-semibold text-foreground">Edit profile</span>
                 <span className="mt-1 block text-sm text-muted-foreground">
-                  Update the name shown in account and membership surfaces.
+                  Update the name and email shown in account surfaces.
+                </span>
+              </span>
+              <span className="text-sm font-medium text-muted-foreground">Open</span>
+            </button>
+
+            <button
+              className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-5 py-4 text-left transition hover:border-primary/40 hover:bg-card"
+              data-testid="user-page-open-username"
+              onClick={() => setActiveDialog('username')}
+              type="button"
+            >
+              <span>
+                <span className="block text-base font-semibold text-foreground">
+                  Change username
+                </span>
+                <span className="mt-1 block text-sm text-muted-foreground">
+                  Update the login username used for this account.
                 </span>
               </span>
               <span className="text-sm font-medium text-muted-foreground">Open</span>
@@ -574,6 +636,20 @@ export function UserPage() {
               value={profileForm.lastName}
             />
           </label>
+          <label className="space-y-2 sm:col-span-2">
+            <span className="text-sm font-medium text-foreground">Email</span>
+            <input
+              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+              data-testid="user-page-email"
+              disabled={disableProfileEditing}
+              onChange={(event) => {
+                profileMutation.reset();
+                setProfileForm((current) => ({ ...current, email: event.target.value }));
+              }}
+              type="email"
+              value={profileForm.email}
+            />
+          </label>
         </div>
 
         {profileMutation.isError ? (
@@ -593,6 +669,7 @@ export function UserPage() {
             data-testid="user-page-save-profile"
             disabled={
               disableProfileEditing
+              || profileForm.email.trim().length === 0
               || profileForm.firstName.trim().length === 0
               || profileForm.lastName.trim().length === 0
             }
@@ -600,6 +677,51 @@ export function UserPage() {
             type="button"
           >
             {profileMutation.isPending ? 'Saving...' : 'Save profile'}
+          </button>
+        </div>
+      </UserActionDialog>
+
+      <UserActionDialog
+        description="Choose a unique username for signing in and identifying your account."
+        onOpenChange={(open) => setActiveDialog(open ? 'username' : null)}
+        open={activeDialog === 'username'}
+        testId="user-page-username-dialog"
+        title="Change username"
+      >
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-foreground">Username</span>
+          <input
+            className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+            data-testid="user-page-username"
+            disabled={disableUsernameEditing}
+            onChange={(event) => {
+              usernameMutation.reset();
+              setUsernameForm({ username: event.target.value });
+            }}
+            value={usernameForm.username}
+          />
+        </label>
+
+        {usernameMutation.isError ? (
+          <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            {extractErrorMessage(usernameMutation.error)}
+          </div>
+        ) : null}
+        {usernameMutation.isSuccess ? (
+          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            Your username was updated.
+          </div>
+        ) : null}
+
+        <div className="mt-5 flex justify-end">
+          <button
+            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+            data-testid="user-page-save-username"
+            disabled={disableUsernameEditing || usernameForm.username.trim().length < 3}
+            onClick={() => void usernameMutation.mutateAsync().catch(() => undefined)}
+            type="button"
+          >
+            {usernameMutation.isPending ? 'Saving...' : 'Save username'}
           </button>
         </div>
       </UserActionDialog>

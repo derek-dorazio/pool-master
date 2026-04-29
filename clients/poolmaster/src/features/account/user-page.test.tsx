@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -22,6 +22,7 @@ const {
   refreshTokenMock,
   updateAccountPreferencesMock,
   updateAccountProfileMock,
+  updateAccountUsernameMock,
   mockLogger,
 } = vi.hoisted(() => {
   const mockLogger = {
@@ -50,6 +51,7 @@ const {
     refreshTokenMock: vi.fn(),
     updateAccountPreferencesMock: vi.fn(),
     updateAccountProfileMock: vi.fn(),
+    updateAccountUsernameMock: vi.fn(),
     mockLogger,
   };
 });
@@ -70,6 +72,7 @@ vi.mock('@/lib/api', () => ({
   refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
   updateAccountPreferences: (...args: unknown[]) => updateAccountPreferencesMock(...args),
   updateAccountProfile: (...args: unknown[]) => updateAccountProfileMock(...args),
+  updateAccountUsername: (...args: unknown[]) => updateAccountUsernameMock(...args),
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -180,6 +183,7 @@ describe('UserPage', () => {
     refreshTokenMock.mockReset();
     updateAccountPreferencesMock.mockReset();
     updateAccountProfileMock.mockReset();
+    updateAccountUsernameMock.mockReset();
     mockLogger.debug.mockReset();
     mockLogger.info.mockReset();
     mockLogger.warn.mockReset();
@@ -189,13 +193,46 @@ describe('UserPage', () => {
     useSessionStore.getState().clearSession();
   });
 
-  it('updates the self profile from the canonical user page dialog', async () => {
+  it('pool-master-mj2 shows user-focused My Profile copy without the implementation eyebrow', async () => {
+    primeCurrentUser();
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    expect(screen.queryByText(/^User$/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Manage your user profile, preferences, login, and account information.'),
+    ).toBeVisible();
+  });
+
+  it('pool-master-aph keeps identity fields in a dedicated profile summary tile', async () => {
+    primeCurrentUser();
+
+    renderUserPage();
+
+    const identitySummary = await screen.findByTestId('user-page-identity-summary');
+    expect(within(identitySummary).getByText('Name')).toBeVisible();
+    expect(within(identitySummary).getByText('Derek Dorazio')).toBeVisible();
+    expect(within(identitySummary).getByText('Email')).toBeVisible();
+    expect(within(identitySummary).getByText('derek@example.com')).toBeVisible();
+    expect(within(identitySummary).getByText('Username')).toBeVisible();
+    expect(within(identitySummary).getByText('ddorazio')).toBeVisible();
+
+    const accountDetails = screen.getByTestId('user-page-account-details');
+    expect(within(accountDetails).getByText('Member since')).toBeVisible();
+    expect(within(accountDetails).getByText('Status')).toBeVisible();
+    expect(within(accountDetails).getByText('Role')).toBeVisible();
+    expect(within(accountDetails).getByText('Method')).toBeVisible();
+    expect(within(accountDetails).queryByText('Auth provider')).not.toBeInTheDocument();
+  });
+
+  it('pool-master-l40 updates the self profile email from the canonical user page dialog', async () => {
     primeCurrentUser();
     updateAccountProfileMock.mockResolvedValue({
       data: {
         user: {
           id: 'user-1',
-          email: 'derek@example.com',
+          email: 'updated@example.com',
           username: 'ddorazio',
           firstName: 'Updated',
           lastName: 'Person',
@@ -218,17 +255,85 @@ describe('UserPage', () => {
     fireEvent.change(screen.getByTestId('user-page-last-name'), {
       target: { value: 'Person' },
     });
+    fireEvent.change(screen.getByTestId('user-page-email'), {
+      target: { value: ' Updated@Example.com ' },
+    });
     fireEvent.click(screen.getByTestId('user-page-save-profile'));
 
     await waitFor(() =>
       expect(updateAccountProfileMock).toHaveBeenCalledWith({
         body: {
+          email: 'updated@example.com',
           firstName: 'Updated',
           lastName: 'Person',
         },
       }),
     );
     await waitFor(() => expect(screen.getByText('Your profile was updated.')).toBeVisible());
+  });
+
+  it('pool-master-l40 changes the self username when the value is available', async () => {
+    primeCurrentUser();
+    updateAccountUsernameMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          username: 'derekd',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-13T00:00:00.000Z',
+        },
+      },
+    });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-username'));
+    await screen.findByTestId('user-page-username-dialog');
+    fireEvent.change(screen.getByTestId('user-page-username'), {
+      target: { value: ' DerekD ' },
+    });
+    fireEvent.click(screen.getByTestId('user-page-save-username'));
+
+    await waitFor(() =>
+      expect(updateAccountUsernameMock).toHaveBeenCalledWith({
+        body: {
+          username: 'derekd',
+        },
+      }),
+    );
+    expect(await screen.findByText('Your username was updated.')).toBeVisible();
+  });
+
+  it('pool-master-l40 tells the user when a requested username is already taken', async () => {
+    primeCurrentUser();
+    updateAccountUsernameMock.mockResolvedValue({
+      data: null,
+      error: {
+        error: {
+          code: 'ACCOUNT_USERNAME_TAKEN',
+          message: 'That username is already taken. Choose another username.',
+        },
+      },
+    });
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-username'));
+    await screen.findByTestId('user-page-username-dialog');
+    fireEvent.change(screen.getByTestId('user-page-username'), {
+      target: { value: 'taken' },
+    });
+    fireEvent.click(screen.getByTestId('user-page-save-username'));
+
+    expect(
+      await screen.findByText('That username is already taken. Choose another username.'),
+    ).toBeVisible();
   });
 
   it('keeps delete locked until the account is inactive', async () => {

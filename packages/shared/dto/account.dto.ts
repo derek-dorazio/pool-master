@@ -4,6 +4,11 @@ import { SuccessSchema } from './common.dto';
 import { AuthenticatedSessionUserDtoSchema } from './auth.dto';
 
 export const AccountProfileUpdateRequestSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .email()
+    .describe('Updated primary contact email address for the account profile.'),
   firstName: z
     .string()
     .trim()
@@ -18,6 +23,17 @@ export const AccountProfileUpdateRequestSchema = z.object({
     .describe('Updated last name for the account profile.'),
 }).describe('Self-service profile update payload for the authenticated account.');
 export type AccountProfileUpdateRequest = z.infer<typeof AccountProfileUpdateRequestSchema>;
+
+export const AccountUsernameUpdateRequestSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(3)
+    .max(100)
+    .regex(/^\S+$/, 'Username cannot contain spaces')
+    .describe('Updated unique login username for the authenticated account.'),
+}).describe('Self-service username update payload for the authenticated account.');
+export type AccountUsernameUpdateRequest = z.infer<typeof AccountUsernameUpdateRequestSchema>;
 
 export const AccountPreferencesUpdateRequestSchema = z.object({
   timezone: z

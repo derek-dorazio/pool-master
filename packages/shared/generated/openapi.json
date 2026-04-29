@@ -22960,7 +22960,7 @@
         "tags": [
           "Account"
         ],
-        "description": "Updates the authenticated account profile fields that are owned directly by the user profile: first name and last name.",
+        "description": "Updates the authenticated account profile fields that are owned directly by the user profile: email, first name, and last name. Email must remain unique across account emails and usernames.",
         "requestBody": {
           "required": true,
           "content": {
@@ -22968,6 +22968,11 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Updated primary contact email address for the account profile."
+                  },
                   "firstName": {
                     "type": "string",
                     "minLength": 1,
@@ -22982,6 +22987,7 @@
                   }
                 },
                 "required": [
+                  "email",
                   "firstName",
                   "lastName"
                 ],
@@ -23096,6 +23102,345 @@
                   ],
                   "additionalProperties": false,
                   "description": "Self-service account response envelope for authenticated account lifecycle actions."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/username": {
+      "put": {
+        "operationId": "updateAccountUsername",
+        "summary": "Update the authenticated account username",
+        "tags": [
+          "Account"
+        ],
+        "description": "Updates the authenticated account login username after confirming it is unique across account usernames and emails.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 100,
+                    "pattern": "^\\S+$",
+                    "description": "Updated unique login username for the authenticated account."
+                  }
+                },
+                "required": [
+                  "username"
+                ],
+                "additionalProperties": false,
+                "description": "Self-service username update payload for the authenticated account."
+              }
+            }
+          },
+          "description": "Self-service username update payload for the authenticated account."
+        },
+        "responses": {
+          "200": {
+            "description": "Self-service account response envelope for authenticated account lifecycle actions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Stable user identifier."
+                        },
+                        "email": {
+                          "type": "string",
+                          "description": "Primary email address for the user account."
+                        },
+                        "username": {
+                          "type": "string",
+                          "description": "Unique login identifier for the account."
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "description": "First name shown in account and member-management surfaces."
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "description": "Last name shown in account and member-management surfaces."
+                        },
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the account is currently active for normal sign-in and product usage."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the user has platform-level root-admin access."
+                        },
+                        "authProvider": {
+                          "type": "string",
+                          "enum": [
+                            "email",
+                            "google",
+                            "apple"
+                          ],
+                          "description": "Authentication provider used for the account when known."
+                        },
+                        "timezone": {
+                          "type": "string",
+                          "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                        },
+                        "locale": {
+                          "type": "string",
+                          "description": "Preferred locale for formatting and localized copy."
+                        },
+                        "timeFormat": {
+                          "type": "string",
+                          "enum": [
+                            "12H",
+                            "24H"
+                          ],
+                          "description": "Preferred clock display used in account and scheduling surfaces."
+                        },
+                        "dateFormat": {
+                          "type": "string",
+                          "enum": [
+                            "MDY",
+                            "DMY",
+                            "YMD"
+                          ],
+                          "description": "Preferred date display format used in account and scheduling surfaces."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Account creation timestamp in ISO 8601 format."
+                        },
+                        "sessionId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true,
+                          "description": "Safe non-secret session correlation identifier for the authenticated browser session."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "username",
+                        "firstName",
+                        "lastName",
+                        "isActive",
+                        "isRootAdmin",
+                        "sessionId"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Authenticated user profile summary enriched with the safe session correlation identifier."
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Self-service account response envelope for authenticated account lifecycle actions."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
                 }
               }
             }

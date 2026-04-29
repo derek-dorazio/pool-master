@@ -11125,6 +11125,10 @@ export type UpdateAccountProfileData = {
      */
     body: {
         /**
+         * Updated primary contact email address for the account profile.
+         */
+        email: string;
+        /**
          * Updated first name for the account profile.
          */
         firstName: string;
@@ -11139,6 +11143,28 @@ export type UpdateAccountProfileData = {
 };
 
 export type UpdateAccountProfileErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
     /**
      * Standard API error envelope.
      */
@@ -11279,6 +11305,185 @@ export type UpdateAccountProfileResponses = {
 };
 
 export type UpdateAccountProfileResponse = UpdateAccountProfileResponses[keyof UpdateAccountProfileResponses];
+
+export type UpdateAccountUsernameData = {
+    /**
+     * Self-service username update payload for the authenticated account.
+     */
+    body: {
+        /**
+         * Updated unique login username for the authenticated account.
+         */
+        username: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/account/username';
+};
+
+export type UpdateAccountUsernameErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type UpdateAccountUsernameError = UpdateAccountUsernameErrors[keyof UpdateAccountUsernameErrors];
+
+export type UpdateAccountUsernameResponses = {
+    /**
+     * Self-service account response envelope for authenticated account lifecycle actions.
+     */
+    200: {
+        /**
+         * Authenticated user profile summary enriched with the safe session correlation identifier.
+         */
+        user: {
+            /**
+             * Stable user identifier.
+             */
+            id: string;
+            /**
+             * Primary email address for the user account.
+             */
+            email: string;
+            /**
+             * Unique login identifier for the account.
+             */
+            username: string;
+            /**
+             * First name shown in account and member-management surfaces.
+             */
+            firstName: string;
+            /**
+             * Last name shown in account and member-management surfaces.
+             */
+            lastName: string;
+            /**
+             * Whether the account is currently active for normal sign-in and product usage.
+             */
+            isActive: boolean;
+            /**
+             * Whether the user has platform-level root-admin access.
+             */
+            isRootAdmin: boolean;
+            /**
+             * Authentication provider used for the account when known.
+             */
+            authProvider?: 'email' | 'google' | 'apple';
+            /**
+             * Preferred IANA timezone for user-facing scheduling and reminders.
+             */
+            timezone?: string;
+            /**
+             * Preferred locale for formatting and localized copy.
+             */
+            locale?: string;
+            /**
+             * Preferred clock display used in account and scheduling surfaces.
+             */
+            timeFormat?: '12H' | '24H';
+            /**
+             * Preferred date display format used in account and scheduling surfaces.
+             */
+            dateFormat?: 'MDY' | 'DMY' | 'YMD';
+            /**
+             * Account creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
+            /**
+             * Safe non-secret session correlation identifier for the authenticated browser session.
+             */
+            sessionId: string;
+        };
+    };
+};
+
+export type UpdateAccountUsernameResponse = UpdateAccountUsernameResponses[keyof UpdateAccountUsernameResponses];
 
 export type UpdateAccountPreferencesData = {
     /**

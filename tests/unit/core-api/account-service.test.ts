@@ -2,10 +2,11 @@ import bcrypt from 'bcryptjs';
 import { AccountLifecycleError, AccountService } from '../../../packages/core-api/src/modules/account/service';
 
 describe('AccountService', () => {
-  it('updates the active account profile', async () => {
+  it('pool-master-l40 updates the active account profile email with the user name fields', async () => {
     const updatedUser = {
       id: 'user-1',
-      email: 'user@example.com',
+      email: 'updated@example.com',
+      username: 'user-1',
       firstName: 'Derek',
       lastName: 'Dorazio',
       isActive: true,
@@ -25,6 +26,7 @@ describe('AccountService', () => {
           passwordHash: '$2b$12$placeholder',
           isActive: true,
         }),
+        findFirst: jest.fn().mockResolvedValue(null),
         update: jest.fn().mockResolvedValue(updatedUser),
       },
     } as any;
@@ -35,14 +37,138 @@ describe('AccountService', () => {
       service.updateOwnProfile('user-1', {
         firstName: ' Derek ',
         lastName: ' Dorazio ',
+        email: ' Updated@Example.com ',
       }),
     ).resolves.toEqual(updatedUser);
 
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-1' },
       data: {
+        email: 'updated@example.com',
         firstName: 'Derek',
         lastName: 'Dorazio',
+      },
+    });
+  });
+
+  it('pool-master-l40 rejects profile email changes when the email belongs to another account', async () => {
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          passwordHash: '$2b$12$placeholder',
+          isActive: true,
+        }),
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'user-2',
+        }),
+      },
+    } as any;
+
+    const service = new AccountService(prisma);
+
+    await expect(
+      service.updateOwnProfile('user-1', {
+        firstName: 'Derek',
+        lastName: 'Dorazio',
+        email: 'used@example.com',
+      }),
+    ).rejects.toMatchObject({
+      code: 'ACCOUNT_EMAIL_TAKEN',
+      statusCode: 409,
+    } satisfies Partial<AccountLifecycleError>);
+
+    expect(prisma.user.findFirst).toHaveBeenCalledWith({
+      where: {
+        OR: [
+          { email: 'used@example.com' },
+          { username: 'used@example.com' },
+        ],
+        NOT: {
+          id: 'user-1',
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+  });
+
+  it('pool-master-l40 updates the active account username when it is unique', async () => {
+    const updatedUser = {
+      id: 'user-1',
+      email: 'user@example.com',
+      username: 'next-user',
+      firstName: 'Derek',
+      lastName: 'Dorazio',
+      isActive: true,
+      isRootAdmin: false,
+      authProvider: 'EMAIL',
+      timezone: null,
+      locale: null,
+      timeFormat: null,
+      dateFormat: null,
+      createdAt: new Date('2026-04-13T00:00:00.000Z'),
+    };
+
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          passwordHash: '$2b$12$placeholder',
+          isActive: true,
+        }),
+        findFirst: jest.fn().mockResolvedValue(null),
+        update: jest.fn().mockResolvedValue(updatedUser),
+      },
+    } as any;
+
+    const service = new AccountService(prisma);
+
+    await expect(service.updateOwnUsername('user-1', ' Next-User ')).resolves.toEqual(updatedUser);
+
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: {
+        username: 'next-user',
+      },
+    });
+  });
+
+  it('pool-master-l40 rejects username changes when the username is already taken', async () => {
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          passwordHash: '$2b$12$placeholder',
+          isActive: true,
+        }),
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'user-2',
+        }),
+      },
+    } as any;
+
+    const service = new AccountService(prisma);
+
+    await expect(service.updateOwnUsername('user-1', 'Taken')).rejects.toMatchObject({
+      code: 'ACCOUNT_USERNAME_TAKEN',
+      statusCode: 409,
+      message: 'That username is already taken. Choose another username.',
+    } satisfies Partial<AccountLifecycleError>);
+
+    expect(prisma.user.findFirst).toHaveBeenCalledWith({
+      where: {
+        OR: [
+          { username: 'taken' },
+          { email: 'taken' },
+        ],
+        NOT: {
+          id: 'user-1',
+        },
+      },
+      select: {
+        id: true,
       },
     });
   });
@@ -64,6 +190,7 @@ describe('AccountService', () => {
       service.updateOwnProfile('user-1', {
         firstName: 'Derek',
         lastName: 'Dorazio',
+        email: 'user@example.com',
       }),
     ).rejects.toMatchObject({
       code: 'ACCOUNT_INACTIVE_READ_ONLY',
