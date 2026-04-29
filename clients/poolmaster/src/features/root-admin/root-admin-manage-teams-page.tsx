@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { adminListTeams, type AdminListTeamsResponses } from '@/lib/api';
@@ -54,33 +54,11 @@ function buildOwnerLabel(team: ManagedTeam) {
 }
 
 export function RootAdminManageTeamsPage() {
-  const [searchDraft, setSearchDraft] = useState('');
-  const [leagueCodeDraft, setLeagueCodeDraft] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
-  const deferredSearch = useDeferredValue(searchDraft);
-  const deferredLeagueCode = useDeferredValue(leagueCodeDraft);
-
   const teamsQuery = useQuery({
-    queryKey: [
-      'poolmaster',
-      'root-admin',
-      'manage-teams',
-      deferredSearch.trim(),
-      deferredLeagueCode.trim().toUpperCase(),
-      activeFilter,
-    ],
+    queryKey: ['poolmaster', 'root-admin', 'manage-teams'],
     queryFn: async (): Promise<ManagedTeam[]> => {
-      const trimmedSearch = deferredSearch.trim();
-      const trimmedLeagueCode = deferredLeagueCode.trim().toUpperCase();
       const response = await adminListTeams({
-        query: {
-          search: trimmedSearch.length > 0 ? trimmedSearch : undefined,
-          leagueCode: trimmedLeagueCode.length > 0 ? trimmedLeagueCode : undefined,
-          isActive:
-            activeFilter === 'ALL'
-              ? undefined
-              : activeFilter === 'ACTIVE',
-        },
+        query: {},
       });
 
       if (!response.data?.teams) {
@@ -170,49 +148,8 @@ export function RootAdminManageTeamsPage() {
             </Link>
             <h2 className="mt-3 text-2xl font-semibold text-foreground">Teams</h2>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-              Search teams across leagues, sort results, and open Team Home for owner and
-              lifecycle actions.
+              Filter teams by column and open Team Home for owner and lifecycle actions.
             </p>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_minmax(0,0.7fr)]">
-            <label className="text-sm text-muted-foreground">
-              <span className="mb-2 block font-medium text-foreground">Search by team name</span>
-              <input
-                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
-                data-testid="root-admin-manage-teams-search"
-                onChange={(event) => setSearchDraft(event.target.value)}
-                placeholder="Search teams"
-                value={searchDraft}
-              />
-            </label>
-
-            <label className="text-sm text-muted-foreground">
-              <span className="mb-2 block font-medium text-foreground">Filter by league code</span>
-              <input
-                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm uppercase text-foreground"
-                data-testid="root-admin-manage-teams-league-code"
-                onChange={(event) => setLeagueCodeDraft(event.target.value)}
-                placeholder="BIGDAWGS"
-                value={leagueCodeDraft}
-              />
-            </label>
-
-            <label className="text-sm text-muted-foreground">
-              <span className="mb-2 block font-medium text-foreground">Lifecycle</span>
-              <select
-                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
-                data-testid="root-admin-manage-teams-is-active-filter"
-                onChange={(event) =>
-                  setActiveFilter(event.target.value as 'ALL' | 'ACTIVE' | 'INACTIVE')
-                }
-                value={activeFilter}
-              >
-                <option value="ALL">All teams</option>
-                <option value="ACTIVE">Active only</option>
-                <option value="INACTIVE">Inactive only</option>
-              </select>
-            </label>
           </div>
         </div>
       </div>

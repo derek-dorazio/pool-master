@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RootAdminManageTeamsPage } from './root-admin-manage-teams-page';
@@ -94,42 +93,23 @@ describe('RootAdminManageTeamsPage', () => {
     expect(screen.getByText('Active')).toBeInTheDocument();
   });
 
-  it('passes search, leagueCode, and isActive filters to the admin list endpoint', async () => {
+  it('pool-master-85r removes redundant header filters and keeps the grid filters as the only filter UI', async () => {
     adminListTeamsMock.mockResolvedValue({ data: { teams: [] } });
 
     renderPage();
 
     await waitFor(() =>
       expect(adminListTeamsMock).toHaveBeenLastCalledWith({
-        query: {
-          search: undefined,
-          leagueCode: undefined,
-          isActive: undefined,
-        },
+        query: {},
       }),
     );
 
-    await userEvent.type(
-      screen.getByTestId('root-admin-manage-teams-search'),
-      'Beer',
-    );
-    await userEvent.type(
-      screen.getByTestId('root-admin-manage-teams-league-code'),
-      'bigdawgs',
-    );
-    await userEvent.selectOptions(
-      screen.getByTestId('root-admin-manage-teams-is-active-filter'),
-      'INACTIVE',
-    );
-
-    await waitFor(() =>
-      expect(adminListTeamsMock).toHaveBeenLastCalledWith({
-        query: {
-          search: 'Beer',
-          leagueCode: 'BIGDAWGS',
-          isActive: false,
-        },
-      }),
-    );
+    expect(screen.queryByTestId('root-admin-manage-teams-search')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-manage-teams-league-code')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-manage-teams-is-active-filter')).not.toBeInTheDocument();
+    expect(await screen.findByPlaceholderText('Filter Team')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Filter League')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Filter Owners')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Filter Lifecycle')).toBeInTheDocument();
   });
 });
