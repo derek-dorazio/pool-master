@@ -37,6 +37,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/version/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get service version metadata
+         * @description Returns non-secret deployment metadata for the core API service so QA and operators can diagnose stale releases, SHA mismatches, and build provenance.
+         */
+        get: operations["getRootVersion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/register": {
         parameters: {
             query?: never;
@@ -48,7 +68,7 @@ export interface paths {
         put?: never;
         /**
          * Register a new user account
-         * @description Creates a new email/password account, issues the initial auth tokens, and returns the authenticated user profile used to enter the PoolMaster app.
+         * @description Creates a new username/email/password account, issues the initial auth tokens, and returns the authenticated user profile used to enter the PoolMaster app.
          */
         post: operations["registerUser"];
         delete?: never;
@@ -67,8 +87,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Authenticate with email and password
-         * @description Authenticates an existing email/password account and returns the authenticated user profile plus fresh access, refresh, and CSRF tokens.
+         * Authenticate with username or email and password
+         * @description Authenticates an existing account using username or email plus password, then returns the authenticated user profile plus fresh access, refresh, and CSRF tokens.
          */
         post: operations["loginUser"];
         delete?: never;
@@ -137,6 +157,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/version/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get service version metadata
+         * @description Returns non-secret deployment metadata for the core API service so QA and operators can diagnose stale releases, SHA mismatches, and build provenance.
+         */
+        get: operations["getVersion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/": {
         parameters: {
             query?: never;
@@ -170,7 +210,7 @@ export interface paths {
         };
         /**
          * Get league details by ID
-         * @description Returns detailed league information by internal league ID for authenticated member or commissioner surfaces that already know the database identifier.
+         * @description Returns detailed league information by internal league ID for authenticated league members, league commissioners, or root admins using platform-level override access.
          */
         get: operations["getLeague"];
         put?: never;
@@ -194,7 +234,7 @@ export interface paths {
         };
         /**
          * Get league details by league code
-         * @description Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation.
+         * @description Returns detailed league information by stable league code. This is the preferred route for bookmarkable `/league/<leagueCode>` web navigation and allows root-admin override access without faking league membership.
          */
         get: operations["getLeagueByCode"];
         put?: never;
@@ -259,6 +299,26 @@ export interface paths {
          * @description Allows a commissioner to mark a league inactive. Inactive leagues remain visible, but this action is the required first step before a permanent delete becomes available.
          */
         post: operations["inactivateLeague"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Activate a league
+         * @description Allows a commissioner to reactivate an inactive league so normal league usage and commissioner edits become available again.
+         */
+        post: operations["activateLeague"];
         delete?: never;
         options?: never;
         head?: never;
@@ -534,7 +594,7 @@ export interface paths {
         };
         /**
          * List squads in a league
-         * @description Returns the squads associated with the current league for squad management and contest-entry flows.
+         * @description Returns the squads associated with the current league for team management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
          */
         get: operations["listLeagueSquads"];
         put?: never;
@@ -558,19 +618,43 @@ export interface paths {
         };
         /**
          * Get squad details
-         * @description Returns the detailed squad payload for the requested squad identifier.
+         * @description Returns the detailed squad payload for the requested squad identifier, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
          */
         get: operations["getLeagueSquad"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Permanently delete an inactive team
+         * @description Permanently deletes an inactive team and cascades related team-owned data. This route is root-admin only and exists to support QA cleanup flows from Team Home.
+         */
+        delete: operations["deleteLeagueSquad"];
         options?: never;
         head?: never;
         /**
          * Update squad details
-         * @description Updates mutable squad fields such as naming and presentation detail.
+         * @description Updates mutable squad fields such as naming and presentation detail for an active team owner, league commissioner, or root admin.
          */
         patch: operations["updateLeagueSquad"];
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/squads/{squadId}/inactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Inactivate a team
+         * @description Inactivates the target team, preserves its history, removes its active owners from the league, and inactivates any affected users who no longer belong to any active leagues. Active team owners, league commissioners, and root admins may perform this action.
+         */
+        post: operations["inactivateLeagueSquad"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/leagues/{id}/squads/{squadId}/members": {
@@ -584,7 +668,7 @@ export interface paths {
         put?: never;
         /**
          * Add or reactivate a team owner
-         * @description Adds an owner to the team or reactivates an existing inactive owner membership.
+         * @description Adds an owner to the team or reactivates an existing inactive owner membership for an active team owner, league commissioner, or root admin.
          */
         post: operations["addSquadOwner"];
         delete?: never;
@@ -605,7 +689,7 @@ export interface paths {
         post?: never;
         /**
          * Remove a team owner
-         * @description Removes the owner relationship between the target user and team.
+         * @description Removes the owner relationship between the target user and team. The backend blocks removal of the final active owner and requires team inactivation instead.
          */
         delete: operations["removeSquadOwner"];
         options?: never;
@@ -622,7 +706,7 @@ export interface paths {
         };
         /**
          * List team-owner invitations for a league
-         * @description Returns pending and historical team-owner invitations visible to the current commissioner or team owner.
+         * @description Returns pending and historical team-owner invitations visible to the current commissioner, active team owner, or root admin.
          */
         get: operations["listSquadOwnerInvitations"];
         put?: never;
@@ -644,7 +728,7 @@ export interface paths {
         put?: never;
         /**
          * Invite a co-owner by email
-         * @description Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected.
+         * @description Starts the co-owner invite flow for a team. Existing PoolMaster users outside the league may be provisioned immediately; current league members are rejected. Active team owners, league commissioners, and root admins may start this flow.
          */
         post: operations["createSquadOwnerInvitation"];
         delete?: never;
@@ -664,7 +748,7 @@ export interface paths {
         put?: never;
         /**
          * Replace an active team owner
-         * @description Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email.
+         * @description Guided replacement flow that inactivates the selected current owner and starts the same co-owner invite/provisioning flow for the replacement email. Active team owners, league commissioners, and root admins may start this flow.
          */
         post: operations["replaceSquadOwner"];
         delete?: never;
@@ -685,7 +769,7 @@ export interface paths {
         post?: never;
         /**
          * Revoke a pending team-owner invitation
-         * @description Revokes a pending co-owner invitation so it can no longer be accepted.
+         * @description Revokes a pending co-owner invitation so it can no longer be accepted. Active team owners, league commissioners, and root admins may revoke invitations in their allowed scope.
          */
         delete: operations["revokeSquadOwnerInvitation"];
         options?: never;
@@ -797,7 +881,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/leagues/{id}/contest-management/contests/": {
+    "/api/v1/leagues/{id}/contest-management/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List seeded contest templates for commissioner create flow
+         * @description Returns the seeded contest configuration templates available for a sport and contest type so commissioner create flows can default to smart presets before advanced editing.
+         */
+        get: operations["listManagedContestTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/contest-management/contests": {
         parameters: {
             query?: never;
             header?: never;
@@ -905,6 +1009,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/contests/{contestId}/entries/{entryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get contest entry detail
+         * @description Returns a contest entry plus its current picked participants and latest performance context for entry-detail and expanded leaderboard surfaces.
+         */
+        get: operations["getContestEntry"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update a contest entry
+         * @description Updates mutable contest-entry fields such as name and tiebreaker prediction while the contest is still joinable.
+         */
+        patch: operations["updateContestEntry"];
+        trace?: never;
+    };
     "/api/v1/contests/{contestId}/entries/me": {
         parameters: {
             query?: never;
@@ -914,13 +1042,14 @@ export interface paths {
         };
         /**
          * Get the current user contest entry
-         * @description Returns the contest entry owned by the authenticated user when one exists for the target contest.
+         * @deprecated
+         * @description Deprecated legacy helper. New clients should use listContestEntries and filter entries by squadId/client context; this operation remains for older clients through the next release boundary.
          */
         get: operations["getMyContestEntry"];
         put?: never;
         /**
-         * Create or return the current user contest entry
-         * @description Creates a contest entry for the authenticated user when needed, or returns the existing entry when the user has already entered.
+         * Create the current user contest entry
+         * @description Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation.
          */
         post: operations["enterContest"];
         /**
@@ -1471,9 +1600,29 @@ export interface paths {
         get?: never;
         /**
          * Update the authenticated account profile
-         * @description Updates the authenticated account profile fields that are owned directly by the user profile: first name and last name.
+         * @description Updates the authenticated account profile fields that are owned directly by the user profile: email, first name, and last name. Email must remain unique across account emails and usernames.
          */
         put: operations["updateAccountProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/username": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update the authenticated account username
+         * @description Updates the authenticated account login username after confirming it is unique across account usernames and emails.
+         */
+        put: operations["updateAccountUsername"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1619,7 +1768,11 @@ export interface paths {
         get: operations["adminGetUserDetail"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete an inactive user account as root admin
+         * @description Permanently deletes an inactive user account after confirming the exact email. Stable UI-handled errors include 404 USER_NOT_FOUND, 400 ACCOUNT_DELETE_CONFIRMATION_MISMATCH, 409 ACCOUNT_DELETE_REQUIRES_INACTIVE, 409 ACCOUNT_DELETE_DEPENDENCIES_EXIST, and 409 LAST_ROOT_ADMIN. ACCOUNT_DELETE_DEPENDENCIES_EXIST may include structured dependency details naming the blocking league and team so admins can navigate to resolve ownership before retrying.
+         */
+        delete: operations["adminDeleteUser"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1685,6 +1838,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users/{userId}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset a user password as root admin
+         * @description Generates a temporary password for the target user, revokes their active refresh sessions, and returns the temporary credential so the root admin can relay it.
+         */
+        post: operations["adminResetUserPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{userId}/root-admin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Grant or revoke the root-admin role for a user
+         * @description Allows an existing root admin to grant or revoke the platform-level root-admin role for another user. Root-admin self-demotion is blocked and at least one root admin must always remain. Stable UI-handled errors: 404 USER_NOT_FOUND, 400 SELF_ROOT_ADMIN_CHANGE, and 409 LAST_ROOT_ADMIN.
+         */
+        post: operations["adminSetUserRootAdmin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leagues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List leagues for root-admin management
+         * @description Returns root-admin league search results by league name for manage-page lifecycle actions.
+         */
+        get: operations["adminListLeagues"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/teams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List teams for root-admin management
+         * @description Returns cross-league root-admin team search results with optional team-name, league-code, and active filters for manage-page operations.
+         */
+        get: operations["adminListTeams"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leagues/{leagueId}/inactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Inactivate a league as root admin
+         * @description Allows root-admins to inactivate a league before permanent deletion. This reuses the truthful league lifecycle behavior.
+         */
+        post: operations["adminInactivateLeague"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leagues/{leagueId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete an inactive league as root admin
+         * @description Allows root-admins to permanently delete an inactive league after confirming the exact league code. This reuses the truthful cascade-delete lifecycle behavior.
+         */
+        delete: operations["adminDeleteLeague"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/providers/health": {
         parameters: {
             query?: never;
@@ -1698,6 +1971,106 @@ export interface paths {
          */
         get: operations["adminListProviders"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/providers/sync-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List recent provider sync runs
+         * @description Returns recent provider sync runs with thin payload-backed operational detail for root-admin visibility surfaces.
+         */
+        get: operations["adminListProviderSyncRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/providers/sync/{sport}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run explicit manual sport sync feeds
+         * @description Submits feed-aware manual sync for the requested sport. The workflow runs asynchronously after acceptance.
+         */
+        post: operations["adminPrepareSportSync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/providers/events/{sport}/{eventId}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run explicit manual event sync feeds
+         * @description Submits feed-aware manual sync for a single event. The workflow runs asynchronously after acceptance.
+         */
+        post: operations["adminSyncProviderEventData"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/contest-config-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List persisted contest configuration templates
+         * @description Returns the persisted commissioner contest configuration templates that root-admins can manage from the /manage page.
+         */
+        get: operations["adminListContestConfigTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/contest-config-templates/{templateId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update a persisted contest configuration template
+         * @description Updates the persisted commissioner contest template used as a global default for future contest create flows.
+         */
+        put: operations["adminUpdateContestConfigTemplate"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2138,12 +2511,12 @@ export interface paths {
         };
         /**
          * Get ingestion schedule configuration
-         * @description Returns the global ingestion scheduling configuration used by operational jobs.
+         * @description Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools.
          */
         get: operations["adminGetIngestionSchedule"];
         /**
          * Update ingestion schedule configuration
-         * @description Updates the global ingestion scheduling configuration for provider health checks and sync cadence.
+         * @description Updates the global feed-aware ingestion scheduling configuration for provider health checks and lifecycle-driven sync cadence.
          */
         put: operations["adminUpdateIngestionSchedule"];
         post?: never;
@@ -2163,10 +2536,30 @@ export interface paths {
         get?: never;
         /**
          * Set per-sport ingestion schedule override
-         * @description Sets a per-sport ingestion schedule override that differs from the global ingestion cadence.
+         * @description Sets a per-sport feed-aware ingestion schedule override that differs from the global ingestion cadence.
          */
         put: operations["adminSetSportIngestionOverride"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/config/ingestion-schedule/{sport}/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clear per-sport ingestion schedule override
+         * @description Removes a persisted per-sport ingestion schedule override so the sport inherits the global runtime configuration again.
+         */
+        post: operations["adminResetSportIngestionOverride"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2207,6 +2600,26 @@ export interface paths {
         get: operations["getPollIntervals"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/client-logs/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ingest browser log batches for operational diagnostics
+         * @description Accepts browser-produced structured log batches so webapp runtime events can be correlated with backend request logs in operational tooling.
+         */
+        post: operations["ingestClientLogs"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2633,6 +3046,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ingestion/events/{sport}/{eventId}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger feed-aware sync for a specific sport event
+         * @description Triggers explicit feed sync work for a single sport event such as participant hydration, live score polling, or final results.
+         */
+        post: operations["syncEventData"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ingestion/scores/{sport}/{eventId}": {
         parameters: {
             query?: never;
@@ -2705,6 +3138,57 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getRootVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public service version metadata for deployment and stale-release diagnostics. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Version metadata response schema version.
+                         * @enum {number}
+                         */
+                        schemaVersion: 1;
+                        /** @description Runtime environment name such as development, qa, staging, or production. */
+                        environment: string;
+                        /**
+                         * Format: date-time
+                         * @description UTC build timestamp supplied by CI, when available.
+                         */
+                        buildTimeUtc: string | null;
+                        /** @description Git branch or ref name supplied by CI, when available. */
+                        gitRef: string | null;
+                        /** @description Core API service version metadata. */
+                        service: {
+                            /** @description Package or runtime component name. */
+                            name: string;
+                            /** @description Semantic package version or deployment version label. */
+                            version: string;
+                            /** @description Git SHA for this component build, when supplied by CI. */
+                            gitSha: string | null;
+                            /** @description CI build or run number for this component build, when supplied by CI. */
+                            buildNumber: string | null;
+                        };
+                        /** @description Non-secret runtime metadata useful during operational debugging. */
+                        runtime: {
+                            /** @description Node.js runtime version running the service. */
+                            nodeVersion: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
     registerUser: {
         parameters: {
             query?: never;
@@ -2712,13 +3196,15 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description Create-account payload for a new email/password user. */
+        /** @description Create-account payload for a new username/email/password user. */
         requestBody: {
             content: {
                 "application/json": {
+                    /** @description Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field. */
+                    username: string;
                     /**
                      * Format: email
-                     * @description Email address used as the account sign-in identifier.
+                     * @description Primary contact email address for the user account.
                      */
                     email: string;
                     /** @description Plaintext password chosen during registration. */
@@ -2738,12 +3224,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
+                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
                         user: {
                             /** @description Stable user identifier. */
                             id: string;
                             /** @description Primary email address for the user account. */
                             email: string;
+                            /** @description Unique login identifier for the account. */
+                            username: string;
                             /** @description First name shown in account and member-management surfaces. */
                             firstName: string;
                             /** @description Last name shown in account and member-management surfaces. */
@@ -2776,6 +3264,11 @@ export interface operations {
                              * @description Account creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
+                            /**
+                             * Format: uuid
+                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
+                             */
+                            sessionId: string | null;
                         };
                         /** @description Authentication token bundle returned after login or registration. */
                         tokens: {
@@ -2838,15 +3331,12 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description Login payload for an existing email/password account. */
+        /** @description Login payload for an existing username-or-email/password account. */
         requestBody: {
             content: {
                 "application/json": {
-                    /**
-                     * Format: email
-                     * @description Email address previously used to register the account.
-                     */
-                    email: string;
+                    /** @description Username or email used to sign in to an existing account. */
+                    identifier: string;
                     /** @description Existing password for the account. */
                     password: string;
                 };
@@ -2860,12 +3350,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
+                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
                         user: {
                             /** @description Stable user identifier. */
                             id: string;
                             /** @description Primary email address for the user account. */
                             email: string;
+                            /** @description Unique login identifier for the account. */
+                            username: string;
                             /** @description First name shown in account and member-management surfaces. */
                             firstName: string;
                             /** @description Last name shown in account and member-management surfaces. */
@@ -2898,6 +3390,11 @@ export interface operations {
                              * @description Account creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
+                            /**
+                             * Format: uuid
+                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
+                             */
+                            sessionId: string | null;
                         };
                         /** @description Authentication token bundle returned after login or registration. */
                         tokens: {
@@ -2932,6 +3429,25 @@ export interface operations {
                     };
                 };
             };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
         };
     };
     refreshToken: {
@@ -2943,7 +3459,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Authentication token bundle returned after login or registration. */
+            /** @description Token refresh response including the stable session correlation identifier. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2958,6 +3474,11 @@ export interface operations {
                         csrfToken: string;
                         /** @description Access-token lifetime in seconds from the time it was issued. */
                         expiresIn: number;
+                        /**
+                         * Format: uuid
+                         * @description Safe non-secret session correlation identifier that remains stable across refresh rotation.
+                         */
+                        sessionId: string;
                     };
                 };
             };
@@ -3043,12 +3564,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
+                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
                         user: {
                             /** @description Stable user identifier. */
                             id: string;
                             /** @description Primary email address for the user account. */
                             email: string;
+                            /** @description Unique login identifier for the account. */
+                            username: string;
                             /** @description First name shown in account and member-management surfaces. */
                             firstName: string;
                             /** @description Last name shown in account and member-management surfaces. */
@@ -3081,6 +3604,11 @@ export interface operations {
                              * @description Account creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
+                            /**
+                             * Format: uuid
+                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
+                             */
+                            sessionId: string | null;
                         };
                     };
                 };
@@ -3100,6 +3628,57 @@ export interface operations {
                             message: string;
                             /** @description Optional structured details for client-specific handling or diagnostics. */
                             details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    getVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public service version metadata for deployment and stale-release diagnostics. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Version metadata response schema version.
+                         * @enum {number}
+                         */
+                        schemaVersion: 1;
+                        /** @description Runtime environment name such as development, qa, staging, or production. */
+                        environment: string;
+                        /**
+                         * Format: date-time
+                         * @description UTC build timestamp supplied by CI, when available.
+                         */
+                        buildTimeUtc: string | null;
+                        /** @description Git branch or ref name supplied by CI, when available. */
+                        gitRef: string | null;
+                        /** @description Core API service version metadata. */
+                        service: {
+                            /** @description Package or runtime component name. */
+                            name: string;
+                            /** @description Semantic package version or deployment version label. */
+                            version: string;
+                            /** @description Git SHA for this component build, when supplied by CI. */
+                            gitSha: string | null;
+                            /** @description CI build or run number for this component build, when supplied by CI. */
+                            buildNumber: string | null;
+                        };
+                        /** @description Non-secret runtime metadata useful during operational debugging. */
+                        runtime: {
+                            /** @description Node.js runtime version running the service. */
+                            nodeVersion: string;
                         };
                     };
                 };
@@ -3143,10 +3722,19 @@ export interface operations {
                             /** @description Number of currently active contests associated with the league. */
                             activeContestCount: number;
                             /**
-                             * @description Current user role in the league when the response is viewer-scoped.
-                             * @enum {string}
+                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                             * @enum {string|null}
                              */
-                            role?: "COMMISSIONER" | "MEMBER";
+                            memberType: "COMMISSIONER" | "MEMBER" | null;
+                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                            leagueRelationship: {
+                                /** @description Whether the current requester is an active member of this league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active commissioner of this league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                            isRootAdmin: boolean;
                             /**
                              * Format: date-time
                              * @description League creation timestamp in ISO 8601 format.
@@ -3227,10 +3815,19 @@ export interface operations {
                             /** @description Number of currently active contests associated with the league. */
                             activeContestCount: number;
                             /**
-                             * @description Current user role in the league when the response is viewer-scoped.
-                             * @enum {string}
+                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                             * @enum {string|null}
                              */
-                            role?: "COMMISSIONER" | "MEMBER";
+                            memberType: "COMMISSIONER" | "MEMBER" | null;
+                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                            leagueRelationship: {
+                                /** @description Whether the current requester is an active member of this league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active commissioner of this league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                            isRootAdmin: boolean;
                             /**
                              * Format: date-time
                              * @description League creation timestamp in ISO 8601 format.
@@ -3325,10 +3922,19 @@ export interface operations {
                             /** @description Number of currently active contests associated with the league. */
                             activeContestCount: number;
                             /**
-                             * @description Current user role in the league when the response is viewer-scoped.
-                             * @enum {string}
+                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                             * @enum {string|null}
                              */
-                            role?: "COMMISSIONER" | "MEMBER";
+                            memberType: "COMMISSIONER" | "MEMBER" | null;
+                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                            leagueRelationship: {
+                                /** @description Whether the current requester is an active member of this league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active commissioner of this league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                            isRootAdmin: boolean;
                             /**
                              * Format: date-time
                              * @description League creation timestamp in ISO 8601 format.
@@ -3478,10 +4084,19 @@ export interface operations {
                             /** @description Number of currently active contests associated with the league. */
                             activeContestCount: number;
                             /**
-                             * @description Current user role in the league when the response is viewer-scoped.
-                             * @enum {string}
+                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                             * @enum {string|null}
                              */
-                            role?: "COMMISSIONER" | "MEMBER";
+                            memberType: "COMMISSIONER" | "MEMBER" | null;
+                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                            leagueRelationship: {
+                                /** @description Whether the current requester is an active member of this league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active commissioner of this league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                            isRootAdmin: boolean;
                             /**
                              * Format: date-time
                              * @description League creation timestamp in ISO 8601 format.
@@ -3567,10 +4182,19 @@ export interface operations {
                             /** @description Number of currently active contests associated with the league. */
                             activeContestCount: number;
                             /**
-                             * @description Current user role in the league when the response is viewer-scoped.
-                             * @enum {string}
+                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                             * @enum {string|null}
                              */
-                            role?: "COMMISSIONER" | "MEMBER";
+                            memberType: "COMMISSIONER" | "MEMBER" | null;
+                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                            leagueRelationship: {
+                                /** @description Whether the current requester is an active member of this league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active commissioner of this league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                            isRootAdmin: boolean;
                             /**
                              * Format: date-time
                              * @description League creation timestamp in ISO 8601 format.
@@ -3676,10 +4300,19 @@ export interface operations {
                             /** @description Number of currently active contests associated with the league. */
                             activeContestCount: number;
                             /**
-                             * @description Current user role in the league when the response is viewer-scoped.
-                             * @enum {string}
+                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                             * @enum {string|null}
                              */
-                            role?: "COMMISSIONER" | "MEMBER";
+                            memberType: "COMMISSIONER" | "MEMBER" | null;
+                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                            leagueRelationship: {
+                                /** @description Whether the current requester is an active member of this league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active commissioner of this league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                            isRootAdmin: boolean;
                             /**
                              * Format: date-time
                              * @description League creation timestamp in ISO 8601 format.
@@ -3774,10 +4407,126 @@ export interface operations {
                             /** @description Number of currently active contests associated with the league. */
                             activeContestCount: number;
                             /**
-                             * @description Current user role in the league when the response is viewer-scoped.
+                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                             * @enum {string|null}
+                             */
+                            memberType: "COMMISSIONER" | "MEMBER" | null;
+                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                            leagueRelationship: {
+                                /** @description Whether the current requester is an active member of this league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active commissioner of this league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                            isRootAdmin: boolean;
+                            /**
+                             * Format: date-time
+                             * @description League creation timestamp in ISO 8601 format.
+                             */
+                            createdAt?: string;
+                            /**
+                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
                              * @enum {string}
                              */
-                            role?: "COMMISSIONER" | "MEMBER";
+                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    activateLeague: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Single-league detail response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
+                        league: {
+                            /** @description Internal league identifier used for authenticated management APIs. */
+                            id: string;
+                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+                            leagueCode: string;
+                            /** @description Primary display name for the league. */
+                            name: string;
+                            /** @description Optional short league description. */
+                            description?: string | null;
+                            /** @description Whether the league is currently active for normal write interactions. */
+                            isActive: boolean;
+                            /**
+                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                            /** @description Current number of memberships in the league. */
+                            memberCount: number;
+                            /** @description Number of currently active contests associated with the league. */
+                            activeContestCount: number;
+                            /**
+                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                             * @enum {string|null}
+                             */
+                            memberType: "COMMISSIONER" | "MEMBER" | null;
+                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                            leagueRelationship: {
+                                /** @description Whether the current requester is an active member of this league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active commissioner of this league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                            isRootAdmin: boolean;
                             /**
                              * Format: date-time
                              * @description League creation timestamp in ISO 8601 format.
@@ -4122,6 +4871,11 @@ export interface operations {
                             id: string;
                             /** @description User account identifier for the member. */
                             userId: string;
+                            /**
+                             * Format: email
+                             * @description Email address for the member account.
+                             */
+                            email: string;
                             /** @description First name shown in member-management surfaces. */
                             firstName: string;
                             /** @description Last name shown in member-management surfaces. */
@@ -4938,11 +5692,8 @@ export interface operations {
                              * @enum {string}
                              */
                             iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            /**
-                             * @description Current squad lifecycle state.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE";
+                            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+                            isActive: boolean;
                             /** @description Number of memberships attached to the squad. */
                             memberCount: number;
                             /**
@@ -4955,6 +5706,17 @@ export interface operations {
                              * @description When the squad was last updated.
                              */
                             updatedAt: string;
+                            /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
+                            teamRelationship: {
+                                /** @description Whether the current requester is an active member of the team’s parent league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active owner of this team. */
+                                owner: boolean;
+                                /** @description Whether the current requester has commissioner authority in the team’s parent league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
+                            isRootAdmin: boolean;
                             /** @description Optional expanded squad membership list. */
                             members?: {
                                 /** Format: uuid */
@@ -5099,11 +5861,8 @@ export interface operations {
                              * @enum {string}
                              */
                             iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            /**
-                             * @description Current squad lifecycle state.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE";
+                            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+                            isActive: boolean;
                             /** @description Number of memberships attached to the squad. */
                             memberCount: number;
                             /**
@@ -5116,6 +5875,17 @@ export interface operations {
                              * @description When the squad was last updated.
                              */
                             updatedAt: string;
+                            /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
+                            teamRelationship: {
+                                /** @description Whether the current requester is an active member of the team’s parent league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active owner of this team. */
+                                owner: boolean;
+                                /** @description Whether the current requester has commissioner authority in the team’s parent league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
+                            isRootAdmin: boolean;
                             /** @description Optional expanded squad membership list. */
                             members?: {
                                 /** Format: uuid */
@@ -5248,11 +6018,8 @@ export interface operations {
                              * @enum {string}
                              */
                             iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            /**
-                             * @description Current squad lifecycle state.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE";
+                            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+                            isActive: boolean;
                             /** @description Number of memberships attached to the squad. */
                             memberCount: number;
                             /**
@@ -5265,6 +6032,17 @@ export interface operations {
                              * @description When the squad was last updated.
                              */
                             updatedAt: string;
+                            /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
+                            teamRelationship: {
+                                /** @description Whether the current requester is an active member of the team’s parent league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active owner of this team. */
+                                owner: boolean;
+                                /** @description Whether the current requester has commissioner authority in the team’s parent league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
+                            isRootAdmin: boolean;
                             /** @description Optional expanded squad membership list. */
                             members?: {
                                 /** Format: uuid */
@@ -5363,6 +6141,111 @@ export interface operations {
             };
         };
     };
+    deleteLeagueSquad: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                squadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Confirms that the requested operation succeeded.
+                         * @enum {boolean}
+                         */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
     updateLeagueSquad: {
         parameters: {
             query?: never;
@@ -5410,11 +6293,8 @@ export interface operations {
                              * @enum {string}
                              */
                             iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
-                            /**
-                             * @description Current squad lifecycle state.
-                             * @enum {string}
-                             */
-                            status: "ACTIVE" | "INACTIVE";
+                            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+                            isActive: boolean;
                             /** @description Number of memberships attached to the squad. */
                             memberCount: number;
                             /**
@@ -5427,6 +6307,174 @@ export interface operations {
                              * @description When the squad was last updated.
                              */
                             updatedAt: string;
+                            /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
+                            teamRelationship: {
+                                /** @description Whether the current requester is an active member of the team’s parent league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active owner of this team. */
+                                owner: boolean;
+                                /** @description Whether the current requester has commissioner authority in the team’s parent league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
+                            isRootAdmin: boolean;
+                            /** @description Optional expanded squad membership list. */
+                            members?: {
+                                /** Format: uuid */
+                                id: string;
+                                /** Format: uuid */
+                                squadId: string;
+                                /** Format: uuid */
+                                leagueId: string;
+                                /** Format: uuid */
+                                userId: string;
+                                /** @description First name for the squad member. */
+                                firstName?: string;
+                                /** @description Last name for the squad member. */
+                                lastName?: string;
+                                /**
+                                 * @description Squad membership status.
+                                 * @enum {string}
+                                 */
+                                status: "ACTIVE" | "INACTIVE";
+                                /**
+                                 * Format: date-time
+                                 * @description When the user joined the squad.
+                                 */
+                                joinedAt: string;
+                                /**
+                                 * Format: date-time
+                                 * @description When the squad membership record was created.
+                                 */
+                                createdAt: string;
+                                /**
+                                 * Format: date-time
+                                 * @description When the squad membership record was last updated.
+                                 */
+                                updatedAt: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    inactivateLeagueSquad: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                squadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Single-squad response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Squad detail returned from squad-management APIs. */
+                        squad: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** Format: uuid */
+                            createdBy: string;
+                            /** @description Squad display name. */
+                            name: string;
+                            /**
+                             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                            /** @description Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks. */
+                            isActive: boolean;
+                            /** @description Number of memberships attached to the squad. */
+                            memberCount: number;
+                            /**
+                             * Format: date-time
+                             * @description When the squad was created.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description When the squad was last updated.
+                             */
+                            updatedAt: string;
+                            /** @description Requester-scoped relationship to the target team. This is relative relationship context, not a generic permission matrix. */
+                            teamRelationship: {
+                                /** @description Whether the current requester is an active member of the team’s parent league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active owner of this team. */
+                                owner: boolean;
+                                /** @description Whether the current requester has commissioner authority in the team’s parent league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not team relationship data. */
+                            isRootAdmin: boolean;
                             /** @description Optional expanded squad membership list. */
                             members?: {
                                 /** Format: uuid */
@@ -6866,9 +7914,104 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        /** @description Contest configuration payload when the client requested expanded detail. */
+                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
                         contestConfiguration?: {
-                            [key: string]: unknown;
+                            draftMode?: string;
+                            rounds?: number;
+                            timePerPickSeconds?: number;
+                            autoPickPolicy?: string;
+                            tierConfig?: {
+                                /** @description Stable tier identifier. */
+                                tierId: string;
+                                /** @description Tier label shown in commissioner and draft UI. */
+                                tierName: string;
+                                /** @description Tier order number. */
+                                tierNumber: number;
+                                /** @description How many picks each entry must make from the tier. */
+                                picksFromTier: number;
+                                /** @description Optional ranking range that produced the tier. */
+                                rankingRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional pricing range that produced the tier. */
+                                priceRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional cap on how many participants can live in the tier. */
+                                maxParticipants?: number;
+                                /** @description Participants assigned to the tier. */
+                                participantIds: string[];
+                            }[];
+                            tierAssignmentMethod?: string;
+                            budget?: number;
+                            pricingMethod?: string;
+                            rosterSize?: number;
+                            pickCount?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            isExclusive?: boolean;
+                            bestBallN?: number;
+                            missedCutPenalty?: number;
+                            captainSlot?: boolean;
+                            captainMultiplier?: number;
+                            /** @description Optional typed configuration mode for golf-first managed contests. */
+                            mode?: string;
+                            /**
+                             * Format: date-time
+                             * @description Contest entry lock timestamp stored on the contest configuration record.
+                             */
+                            locksAt?: string | null;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description How many roster scores count toward the entry total in managed golf contests. */
+                            countedScores?: number;
+                            /** @description Tier source used for managed golf contests. */
+                            tierSource?: string;
+                            tierGeneration?: {
+                                /** @description Default managed tier size used to seed tier generation. */
+                                defaultTierSize: number;
+                            };
+                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
+                            tiers?: {
+                                /** @description Stable tier key such as A, B, or C. */
+                                tierKey: string;
+                                /** @description Commissioner-facing tier label. */
+                                label: string;
+                                /** @description How many golfers must be picked from the tier. */
+                                pickCount: number;
+                                /** @description Starting resolved rank/odds position for the tier. */
+                                startPosition: number;
+                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                                endPosition: number | null;
+                            }[];
+                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
+                            cutRule?: {
+                                /** @enum {string} */
+                                type: "FIXED_SCORE";
+                                /** @description Fallback score assigned when a golfer misses the cut. */
+                                fixedScore: number;
+                            };
+                            /** @description Managed-golf playoff handling strategy. */
+                            playoffHandling?: string;
+                            /** @description Managed-golf leaderboard display scoring mode. */
+                            displayScoring?: string;
+                            /** @description Managed-golf tiebreaker configuration. */
+                            tiebreaker?: {
+                                /** @enum {string} */
+                                type: "PREDICT_WINNING_SCORE";
+                            };
+                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
+                            categories?: {
+                                /** @enum {string} */
+                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                                /** @description Commissioner-facing category label. */
+                                label: string;
+                                /** @description How many golfers must be picked for the category. */
+                                pickCount: number;
+                            }[];
                         } | null;
                     };
                 };
@@ -6913,6 +8056,220 @@ export interface operations {
             };
         };
     };
+    listManagedContestTemplates: {
+        parameters: {
+            query: {
+                /** @description Sport to filter templates by. */
+                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                /** @description Contest type to filter templates by. */
+                contestType: "SINGLE_EVENT";
+                /** @description Optional event type used to narrow template selection. */
+                eventType?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Available seeded contest templates for commissioner create flow. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        templates: {
+                            /**
+                             * Format: uuid
+                             * @description Seeded contest template identifier.
+                             */
+                            id: string;
+                            /**
+                             * @description Sport this template applies to.
+                             * @enum {string}
+                             */
+                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                            /** @description Optional event-type scope for the template. */
+                            eventType?: string | null;
+                            /**
+                             * @description Contest type that may use the template.
+                             * @enum {string}
+                             */
+                            contestType: "SINGLE_EVENT";
+                            /**
+                             * @description Configuration mode seeded by the template.
+                             * @enum {string}
+                             */
+                            configMode: "GOLF_TIERED" | "GOLF_CATEGORY_PICKS";
+                            /** @description Stable machine key for the template. */
+                            templateKey: string;
+                            /** @description Commissioner-facing template label. */
+                            name: string;
+                            /** @description Commissioner-facing template description. */
+                            description: string;
+                            /** @description Display order for template selection. */
+                            sortOrder: number;
+                            /** @description Whether the template should be preselected in the create flow. */
+                            isDefault: boolean;
+                            /** @description Whether the template is currently selectable. */
+                            active: boolean;
+                            /** @description Version of the configuration schema metadata expected by the template. */
+                            schemaVersion: number;
+                            /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
+                            configuration: {
+                                /** @enum {string} */
+                                mode: "GOLF_TIERED";
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
+                                locksAt?: string | null;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description How many golfers each Team entry must pick. */
+                                rosterSize: number;
+                                /** @description How many golfer scores count toward the Team total. */
+                                countedScores: number;
+                                /**
+                                 * @description Single tier source used to generate all tiers.
+                                 * @enum {string}
+                                 */
+                                tierSource: "ODDS" | "WORLD_RANK";
+                                tierGeneration: {
+                                    /** @description Basic mode tier size used to seed the tier list. */
+                                    defaultTierSize: number;
+                                };
+                                /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
+                                tiers: {
+                                    /** @description Stable tier key such as A, B, or C. */
+                                    tierKey: string;
+                                    /** @description Commissioner-facing tier label. */
+                                    label: string;
+                                    /** @description How many golfers must be picked from the tier. */
+                                    pickCount: number;
+                                    /** @description Starting resolved rank/odds position for the tier. */
+                                    startPosition: number;
+                                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                                    endPosition: number | null;
+                                }[];
+                                /** @description Golf cut rule for first-pass contests. */
+                                cutRule: {
+                                    /** @enum {string} */
+                                    type: "FIXED_SCORE";
+                                    /** @description Fallback score assigned when a golfer misses the cut. */
+                                    fixedScore: number;
+                                };
+                                /** @enum {string} */
+                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                                /** @enum {string} */
+                                displayScoring: "TO_PAR";
+                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                                tiebreaker: {
+                                    /** @enum {string} */
+                                    type: "PREDICT_WINNING_SCORE";
+                                };
+                            } | {
+                                /** @enum {string} */
+                                mode: "GOLF_CATEGORY_PICKS";
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
+                                locksAt?: string | null;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description Enabled category slots for the contest. */
+                                categories: {
+                                    /** @enum {string} */
+                                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                                    /** @description Commissioner-facing category label. */
+                                    label: string;
+                                    /** @description How many golfers must be picked for the category. */
+                                    pickCount: number;
+                                }[];
+                                /** @description Golf cut rule for first-pass contests. */
+                                cutRule: {
+                                    /** @enum {string} */
+                                    type: "FIXED_SCORE";
+                                    /** @description Fallback score assigned when a golfer misses the cut. */
+                                    fixedScore: number;
+                                };
+                                /** @enum {string} */
+                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                                /** @enum {string} */
+                                displayScoring: "TO_PAR";
+                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                                tiebreaker: {
+                                    /** @enum {string} */
+                                    type: "PREDICT_WINNING_SCORE";
+                                };
+                            };
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
     createManagedContest: {
         parameters: {
             query?: never;
@@ -6922,7 +8279,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Commissioner request payload for creating a managed contest. */
+        /** @description Commissioner request payload for creating a golf-first managed contest. */
         requestBody: {
             content: {
                 "application/json": {
@@ -6933,117 +8290,200 @@ export interface operations {
                      * @description Sport-event identifier that anchors the contest.
                      */
                     sportEventId: string;
-                    /**
-                     * @default SINGLE_EVENT
-                     * @enum {string}
-                     */
-                    contestType?: "SINGLE_EVENT";
-                    /** @description Managed contest-configuration payload. */
+                    /** @enum {string} */
+                    contestType: "SINGLE_EVENT";
+                    /** @description Approved commissioner-managed contest configuration payload for golf-first contest creation. */
                     configuration: {
                         /** @enum {string} */
-                        selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
-                        rounds?: number;
-                        timePerPickSeconds?: number;
-                        autoPickPolicy?: string;
-                        tierConfig?: {
-                            /** @description Stable tier identifier. */
-                            tierId: string;
-                            /** @description Commissioner-facing tier label. */
-                            tierName: string;
-                            /** @description Ordered tier number used in draft and selection UX. */
-                            tierNumber: number;
-                            /** @description How many selections each entry must make from the tier. */
-                            picksFromTier: number;
-                            /** @description Participants assigned to the tier. */
-                            participantIds: string[];
-                        }[];
-                        budget?: number;
-                        pricingMethod?: string;
-                        pickCount?: number;
-                        isExclusive?: boolean;
-                        picksPerPeriod?: number;
-                        roundValues?: number[];
-                        startRound?: string;
-                        /** Format: date-time */
-                        locksAt?: string | null;
-                        minimumEntries?: number;
-                        maxEntriesPerSquad?: number;
-                        rosterSize?: number;
-                        totalPrizePoolAmount?: number | null;
-                        participantScoringRules: {
-                            /**
-                             * @description Scoring definition applied to each participant within the contest.
-                             * @enum {string}
-                             */
-                            participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
-                            /** @description Evaluation order for participant scoring rules. */
-                            sortOrder: number;
-                            /**
-                             * @description Rule-specific configuration payload consumed by the scoring engine.
-                             * @default {}
-                             */
-                            config?: {
-                                [key: string]: unknown;
-                            };
-                            /**
-                             * @description Whether the scoring rule is currently active.
-                             * @default true
-                             */
-                            active?: boolean;
-                        }[];
-                        /** @description Contest-entry aggregation rule for managed-contest configuration. */
-                        entryAggregationRule: {
-                            /**
-                             * @description Aggregation strategy used to convert participant scores into an entry score.
-                             * @enum {string}
-                             */
-                            aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
-                            /**
-                             * @description Aggregation-rule configuration payload.
-                             * @default {}
-                             */
-                            config?: {
-                                [key: string]: unknown;
-                            };
-                            /**
-                             * @description Whether the aggregation rule is active.
-                             * @default true
-                             */
-                            active?: boolean;
-                        };
+                        mode: "GOLF_TIERED";
                         /**
-                         * @description Prize definitions attached to the contest configuration.
-                         * @default []
+                         * Format: date-time
+                         * @description Contest entry lock timestamp.
                          */
-                        prizeDefinitions?: {
-                            /** @description Stable prize-definition identifier. */
-                            prizeDefinitionId: string;
-                            /** @description Commissioner-facing display name for the prize. */
-                            displayName: string;
-                            /** @description Display and evaluation order for the prize definition. */
-                            sortOrder: number;
-                            /**
-                             * @description Prize-award rule configuration payload.
-                             * @default {}
-                             */
-                            ruleConfig?: {
-                                [key: string]: unknown;
-                            };
-                            /**
-                             * @description How the prize amount should be interpreted when a payout is attached.
-                             * @enum {string}
-                             */
-                            payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
-                            /** @description Fixed payout amount when payoutType is FIXED_AMOUNT. */
-                            amount?: number;
-                            /** @description Prize-pool percentage when payoutType is PERCENTAGE. */
-                            percentage?: number;
-                            /**
-                             * @description Whether the prize definition is currently active.
-                             * @default true
-                             */
-                            active?: boolean;
+                        locksAt?: string | null;
+                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        maxEntriesPerSquad?: number | null;
+                        /** @description How many golfers each Team entry must pick. */
+                        rosterSize: number;
+                        /** @description How many golfer scores count toward the Team total. */
+                        countedScores: number;
+                        /**
+                         * @description Single tier source used to generate all tiers.
+                         * @enum {string}
+                         */
+                        tierSource: "ODDS" | "WORLD_RANK";
+                        tierGeneration: {
+                            /** @description Basic mode tier size used to seed the tier list. */
+                            defaultTierSize: number;
+                        };
+                        /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
+                        tiers: {
+                            /** @description Stable tier key such as A, B, or C. */
+                            tierKey: string;
+                            /** @description Commissioner-facing tier label. */
+                            label: string;
+                            /** @description How many golfers must be picked from the tier. */
+                            pickCount: number;
+                            /** @description Starting resolved rank/odds position for the tier. */
+                            startPosition: number;
+                            /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                            endPosition: number | null;
                         }[];
+                        /** @description Golf cut rule for first-pass contests. */
+                        cutRule: {
+                            /** @enum {string} */
+                            type: "FIXED_SCORE";
+                            /** @description Fallback score assigned when a golfer misses the cut. */
+                            fixedScore: number;
+                        };
+                        /** @enum {string} */
+                        playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                        /** @enum {string} */
+                        displayScoring: "TO_PAR";
+                        /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                        tiebreaker: {
+                            /** @enum {string} */
+                            type: "PREDICT_WINNING_SCORE";
+                        };
+                    } | {
+                        /** @enum {string} */
+                        mode: "GOLF_CATEGORY_PICKS";
+                        /**
+                         * Format: date-time
+                         * @description Contest entry lock timestamp.
+                         */
+                        locksAt?: string | null;
+                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        maxEntriesPerSquad?: number | null;
+                        /** @description Enabled category slots for the contest. */
+                        categories: {
+                            /** @enum {string} */
+                            categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                            /** @description Commissioner-facing category label. */
+                            label: string;
+                            /** @description How many golfers must be picked for the category. */
+                            pickCount: number;
+                        }[];
+                        /** @description Golf cut rule for first-pass contests. */
+                        cutRule: {
+                            /** @enum {string} */
+                            type: "FIXED_SCORE";
+                            /** @description Fallback score assigned when a golfer misses the cut. */
+                            fixedScore: number;
+                        };
+                        /** @enum {string} */
+                        playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                        /** @enum {string} */
+                        displayScoring: "TO_PAR";
+                        /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                        tiebreaker: {
+                            /** @enum {string} */
+                            type: "PREDICT_WINNING_SCORE";
+                        };
+                    };
+                } | {
+                    /** @description Contest name shown to commissioners and members. */
+                    name: string;
+                    /**
+                     * Format: uuid
+                     * @description Sport-event identifier that anchors the contest.
+                     */
+                    sportEventId: string;
+                    /** @enum {string} */
+                    contestType: "SINGLE_EVENT";
+                    /**
+                     * Format: uuid
+                     * @description Seeded contest template selected for the create flow.
+                     */
+                    templateId: string;
+                    /** @description Approved commissioner-managed contest configuration payload for golf-first contest creation. */
+                    configurationOverrides?: {
+                        /** @enum {string} */
+                        mode: "GOLF_TIERED";
+                        /**
+                         * Format: date-time
+                         * @description Contest entry lock timestamp.
+                         */
+                        locksAt?: string | null;
+                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        maxEntriesPerSquad?: number | null;
+                        /** @description How many golfers each Team entry must pick. */
+                        rosterSize: number;
+                        /** @description How many golfer scores count toward the Team total. */
+                        countedScores: number;
+                        /**
+                         * @description Single tier source used to generate all tiers.
+                         * @enum {string}
+                         */
+                        tierSource: "ODDS" | "WORLD_RANK";
+                        tierGeneration: {
+                            /** @description Basic mode tier size used to seed the tier list. */
+                            defaultTierSize: number;
+                        };
+                        /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
+                        tiers: {
+                            /** @description Stable tier key such as A, B, or C. */
+                            tierKey: string;
+                            /** @description Commissioner-facing tier label. */
+                            label: string;
+                            /** @description How many golfers must be picked from the tier. */
+                            pickCount: number;
+                            /** @description Starting resolved rank/odds position for the tier. */
+                            startPosition: number;
+                            /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                            endPosition: number | null;
+                        }[];
+                        /** @description Golf cut rule for first-pass contests. */
+                        cutRule: {
+                            /** @enum {string} */
+                            type: "FIXED_SCORE";
+                            /** @description Fallback score assigned when a golfer misses the cut. */
+                            fixedScore: number;
+                        };
+                        /** @enum {string} */
+                        playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                        /** @enum {string} */
+                        displayScoring: "TO_PAR";
+                        /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                        tiebreaker: {
+                            /** @enum {string} */
+                            type: "PREDICT_WINNING_SCORE";
+                        };
+                    } | {
+                        /** @enum {string} */
+                        mode: "GOLF_CATEGORY_PICKS";
+                        /**
+                         * Format: date-time
+                         * @description Contest entry lock timestamp.
+                         */
+                        locksAt?: string | null;
+                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        maxEntriesPerSquad?: number | null;
+                        /** @description Enabled category slots for the contest. */
+                        categories: {
+                            /** @enum {string} */
+                            categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                            /** @description Commissioner-facing category label. */
+                            label: string;
+                            /** @description How many golfers must be picked for the category. */
+                            pickCount: number;
+                        }[];
+                        /** @description Golf cut rule for first-pass contests. */
+                        cutRule: {
+                            /** @enum {string} */
+                            type: "FIXED_SCORE";
+                            /** @description Fallback score assigned when a golfer misses the cut. */
+                            fixedScore: number;
+                        };
+                        /** @enum {string} */
+                        playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                        /** @enum {string} */
+                        displayScoring: "TO_PAR";
+                        /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                        tiebreaker: {
+                            /** @enum {string} */
+                            type: "PREDICT_WINNING_SCORE";
+                        };
                     };
                 };
             };
@@ -7056,7 +8496,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Contest-management detail returned to commissioner tooling. */
+                        /** @description Golf-first contest-management detail returned to commissioner tooling. */
                         contest: {
                             /** @description Contest identifier. */
                             id: string;
@@ -7071,111 +8511,95 @@ export interface operations {
                             /** @description Current commissioner-managed contest configuration. */
                             configuration: {
                                 /** @enum {string} */
-                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
-                                rounds?: number;
-                                timePerPickSeconds?: number;
-                                autoPickPolicy?: string;
-                                tierConfig?: {
-                                    /** @description Stable tier identifier. */
-                                    tierId: string;
-                                    /** @description Commissioner-facing tier label. */
-                                    tierName: string;
-                                    /** @description Ordered tier number used in draft and selection UX. */
-                                    tierNumber: number;
-                                    /** @description How many selections each entry must make from the tier. */
-                                    picksFromTier: number;
-                                    /** @description Participants assigned to the tier. */
-                                    participantIds: string[];
-                                }[];
-                                budget?: number;
-                                pricingMethod?: string;
-                                pickCount?: number;
-                                isExclusive?: boolean;
-                                picksPerPeriod?: number;
-                                roundValues?: number[];
-                                startRound?: string;
-                                /** Format: date-time */
+                                mode: "GOLF_TIERED";
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
                                 locksAt?: string | null;
-                                minimumEntries?: number;
-                                maxEntriesPerSquad?: number;
-                                rosterSize?: number;
-                                totalPrizePoolAmount?: number | null;
-                                participantScoringRules: {
-                                    /**
-                                     * @description Scoring definition applied to each participant within the contest.
-                                     * @enum {string}
-                                     */
-                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
-                                    /** @description Evaluation order for participant scoring rules. */
-                                    sortOrder: number;
-                                    /**
-                                     * @description Rule-specific configuration payload consumed by the scoring engine.
-                                     * @default {}
-                                     */
-                                    config: {
-                                        [key: string]: unknown;
-                                    };
-                                    /**
-                                     * @description Whether the scoring rule is currently active.
-                                     * @default true
-                                     */
-                                    active: boolean;
-                                    /** @description Participant scoring-rule identifier. */
-                                    id: string;
-                                }[];
-                                /** @description Persisted contest-entry aggregation rule. */
-                                entryAggregationRule: {
-                                    /**
-                                     * @description Aggregation strategy used to convert participant scores into an entry score.
-                                     * @enum {string}
-                                     */
-                                    aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
-                                    /**
-                                     * @description Aggregation-rule configuration payload.
-                                     * @default {}
-                                     */
-                                    config: {
-                                        [key: string]: unknown;
-                                    };
-                                    /**
-                                     * @description Whether the aggregation rule is active.
-                                     * @default true
-                                     */
-                                    active: boolean;
-                                    /** @description Contest-entry aggregation-rule identifier. */
-                                    id: string;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description How many golfers each Team entry must pick. */
+                                rosterSize: number;
+                                /** @description How many golfer scores count toward the Team total. */
+                                countedScores: number;
+                                /**
+                                 * @description Single tier source used to generate all tiers.
+                                 * @enum {string}
+                                 */
+                                tierSource: "ODDS" | "WORLD_RANK";
+                                tierGeneration: {
+                                    /** @description Basic mode tier size used to seed the tier list. */
+                                    defaultTierSize: number;
                                 };
-                                prizeDefinitions: {
-                                    /** @description Stable prize-definition identifier. */
-                                    prizeDefinitionId: string;
-                                    /** @description Commissioner-facing display name for the prize. */
-                                    displayName: string;
-                                    /** @description Display and evaluation order for the prize definition. */
-                                    sortOrder: number;
-                                    /**
-                                     * @description Prize-award rule configuration payload.
-                                     * @default {}
-                                     */
-                                    ruleConfig: {
-                                        [key: string]: unknown;
-                                    };
-                                    /**
-                                     * @description How the prize amount should be interpreted when a payout is attached.
-                                     * @enum {string}
-                                     */
-                                    payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
-                                    /** @description Fixed payout amount when payoutType is FIXED_AMOUNT. */
-                                    amount?: number;
-                                    /** @description Prize-pool percentage when payoutType is PERCENTAGE. */
-                                    percentage?: number;
-                                    /**
-                                     * @description Whether the prize definition is currently active.
-                                     * @default true
-                                     */
-                                    active: boolean;
-                                    /** @description Prize-definition record identifier. */
-                                    id: string;
+                                /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
+                                tiers: {
+                                    /** @description Stable tier key such as A, B, or C. */
+                                    tierKey: string;
+                                    /** @description Commissioner-facing tier label. */
+                                    label: string;
+                                    /** @description How many golfers must be picked from the tier. */
+                                    pickCount: number;
+                                    /** @description Starting resolved rank/odds position for the tier. */
+                                    startPosition: number;
+                                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                                    endPosition: number | null;
                                 }[];
+                                /** @description Golf cut rule for first-pass contests. */
+                                cutRule: {
+                                    /** @enum {string} */
+                                    type: "FIXED_SCORE";
+                                    /** @description Fallback score assigned when a golfer misses the cut. */
+                                    fixedScore: number;
+                                };
+                                /** @enum {string} */
+                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                                /** @enum {string} */
+                                displayScoring: "TO_PAR";
+                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                                tiebreaker: {
+                                    /** @enum {string} */
+                                    type: "PREDICT_WINNING_SCORE";
+                                };
+                                /** @description Contest-configuration identifier. */
+                                id: string;
+                                /** @description Contest that owns the configuration. */
+                                contestId: string;
+                            } | {
+                                /** @enum {string} */
+                                mode: "GOLF_CATEGORY_PICKS";
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
+                                locksAt?: string | null;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description Enabled category slots for the contest. */
+                                categories: {
+                                    /** @enum {string} */
+                                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                                    /** @description Commissioner-facing category label. */
+                                    label: string;
+                                    /** @description How many golfers must be picked for the category. */
+                                    pickCount: number;
+                                }[];
+                                /** @description Golf cut rule for first-pass contests. */
+                                cutRule: {
+                                    /** @enum {string} */
+                                    type: "FIXED_SCORE";
+                                    /** @description Fallback score assigned when a golfer misses the cut. */
+                                    fixedScore: number;
+                                };
+                                /** @enum {string} */
+                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                                /** @enum {string} */
+                                displayScoring: "TO_PAR";
+                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                                tiebreaker: {
+                                    /** @enum {string} */
+                                    type: "PREDICT_WINNING_SCORE";
+                                };
                                 /** @description Contest-configuration identifier. */
                                 id: string;
                                 /** @description Contest that owns the configuration. */
@@ -7191,6 +8615,13 @@ export interface operations {
                              * @description When the contest was last updated.
                              */
                             updatedAt: string;
+                            /**
+                             * Format: uuid
+                             * @description Seeded template chosen when the contest was created, if any.
+                             */
+                            templateId?: string | null;
+                            /** @description Schema/template version captured when the contest was created, if any. */
+                            templateVersion?: number | null;
                         };
                     };
                 };
@@ -7292,7 +8723,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Contest-management detail returned to commissioner tooling. */
+                        /** @description Golf-first contest-management detail returned to commissioner tooling. */
                         contest: {
                             /** @description Contest identifier. */
                             id: string;
@@ -7307,111 +8738,95 @@ export interface operations {
                             /** @description Current commissioner-managed contest configuration. */
                             configuration: {
                                 /** @enum {string} */
-                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
-                                rounds?: number;
-                                timePerPickSeconds?: number;
-                                autoPickPolicy?: string;
-                                tierConfig?: {
-                                    /** @description Stable tier identifier. */
-                                    tierId: string;
-                                    /** @description Commissioner-facing tier label. */
-                                    tierName: string;
-                                    /** @description Ordered tier number used in draft and selection UX. */
-                                    tierNumber: number;
-                                    /** @description How many selections each entry must make from the tier. */
-                                    picksFromTier: number;
-                                    /** @description Participants assigned to the tier. */
-                                    participantIds: string[];
-                                }[];
-                                budget?: number;
-                                pricingMethod?: string;
-                                pickCount?: number;
-                                isExclusive?: boolean;
-                                picksPerPeriod?: number;
-                                roundValues?: number[];
-                                startRound?: string;
-                                /** Format: date-time */
+                                mode: "GOLF_TIERED";
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
                                 locksAt?: string | null;
-                                minimumEntries?: number;
-                                maxEntriesPerSquad?: number;
-                                rosterSize?: number;
-                                totalPrizePoolAmount?: number | null;
-                                participantScoringRules: {
-                                    /**
-                                     * @description Scoring definition applied to each participant within the contest.
-                                     * @enum {string}
-                                     */
-                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
-                                    /** @description Evaluation order for participant scoring rules. */
-                                    sortOrder: number;
-                                    /**
-                                     * @description Rule-specific configuration payload consumed by the scoring engine.
-                                     * @default {}
-                                     */
-                                    config: {
-                                        [key: string]: unknown;
-                                    };
-                                    /**
-                                     * @description Whether the scoring rule is currently active.
-                                     * @default true
-                                     */
-                                    active: boolean;
-                                    /** @description Participant scoring-rule identifier. */
-                                    id: string;
-                                }[];
-                                /** @description Persisted contest-entry aggregation rule. */
-                                entryAggregationRule: {
-                                    /**
-                                     * @description Aggregation strategy used to convert participant scores into an entry score.
-                                     * @enum {string}
-                                     */
-                                    aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
-                                    /**
-                                     * @description Aggregation-rule configuration payload.
-                                     * @default {}
-                                     */
-                                    config: {
-                                        [key: string]: unknown;
-                                    };
-                                    /**
-                                     * @description Whether the aggregation rule is active.
-                                     * @default true
-                                     */
-                                    active: boolean;
-                                    /** @description Contest-entry aggregation-rule identifier. */
-                                    id: string;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description How many golfers each Team entry must pick. */
+                                rosterSize: number;
+                                /** @description How many golfer scores count toward the Team total. */
+                                countedScores: number;
+                                /**
+                                 * @description Single tier source used to generate all tiers.
+                                 * @enum {string}
+                                 */
+                                tierSource: "ODDS" | "WORLD_RANK";
+                                tierGeneration: {
+                                    /** @description Basic mode tier size used to seed the tier list. */
+                                    defaultTierSize: number;
                                 };
-                                prizeDefinitions: {
-                                    /** @description Stable prize-definition identifier. */
-                                    prizeDefinitionId: string;
-                                    /** @description Commissioner-facing display name for the prize. */
-                                    displayName: string;
-                                    /** @description Display and evaluation order for the prize definition. */
-                                    sortOrder: number;
-                                    /**
-                                     * @description Prize-award rule configuration payload.
-                                     * @default {}
-                                     */
-                                    ruleConfig: {
-                                        [key: string]: unknown;
-                                    };
-                                    /**
-                                     * @description How the prize amount should be interpreted when a payout is attached.
-                                     * @enum {string}
-                                     */
-                                    payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
-                                    /** @description Fixed payout amount when payoutType is FIXED_AMOUNT. */
-                                    amount?: number;
-                                    /** @description Prize-pool percentage when payoutType is PERCENTAGE. */
-                                    percentage?: number;
-                                    /**
-                                     * @description Whether the prize definition is currently active.
-                                     * @default true
-                                     */
-                                    active: boolean;
-                                    /** @description Prize-definition record identifier. */
-                                    id: string;
+                                /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
+                                tiers: {
+                                    /** @description Stable tier key such as A, B, or C. */
+                                    tierKey: string;
+                                    /** @description Commissioner-facing tier label. */
+                                    label: string;
+                                    /** @description How many golfers must be picked from the tier. */
+                                    pickCount: number;
+                                    /** @description Starting resolved rank/odds position for the tier. */
+                                    startPosition: number;
+                                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                                    endPosition: number | null;
                                 }[];
+                                /** @description Golf cut rule for first-pass contests. */
+                                cutRule: {
+                                    /** @enum {string} */
+                                    type: "FIXED_SCORE";
+                                    /** @description Fallback score assigned when a golfer misses the cut. */
+                                    fixedScore: number;
+                                };
+                                /** @enum {string} */
+                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                                /** @enum {string} */
+                                displayScoring: "TO_PAR";
+                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                                tiebreaker: {
+                                    /** @enum {string} */
+                                    type: "PREDICT_WINNING_SCORE";
+                                };
+                                /** @description Contest-configuration identifier. */
+                                id: string;
+                                /** @description Contest that owns the configuration. */
+                                contestId: string;
+                            } | {
+                                /** @enum {string} */
+                                mode: "GOLF_CATEGORY_PICKS";
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
+                                locksAt?: string | null;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description Enabled category slots for the contest. */
+                                categories: {
+                                    /** @enum {string} */
+                                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                                    /** @description Commissioner-facing category label. */
+                                    label: string;
+                                    /** @description How many golfers must be picked for the category. */
+                                    pickCount: number;
+                                }[];
+                                /** @description Golf cut rule for first-pass contests. */
+                                cutRule: {
+                                    /** @enum {string} */
+                                    type: "FIXED_SCORE";
+                                    /** @description Fallback score assigned when a golfer misses the cut. */
+                                    fixedScore: number;
+                                };
+                                /** @enum {string} */
+                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                                /** @enum {string} */
+                                displayScoring: "TO_PAR";
+                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                                tiebreaker: {
+                                    /** @enum {string} */
+                                    type: "PREDICT_WINNING_SCORE";
+                                };
                                 /** @description Contest-configuration identifier. */
                                 id: string;
                                 /** @description Contest that owns the configuration. */
@@ -7427,6 +8842,13 @@ export interface operations {
                              * @description When the contest was last updated.
                              */
                             updatedAt: string;
+                            /**
+                             * Format: uuid
+                             * @description Seeded template chosen when the contest was created, if any.
+                             */
+                            templateId?: string | null;
+                            /** @description Schema/template version captured when the contest was created, if any. */
+                            templateVersion?: number | null;
                         };
                     };
                 };
@@ -7519,114 +8941,96 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Managed contest-configuration payload. */
+        /** @description Approved commissioner-managed contest configuration payload for golf-first contest creation. */
         requestBody: {
             content: {
                 "application/json": {
                     /** @enum {string} */
-                    selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
-                    rounds?: number;
-                    timePerPickSeconds?: number;
-                    autoPickPolicy?: string;
-                    tierConfig?: {
-                        /** @description Stable tier identifier. */
-                        tierId: string;
-                        /** @description Commissioner-facing tier label. */
-                        tierName: string;
-                        /** @description Ordered tier number used in draft and selection UX. */
-                        tierNumber: number;
-                        /** @description How many selections each entry must make from the tier. */
-                        picksFromTier: number;
-                        /** @description Participants assigned to the tier. */
-                        participantIds: string[];
-                    }[];
-                    budget?: number;
-                    pricingMethod?: string;
-                    pickCount?: number;
-                    isExclusive?: boolean;
-                    picksPerPeriod?: number;
-                    roundValues?: number[];
-                    startRound?: string;
-                    /** Format: date-time */
-                    locksAt?: string | null;
-                    minimumEntries?: number;
-                    maxEntriesPerSquad?: number;
-                    rosterSize?: number;
-                    totalPrizePoolAmount?: number | null;
-                    participantScoringRules: {
-                        /**
-                         * @description Scoring definition applied to each participant within the contest.
-                         * @enum {string}
-                         */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
-                        /** @description Evaluation order for participant scoring rules. */
-                        sortOrder: number;
-                        /**
-                         * @description Rule-specific configuration payload consumed by the scoring engine.
-                         * @default {}
-                         */
-                        config?: {
-                            [key: string]: unknown;
-                        };
-                        /**
-                         * @description Whether the scoring rule is currently active.
-                         * @default true
-                         */
-                        active?: boolean;
-                    }[];
-                    /** @description Contest-entry aggregation rule for managed-contest configuration. */
-                    entryAggregationRule: {
-                        /**
-                         * @description Aggregation strategy used to convert participant scores into an entry score.
-                         * @enum {string}
-                         */
-                        aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
-                        /**
-                         * @description Aggregation-rule configuration payload.
-                         * @default {}
-                         */
-                        config?: {
-                            [key: string]: unknown;
-                        };
-                        /**
-                         * @description Whether the aggregation rule is active.
-                         * @default true
-                         */
-                        active?: boolean;
-                    };
+                    mode: "GOLF_TIERED";
                     /**
-                     * @description Prize definitions attached to the contest configuration.
-                     * @default []
+                     * Format: date-time
+                     * @description Contest entry lock timestamp.
                      */
-                    prizeDefinitions?: {
-                        /** @description Stable prize-definition identifier. */
-                        prizeDefinitionId: string;
-                        /** @description Commissioner-facing display name for the prize. */
-                        displayName: string;
-                        /** @description Display and evaluation order for the prize definition. */
-                        sortOrder: number;
-                        /**
-                         * @description Prize-award rule configuration payload.
-                         * @default {}
-                         */
-                        ruleConfig?: {
-                            [key: string]: unknown;
-                        };
-                        /**
-                         * @description How the prize amount should be interpreted when a payout is attached.
-                         * @enum {string}
-                         */
-                        payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
-                        /** @description Fixed payout amount when payoutType is FIXED_AMOUNT. */
-                        amount?: number;
-                        /** @description Prize-pool percentage when payoutType is PERCENTAGE. */
-                        percentage?: number;
-                        /**
-                         * @description Whether the prize definition is currently active.
-                         * @default true
-                         */
-                        active?: boolean;
+                    locksAt?: string | null;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description How many golfers each Team entry must pick. */
+                    rosterSize: number;
+                    /** @description How many golfer scores count toward the Team total. */
+                    countedScores: number;
+                    /**
+                     * @description Single tier source used to generate all tiers.
+                     * @enum {string}
+                     */
+                    tierSource: "ODDS" | "WORLD_RANK";
+                    tierGeneration: {
+                        /** @description Basic mode tier size used to seed the tier list. */
+                        defaultTierSize: number;
+                    };
+                    /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
+                    tiers: {
+                        /** @description Stable tier key such as A, B, or C. */
+                        tierKey: string;
+                        /** @description Commissioner-facing tier label. */
+                        label: string;
+                        /** @description How many golfers must be picked from the tier. */
+                        pickCount: number;
+                        /** @description Starting resolved rank/odds position for the tier. */
+                        startPosition: number;
+                        /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                        endPosition: number | null;
                     }[];
+                    /** @description Golf cut rule for first-pass contests. */
+                    cutRule: {
+                        /** @enum {string} */
+                        type: "FIXED_SCORE";
+                        /** @description Fallback score assigned when a golfer misses the cut. */
+                        fixedScore: number;
+                    };
+                    /** @enum {string} */
+                    playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                    /** @enum {string} */
+                    displayScoring: "TO_PAR";
+                    /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                    tiebreaker: {
+                        /** @enum {string} */
+                        type: "PREDICT_WINNING_SCORE";
+                    };
+                } | {
+                    /** @enum {string} */
+                    mode: "GOLF_CATEGORY_PICKS";
+                    /**
+                     * Format: date-time
+                     * @description Contest entry lock timestamp.
+                     */
+                    locksAt?: string | null;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description Enabled category slots for the contest. */
+                    categories: {
+                        /** @enum {string} */
+                        categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                        /** @description Commissioner-facing category label. */
+                        label: string;
+                        /** @description How many golfers must be picked for the category. */
+                        pickCount: number;
+                    }[];
+                    /** @description Golf cut rule for first-pass contests. */
+                    cutRule: {
+                        /** @enum {string} */
+                        type: "FIXED_SCORE";
+                        /** @description Fallback score assigned when a golfer misses the cut. */
+                        fixedScore: number;
+                    };
+                    /** @enum {string} */
+                    playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                    /** @enum {string} */
+                    displayScoring: "TO_PAR";
+                    /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                    tiebreaker: {
+                        /** @enum {string} */
+                        type: "PREDICT_WINNING_SCORE";
+                    };
                 };
             };
         };
@@ -7638,7 +9042,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Contest-management detail returned to commissioner tooling. */
+                        /** @description Golf-first contest-management detail returned to commissioner tooling. */
                         contest: {
                             /** @description Contest identifier. */
                             id: string;
@@ -7653,111 +9057,95 @@ export interface operations {
                             /** @description Current commissioner-managed contest configuration. */
                             configuration: {
                                 /** @enum {string} */
-                                selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
-                                rounds?: number;
-                                timePerPickSeconds?: number;
-                                autoPickPolicy?: string;
-                                tierConfig?: {
-                                    /** @description Stable tier identifier. */
-                                    tierId: string;
-                                    /** @description Commissioner-facing tier label. */
-                                    tierName: string;
-                                    /** @description Ordered tier number used in draft and selection UX. */
-                                    tierNumber: number;
-                                    /** @description How many selections each entry must make from the tier. */
-                                    picksFromTier: number;
-                                    /** @description Participants assigned to the tier. */
-                                    participantIds: string[];
-                                }[];
-                                budget?: number;
-                                pricingMethod?: string;
-                                pickCount?: number;
-                                isExclusive?: boolean;
-                                picksPerPeriod?: number;
-                                roundValues?: number[];
-                                startRound?: string;
-                                /** Format: date-time */
+                                mode: "GOLF_TIERED";
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
                                 locksAt?: string | null;
-                                minimumEntries?: number;
-                                maxEntriesPerSquad?: number;
-                                rosterSize?: number;
-                                totalPrizePoolAmount?: number | null;
-                                participantScoringRules: {
-                                    /**
-                                     * @description Scoring definition applied to each participant within the contest.
-                                     * @enum {string}
-                                     */
-                                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "TEAM_WIN_POINTS" | "ROUND_MULTIPLIER" | "SEED_DIFFERENTIAL_BONUS";
-                                    /** @description Evaluation order for participant scoring rules. */
-                                    sortOrder: number;
-                                    /**
-                                     * @description Rule-specific configuration payload consumed by the scoring engine.
-                                     * @default {}
-                                     */
-                                    config: {
-                                        [key: string]: unknown;
-                                    };
-                                    /**
-                                     * @description Whether the scoring rule is currently active.
-                                     * @default true
-                                     */
-                                    active: boolean;
-                                    /** @description Participant scoring-rule identifier. */
-                                    id: string;
-                                }[];
-                                /** @description Persisted contest-entry aggregation rule. */
-                                entryAggregationRule: {
-                                    /**
-                                     * @description Aggregation strategy used to convert participant scores into an entry score.
-                                     * @enum {string}
-                                     */
-                                    aggregationDefinitionId: "SUM_ALL_ENTRIES" | "SUM_TOP_N_ENTRIES";
-                                    /**
-                                     * @description Aggregation-rule configuration payload.
-                                     * @default {}
-                                     */
-                                    config: {
-                                        [key: string]: unknown;
-                                    };
-                                    /**
-                                     * @description Whether the aggregation rule is active.
-                                     * @default true
-                                     */
-                                    active: boolean;
-                                    /** @description Contest-entry aggregation-rule identifier. */
-                                    id: string;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description How many golfers each Team entry must pick. */
+                                rosterSize: number;
+                                /** @description How many golfer scores count toward the Team total. */
+                                countedScores: number;
+                                /**
+                                 * @description Single tier source used to generate all tiers.
+                                 * @enum {string}
+                                 */
+                                tierSource: "ODDS" | "WORLD_RANK";
+                                tierGeneration: {
+                                    /** @description Basic mode tier size used to seed the tier list. */
+                                    defaultTierSize: number;
                                 };
-                                prizeDefinitions: {
-                                    /** @description Stable prize-definition identifier. */
-                                    prizeDefinitionId: string;
-                                    /** @description Commissioner-facing display name for the prize. */
-                                    displayName: string;
-                                    /** @description Display and evaluation order for the prize definition. */
-                                    sortOrder: number;
-                                    /**
-                                     * @description Prize-award rule configuration payload.
-                                     * @default {}
-                                     */
-                                    ruleConfig: {
-                                        [key: string]: unknown;
-                                    };
-                                    /**
-                                     * @description How the prize amount should be interpreted when a payout is attached.
-                                     * @enum {string}
-                                     */
-                                    payoutType?: "FIXED_AMOUNT" | "PERCENTAGE";
-                                    /** @description Fixed payout amount when payoutType is FIXED_AMOUNT. */
-                                    amount?: number;
-                                    /** @description Prize-pool percentage when payoutType is PERCENTAGE. */
-                                    percentage?: number;
-                                    /**
-                                     * @description Whether the prize definition is currently active.
-                                     * @default true
-                                     */
-                                    active: boolean;
-                                    /** @description Prize-definition record identifier. */
-                                    id: string;
+                                /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
+                                tiers: {
+                                    /** @description Stable tier key such as A, B, or C. */
+                                    tierKey: string;
+                                    /** @description Commissioner-facing tier label. */
+                                    label: string;
+                                    /** @description How many golfers must be picked from the tier. */
+                                    pickCount: number;
+                                    /** @description Starting resolved rank/odds position for the tier. */
+                                    startPosition: number;
+                                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                                    endPosition: number | null;
                                 }[];
+                                /** @description Golf cut rule for first-pass contests. */
+                                cutRule: {
+                                    /** @enum {string} */
+                                    type: "FIXED_SCORE";
+                                    /** @description Fallback score assigned when a golfer misses the cut. */
+                                    fixedScore: number;
+                                };
+                                /** @enum {string} */
+                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                                /** @enum {string} */
+                                displayScoring: "TO_PAR";
+                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                                tiebreaker: {
+                                    /** @enum {string} */
+                                    type: "PREDICT_WINNING_SCORE";
+                                };
+                                /** @description Contest-configuration identifier. */
+                                id: string;
+                                /** @description Contest that owns the configuration. */
+                                contestId: string;
+                            } | {
+                                /** @enum {string} */
+                                mode: "GOLF_CATEGORY_PICKS";
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
+                                locksAt?: string | null;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description Enabled category slots for the contest. */
+                                categories: {
+                                    /** @enum {string} */
+                                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                                    /** @description Commissioner-facing category label. */
+                                    label: string;
+                                    /** @description How many golfers must be picked for the category. */
+                                    pickCount: number;
+                                }[];
+                                /** @description Golf cut rule for first-pass contests. */
+                                cutRule: {
+                                    /** @enum {string} */
+                                    type: "FIXED_SCORE";
+                                    /** @description Fallback score assigned when a golfer misses the cut. */
+                                    fixedScore: number;
+                                };
+                                /** @enum {string} */
+                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                                /** @enum {string} */
+                                displayScoring: "TO_PAR";
+                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                                tiebreaker: {
+                                    /** @enum {string} */
+                                    type: "PREDICT_WINNING_SCORE";
+                                };
                                 /** @description Contest-configuration identifier. */
                                 id: string;
                                 /** @description Contest that owns the configuration. */
@@ -7773,6 +9161,13 @@ export interface operations {
                              * @description When the contest was last updated.
                              */
                             updatedAt: string;
+                            /**
+                             * Format: uuid
+                             * @description Seeded template chosen when the contest was created, if any.
+                             */
+                            templateId?: string | null;
+                            /** @description Schema/template version captured when the contest was created, if any. */
+                            templateVersion?: number | null;
                         };
                     };
                 };
@@ -7921,9 +9316,104 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        /** @description Contest configuration payload when the client requested expanded detail. */
+                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
                         contestConfiguration?: {
-                            [key: string]: unknown;
+                            draftMode?: string;
+                            rounds?: number;
+                            timePerPickSeconds?: number;
+                            autoPickPolicy?: string;
+                            tierConfig?: {
+                                /** @description Stable tier identifier. */
+                                tierId: string;
+                                /** @description Tier label shown in commissioner and draft UI. */
+                                tierName: string;
+                                /** @description Tier order number. */
+                                tierNumber: number;
+                                /** @description How many picks each entry must make from the tier. */
+                                picksFromTier: number;
+                                /** @description Optional ranking range that produced the tier. */
+                                rankingRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional pricing range that produced the tier. */
+                                priceRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional cap on how many participants can live in the tier. */
+                                maxParticipants?: number;
+                                /** @description Participants assigned to the tier. */
+                                participantIds: string[];
+                            }[];
+                            tierAssignmentMethod?: string;
+                            budget?: number;
+                            pricingMethod?: string;
+                            rosterSize?: number;
+                            pickCount?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            isExclusive?: boolean;
+                            bestBallN?: number;
+                            missedCutPenalty?: number;
+                            captainSlot?: boolean;
+                            captainMultiplier?: number;
+                            /** @description Optional typed configuration mode for golf-first managed contests. */
+                            mode?: string;
+                            /**
+                             * Format: date-time
+                             * @description Contest entry lock timestamp stored on the contest configuration record.
+                             */
+                            locksAt?: string | null;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description How many roster scores count toward the entry total in managed golf contests. */
+                            countedScores?: number;
+                            /** @description Tier source used for managed golf contests. */
+                            tierSource?: string;
+                            tierGeneration?: {
+                                /** @description Default managed tier size used to seed tier generation. */
+                                defaultTierSize: number;
+                            };
+                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
+                            tiers?: {
+                                /** @description Stable tier key such as A, B, or C. */
+                                tierKey: string;
+                                /** @description Commissioner-facing tier label. */
+                                label: string;
+                                /** @description How many golfers must be picked from the tier. */
+                                pickCount: number;
+                                /** @description Starting resolved rank/odds position for the tier. */
+                                startPosition: number;
+                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                                endPosition: number | null;
+                            }[];
+                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
+                            cutRule?: {
+                                /** @enum {string} */
+                                type: "FIXED_SCORE";
+                                /** @description Fallback score assigned when a golfer misses the cut. */
+                                fixedScore: number;
+                            };
+                            /** @description Managed-golf playoff handling strategy. */
+                            playoffHandling?: string;
+                            /** @description Managed-golf leaderboard display scoring mode. */
+                            displayScoring?: string;
+                            /** @description Managed-golf tiebreaker configuration. */
+                            tiebreaker?: {
+                                /** @enum {string} */
+                                type: "PREDICT_WINNING_SCORE";
+                            };
+                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
+                            categories?: {
+                                /** @enum {string} */
+                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                                /** @description Commissioner-facing category label. */
+                                label: string;
+                                /** @description How many golfers must be picked for the category. */
+                                pickCount: number;
+                            }[];
                         } | null;
                     };
                 };
@@ -8011,9 +9501,104 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        /** @description Contest configuration payload when the client requested expanded detail. */
+                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
                         contestConfiguration?: {
-                            [key: string]: unknown;
+                            draftMode?: string;
+                            rounds?: number;
+                            timePerPickSeconds?: number;
+                            autoPickPolicy?: string;
+                            tierConfig?: {
+                                /** @description Stable tier identifier. */
+                                tierId: string;
+                                /** @description Tier label shown in commissioner and draft UI. */
+                                tierName: string;
+                                /** @description Tier order number. */
+                                tierNumber: number;
+                                /** @description How many picks each entry must make from the tier. */
+                                picksFromTier: number;
+                                /** @description Optional ranking range that produced the tier. */
+                                rankingRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional pricing range that produced the tier. */
+                                priceRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional cap on how many participants can live in the tier. */
+                                maxParticipants?: number;
+                                /** @description Participants assigned to the tier. */
+                                participantIds: string[];
+                            }[];
+                            tierAssignmentMethod?: string;
+                            budget?: number;
+                            pricingMethod?: string;
+                            rosterSize?: number;
+                            pickCount?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            isExclusive?: boolean;
+                            bestBallN?: number;
+                            missedCutPenalty?: number;
+                            captainSlot?: boolean;
+                            captainMultiplier?: number;
+                            /** @description Optional typed configuration mode for golf-first managed contests. */
+                            mode?: string;
+                            /**
+                             * Format: date-time
+                             * @description Contest entry lock timestamp stored on the contest configuration record.
+                             */
+                            locksAt?: string | null;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description How many roster scores count toward the entry total in managed golf contests. */
+                            countedScores?: number;
+                            /** @description Tier source used for managed golf contests. */
+                            tierSource?: string;
+                            tierGeneration?: {
+                                /** @description Default managed tier size used to seed tier generation. */
+                                defaultTierSize: number;
+                            };
+                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
+                            tiers?: {
+                                /** @description Stable tier key such as A, B, or C. */
+                                tierKey: string;
+                                /** @description Commissioner-facing tier label. */
+                                label: string;
+                                /** @description How many golfers must be picked from the tier. */
+                                pickCount: number;
+                                /** @description Starting resolved rank/odds position for the tier. */
+                                startPosition: number;
+                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                                endPosition: number | null;
+                            }[];
+                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
+                            cutRule?: {
+                                /** @enum {string} */
+                                type: "FIXED_SCORE";
+                                /** @description Fallback score assigned when a golfer misses the cut. */
+                                fixedScore: number;
+                            };
+                            /** @description Managed-golf playoff handling strategy. */
+                            playoffHandling?: string;
+                            /** @description Managed-golf leaderboard display scoring mode. */
+                            displayScoring?: string;
+                            /** @description Managed-golf tiebreaker configuration. */
+                            tiebreaker?: {
+                                /** @enum {string} */
+                                type: "PREDICT_WINNING_SCORE";
+                            };
+                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
+                            categories?: {
+                                /** @enum {string} */
+                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                                /** @description Commissioner-facing category label. */
+                                label: string;
+                                /** @description How many golfers must be picked for the category. */
+                                pickCount: number;
+                            }[];
                         } | null;
                     };
                 };
@@ -8152,7 +9737,9 @@ export interface operations {
                         myEntryId: string | null;
                         /** @description All current-user entry identifiers when multiple entries are allowed. */
                         myEntryIds?: string[];
-                        /** @description Entry page or slice returned by the API. */
+                        /** @description Whether participant picks are visible to non-owners on this contest. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase. */
+                        picksRevealed: boolean;
+                        /** @description Entries for the contest. Each entry includes participants[] when picksRevealed is true (or when the entry belongs to the requester regardless of contest status); otherwise participants is omitted. */
                         entries: {
                             id: string;
                             contestId: string;
@@ -8162,9 +9749,12 @@ export interface operations {
                             name: string;
                             /** @enum {string} */
                             status: "ACTIVE" | "INACTIVE";
+                            tiebreakerValue?: number | null;
                             totalScore: number;
                             standingsPosition?: number | null;
                             isEliminated: boolean;
+                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                            picksCount: number;
                             /**
                              * Format: date-time
                              * @description When the contest entry was created.
@@ -8175,7 +9765,243 @@ export interface operations {
                              * @description When the contest entry was last updated.
                              */
                             updatedAt: string;
+                            /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
+                            participants?: {
+                                rosterPickId: string;
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                participantName: string;
+                                participantStatus?: string | null;
+                                position?: string | null;
+                                teamAffiliation?: string | null;
+                                /** @description Current points earned within the contest for this picked participant. */
+                                contestPoints: number;
+                                /**
+                                 * Format: date-time
+                                 * @description When the participant was added to the contest entry.
+                                 */
+                                pickedAt: string;
+                                /** @description Latest provider-backed performance snapshot available for the picked participant. */
+                                latestPerformance: {
+                                    [key: string]: unknown;
+                                };
+                            }[];
                         }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    getContestEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Expanded contest-entry detail response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Contest that owns the entry. */
+                        contestId: string;
+                        /** @description Whether participant picks are visible to non-owners on this entry. False when contest is still DRAFT or OPEN (pre-event-start). True once the contest has progressed past the joinable phase. */
+                        picksRevealed: boolean;
+                        /** @description Expanded contest entry detail. */
+                        entry: {
+                            id: string;
+                            contestId: string;
+                            squadId: string;
+                            squadName: string;
+                            entryNumber: number;
+                            name: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            tiebreakerValue?: number | null;
+                            totalScore: number;
+                            standingsPosition?: number | null;
+                            isEliminated: boolean;
+                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                            picksCount: number;
+                            /**
+                             * Format: date-time
+                             * @description When the contest entry was created.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description When the contest entry was last updated.
+                             */
+                            updatedAt: string;
+                            /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
+                            participants?: {
+                                rosterPickId: string;
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                participantName: string;
+                                participantStatus?: string | null;
+                                position?: string | null;
+                                teamAffiliation?: string | null;
+                                /** @description Current points earned within the contest for this picked participant. */
+                                contestPoints: number;
+                                /**
+                                 * Format: date-time
+                                 * @description When the participant was added to the contest entry.
+                                 */
+                                pickedAt: string;
+                                /** @description Latest provider-backed performance snapshot available for the picked participant. */
+                                latestPerformance: {
+                                    [key: string]: unknown;
+                                };
+                            }[];
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateContestEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Request payload for updating a contest entry while the contest is still joinable. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Unique entry name shown anywhere the team entry is listed. */
+                    name?: string;
+                    /** @description Optional tiebreaker prediction saved on the contest entry. */
+                    tiebreakerValue?: number | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Single contest-entry response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Contest that owns the entry. */
+                        contestId: string;
+                        /** @description Contest entry summary. */
+                        entry: {
+                            id: string;
+                            contestId: string;
+                            squadId: string;
+                            squadName: string;
+                            entryNumber: number;
+                            name: string;
+                            /** @enum {string} */
+                            status: "ACTIVE" | "INACTIVE";
+                            tiebreakerValue?: number | null;
+                            totalScore: number;
+                            standingsPosition?: number | null;
+                            isEliminated: boolean;
+                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                            picksCount: number;
+                            /**
+                             * Format: date-time
+                             * @description When the contest entry was created.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description When the contest entry was last updated.
+                             */
+                            updatedAt: string;
+                        };
                     };
                 };
             };
@@ -8249,9 +10075,12 @@ export interface operations {
                             name: string;
                             /** @enum {string} */
                             status: "ACTIVE" | "INACTIVE";
+                            tiebreakerValue?: number | null;
                             totalScore: number;
                             standingsPosition?: number | null;
                             isEliminated: boolean;
+                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                            picksCount: number;
                             /**
                              * Format: date-time
                              * @description When the contest entry was created.
@@ -8318,42 +10147,6 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Single contest-entry response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Contest that owns the entry. */
-                        contestId: string;
-                        /** @description Contest entry summary. */
-                        entry: {
-                            id: string;
-                            contestId: string;
-                            squadId: string;
-                            squadName: string;
-                            entryNumber: number;
-                            name: string;
-                            /** @enum {string} */
-                            status: "ACTIVE" | "INACTIVE";
-                            totalScore: number;
-                            standingsPosition?: number | null;
-                            isEliminated: boolean;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the contest entry was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
-                };
-            };
-            /** @description Single contest-entry response. */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -8372,9 +10165,12 @@ export interface operations {
                             name: string;
                             /** @enum {string} */
                             status: "ACTIVE" | "INACTIVE";
+                            tiebreakerValue?: number | null;
                             totalScore: number;
                             standingsPosition?: number | null;
                             isEliminated: boolean;
+                            /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
+                            picksCount: number;
                             /**
                              * Format: date-time
                              * @description When the contest entry was created.
@@ -8410,6 +10206,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8767,9 +10582,104 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        /** @description Contest configuration payload when the client requested expanded detail. */
+                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
                         contestConfiguration?: {
-                            [key: string]: unknown;
+                            draftMode?: string;
+                            rounds?: number;
+                            timePerPickSeconds?: number;
+                            autoPickPolicy?: string;
+                            tierConfig?: {
+                                /** @description Stable tier identifier. */
+                                tierId: string;
+                                /** @description Tier label shown in commissioner and draft UI. */
+                                tierName: string;
+                                /** @description Tier order number. */
+                                tierNumber: number;
+                                /** @description How many picks each entry must make from the tier. */
+                                picksFromTier: number;
+                                /** @description Optional ranking range that produced the tier. */
+                                rankingRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional pricing range that produced the tier. */
+                                priceRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional cap on how many participants can live in the tier. */
+                                maxParticipants?: number;
+                                /** @description Participants assigned to the tier. */
+                                participantIds: string[];
+                            }[];
+                            tierAssignmentMethod?: string;
+                            budget?: number;
+                            pricingMethod?: string;
+                            rosterSize?: number;
+                            pickCount?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            isExclusive?: boolean;
+                            bestBallN?: number;
+                            missedCutPenalty?: number;
+                            captainSlot?: boolean;
+                            captainMultiplier?: number;
+                            /** @description Optional typed configuration mode for golf-first managed contests. */
+                            mode?: string;
+                            /**
+                             * Format: date-time
+                             * @description Contest entry lock timestamp stored on the contest configuration record.
+                             */
+                            locksAt?: string | null;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description How many roster scores count toward the entry total in managed golf contests. */
+                            countedScores?: number;
+                            /** @description Tier source used for managed golf contests. */
+                            tierSource?: string;
+                            tierGeneration?: {
+                                /** @description Default managed tier size used to seed tier generation. */
+                                defaultTierSize: number;
+                            };
+                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
+                            tiers?: {
+                                /** @description Stable tier key such as A, B, or C. */
+                                tierKey: string;
+                                /** @description Commissioner-facing tier label. */
+                                label: string;
+                                /** @description How many golfers must be picked from the tier. */
+                                pickCount: number;
+                                /** @description Starting resolved rank/odds position for the tier. */
+                                startPosition: number;
+                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                                endPosition: number | null;
+                            }[];
+                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
+                            cutRule?: {
+                                /** @enum {string} */
+                                type: "FIXED_SCORE";
+                                /** @description Fallback score assigned when a golfer misses the cut. */
+                                fixedScore: number;
+                            };
+                            /** @description Managed-golf playoff handling strategy. */
+                            playoffHandling?: string;
+                            /** @description Managed-golf leaderboard display scoring mode. */
+                            displayScoring?: string;
+                            /** @description Managed-golf tiebreaker configuration. */
+                            tiebreaker?: {
+                                /** @enum {string} */
+                                type: "PREDICT_WINNING_SCORE";
+                            };
+                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
+                            categories?: {
+                                /** @enum {string} */
+                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                                /** @description Commissioner-facing category label. */
+                                label: string;
+                                /** @description How many golfers must be picked for the category. */
+                                pickCount: number;
+                            }[];
                         } | null;
                     };
                 };
@@ -8831,9 +10741,104 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        /** @description Contest configuration payload when the client requested expanded detail. */
+                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
                         contestConfiguration?: {
-                            [key: string]: unknown;
+                            draftMode?: string;
+                            rounds?: number;
+                            timePerPickSeconds?: number;
+                            autoPickPolicy?: string;
+                            tierConfig?: {
+                                /** @description Stable tier identifier. */
+                                tierId: string;
+                                /** @description Tier label shown in commissioner and draft UI. */
+                                tierName: string;
+                                /** @description Tier order number. */
+                                tierNumber: number;
+                                /** @description How many picks each entry must make from the tier. */
+                                picksFromTier: number;
+                                /** @description Optional ranking range that produced the tier. */
+                                rankingRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional pricing range that produced the tier. */
+                                priceRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional cap on how many participants can live in the tier. */
+                                maxParticipants?: number;
+                                /** @description Participants assigned to the tier. */
+                                participantIds: string[];
+                            }[];
+                            tierAssignmentMethod?: string;
+                            budget?: number;
+                            pricingMethod?: string;
+                            rosterSize?: number;
+                            pickCount?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            isExclusive?: boolean;
+                            bestBallN?: number;
+                            missedCutPenalty?: number;
+                            captainSlot?: boolean;
+                            captainMultiplier?: number;
+                            /** @description Optional typed configuration mode for golf-first managed contests. */
+                            mode?: string;
+                            /**
+                             * Format: date-time
+                             * @description Contest entry lock timestamp stored on the contest configuration record.
+                             */
+                            locksAt?: string | null;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description How many roster scores count toward the entry total in managed golf contests. */
+                            countedScores?: number;
+                            /** @description Tier source used for managed golf contests. */
+                            tierSource?: string;
+                            tierGeneration?: {
+                                /** @description Default managed tier size used to seed tier generation. */
+                                defaultTierSize: number;
+                            };
+                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
+                            tiers?: {
+                                /** @description Stable tier key such as A, B, or C. */
+                                tierKey: string;
+                                /** @description Commissioner-facing tier label. */
+                                label: string;
+                                /** @description How many golfers must be picked from the tier. */
+                                pickCount: number;
+                                /** @description Starting resolved rank/odds position for the tier. */
+                                startPosition: number;
+                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                                endPosition: number | null;
+                            }[];
+                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
+                            cutRule?: {
+                                /** @enum {string} */
+                                type: "FIXED_SCORE";
+                                /** @description Fallback score assigned when a golfer misses the cut. */
+                                fixedScore: number;
+                            };
+                            /** @description Managed-golf playoff handling strategy. */
+                            playoffHandling?: string;
+                            /** @description Managed-golf leaderboard display scoring mode. */
+                            displayScoring?: string;
+                            /** @description Managed-golf tiebreaker configuration. */
+                            tiebreaker?: {
+                                /** @enum {string} */
+                                type: "PREDICT_WINNING_SCORE";
+                            };
+                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
+                            categories?: {
+                                /** @enum {string} */
+                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                                /** @description Commissioner-facing category label. */
+                                label: string;
+                                /** @description How many golfers must be picked for the category. */
+                                pickCount: number;
+                            }[];
                         } | null;
                     };
                 };
@@ -8900,9 +10905,104 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        /** @description Contest configuration payload when the client requested expanded detail. */
+                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
                         contestConfiguration?: {
-                            [key: string]: unknown;
+                            draftMode?: string;
+                            rounds?: number;
+                            timePerPickSeconds?: number;
+                            autoPickPolicy?: string;
+                            tierConfig?: {
+                                /** @description Stable tier identifier. */
+                                tierId: string;
+                                /** @description Tier label shown in commissioner and draft UI. */
+                                tierName: string;
+                                /** @description Tier order number. */
+                                tierNumber: number;
+                                /** @description How many picks each entry must make from the tier. */
+                                picksFromTier: number;
+                                /** @description Optional ranking range that produced the tier. */
+                                rankingRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional pricing range that produced the tier. */
+                                priceRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional cap on how many participants can live in the tier. */
+                                maxParticipants?: number;
+                                /** @description Participants assigned to the tier. */
+                                participantIds: string[];
+                            }[];
+                            tierAssignmentMethod?: string;
+                            budget?: number;
+                            pricingMethod?: string;
+                            rosterSize?: number;
+                            pickCount?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            isExclusive?: boolean;
+                            bestBallN?: number;
+                            missedCutPenalty?: number;
+                            captainSlot?: boolean;
+                            captainMultiplier?: number;
+                            /** @description Optional typed configuration mode for golf-first managed contests. */
+                            mode?: string;
+                            /**
+                             * Format: date-time
+                             * @description Contest entry lock timestamp stored on the contest configuration record.
+                             */
+                            locksAt?: string | null;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description How many roster scores count toward the entry total in managed golf contests. */
+                            countedScores?: number;
+                            /** @description Tier source used for managed golf contests. */
+                            tierSource?: string;
+                            tierGeneration?: {
+                                /** @description Default managed tier size used to seed tier generation. */
+                                defaultTierSize: number;
+                            };
+                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
+                            tiers?: {
+                                /** @description Stable tier key such as A, B, or C. */
+                                tierKey: string;
+                                /** @description Commissioner-facing tier label. */
+                                label: string;
+                                /** @description How many golfers must be picked from the tier. */
+                                pickCount: number;
+                                /** @description Starting resolved rank/odds position for the tier. */
+                                startPosition: number;
+                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                                endPosition: number | null;
+                            }[];
+                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
+                            cutRule?: {
+                                /** @enum {string} */
+                                type: "FIXED_SCORE";
+                                /** @description Fallback score assigned when a golfer misses the cut. */
+                                fixedScore: number;
+                            };
+                            /** @description Managed-golf playoff handling strategy. */
+                            playoffHandling?: string;
+                            /** @description Managed-golf leaderboard display scoring mode. */
+                            displayScoring?: string;
+                            /** @description Managed-golf tiebreaker configuration. */
+                            tiebreaker?: {
+                                /** @enum {string} */
+                                type: "PREDICT_WINNING_SCORE";
+                            };
+                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
+                            categories?: {
+                                /** @enum {string} */
+                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                                /** @description Commissioner-facing category label. */
+                                label: string;
+                                /** @description How many golfers must be picked for the category. */
+                                pickCount: number;
+                            }[];
                         } | null;
                     };
                 };
@@ -8969,9 +11069,104 @@ export interface operations {
                             lockAt?: string | null;
                             isExclusive?: boolean;
                         };
-                        /** @description Contest configuration payload when the client requested expanded detail. */
+                        /** @description Typed contest configuration payload used by contest detail, My Entries, and Manage Contest surfaces. */
                         contestConfiguration?: {
-                            [key: string]: unknown;
+                            draftMode?: string;
+                            rounds?: number;
+                            timePerPickSeconds?: number;
+                            autoPickPolicy?: string;
+                            tierConfig?: {
+                                /** @description Stable tier identifier. */
+                                tierId: string;
+                                /** @description Tier label shown in commissioner and draft UI. */
+                                tierName: string;
+                                /** @description Tier order number. */
+                                tierNumber: number;
+                                /** @description How many picks each entry must make from the tier. */
+                                picksFromTier: number;
+                                /** @description Optional ranking range that produced the tier. */
+                                rankingRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional pricing range that produced the tier. */
+                                priceRange?: [
+                                    number,
+                                    number
+                                ];
+                                /** @description Optional cap on how many participants can live in the tier. */
+                                maxParticipants?: number;
+                                /** @description Participants assigned to the tier. */
+                                participantIds: string[];
+                            }[];
+                            tierAssignmentMethod?: string;
+                            budget?: number;
+                            pricingMethod?: string;
+                            rosterSize?: number;
+                            pickCount?: number;
+                            picksPerPeriod?: number;
+                            roundValues?: number[];
+                            startRound?: string;
+                            isExclusive?: boolean;
+                            bestBallN?: number;
+                            missedCutPenalty?: number;
+                            captainSlot?: boolean;
+                            captainMultiplier?: number;
+                            /** @description Optional typed configuration mode for golf-first managed contests. */
+                            mode?: string;
+                            /**
+                             * Format: date-time
+                             * @description Contest entry lock timestamp stored on the contest configuration record.
+                             */
+                            locksAt?: string | null;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description How many roster scores count toward the entry total in managed golf contests. */
+                            countedScores?: number;
+                            /** @description Tier source used for managed golf contests. */
+                            tierSource?: string;
+                            tierGeneration?: {
+                                /** @description Default managed tier size used to seed tier generation. */
+                                defaultTierSize: number;
+                            };
+                            /** @description Resolved managed-golf tier definitions when the contest stores typed tiered configuration. */
+                            tiers?: {
+                                /** @description Stable tier key such as A, B, or C. */
+                                tierKey: string;
+                                /** @description Commissioner-facing tier label. */
+                                label: string;
+                                /** @description How many golfers must be picked from the tier. */
+                                pickCount: number;
+                                /** @description Starting resolved rank/odds position for the tier. */
+                                startPosition: number;
+                                /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                                endPosition: number | null;
+                            }[];
+                            /** @description Managed-golf missed-cut scoring rule when the contest uses typed golf configuration. */
+                            cutRule?: {
+                                /** @enum {string} */
+                                type: "FIXED_SCORE";
+                                /** @description Fallback score assigned when a golfer misses the cut. */
+                                fixedScore: number;
+                            };
+                            /** @description Managed-golf playoff handling strategy. */
+                            playoffHandling?: string;
+                            /** @description Managed-golf leaderboard display scoring mode. */
+                            displayScoring?: string;
+                            /** @description Managed-golf tiebreaker configuration. */
+                            tiebreaker?: {
+                                /** @enum {string} */
+                                type: "PREDICT_WINNING_SCORE";
+                            };
+                            /** @description Managed-golf category slot definitions when the contest uses category picks. */
+                            categories?: {
+                                /** @enum {string} */
+                                categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                                /** @description Commissioner-facing category label. */
+                                label: string;
+                                /** @description How many golfers must be picked for the category. */
+                                pickCount: number;
+                            }[];
                         } | null;
                     };
                 };
@@ -9026,8 +11221,11 @@ export interface operations {
     listEvents: {
         parameters: {
             query?: {
+                /** @description Optional sport filter. */
                 sport?: string;
+                /** @description Optional provider-normalized event status filter. */
                 status?: string;
+                /** @description Optional page-size style limit. */
                 limit?: number;
             };
             header?: never;
@@ -9046,6 +11244,8 @@ export interface operations {
                         events: {
                             /** @description Sport-event identifier. */
                             id: string;
+                            /** @description Provider event identifier used by event-level sync operations. */
+                            externalId: string;
                             /**
                              * @description Sport associated with the event.
                              * @enum {string}
@@ -9061,7 +11261,7 @@ export interface operations {
                              * @description Provider-normalized event status.
                              * @enum {string}
                              */
-                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "OFFICIAL" | "CANCELLED" | "POSTPONED";
                             /**
                              * Format: date-time
                              * @description Scheduled or actual event start time.
@@ -9072,10 +11272,29 @@ export interface operations {
                              * @description Scheduled or actual event end time, when known.
                              */
                             endDate?: string | null;
+                            /**
+                             * Format: date-time
+                             * @description PoolMaster operational datetime when the event becomes available for contest setup.
+                             */
+                            releaseAt: string;
+                            /**
+                             * Format: date-time
+                             * @description PoolMaster operational datetime after which event-field changes are no longer honored for new contest setup.
+                             */
+                            fieldLocksAt: string;
                             /** @description Participant count when the provider exposes field size. */
                             participantCount?: number | null;
-                            /** @description Whether contest participant pools should be treated as locked for the event. */
+                            /** @description Compatibility projection that reflects whether the event field should currently be treated as locked for contest setup behavior. */
                             fieldLocked: boolean;
+                            /**
+                             * @description Current readiness state for contest setup and event-driven contest operations.
+                             * @enum {string}
+                             */
+                            readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "FIELD_LOCKED";
+                            /** @description Structured reasons explaining why the event is or is not contest-eligible right now. */
+                            readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "FIELD_LOCKED")[];
+                            /** @description Whether the event is currently eligible for contest creation/configuration flows. */
+                            contestEligible: boolean;
                         }[];
                     };
                 };
@@ -10297,12 +12516,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
+                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
                         user: {
                             /** @description Stable user identifier. */
                             id: string;
                             /** @description Primary email address for the user account. */
                             email: string;
+                            /** @description Unique login identifier for the account. */
+                            username: string;
                             /** @description First name shown in account and member-management surfaces. */
                             firstName: string;
                             /** @description Last name shown in account and member-management surfaces. */
@@ -10335,6 +12556,11 @@ export interface operations {
                              * @description Account creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
+                            /**
+                             * Format: uuid
+                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
+                             */
+                            sessionId: string | null;
                         };
                     };
                 };
@@ -10409,6 +12635,11 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /**
+                     * Format: email
+                     * @description Updated primary contact email address for the account profile.
+                     */
+                    email: string;
                     /** @description Updated first name for the account profile. */
                     firstName: string;
                     /** @description Updated last name for the account profile. */
@@ -10424,12 +12655,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
+                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
                         user: {
                             /** @description Stable user identifier. */
                             id: string;
                             /** @description Primary email address for the user account. */
                             email: string;
+                            /** @description Unique login identifier for the account. */
+                            username: string;
                             /** @description First name shown in account and member-management surfaces. */
                             firstName: string;
                             /** @description Last name shown in account and member-management surfaces. */
@@ -10462,6 +12695,181 @@ export interface operations {
                              * @description Account creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
+                            /**
+                             * Format: uuid
+                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
+                             */
+                            sessionId: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    updateAccountUsername: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Self-service username update payload for the authenticated account. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Updated unique login username for the authenticated account. */
+                    username: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Self-service account response envelope for authenticated account lifecycle actions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
+                        user: {
+                            /** @description Stable user identifier. */
+                            id: string;
+                            /** @description Primary email address for the user account. */
+                            email: string;
+                            /** @description Unique login identifier for the account. */
+                            username: string;
+                            /** @description First name shown in account and member-management surfaces. */
+                            firstName: string;
+                            /** @description Last name shown in account and member-management surfaces. */
+                            lastName: string;
+                            /** @description Whether the account is currently active for normal sign-in and product usage. */
+                            isActive: boolean;
+                            /** @description Whether the user has platform-level root-admin access. */
+                            isRootAdmin: boolean;
+                            /**
+                             * @description Authentication provider used for the account when known.
+                             * @enum {string}
+                             */
+                            authProvider?: "email" | "google" | "apple";
+                            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                            timezone?: string;
+                            /** @description Preferred locale for formatting and localized copy. */
+                            locale?: string;
+                            /**
+                             * @description Preferred clock display used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            timeFormat?: "12H" | "24H";
+                            /**
+                             * @description Preferred date display format used in account and scheduling surfaces.
+                             * @enum {string}
+                             */
+                            dateFormat?: "MDY" | "DMY" | "YMD";
+                            /**
+                             * Format: date-time
+                             * @description Account creation timestamp in ISO 8601 format.
+                             */
+                            createdAt?: string;
+                            /**
+                             * Format: uuid
+                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
+                             */
+                            sessionId: string | null;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
                         };
                     };
                 };
@@ -10561,12 +12969,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
+                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
                         user: {
                             /** @description Stable user identifier. */
                             id: string;
                             /** @description Primary email address for the user account. */
                             email: string;
+                            /** @description Unique login identifier for the account. */
+                            username: string;
                             /** @description First name shown in account and member-management surfaces. */
                             firstName: string;
                             /** @description Last name shown in account and member-management surfaces. */
@@ -10599,6 +13009,11 @@ export interface operations {
                              * @description Account creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
+                            /**
+                             * Format: uuid
+                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
+                             */
+                            sessionId: string | null;
                         };
                     };
                 };
@@ -10792,12 +13207,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Frontend-facing user profile summary derived from the authenticated account. */
+                        /** @description Authenticated user profile summary enriched with the safe session correlation identifier. */
                         user: {
                             /** @description Stable user identifier. */
                             id: string;
                             /** @description Primary email address for the user account. */
                             email: string;
+                            /** @description Unique login identifier for the account. */
+                            username: string;
                             /** @description First name shown in account and member-management surfaces. */
                             firstName: string;
                             /** @description Last name shown in account and member-management surfaces. */
@@ -10830,6 +13247,11 @@ export interface operations {
                              * @description Account creation timestamp in ISO 8601 format.
                              */
                             createdAt?: string;
+                            /**
+                             * Format: uuid
+                             * @description Safe non-secret session correlation identifier for the authenticated browser session.
+                             */
+                            sessionId: string | null;
                         };
                     };
                 };
@@ -11142,6 +13564,8 @@ export interface operations {
                             id: string;
                             /** @description Primary email address for the user account. */
                             email: string;
+                            /** @description Unique login identifier for the account. */
+                            username: string;
                             /** @description First name shown in account and member-management surfaces. */
                             firstName: string;
                             /** @description Last name shown in account and member-management surfaces. */
@@ -11229,6 +13653,8 @@ export interface operations {
                         id: string;
                         /** @description Primary email address for the user account. */
                         email: string;
+                        /** @description Unique login identifier for the account. */
+                        username: string;
                         /** @description First name shown in account and member-management surfaces. */
                         firstName: string;
                         /** @description Last name shown in account and member-management surfaces. */
@@ -11261,6 +13687,15 @@ export interface operations {
                          * @description Account creation timestamp in ISO 8601 format.
                          */
                         createdAt?: string;
+                        /** @description Account-page authority flags emitted for the viewed user. */
+                        viewerAuthority: {
+                            /** @description Whether the current requester is viewing their own user account. */
+                            self: boolean;
+                            /** @description Whether the current requester has root-admin authority on this account page. */
+                            rootAdmin: boolean;
+                            /** @description Fallback viewer state when the requester is neither self nor root admin on this account page. */
+                            viewer: boolean;
+                        };
                     };
                 };
             };
@@ -11285,6 +13720,123 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminDeleteUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Root-admin delete-account confirmation payload. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Format: email
+                     * @description Exact target email confirmation required before permanently deleting the account.
+                     */
+                    email: string;
+                    /** @description Optional human reason captured in the root-admin audit log. */
+                    reason?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Confirms that the requested operation succeeded.
+                         * @enum {boolean}
+                         */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11508,6 +14060,582 @@ export interface operations {
             };
         };
     };
+    adminResetUserPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Root-admin initiated password-reset request. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Optional human reason captured in the root-admin audit log. */
+                    reason?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Root-admin password-reset response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Temporary password to relay to the user. Existing refresh sessions are revoked and the user should change this after signing in. */
+                        temporaryPassword: string;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminSetUserRootAdmin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Root-admin role-change request payload. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Whether the target user should hold the platform-level root-admin role after the change. */
+                    isRootAdmin: boolean;
+                    /** @description Optional human reason captured in the root-admin audit log. */
+                    reason?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Confirms that the requested operation succeeded.
+                         * @enum {boolean}
+                         */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminListLeagues: {
+        parameters: {
+            query?: {
+                /** @description Optional case-insensitive league-name search for root-admin management surfaces. */
+                search?: string;
+                /** @description Optional active/inactive filter for root-admin league management surfaces. */
+                isActive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description League-list response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        leagues: {
+                            /** @description Internal league identifier used for authenticated management APIs. */
+                            id: string;
+                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+                            leagueCode: string;
+                            /** @description Primary display name for the league. */
+                            name: string;
+                            /** @description Optional short league description. */
+                            description?: string | null;
+                            /** @description Whether the league is currently active for normal write interactions. */
+                            isActive: boolean;
+                            /**
+                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                            /** @description Current number of memberships in the league. */
+                            memberCount: number;
+                            /** @description Number of currently active contests associated with the league. */
+                            activeContestCount: number;
+                            /**
+                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                             * @enum {string|null}
+                             */
+                            memberType: "COMMISSIONER" | "MEMBER" | null;
+                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                            leagueRelationship: {
+                                /** @description Whether the current requester is an active member of this league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active commissioner of this league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                            isRootAdmin: boolean;
+                            /**
+                             * Format: date-time
+                             * @description League creation timestamp in ISO 8601 format.
+                             */
+                            createdAt?: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminListTeams: {
+        parameters: {
+            query?: {
+                /** @description Optional case-insensitive team-name search for root-admin management surfaces. */
+                search?: string;
+                /** @description Optional canonical league-code filter for cross-league team management. */
+                leagueCode?: string;
+                /** @description Optional active/inactive filter for root-admin team management surfaces. */
+                isActive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cross-league team list response for root-admin management surfaces. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        teams: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            leagueId: string;
+                            /** @description Canonical league code for routing and filtering. */
+                            leagueCode: string;
+                            /** @description Display name for the team’s parent league. */
+                            leagueName: string;
+                            /** @description Team display name. */
+                            name: string;
+                            /**
+                             * @description Selected built-in team icon key from the curated PoolMaster team icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                            /** @description Whether the team is currently active. This is the lifecycle source of truth for root-admin team management surfaces. */
+                            isActive: boolean;
+                            /** @description Count of active owners attached to the team. */
+                            ownerCount: number;
+                            /** @description Active owners attached to the team. */
+                            owners: {
+                                /** Format: uuid */
+                                userId: string;
+                                /** @description First name for the active team owner. */
+                                firstName?: string;
+                                /** @description Last name for the active team owner. */
+                                lastName?: string;
+                            }[];
+                            /**
+                             * Format: date-time
+                             * @description When the team was created.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description When the team was last updated.
+                             */
+                            updatedAt: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminInactivateLeague: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Single-league detail response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Detailed league payload used by league-home and commissioner-management surfaces. */
+                        league: {
+                            /** @description Internal league identifier used for authenticated management APIs. */
+                            id: string;
+                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+                            leagueCode: string;
+                            /** @description Primary display name for the league. */
+                            name: string;
+                            /** @description Optional short league description. */
+                            description?: string | null;
+                            /** @description Whether the league is currently active for normal write interactions. */
+                            isActive: boolean;
+                            /**
+                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                            /** @description Current number of memberships in the league. */
+                            memberCount: number;
+                            /** @description Number of currently active contests associated with the league. */
+                            activeContestCount: number;
+                            /**
+                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                             * @enum {string|null}
+                             */
+                            memberType: "COMMISSIONER" | "MEMBER" | null;
+                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                            leagueRelationship: {
+                                /** @description Whether the current requester is an active member of this league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active commissioner of this league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                            isRootAdmin: boolean;
+                            /**
+                             * Format: date-time
+                             * @description League creation timestamp in ISO 8601 format.
+                             */
+                            createdAt?: string;
+                            /**
+                             * @description League join policy controlling whether membership comes only through commissioners, shareable invite links, or open enrollment.
+                             * @enum {string}
+                             */
+                            joinPolicy: "COMMISSIONER_ONLY" | "LINK_INVITE" | "OPEN";
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminDeleteLeague: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leagueId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Commissioner confirmation payload for permanently deleting an inactive league. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Exact league code confirmation required before permanently deleting an inactive league. */
+                    leagueCode: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Confirms that the requested operation succeeded.
+                         * @enum {boolean}
+                         */
+                        success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
     adminListProviders: {
         parameters: {
             query?: never;
@@ -11541,6 +14669,794 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminListProviderSyncRuns: {
+        parameters: {
+            query?: {
+                providerId?: string;
+                sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recent provider sync runs returned for root-admin operational visibility. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            providerId: string;
+                            /** @enum {string} */
+                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                            eventId: string | null;
+                            /** @enum {string} */
+                            status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+                            /** Format: date-time */
+                            startedAt: string | null;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** @description Opaque provider sync payload retained for thin admin operational detail surfaces. */
+                            payload: {
+                                [key: string]: unknown;
+                            };
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminPrepareSportSync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sport: string;
+            };
+            cookie?: never;
+        };
+        /** @description Feed-aware sport sync request. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Feed types to run for a sport-level sync request. */
+                    feeds: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS")[];
+                    /**
+                     * Format: date-time
+                     * @description Optional lower bound for sport-level event discovery.
+                     */
+                    from?: string;
+                    /**
+                     * Format: date-time
+                     * @description Optional lower bound for sport-level event discovery.
+                     */
+                    to?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                        eventId: string | null;
+                        requestedFeeds: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                        /** Format: date-time */
+                        submittedAt: string;
+                        syncRuns: {
+                            id: string;
+                            providerId: string;
+                            /** @enum {string} */
+                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                            eventId: string | null;
+                            /** @enum {string} */
+                            status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+                            /** Format: date-time */
+                            startedAt: string | null;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** @description Opaque provider sync payload retained for thin admin operational detail surfaces. */
+                            payload: {
+                                [key: string]: unknown;
+                            };
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminSyncProviderEventData: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sport: string;
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Feed-aware event sync request. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Feed types to run for a specific event sync request. */
+                    feeds: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                };
+            };
+        };
+        responses: {
+            /** @description Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                        eventId: string | null;
+                        requestedFeeds: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                        /** Format: date-time */
+                        submittedAt: string;
+                        syncRuns: {
+                            id: string;
+                            providerId: string;
+                            /** @enum {string} */
+                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                            eventId: string | null;
+                            /** @enum {string} */
+                            status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+                            /** Format: date-time */
+                            startedAt: string | null;
+                            /** Format: date-time */
+                            completedAt: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** @description Opaque provider sync payload retained for thin admin operational detail surfaces. */
+                            payload: {
+                                [key: string]: unknown;
+                            };
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminListContestConfigTemplates: {
+        parameters: {
+            query?: {
+                /** @description Optional sport filter for root-admin contest template management. */
+                sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                /** @description Optional contest-type filter for root-admin contest template management. */
+                contestType?: "SINGLE_EVENT";
+                /** @description Optional active-state filter for root-admin contest template management. */
+                active?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Available seeded contest templates for commissioner create flow. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        templates: {
+                            /**
+                             * Format: uuid
+                             * @description Seeded contest template identifier.
+                             */
+                            id: string;
+                            /**
+                             * @description Sport this template applies to.
+                             * @enum {string}
+                             */
+                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                            /** @description Optional event-type scope for the template. */
+                            eventType?: string | null;
+                            /**
+                             * @description Contest type that may use the template.
+                             * @enum {string}
+                             */
+                            contestType: "SINGLE_EVENT";
+                            /**
+                             * @description Configuration mode seeded by the template.
+                             * @enum {string}
+                             */
+                            configMode: "GOLF_TIERED" | "GOLF_CATEGORY_PICKS";
+                            /** @description Stable machine key for the template. */
+                            templateKey: string;
+                            /** @description Commissioner-facing template label. */
+                            name: string;
+                            /** @description Commissioner-facing template description. */
+                            description: string;
+                            /** @description Display order for template selection. */
+                            sortOrder: number;
+                            /** @description Whether the template should be preselected in the create flow. */
+                            isDefault: boolean;
+                            /** @description Whether the template is currently selectable. */
+                            active: boolean;
+                            /** @description Version of the configuration schema metadata expected by the template. */
+                            schemaVersion: number;
+                            /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
+                            configuration: {
+                                /** @enum {string} */
+                                mode: "GOLF_TIERED";
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
+                                locksAt?: string | null;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description How many golfers each Team entry must pick. */
+                                rosterSize: number;
+                                /** @description How many golfer scores count toward the Team total. */
+                                countedScores: number;
+                                /**
+                                 * @description Single tier source used to generate all tiers.
+                                 * @enum {string}
+                                 */
+                                tierSource: "ODDS" | "WORLD_RANK";
+                                tierGeneration: {
+                                    /** @description Basic mode tier size used to seed the tier list. */
+                                    defaultTierSize: number;
+                                };
+                                /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
+                                tiers: {
+                                    /** @description Stable tier key such as A, B, or C. */
+                                    tierKey: string;
+                                    /** @description Commissioner-facing tier label. */
+                                    label: string;
+                                    /** @description How many golfers must be picked from the tier. */
+                                    pickCount: number;
+                                    /** @description Starting resolved rank/odds position for the tier. */
+                                    startPosition: number;
+                                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                                    endPosition: number | null;
+                                }[];
+                                /** @description Golf cut rule for first-pass contests. */
+                                cutRule: {
+                                    /** @enum {string} */
+                                    type: "FIXED_SCORE";
+                                    /** @description Fallback score assigned when a golfer misses the cut. */
+                                    fixedScore: number;
+                                };
+                                /** @enum {string} */
+                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                                /** @enum {string} */
+                                displayScoring: "TO_PAR";
+                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                                tiebreaker: {
+                                    /** @enum {string} */
+                                    type: "PREDICT_WINNING_SCORE";
+                                };
+                            } | {
+                                /** @enum {string} */
+                                mode: "GOLF_CATEGORY_PICKS";
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
+                                locksAt?: string | null;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description Enabled category slots for the contest. */
+                                categories: {
+                                    /** @enum {string} */
+                                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                                    /** @description Commissioner-facing category label. */
+                                    label: string;
+                                    /** @description How many golfers must be picked for the category. */
+                                    pickCount: number;
+                                }[];
+                                /** @description Golf cut rule for first-pass contests. */
+                                cutRule: {
+                                    /** @enum {string} */
+                                    type: "FIXED_SCORE";
+                                    /** @description Fallback score assigned when a golfer misses the cut. */
+                                    fixedScore: number;
+                                };
+                                /** @enum {string} */
+                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                                /** @enum {string} */
+                                displayScoring: "TO_PAR";
+                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                                tiebreaker: {
+                                    /** @enum {string} */
+                                    type: "PREDICT_WINNING_SCORE";
+                                };
+                            };
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminUpdateContestConfigTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Root-admin contest template update payload. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Updated root-admin template display name. */
+                    name?: string;
+                    /** @description Updated root-admin template description. */
+                    description?: string;
+                    /** @description Updated sort order for the template within its create-flow group. */
+                    sortOrder?: number;
+                    /** @description Whether this template should be the default choice for future create flows in its scope. */
+                    isDefault?: boolean;
+                    /** @description Whether commissioners can select this template in future create flows. */
+                    active?: boolean;
+                    /** @description Updated persisted configuration payload copied into future contests when this template is selected. */
+                    configuration?: {
+                        /** @enum {string} */
+                        mode: "GOLF_TIERED";
+                        /**
+                         * Format: date-time
+                         * @description Contest entry lock timestamp.
+                         */
+                        locksAt?: string | null;
+                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        maxEntriesPerSquad?: number | null;
+                        /** @description How many golfers each Team entry must pick. */
+                        rosterSize: number;
+                        /** @description How many golfer scores count toward the Team total. */
+                        countedScores: number;
+                        /**
+                         * @description Single tier source used to generate all tiers.
+                         * @enum {string}
+                         */
+                        tierSource: "ODDS" | "WORLD_RANK";
+                        tierGeneration: {
+                            /** @description Basic mode tier size used to seed the tier list. */
+                            defaultTierSize: number;
+                        };
+                        /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
+                        tiers: {
+                            /** @description Stable tier key such as A, B, or C. */
+                            tierKey: string;
+                            /** @description Commissioner-facing tier label. */
+                            label: string;
+                            /** @description How many golfers must be picked from the tier. */
+                            pickCount: number;
+                            /** @description Starting resolved rank/odds position for the tier. */
+                            startPosition: number;
+                            /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                            endPosition: number | null;
+                        }[];
+                        /** @description Golf cut rule for first-pass contests. */
+                        cutRule: {
+                            /** @enum {string} */
+                            type: "FIXED_SCORE";
+                            /** @description Fallback score assigned when a golfer misses the cut. */
+                            fixedScore: number;
+                        };
+                        /** @enum {string} */
+                        playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                        /** @enum {string} */
+                        displayScoring: "TO_PAR";
+                        /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                        tiebreaker: {
+                            /** @enum {string} */
+                            type: "PREDICT_WINNING_SCORE";
+                        };
+                    } | {
+                        /** @enum {string} */
+                        mode: "GOLF_CATEGORY_PICKS";
+                        /**
+                         * Format: date-time
+                         * @description Contest entry lock timestamp.
+                         */
+                        locksAt?: string | null;
+                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        maxEntriesPerSquad?: number | null;
+                        /** @description Enabled category slots for the contest. */
+                        categories: {
+                            /** @enum {string} */
+                            categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                            /** @description Commissioner-facing category label. */
+                            label: string;
+                            /** @description How many golfers must be picked for the category. */
+                            pickCount: number;
+                        }[];
+                        /** @description Golf cut rule for first-pass contests. */
+                        cutRule: {
+                            /** @enum {string} */
+                            type: "FIXED_SCORE";
+                            /** @description Fallback score assigned when a golfer misses the cut. */
+                            fixedScore: number;
+                        };
+                        /** @enum {string} */
+                        playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                        /** @enum {string} */
+                        displayScoring: "TO_PAR";
+                        /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                        tiebreaker: {
+                            /** @enum {string} */
+                            type: "PREDICT_WINNING_SCORE";
+                        };
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Single root-admin contest template response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Seeded commissioner-facing contest configuration template. */
+                        template: {
+                            /**
+                             * Format: uuid
+                             * @description Seeded contest template identifier.
+                             */
+                            id: string;
+                            /**
+                             * @description Sport this template applies to.
+                             * @enum {string}
+                             */
+                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                            /** @description Optional event-type scope for the template. */
+                            eventType?: string | null;
+                            /**
+                             * @description Contest type that may use the template.
+                             * @enum {string}
+                             */
+                            contestType: "SINGLE_EVENT";
+                            /**
+                             * @description Configuration mode seeded by the template.
+                             * @enum {string}
+                             */
+                            configMode: "GOLF_TIERED" | "GOLF_CATEGORY_PICKS";
+                            /** @description Stable machine key for the template. */
+                            templateKey: string;
+                            /** @description Commissioner-facing template label. */
+                            name: string;
+                            /** @description Commissioner-facing template description. */
+                            description: string;
+                            /** @description Display order for template selection. */
+                            sortOrder: number;
+                            /** @description Whether the template should be preselected in the create flow. */
+                            isDefault: boolean;
+                            /** @description Whether the template is currently selectable. */
+                            active: boolean;
+                            /** @description Version of the configuration schema metadata expected by the template. */
+                            schemaVersion: number;
+                            /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
+                            configuration: {
+                                /** @enum {string} */
+                                mode: "GOLF_TIERED";
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
+                                locksAt?: string | null;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description How many golfers each Team entry must pick. */
+                                rosterSize: number;
+                                /** @description How many golfer scores count toward the Team total. */
+                                countedScores: number;
+                                /**
+                                 * @description Single tier source used to generate all tiers.
+                                 * @enum {string}
+                                 */
+                                tierSource: "ODDS" | "WORLD_RANK";
+                                tierGeneration: {
+                                    /** @description Basic mode tier size used to seed the tier list. */
+                                    defaultTierSize: number;
+                                };
+                                /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
+                                tiers: {
+                                    /** @description Stable tier key such as A, B, or C. */
+                                    tierKey: string;
+                                    /** @description Commissioner-facing tier label. */
+                                    label: string;
+                                    /** @description How many golfers must be picked from the tier. */
+                                    pickCount: number;
+                                    /** @description Starting resolved rank/odds position for the tier. */
+                                    startPosition: number;
+                                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
+                                    endPosition: number | null;
+                                }[];
+                                /** @description Golf cut rule for first-pass contests. */
+                                cutRule: {
+                                    /** @enum {string} */
+                                    type: "FIXED_SCORE";
+                                    /** @description Fallback score assigned when a golfer misses the cut. */
+                                    fixedScore: number;
+                                };
+                                /** @enum {string} */
+                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                                /** @enum {string} */
+                                displayScoring: "TO_PAR";
+                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                                tiebreaker: {
+                                    /** @enum {string} */
+                                    type: "PREDICT_WINNING_SCORE";
+                                };
+                            } | {
+                                /** @enum {string} */
+                                mode: "GOLF_CATEGORY_PICKS";
+                                /**
+                                 * Format: date-time
+                                 * @description Contest entry lock timestamp.
+                                 */
+                                locksAt?: string | null;
+                                /** @description Maximum entries a Team may create. Null means unlimited. */
+                                maxEntriesPerSquad?: number | null;
+                                /** @description Enabled category slots for the contest. */
+                                categories: {
+                                    /** @enum {string} */
+                                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
+                                    /** @description Commissioner-facing category label. */
+                                    label: string;
+                                    /** @description How many golfers must be picked for the category. */
+                                    pickCount: number;
+                                }[];
+                                /** @description Golf cut rule for first-pass contests. */
+                                cutRule: {
+                                    /** @enum {string} */
+                                    type: "FIXED_SCORE";
+                                    /** @description Fallback score assigned when a golfer misses the cut. */
+                                    fixedScore: number;
+                                };
+                                /** @enum {string} */
+                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
+                                /** @enum {string} */
+                                displayScoring: "TO_PAR";
+                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
+                                tiebreaker: {
+                                    /** @enum {string} */
+                                    type: "PREDICT_WINNING_SCORE";
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12060,18 +15976,26 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Minimal success response envelope. */
-            200: {
+            /** @description Recent or active provider ingestion job. */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
+                        id: string;
+                        providerId: string;
+                        /** @enum {string} */
+                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                        eventId: string | null;
+                        /** @enum {string} */
+                        status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                        /** Format: date-time */
+                        startedAt: string | null;
+                        /** Format: date-time */
+                        completedAt: string | null;
+                        recordsProcessed: number;
+                        errors: number;
                     };
                 };
             };
@@ -12096,6 +16020,25 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13180,7 +17123,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Minimal success response envelope. */
+            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -13188,10 +17131,174 @@ export interface operations {
                 content: {
                     "application/json": {
                         /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
+                         * @description Sports that scheduled ingestion is allowed to run automatically.
+                         * @default [
+                         *       "GOLF"
+                         *     ]
                          */
-                        success: true;
+                        scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                        /** @description Scheduling policy for provider health checks. */
+                        healthCheck: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for event schedule discovery. */
+                        eventSchedule: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for event participant hydration before the event starts. */
+                        eventParticipants: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for ranking refreshes. */
+                        participantRankings: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for live score polling. */
+                        eventLiveScores: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for completed-event result refreshes. */
+                        eventResults: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
+                        perSportOverrides: {
+                            [key: string]: {
+                                scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                                /** @description Partial feed-scheduling override payload. */
+                                healthCheck?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventSchedule?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventParticipants?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                participantRankings?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventLiveScores?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventResults?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                            };
+                        };
                     };
                 };
             };
@@ -13223,19 +17330,94 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
+        /** @description Partial ingestion scheduling override used for global updates and per-sport overrides. */
         requestBody: {
             content: {
                 "application/json": {
-                    healthCheckIntervalMinutes?: number;
-                    scheduleSyncIntervalHours?: number;
-                    participantSyncIntervalHours?: number;
-                    rankingSyncIntervalHours?: number;
-                    liveScorePollingIntervalSeconds?: number;
+                    scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                    /** @description Partial feed-scheduling override payload. */
+                    healthCheck?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        lookaheadDays?: number;
+                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                        leadDaysBeforeStart?: number;
+                    };
+                    /** @description Partial feed-scheduling override payload. */
+                    eventSchedule?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        lookaheadDays?: number;
+                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                        leadDaysBeforeStart?: number;
+                    };
+                    /** @description Partial feed-scheduling override payload. */
+                    eventParticipants?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        lookaheadDays?: number;
+                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                        leadDaysBeforeStart?: number;
+                    };
+                    /** @description Partial feed-scheduling override payload. */
+                    participantRankings?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        lookaheadDays?: number;
+                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                        leadDaysBeforeStart?: number;
+                    };
+                    /** @description Partial feed-scheduling override payload. */
+                    eventLiveScores?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        lookaheadDays?: number;
+                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                        leadDaysBeforeStart?: number;
+                    };
+                    /** @description Partial feed-scheduling override payload. */
+                    eventResults?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        lookaheadDays?: number;
+                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                        leadDaysBeforeStart?: number;
+                    };
                 };
             };
         };
         responses: {
-            /** @description Minimal success response envelope. */
+            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -13243,10 +17425,174 @@ export interface operations {
                 content: {
                     "application/json": {
                         /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
+                         * @description Sports that scheduled ingestion is allowed to run automatically.
+                         * @default [
+                         *       "GOLF"
+                         *     ]
                          */
-                        success: true;
+                        scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                        /** @description Scheduling policy for provider health checks. */
+                        healthCheck: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for event schedule discovery. */
+                        eventSchedule: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for event participant hydration before the event starts. */
+                        eventParticipants: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for ranking refreshes. */
+                        participantRankings: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for live score polling. */
+                        eventLiveScores: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for completed-event result refreshes. */
+                        eventResults: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
+                        perSportOverrides: {
+                            [key: string]: {
+                                scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                                /** @description Partial feed-scheduling override payload. */
+                                healthCheck?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventSchedule?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventParticipants?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                participantRankings?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventLiveScores?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventResults?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                            };
+                        };
                     };
                 };
             };
@@ -13280,19 +17626,94 @@ export interface operations {
             };
             cookie?: never;
         };
+        /** @description Partial ingestion scheduling override used for global updates and per-sport overrides. */
         requestBody: {
             content: {
                 "application/json": {
-                    healthCheckIntervalMinutes?: number;
-                    scheduleSyncIntervalHours?: number;
-                    participantSyncIntervalHours?: number;
-                    rankingSyncIntervalHours?: number;
-                    liveScorePollingIntervalSeconds?: number;
+                    scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                    /** @description Partial feed-scheduling override payload. */
+                    healthCheck?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        lookaheadDays?: number;
+                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                        leadDaysBeforeStart?: number;
+                    };
+                    /** @description Partial feed-scheduling override payload. */
+                    eventSchedule?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        lookaheadDays?: number;
+                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                        leadDaysBeforeStart?: number;
+                    };
+                    /** @description Partial feed-scheduling override payload. */
+                    eventParticipants?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        lookaheadDays?: number;
+                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                        leadDaysBeforeStart?: number;
+                    };
+                    /** @description Partial feed-scheduling override payload. */
+                    participantRankings?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        lookaheadDays?: number;
+                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                        leadDaysBeforeStart?: number;
+                    };
+                    /** @description Partial feed-scheduling override payload. */
+                    eventLiveScores?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        lookaheadDays?: number;
+                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                        leadDaysBeforeStart?: number;
+                    };
+                    /** @description Partial feed-scheduling override payload. */
+                    eventResults?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        lookaheadDays?: number;
+                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                        leadDaysBeforeStart?: number;
+                    };
                 };
             };
         };
         responses: {
-            /** @description Minimal success response envelope. */
+            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -13300,10 +17721,385 @@ export interface operations {
                 content: {
                     "application/json": {
                         /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
+                         * @description Sports that scheduled ingestion is allowed to run automatically.
+                         * @default [
+                         *       "GOLF"
+                         *     ]
                          */
-                        success: true;
+                        scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                        /** @description Scheduling policy for provider health checks. */
+                        healthCheck: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for event schedule discovery. */
+                        eventSchedule: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for event participant hydration before the event starts. */
+                        eventParticipants: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for ranking refreshes. */
+                        participantRankings: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for live score polling. */
+                        eventLiveScores: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for completed-event result refreshes. */
+                        eventResults: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
+                        perSportOverrides: {
+                            [key: string]: {
+                                scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                                /** @description Partial feed-scheduling override payload. */
+                                healthCheck?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventSchedule?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventParticipants?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                participantRankings?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventLiveScores?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventResults?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminResetSportIngestionOverride: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sport: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Sports that scheduled ingestion is allowed to run automatically.
+                         * @default [
+                         *       "GOLF"
+                         *     ]
+                         */
+                        scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                        /** @description Scheduling policy for provider health checks. */
+                        healthCheck: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for event schedule discovery. */
+                        eventSchedule: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for event participant hydration before the event starts. */
+                        eventParticipants: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for ranking refreshes. */
+                        participantRankings: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for live score polling. */
+                        eventLiveScores: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for completed-event result refreshes. */
+                        eventResults: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
+                        perSportOverrides: {
+                            [key: string]: {
+                                scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                                /** @description Partial feed-scheduling override payload. */
+                                healthCheck?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventSchedule?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventParticipants?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                participantRankings?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventLiveScores?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventResults?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                            };
+                        };
                     };
                 };
             };
@@ -13337,7 +18133,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Minimal success response envelope. */
+            /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -13345,10 +18141,174 @@ export interface operations {
                 content: {
                     "application/json": {
                         /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
+                         * @description Sports that scheduled ingestion is allowed to run automatically.
+                         * @default [
+                         *       "GOLF"
+                         *     ]
                          */
-                        success: true;
+                        scheduledSports: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                        /** @description Scheduling policy for provider health checks. */
+                        healthCheck: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for event schedule discovery. */
+                        eventSchedule: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for event participant hydration before the event starts. */
+                        eventParticipants: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for ranking refreshes. */
+                        participantRankings: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for live score polling. */
+                        eventLiveScores: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Scheduling policy for completed-event result refreshes. */
+                        eventResults: {
+                            /** @description Whether the feed should be scheduled automatically. */
+                            enabled: boolean;
+                            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                            intervalMinutes?: number;
+                            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                            intervalSeconds?: number;
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            lookaheadDays?: number;
+                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                            leadDaysBeforeStart?: number;
+                        };
+                        /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
+                        perSportOverrides: {
+                            [key: string]: {
+                                scheduledSports?: ("GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC")[];
+                                /** @description Partial feed-scheduling override payload. */
+                                healthCheck?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventSchedule?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventParticipants?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                participantRankings?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventLiveScores?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                                /** @description Partial feed-scheduling override payload. */
+                                eventResults?: {
+                                    /** @description Whether the feed should be scheduled automatically. */
+                                    enabled?: boolean;
+                                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                                    intervalMinutes?: number;
+                                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                                    intervalSeconds?: number;
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    lookaheadDays?: number;
+                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
+                                    leadDaysBeforeStart?: number;
+                                };
+                            };
+                        };
                     };
                 };
             };
@@ -13385,9 +18345,116 @@ export interface operations {
             };
         };
     };
-    getDraftState: {
+    ingestClientLogs: {
         parameters: {
             query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {number} */
+                    schemaVersion: 1;
+                    clientTraceId: string;
+                    webappVersion: string;
+                    userAgent: string;
+                    entries: {
+                        /** @enum {string} */
+                        level: "debug" | "info" | "warn" | "error" | "fatal";
+                        action: string;
+                        msg?: string;
+                        /** Format: date-time */
+                        ts: string;
+                        route?: string;
+                        /** Format: uuid */
+                        sessionId?: string | null;
+                        /** Format: uuid */
+                        userId?: string | null;
+                        /** Format: uuid */
+                        clientRequestId?: string | null;
+                        data?: {
+                            [key: string]: unknown;
+                        };
+                        err?: unknown;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    getDraftState: {
+        parameters: {
+            query?: {
+                /** @description Specific contest entry to view within roster-based selection flows. */
+                entryId?: string;
+            };
             header?: never;
             path: {
                 contestId: string;
@@ -13475,6 +18542,33 @@ export interface operations {
                             pickedAt: string;
                         }[];
                         availableParticipantIds: string[];
+                        selectedEntryId?: string | null;
+                        selectedEntryName?: string | null;
+                        tiebreakerValue?: number | null;
+                        selectionGroups?: {
+                            groupId: string;
+                            groupName: string;
+                            groupNumber: number;
+                            picksFromGroup: number;
+                            /** @description Selections currently saved on the selected entry for this group. */
+                            selectedParticipantIds: string[];
+                            /** @description Selectable participants shown inside the group. */
+                            participants: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                participantName: string;
+                                position?: string | null;
+                                team?: string | null;
+                                status?: string | null;
+                                price?: number | null;
+                                ranking?: number | null;
+                                orderIndex?: number | null;
+                                isAvailable: boolean;
+                                unavailableReason?: string | null;
+                                /** @description Whether the currently selected entry has this participant selected. */
+                                isSelected?: boolean;
+                            }[];
+                        }[];
                         isComplete: boolean;
                         pickEmEvents?: {
                             id: string;
@@ -13669,6 +18763,33 @@ export interface operations {
                             pickedAt: string;
                         }[];
                         availableParticipantIds: string[];
+                        selectedEntryId?: string | null;
+                        selectedEntryName?: string | null;
+                        tiebreakerValue?: number | null;
+                        selectionGroups?: {
+                            groupId: string;
+                            groupName: string;
+                            groupNumber: number;
+                            picksFromGroup: number;
+                            /** @description Selections currently saved on the selected entry for this group. */
+                            selectedParticipantIds: string[];
+                            /** @description Selectable participants shown inside the group. */
+                            participants: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                participantName: string;
+                                position?: string | null;
+                                team?: string | null;
+                                status?: string | null;
+                                price?: number | null;
+                                ranking?: number | null;
+                                orderIndex?: number | null;
+                                isAvailable: boolean;
+                                unavailableReason?: string | null;
+                                /** @description Whether the currently selected entry has this participant selected. */
+                                isSelected?: boolean;
+                            }[];
+                        }[];
                         isComplete: boolean;
                         pickEmEvents?: {
                             id: string;
@@ -13854,6 +18975,33 @@ export interface operations {
                             pickedAt: string;
                         }[];
                         availableParticipantIds: string[];
+                        selectedEntryId?: string | null;
+                        selectedEntryName?: string | null;
+                        tiebreakerValue?: number | null;
+                        selectionGroups?: {
+                            groupId: string;
+                            groupName: string;
+                            groupNumber: number;
+                            picksFromGroup: number;
+                            /** @description Selections currently saved on the selected entry for this group. */
+                            selectedParticipantIds: string[];
+                            /** @description Selectable participants shown inside the group. */
+                            participants: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                participantName: string;
+                                position?: string | null;
+                                team?: string | null;
+                                status?: string | null;
+                                price?: number | null;
+                                ranking?: number | null;
+                                orderIndex?: number | null;
+                                isAvailable: boolean;
+                                unavailableReason?: string | null;
+                                /** @description Whether the currently selected entry has this participant selected. */
+                                isSelected?: boolean;
+                            }[];
+                        }[];
                         isComplete: boolean;
                         pickEmEvents?: {
                             id: string;
@@ -14086,6 +19234,33 @@ export interface operations {
                             pickedAt: string;
                         }[];
                         availableParticipantIds: string[];
+                        selectedEntryId?: string | null;
+                        selectedEntryName?: string | null;
+                        tiebreakerValue?: number | null;
+                        selectionGroups?: {
+                            groupId: string;
+                            groupName: string;
+                            groupNumber: number;
+                            picksFromGroup: number;
+                            /** @description Selections currently saved on the selected entry for this group. */
+                            selectedParticipantIds: string[];
+                            /** @description Selectable participants shown inside the group. */
+                            participants: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                participantName: string;
+                                position?: string | null;
+                                team?: string | null;
+                                status?: string | null;
+                                price?: number | null;
+                                ranking?: number | null;
+                                orderIndex?: number | null;
+                                isAvailable: boolean;
+                                unavailableReason?: string | null;
+                                /** @description Whether the currently selected entry has this participant selected. */
+                                isSelected?: boolean;
+                            }[];
+                        }[];
                         isComplete: boolean;
                         pickEmEvents?: {
                             id: string;
@@ -14299,6 +19474,33 @@ export interface operations {
                             pickedAt: string;
                         }[];
                         availableParticipantIds: string[];
+                        selectedEntryId?: string | null;
+                        selectedEntryName?: string | null;
+                        tiebreakerValue?: number | null;
+                        selectionGroups?: {
+                            groupId: string;
+                            groupName: string;
+                            groupNumber: number;
+                            picksFromGroup: number;
+                            /** @description Selections currently saved on the selected entry for this group. */
+                            selectedParticipantIds: string[];
+                            /** @description Selectable participants shown inside the group. */
+                            participants: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                participantName: string;
+                                position?: string | null;
+                                team?: string | null;
+                                status?: string | null;
+                                price?: number | null;
+                                ranking?: number | null;
+                                orderIndex?: number | null;
+                                isAvailable: boolean;
+                                unavailableReason?: string | null;
+                                /** @description Whether the currently selected entry has this participant selected. */
+                                isSelected?: boolean;
+                            }[];
+                        }[];
                         isComplete: boolean;
                         pickEmEvents?: {
                             id: string;
@@ -14520,6 +19722,33 @@ export interface operations {
                             pickedAt: string;
                         }[];
                         availableParticipantIds: string[];
+                        selectedEntryId?: string | null;
+                        selectedEntryName?: string | null;
+                        tiebreakerValue?: number | null;
+                        selectionGroups?: {
+                            groupId: string;
+                            groupName: string;
+                            groupNumber: number;
+                            picksFromGroup: number;
+                            /** @description Selections currently saved on the selected entry for this group. */
+                            selectedParticipantIds: string[];
+                            /** @description Selectable participants shown inside the group. */
+                            participants: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                participantName: string;
+                                position?: string | null;
+                                team?: string | null;
+                                status?: string | null;
+                                price?: number | null;
+                                ranking?: number | null;
+                                orderIndex?: number | null;
+                                isAvailable: boolean;
+                                unavailableReason?: string | null;
+                                /** @description Whether the currently selected entry has this participant selected. */
+                                isSelected?: boolean;
+                            }[];
+                        }[];
                         isComplete: boolean;
                         pickEmEvents?: {
                             id: string;
@@ -14733,6 +19962,33 @@ export interface operations {
                             pickedAt: string;
                         }[];
                         availableParticipantIds: string[];
+                        selectedEntryId?: string | null;
+                        selectedEntryName?: string | null;
+                        tiebreakerValue?: number | null;
+                        selectionGroups?: {
+                            groupId: string;
+                            groupName: string;
+                            groupNumber: number;
+                            picksFromGroup: number;
+                            /** @description Selections currently saved on the selected entry for this group. */
+                            selectedParticipantIds: string[];
+                            /** @description Selectable participants shown inside the group. */
+                            participants: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                participantName: string;
+                                position?: string | null;
+                                team?: string | null;
+                                status?: string | null;
+                                price?: number | null;
+                                ranking?: number | null;
+                                orderIndex?: number | null;
+                                isAvailable: boolean;
+                                unavailableReason?: string | null;
+                                /** @description Whether the currently selected entry has this participant selected. */
+                                isSelected?: boolean;
+                            }[];
+                        }[];
                         isComplete: boolean;
                         pickEmEvents?: {
                             id: string;
@@ -14946,6 +20202,33 @@ export interface operations {
                             pickedAt: string;
                         }[];
                         availableParticipantIds: string[];
+                        selectedEntryId?: string | null;
+                        selectedEntryName?: string | null;
+                        tiebreakerValue?: number | null;
+                        selectionGroups?: {
+                            groupId: string;
+                            groupName: string;
+                            groupNumber: number;
+                            picksFromGroup: number;
+                            /** @description Selections currently saved on the selected entry for this group. */
+                            selectedParticipantIds: string[];
+                            /** @description Selectable participants shown inside the group. */
+                            participants: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                participantName: string;
+                                position?: string | null;
+                                team?: string | null;
+                                status?: string | null;
+                                price?: number | null;
+                                ranking?: number | null;
+                                orderIndex?: number | null;
+                                isAvailable: boolean;
+                                unavailableReason?: string | null;
+                                /** @description Whether the currently selected entry has this participant selected. */
+                                isSelected?: boolean;
+                            }[];
+                        }[];
                         isComplete: boolean;
                         pickEmEvents?: {
                             id: string;
@@ -15697,19 +20980,36 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        /** @description Feed-aware sport sync request. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Feed types to run for a sport-level sync request. */
+                    feeds: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS")[];
+                    /**
+                     * Format: date-time
+                     * @description Optional lower bound for sport-level event discovery.
+                     */
+                    from?: string;
+                    /**
+                     * Format: date-time
+                     * @description Optional lower bound for sport-level event discovery.
+                     */
+                    to?: string;
+                };
+            };
+        };
         responses: {
-            /** @description Single ingestion-job response. */
+            /** @description Multiple ingestion jobs returned for a feed-aware sync request. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** @description Ingestion job execution record. */
-                        job: {
+                        jobs: {
                             /** @enum {string} */
-                            jobType: "SCHEDULE_SYNC" | "PARTICIPANT_SYNC" | "RANKING_SYNC" | "LIVE_SCORES" | "EVENT_RESULTS" | "HEALTH_CHECK";
+                            jobType: "EVENT_SCHEDULE_SYNC" | "EVENT_PARTICIPANTS_SYNC" | "PARTICIPANT_RANKINGS_SYNC" | "EVENT_LIVE_SCORES_SYNC" | "EVENT_RESULTS_SYNC" | "HEALTH_CHECK";
                             /** @description Provider that owns the ingestion job. */
                             providerId: string;
                             /**
@@ -15742,7 +21042,94 @@ export interface operations {
                             errorLog: {
                                 [key: string]: unknown;
                             }[];
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
                         };
+                    };
+                };
+            };
+        };
+    };
+    syncEventData: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sport: string;
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Feed-aware event sync request. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Feed types to run for a specific event sync request. */
+                    feeds: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                };
+            };
+        };
+        responses: {
+            /** @description Multiple ingestion jobs returned for a feed-aware sync request. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        jobs: {
+                            /** @enum {string} */
+                            jobType: "EVENT_SCHEDULE_SYNC" | "EVENT_PARTICIPANTS_SYNC" | "PARTICIPANT_RANKINGS_SYNC" | "EVENT_LIVE_SCORES_SYNC" | "EVENT_RESULTS_SYNC" | "HEALTH_CHECK";
+                            /** @description Provider that owns the ingestion job. */
+                            providerId: string;
+                            /**
+                             * @description Sport being synchronized.
+                             * @enum {string}
+                             */
+                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                            /** @description Provider event identifier when the job targets a single event. */
+                            eventExternalId?: string;
+                            /**
+                             * @description Current ingestion job lifecycle state.
+                             * @enum {string}
+                             */
+                            status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                            /**
+                             * Format: date-time
+                             * @description When the job began processing.
+                             */
+                            startedAt?: string;
+                            /**
+                             * Format: date-time
+                             * @description When the job began processing.
+                             */
+                            completedAt?: string;
+                            /** @description How many records the job successfully processed. */
+                            recordsProcessed: number;
+                            /** @description How many processing errors occurred during the job. */
+                            errors: number;
+                            /** @description Opaque error payloads returned for diagnostics and admin tooling. */
+                            errorLog: {
+                                [key: string]: unknown;
+                            }[];
+                        }[];
                     };
                 };
             };
@@ -15789,7 +21176,7 @@ export interface operations {
                         /** @description Ingestion job execution record. */
                         job: {
                             /** @enum {string} */
-                            jobType: "SCHEDULE_SYNC" | "PARTICIPANT_SYNC" | "RANKING_SYNC" | "LIVE_SCORES" | "EVENT_RESULTS" | "HEALTH_CHECK";
+                            jobType: "EVENT_SCHEDULE_SYNC" | "EVENT_PARTICIPANTS_SYNC" | "PARTICIPANT_RANKINGS_SYNC" | "EVENT_LIVE_SCORES_SYNC" | "EVENT_RESULTS_SYNC" | "HEALTH_CHECK";
                             /** @description Provider that owns the ingestion job. */
                             providerId: string;
                             /**
@@ -15869,7 +21256,7 @@ export interface operations {
                         /** @description Ingestion job execution record. */
                         job: {
                             /** @enum {string} */
-                            jobType: "SCHEDULE_SYNC" | "PARTICIPANT_SYNC" | "RANKING_SYNC" | "LIVE_SCORES" | "EVENT_RESULTS" | "HEALTH_CHECK";
+                            jobType: "EVENT_SCHEDULE_SYNC" | "EVENT_PARTICIPANTS_SYNC" | "PARTICIPANT_RANKINGS_SYNC" | "EVENT_LIVE_SCORES_SYNC" | "EVENT_RESULTS_SYNC" | "HEALTH_CHECK";
                             /** @description Provider that owns the ingestion job. */
                             providerId: string;
                             /**

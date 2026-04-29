@@ -14,6 +14,7 @@ import {
 import { buildRegisteredUser } from './builders';
 import {
   cleanupFunctionalData,
+  createFunctionalEmail,
   createCookieSessionClient,
   disconnectFunctionalPrisma,
   expectFunctionalError,
@@ -34,28 +35,30 @@ describe('SDK Functional: Account Lifecycle', () => {
       displayName: 'Account Profile User',
     });
     const cookieClient = createCookieSessionClient(user.login.tokens);
+    const updatedEmail = createFunctionalEmail('updated-account-profile');
+    const updatedUsername = `updated-account-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
     const profileResponse = await updateAccountProfile({
       client: cookieClient,
       body: {
-        email: 'updated-account-profile@example.com',
+        email: updatedEmail,
         firstName: 'Updated',
         lastName: 'Person',
       },
     });
 
-    expect(profileResponse.data?.user.email).toBe('updated-account-profile@example.com');
+    expect(profileResponse.data?.user.email).toBe(updatedEmail);
     expect(profileResponse.data?.user.firstName).toBe('Updated');
     expect(profileResponse.data?.user.lastName).toBe('Person');
 
     const usernameResponse = await updateAccountUsername({
       client: cookieClient,
       body: {
-        username: 'updated-account-profile-user',
+        username: updatedUsername,
       },
     });
 
-    expect(usernameResponse.data?.user.username).toBe('updated-account-profile-user');
+    expect(usernameResponse.data?.user.username).toBe(updatedUsername);
 
     const preferencesResponse = await updateAccountPreferences({
       client: cookieClient,
@@ -86,7 +89,7 @@ describe('SDK Functional: Account Lifecycle', () => {
     const loginWithOldPassword = await loginUser({
       client: getSdkClient(),
       body: {
-        identifier: 'updated-account-profile-user',
+        identifier: updatedUsername,
         password: user.password,
       },
     });
@@ -99,7 +102,7 @@ describe('SDK Functional: Account Lifecycle', () => {
     const loginWithNewPassword = await loginUser({
       client: getSdkClient(),
       body: {
-        identifier: 'updated-account-profile@example.com',
+        identifier: updatedUsername,
         password: 'UpdatedPassword123!',
       },
     });

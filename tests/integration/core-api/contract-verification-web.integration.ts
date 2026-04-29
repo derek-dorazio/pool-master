@@ -587,6 +587,7 @@ describe('Contract verification (web)', () => {
       url: API_ROUTES.account.profile,
       headers: user.headers,
       payload: {
+        email: user.user.email,
         firstName: 'Updated',
         lastName: 'Person',
       },
