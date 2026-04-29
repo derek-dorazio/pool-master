@@ -4,10 +4,12 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
+import { LeagueContestHistoryPage } from './league-contest-history-page';
 import { LeagueContestsPage } from './league-contests-page';
 
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
+const getMyContestEntryMock = vi.fn();
 const listContestsMock = vi.fn();
 const logoutUserMock = vi.fn();
 const refreshTokenMock = vi.fn();
@@ -15,6 +17,7 @@ const refreshTokenMock = vi.fn();
 vi.mock('@/lib/api', () => ({
   getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
   getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
+  getMyContestEntry: (...args: unknown[]) => getMyContestEntryMock(...args),
   listContests: (...args: unknown[]) => listContestsMock(...args),
   logoutUser: (...args: unknown[]) => logoutUserMock(...args),
   refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
@@ -35,6 +38,7 @@ function renderLeagueContestsPage() {
         <MemoryRouter initialEntries={['/league/BIGDAWGS/contests']}>
           <Routes>
             <Route element={<LeagueContestsPage />} path="/league/:leagueCode/contests" />
+            <Route element={<LeagueContestHistoryPage />} path="/league/:leagueCode/contests/history" />
             <Route element={<div data-testid="contest-destination" />} path="/league/:leagueCode/contests/:contestId" />
             <Route element={<div data-testid="league-home-destination" />} path="/league/:leagueCode" />
           </Routes>
@@ -93,13 +97,14 @@ describe('LeagueContestsPage', () => {
   afterEach(() => {
     getCurrentUserMock.mockReset();
     getLeagueByCodeMock.mockReset();
+    getMyContestEntryMock.mockReset();
     listContestsMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
     useSessionStore.getState().clearSession();
   });
 
-  it('pool-master-7j3 and pool-master-9r6 show active contests and history on League Contests', async () => {
+  it('pool-master-9ef shows active contests only on Active Contests', async () => {
     primeCommonMocks({ leagueRole: 'COMMISSIONER' });
     listContestsMock.mockResolvedValue({
       data: {
@@ -138,12 +143,69 @@ describe('LeagueContestsPage', () => {
 
     expect(await screen.findByTestId('league-contests-active')).toHaveTextContent('Masters Pick 6');
     expect(screen.getByTestId('league-contests-active')).toHaveTextContent('12 entries');
-    expect(screen.getByTestId('league-contests-history')).toHaveTextContent('Players Championship');
-    expect(screen.getByTestId('league-contests-history')).toHaveTextContent('10 entries');
+    expect(screen.queryByTestId('league-contests-history')).not.toBeInTheDocument();
+    expect(screen.queryByText('Players Championship')).not.toBeInTheDocument();
     expect(screen.getByTestId('league-contest-contest-1')).toHaveAttribute(
       'href',
       '/league/BIGDAWGS/contests/contest-1',
     );
+  });
+
+  it('pool-master-9ef shows completed contests on Contest History', async () => {
+    primeCommonMocks({ leagueRole: 'COMMISSIONER' });
+    listContestsMock.mockResolvedValue({
+      data: {
+        contests: [
+          {
+            id: 'contest-1',
+            name: 'Masters Pick 6',
+            status: 'OPEN',
+            contestType: 'SINGLE_EVENT',
+            selectionType: 'TIERED',
+            scoringEngine: 'STROKE_PLAY',
+            leagueId: 'league-1',
+            sport: 'GOLF',
+            entryCount: 12,
+          },
+          {
+            id: 'contest-2',
+            name: 'Players Championship',
+            status: 'COMPLETED',
+            contestType: 'SINGLE_EVENT',
+            selectionType: 'TIERED',
+            scoringEngine: 'STROKE_PLAY',
+            leagueId: 'league-1',
+            sport: 'GOLF',
+            entryCount: 10,
+          },
+        ],
+      },
+    });
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/league/BIGDAWGS/contests/history']}>
+            <Routes>
+              <Route element={<LeagueContestHistoryPage />} path="/league/:leagueCode/contests/history" />
+              <Route element={<div data-testid="contest-destination" />} path="/league/:leagueCode/contests/:contestId" />
+            </Routes>
+          </MemoryRouter>
+        </AuthProvider>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByTestId('league-contest-history-page')).toBeInTheDocument();
+    expect(await screen.findByTestId('league-contests-history')).toHaveTextContent('Players Championship');
+    expect(screen.queryByText('Masters Pick 6')).not.toBeInTheDocument();
     expect(screen.getByTestId('league-history-contest-contest-2')).toHaveAttribute(
       'href',
       '/league/BIGDAWGS/contests/contest-2',

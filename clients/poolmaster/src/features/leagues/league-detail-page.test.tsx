@@ -210,11 +210,8 @@ describe('LeagueDetailPage', () => {
     });
 
     await screen.findByTestId('league-home');
-    expect(
-      screen
-        .getAllByRole('link', { name: 'Manage Contests' })
-        .every((link) => link.getAttribute('href') === '/league/BIGDAWGS/contests/manage'),
-    ).toBe(true);
+    fireEvent.click(screen.getByTestId('league-open-details'));
+    await screen.findByTestId('league-details-modal');
     fireEvent.change(screen.getByTestId('league-details-name'), {
       target: { value: 'Bigger Dawgs' },
     });
@@ -258,6 +255,8 @@ describe('LeagueDetailPage', () => {
     renderLeagueDetailPage();
 
     await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByTestId('league-leave-open'));
+    await screen.findByTestId('league-leave-modal');
     fireEvent.click(screen.getByTestId('league-leave'));
 
     expect(await screen.findByTestId('league-leave-error')).toHaveTextContent(
@@ -281,20 +280,17 @@ describe('LeagueDetailPage', () => {
     expect(getContestMock).not.toHaveBeenCalled();
   });
 
-  it('renders join policy and lifecycle in their dedicated League Home sections', async () => {
+  it('pool-master-zi0 renders join policy and lifecycle in the details/actions layout', async () => {
     primeCommonMocks();
 
     renderLeagueDetailPage();
 
     await screen.findByTestId('league-home');
 
-    expect(screen.getByTestId('league-summary-tile')).not.toHaveTextContent('Join policy');
-    expect(screen.getByTestId('league-summary-tile')).not.toHaveTextContent('Lifecycle');
-
-    expect(screen.getByTestId('league-invitations-section')).toHaveTextContent('Join policy');
+    expect(screen.getByTestId('league-details-tile')).toHaveTextContent('Join policy');
     expect(screen.getByTestId('league-join-policy')).toHaveTextContent('COMMISSIONER_ONLY');
 
-    expect(screen.getByTestId('league-lifecycle-section')).toHaveTextContent('Current status');
+    expect(screen.getByTestId('league-actions-tile')).toHaveTextContent('Inactivate');
     expect(screen.getByTestId('league-lifecycle-status')).toHaveTextContent('Active');
     expect(screen.getByTestId('league-lifecycle-helper')).toHaveTextContent(
       'The league is currently Active, inactivating the league will prevent further usage but will maintain history. The league can be deleted after being made inactive.',

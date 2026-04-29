@@ -1,63 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
 import {
+  getMyContestEntry,
   getLeagueByCode,
   listContests,
   type GetLeagueByCodeResponses,
   type ListContestsResponses,
 } from '@/lib/api';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
-import {
-  buildLeagueContestCreatePath,
-  buildLeagueContestPath,
-  buildLeagueContestsManagePath,
-  buildLeaguePath,
-  setRecentLeagueCode,
-} from '@/features/leagues/league-routing';
+import { buildLeagueContestCreatePath, buildLeagueContestsManagePath, buildLeaguePath, setRecentLeagueCode } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
 import { isHistoricalContest } from './contest-status';
+import { ContestListCard } from './contest-list-card';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type ContestSummary = ListContestsResponses[200]['contests'][number];
 
-function ContestListCard({
-  contest,
-  leagueCode,
-  testId,
-}: {
-  contest: ContestSummary;
-  leagueCode: string;
-  testId: string;
-}) {
-  return (
-    <Link
-      className="block rounded-2xl border border-border bg-background px-4 py-4 transition hover:border-primary/40 hover:bg-card"
-      data-testid={testId}
-      state={{ leagueCode }}
-      to={buildLeagueContestPath(leagueCode, contest.id)}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="font-medium">{contest.name}</div>
-          <div className="mt-1 text-sm text-muted-foreground">
-            {contest.sport} · {contest.selectionType} · {contest.scoringEngine}
-          </div>
-        </div>
-        <div className="text-right text-sm text-muted-foreground">
-          <div>{contest.status}</div>
-          <div>{contest.entryCount ?? 0} entries</div>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
 export function LeagueContestsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
+  const [searchParams] = useSearchParams();
   const logger = useLogger().child({
     feature: 'league-contests-page',
   });
+  const isMyEntriesFilter = searchParams.get('filter') === 'my-entries';
 
   const leagueQuery = useQuery({
     queryKey: ['poolmaster', 'league', leagueCode],
@@ -118,10 +84,33 @@ export function LeagueContestsPage() {
     () => contests.filter((contest) => !isHistoricalContest(contest.status)),
     [contests],
   );
-  const historicalContests = useMemo(
-    () => contests.filter((contest) => isHistoricalContest(contest.status)),
-    [contests],
+  const activeContestIds = useMemo(
+    () => activeContests.map((contest) => contest.id),
+    [activeContests],
   );
+  const myContestIdsQuery = useQuery({
+    queryKey: ['poolmaster', 'league-contests', leagueId, 'my-entries', activeContestIds],
+    queryFn: async (): Promise<Set<string>> => {
+      const contestIds = await Promise.all(
+        activeContestIds.map(async (contestId) => {
+          const response = await getMyContestEntry({ path: { contestId } });
+          return response.data?.entry ? contestId : null;
+        }),
+      );
+
+      return new Set(contestIds.filter((contestId): contestId is string => Boolean(contestId)));
+    },
+    enabled: Boolean(leagueId && isMyEntriesFilter && activeContestIds.length),
+    retry: false,
+  });
+  const visibleActiveContests = useMemo(() => {
+    if (!isMyEntriesFilter) {
+      return activeContests;
+    }
+
+    const myContestIds = myContestIdsQuery.data ?? new Set<string>();
+    return activeContests.filter((contest) => myContestIds.has(contest.id));
+  }, [activeContests, isMyEntriesFilter, myContestIdsQuery.data]);
 
   if (leagueQuery.isLoading) {
     return (
@@ -160,11 +149,12 @@ export function LeagueContestsPage() {
         <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-              League Contests
+              {isMyEntriesFilter ? 'My Contests' : 'Active Contests'}
             </h1>
             <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-              Open active contests, review completed contest history, and jump into contest boards
-              from one place.
+              {isMyEntriesFilter
+                ? 'Open active contests where your team has an entry.'
+                : 'Open active contests and jump into contest boards from one place.'}
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -197,8 +187,8 @@ export function LeagueContestsPage() {
             <div className="mt-1 text-lg font-semibold text-foreground">{activeContests.length}</div>
           </div>
           <div className="rounded-2xl bg-background px-4 py-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Completed</div>
-            <div className="mt-1 text-lg font-semibold text-foreground">{historicalContests.length}</div>
+            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Shown</div>
+            <div className="mt-1 text-lg font-semibold text-foreground">{visibleActiveContests.length}</div>
           </div>
         </div>
       </div>
@@ -214,76 +204,46 @@ export function LeagueContestsPage() {
           </p>
         </section>
       ) : (
-        <>
-          <section
-            className="rounded-[2rem] border border-border bg-card p-6"
-            data-testid="league-contests-active"
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">Active contests</h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Open a contest to view its leaderboard, manage entries, and see picks once the
-                  event has started.
-                </p>
-              </div>
-              <div className="rounded-2xl bg-background px-4 py-2 text-sm font-medium text-foreground">
-                {activeContests.length}
-              </div>
+        <section
+          className="rounded-[2rem] border border-border bg-card p-6"
+          data-testid="league-contests-active"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">
+                {isMyEntriesFilter ? 'My active contests' : 'Active contests'}
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Open a contest to view its leaderboard, manage entries, and see picks once the
+                event has started.
+              </p>
             </div>
+            <div className="rounded-2xl bg-background px-4 py-2 text-sm font-medium text-foreground">
+              {visibleActiveContests.length}
+            </div>
+          </div>
 
-            <div className="mt-5 space-y-3">
-              {activeContests.length ? (
-                activeContests.map((contest) => (
-                  <ContestListCard
-                    contest={contest}
-                    key={contest.id}
-                    leagueCode={league.leagueCode}
-                    testId={`league-contest-${contest.id}`}
-                  />
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No active contests are available for this league yet.
-                </p>
-              )}
-            </div>
-          </section>
-
-          <section
-            className="rounded-[2rem] border border-border bg-card p-6"
-            data-testid="league-contests-history"
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">Completed contest history</h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Open a completed contest to view final standings and revealed picks.
-                </p>
-              </div>
-              <div className="rounded-2xl bg-background px-4 py-2 text-sm font-medium text-foreground">
-                {historicalContests.length}
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {historicalContests.length ? (
-                historicalContests.map((contest) => (
-                  <ContestListCard
-                    contest={contest}
-                    key={contest.id}
-                    leagueCode={league.leagueCode}
-                    testId={`league-history-contest-${contest.id}`}
-                  />
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  This league does not have any completed contests yet.
-                </p>
-              )}
-            </div>
-          </section>
-        </>
+          <div className="mt-5 space-y-3">
+            {isMyEntriesFilter && myContestIdsQuery.isLoading ? (
+              <p className="text-sm text-muted-foreground">Loading your contests...</p>
+            ) : visibleActiveContests.length ? (
+              visibleActiveContests.map((contest) => (
+                <ContestListCard
+                  contest={contest}
+                  key={contest.id}
+                  leagueCode={league.leagueCode}
+                  testId={`league-contest-${contest.id}`}
+                />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {isMyEntriesFilter
+                  ? 'Your team does not have entries in any active contests yet.'
+                  : 'No active contests are available for this league yet.'}
+              </p>
+            )}
+          </div>
+        </section>
       )}
     </section>
   );

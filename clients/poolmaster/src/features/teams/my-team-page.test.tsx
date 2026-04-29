@@ -296,7 +296,8 @@ describe('MyTeamPage', () => {
 
     renderMyTeamPage();
 
-    await screen.findByDisplayValue('Original Team');
+    fireEvent.click(await screen.findByTestId('my-team-open-name'));
+    await screen.findByTestId('my-team-name-modal');
     fireEvent.change(screen.getByTestId('my-team-name'), {
       target: { value: 'Updated Team' },
     });
@@ -372,7 +373,7 @@ describe('MyTeamPage', () => {
 
     renderMyTeamPage();
 
-    await screen.findByDisplayValue('Derek Squad');
+    await screen.findByTestId('my-team-current-icon-label');
     expect(screen.getByTestId('my-team-current-icon-label')).toHaveTextContent('Captain Smile Field');
 
     fireEvent.click(screen.getByTestId('my-team-change-icon'));
@@ -446,7 +447,7 @@ describe('MyTeamPage', () => {
 
     renderMyTeamPage();
 
-    await screen.findByDisplayValue('Derek Squad');
+    await screen.findByTestId('my-team-current-icon-label');
     fireEvent.click(screen.getByTestId('my-team-change-icon'));
 
     expect(await screen.findByTestId('my-team-icon-modal')).toHaveClass(
@@ -650,7 +651,8 @@ describe('MyTeamPage', () => {
 
     renderMyTeamPage();
 
-    await screen.findByDisplayValue('Original Team');
+    fireEvent.click(await screen.findByTestId('my-team-open-owners'));
+    await screen.findByTestId('my-team-owners-modal');
     expect(screen.getByTestId('my-team-member-link-user-2')).toHaveAttribute('href', '/users/user-2');
 
     fireEvent.change(screen.getByTestId('my-team-owner-email'), {
@@ -765,8 +767,7 @@ describe('MyTeamPage', () => {
 
     renderMyTeamPage();
 
-    await screen.findByDisplayValue('Original Team');
-    fireEvent.click(screen.getByTestId('my-team-inactivate'));
+    fireEvent.click(await screen.findByTestId('my-team-inactivate'));
 
     await waitFor(() =>
       expect(inactivateLeagueSquadMock).toHaveBeenCalledWith({
@@ -838,7 +839,7 @@ describe('MyTeamPage', () => {
 
     renderMyTeamPage('/league/BIGDAWGS/team?teamId=team-1');
 
-    await screen.findByDisplayValue('Inactive Team');
+    await screen.findByTestId('my-team-delete');
     expect(screen.getByTestId('my-team-lifecycle-status')).toHaveTextContent('Inactive');
     expect(screen.queryByTestId('my-team-inactivate')).not.toBeInTheDocument();
 
@@ -852,7 +853,7 @@ describe('MyTeamPage', () => {
     expect(await screen.findByTestId('manage-teams-route-destination')).toBeInTheDocument();
   });
 
-  it('routes active entry management and history to their dedicated pages', async () => {
+  it('pool-master-zi0 removes duplicate active entry management links from Team Details', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {
         user: {
@@ -906,14 +907,10 @@ describe('MyTeamPage', () => {
     });
     renderMyTeamPage();
 
-    expect(await screen.findByTestId('my-team-open-league-home')).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS',
-    );
-    expect(screen.getByTestId('my-team-open-my-history')).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS/history',
-    );
+    await screen.findByTestId('my-team-page');
+    expect(screen.queryByText('Active entry management')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('my-team-open-league-home')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('my-team-open-my-history')).not.toBeInTheDocument();
     expect(screen.queryByTestId('my-team-history-contest-contest-complete')).not.toBeInTheDocument();
   });
 
@@ -1022,7 +1019,8 @@ describe('MyTeamPage', () => {
 
     renderMyTeamPage('/league/BIGDAWGS/team?teamId=team-1');
 
-    await screen.findByDisplayValue('Original Team');
+    fireEvent.click(await screen.findByTestId('my-team-open-owners'));
+    await screen.findByTestId('my-team-owners-modal');
     fireEvent.click(screen.getByTestId('team-home-owner-actions-trigger-team-1-user-2'));
     fireEvent.click(screen.getByTestId('team-home-owner-actions-promote-team-1-user-2'));
     await screen.findByTestId('team-home-owner-actions-dialog-team-1-user-2');

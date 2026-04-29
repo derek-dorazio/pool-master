@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from 'react';
+import { ChevronDown, Inbox } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useLogger } from '@/lib/logger';
@@ -11,10 +12,13 @@ import {
 } from '@/features/leagues/create-league-modal';
 import {
   buildLeagueContestCreatePath,
+  buildLeagueContestHistoryPath,
   buildLeagueContestsPath,
-  buildLeagueContestsManagePath,
   buildLeagueHistoryPath,
+  buildLeagueMyContestsPath,
   buildLeaguePath,
+  buildLeagueTeamPath,
+  buildLeagueTeamsPath,
 } from '@/features/leagues/league-routing';
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
 import { LeagueSelector } from './league-selector';
@@ -23,6 +27,7 @@ export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [openMenu, setOpenMenu] = useState<'my-team' | 'league' | null>(null);
   const auth = useAuth();
   const logger = useLogger().child({
     feature: 'app-shell',
@@ -43,7 +48,13 @@ export function AppShell() {
   const canManageActiveLeague = Boolean(
     activeLeagueCode && (activeLeague?.leagueRelationship.commissioner || activeLeague?.isRootAdmin),
   );
+  const canCreateActiveLeagueContest = canManageActiveLeague && activeLeague?.isActive !== false;
   const isCreateLeagueOpen = searchParams.get('createLeague') === '1';
+  const leagueMenuDisabled = !activeLeagueCode;
+
+  function closeMenus() {
+    setOpenMenu(null);
+  }
 
   function openCreateLeague() {
     logger.info(
@@ -117,30 +128,136 @@ export function AppShell() {
           <div className="flex items-center gap-4">
             <div className="space-y-1">
               <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                Ultimate Office Pool Manager
+                Prime Time Commissioner
               </span>
-              <h1 className="text-2xl font-semibold tracking-tight">League-first web app</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">ultimate office pool manager</h1>
             </div>
 
             {shouldLoadLeagueShell ? (
-              <LeagueSelector
-                activeLeagueCode={activeLeagueCode}
-                leagues={leaguesQuery.data ?? []}
-                onCreateLeague={openCreateLeague}
-                onNavigate={(path) => {
-                  logger.info(
-                    {
-                      action: 'appShell.league.navigate',
-                      data: {
-                        from: location.pathname,
-                        to: path,
+              <>
+                <LeagueSelector
+                  activeLeagueCode={activeLeagueCode}
+                  leagues={leaguesQuery.data ?? []}
+                  onCreateLeague={openCreateLeague}
+                  onNavigate={(path) => {
+                    closeMenus();
+                    logger.info(
+                      {
+                        action: 'appShell.league.navigate',
+                        data: {
+                          from: location.pathname,
+                          to: path,
+                        },
                       },
-                    },
-                    'Navigating to selected league from app shell',
-                  );
-                  navigate(path);
-                }}
-              />
+                      'Navigating to selected league from app shell',
+                    );
+                    navigate(path);
+                  }}
+                />
+                <nav className="flex items-center gap-2" aria-label="Primary">
+                  <div className="relative">
+                    <button
+                      aria-expanded={openMenu === 'my-team'}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 disabled:cursor-not-allowed disabled:text-muted-foreground"
+                      data-testid="app-menu-my-team-trigger"
+                      disabled={leagueMenuDisabled}
+                      onClick={() => setOpenMenu((current) => current === 'my-team' ? null : 'my-team')}
+                      type="button"
+                    >
+                      My Team
+                      <ChevronDown aria-hidden size={16} />
+                    </button>
+                    {openMenu === 'my-team' && activeLeagueCode ? (
+                      <div className="absolute left-0 top-full z-40 mt-2 min-w-56 rounded-2xl border border-border bg-card p-2 shadow-xl">
+                        <Link
+                          className="block rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
+                          data-testid="app-menu-my-team-details"
+                          onClick={closeMenus}
+                          to={buildLeagueTeamPath(activeLeagueCode)}
+                        >
+                          Team Details
+                        </Link>
+                        <Link
+                          className="block rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
+                          data-testid="app-menu-my-contests"
+                          onClick={closeMenus}
+                          to={buildLeagueMyContestsPath(activeLeagueCode)}
+                        >
+                          My Contests
+                        </Link>
+                        <Link
+                          className="block rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
+                          data-testid="app-menu-my-history"
+                          onClick={closeMenus}
+                          to={buildLeagueHistoryPath(activeLeagueCode)}
+                        >
+                          My History
+                        </Link>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="relative">
+                    <button
+                      aria-expanded={openMenu === 'league'}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 disabled:cursor-not-allowed disabled:text-muted-foreground"
+                      data-testid="app-menu-league-trigger"
+                      disabled={leagueMenuDisabled}
+                      onClick={() => setOpenMenu((current) => current === 'league' ? null : 'league')}
+                      type="button"
+                    >
+                      League
+                      <ChevronDown aria-hidden size={16} />
+                    </button>
+                    {openMenu === 'league' && activeLeagueCode ? (
+                      <div className="absolute left-0 top-full z-40 mt-2 min-w-60 rounded-2xl border border-border bg-card p-2 shadow-xl">
+                        <Link
+                          className="block rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
+                          data-testid="app-menu-league-details"
+                          onClick={closeMenus}
+                          to={buildLeaguePath(activeLeagueCode)}
+                        >
+                          League Details
+                        </Link>
+                        <Link
+                          className="block rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
+                          data-testid="app-menu-league-teams"
+                          onClick={closeMenus}
+                          to={buildLeagueTeamsPath(activeLeagueCode)}
+                        >
+                          Teams and Owners
+                        </Link>
+                        <Link
+                          className="block rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
+                          data-testid="app-menu-active-contests"
+                          onClick={closeMenus}
+                          to={buildLeagueContestsPath(activeLeagueCode)}
+                        >
+                          Active Contests
+                        </Link>
+                        <Link
+                          className="block rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
+                          data-testid="app-menu-contest-history"
+                          onClick={closeMenus}
+                          to={buildLeagueContestHistoryPath(activeLeagueCode)}
+                        >
+                          Contest History
+                        </Link>
+                        {canCreateActiveLeagueContest ? (
+                          <Link
+                            className="block rounded-xl px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
+                            data-testid="app-menu-create-contest"
+                            onClick={closeMenus}
+                            to={buildLeagueContestCreatePath(activeLeagueCode)}
+                          >
+                            Create Contest
+                          </Link>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                </nav>
+              </>
             ) : null}
           </div>
 
@@ -149,20 +266,13 @@ export function AppShell() {
               <>
                 <button
                   aria-label="Notifications"
-                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border text-muted-foreground"
+                  data-testid="app-shell-notifications"
                   disabled
                   title="Notifications are not available yet."
                   type="button"
                 >
-                  Notifications
-                </button>
-                <button
-                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
-                  disabled
-                  title="Help is not available yet."
-                  type="button"
-                >
-                  Help
+                  <Inbox aria-hidden size={18} />
                 </button>
                 <AccountMenu
                   isRootAdmin={auth.isRootAdmin}
@@ -203,83 +313,6 @@ export function AppShell() {
       </header>
 
       <div className="mx-auto max-w-6xl px-6 py-10">
-        {shouldLoadLeagueShell ? (
-          <nav className="mb-8 flex flex-wrap gap-3">
-            <Link
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
-              data-testid="app-nav-league-home"
-              to={activeLeagueCode ? buildLeaguePath(activeLeagueCode) : '/welcome'}
-            >
-              League Home
-            </Link>
-            {activeLeagueCode ? (
-              <Link
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
-                data-testid="app-nav-create-contest"
-                to={buildLeagueContestCreatePath(activeLeagueCode)}
-              >
-                Create Contest
-              </Link>
-            ) : (
-              <button
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
-                data-testid="app-nav-create-contest-disabled"
-                disabled
-                title="Open a league first to create a contest."
-                type="button"
-              >
-                Create Contest
-              </button>
-            )}
-            {canManageActiveLeague ? (
-              <Link
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
-                data-testid="app-nav-manage-contests"
-                to={buildLeagueContestsManagePath(activeLeagueCode ?? '')}
-              >
-                Manage Contests
-              </Link>
-            ) : null}
-            {activeLeagueCode ? (
-              <>
-                <Link
-                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
-                  data-testid="app-nav-contest-list"
-                  to={buildLeagueContestsPath(activeLeagueCode)}
-                >
-                  League Contests
-                </Link>
-                <Link
-                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
-                  data-testid="app-nav-my-history"
-                  to={buildLeagueHistoryPath(activeLeagueCode)}
-                >
-                  My History
-                </Link>
-              </>
-            ) : (
-              <>
-                <button
-                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
-                  disabled
-                  title="Open a league first to browse its contests."
-                  type="button"
-                >
-                  League Contests
-                </button>
-                <button
-                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground"
-                  disabled
-                  title="Open a league first to browse your contest history."
-                  type="button"
-                >
-                  My History
-                </button>
-              </>
-            )}
-          </nav>
-        ) : null}
-
         <main>
           <Outlet />
         </main>

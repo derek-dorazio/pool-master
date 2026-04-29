@@ -180,21 +180,45 @@ describe('AppShell', () => {
     renderAppShell();
 
     await screen.findByTestId('mock-outlet');
-    expect(screen.getByTestId('app-nav-league-home')).toHaveAttribute(
+    expect(screen.getByText('Prime Time Commissioner')).toBeInTheDocument();
+    expect(screen.getByText('ultimate office pool manager')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Help' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('app-shell-notifications')).toHaveAttribute('aria-label', 'Notifications');
+
+    fireEvent.click(screen.getByTestId('app-menu-my-team-trigger'));
+    expect(screen.getByTestId('app-menu-my-team-details')).toHaveAttribute(
       'href',
-      '/league/LEAGUE1',
+      '/league/LEAGUE1/team',
     );
-    expect(screen.getByTestId('app-nav-contest-list')).toHaveAttribute(
+    expect(screen.getByTestId('app-menu-my-contests')).toHaveAttribute(
       'href',
-      '/league/LEAGUE1/contests',
+      '/league/LEAGUE1/contests?filter=my-entries',
     );
-    expect(screen.getByTestId('app-nav-my-history')).toHaveAttribute(
+    expect(screen.getByTestId('app-menu-my-history')).toHaveAttribute(
       'href',
       '/league/LEAGUE1/history',
     );
-    expect(await screen.findByTestId('app-nav-manage-contests')).toHaveAttribute(
+
+    fireEvent.click(screen.getByTestId('app-menu-league-trigger'));
+    expect(screen.getByTestId('app-menu-league-details')).toHaveAttribute(
       'href',
-      '/league/LEAGUE1/contests/manage',
+      '/league/LEAGUE1',
+    );
+    expect(screen.getByTestId('app-menu-league-teams')).toHaveAttribute(
+      'href',
+      '/league/LEAGUE1/teams',
+    );
+    expect(screen.getByTestId('app-menu-active-contests')).toHaveAttribute(
+      'href',
+      '/league/LEAGUE1/contests',
+    );
+    expect(screen.getByTestId('app-menu-contest-history')).toHaveAttribute(
+      'href',
+      '/league/LEAGUE1/contests/history',
+    );
+    expect(screen.getByTestId('app-menu-create-contest')).toHaveAttribute(
+      'href',
+      '/league/LEAGUE1/contests/new',
     );
     await waitFor(() =>
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -258,20 +282,19 @@ describe('AppShell', () => {
 
     await screen.findByTestId('mock-outlet');
     expect(await screen.findByTestId('mock-account-menu-is-root-admin')).toHaveTextContent('false');
-    expect(screen.queryByTestId('app-nav-manage-contests')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('app-menu-league-trigger'));
+    expect(screen.queryByTestId('app-menu-create-contest')).not.toBeInTheDocument();
   });
 
-  it('falls back to /welcome for the league-home nav when no active league is selected', async () => {
+  it('disables header menus when no active league is selected', async () => {
     clearSessionMock.mockResolvedValue(undefined);
     listLeaguesMock.mockResolvedValue({ data: { leagues: [] } });
 
     renderAppShell(['/welcome']);
 
     await screen.findByTestId('mock-outlet');
-    expect(screen.getByTestId('app-nav-league-home')).toHaveAttribute(
-      'href',
-      '/welcome',
-    );
+    expect(screen.getByTestId('app-menu-my-team-trigger')).toBeDisabled();
+    expect(screen.getByTestId('app-menu-league-trigger')).toBeDisabled();
   });
 
   it('pool-master-dxd.29 does not load or render league navigation on root-admin manage routes', async () => {
@@ -283,8 +306,8 @@ describe('AppShell', () => {
     await screen.findByTestId('mock-outlet');
     expect(listLeaguesMock).not.toHaveBeenCalled();
     expect(screen.queryByTestId('mock-league-selector-create')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('app-nav-league-home')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('app-nav-create-contest-disabled')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('app-menu-my-team-trigger')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('app-menu-league-trigger')).not.toBeInTheDocument();
   });
 
   it('pool-master-dxd.33 does not load member league shell while a root admin login redirects from root', async () => {
@@ -296,8 +319,8 @@ describe('AppShell', () => {
     expect(await screen.findByTestId('mock-account-menu-is-root-admin')).toHaveTextContent('true');
     expect(listLeaguesMock).not.toHaveBeenCalled();
     expect(screen.queryByTestId('mock-league-selector-create')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('app-nav-league-home')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('app-nav-create-contest-disabled')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('app-menu-my-team-trigger')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('app-menu-league-trigger')).not.toBeInTheDocument();
   });
 
   it('logs logout completion when the app-shell logout action succeeds', async () => {

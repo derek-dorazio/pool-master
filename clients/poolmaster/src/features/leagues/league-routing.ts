@@ -29,6 +29,14 @@ export function buildLeagueContestsPath(leagueCode: string) {
   return `/league/${leagueCode}/contests`;
 }
 
+export function buildLeagueMyContestsPath(leagueCode: string) {
+  return `/league/${leagueCode}/contests?filter=my-entries`;
+}
+
+export function buildLeagueContestHistoryPath(leagueCode: string) {
+  return `/league/${leagueCode}/contests/history`;
+}
+
 export function buildLeagueContestCreatePath(leagueCode: string) {
   return `/league/${leagueCode}/contests/new`;
 }
