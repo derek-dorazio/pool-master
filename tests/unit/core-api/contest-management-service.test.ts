@@ -405,6 +405,77 @@ describe('ContestManagementService', () => {
     );
   });
 
+  it('pool-master-dxd.40 rejects tiered contests when tiers exceed the loaded event field', async () => {
+    const contestCoreRepo = createContestCoreRepo();
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      createContestConfigurationRepo(),
+      createParticipantScoringRuleRepo(),
+      createAggregationRuleRepo(),
+      createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantSourceDataRepo(),
+      createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader({
+        participantCount: 80,
+        loadedParticipantCount: 80,
+      }),
+    );
+
+    await expect(
+      service.createContest(
+        { leagueId: 'league-1' },
+        {
+          name: 'Invalid tiers',
+          sportEventId: '11111111-1111-1111-1111-111111111111',
+          contestType: 'SINGLE_EVENT',
+          configuration: {
+            mode: 'GOLF_TIERED',
+            locksAt: '2026-04-10T12:00:00.000Z',
+            maxEntriesPerSquad: 3,
+            rosterSize: 4,
+            countedScores: 4,
+            tierSource: 'ODDS',
+            tierGeneration: {
+              defaultTierSize: 10,
+            },
+            tiers: [
+              {
+                tierKey: 'A',
+                label: 'Tier A',
+                pickCount: 2,
+                startPosition: 1,
+                endPosition: 10,
+              },
+              {
+                tierKey: 'B',
+                label: 'Tier B',
+                pickCount: 2,
+                startPosition: 111,
+                endPosition: null,
+              },
+            ],
+            cutRule: {
+              type: 'FIXED_SCORE',
+              fixedScore: 80,
+            },
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+            displayScoring: 'TO_PAR',
+            tiebreaker: {
+              type: 'PREDICT_WINNING_SCORE',
+            },
+          },
+        },
+      ),
+    ).rejects.toMatchObject({
+      code: 'CONTEST_TIER_FIELD_OUT_OF_RANGE',
+      message: 'Tier B starts at field position 111, but the selected event only has 80 participants.',
+    });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
   it('creates category contests with OPEN_SELECTION and SUM_ALL_ENTRIES aggregation', async () => {
     const contestCoreRepo = createContestCoreRepo();
     const contestEntryAggregationRuleRepo = createAggregationRuleRepo();
@@ -578,6 +649,69 @@ describe('ContestManagementService', () => {
     }
     expect(result.configuration.rosterSize).toBe(8);
     expect(result.configuration.cutRule.fixedScore).toBe(82);
+  });
+
+  it('pool-master-dxd.40 rejects tiered contest updates when tiers exceed the loaded event field', async () => {
+    const contestConfigurationRepo = createContestConfigurationRepo();
+    const service = new ContestManagementService(
+      createContestCoreRepo(),
+      createContestConfigTemplateRepo(),
+      contestConfigurationRepo,
+      createParticipantScoringRuleRepo(),
+      createAggregationRuleRepo(),
+      createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantSourceDataRepo(),
+      createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader({
+        participantCount: 80,
+        loadedParticipantCount: 80,
+      }),
+    );
+
+    await expect(
+      service.updateContestConfiguration('contest-1', {
+        mode: 'GOLF_TIERED',
+        locksAt: '2026-04-11T12:00:00.000Z',
+        maxEntriesPerSquad: 2,
+        rosterSize: 4,
+        countedScores: 4,
+        tierSource: 'WORLD_RANK',
+        tierGeneration: {
+          defaultTierSize: 10,
+        },
+        tiers: [
+          {
+            tierKey: 'A',
+            label: 'Tier A',
+            pickCount: 2,
+            startPosition: 1,
+            endPosition: 10,
+          },
+          {
+            tierKey: 'B',
+            label: 'Tier B',
+            pickCount: 2,
+            startPosition: 111,
+            endPosition: null,
+          },
+        ],
+        cutRule: {
+          type: 'FIXED_SCORE',
+          fixedScore: 82,
+        },
+        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+        displayScoring: 'TO_PAR',
+        tiebreaker: {
+          type: 'PREDICT_WINNING_SCORE',
+        },
+      }),
+    ).rejects.toMatchObject({
+      code: 'CONTEST_TIER_FIELD_OUT_OF_RANGE',
+      message: 'Tier B starts at field position 111, but the selected event only has 80 participants.',
+    });
+    expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
   });
 
   it('returns contest management detail by contest id', async () => {

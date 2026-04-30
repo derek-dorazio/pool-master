@@ -74,11 +74,13 @@ export function updateTieredTemplateConfiguration(
   const picksPerTier = updates.picksPerTier ?? getPicksPerTier(template);
   const tierSize = updates.tierSize ?? template.configuration.tierGeneration.defaultTierSize;
   const countedScores = updates.countedScores ?? template.configuration.countedScores;
+  const rosterSize = tierCount * picksPerTier;
 
   return {
     ...template,
     configuration: {
       ...template.configuration,
+      rosterSize,
       countedScores,
       tierGeneration: {
         ...template.configuration.tierGeneration,

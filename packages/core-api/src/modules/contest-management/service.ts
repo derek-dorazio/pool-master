@@ -94,7 +94,11 @@ export class ContestManagementService {
       input,
       this.contestConfigTemplateRepo,
     );
-    await this.assertSportEventContestEligible(input.sportEventId);
+    const sportEvent = await this.assertSportEventContestEligible(input.sportEventId);
+    assertTierConfigurationFitsParticipantCount(
+      resolvedConfiguration.configuration,
+      sportEvent?.loadedParticipantCount,
+    );
     const selectionType = mapSelectionType(resolvedConfiguration.configuration);
     const contest = await this.contestCoreRepo.create({
       leagueId: context.leagueId,
@@ -216,6 +220,7 @@ export class ContestManagementService {
       this.logger.warn({ contestId }, 'contest management update configuration missing contest');
       throw new ContestManagementError('Contest not found', 'CONTEST_NOT_FOUND', 404);
     }
+    await this.assertTierConfigurationFitsSportEvent(contest.sportEventId, input);
 
     await this.contestConfigurationRepo.update(configuration.id, {
       selectionType,
@@ -256,9 +261,9 @@ export class ContestManagementService {
 
   private async assertSportEventContestEligible(
     sportEventId: string,
-  ): Promise<void> {
+  ): Promise<ContestCreateSportEventState | null> {
     if (!this.sportEventReader) {
-      return;
+      return null;
     }
 
     const sportEvent = await this.sportEventReader.findById(sportEventId);
@@ -312,6 +317,32 @@ export class ContestManagementService {
         'SPORT_EVENT_FIELD_LOCKED',
       );
     }
+
+    return sportEvent;
+  }
+
+  private async assertTierConfigurationFitsSportEvent(
+    sportEventId: string,
+    configuration: ContestConfigurationRequest,
+  ): Promise<void> {
+    if (!this.sportEventReader) {
+      return;
+    }
+
+    const sportEvent = await this.sportEventReader.findById(sportEventId);
+    if (!sportEvent) {
+      this.logger.warn({ sportEventId }, 'contest management tier validation missing sport event');
+      throw new ContestManagementError(
+        'Selected sporting event was not found.',
+        'SPORT_EVENT_NOT_FOUND',
+        404,
+      );
+    }
+
+    assertTierConfigurationFitsParticipantCount(
+      configuration,
+      sportEvent.loadedParticipantCount,
+    );
   }
 }
 
@@ -332,6 +363,33 @@ function mapSelectionType(
   return configuration.mode === GolfContestConfigMode.GOLF_TIERED
     ? SelectionType.TIERED
     : SelectionType.OPEN_SELECTION;
+}
+
+function assertTierConfigurationFitsParticipantCount(
+  configuration: ContestConfigurationRequest,
+  participantCount?: number | null,
+): void {
+  if (configuration.mode !== GolfContestConfigMode.GOLF_TIERED || participantCount == null) {
+    return;
+  }
+
+  for (const tier of configuration.tiers) {
+    if (tier.startPosition > participantCount) {
+      throw new ContestManagementError(
+        `${tier.label} starts at field position ${tier.startPosition}, but the selected event only has ${participantCount} participants.`,
+        'CONTEST_TIER_FIELD_OUT_OF_RANGE',
+      );
+    }
+
+    const endPosition = Math.min(tier.endPosition ?? participantCount, participantCount);
+    const availableParticipants = endPosition - tier.startPosition + 1;
+    if (availableParticipants < tier.pickCount) {
+      throw new ContestManagementError(
+        `${tier.label} does not contain enough participants for ${tier.pickCount} picks.`,
+        'CONTEST_TIER_FIELD_OUT_OF_RANGE',
+      );
+    }
+  }
 }
 
 async function deriveLegacyPersistenceFields(

@@ -112,7 +112,8 @@ describe('RootAdminContentConfigurationDetailPage', () => {
     mockLogger.info.mockReset();
   });
 
-  it('loads a template and submits updates from the dedicated page', async () => {
+  // pool-master-dxd.43 — tier template edits derive roster size from tier count and picks per tier.
+  it('loads a template and submits generic tier updates from the dedicated page', async () => {
     seedTemplates();
 
     renderPage();
@@ -127,6 +128,9 @@ describe('RootAdminContentConfigurationDetailPage', () => {
     fireEvent.change(screen.getByTestId('root-admin-content-config-tier-count'), {
       target: { value: '3' },
     });
+    fireEvent.change(screen.getByTestId('root-admin-content-config-picks-per-tier'), {
+      target: { value: '2' },
+    });
 
     fireEvent.click(screen.getByTestId('root-admin-content-config-save'));
 
@@ -138,10 +142,11 @@ describe('RootAdminContentConfigurationDetailPage', () => {
         body: expect.objectContaining({
           name: 'Updated template name',
           configuration: expect.objectContaining({
+            rosterSize: 6,
             tiers: expect.arrayContaining([
-              expect.objectContaining({ tierKey: 'A' }),
-              expect.objectContaining({ tierKey: 'B' }),
-              expect.objectContaining({ tierKey: 'C' }),
+              expect.objectContaining({ tierKey: 'A', pickCount: 2, endPosition: 10 }),
+              expect.objectContaining({ tierKey: 'B', pickCount: 2, endPosition: 20 }),
+              expect.objectContaining({ tierKey: 'C', pickCount: 2, endPosition: 30 }),
             ]),
           }),
         }),

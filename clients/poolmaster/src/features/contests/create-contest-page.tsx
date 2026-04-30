@@ -100,14 +100,48 @@ function buildTierKey(index: number) {
   return alphabet[index] ?? `T${index + 1}`;
 }
 
-function buildSeededTiers(rosterSize: number, defaultTierSize: number): TierDefinition[] {
-  return Array.from({ length: rosterSize }, (_, index) => ({
+function buildSeededTiers(tierCount: number, defaultTierSize: number, pickCount = 1): TierDefinition[] {
+  return Array.from({ length: tierCount }, (_, index) => ({
     tierKey: buildTierKey(index),
     label: `Tier ${buildTierKey(index)}`,
-    pickCount: 1,
+    pickCount,
     startPosition: index * defaultTierSize + 1,
-    endPosition: index === rosterSize - 1 ? null : (index + 1) * defaultTierSize,
+    endPosition: index === tierCount - 1 ? null : (index + 1) * defaultTierSize,
   }));
+}
+
+function getTierShape(tiers: TierDefinition[], fallbackRosterSize: number) {
+  const tierCount = Math.max(1, tiers.length || 1);
+  const fallbackPicksPerTier = Math.max(1, Math.ceil(fallbackRosterSize / tierCount));
+
+  return {
+    tierCount,
+    picksPerTier: Math.max(1, tiers[0]?.pickCount ?? fallbackPicksPerTier),
+  };
+}
+
+function getTierFieldValidationMessage(
+  tiers: TierDefinition[],
+  participantCount: number | null | undefined,
+) {
+  if (participantCount == null || participantCount < 1) {
+    return null;
+  }
+
+  const invalidStartTier = tiers.find((tier) => tier.startPosition > participantCount);
+  if (invalidStartTier) {
+    return `${invalidStartTier.label} starts at field position ${invalidStartTier.startPosition}, but the selected event has only ${participantCount} participants.`;
+  }
+
+  const undersizedTier = tiers.find((tier) => {
+    const endPosition = Math.min(tier.endPosition ?? participantCount, participantCount);
+    return endPosition - tier.startPosition + 1 < tier.pickCount;
+  });
+  if (undersizedTier) {
+    return `${undersizedTier.label} does not contain enough participants for ${undersizedTier.pickCount} picks.`;
+  }
+
+  return null;
 }
 
 function formatDateTimeDisplay(isoString: string | null) {
@@ -266,7 +300,6 @@ export function CreateContestPage() {
   const [tierSource, setTierSource] = useState<TierSource>('ODDS');
   const [defaultTierSize, setDefaultTierSize] = useState('10');
   const [tiers, setTiers] = useState<TierDefinition[]>(buildSeededTiers(6, 10));
-  const [hasCustomTiers, setHasCustomTiers] = useState(false);
   const [tieredFallbackScore, setTieredFallbackScore] = useState('80');
   const [selectedCategories, setSelectedCategories] = useState<CategoryKey[]>([
     'SENIOR',
@@ -413,7 +446,6 @@ export function CreateContestPage() {
       setTierSource(configuration.tierSource);
       setDefaultTierSize(String(configuration.tierGeneration.defaultTierSize));
       setTiers(configuration.tiers);
-      setHasCustomTiers(false);
       setTieredFallbackScore(String(configuration.cutRule.fixedScore));
       return;
     }
@@ -491,7 +523,6 @@ export function CreateContestPage() {
       setTierSource(configuration.tierSource);
       setDefaultTierSize(String(configuration.tierGeneration.defaultTierSize));
       setTiers(configuration.tiers);
-      setHasCustomTiers(true);
       setTieredFallbackScore(String(configuration.cutRule.fixedScore));
     } else {
       setSelectedCategories(
@@ -526,14 +557,6 @@ export function CreateContestPage() {
 
     setIsHydratedFromManagedContest(true);
   }, [eventsQuery.data, isHydratedFromManagedContest, managedContestQuery.data]);
-
-  useEffect(() => {
-    if (!hasCustomTiers) {
-      const nextRosterSize = Math.max(1, Number(rosterSize) || 1);
-      const nextDefaultTierSize = Math.max(1, Number(defaultTierSize) || 1);
-      setTiers(buildSeededTiers(nextRosterSize, nextDefaultTierSize));
-    }
-  }, [defaultTierSize, hasCustomTiers, rosterSize]);
 
   useEffect(() => {
     if (!sportEventId && eligibleEvents.length) {
@@ -741,6 +764,14 @@ export function CreateContestPage() {
 
               if (totalTierPickCount !== parsedRosterSize) {
                 throw new Error('The sum of picks across all tiers must match golfers picked.');
+              }
+
+              const tierFieldValidationMessage = getTierFieldValidationMessage(
+                tiers,
+                selectedEvent?.participantCount,
+              );
+              if (tierFieldValidationMessage) {
+                throw new Error(tierFieldValidationMessage);
               }
 
               if (
@@ -973,17 +1004,24 @@ export function CreateContestPage() {
   });
 
   function resetTiersFromDefaults() {
-    setHasCustomTiers(false);
+    const templateTiers =
+      selectedTemplate?.configuration.mode === 'GOLF_TIERED'
+        ? selectedTemplate.configuration.tiers
+        : [];
+    const sourceTiers = templateTiers.length ? templateTiers : tiers;
+    const parsedRosterSize = Math.max(1, Number(rosterSize) || 1);
+    const { tierCount, picksPerTier } = getTierShape(sourceTiers, parsedRosterSize);
+
     setTiers(
       buildSeededTiers(
-        Math.max(1, Number(rosterSize) || 1),
+        tierCount,
         Math.max(1, Number(defaultTierSize) || 1),
+        picksPerTier,
       ),
     );
   }
 
   function updateTier(index: number, updates: Partial<TierDefinition>) {
-    setHasCustomTiers(true);
     setTiers((current) =>
       current.map((tier, tierIndex) =>
         tierIndex === index
@@ -1418,10 +1456,9 @@ export function CreateContestPage() {
                 <div className="rounded-2xl border border-border bg-background p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <h3 className="font-medium">Tier preview</h3>
+                      <h3 className="font-medium">Tier settings</h3>
                       <p className="text-sm text-muted-foreground">
-                        Basic setup seeds one pick in each tier. Advanced mode lets you reshape the
-                        boundaries and pick counts.
+                        Adjust the participant rank ranges and picks for this contest.
                       </p>
                     </div>
                     <button
@@ -1447,7 +1484,7 @@ export function CreateContestPage() {
                           <input
                             className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
                             data-testid={`contest-tier-label-${tier.tierKey}`}
-                            disabled={!showAdvanced}
+                            disabled={!isDraftEditable}
                             onChange={(event) => updateTier(index, { label: event.target.value })}
                             type="text"
                             value={tier.label}
@@ -1460,7 +1497,7 @@ export function CreateContestPage() {
                           <input
                             className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
                             data-testid={`contest-tier-start-${tier.tierKey}`}
-                            disabled={!showAdvanced}
+                            disabled={!isDraftEditable}
                             min={1}
                             onChange={(event) =>
                               updateTier(index, {
@@ -1477,7 +1514,7 @@ export function CreateContestPage() {
                           <input
                             className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
                             data-testid={`contest-tier-end-${tier.tierKey}`}
-                            disabled={!showAdvanced}
+                            disabled={!isDraftEditable}
                             min={tier.startPosition}
                             onChange={(event) =>
                               updateTier(index, {
@@ -1497,7 +1534,7 @@ export function CreateContestPage() {
                           <input
                             className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
                             data-testid={`contest-tier-pick-count-${tier.tierKey}`}
-                            disabled={!showAdvanced}
+                            disabled={!isDraftEditable}
                             min={1}
                             onChange={(event) =>
                               updateTier(index, {
