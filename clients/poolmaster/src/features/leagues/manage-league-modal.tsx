@@ -464,7 +464,7 @@ export function ManageLeagueModal({
                   <div>
                     <h3 className="text-xl font-semibold">League icon</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Choose from the built-in PoolMaster icon catalog.
+                      Choose from the built-in Prime Time Commissioner icon catalog.
                     </p>
                   </div>
                   <div className="rounded-[1.5rem] border border-border bg-card p-5">

@@ -412,7 +412,7 @@ export function UserPage() {
           data-testid="user-page-delete-success"
         >
           <div className="text-lg font-semibold">Your account was deleted.</div>
-          <p className="mt-2 text-sm">You no longer have access to PoolMaster with this account.</p>
+          <p className="mt-2 text-sm">You no longer have access to Prime Time Commissioner with this account.</p>
           <button
             className="mt-4 rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-95"
             onClick={() =>
@@ -929,7 +929,7 @@ export function UserPage() {
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
             {isInactive
-              ? 'Reactivating your account restores normal PoolMaster usage immediately.'
+              ? 'Reactivating your account restores normal Prime Time Commissioner usage immediately.'
               : 'Inactivating your account turns profile, preferences, and password management read-only until you reactivate or permanently delete the account.'}
           </p>
           {inactivateMutation.isError ? (

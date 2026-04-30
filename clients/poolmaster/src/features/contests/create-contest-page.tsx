@@ -1324,7 +1324,7 @@ export function CreateContestPage() {
               <div>
                 <div className="text-sm font-medium">Lock time</div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  PoolMaster stores an exact lock timestamp, but commissioners configure it
+                  Prime Time Commissioner stores an exact lock timestamp, but commissioners configure it
                   relative to the event start.
                 </p>
               </div>
@@ -1758,7 +1758,7 @@ export function CreateContestPage() {
             >
               <h3 className="text-lg font-semibold">No golf events are currently available for contest setup.</h3>
               <p className="mt-2 text-sky-900/90">
-                PoolMaster only shows real imported events once they are released and the field is
+                Prime Time Commissioner only shows real imported events once they are released and the field is
                 loaded. Check back when the next tournament reaches contest-ready status.
               </p>
               {unavailableEvents.length ? (

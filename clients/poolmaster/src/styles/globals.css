@@ -1,51 +1,127 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,600;0,700;0,900;1,800;1,900&family=Inter:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Sunday Prime brand scales. Raw values live only at the theme layer. */
+    --color-navy-50: #eaeef6;
+    --color-navy-100: #c9d3e6;
+    --color-navy-200: #8ea3c4;
+    --color-navy-300: #5673a1;
+    --color-navy-400: #294b80;
+    --color-navy-500: #16325e;
+    --color-navy-600: #0b1e3f;
+    --color-navy-700: #091832;
+    --color-navy-800: #05122a;
+    --color-navy-900: #030a1c;
+    --color-gold-50: #fff7da;
+    --color-gold-100: #ffe9a2;
+    --color-gold-200: #ffd86b;
+    --color-gold-300: #ffc82e;
+    --color-gold-400: #f5b800;
+    --color-gold-500: #d79e00;
+    --color-gold-600: #a87c00;
+    --color-gold-700: #745600;
+    --color-red-50: #fbe8ea;
+    --color-red-100: #f3bec3;
+    --color-red-200: #e28c96;
+    --color-red-300: #c55866;
+    --color-red-400: #a8202d;
+    --color-red-500: #851923;
+    --color-red-600: #5e0f17;
+    --color-paper: #f5f5f2;
+    --color-paper-warm: #fafaf7;
+    --color-ink: #0b0b0b;
+    --color-ink-soft: #2b2b2b;
+
+    --surface-canvas: var(--color-paper);
+    --surface-raised: #ffffff;
+    --surface-inverse: var(--color-navy-600);
+    --surface-inverse-deep: var(--color-navy-800);
+    --text-primary: var(--color-navy-600);
+    --text-secondary: #3f3f3a;
+    --text-muted: #6b6b64;
+    --text-on-inverse: #ffffff;
+    --text-on-inverse-muted: rgba(255, 255, 255, 0.66);
+    --surface-on-inverse-subtle: rgba(255, 255, 255, 0.1);
+    --surface-on-inverse-hover: rgba(255, 255, 255, 0.15);
+    --text-accent: var(--color-gold-400);
+    --text-danger: var(--color-red-400);
+    --border-subtle: rgba(11, 30, 63, 0.1);
+    --border-default: rgba(11, 30, 63, 0.18);
+    --border-strong: var(--color-navy-600);
+    --border-on-inverse: rgba(255, 255, 255, 0.12);
+    --accent-primary: var(--color-gold-400);
+    --accent-primary-hover: var(--color-gold-300);
+
+    --background: 60 13% 95%;
+    --foreground: 218 70% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 218 70% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --popover-foreground: 218 70% 15%;
+    --primary: 45 100% 48%;
+    --primary-foreground: 218 70% 15%;
+    --secondary: 60 7% 89%;
+    --secondary-foreground: 218 70% 15%;
+    --muted: 60 8% 91%;
+    --muted-foreground: 60 3% 41%;
+    --accent: 45 100% 48%;
+    --accent-foreground: 218 70% 15%;
+    --destructive: 354 68% 39%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 218 70% 15% / 0.18;
+    --input: 218 70% 15% / 0.18;
+    --ring: 45 100% 48%;
     --radius: 0.5rem;
+    --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    /*
+     * brand/theme defines a negative display tracking token. PoolMaster keeps
+     * letter spacing non-negative per UX rules, so display tracking resolves
+     * to normal at the app theme layer.
+     */
+    --tracking-display: 0em;
+    --tracking-eyebrow: 0.24em;
+    --tracking-label: 0.14em;
+    --shadow-sm: 0 1px 2px rgba(11, 30, 63, 0.06);
+    --shadow-md: 0 4px 12px rgba(11, 30, 63, 0.08);
+    --shadow-lg: 0 12px 28px rgba(11, 30, 63, 0.12);
+    --shadow-xl: 0 40px 80px -30px rgba(0, 0, 0, 0.7);
+    --shadow-focus: 0 0 0 3px rgba(245, 184, 0, 0.45);
+    --shadow-gold-glow: 0 0 0 3px rgba(245, 184, 0, 0.3);
+    --shadow-red-pulse: 0 0 0 3px rgba(168, 32, 45, 0.3);
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --duration-fast: 120ms;
+    --duration-base: 200ms;
+    --duration-slow: 320ms;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --background: 218 79% 9%;
+    --foreground: 60 13% 95%;
+    --card: 218 70% 15%;
+    --card-foreground: 60 13% 95%;
+    --popover: 218 70% 15%;
+    --popover-foreground: 60 13% 95%;
+    --primary: 45 100% 48%;
+    --primary-foreground: 218 79% 9%;
+    --secondary: 216 50% 20%;
+    --secondary-foreground: 60 13% 95%;
+    --muted: 216 50% 20%;
+    --muted-foreground: 60 13% 75%;
+    --accent: 45 100% 48%;
+    --accent-foreground: 218 79% 9%;
+    --destructive: 354 68% 39%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100% / 0.12;
+    --input: 0 0% 100% / 0.12;
+    --ring: 45 100% 48%;
   }
 }
 
@@ -55,6 +131,6 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background font-body text-foreground;
   }
 }

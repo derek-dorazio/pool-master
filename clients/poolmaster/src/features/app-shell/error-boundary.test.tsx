@@ -25,7 +25,7 @@ describe('ErrorBoundary', () => {
     );
 
     expect(
-      screen.getByText(/poolmaster hit an unexpected problem/i),
+      screen.getByText(/prime time commissioner hit an unexpected problem/i),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /reload page/i })).toBeInTheDocument();
     expect(loggerSpy).toHaveBeenCalledWith(

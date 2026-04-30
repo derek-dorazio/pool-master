@@ -52,7 +52,7 @@ export function MemberRouteGuard() {
   if (auth.isLoading) {
     return (
       <div className="rounded-[2rem] border border-border bg-card p-8 text-sm text-muted-foreground">
-        Loading your PoolMaster session...
+        Loading your Prime Time Commissioner session...
       </div>
     );
   }
@@ -135,7 +135,7 @@ export function RootAdminRouteGuard() {
   if (auth.isLoading) {
     return (
       <div className="rounded-[2rem] border border-border bg-card p-8 text-sm text-muted-foreground">
-        Loading your PoolMaster session...
+        Loading your Prime Time Commissioner session...
       </div>
     );
   }

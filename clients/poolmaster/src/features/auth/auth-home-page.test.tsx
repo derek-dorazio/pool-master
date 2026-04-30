@@ -234,7 +234,7 @@ describe('AuthHomePage', () => {
 
     renderAuthHomePage();
 
-    fireEvent.click(screen.getByTestId('auth-register-tab'));
+    fireEvent.click(screen.getByRole('radio', { name: 'Create account' }));
     fireEvent.change(screen.getByTestId('auth-register-first-name'), {
       target: { value: 'Derek' },
     });

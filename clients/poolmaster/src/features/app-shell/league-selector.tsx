@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
-import type { ListLeaguesResponses } from '@/lib/api';
-import { useLogger } from '@/lib/logger';
+import { useEffect, useRef, useState } from "react";
+import type { ListLeaguesResponses } from "@/lib/api";
+import { useLogger } from "@/lib/logger";
+import { Tile } from "@/features/shared/ui";
 import {
   buildLeaguePath,
   getLeagueSelectorOptions,
   setRecentLeagueCode,
-} from '@/features/leagues/league-routing';
-import { LeagueIcon } from '@/features/leagues/league-icon';
+} from "@/features/leagues/league-routing";
+import { LeagueIcon } from "@/features/leagues/league-icon";
 
-type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
+type LeagueSummary = ListLeaguesResponses[200]["leagues"][number];
 
 type LeagueSelectorProps = {
   activeLeagueCode?: string | null;
@@ -24,11 +25,12 @@ export function LeagueSelector({
   onNavigate,
 }: LeagueSelectorProps) {
   const logger = useLogger().child({
-    feature: 'league-selector',
+    feature: "league-selector",
   });
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const activeLeague = leagues.find((league) => league.leagueCode === activeLeagueCode) ?? null;
+  const activeLeague =
+    leagues.find((league) => league.leagueCode === activeLeagueCode) ?? null;
   const selectorLeagues = getLeagueSelectorOptions(leagues);
 
   useEffect(() => {
@@ -43,16 +45,16 @@ export function LeagueSelector({
     }
 
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setIsOpen(false);
       }
     }
 
-    window.addEventListener('mousedown', handlePointerDown);
-    window.addEventListener('keydown', handleEscape);
+    window.addEventListener("mousedown", handlePointerDown);
+    window.addEventListener("keydown", handleEscape);
     return () => {
-      window.removeEventListener('mousedown', handlePointerDown);
-      window.removeEventListener('keydown', handleEscape);
+      window.removeEventListener("mousedown", handlePointerDown);
+      window.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen]);
 
@@ -61,35 +63,41 @@ export function LeagueSelector({
       <button
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="flex cursor-pointer items-center gap-3 rounded-[1.5rem] border border-border bg-background px-4 py-3 text-left shadow-sm"
+        className="flex cursor-pointer items-center gap-3 rounded-[1.5rem] border border-inverse-border bg-on-inverse-subtle px-4 py-3 text-left shadow-sm"
         data-testid="league-selector-toggle"
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
-        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <LeagueIcon iconKey={activeLeague?.iconKey} size="md" />
         </div>
         <div className="min-w-0">
-          <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">League</div>
-          <div className="truncate text-sm font-semibold text-foreground">
-            {activeLeague?.name ?? 'Select league'}
+          <div className="font-display text-xs font-bold uppercase tracking-[0.22em] text-on-inverse-muted">
+            League
+          </div>
+          <div className="truncate text-sm font-semibold text-on-inverse">
+            {activeLeague?.name ?? "Select league"}
           </div>
         </div>
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 z-20 mt-3 w-72 rounded-[1.5rem] border border-border bg-card p-3 shadow-xl">
+        <Tile
+          className="absolute right-0 z-20 mt-3 w-72 shadow-xl"
+          padding="sm"
+          radius="lg"
+        >
           <div className="space-y-2">
             {selectorLeagues.map((league) => (
               <button
                 className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
                   league.leagueCode === activeLeagueCode
                     ? league.isActive
-                      ? 'border-primary/20 bg-primary/10'
-                      : 'border-amber-200 bg-amber-50'
+                      ? "border-primary/20 bg-primary/10"
+                      : "border-border bg-muted/40"
                     : league.isActive
-                      ? 'border-transparent hover:bg-muted/50'
-                      : 'border-amber-200/70 bg-amber-50/70 hover:bg-amber-100/70'
+                      ? "border-transparent hover:bg-muted/50"
+                      : "border-border bg-muted/30 hover:bg-muted/50"
                 }`}
                 data-testid={`league-selector-option-${league.leagueCode}`}
                 key={league.id}
@@ -98,12 +106,12 @@ export function LeagueSelector({
                   setIsOpen(false);
                   logger.info(
                     {
-                      action: 'leagueSelector.navigate',
+                      action: "leagueSelector.navigate",
                       data: {
                         leagueCode: league.leagueCode,
                       },
                     },
-                    'Selected league from the league selector',
+                    "Selected league from the league selector",
                   );
                   onNavigate(buildLeaguePath(league.leagueCode));
                 }}
@@ -113,9 +121,13 @@ export function LeagueSelector({
                   <LeagueIcon iconKey={league.iconKey} size="sm" />
                 </div>
                 <div className="min-w-0">
-                  <div className="truncate font-medium text-foreground">{league.name}</div>
+                  <div className="truncate font-medium text-foreground">
+                    {league.name}
+                  </div>
                   <div className="truncate text-xs uppercase tracking-[0.22em] text-muted-foreground">
-                    {league.isActive ? league.leagueCode : 'Not currently active'}
+                    {league.isActive
+                      ? league.leagueCode
+                      : "Not currently active"}
                   </div>
                 </div>
               </button>
@@ -128,9 +140,9 @@ export function LeagueSelector({
                 setIsOpen(false);
                 logger.info(
                   {
-                    action: 'leagueSelector.createRequested',
+                    action: "leagueSelector.createRequested",
                   },
-                  'Requested league creation from the selector',
+                  "Requested league creation from the selector",
                 );
                 onCreateLeague();
               }}
@@ -142,7 +154,7 @@ export function LeagueSelector({
               <div className="font-medium text-foreground">Create league</div>
             </button>
           </div>
-        </div>
+        </Tile>
       ) : null}
     </div>
   );

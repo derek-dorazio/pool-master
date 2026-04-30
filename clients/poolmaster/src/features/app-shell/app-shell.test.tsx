@@ -181,7 +181,7 @@ describe('AppShell', () => {
 
     await screen.findByTestId('mock-outlet');
     expect(screen.getByText('Prime Time Commissioner')).toBeInTheDocument();
-    expect(screen.getByText('ultimate office pool manager')).toBeInTheDocument();
+    expect(screen.getByText('Ultimate Office Pool Manager')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Help' })).not.toBeInTheDocument();
     expect(screen.getByTestId('app-shell-notifications')).toHaveAttribute('aria-label', 'Notifications');
 

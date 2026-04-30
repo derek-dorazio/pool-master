@@ -48,7 +48,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <div className="mt-4 space-y-4">
             <div className="space-y-3">
               <h2 className="text-3xl font-semibold tracking-tight">
-                PoolMaster hit an unexpected problem.
+                Prime Time Commissioner hit an unexpected problem.
               </h2>
               <p className="max-w-2xl text-base leading-7 text-muted-foreground">
                 Try reloading the page. If the problem keeps happening, the browser and backend
