@@ -280,8 +280,30 @@ describe('LeagueDetailPage', () => {
     expect(getContestMock).not.toHaveBeenCalled();
   });
 
-  it('pool-master-zi0 renders join policy and lifecycle in the details/actions layout', async () => {
+  it('pool-master-dxd.37 opens active league inactivation in a confirmation modal', async () => {
     primeCommonMocks();
+    inactivateLeagueMock.mockResolvedValue({
+      data: {
+        league: {
+          id: 'league-1',
+          leagueCode: 'BIGDAWGS',
+          name: 'Big Dawgs',
+          description: 'A test league',
+          isActive: false,
+          iconKey: 'TROPHY',
+          memberCount: 2,
+          activeContestCount: 1,
+          memberType: 'COMMISSIONER',
+          leagueRelationship: {
+            leagueMember: true,
+            commissioner: true,
+          },
+          isRootAdmin: false,
+          joinPolicy: 'COMMISSIONER_ONLY',
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
 
     renderLeagueDetailPage();
 
@@ -290,16 +312,24 @@ describe('LeagueDetailPage', () => {
     expect(screen.getByTestId('league-details-tile')).toHaveTextContent('Join policy');
     expect(screen.getByTestId('league-join-policy')).toHaveTextContent('COMMISSIONER_ONLY');
 
-    expect(screen.getByTestId('league-actions-tile')).toHaveTextContent('Inactivate');
+    expect(screen.getByTestId('league-actions-tile')).toHaveTextContent('Inactivate league');
     expect(screen.getByTestId('league-lifecycle-status')).toHaveTextContent('Active');
-    expect(screen.getByTestId('league-lifecycle-helper')).toHaveTextContent(
-      'The league is currently Active, inactivating the league will prevent further usage but will maintain history. The league can be deleted after being made inactive.',
-    );
-    expect(screen.getByTestId('league-inactivate')).toHaveTextContent('Inactivate');
+    expect(screen.queryByTestId('league-lifecycle-helper')).not.toBeInTheDocument();
+    expect(screen.getByTestId('league-inactivate-open')).toHaveTextContent('Open');
     expect(screen.queryByTestId('league-activate')).not.toBeInTheDocument();
     expect(screen.queryByTestId('league-delete-open')).not.toBeInTheDocument();
-    expect(screen.getByTestId('league-lifecycle-section')).not.toHaveTextContent(
-      'Lifecycle stays inline on League Home',
+
+    fireEvent.click(screen.getByTestId('league-inactivate-open'));
+
+    expect(await screen.findByTestId('league-inactivate-modal')).toHaveTextContent(
+      'The league is currently Active, inactivating the league will prevent further usage but will maintain history. The league can be deleted after being made inactive.',
+    );
+    fireEvent.click(screen.getByTestId('league-inactivate'));
+
+    await waitFor(() =>
+      expect(inactivateLeagueMock).toHaveBeenCalledWith({
+        path: { id: 'league-1' },
+      }),
     );
   });
 
