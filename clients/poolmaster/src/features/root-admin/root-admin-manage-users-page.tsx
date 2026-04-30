@@ -2,7 +2,12 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { adminListUsers, type AdminListUsersResponses } from "@/lib/api";
-import { Tile } from "@/features/shared/ui";
+import {
+  ErrorState,
+  LoadingState,
+  StatusBadge,
+  Tile,
+} from "@/features/shared/ui";
 import { AdminDataGrid } from "./admin-data-grid";
 
 type RootAdminUser = AdminListUsersResponses[200]["items"][number];
@@ -94,15 +99,9 @@ export function RootAdminManageUsersPage() {
           const isActive = getValue() === "Active";
 
           return (
-            <span
-              className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
-                isActive
-                  ? "border-emerald-300 bg-emerald-50 text-emerald-900"
-                  : "border-border bg-background text-muted-foreground"
-              }`}
-            >
+            <StatusBadge tone={isActive ? "active" : "inactive"}>
               {getValue()}
-            </span>
+            </StatusBadge>
           );
         },
       }),
@@ -113,15 +112,9 @@ export function RootAdminManageUsersPage() {
           const isRootAdmin = getValue() === "Yes";
 
           return (
-            <span
-              className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
-                isRootAdmin
-                  ? "border-sky-300 bg-sky-50 text-sky-900"
-                  : "border-border bg-background text-muted-foreground"
-              }`}
-            >
+            <StatusBadge tone={isRootAdmin ? "info" : "neutral"}>
               {getValue()}
-            </span>
+            </StatusBadge>
           );
         },
       }),
@@ -133,14 +126,14 @@ export function RootAdminManageUsersPage() {
     <section className="space-y-6" data-testid="root-admin-manage-users-page">
       <Tile>
         {usersQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading users...</p>
+          <LoadingState body="Loading users..." />
         ) : usersQuery.isError ? (
-          <p className="text-sm text-rose-700">
-            {extractAdminError(
+          <ErrorState
+            body={extractAdminError(
               usersQuery.error,
               "We could not load users right now.",
             )}
-          </p>
+          />
         ) : (
           <AdminDataGrid
             columns={columns}

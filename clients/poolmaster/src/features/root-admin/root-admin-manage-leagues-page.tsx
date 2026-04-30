@@ -1,15 +1,21 @@
-import { createColumnHelper } from '@tanstack/react-table';
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { adminListLeagues, type AdminListLeaguesResponses } from '@/lib/api';
-import { buildLeaguePath } from '@/features/leagues/league-routing';
-import { AdminDataGrid } from './admin-data-grid';
+import { createColumnHelper } from "@tanstack/react-table";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { adminListLeagues, type AdminListLeaguesResponses } from "@/lib/api";
+import { buildLeaguePath } from "@/features/leagues/league-routing";
+import {
+  ErrorState,
+  LoadingState,
+  StatusBadge,
+  Tile,
+} from "@/features/shared/ui";
+import { AdminDataGrid } from "./admin-data-grid";
 
-type ManagedLeague = AdminListLeaguesResponses[200]['leagues'][number];
+type ManagedLeague = AdminListLeaguesResponses[200]["leagues"][number];
 const columnHelper = createColumnHelper<ManagedLeague>();
 
 function extractErrorMessage(error: unknown, fallback: string) {
-  if (!error || typeof error !== 'object') {
+  if (!error || typeof error !== "object") {
     return fallback;
   }
 
@@ -18,33 +24,30 @@ function extractErrorMessage(error: unknown, fallback: string) {
     message?: unknown;
   };
 
-  if (typeof candidate.error?.message === 'string') {
+  if (typeof candidate.error?.message === "string") {
     return candidate.error.message;
   }
 
-  if (typeof candidate.message === 'string') {
+  if (typeof candidate.message === "string") {
     return candidate.message;
   }
 
   return fallback;
 }
 
-function getLeagueStatusClasses(isActive: boolean) {
-  return isActive
-    ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
-    : 'border-amber-300 bg-amber-50 text-amber-900';
-}
-
 export function RootAdminManageLeaguesPage() {
   const leaguesQuery = useQuery({
-    queryKey: ['poolmaster', 'root-admin', 'manage-leagues'],
+    queryKey: ["poolmaster", "root-admin", "manage-leagues"],
     queryFn: async (): Promise<ManagedLeague[]> => {
       const response = await adminListLeagues({
         query: {},
       });
 
       if (!response.data?.leagues) {
-        throw response.error ?? new Error('League management response is missing data.');
+        throw (
+          response.error ??
+          new Error("League management response is missing data.")
+        );
       }
 
       return response.data.leagues;
@@ -54,50 +57,57 @@ export function RootAdminManageLeaguesPage() {
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor('name', {
-        header: 'League',
+      columnHelper.accessor("name", {
+        header: "League",
         cell: ({ row }) => (
           <div>
             <div className="font-medium text-primary">{row.original.name}</div>
             {row.original.description ? (
-              <div className="mt-1 text-xs text-muted-foreground">{row.original.description}</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {row.original.description}
+              </div>
             ) : null}
           </div>
         ),
       }),
-      columnHelper.accessor('leagueCode', {
-        header: 'Code',
+      columnHelper.accessor("leagueCode", {
+        header: "Code",
         cell: ({ getValue }) => (
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
       }),
-      columnHelper.accessor((league) => (league.isActive ? 'Active' : 'Inactive'), {
-        id: 'lifecycle',
-        header: 'Lifecycle',
-        cell: ({ getValue }) => {
-          const isActive = getValue() === 'Active';
+      columnHelper.accessor(
+        (league) => (league.isActive ? "Active" : "Inactive"),
+        {
+          id: "lifecycle",
+          header: "Lifecycle",
+          cell: ({ getValue }) => {
+            const isActive = getValue() === "Active";
 
-          return (
-            <span
-              className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${getLeagueStatusClasses(isActive)}`}
-            >
-              {getValue()}
-            </span>
-          );
+            return (
+              <StatusBadge tone={isActive ? "active" : "inactive"}>
+                {getValue()}
+              </StatusBadge>
+            );
+          },
         },
-      }),
+      ),
       columnHelper.accessor((league) => String(league.memberCount), {
-        id: 'memberCount',
-        header: 'Members',
+        id: "memberCount",
+        header: "Members",
         cell: ({ row }) => (
-          <span className="font-medium text-foreground">{row.original.memberCount}</span>
+          <span className="font-medium text-foreground">
+            {row.original.memberCount}
+          </span>
         ),
       }),
       columnHelper.accessor((league) => String(league.activeContestCount), {
-        id: 'activeContestCount',
-        header: 'Active contests',
+        id: "activeContestCount",
+        header: "Active contests",
         cell: ({ row }) => (
-          <span className="font-medium text-foreground">{row.original.activeContestCount}</span>
+          <span className="font-medium text-foreground">
+            {row.original.activeContestCount}
+          </span>
         ),
       }),
     ],
@@ -106,13 +116,16 @@ export function RootAdminManageLeaguesPage() {
 
   return (
     <section className="space-y-6" data-testid="root-admin-manage-leagues-page">
-      <section className="rounded-[2rem] border border-border bg-card p-6">
+      <Tile>
         {leaguesQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading leagues...</p>
+          <LoadingState body="Loading leagues..." />
         ) : leaguesQuery.isError ? (
-          <p className="text-sm text-rose-700">
-            {extractErrorMessage(leaguesQuery.error, 'We could not load leagues right now.')}
-          </p>
+          <ErrorState
+            body={extractErrorMessage(
+              leaguesQuery.error,
+              "We could not load leagues right now.",
+            )}
+          />
         ) : (
           <AdminDataGrid
             columns={columns}
@@ -120,10 +133,12 @@ export function RootAdminManageLeaguesPage() {
             emptyMessage="No leagues matched the current filters."
             getRowId={(league) => league.id}
             getRowLink={(league) => buildLeaguePath(league.leagueCode)}
-            rowTestId={(league) => `root-admin-manage-leagues-link-${league.id}`}
+            rowTestId={(league) =>
+              `root-admin-manage-leagues-link-${league.id}`
+            }
           />
         )}
-      </section>
+      </Tile>
     </section>
   );
 }
