@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from "react";
+import { ActionList, ActionTile, Tile } from "@/features/shared/ui";
 
 type AccountMenuProps = {
   profilePath: string;
@@ -30,47 +30,51 @@ export function AccountMenu({
       </button>
 
       {isOpen ? (
-        <div
-          className="absolute right-0 z-40 mt-3 w-72 rounded-[1.5rem] border border-border bg-card p-3 shadow-xl"
+        <Tile
+          className="absolute right-0 z-40 mt-3 w-72 shadow-xl"
           data-testid="account-menu-panel"
+          padding="sm"
+          radius="lg"
         >
           <div className="rounded-[1.25rem] border border-border bg-background px-4 py-3">
-            <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Signed in as</div>
-            <div className="mt-2 text-base font-semibold text-foreground">{userName}</div>
+            <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+              Signed in as
+            </div>
+            <div className="mt-2 text-base font-semibold text-foreground">
+              {userName}
+            </div>
           </div>
 
-          <nav aria-label="User menu" className="mt-3 space-y-2">
-            {isRootAdmin ? (
-              <Link
-                className="block rounded-[1.25rem] border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
-                data-testid="account-menu-manage"
+          <nav aria-label="User menu" className="mt-3">
+            <ActionList>
+              {isRootAdmin ? (
+                <ActionTile
+                  data-testid="account-menu-manage"
+                  label="Manage"
+                  onClick={() => setIsOpen(false)}
+                  to="/manage"
+                  tone="primary"
+                />
+              ) : null}
+              <ActionTile
+                data-testid="account-menu-profile"
+                label="Profile"
                 onClick={() => setIsOpen(false)}
-                to="/manage"
-              >
-                Manage
-              </Link>
-            ) : null}
-            <Link
-              className="block rounded-[1.25rem] border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
-              data-testid="account-menu-profile"
-              onClick={() => setIsOpen(false)}
-              to={profilePath}
-            >
-              Profile
-            </Link>
-            <button
-              className="block w-full rounded-[1.25rem] bg-primary px-4 py-3 text-left text-sm font-medium text-primary-foreground transition hover:opacity-95"
-              data-testid="account-menu-logout"
-              onClick={() => {
-                setIsOpen(false);
-                void onLogout();
-              }}
-              type="button"
-            >
-              Log out
-            </button>
+                to={profilePath}
+                tone="primary"
+              />
+              <ActionTile
+                data-testid="account-menu-logout"
+                label="Log out"
+                onClick={() => {
+                  setIsOpen(false);
+                  void onLogout();
+                }}
+                tone="primary"
+              />
+            </ActionList>
           </nav>
-        </div>
+        </Tile>
       ) : null}
     </div>
   );
