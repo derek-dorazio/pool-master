@@ -1,14 +1,15 @@
-import { createColumnHelper } from '@tanstack/react-table';
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { adminListUsers, type AdminListUsersResponses } from '@/lib/api';
-import { AdminDataGrid } from './admin-data-grid';
+import { createColumnHelper } from "@tanstack/react-table";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { adminListUsers, type AdminListUsersResponses } from "@/lib/api";
+import { Tile } from "@/features/shared/ui";
+import { AdminDataGrid } from "./admin-data-grid";
 
-type RootAdminUser = AdminListUsersResponses[200]['items'][number];
+type RootAdminUser = AdminListUsersResponses[200]["items"][number];
 const columnHelper = createColumnHelper<RootAdminUser>();
 
 function extractAdminError(error: unknown, fallback: string) {
-  if (!error || typeof error !== 'object') {
+  if (!error || typeof error !== "object") {
     return fallback;
   }
 
@@ -17,15 +18,18 @@ function extractAdminError(error: unknown, fallback: string) {
     message?: unknown;
   };
 
-  if (typeof candidate.error?.code === 'string' && typeof candidate.error?.message === 'string') {
+  if (
+    typeof candidate.error?.code === "string" &&
+    typeof candidate.error?.message === "string"
+  ) {
     return `${candidate.error.code}: ${candidate.error.message}`;
   }
 
-  if (typeof candidate.error?.message === 'string') {
+  if (typeof candidate.error?.message === "string") {
     return candidate.error.message;
   }
 
-  if (typeof candidate.message === 'string') {
+  if (typeof candidate.message === "string") {
     return candidate.message;
   }
 
@@ -39,7 +43,7 @@ function buildUserDisplayName(user: RootAdminUser) {
 
 export function RootAdminManageUsersPage() {
   const usersQuery = useQuery({
-    queryKey: ['poolmaster', 'manage', 'users'],
+    queryKey: ["poolmaster", "manage", "users"],
     queryFn: async () => {
       const response = await adminListUsers({
         query: {
@@ -49,7 +53,9 @@ export function RootAdminManageUsersPage() {
       });
 
       if (!response.data) {
-        throw response.error ?? new Error('User list response is missing data.');
+        throw (
+          response.error ?? new Error("User list response is missing data.")
+        );
       }
 
       return response.data;
@@ -61,8 +67,8 @@ export function RootAdminManageUsersPage() {
       columnHelper.accessor(
         (user) => `${buildUserDisplayName(user)} ${user.username}`,
         {
-          id: 'username',
-          header: 'User',
+          id: "username",
+          header: "User",
           cell: ({ row }) => (
             <div>
               <div className="font-medium text-primary">
@@ -75,24 +81,24 @@ export function RootAdminManageUsersPage() {
           ),
         },
       ),
-      columnHelper.accessor('email', {
-        header: 'Email',
+      columnHelper.accessor("email", {
+        header: "Email",
         cell: ({ getValue }) => (
           <span className="text-muted-foreground">{getValue()}</span>
         ),
       }),
-      columnHelper.accessor((user) => (user.isActive ? 'Active' : 'Inactive'), {
-        id: 'account',
-        header: 'Account',
+      columnHelper.accessor((user) => (user.isActive ? "Active" : "Inactive"), {
+        id: "account",
+        header: "Account",
         cell: ({ getValue }) => {
-          const isActive = getValue() === 'Active';
+          const isActive = getValue() === "Active";
 
           return (
             <span
               className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
                 isActive
-                  ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
-                  : 'border-border bg-background text-muted-foreground'
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+                  : "border-border bg-background text-muted-foreground"
               }`}
             >
               {getValue()}
@@ -100,18 +106,18 @@ export function RootAdminManageUsersPage() {
           );
         },
       }),
-      columnHelper.accessor((user) => (user.isRootAdmin ? 'Yes' : 'No'), {
-        id: 'rootAdmin',
-        header: 'Root admin',
+      columnHelper.accessor((user) => (user.isRootAdmin ? "Yes" : "No"), {
+        id: "rootAdmin",
+        header: "Root admin",
         cell: ({ getValue }) => {
-          const isRootAdmin = getValue() === 'Yes';
+          const isRootAdmin = getValue() === "Yes";
 
           return (
             <span
               className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
                 isRootAdmin
-                  ? 'border-sky-300 bg-sky-50 text-sky-900'
-                  : 'border-border bg-background text-muted-foreground'
+                  ? "border-sky-300 bg-sky-50 text-sky-900"
+                  : "border-border bg-background text-muted-foreground"
               }`}
             >
               {getValue()}
@@ -124,18 +130,15 @@ export function RootAdminManageUsersPage() {
   );
 
   return (
-    <section
-      className="space-y-6"
-      data-testid="root-admin-manage-users-page"
-    >
-      <section className="rounded-[2rem] border border-border bg-card p-6">
+    <section className="space-y-6" data-testid="root-admin-manage-users-page">
+      <Tile>
         {usersQuery.isLoading ? (
           <p className="text-sm text-muted-foreground">Loading users...</p>
         ) : usersQuery.isError ? (
           <p className="text-sm text-rose-700">
             {extractAdminError(
               usersQuery.error,
-              'We could not load users right now.',
+              "We could not load users right now.",
             )}
           </p>
         ) : (
@@ -148,7 +151,7 @@ export function RootAdminManageUsersPage() {
             rowTestId={(user) => `root-admin-manage-user-row-${user.id}`}
           />
         )}
-      </section>
+      </Tile>
     </section>
   );
 }
