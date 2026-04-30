@@ -508,49 +508,6 @@ export function LeagueDetailPage() {
               </div>
             </div>
 
-            <div className="sm:col-span-2">
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Join URL
-              </div>
-              <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-                <input
-                  className="min-w-0 flex-1 rounded-2xl border border-border bg-card px-4 py-3 font-mono text-sm disabled:cursor-not-allowed disabled:opacity-70"
-                  data-testid="league-join-url"
-                  disabled={isInactiveLeague}
-                  placeholder="Create a join URL"
-                  readOnly
-                  value={inviteLink}
-                />
-                <div className="flex gap-2">
-                  <button
-                    className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                    data-testid="league-create-join-url"
-                    disabled={inviteLinkMutation.isPending || isInactiveLeague}
-                    onClick={() => void handleGenerateInviteLink()}
-                    type="button"
-                  >
-                    {inviteLinkMutation.isPending ? 'Creating...' : inviteLink ? 'Refresh URL' : 'Create URL'}
-                  </button>
-                  <button
-                    aria-label="Copy join URL"
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                    data-testid="league-copy-join-url"
-                    disabled={!inviteLink || isInactiveLeague}
-                    onClick={() => void handleCopyInviteLink()}
-                    title="Copy join URL"
-                    type="button"
-                  >
-                    {inviteLinkCopied ? <Check aria-hidden size={18} /> : <Copy aria-hidden size={18} />}
-                  </button>
-                </div>
-              </div>
-              {inviteLinkMutation.isError ? (
-                <p className="mt-2 text-sm text-destructive">
-                  {extractErrorMessage(inviteLinkMutation.error, 'We could not create a join URL.')}
-                </p>
-              ) : null}
-            </div>
-
             <div>
               <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                 Created
@@ -798,6 +755,49 @@ export function LeagueDetailPage() {
               <div className="mt-2 font-semibold text-foreground">
                 {leagueQuery.data.joinPolicy}
               </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-border bg-background p-4">
+              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Join URL
+              </div>
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                <input
+                  className="min-w-0 flex-1 rounded-2xl border border-border bg-card px-4 py-3 font-mono text-sm disabled:cursor-not-allowed disabled:opacity-70"
+                  data-testid="league-join-url"
+                  disabled={isInactiveLeague}
+                  placeholder="Create a join URL"
+                  readOnly
+                  value={inviteLink}
+                />
+                <div className="flex gap-2">
+                  <button
+                    className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                    data-testid="league-create-join-url"
+                    disabled={inviteLinkMutation.isPending || isInactiveLeague}
+                    onClick={() => void handleGenerateInviteLink()}
+                    type="button"
+                  >
+                    {inviteLinkMutation.isPending ? 'Creating...' : inviteLink ? 'Refresh URL' : 'Create URL'}
+                  </button>
+                  <button
+                    aria-label="Copy join URL"
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                    data-testid="league-copy-join-url"
+                    disabled={!inviteLink || isInactiveLeague}
+                    onClick={() => void handleCopyInviteLink()}
+                    title="Copy join URL"
+                    type="button"
+                  >
+                    {inviteLinkCopied ? <Check aria-hidden size={18} /> : <Copy aria-hidden size={18} />}
+                  </button>
+                </div>
+              </div>
+              {inviteLinkMutation.isError ? (
+                <p className="mt-2 text-sm text-destructive">
+                  {extractErrorMessage(inviteLinkMutation.error, 'We could not create a join URL.')}
+                </p>
+              ) : null}
             </div>
 
             <label className="mt-5 block space-y-2">

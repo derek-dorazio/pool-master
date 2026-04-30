@@ -380,7 +380,7 @@ describe('LeagueDetailPage', () => {
   });
 
   // pool-master-8lt — commissioners can create and copy a join URL without email delivery.
-  it('creates a copyable join URL from League details', async () => {
+  it('creates a copyable join URL from the Invite Members action modal', async () => {
     primeCommonMocks();
     const writeTextMock = vi.fn().mockResolvedValue(undefined);
     Object.assign(navigator, {
@@ -397,6 +397,11 @@ describe('LeagueDetailPage', () => {
     renderLeagueDetailPage();
 
     await screen.findByTestId('league-home');
+    expect(screen.queryByTestId('league-join-url')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('league-open-invite-members'));
+
+    await screen.findByTestId('league-invitations-section');
     expect(screen.getByTestId('league-join-url')).toHaveValue('');
 
     fireEvent.click(screen.getByTestId('league-create-join-url'));
