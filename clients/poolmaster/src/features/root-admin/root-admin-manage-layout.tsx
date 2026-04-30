@@ -19,46 +19,49 @@ function buildBreadcrumbs(pathname: string) {
 export function RootAdminManageLayout() {
   const location = useLocation();
   const breadcrumbs = buildBreadcrumbs(location.pathname);
+  const pageTitle = breadcrumbs.at(-1)?.label ?? 'Manage';
 
   return (
     <section
       className="space-y-6"
       data-testid="root-admin-manage-layout"
     >
-      <nav
-        aria-label="Manage breadcrumbs"
-        className="rounded-[1.5rem] border border-border bg-card px-5 py-4"
-      >
-        <ol className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          {breadcrumbs.map((breadcrumb, index) => {
-            const isLast = index === breadcrumbs.length - 1;
+      <div className="rounded-[1.5rem] border border-border bg-card px-5 py-4">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          {pageTitle}
+        </h1>
+        <nav aria-label="Manage breadcrumbs" className="mt-3">
+          <ol className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            {breadcrumbs.map((breadcrumb, index) => {
+              const isLast = index === breadcrumbs.length - 1;
 
-            return (
-              <Fragment key={breadcrumb.href}>
-                <li>
-                  {isLast ? (
-                    <span className="font-medium text-foreground">
-                      {breadcrumb.label}
-                    </span>
-                  ) : (
-                    <Link
-                      className="font-medium text-primary transition hover:opacity-80"
-                      to={breadcrumb.href}
-                    >
-                      {breadcrumb.label}
-                    </Link>
-                  )}
-                </li>
-                {!isLast ? (
-                  <li aria-hidden="true" className="text-muted-foreground/70">
-                    /
+              return (
+                <Fragment key={breadcrumb.href}>
+                  <li>
+                    {isLast ? (
+                      <span className="font-medium text-foreground" aria-current="page">
+                        {breadcrumb.label}
+                      </span>
+                    ) : (
+                      <Link
+                        className="font-medium text-primary transition hover:opacity-80"
+                        to={breadcrumb.href}
+                      >
+                        {breadcrumb.label}
+                      </Link>
+                    )}
                   </li>
-                ) : null}
-              </Fragment>
-            );
-          })}
-        </ol>
-      </nav>
+                  {!isLast ? (
+                    <li aria-hidden="true" className="text-muted-foreground/70">
+                      /
+                    </li>
+                  ) : null}
+                </Fragment>
+              );
+            })}
+          </ol>
+        </nav>
+      </div>
 
       <Outlet />
     </section>

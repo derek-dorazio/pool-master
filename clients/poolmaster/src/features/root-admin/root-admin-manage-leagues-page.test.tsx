@@ -86,11 +86,15 @@ describe('RootAdminManageLeaguesPage', () => {
     mockLogger.info.mockReset();
   });
 
-  it('renders a row per league and links each row to the canonical League Home', async () => {
+  it('pool-master-dxd.35 renders a row per league without duplicate admin header copy', async () => {
     seedLeagues();
 
     renderPage();
 
+    expect(screen.queryByText('Back to Manage')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Filter leagues by column/),
+    ).not.toBeInTheDocument();
     const activeRow = await screen.findByTestId(
       'root-admin-manage-leagues-link-league-active-1',
     );

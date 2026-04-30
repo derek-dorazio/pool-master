@@ -95,10 +95,14 @@ describe('RootAdminManageUsersPage', () => {
     mockLogger.child.mockClear();
   });
 
-  it('renders the dedicated user directory with canonical user-page links', async () => {
+  it('pool-master-dxd.35 renders the user grid without duplicate directory helper copy', async () => {
     renderManageUsersPage();
 
     expect(await screen.findByTestId('root-admin-manage-users-page')).toBeInTheDocument();
+    expect(screen.queryByText('User directory')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Filter by the columns below and open a user page from the name column.'),
+    ).not.toBeInTheDocument();
     expect(await screen.findByTestId('root-admin-manage-user-row-user-1')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Alex Admin/ })).toHaveAttribute(
       'href',

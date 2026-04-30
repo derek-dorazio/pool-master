@@ -52,7 +52,7 @@ describe('RootAdminManageTeamsPage', () => {
     mockLogger.info.mockReset();
   });
 
-  it('renders team rows that link to canonical Team Home routes', async () => {
+  it('pool-master-dxd.35 renders team rows without duplicate admin header copy', async () => {
     adminListTeamsMock.mockResolvedValue({
       data: {
         teams: [
@@ -86,6 +86,10 @@ describe('RootAdminManageTeamsPage', () => {
 
     renderPage();
 
+    expect(screen.queryByText('Back to Manage')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Filter teams by column/),
+    ).not.toBeInTheDocument();
     const teamLink = await screen.findByRole('link', { name: /beer bellies/i });
     expect(teamLink).toHaveAttribute('href', '/league/BIGDAWGS/teams/team-active-1');
     expect(screen.queryByText('Open Team Home to manage lifecycle.')).not.toBeInTheDocument();

@@ -7,18 +7,6 @@ export function RootAdminManageHubPage() {
       className="space-y-6"
       data-testid="root-admin-manage-hub-page"
     >
-      <div className="rounded-[2rem] border border-border bg-card p-6">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Root Admin
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
-          Manage
-        </h1>
-        <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          Choose an operational area and open the admin page for that workflow.
-        </p>
-      </div>
-
       <section className="grid gap-4 xl:grid-cols-2">
         {MANAGE_SECTION_DEFINITIONS.map((section) => (
           <article

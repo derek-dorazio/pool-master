@@ -1,7 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { adminListTeams, type AdminListTeamsResponses } from '@/lib/api';
 import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { TeamIcon } from '@/features/teams/team-icon';
@@ -137,23 +136,6 @@ export function RootAdminManageTeamsPage() {
 
   return (
     <section className="space-y-6" data-testid="root-admin-manage-teams-page">
-      <div className="rounded-[2rem] border border-border bg-card p-6">
-        <div className="flex flex-col gap-4">
-          <div>
-            <Link
-              className="text-sm font-medium text-primary transition hover:opacity-80"
-              to="/manage"
-            >
-              Back to Manage
-            </Link>
-            <h2 className="mt-3 text-2xl font-semibold text-foreground">Teams</h2>
-            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-              Filter teams by column and open Team Home for owner and lifecycle actions.
-            </p>
-          </div>
-        </div>
-      </div>
-
       <section className="rounded-[2rem] border border-border bg-card p-6">
         {teamsQuery.isLoading ? (
           <p className="text-sm text-muted-foreground">Loading teams...</p>

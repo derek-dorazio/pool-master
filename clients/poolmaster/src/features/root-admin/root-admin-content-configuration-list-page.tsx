@@ -56,25 +56,6 @@ export function RootAdminContentConfigurationListPage() {
       className="space-y-6"
       data-testid="root-admin-content-configuration-list-page"
     >
-      <div className="rounded-[2rem] border border-border bg-card p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <Link
-              className="text-sm font-medium text-primary transition hover:opacity-80"
-              to="/manage"
-            >
-              Back to Manage
-            </Link>
-            <h2 className="mt-3 text-2xl font-semibold text-foreground">
-              Content Configuration
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-              Manage the persisted contest templates available to commissioner contest setup.
-            </p>
-          </div>
-        </div>
-      </div>
-
       <section className="rounded-[2rem] border border-border bg-card p-6">
         {templatesQuery.isLoading ? (
           <p className="text-sm text-muted-foreground">

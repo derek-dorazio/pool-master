@@ -128,51 +128,25 @@ export function RootAdminManageUsersPage() {
       className="space-y-6"
       data-testid="root-admin-manage-users-page"
     >
-      <div className="rounded-[2rem] border border-border bg-card p-6">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Manage
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
-          Users
-        </h1>
-        <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          Search user accounts, review root-admin and lifecycle status, and open
-          user pages for account actions.
-        </p>
-      </div>
-
       <section className="rounded-[2rem] border border-border bg-card p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">
-              User directory
-            </h2>
-            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-              Filter by the columns below and open a user page from the name column.
-            </p>
-          </div>
-        </div>
-
         {usersQuery.isLoading ? (
-          <p className="mt-5 text-sm text-muted-foreground">Loading users...</p>
+          <p className="text-sm text-muted-foreground">Loading users...</p>
         ) : usersQuery.isError ? (
-          <p className="mt-5 text-sm text-rose-700">
+          <p className="text-sm text-rose-700">
             {extractAdminError(
               usersQuery.error,
               'We could not load users right now.',
             )}
           </p>
         ) : (
-          <div className="mt-5">
-            <AdminDataGrid
-              columns={columns}
-              data={usersQuery.data?.items ?? []}
-              emptyMessage="No users matched the current filters."
-              getRowId={(user) => user.id}
-              getRowLink={(user) => `/users/${user.id}`}
-              rowTestId={(user) => `root-admin-manage-user-row-${user.id}`}
-            />
-          </div>
+          <AdminDataGrid
+            columns={columns}
+            data={usersQuery.data?.items ?? []}
+            emptyMessage="No users matched the current filters."
+            getRowId={(user) => user.id}
+            getRowLink={(user) => `/users/${user.id}`}
+            rowTestId={(user) => `root-admin-manage-user-row-${user.id}`}
+          />
         )}
       </section>
     </section>

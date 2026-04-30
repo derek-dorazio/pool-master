@@ -27,23 +27,6 @@ const SYNC_CONFIG_DESTINATIONS = [
 export function RootAdminSyncConfigPage() {
   return (
     <section className="space-y-6" data-testid="root-admin-sync-config-page">
-      <div className="rounded-[2rem] border border-border bg-card p-6">
-        <Link
-          className="text-sm font-medium text-primary transition hover:opacity-80"
-          to="/manage"
-        >
-          Back to Manage
-        </Link>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
-          Sync Configuration
-        </h1>
-        <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          Durable platform settings for client polling and automated ingestion
-          behavior now live in focused edit pages. Choose the configuration area
-          you want to review or change.
-        </p>
-      </div>
-
       <section className="grid gap-4 xl:grid-cols-3">
         {SYNC_CONFIG_DESTINATIONS.map((destination) => (
           <article

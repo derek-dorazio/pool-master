@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { createColumnHelper } from '@tanstack/react-table';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
@@ -6,17 +7,17 @@ import {
   adminListProviders,
 } from '@/lib/api';
 import {
-  ALL_SYNC_SPORT_OPTIONS,
   buildPayloadSummary,
   getProviderName,
   getProviderStatusClasses,
   getSyncRunStatusClasses,
   type ProviderSummary,
   type ProviderSyncRun,
-  type SyncSport,
-  SYNC_STATUS_OPTIONS,
   formatJsonPayload,
 } from './root-admin-sync-utils';
+import { AdminDataGrid } from './admin-data-grid';
+
+const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
 
 function extractErrorMessage(error: unknown, fallback: string) {
   if (!error || typeof error !== 'object') {
@@ -52,6 +53,15 @@ function formatDateTimeDisplay(isoString: string | null | undefined) {
   return new Date(parsed).toLocaleString();
 }
 
+function toSortableTimestamp(isoString: string | null | undefined) {
+  if (!isoString) {
+    return 0;
+  }
+
+  const parsed = Date.parse(isoString);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
 function formatEventValue(eventId: string | null | undefined) {
   if (!eventId || eventId.trim().length === 0) {
     return 'No event';
@@ -61,10 +71,6 @@ function formatEventValue(eventId: string | null | undefined) {
 }
 
 export function RootAdminSyncDashboardPage() {
-  const [providerFilter, setProviderFilter] = useState('ALL');
-  const [sportFilter, setSportFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-
   const providersQuery = useQuery({
     queryKey: ['poolmaster', 'root-admin', 'providers'],
     queryFn: async (): Promise<ProviderSummary[]> => {
@@ -78,15 +84,10 @@ export function RootAdminSyncDashboardPage() {
   });
 
   const syncRunsQuery = useQuery({
-    queryKey: ['poolmaster', 'root-admin', 'provider-sync-runs', providerFilter, sportFilter, statusFilter],
+    queryKey: ['poolmaster', 'root-admin', 'provider-sync-runs'],
     queryFn: async (): Promise<ProviderSyncRun[]> => {
       const response = await adminListProviderSyncRuns({
         query: {
-          providerId: providerFilter === 'ALL' ? undefined : providerFilter,
-          sport: sportFilter === 'ALL' ? undefined : sportFilter as SyncSport,
-          status: statusFilter === 'ALL'
-            ? undefined
-            : statusFilter as (typeof SYNC_STATUS_OPTIONS)[number],
           limit: 25,
         },
       });
@@ -101,16 +102,6 @@ export function RootAdminSyncDashboardPage() {
   });
 
   const recentRuns = syncRunsQuery.data ?? [];
-  const providerOptions = useMemo(() => {
-    const providerIdsFromRuns = recentRuns.map((run) => run.providerId);
-    const providerIdsFromHealth = (providersQuery.data ?? []).map(
-      (provider) => provider.providerId,
-    );
-    return Array.from(
-      new Set([...providerIdsFromHealth, ...providerIdsFromRuns]),
-    ).sort();
-  }, [providersQuery.data, recentRuns]);
-
   const summary = useMemo(() => {
     const submitted = recentRuns.filter((run) => run.status === 'SUBMITTED').length;
     const running = recentRuns.filter((run) => run.status === 'IN_PROGRESS').length;
@@ -125,98 +116,117 @@ export function RootAdminSyncDashboardPage() {
     };
   }, [recentRuns]);
 
+  const syncHistoryColumns = useMemo(
+    () => [
+      syncRunColumnHelper.accessor(
+        (run) => formatDateTimeDisplay(run.startedAt ?? run.createdAt),
+        {
+          id: 'started',
+          header: 'Started',
+          sortingFn: (left, right) =>
+            toSortableTimestamp(left.original.startedAt ?? left.original.createdAt)
+            - toSortableTimestamp(right.original.startedAt ?? right.original.createdAt),
+          cell: ({ getValue }) => (
+            <span className="text-foreground">{getValue()}</span>
+          ),
+        },
+      ),
+      syncRunColumnHelper.accessor(
+        (run) => formatDateTimeDisplay(run.completedAt),
+        {
+          id: 'completed',
+          header: 'Completed',
+          sortingFn: (left, right) =>
+            toSortableTimestamp(left.original.completedAt)
+            - toSortableTimestamp(right.original.completedAt),
+          cell: ({ getValue }) => (
+            <span className="text-muted-foreground">{getValue()}</span>
+          ),
+        },
+      ),
+      syncRunColumnHelper.accessor(
+        (run) => `${getProviderName(run.providerId, providersQuery.data)} ${run.providerId}`,
+        {
+          id: 'provider',
+          header: 'Provider',
+          cell: ({ row }) => (
+            <div>
+              <div className="font-medium text-foreground">
+                {getProviderName(row.original.providerId, providersQuery.data)}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {row.original.providerId}
+              </div>
+            </div>
+          ),
+        },
+      ),
+      syncRunColumnHelper.accessor('sport', {
+        header: 'Sport',
+        cell: ({ getValue }) => (
+          <span className="text-foreground">{getValue()}</span>
+        ),
+      }),
+      syncRunColumnHelper.accessor((run) => formatEventValue(run.eventId), {
+        id: 'event',
+        header: 'Event',
+        cell: ({ getValue }) => (
+          <span className="text-muted-foreground">{getValue()}</span>
+        ),
+      }),
+      syncRunColumnHelper.accessor('status', {
+        header: 'Status',
+        cell: ({ getValue }) => (
+          <span
+            className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${getSyncRunStatusClasses(getValue())}`}
+          >
+            {getValue()}
+          </span>
+        ),
+      }),
+      syncRunColumnHelper.accessor((run) => buildPayloadSummary(run.payload), {
+        id: 'summary',
+        header: 'Summary',
+        cell: ({ row }) => (
+          <div className="text-muted-foreground">
+            <div>{buildPayloadSummary(row.original.payload)}</div>
+            <details className="mt-2">
+              <summary className="cursor-pointer text-xs font-medium uppercase tracking-[0.18em] text-primary">
+                View payload
+              </summary>
+              <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-card p-3">
+                {formatJsonPayload(row.original.payload)}
+              </pre>
+            </details>
+          </div>
+        ),
+      }),
+    ],
+    [providersQuery.data],
+  );
+
   return (
     <section
       className="space-y-6"
       data-testid="root-admin-sync-dashboard-page"
     >
       <div className="rounded-[2rem] border border-border bg-card p-8">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Manage
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
-              Sync
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Operational visibility into provider sync activity. Use this
-              dashboard to review provider health, filter recent sync history,
-              and move into the dedicated manual-run pages when automatic
-              ingestion needs help.
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Link
-              className="inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
-              data-testid="root-admin-open-run-sport-sync-page"
-              to="/manage/sync/run-sport-sync"
-            >
-              Open sport sync page
-            </Link>
-            <Link
-              className="inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
-              data-testid="root-admin-open-run-event-sync-page"
-              to="/manage/sync/run-event-sync"
-            >
-              Open event sync page
-            </Link>
-          </div>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            className="inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+            data-testid="root-admin-open-run-sport-sync-page"
+            to="/manage/sync/run-sport-sync"
+          >
+            Open sport sync page
+          </Link>
+          <Link
+            className="inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+            data-testid="root-admin-open-run-event-sync-page"
+            to="/manage/sync/run-event-sync"
+          >
+            Open event sync page
+          </Link>
         </div>
-
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <label className="text-sm text-muted-foreground">
-            <span className="mb-2 block font-medium text-foreground">Provider</span>
-            <select
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
-              data-testid="root-admin-provider-filter"
-              onChange={(event) => setProviderFilter(event.target.value)}
-              value={providerFilter}
-            >
-              <option value="ALL">All providers</option>
-              {providerOptions.map((providerId) => (
-                <option key={providerId} value={providerId}>
-                  {getProviderName(providerId, providersQuery.data)}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="text-sm text-muted-foreground">
-            <span className="mb-2 block font-medium text-foreground">Sport</span>
-            <select
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
-              data-testid="root-admin-sport-filter"
-              onChange={(event) => setSportFilter(event.target.value)}
-              value={sportFilter}
-            >
-              <option value="ALL">All sports</option>
-              {ALL_SYNC_SPORT_OPTIONS.map((sport) => (
-                <option key={sport} value={sport}>
-                  {sport}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="text-sm text-muted-foreground">
-            <span className="mb-2 block font-medium text-foreground">Status</span>
-            <select
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
-              data-testid="root-admin-status-filter"
-              onChange={(event) => setStatusFilter(event.target.value)}
-              value={statusFilter}
-            >
-              <option value="ALL">All statuses</option>
-              {SYNC_STATUS_OPTIONS.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
         <div className="mt-6 grid gap-4 md:grid-cols-5">
           <div className="rounded-[1.5rem] border border-border bg-background p-4">
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
@@ -289,19 +299,8 @@ export function RootAdminSyncDashboardPage() {
       </div>
 
       <section className="rounded-[2rem] border border-border bg-card p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">Sync history</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Most recent runs are shown first. Use manual sync only when
-              automatic ingestion has not populated contest-ready data yet or
-              when operational troubleshooting is needed.
-            </p>
-          </div>
-        </div>
-
         {syncRunsQuery.isError ? (
-          <p className="mt-4 text-sm text-rose-700">
+          <p className="text-sm text-rose-700">
             {extractErrorMessage(
               syncRunsQuery.error,
               'We could not load provider sync runs right now.',
@@ -309,78 +308,16 @@ export function RootAdminSyncDashboardPage() {
           </p>
         ) : null}
 
-        {recentRuns.length === 0 ? (
-          <div className="mt-5 rounded-[1.5rem] border border-dashed border-border bg-background p-6 text-sm text-muted-foreground">
-            No sync runs matched the current filters.
-          </div>
-        ) : (
-          <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-border bg-background">
-            <div className="overflow-x-auto">
-              <table
-                className="min-w-full border-collapse text-left text-sm"
-                data-testid="root-admin-sync-history-table"
-              >
-                <thead className="bg-card/70 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">Started</th>
-                    <th className="px-4 py-3 font-medium">Completed</th>
-                    <th className="px-4 py-3 font-medium">Provider</th>
-                    <th className="px-4 py-3 font-medium">Sport</th>
-                    <th className="px-4 py-3 font-medium">Event</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-4 py-3 font-medium">Summary</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentRuns.map((run) => (
-                    <tr
-                      className="border-t border-border align-top"
-                      data-testid={`root-admin-sync-run-${run.id}`}
-                      key={run.id}
-                    >
-                      <td className="px-4 py-4 text-foreground">
-                        {formatDateTimeDisplay(run.startedAt ?? run.createdAt)}
-                      </td>
-                      <td className="px-4 py-4 text-muted-foreground">
-                        {formatDateTimeDisplay(run.completedAt)}
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="font-medium text-foreground">
-                          {getProviderName(run.providerId, providersQuery.data)}
-                        </div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {run.providerId}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-foreground">{run.sport}</td>
-                      <td className="px-4 py-4 text-muted-foreground">
-                        {formatEventValue(run.eventId)}
-                      </td>
-                      <td className="px-4 py-4">
-                        <span
-                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${getSyncRunStatusClasses(run.status)}`}
-                        >
-                          {run.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-muted-foreground">
-                        <div>{buildPayloadSummary(run.payload)}</div>
-                        <details className="mt-2">
-                          <summary className="cursor-pointer text-xs font-medium uppercase tracking-[0.18em] text-primary">
-                            View payload
-                          </summary>
-                          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-card p-3">
-                            {formatJsonPayload(run.payload)}
-                          </pre>
-                        </details>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {!syncRunsQuery.isError ? (
+          <AdminDataGrid
+            columns={syncHistoryColumns}
+            data={recentRuns}
+            emptyMessage="No sync runs matched the current filters."
+            getRowId={(run) => run.id}
+            rowTestId={(run) => `root-admin-sync-run-${run.id}`}
+            tableTestId="root-admin-sync-history-table"
+          />
+        ) : null}
       </section>
     </section>
   );

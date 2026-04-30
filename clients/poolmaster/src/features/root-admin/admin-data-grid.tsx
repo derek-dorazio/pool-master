@@ -17,6 +17,7 @@ type AdminDataGridProps<TData> = {
   getRowId?: (row: TData, index: number) => string;
   getRowLink?: (row: TData) => string;
   rowTestId?: (row: TData, index: number) => string;
+  tableTestId?: string;
 };
 
 function getSortIndicator(direction: false | 'asc' | 'desc') {
@@ -38,6 +39,7 @@ export function AdminDataGrid<TData>({
   getRowId,
   getRowLink,
   rowTestId,
+  tableTestId,
 }: AdminDataGridProps<TData>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -66,7 +68,10 @@ export function AdminDataGrid<TData>({
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full border-collapse text-left text-sm">
+      <table
+        className="min-w-full border-collapse text-left text-sm"
+        data-testid={tableTestId}
+      >
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr
