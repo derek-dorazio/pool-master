@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import {
   getLeagueByCode,
@@ -16,7 +16,20 @@ import {
   setRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
-import { LinkButton, ListCard, ListEmptyRow, ListStack } from '@/features/shared/ui';
+import {
+  Chip,
+  EmptyState,
+  ErrorState,
+  LinkButton,
+  ListCard,
+  ListEmptyRow,
+  ListStack,
+  LoadingState,
+  MetricGrid,
+  MetricTile,
+  PageHeader,
+  Tile,
+} from '@/features/shared/ui';
 import { isHistoricalContest } from './contest-status';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
@@ -83,27 +96,22 @@ export function ManageContestsPage() {
   });
 
   if (leagueQuery.isLoading) {
-    return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <p className="text-sm text-muted-foreground">Loading contest management...</p>
-      </section>
-    );
+    return <LoadingState body="Loading contest management..." />;
   }
 
   if (leagueQuery.isError || !leagueQuery.data) {
     const copy = getLeagueLoadErrorCopy(leagueQuery.error);
 
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <h2 className="text-2xl font-semibold">{copy.title}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{copy.body}</p>
-        <Link
-          className="mt-4 inline-flex text-sm font-medium text-primary hover:underline"
-          to="/welcome"
-        >
-          Back to welcome
-        </Link>
-      </section>
+      <ErrorState
+        action={(
+          <LinkButton to="/welcome" variant="secondary">
+            Back to welcome
+          </LinkButton>
+        )}
+        body={copy.body}
+        title={copy.title}
+      />
     );
   }
 
@@ -113,37 +121,29 @@ export function ManageContestsPage() {
   if (!canManageContests) {
     return (
       <section className="space-y-6" data-testid="manage-contests-page">
-        <div className="rounded-[2rem] border border-border bg-card p-8">
-          <Link
-            className="text-sm font-medium text-primary transition hover:opacity-80"
-            to={buildLeaguePath(league.leagueCode)}
-          >
-            Back to League Home
-          </Link>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
-            Manage Contests
-          </h1>
-          <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
+        <PageHeader
+          breadcrumbs={[
+            { href: buildLeaguePath(league.leagueCode), label: 'League Home' },
+            { label: 'Manage Contests' },
+          ]}
+          description={(
+            <>
             Contest administration lives here for commissioners and root admins. This league
             membership does not include contest-management authority.
-          </p>
-        </div>
+            </>
+          )}
+          title="Manage Contests"
+        />
 
-        <section
-          className="rounded-[2rem] border border-border bg-card p-6"
-          data-testid="manage-contests-access-denied"
-        >
-          <p className="text-sm text-muted-foreground">
-            Open League Home for read-only league context. Contest management remains restricted to
-            commissioners and root admins.
-          </p>
-          <Link
-            className="mt-5 inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
-            to={buildLeaguePath(league.leagueCode)}
-          >
-            Open League Home
-          </Link>
-        </section>
+        <EmptyState
+          action={(
+            <LinkButton to={buildLeaguePath(league.leagueCode)} variant="secondary">
+              Open League Home
+            </LinkButton>
+          )}
+          body="Open League Home for read-only league context. Contest management remains restricted to commissioners and root admins."
+          testId="manage-contests-access-denied"
+        />
       </section>
     );
   }
@@ -154,85 +154,53 @@ export function ManageContestsPage() {
 
   return (
     <section className="space-y-6" data-testid="manage-contests-page">
-      <div className="rounded-[2rem] border border-border bg-card p-8">
-        <Link
-          className="text-sm font-medium text-primary transition hover:opacity-80"
-          to={buildLeaguePath(league.leagueCode)}
-        >
-          Back to League Home
-        </Link>
-        <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-              Manage Contests
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-              Commissioners and root admins manage league contests here. Use this list to open a
-              contest, jump into the existing per-contest manage flow, or create the next contest.
-            </p>
-          </div>
-          {league.isActive ? (
-            <Link
-              className="inline-flex items-center justify-center rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+      <PageHeader
+        actions={
+          league.isActive ? (
+            <LinkButton
               data-testid="manage-contests-create-link"
               to={buildLeagueContestCreatePath(league.leagueCode)}
             >
               Create Contest
-            </Link>
+            </LinkButton>
           ) : (
-            <div className="rounded-2xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
-              League inactive
-            </div>
-          )}
-        </div>
+            <Chip tone="inactive">League inactive</Chip>
+          )
+        }
+        breadcrumbs={[
+          { href: buildLeaguePath(league.leagueCode), label: 'League Home' },
+          { label: 'Manage Contests' },
+        ]}
+        description="Commissioners and root admins manage league contests here. Use this list to open a contest, jump into the existing per-contest manage flow, or create the next contest."
+        title="Manage Contests"
+      />
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl bg-background px-4 py-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">League</div>
-            <div className="mt-1 text-lg font-semibold text-foreground">{league.name}</div>
-          </div>
-          <div className="rounded-2xl bg-background px-4 py-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Active</div>
-            <div className="mt-1 text-lg font-semibold text-foreground">{activeContests.length}</div>
-          </div>
-          <div className="rounded-2xl bg-background px-4 py-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Historical</div>
-            <div className="mt-1 text-lg font-semibold text-foreground">{historicalContests.length}</div>
-          </div>
-        </div>
-      </div>
+      <MetricGrid>
+        <MetricTile label="League" value={league.name} />
+        <MetricTile label="Active" value={activeContests.length} />
+        <MetricTile label="Historical" value={historicalContests.length} />
+      </MetricGrid>
 
       {contestsQuery.isLoading ? (
-        <section className="rounded-[2rem] border border-border bg-card p-6">
-          <p className="text-sm text-muted-foreground">Loading contests...</p>
-        </section>
+        <LoadingState body="Loading contests..." />
       ) : contestsQuery.isError ? (
-        <section className="rounded-[2rem] border border-border bg-card p-6">
-          <p className="text-sm text-muted-foreground">
-            We couldn&apos;t load contests for this league.
-          </p>
-        </section>
+        <ErrorState body="We couldn't load contests for this league." />
       ) : !contests.length ? (
-        <section
-          className="rounded-[2rem] border border-border bg-card p-6"
-          data-testid="manage-contests-empty"
-        >
-          <h2 className="text-xl font-semibold text-foreground">No contests yet</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Create the first contest for this league to start the commissioner workflow.
-          </p>
-          {league.isActive ? (
-            <Link
-              className="mt-5 inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
-              to={buildLeagueContestCreatePath(league.leagueCode)}
-            >
-              Create first contest
-            </Link>
-          ) : null}
-        </section>
+        <EmptyState
+          action={
+            league.isActive ? (
+              <LinkButton to={buildLeagueContestCreatePath(league.leagueCode)} variant="secondary">
+                Create first contest
+              </LinkButton>
+            ) : null
+          }
+          body="Create the first contest for this league to start the commissioner workflow."
+          testId="manage-contests-empty"
+          title="No contests yet"
+        />
       ) : (
         <>
-          <section className="rounded-[2rem] border border-border bg-card p-6">
+          <Tile>
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-semibold text-foreground">Active contests</h2>
@@ -240,9 +208,7 @@ export function ManageContestsPage() {
                   Open live contests or jump into the existing per-contest manage page.
                 </p>
               </div>
-              <div className="rounded-2xl bg-background px-4 py-2 text-sm font-medium text-foreground">
-                {activeContests.length}
-              </div>
+              <Chip tone="neutral">{activeContests.length}</Chip>
             </div>
 
             <ListStack className="mt-5">
@@ -282,9 +248,9 @@ export function ManageContestsPage() {
                 <ListEmptyRow>No active contests right now.</ListEmptyRow>
               )}
             </ListStack>
-          </section>
+          </Tile>
 
-          <section className="rounded-[2rem] border border-border bg-card p-6">
+          <Tile>
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-semibold text-foreground">Historical contests</h2>
@@ -293,9 +259,7 @@ export function ManageContestsPage() {
                   maintenance.
                 </p>
               </div>
-              <div className="rounded-2xl bg-background px-4 py-2 text-sm font-medium text-foreground">
-                {historicalContests.length}
-              </div>
+              <Chip tone="neutral">{historicalContests.length}</Chip>
             </div>
 
             <ListStack className="mt-5">
@@ -338,7 +302,7 @@ export function ManageContestsPage() {
                 </ListEmptyRow>
               )}
             </ListStack>
-          </section>
+          </Tile>
         </>
       )}
     </section>
