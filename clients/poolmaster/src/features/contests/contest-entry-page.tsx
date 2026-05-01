@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   getContest,
   getDraftState,
@@ -18,6 +18,19 @@ import {
 } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
+import {
+  Alert,
+  DefinitionList,
+  ErrorState,
+  FormField,
+  Input,
+  LinkButton,
+  LoadingState,
+  MetricGrid,
+  MetricTile,
+  StatusBadge,
+  Tile,
+} from '@/features/shared/ui';
 import {
   EditableSelectionGroup,
   LockedSelectionGroup,
@@ -511,11 +524,7 @@ export function ContestEntryPage() {
   });
 
   if (contestQuery.isLoading || draftStateQuery.isLoading || contestEntriesQuery.isLoading) {
-    return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <p className="text-sm text-muted-foreground">Loading contest entry...</p>
-      </section>
-    );
+    return <LoadingState body="Loading contest entry..." />;
   }
 
   if (
@@ -526,12 +535,10 @@ export function ContestEntryPage() {
     || contestEntriesQuery.isError
   ) {
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <h2 className="text-2xl font-semibold">We couldn&apos;t load this contest entry.</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Try refreshing or return to the contest board.
-        </p>
-      </section>
+      <ErrorState
+        body="Try refreshing or return to the contest board."
+        title="We couldn't load this contest entry."
+      />
     );
   }
 
@@ -580,28 +587,26 @@ export function ContestEntryPage() {
 
   if (contest.selectionType !== 'TIERED') {
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <h2 className="text-2xl font-semibold">This entry flow is not ready yet.</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The first-pass entry builder currently supports tiered contest selections only.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Link className="rounded-2xl border border-border px-4 py-3 text-sm font-medium" to={backToContestPath}>
+      <ErrorState
+        action={(
+          <LinkButton to={backToContestPath} variant="secondary">
             Back to contest
-          </Link>
-        </div>
-      </section>
+          </LinkButton>
+        )}
+        body="The first-pass entry builder currently supports tiered contest selections only."
+        title="This entry flow is not ready yet."
+      />
     );
   }
 
   return (
     <section className="space-y-6">
-      <div className="rounded-[2rem] border border-border bg-card p-8">
+      <Tile padding="lg">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
-            <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+            <StatusBadge tone={isEditable ? 'active' : 'locked'}>
               {getContestPhaseLabel(contest)}
-            </span>
+            </StatusBadge>
             <div>
               <h2 className="text-3xl font-semibold tracking-tight" data-testid="contest-entry-heading">
                 {selectedEntry?.name ?? entrySummary?.name ?? 'Contest entry'}
@@ -613,153 +618,129 @@ export function ContestEntryPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+            <LinkButton
               data-testid="contest-entry-back-to-contest"
               state={{ leagueCode: backLeagueCode }}
               to={backToContestPath}
+              variant="secondary"
             >
               Back to contest
-            </Link>
-            <Link
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+            </LinkButton>
+            <LinkButton
               data-testid="contest-entry-back-to-league"
               to={backToLeaguePath}
+              variant="secondary"
             >
               Back to league
-            </Link>
+            </LinkButton>
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 md:grid-cols-4">
-          <div className="rounded-[1.5rem] bg-background px-4 py-4">
-            <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Tier progress</div>
-            <div className="mt-2 text-2xl font-semibold text-foreground">
-              {completionStats.completedTiers}/{selectionGroups.length || 0}
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">Tiers complete</div>
-          </div>
-          <div className="rounded-[1.5rem] bg-background px-4 py-4">
-            <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Picks saved</div>
-            <div className="mt-2 text-2xl font-semibold text-foreground">
-              {completionStats.totalSelections}/{completionStats.requiredSelections}
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">Lineup slots filled</div>
-          </div>
-          <div className="rounded-[1.5rem] bg-background px-4 py-4">
-            <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Tiebreaker</div>
-            <div className="mt-2 text-2xl font-semibold text-foreground" data-testid="contest-entry-tiebreaker-status">
-              {hasSavedTiebreaker ? 'Saved' : isEditable ? 'Needed' : 'Closed'}
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground" data-testid="contest-entry-tiebreaker-summary">
-              {hasSavedTiebreaker
-                ? `Relative to par ${formatRelativeToPar(draftState.tiebreakerValue) ?? draftState.tiebreakerValue}`
-                : isEditable
-                  ? 'Needed after lineup is complete'
-                  : 'No tiebreaker was saved'}
-            </div>
-          </div>
-          <div className="rounded-[1.5rem] bg-background px-4 py-4">
-            <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Lock time</div>
-            <div className="mt-2 text-lg font-semibold text-foreground">
-              {formatDateTimeDisplay(contest.lockAt)}
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              {isEditable
+        <MetricGrid className="mt-6 md:grid-cols-4">
+          <MetricTile
+            helperText="Tiers complete"
+            label="Tier progress"
+            value={`${completionStats.completedTiers}/${selectionGroups.length || 0}`}
+          />
+          <MetricTile
+            helperText="Lineup slots filled"
+            label="Picks saved"
+            value={`${completionStats.totalSelections}/${completionStats.requiredSelections}`}
+          />
+          <MetricTile
+            helperText={(
+              <span data-testid="contest-entry-tiebreaker-summary">
+                {hasSavedTiebreaker
+                  ? `Relative to par ${formatRelativeToPar(draftState.tiebreakerValue) ?? draftState.tiebreakerValue}`
+                  : isEditable
+                    ? 'Needed after lineup is complete'
+                    : 'No tiebreaker was saved'}
+              </span>
+            )}
+            label="Tiebreaker"
+            value={(
+              <span data-testid="contest-entry-tiebreaker-status">
+                {hasSavedTiebreaker ? 'Saved' : isEditable ? 'Needed' : 'Closed'}
+              </span>
+            )}
+          />
+          <MetricTile
+            helperText={
+              isEditable
                 ? nextIncompleteGroupId
                   ? `Next focus: ${selectionGroups.find((group) => group.groupId === nextIncompleteGroupId)?.groupName ?? 'Open tier'}`
                   : 'Lineup is fully selected'
-                : 'Entry editing is closed'}
-            </div>
-          </div>
-        </div>
-      </div>
+                : 'Entry editing is closed'
+            }
+            label="Lock time"
+            value={formatDateTimeDisplay(contest.lockAt)}
+          />
+        </MetricGrid>
+      </Tile>
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-6">
-          <div className="rounded-[2rem] border border-border bg-card p-6">
+          <Tile>
             <h3 className="text-xl font-semibold">
               {isEditable ? 'Entry details' : 'Entry summary'}
             </h3>
 
-            <dl className="mt-5 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-              <div className="rounded-2xl bg-background px-4 py-4">
-                <dt>Entry status</dt>
-                <dd className="mt-1 font-semibold text-foreground">
-                  {entrySummary?.status ?? 'ACTIVE'}
-                </dd>
-              </div>
-              <div className="rounded-2xl bg-background px-4 py-4">
-                <dt>Contest phase</dt>
-                <dd className="mt-1 font-semibold text-foreground">{getContestPhaseLabel(contest)}</dd>
-              </div>
-              <div className="rounded-2xl bg-background px-4 py-4">
-                <dt>Score</dt>
-                <dd className="mt-1 font-semibold text-foreground">{entrySummary?.totalScore ?? 0} pts</dd>
-              </div>
-              <div className="rounded-2xl bg-background px-4 py-4">
-                <dt>Standing</dt>
-                <dd className="mt-1 font-semibold text-foreground">
-                  {entrySummary?.standingsPosition ? `#${entrySummary.standingsPosition}` : 'Rank pending'}
-                </dd>
-              </div>
-              <div className="rounded-2xl bg-background px-4 py-4">
-                <dt>Created</dt>
-                <dd className="mt-1 font-semibold text-foreground">
-                  {formatDateTimeDisplay(entrySummary?.createdAt)}
-                </dd>
-              </div>
-              <div className="rounded-2xl bg-background px-4 py-4">
-                <dt>Last updated</dt>
-                <dd className="mt-1 font-semibold text-foreground">
-                  {formatDateTimeDisplay(entrySummary?.updatedAt)}
-                </dd>
-              </div>
-            </dl>
+            <DefinitionList
+              className="mt-5"
+              items={[
+                { label: 'Entry status', value: entrySummary?.status ?? 'ACTIVE' },
+                { label: 'Contest phase', value: getContestPhaseLabel(contest) },
+                { label: 'Score', value: `${entrySummary?.totalScore ?? 0} pts` },
+                {
+                  label: 'Standing',
+                  value: entrySummary?.standingsPosition
+                    ? `#${entrySummary.standingsPosition}`
+                    : 'Rank pending',
+                },
+                { label: 'Created', value: formatDateTimeDisplay(entrySummary?.createdAt) },
+                { label: 'Last updated', value: formatDateTimeDisplay(entrySummary?.updatedAt) },
+              ]}
+            />
 
             {isMyEntry ? (
               isEditable ? (
-                <div className="mt-5 space-y-4 rounded-[1.5rem] border border-border bg-background p-4">
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium text-foreground">Entry name</span>
-                    <input
-                      className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
+                <Tile className="mt-5 space-y-4" padding="sm" radius="lg" variant="subtle">
+                  <FormField label="Entry name">
+                    <Input
                       data-testid="contest-entry-name-input"
                       disabled={saveEntryDetailsMutation.isPending}
                       maxLength={100}
                       onChange={(event) => setEntryNameDraft(event.target.value)}
                       value={entryNameDraft}
                     />
-                  </label>
+                  </FormField>
                   {saveEntryDetailsMutation.isError ? (
-                    <p className="text-sm text-destructive">
+                    <Alert tone="danger">
                       {extractErrorMessage(saveEntryDetailsMutation.error)}
-                    </p>
+                    </Alert>
                   ) : null}
-                </div>
+                </Tile>
               ) : (
-                <div className="mt-5 rounded-[1.5rem] border border-border bg-background p-4">
-                  <div className="text-sm font-medium text-foreground">Saved tiebreaker</div>
+                <Alert className="mt-5" title="Saved tiebreaker">
                   <div
-                    className="mt-2 text-sm text-muted-foreground"
                     data-testid="contest-entry-readonly-tiebreaker"
                   >
                     {draftState.tiebreakerValue === null || draftState.tiebreakerValue === undefined
                       ? 'No tiebreaker prediction was saved.'
                       : `Winning score relative to par: ${formatRelativeToPar(draftState.tiebreakerValue) ?? draftState.tiebreakerValue}`}
                   </div>
-                </div>
+                </Alert>
               )
             ) : (
-              <div className="mt-5 rounded-[1.5rem] border border-border bg-background p-4 text-sm text-muted-foreground">
+              <Alert className="mt-5">
                 This entry is not part of your current team context.
-              </div>
+              </Alert>
             )}
-          </div>
+          </Tile>
 
         </div>
 
-        <div className="rounded-[2rem] border border-border bg-card p-6">
+        <Tile>
           <h3 className="text-xl font-semibold" data-testid="contest-entry-builder-heading">
             {isEditable ? 'Build your lineup' : 'Saved lineup detail'}
           </h3>
@@ -811,9 +792,9 @@ export function ContestEntryPage() {
             })}
 
             {submitSelectionMutation.isError ? (
-              <p className="text-sm text-destructive">
+              <Alert tone="danger">
                 {extractErrorMessage(submitSelectionMutation.error)}
-              </p>
+              </Alert>
             ) : null}
 
             {isEditable && isMyEntry && lineupComplete ? (
@@ -828,7 +809,7 @@ export function ContestEntryPage() {
               />
             ) : null}
           </div>
-        </div>
+        </Tile>
       </div>
     </section>
   );

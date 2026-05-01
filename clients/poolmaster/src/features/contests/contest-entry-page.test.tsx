@@ -382,7 +382,7 @@ describe('ContestEntryPage', () => {
 
     expect(await screen.findByText('Build your lineup')).toBeInTheDocument();
     expect(screen.queryByText('Selection progress')).not.toBeInTheDocument();
-    expect(screen.getByTestId('contest-entry-group-tier-1')).toHaveClass('border-amber-300');
+    expect(screen.getByTestId('contest-entry-group-tier-1')).toHaveClass('bg-muted/30');
     expect(screen.getByTestId('contest-entry-back-to-contest')).toHaveAttribute(
       'href',
       '/league/BIGDAWGS/contests/contest-1',

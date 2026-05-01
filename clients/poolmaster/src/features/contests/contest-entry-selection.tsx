@@ -1,5 +1,6 @@
 import type { GetDraftStateResponses } from "@/lib/api";
 import {
+  Alert,
   Button,
   Chip,
   FormField,
@@ -89,17 +90,17 @@ export function SelectionParticipantCard({
   }
 
   return (
-    <button
+    <Button
       className={cn(
-        "flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-70",
+        "h-auto w-full items-start justify-start gap-3 px-4 py-3 text-left whitespace-normal",
         isSelected
-          ? "border-primary bg-primary/5"
-          : "border-border bg-card hover:border-foreground/30",
+          ? "border-primary bg-primary/5 hover:bg-primary/5"
+          : "hover:border-foreground/30",
       )}
       data-testid={`contest-entry-participant-${participant.sportEventParticipantId}`}
       disabled={isDisabled}
       onClick={() => onSelect(participant)}
-      type="button"
+      variant="secondary"
     >
       <input
         aria-label={actionLabel}
@@ -131,7 +132,7 @@ export function SelectionParticipantCard({
           ))}
         </div>
       </div>
-    </button>
+    </Button>
   );
 }
 
@@ -175,20 +176,18 @@ export function EditableSelectionGroup({
 
   return (
     <Tile
-      className={cn(
-        !isComplete ? "border-amber-300 bg-amber-50/40" : null,
-      )}
+      className={cn(!isComplete ? "bg-muted/30" : null)}
       data-testid={`contest-entry-group-${group.groupId}`}
       padding="sm"
       radius="lg"
       variant="subtle"
     >
-      <button
-        className="flex w-full flex-wrap items-start justify-between gap-3 text-left"
+      <Button
+        className="h-auto w-full flex-wrap items-start justify-between gap-3 p-0 text-left whitespace-normal hover:bg-transparent"
         data-testid={`contest-entry-group-toggle-${group.groupId}`}
         onClick={onToggle}
         ref={setToggleRef}
-        type="button"
+        variant="ghost"
       >
         <div>
           <h4 className="text-lg font-semibold text-foreground">
@@ -211,7 +210,7 @@ export function EditableSelectionGroup({
             {isExpanded ? "Hide tier" : isComplete ? "Review tier" : "Open tier"}
           </span>
         </div>
-      </button>
+      </Button>
 
       {isExpanded ? (
         <ListStack className="mt-4">
@@ -257,7 +256,7 @@ export function LockedSelectionGroup({
         <StatusBadge tone="locked">Locked</StatusBadge>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
+      <Tile className="mt-4 overflow-x-auto" padding="none" radius="lg">
         <div className="grid grid-cols-[minmax(0,1.6fr)_100px_110px_90px] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
           <span>Golfer</span>
           <span className="text-right">Contest rank</span>
@@ -296,12 +295,12 @@ export function LockedSelectionGroup({
               </div>
             ))
           ) : (
-            <div className="px-4 py-4 text-sm text-muted-foreground">
+            <Alert className="m-4">
               No golfer was saved from this tier.
-            </div>
+            </Alert>
           )}
         </div>
-      </div>
+      </Tile>
     </Tile>
   );
 }
