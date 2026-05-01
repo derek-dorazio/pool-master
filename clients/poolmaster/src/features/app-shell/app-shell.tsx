@@ -1,5 +1,5 @@
-import { ChevronDown, Inbox } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Inbox } from "lucide-react";
+import { useEffect, useMemo } from "react";
 import {
   Outlet,
   useLocation,
@@ -11,7 +11,11 @@ import { useLogger } from "@/lib/logger";
 import { AccountMenu } from "@/features/account/account-menu";
 import { buildUserPath } from "@/features/account/user-routing";
 import { formatUserName } from "@/features/account/user-name";
-import { ActionList, ActionTile, Button, Tile } from "@/features/shared/ui";
+import {
+  AppIconActionButton,
+  AppNavigationMenu,
+  type AppNavigationItem,
+} from "@/features/shared/ui";
 import {
   CreateLeagueModal,
   buildCreateLeagueDestination,
@@ -33,7 +37,6 @@ export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [openMenu, setOpenMenu] = useState<"my-team" | "league" | null>(null);
   const auth = useAuth();
   const logger = useLogger().child({
     feature: "app-shell",
@@ -65,10 +68,89 @@ export function AppShell() {
     canManageActiveLeague && activeLeague?.isActive !== false;
   const isCreateLeagueOpen = searchParams.get("createLeague") === "1";
   const leagueMenuDisabled = !activeLeagueCode;
+  const currentRoute = `${location.pathname}${location.search}`;
+  const appMenuClassName =
+    "border-inverse-border bg-on-inverse-subtle text-on-inverse hover:border-primary/50 hover:bg-on-inverse-hover disabled:text-on-inverse-muted";
 
-  function closeMenus() {
-    setOpenMenu(null);
-  }
+  const myTeamMenuItems = useMemo<AppNavigationItem[]>(() => {
+    if (!activeLeagueCode) {
+      return [];
+    }
+
+    const teamPath = buildLeagueTeamPath(activeLeagueCode);
+    const myContestsPath = buildLeagueMyContestsPath(activeLeagueCode);
+    const historyPath = buildLeagueHistoryPath(activeLeagueCode);
+
+    return [
+      {
+        isActive: location.pathname === teamPath,
+        label: "Team Details",
+        testId: "app-menu-my-team-details",
+        to: teamPath,
+      },
+      {
+        isActive: currentRoute === myContestsPath,
+        label: "My Contests",
+        testId: "app-menu-my-contests",
+        to: myContestsPath,
+      },
+      {
+        isActive: location.pathname === historyPath,
+        label: "My History",
+        testId: "app-menu-my-history",
+        to: historyPath,
+      },
+    ];
+  }, [activeLeagueCode, currentRoute, location.pathname]);
+
+  const leagueMenuItems = useMemo<AppNavigationItem[]>(() => {
+    if (!activeLeagueCode) {
+      return [];
+    }
+
+    const leaguePath = buildLeaguePath(activeLeagueCode);
+    const teamsPath = buildLeagueTeamsPath(activeLeagueCode);
+    const contestsPath = buildLeagueContestsPath(activeLeagueCode);
+    const contestHistoryPath = buildLeagueContestHistoryPath(activeLeagueCode);
+
+    return [
+      {
+        isActive: location.pathname === leaguePath,
+        label: "League Details",
+        testId: "app-menu-league-details",
+        to: leaguePath,
+      },
+      {
+        isActive: location.pathname === teamsPath,
+        label: "Teams and Owners",
+        testId: "app-menu-league-teams",
+        to: teamsPath,
+      },
+      {
+        isActive: currentRoute === contestsPath,
+        label: "Active Contests",
+        testId: "app-menu-active-contests",
+        to: contestsPath,
+      },
+      {
+        isActive: location.pathname === contestHistoryPath,
+        label: "Contest History",
+        testId: "app-menu-contest-history",
+        to: contestHistoryPath,
+      },
+      {
+        hidden: !canCreateActiveLeagueContest,
+        label: "Create Contest",
+        testId: "app-menu-create-contest",
+        to: buildLeagueContestCreatePath(activeLeagueCode),
+      },
+    ];
+  }, [
+    activeLeagueCode,
+    canCreateActiveLeagueContest,
+    currentRoute,
+    location.pathname,
+  ]);
 
   function openCreateLeague() {
     logger.info(
@@ -169,7 +251,6 @@ export function AppShell() {
                   leagues={leaguesQuery.data ?? []}
                   onCreateLeague={openCreateLeague}
                   onNavigate={(path) => {
-                    closeMenus();
                     logger.info(
                       {
                         action: "appShell.league.navigate",
@@ -184,115 +265,22 @@ export function AppShell() {
                   }}
                 />
                 <nav className="flex items-center gap-2" aria-label="Primary">
-                  <div className="relative">
-                    <Button
-                      aria-expanded={openMenu === "my-team"}
-                      className="border-inverse-border bg-on-inverse-subtle text-on-inverse hover:border-primary/50 hover:bg-on-inverse-hover disabled:text-on-inverse-muted"
-                      data-testid="app-menu-my-team-trigger"
-                      disabled={leagueMenuDisabled}
-                      onClick={() =>
-                        setOpenMenu((current) =>
-                          current === "my-team" ? null : "my-team",
-                        )
-                      }
-                      type="button"
-                      variant="secondary"
-                    >
-                      My Team
-                      <ChevronDown aria-hidden size={16} />
-                    </Button>
-                    {openMenu === "my-team" && activeLeagueCode ? (
-                      <Tile
-                        className="absolute left-0 top-full z-40 mt-2 min-w-56 shadow-xl"
-                        padding="sm"
-                        radius="lg"
-                      >
-                        <ActionList>
-                          <ActionTile
-                            data-testid="app-menu-my-team-details"
-                            label="Team Details"
-                            onClick={closeMenus}
-                            to={buildLeagueTeamPath(activeLeagueCode)}
-                          />
-                          <ActionTile
-                            data-testid="app-menu-my-contests"
-                            label="My Contests"
-                            onClick={closeMenus}
-                            to={buildLeagueMyContestsPath(activeLeagueCode)}
-                          />
-                          <ActionTile
-                            data-testid="app-menu-my-history"
-                            label="My History"
-                            onClick={closeMenus}
-                            to={buildLeagueHistoryPath(activeLeagueCode)}
-                          />
-                        </ActionList>
-                      </Tile>
-                    ) : null}
-                  </div>
+                  <AppNavigationMenu
+                    className={appMenuClassName}
+                    disabled={leagueMenuDisabled}
+                    items={myTeamMenuItems}
+                    label="My Team"
+                    triggerTestId="app-menu-my-team-trigger"
+                  />
 
-                  <div className="relative">
-                    <Button
-                      aria-expanded={openMenu === "league"}
-                      className="border-inverse-border bg-on-inverse-subtle text-on-inverse hover:border-primary/50 hover:bg-on-inverse-hover disabled:text-on-inverse-muted"
-                      data-testid="app-menu-league-trigger"
-                      disabled={leagueMenuDisabled}
-                      onClick={() =>
-                        setOpenMenu((current) =>
-                          current === "league" ? null : "league",
-                        )
-                      }
-                      type="button"
-                      variant="secondary"
-                    >
-                      League
-                      <ChevronDown aria-hidden size={16} />
-                    </Button>
-                    {openMenu === "league" && activeLeagueCode ? (
-                      <Tile
-                        className="absolute left-0 top-full z-40 mt-2 min-w-60 shadow-xl"
-                        padding="sm"
-                        radius="lg"
-                      >
-                        <ActionList>
-                          <ActionTile
-                            data-testid="app-menu-league-details"
-                            label="League Details"
-                            onClick={closeMenus}
-                            to={buildLeaguePath(activeLeagueCode)}
-                          />
-                          <ActionTile
-                            data-testid="app-menu-league-teams"
-                            label="Teams and Owners"
-                            onClick={closeMenus}
-                            to={buildLeagueTeamsPath(activeLeagueCode)}
-                          />
-                          <ActionTile
-                            data-testid="app-menu-active-contests"
-                            label="Active Contests"
-                            onClick={closeMenus}
-                            to={buildLeagueContestsPath(activeLeagueCode)}
-                          />
-                          <ActionTile
-                            data-testid="app-menu-contest-history"
-                            label="Contest History"
-                            onClick={closeMenus}
-                            to={buildLeagueContestHistoryPath(activeLeagueCode)}
-                          />
-                          {canCreateActiveLeagueContest ? (
-                            <ActionTile
-                              data-testid="app-menu-create-contest"
-                              label="Create Contest"
-                              onClick={closeMenus}
-                              to={buildLeagueContestCreatePath(
-                                activeLeagueCode,
-                              )}
-                            />
-                          ) : null}
-                        </ActionList>
-                      </Tile>
-                    ) : null}
-                  </div>
+                  <AppNavigationMenu
+                    className={appMenuClassName}
+                    contentClassName="min-w-60"
+                    disabled={leagueMenuDisabled}
+                    items={leagueMenuItems}
+                    label="League"
+                    triggerTestId="app-menu-league-trigger"
+                  />
                 </nav>
               </>
             ) : null}
@@ -301,16 +289,14 @@ export function AppShell() {
           <div className="flex flex-wrap items-center gap-3">
             {auth.isAuthenticated ? (
               <>
-                <button
-                  aria-label="Notifications"
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-inverse-border bg-on-inverse-subtle text-on-inverse-muted"
+                <AppIconActionButton
+                  className="border-inverse-border bg-on-inverse-subtle text-on-inverse-muted"
                   data-testid="app-shell-notifications"
                   disabled
+                  icon={<Inbox aria-hidden size={18} />}
+                  label="Notifications"
                   title="Notifications are not available yet."
-                  type="button"
-                >
-                  <Inbox aria-hidden size={18} />
-                </button>
+                />
                 <AccountMenu
                   isRootAdmin={auth.isRootAdmin}
                   profilePath={

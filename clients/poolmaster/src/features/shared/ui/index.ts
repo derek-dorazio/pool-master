@@ -1,5 +1,7 @@
 export { ActionList, ActionTile } from "./action-list";
 export { Alert, Callout } from "./alert";
+export { AppIconActionButton, AppNavigationMenu } from "./app-navigation";
+export type { AppNavigationItem } from "./app-navigation";
 export { Button, LinkButton } from "./button";
 export type { ButtonProps, LinkButtonProps } from "./button";
 export { BreadcrumbHeader, PageHeader } from "./page-header";

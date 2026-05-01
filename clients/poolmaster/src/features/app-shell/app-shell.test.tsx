@@ -185,7 +185,7 @@ describe('AppShell', () => {
     expect(screen.queryByRole('button', { name: 'Help' })).not.toBeInTheDocument();
     expect(screen.getByTestId('app-shell-notifications')).toHaveAttribute('aria-label', 'Notifications');
 
-    fireEvent.click(screen.getByTestId('app-menu-my-team-trigger'));
+    fireEvent.pointerDown(screen.getByTestId('app-menu-my-team-trigger'));
     expect(screen.getByTestId('app-menu-my-team-details')).toHaveAttribute(
       'href',
       '/league/LEAGUE1/team',
@@ -199,7 +199,7 @@ describe('AppShell', () => {
       '/league/LEAGUE1/history',
     );
 
-    fireEvent.click(screen.getByTestId('app-menu-league-trigger'));
+    fireEvent.pointerDown(screen.getByTestId('app-menu-league-trigger'));
     expect(screen.getByTestId('app-menu-league-details')).toHaveAttribute(
       'href',
       '/league/LEAGUE1',
@@ -216,9 +216,11 @@ describe('AppShell', () => {
       'href',
       '/league/LEAGUE1/contests/history',
     );
-    expect(screen.getByTestId('app-menu-create-contest')).toHaveAttribute(
-      'href',
-      '/league/LEAGUE1/contests/new',
+    await waitFor(() =>
+      expect(screen.getByTestId('app-menu-create-contest')).toHaveAttribute(
+        'href',
+        '/league/LEAGUE1/contests/new',
+      ),
     );
     await waitFor(() =>
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -282,7 +284,7 @@ describe('AppShell', () => {
 
     await screen.findByTestId('mock-outlet');
     expect(await screen.findByTestId('mock-account-menu-is-root-admin')).toHaveTextContent('false');
-    fireEvent.click(screen.getByTestId('app-menu-league-trigger'));
+    fireEvent.pointerDown(screen.getByTestId('app-menu-league-trigger'));
     expect(screen.queryByTestId('app-menu-create-contest')).not.toBeInTheDocument();
   });
 
