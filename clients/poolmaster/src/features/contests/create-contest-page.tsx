@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import type {
   GetManagedContestResponses,
   GetLeagueByCodeResponses,
@@ -26,6 +26,21 @@ import {
   buildLeaguePath,
   buildLeagueTeamPath,
 } from '@/features/leagues/league-routing';
+import {
+  Alert,
+  Button,
+  DefinitionList,
+  ErrorState,
+  FormField,
+  Input,
+  LinkButton,
+  ListCard,
+  ListStack,
+  LoadingState,
+  Select,
+  StatusBadge,
+  Tile,
+} from '@/features/shared/ui';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type SportEventSummary = ListEventsResponses[200]['events'][number];
@@ -1057,12 +1072,10 @@ export function CreateContestPage() {
     || isManagedContestHydrating
   ) {
     return (
-      <section
-        className="rounded-[2rem] border border-border bg-card p-8"
-        data-testid="create-contest-page-loading"
-      >
-        <p className="text-sm text-muted-foreground">Loading contest setup...</p>
-      </section>
+      <LoadingState
+        body="Loading contest setup..."
+        testId="create-contest-page-loading"
+      />
     );
   }
 
@@ -1074,36 +1087,26 @@ export function CreateContestPage() {
   ) {
     const copy = getLeagueLoadErrorCopy(leagueQuery.error);
     return (
-      <section
-        className="rounded-[2rem] border border-border bg-card p-8"
-        data-testid="create-contest-page-error"
-      >
-        <h2 className="text-2xl font-semibold">{copy.title}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {copy.body}
-        </p>
-      </section>
+      <ErrorState
+        body={copy.body}
+        testId="create-contest-page-error"
+        title={copy.title}
+      />
     );
   }
 
   if (!isCommissioner) {
     return (
-      <section
-        className="rounded-[2rem] border border-border bg-card p-8"
-        data-testid="create-contest-page-unauthorized"
-      >
-        <h2 className="text-2xl font-semibold">Commissioner access required</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Contest configuration stays limited to commissioners so the league uses one consistent
-          contest setup flow.
-        </p>
-        <Link
-          className="mt-5 inline-flex rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
-          to={buildLeaguePath(leagueQuery.data.leagueCode)}
-        >
-          Back to league home
-        </Link>
-      </section>
+      <ErrorState
+        action={(
+          <LinkButton to={buildLeaguePath(leagueQuery.data.leagueCode)} variant="secondary">
+            Back to league home
+          </LinkButton>
+        )}
+        body="Contest configuration stays limited to commissioners so the league uses one consistent contest setup flow."
+        testId="create-contest-page-unauthorized"
+        title="Commissioner access required"
+      />
     );
   }
 
@@ -1112,12 +1115,12 @@ export function CreateContestPage() {
       className="space-y-6"
       data-testid={isEditMode ? 'manage-contest-page' : 'create-contest-page'}
     >
-      <div className="rounded-[2rem] border border-border bg-card p-8">
+      <Tile padding="lg">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
-            <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+            <StatusBadge tone="info">
               Commissioner contest setup
-            </span>
+            </StatusBadge>
             <div>
               <h2 className="text-3xl font-semibold tracking-tight">
                 {isEditMode ? 'Manage golf contest' : 'Create a golf contest'}
@@ -1130,43 +1133,33 @@ export function CreateContestPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+            <LinkButton
               to={buildLeaguePath(leagueQuery.data.leagueCode)}
+              variant="secondary"
             >
               Back to league
-            </Link>
-            <Link
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+            </LinkButton>
+            <LinkButton
               to={buildLeagueTeamPath(leagueQuery.data.leagueCode)}
+              variant="secondary"
             >
               My Team
-            </Link>
+            </LinkButton>
           </div>
         </div>
-      </div>
+      </Tile>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[2rem] border border-border bg-card p-6">
+        <Tile>
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                mode === 'GOLF_TIERED'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'border border-border text-foreground hover:bg-muted/40'
-              }`}
+            <Button
               data-testid="contest-mode-tiered"
               onClick={() => selectDefaultTemplateForMode('GOLF_TIERED')}
-              type="button"
+              variant={mode === 'GOLF_TIERED' ? 'primary' : 'secondary'}
             >
               Tiered contest
-            </button>
-            <button
-              className={`rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                mode === 'GOLF_CATEGORY_PICKS'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'border border-border text-muted-foreground'
-              }`}
+            </Button>
+            <Button
               data-testid="contest-mode-category"
               disabled={!isEditMode}
               onClick={() => selectDefaultTemplateForMode('GOLF_CATEGORY_PICKS')}
@@ -1175,34 +1168,30 @@ export function CreateContestPage() {
                   ? undefined
                   : 'Category picks are available when editing a category-picks contest.'
               }
-              type="button"
+              variant={mode === 'GOLF_CATEGORY_PICKS' ? 'primary' : 'secondary'}
             >
               Category picks
-            </button>
-            <button
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+            </Button>
+            <Button
               data-testid="contest-toggle-advanced"
               onClick={() => setShowAdvanced((current) => !current)}
-              type="button"
+              variant="secondary"
             >
               {showAdvanced ? 'Hide advanced' : 'Show advanced'}
-            </button>
+            </Button>
           </div>
 
           <div className="mt-6 space-y-5">
             {isEditMode && !isDraftEditable ? (
-              <div
-                className="rounded-2xl border border-border bg-background px-4 py-4 text-sm text-muted-foreground"
-                data-testid="contest-manage-readonly-note"
-              >
+              <Alert data-testid="contest-manage-readonly-note">
                 Contest structure is no longer editable. Lock, in-progress, and completed states
                 follow the real event timing and feed updates automatically.
-              </div>
+              </Alert>
             ) : null}
 
             <fieldset className="space-y-5" disabled={!isDraftEditable}>
             {!isEditMode ? (
-              <div className="space-y-3 rounded-2xl border border-border bg-background p-4">
+              <Tile className="space-y-3" padding="sm" radius="lg" variant="subtle">
                 <div>
                   <div className="text-sm font-medium">Contest template</div>
                   <p className="mt-1 text-sm text-muted-foreground">
@@ -1211,60 +1200,40 @@ export function CreateContestPage() {
                     saved at creation time.
                   </p>
                 </div>
-                <div className="grid gap-3">
+                <ListStack>
                   {visibleTemplates.map((template) => (
-                    <button
-                      className={`rounded-2xl border px-4 py-4 text-left transition ${
-                        selectedTemplateId === template.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border bg-card hover:bg-muted/40'
-                      }`}
+                    <ListCard
+                      className={selectedTemplateId === template.id ? 'border-primary bg-primary/5' : undefined}
                       data-testid={`contest-template-${template.templateKey}`}
+                      description={template.description}
                       key={template.id}
                       onClick={() => selectTemplate(template.id)}
-                      type="button"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm font-medium text-foreground">
-                          {template.name}
-                        </span>
-                        {template.isDefault ? (
-                          <span className="rounded-full border border-border px-2 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                            Default
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {template.description}
-                      </p>
-                    </button>
+                      title={template.name}
+                      trailing={template.isDefault ? <StatusBadge tone="info">Default</StatusBadge> : null}
+                    />
                   ))}
-                </div>
+                </ListStack>
                 {!isEditMode ? (
-                  <div className="rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm text-muted-foreground">
+                  <Alert>
                     New contests currently use tiered entry. Existing category-picks contests can
                     still be edited here.
-                  </div>
+                  </Alert>
                 ) : null}
-              </div>
+              </Tile>
             ) : null}
 
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Contest name</span>
-              <input
-                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+            <FormField label="Contest name">
+              <Input
                 data-testid="contest-name"
                 onChange={(event) => setContestName(event.target.value)}
                 placeholder="Masters Pick 6"
                 type="text"
                 value={contestName}
               />
-            </label>
+            </FormField>
 
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Golf event</span>
-              <select
-                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+            <FormField label="Golf event">
+              <Select
                 data-testid="contest-sport-event"
                 onChange={(event) => {
                   setSportEventId(event.target.value);
@@ -1282,11 +1251,11 @@ export function CreateContestPage() {
                     {' golfers'}
                   </option>
                 ))}
-              </select>
-            </label>
+              </Select>
+            </FormField>
 
             {selectedEvent ? (
-              <div className="rounded-2xl border border-border bg-background p-4">
+              <Tile padding="sm" radius="lg" variant="subtle">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="text-sm font-medium text-foreground">Selected event readiness</div>
@@ -1294,33 +1263,24 @@ export function CreateContestPage() {
                       {formatReadinessReasons(selectedEvent)}
                     </p>
                   </div>
-                  <span className="rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <StatusBadge tone={selectedEvent.contestEligible ? 'success' : 'warning'}>
                     {formatReadinessLabel(selectedEvent)}
-                  </span>
+                  </StatusBadge>
                 </div>
 
-                <dl className="mt-4 grid gap-3 text-sm text-muted-foreground md:grid-cols-2">
-                  <div className="rounded-2xl border border-border/70 bg-card px-4 py-3">
-                    <dt className="font-medium text-foreground">Participants loaded</dt>
-                    <dd className="mt-1">{selectedEvent.participantCount ?? 0}</dd>
-                  </div>
-                  <div className="rounded-2xl border border-border/70 bg-card px-4 py-3">
-                    <dt className="font-medium text-foreground">Release at</dt>
-                    <dd className="mt-1">{formatDateTimeDisplay(selectedEvent.releaseAt)}</dd>
-                  </div>
-                  <div className="rounded-2xl border border-border/70 bg-card px-4 py-3">
-                    <dt className="font-medium text-foreground">Field locks at</dt>
-                    <dd className="mt-1">{formatDateTimeDisplay(selectedEvent.fieldLocksAt)}</dd>
-                  </div>
-                  <div className="rounded-2xl border border-border/70 bg-card px-4 py-3">
-                    <dt className="font-medium text-foreground">Event status</dt>
-                    <dd className="mt-1">{selectedEvent.status}</dd>
-                  </div>
-                </dl>
-              </div>
+                <DefinitionList
+                  className="mt-4"
+                  items={[
+                    { label: 'Participants loaded', value: selectedEvent.participantCount ?? 0 },
+                    { label: 'Release at', value: formatDateTimeDisplay(selectedEvent.releaseAt) },
+                    { label: 'Field locks at', value: formatDateTimeDisplay(selectedEvent.fieldLocksAt) },
+                    { label: 'Event status', value: selectedEvent.status },
+                  ]}
+                />
+              </Tile>
             ) : null}
 
-            <div className="space-y-3 rounded-2xl border border-border bg-background p-4">
+            <Tile className="space-y-3" padding="sm" radius="lg" variant="subtle">
               <div>
                 <div className="text-sm font-medium">Lock time</div>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -1328,10 +1288,8 @@ export function CreateContestPage() {
                   relative to the event start.
                 </p>
               </div>
-              <label className="block space-y-2">
-                <span className="text-sm font-medium">Lock entries</span>
-                <select
-                  className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
+              <FormField label="Lock entries">
+                <Select
                   data-testid="contest-lock-preset"
                   onChange={(event) => setLockPreset(event.target.value as LockPreset)}
                   value={lockPreset}
@@ -1341,41 +1299,36 @@ export function CreateContestPage() {
                       {option.label}
                     </option>
                   ))}
-                </select>
-              </label>
+                </Select>
+              </FormField>
               {lockPreset === 'CUSTOM' ? (
                 <div className="grid gap-4 md:grid-cols-2">
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium">Hours before start</span>
-                    <input
-                      className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  <FormField label="Hours before start">
+                    <Input
                       data-testid="contest-lock-custom-hours"
                       min={0}
                       onChange={(event) => setCustomLockHours(event.target.value)}
                       type="number"
                       value={customLockHours}
                     />
-                  </label>
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium">Minutes before start</span>
-                    <input
-                      className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  </FormField>
+                  <FormField label="Minutes before start">
+                    <Input
                       data-testid="contest-lock-custom-minutes"
                       min={0}
                       onChange={(event) => setCustomLockMinutes(event.target.value)}
                       type="number"
                       value={customLockMinutes}
                     />
-                  </label>
+                  </FormField>
                 </div>
               ) : null}
-              <div className="rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm">
-                <div className="font-medium text-foreground">Resolved lock timestamp</div>
-                <div className="mt-1 text-muted-foreground" data-testid="contest-lock-summary">
+              <Alert title="Resolved lock timestamp">
+                <div data-testid="contest-lock-summary">
                   {derivedLockAt ? formatDateTimeDisplay(derivedLockAt) : 'Select a golf event first'}
                 </div>
-              </div>
-            </div>
+              </Alert>
+            </Tile>
 
             <div className="space-y-3">
               <div className="text-sm font-medium">Entries per team</div>
@@ -1389,8 +1342,7 @@ export function CreateContestPage() {
                 Unlimited
               </label>
               {!unlimitedEntries ? (
-                <input
-                  className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                <Input
                   data-testid="contest-max-entries"
                   min={1}
                   onChange={(event) => setMaxEntriesPerTeam(event.target.value)}
@@ -1403,57 +1355,49 @@ export function CreateContestPage() {
             {mode === 'GOLF_TIERED' ? (
               <>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium">Golfers picked</span>
-                    <input
-                      className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  <FormField label="Golfers picked">
+                    <Input
                       data-testid="contest-tiered-roster-size"
                       min={1}
                       onChange={(event) => setRosterSize(event.target.value)}
                       type="number"
                       value={rosterSize}
                     />
-                  </label>
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium">Count best</span>
-                    <input
-                      className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  </FormField>
+                  <FormField label="Count best">
+                    <Input
                       data-testid="contest-tiered-counted-scores"
                       min={1}
                       onChange={(event) => setCountedScores(event.target.value)}
                       type="number"
                       value={countedScores}
                     />
-                  </label>
+                  </FormField>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium">Tier source</span>
-                    <select
-                      className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  <FormField label="Tier source">
+                    <Select
                       data-testid="contest-tiered-source"
                       onChange={(event) => setTierSource(event.target.value as TierSource)}
                       value={tierSource}
                     >
                       <option value="ODDS">Odds</option>
                       <option value="WORLD_RANK">World rank</option>
-                    </select>
-                  </label>
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium">Default tier size</span>
-                    <input
-                      className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                    </Select>
+                  </FormField>
+                  <FormField label="Default tier size">
+                    <Input
                       data-testid="contest-tiered-default-tier-size"
                       min={1}
                       onChange={(event) => setDefaultTierSize(event.target.value)}
                       type="number"
                       value={defaultTierSize}
                     />
-                  </label>
+                  </FormField>
                 </div>
 
-                <div className="rounded-2xl border border-border bg-background p-4">
+                <Tile padding="sm" radius="lg" variant="subtle">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <h3 className="font-medium">Tier settings</h3>
@@ -1461,14 +1405,14 @@ export function CreateContestPage() {
                         Adjust the participant rank ranges and picks for this contest.
                       </p>
                     </div>
-                    <button
-                      className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/40"
+                    <Button
                       data-testid="contest-tiered-reset-tiers"
                       onClick={resetTiersFromDefaults}
-                      type="button"
+                      size="sm"
+                      variant="secondary"
                     >
                       Reset tiers
-                    </button>
+                    </Button>
                   </div>
                   <div className="mt-4 space-y-3">
                     {tiers.map((tier, index) => (
@@ -1547,20 +1491,18 @@ export function CreateContestPage() {
                       </div>
                     ))}
                   </div>
-                </div>
+                </Tile>
 
                 {showAdvanced ? (
-                  <label className="block space-y-2">
-                    <span className="text-sm font-medium">Missed-cut fallback score</span>
-                    <input
-                      className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  <FormField label="Missed-cut fallback score">
+                    <Input
                       data-testid="contest-tiered-fallback-score"
                       min={0}
                       onChange={(event) => setTieredFallbackScore(event.target.value)}
                       type="number"
                       value={tieredFallbackScore}
                     />
-                  </label>
+                  </FormField>
                 ) : null}
               </>
             ) : (
@@ -1631,18 +1573,17 @@ export function CreateContestPage() {
             </fieldset>
 
             {formError ? (
-              <div
-                className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+              <Alert
                 data-testid="create-contest-error"
+                tone="danger"
               >
                 {formError}
-              </div>
+              </Alert>
             ) : null}
 
             <div className="flex flex-wrap items-center gap-3">
               {isDraftEditable ? (
-                <button
-                  className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                <Button
                   data-testid="create-contest-submit"
                   disabled={
                     saveContestMutation.isPending
@@ -1654,115 +1595,89 @@ export function CreateContestPage() {
                     setFormError(null);
                     void saveContestMutation.mutateAsync().catch(() => undefined);
                   }}
-                  type="button"
                 >
                   {saveContestMutation.isPending
                     ? (isEditMode ? 'Saving...' : 'Creating...')
                     : (isEditMode ? 'Save draft changes' : 'Create contest')}
-                </button>
+                </Button>
               ) : null}
               {isEditMode && isDraftEditable ? (
-                <button
-                  className="rounded-2xl border border-destructive/30 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/5 disabled:cursor-not-allowed disabled:opacity-60"
+                <Button
                   data-testid="contest-delete"
                   disabled={deleteContestMutation.isPending}
                   onClick={() => {
                     setFormError(null);
                     void deleteContestMutation.mutateAsync().catch(() => undefined);
                   }}
-                  type="button"
+                  variant="danger"
                 >
                   {deleteContestMutation.isPending ? 'Deleting...' : 'Delete contest'}
-                </button>
+                </Button>
               ) : null}
-              <Link
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
+              <LinkButton
                 to={buildLeaguePath(leagueQuery.data.leagueCode)}
+                variant="secondary"
               >
                 Cancel
-              </Link>
+              </LinkButton>
             </div>
           </div>
-        </div>
+        </Tile>
 
         <aside className="space-y-6">
-          <div className="rounded-[2rem] border border-border bg-card p-6">
+          <Tile>
             <h3 className="text-xl font-semibold">Current choices</h3>
-            <dl className="mt-4 space-y-3 text-sm text-muted-foreground">
-              <div>
-                <dt className="font-medium text-foreground">League</dt>
-                <dd>{leagueQuery.data.name}</dd>
-              </div>
-              <div>
-                <dt className="font-medium text-foreground">Mode</dt>
-                <dd>{mode === 'GOLF_TIERED' ? 'Golf tiered contest' : 'Golf category picks'}</dd>
-              </div>
-              <div>
-                <dt className="font-medium text-foreground">Event</dt>
-                <dd>{selectedEvent ? selectedEvent.name : 'Choose a golf event'}</dd>
-              </div>
-              <div>
-                <dt className="font-medium text-foreground">Event starts</dt>
-                <dd>{selectedEvent ? formatDateTimeDisplay(selectedEvent.startDate) : 'Choose a golf event'}</dd>
-              </div>
-              <div>
-                <dt className="font-medium text-foreground">Locks</dt>
-                <dd>{derivedLockAt ? formatDateTimeDisplay(derivedLockAt) : 'Choose a golf event'}</dd>
-              </div>
-              <div>
-                <dt className="font-medium text-foreground">Entries per team</dt>
-                <dd>{unlimitedEntries ? 'Unlimited' : maxEntriesPerTeam || '1'}</dd>
-              </div>
-              {mode === 'GOLF_TIERED' ? (
-                <>
-                  <div>
-                    <dt className="font-medium text-foreground">Golfers picked</dt>
-                    <dd>{rosterSize}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-foreground">Count best</dt>
-                    <dd>{countedScores}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-foreground">Tier source</dt>
-                    <dd>{tierSource === 'ODDS' ? 'Odds' : 'World rank'}</dd>
-                  </div>
-                </>
-              ) : (
-                <div>
-                  <dt className="font-medium text-foreground">Enabled categories</dt>
-                  <dd>{selectedCategories.length}</dd>
-                </div>
-              )}
-            </dl>
-          </div>
+            <DefinitionList
+              className="mt-4 sm:grid-cols-1"
+              items={[
+                { label: 'League', value: leagueQuery.data.name },
+                { label: 'Mode', value: mode === 'GOLF_TIERED' ? 'Golf tiered contest' : 'Golf category picks' },
+                { label: 'Event', value: selectedEvent ? selectedEvent.name : 'Choose a golf event' },
+                {
+                  label: 'Event starts',
+                  value: selectedEvent ? formatDateTimeDisplay(selectedEvent.startDate) : 'Choose a golf event',
+                },
+                { label: 'Locks', value: derivedLockAt ? formatDateTimeDisplay(derivedLockAt) : 'Choose a golf event' },
+                { label: 'Entries per team', value: unlimitedEntries ? 'Unlimited' : maxEntriesPerTeam || '1' },
+                ...(mode === 'GOLF_TIERED'
+                  ? [
+                      { label: 'Golfers picked', value: rosterSize },
+                      { label: 'Count best', value: countedScores },
+                      { label: 'Tier source', value: tierSource === 'ODDS' ? 'Odds' : 'World rank' },
+                    ]
+                  : [
+                      { label: 'Enabled categories', value: selectedCategories.length },
+                    ]),
+              ]}
+            />
+          </Tile>
 
-          <div className="rounded-[2rem] border border-border bg-card p-6">
+          <Tile>
             <h3 className="text-xl font-semibold">Lifecycle truth</h3>
             <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
               <li>Creating a contest makes it immediately live for league entries.</li>
               <li>Lock time is configured relative to the event start, then stored as an exact timestamp.</li>
               <li>Locked, in-progress, and completed states should follow event timing and feed updates automatically.</li>
             </ul>
-          </div>
+          </Tile>
 
           {eventsQuery.isError ? (
-            <div className="rounded-[2rem] border border-destructive/30 bg-destructive/5 p-6 text-sm text-destructive">
+            <Alert tone="danger">
               We couldn&apos;t load golf events. Contest creation needs an imported event before a
               commissioner can continue.
-            </div>
+            </Alert>
           ) : !eligibleEvents.length ? (
-            <div
-              className="rounded-[2rem] border border-sky-200 bg-sky-50 p-6 text-sm text-sky-950"
+            <Alert
               data-testid="create-contest-no-events"
+              title="No golf events are currently available for contest setup."
+              tone="warning"
             >
-              <h3 className="text-lg font-semibold">No golf events are currently available for contest setup.</h3>
-              <p className="mt-2 text-sky-900/90">
+              <p>
                 Prime Time Commissioner only shows real imported events once they are released and the field is
                 loaded. Check back when the next tournament reaches contest-ready status.
               </p>
               {unavailableEvents.length ? (
-                <ul className="mt-4 space-y-2 text-sky-900/90">
+                <ul className="mt-4 space-y-2">
                   {unavailableEvents.slice(0, 3).map((event) => (
                     <li key={event.id}>
                       {event.name}
@@ -1774,7 +1689,7 @@ export function CreateContestPage() {
                   ))}
                 </ul>
               ) : null}
-            </div>
+            </Alert>
           ) : null}
         </aside>
       </div>
