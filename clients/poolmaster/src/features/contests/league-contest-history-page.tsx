@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
 import {
   getLeagueByCode,
@@ -9,7 +9,16 @@ import {
 } from '@/lib/api';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import { buildLeagueContestsPath, buildLeaguePath, setRecentLeagueCode } from '@/features/leagues/league-routing';
-import { ListStack } from '@/features/shared/ui';
+import {
+  Chip,
+  EmptyState,
+  ErrorState,
+  LinkButton,
+  ListStack,
+  LoadingState,
+  PageHeader,
+  Tile,
+} from '@/features/shared/ui';
 import { useLogger } from '@/lib/logger';
 import { isHistoricalContest } from './contest-status';
 import { ContestListCard } from './contest-list-card';
@@ -83,24 +92,22 @@ export function LeagueContestHistoryPage() {
   );
 
   if (leagueQuery.isLoading) {
-    return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <p className="text-sm text-muted-foreground">Loading contest history...</p>
-      </section>
-    );
+    return <LoadingState body="Loading contest history..." />;
   }
 
   if (leagueQuery.isError || !leagueQuery.data) {
     const copy = getLeagueLoadErrorCopy(leagueQuery.error);
 
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <h2 className="text-2xl font-semibold">{copy.title}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{copy.body}</p>
-        <Link className="mt-4 inline-flex text-sm font-medium text-primary hover:underline" to="/welcome">
-          Back to welcome
-        </Link>
-      </section>
+      <ErrorState
+        action={(
+          <LinkButton to="/welcome" variant="subtle">
+            Back to welcome
+          </LinkButton>
+        )}
+        body={copy.body}
+        title={copy.title}
+      />
     );
   }
 
@@ -108,46 +115,26 @@ export function LeagueContestHistoryPage() {
 
   return (
     <section className="space-y-6" data-testid="league-contest-history-page">
-      <div className="rounded-[2rem] border border-border bg-card p-8">
-        <Link
-          className="text-sm font-medium text-primary transition hover:opacity-80"
-          to={buildLeagueContestsPath(league.leagueCode)}
-        >
-          Back to Active Contests
-        </Link>
-        <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-              Contest History
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-              Review completed contests, final standings, and revealed picks.
-            </p>
-          </div>
-          <Link
-            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted/40"
-            to={buildLeaguePath(league.leagueCode)}
-          >
+      <PageHeader
+        actions={(
+          <LinkButton to={buildLeaguePath(league.leagueCode)} variant="secondary">
             League Details
-          </Link>
-        </div>
-      </div>
+          </LinkButton>
+        )}
+        breadcrumbs={[
+          { href: buildLeagueContestsPath(league.leagueCode), label: 'Active Contests' },
+          { label: 'Contest History' },
+        ]}
+        description="Review completed contests, final standings, and revealed picks."
+        title="Contest History"
+      />
 
       {contestsQuery.isLoading ? (
-        <section className="rounded-[2rem] border border-border bg-card p-6">
-          <p className="text-sm text-muted-foreground">Loading contest history...</p>
-        </section>
+        <LoadingState body="Loading contest history..." />
       ) : contestsQuery.isError ? (
-        <section className="rounded-[2rem] border border-border bg-card p-6">
-          <p className="text-sm text-muted-foreground">
-            We couldn&apos;t load contest history for this league.
-          </p>
-        </section>
+        <ErrorState body="We couldn't load contest history for this league." />
       ) : (
-        <section
-          className="rounded-[2rem] border border-border bg-card p-6"
-          data-testid="league-contests-history"
-        >
+        <Tile data-testid="league-contests-history">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold text-foreground">Completed contests</h2>
@@ -155,9 +142,9 @@ export function LeagueContestHistoryPage() {
                 Open a completed contest to view final standings and revealed picks.
               </p>
             </div>
-            <div className="rounded-2xl bg-background px-4 py-2 text-sm font-medium text-foreground">
+            <Chip tone="info">
               {historicalContests.length}
-            </div>
+            </Chip>
           </div>
 
           <ListStack className="mt-5">
@@ -171,12 +158,10 @@ export function LeagueContestHistoryPage() {
                 />
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">
-                This league does not have any completed contests yet.
-              </p>
+              <EmptyState body="This league does not have any completed contests yet." />
             )}
           </ListStack>
-        </section>
+        </Tile>
       )}
     </section>
   );

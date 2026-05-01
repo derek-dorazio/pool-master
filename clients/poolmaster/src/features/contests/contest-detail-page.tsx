@@ -22,6 +22,20 @@ import {
 } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
+import {
+  Alert,
+  Button,
+  Chip,
+  DefinitionList,
+  EmptyState,
+  ErrorState,
+  FormField,
+  Input,
+  LinkButton,
+  LoadingState,
+  StatusBadge,
+  Tile,
+} from '@/features/shared/ui';
 import { shouldPollContestEntries } from './contest-status';
 
 type ContestDetail = GetContestResponses[200]['contest'];
@@ -102,14 +116,14 @@ function ParticipantsTable({
 
   if (sorted.length === 0) {
     return (
-      <div className="mt-4 rounded-2xl bg-card px-4 py-4 text-sm text-muted-foreground">
+      <Alert className="mt-4">
         This entry does not have any picked participants yet.
-      </div>
+      </Alert>
     );
   }
 
   return (
-    <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
+    <Tile className="mt-4 overflow-x-auto" padding="none" radius="lg">
       <div className="grid grid-cols-[minmax(0,1.5fr)_80px_70px_repeat(4,56px)] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
         <span>Participant</span>
         <span className="text-right">Total</span>
@@ -152,7 +166,7 @@ function ParticipantsTable({
           );
         })}
       </div>
-    </div>
+    </Tile>
   );
 }
 
@@ -321,21 +335,15 @@ export function ContestDetailPage() {
   ]);
 
   if (contestQuery.isLoading) {
-    return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <p className="text-sm text-muted-foreground">Loading contest detail...</p>
-      </section>
-    );
+    return <LoadingState body="Loading contest detail..." />;
   }
 
   if (contestQuery.isError || !contestQuery.data) {
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <h2 className="text-2xl font-semibold">We couldn&apos;t load this contest.</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Try refreshing or return to League Home.
-        </p>
-      </section>
+      <ErrorState
+        body="Try refreshing or return to League Home."
+        title="We couldn't load this contest."
+      />
     );
   }
 
@@ -373,12 +381,12 @@ export function ContestDetailPage() {
 
   return (
     <section className="space-y-6" data-testid="contest-board">
-      <div className="rounded-[2rem] border border-border bg-card p-8">
+      <Tile padding="lg">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
-            <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+            <StatusBadge tone={isOpen ? 'active' : 'neutral'}>
               {contest.status}
-            </span>
+            </StatusBadge>
             <div>
               <h2 className="text-3xl font-semibold tracking-tight" data-testid="contest-detail-heading">
                 {contest.name}
@@ -388,43 +396,43 @@ export function ContestDetailPage() {
                 {contest.sport ? ` · ${contest.sport}` : ''}
               </p>
               <div className="mt-4 flex flex-wrap gap-3 text-sm">
-                <span
-                  className="rounded-full border border-border px-3 py-1 text-muted-foreground"
+                <Chip
                   data-testid="contest-board-my-count"
+                  tone="info"
                 >
                   My Entries: <span className="font-semibold text-foreground">{myCount}</span>
-                </span>
-                <span
-                  className="rounded-full border border-border px-3 py-1 text-muted-foreground"
+                </Chip>
+                <Chip
                   data-testid="contest-board-total-count"
+                  tone="info"
                 >
                   Total Entries: <span className="font-semibold text-foreground">{totalCount}</span>
-                </span>
+                </Chip>
               </div>
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
             {manageContestPath ? (
-              <Link
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+              <LinkButton
                 data-testid="contest-manage-link"
                 to={manageContestPath}
+                variant="secondary"
               >
                 Manage contest
-              </Link>
+              </LinkButton>
             ) : null}
-            <Link
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+            <LinkButton
               data-testid="contest-back-to-league"
               to={backToLeaguePath}
+              variant="secondary"
             >
               Back to league
-            </Link>
+            </LinkButton>
           </div>
         </div>
-      </div>
+      </Tile>
 
-      <div className="rounded-[2rem] border border-border bg-card p-6">
+      <Tile>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="text-xl font-semibold">
@@ -447,25 +455,23 @@ export function ContestDetailPage() {
               My entries only
             </label>
             {canCreateEntry ? (
-              <button
-                className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+              <Button
                 data-testid="contest-board-create-entry"
                 disabled={enterContestMutation.isPending}
                 onClick={() => void enterContestMutation.mutateAsync()}
-                type="button"
               >
                 {enterContestMutation.isPending ? 'Creating...' : 'Create entry'}
-              </button>
+              </Button>
             ) : null}
           </div>
         </div>
 
         {enterContestMutation.isError ? (
-          <p className="mt-3 text-sm text-destructive" data-testid="contest-board-create-error">
+          <Alert className="mt-3" data-testid="contest-board-create-error" tone="danger">
             {extractErrorMessage(enterContestMutation.error, {
               fallback: 'We could not create that contest entry right now.',
             })}
-          </p>
+          </Alert>
         ) : null}
 
         <div
@@ -473,17 +479,17 @@ export function ContestDetailPage() {
           data-testid="contest-board-entries"
         >
           {contestEntriesQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading contest entries...</p>
+            <LoadingState body="Loading contest entries..." />
           ) : contestEntriesQuery.isError ? (
-            <p className="text-sm text-muted-foreground">
-              We couldn&apos;t load the current contest entries.
-            </p>
+            <ErrorState body="We couldn't load the current contest entries." />
           ) : visibleEntries.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {myOnly
-                ? 'Your team does not have an entry in this contest yet.'
-                : 'No contest entries exist yet.'}
-            </p>
+            <EmptyState
+              body={
+                myOnly
+                  ? 'Your team does not have an entry in this contest yet.'
+                  : 'No contest entries exist yet.'
+              }
+            />
           ) : (
             visibleEntries.map((entry) => {
               const isOwnEntry = myTeamId !== null && entry.squadId === myTeamId;
@@ -494,14 +500,13 @@ export function ContestDetailPage() {
               const showHiddenPlaceholder = isExpanded && !picksRevealed && !isOwnEntry;
 
               return (
-                <div
-                  className={`rounded-2xl border px-4 py-4 transition ${
-                    isOwnEntry
-                      ? 'border-primary/40 bg-primary/5'
-                      : 'border-border bg-background'
-                  }`}
+                <Tile
+                  className={isOwnEntry ? 'border-primary/40 bg-primary/5' : undefined}
                   data-testid={`contest-board-entry-${entry.id}`}
                   key={entry.id}
+                  padding="sm"
+                  radius="lg"
+                  variant="subtle"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -513,9 +518,9 @@ export function ContestDetailPage() {
                         ) : null}
                         <span className="font-medium text-foreground">{entry.name}</span>
                         {isOwnEntry ? (
-                          <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                          <Chip tone="active">
                             Your team
-                          </span>
+                          </Chip>
                         ) : null}
                       </div>
                       <div className="mt-1 text-sm text-muted-foreground">
@@ -527,91 +532,92 @@ export function ContestDetailPage() {
                         <div>{entry.standingsPosition ? `#${entry.standingsPosition}` : 'Rank pending'}</div>
                         <div>{entry.totalScore} pts</div>
                       </div>
-                      <button
-                        className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground"
+                      <Button
                         data-testid={`contest-board-toggle-${entry.id}`}
                         onClick={() =>
                           setExpandedEntryId((current) =>
                             current === entry.id ? null : entry.id,
                           )}
-                        type="button"
+                        size="sm"
+                        variant="secondary"
                       >
                         {isExpanded ? 'Hide' : 'View'}
-                      </button>
+                      </Button>
                       {isOwnEntry && isOpen ? (
-                        <Link
+                        <Button
                           aria-label={`Edit ${entry.name}`}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-border text-foreground hover:border-foreground/30"
+                          asChild
                           data-testid={`contest-board-edit-entry-${entry.id}`}
-                          state={{ leagueCode: hintedLeagueCode }}
-                          title="Edit entry"
-                          to={
-                            hintedLeagueCode
-                              ? buildLeagueContestEntryPath(hintedLeagueCode, contestId, entry.id)
-                              : buildContestEntryPath(contestId, entry.id)
-                          }
+                          size="icon"
+                          variant="icon"
                         >
-                          <Pencil aria-hidden size={16} />
-                        </Link>
+                          <Link
+                            state={{ leagueCode: hintedLeagueCode }}
+                            title="Edit entry"
+                            to={
+                              hintedLeagueCode
+                                ? buildLeagueContestEntryPath(hintedLeagueCode, contestId, entry.id)
+                                : buildContestEntryPath(contestId, entry.id)
+                            }
+                          >
+                            <Pencil aria-hidden size={16} />
+                          </Link>
+                        </Button>
                       ) : null}
                     </div>
                   </div>
 
                   {canRename ? (
                     isRenaming ? (
-                      <div className="mt-4 space-y-2 rounded-2xl border border-border bg-card px-4 py-4">
-                        <label className="block space-y-2">
-                          <span className="text-sm font-medium text-foreground">Entry name</span>
-                          <input
-                            className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
+                      <Tile className="mt-4 space-y-3" padding="sm" radius="lg" variant="default">
+                        <FormField label="Entry name">
+                          <Input
                             data-testid={`contest-board-rename-input-${entry.id}`}
                             disabled={renameEntryMutation.isPending}
                             maxLength={100}
                             onChange={(event) => setRenameDraft(event.target.value)}
                             value={renameDraft}
                           />
-                        </label>
+                        </FormField>
                         <div className="flex flex-wrap gap-3">
-                          <button
-                            className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                          <Button
                             data-testid={`contest-board-rename-save-${entry.id}`}
                             disabled={!renameDraft.trim() || renameEntryMutation.isPending}
+                            isLoading={renameEntryMutation.isPending}
                             onClick={() =>
                               void renameEntryMutation.mutateAsync({
                                 entryId: entry.id,
                                 name: renameDraft.trim(),
                               })
                             }
-                            type="button"
                           >
                             {renameEntryMutation.isPending ? 'Saving...' : 'Save name'}
-                          </button>
-                          <button
-                            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
+                          </Button>
+                          <Button
                             data-testid={`contest-board-rename-cancel-${entry.id}`}
                             disabled={renameEntryMutation.isPending}
                             onClick={cancelRenameEntry}
-                            type="button"
+                            variant="secondary"
                           >
                             Cancel
-                          </button>
+                          </Button>
                         </div>
                         {renameEntryMutation.isError ? (
-                          <p className="text-sm text-destructive">
+                          <Alert tone="danger">
                             {extractErrorMessage(renameEntryMutation.error)}
-                          </p>
+                          </Alert>
                         ) : null}
-                      </div>
+                      </Tile>
                     ) : (
                       <div className="mt-3">
-                        <button
-                          className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground"
+                        <Button
                           data-testid={`contest-board-rename-${entry.id}`}
                           onClick={() => startRenameEntry(entry)}
-                          type="button"
+                          size="sm"
+                          variant="secondary"
                         >
                           Rename entry
-                        </button>
+                        </Button>
                       </div>
                     )
                   ) : null}
@@ -621,41 +627,32 @@ export function ContestDetailPage() {
                   ) : null}
 
                   {showHiddenPlaceholder ? (
-                    <div
-                      className="mt-4 rounded-2xl bg-card px-4 py-4 text-sm text-muted-foreground"
+                    <Alert
+                      className="mt-4"
                       data-testid={`contest-board-picks-hidden-${entry.id}`}
                     >
                       Picks hidden until the contest moves past OPEN. {entry.picksCount} picks made so far.
-                    </div>
+                    </Alert>
                   ) : null}
-                </div>
+                </Tile>
               );
             })
           )}
         </div>
-      </div>
+      </Tile>
 
-      <div className="rounded-[2rem] border border-border bg-card p-6" id="contest-rules">
+      <Tile id="contest-rules">
         <h3 className="text-xl font-semibold">Contest rules and snapshot</h3>
-        <dl className="mt-5 grid gap-3 sm:grid-cols-2 text-sm text-muted-foreground">
-          <div className="rounded-2xl bg-background px-4 py-4">
-            <dt>Contest type</dt>
-            <dd className="mt-1 font-semibold text-foreground">{contest.contestType}</dd>
-          </div>
-          <div className="rounded-2xl bg-background px-4 py-4">
-            <dt>Selection type</dt>
-            <dd className="mt-1 font-semibold text-foreground">{contest.selectionType}</dd>
-          </div>
-          <div className="rounded-2xl bg-background px-4 py-4">
-            <dt>Scoring engine</dt>
-            <dd className="mt-1 font-semibold text-foreground">{contest.scoringEngine}</dd>
-          </div>
-          <div className="rounded-2xl bg-background px-4 py-4">
-            <dt>Status</dt>
-            <dd className="mt-1 font-semibold text-foreground">{contest.status}</dd>
-          </div>
-        </dl>
-      </div>
+        <DefinitionList
+          className="mt-5"
+          items={[
+            { label: 'Contest type', value: contest.contestType },
+            { label: 'Selection type', value: contest.selectionType },
+            { label: 'Scoring engine', value: contest.scoringEngine },
+            { label: 'Status', value: contest.status },
+          ]}
+        />
+      </Tile>
     </section>
   );
 }

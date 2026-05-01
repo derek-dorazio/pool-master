@@ -17,6 +17,7 @@ import {
 } from "@/features/leagues/league-routing";
 import { useLogger } from "@/lib/logger";
 import {
+  Chip,
   EmptyState,
   ErrorState,
   LinkButton,
@@ -223,9 +224,9 @@ export function LeagueContestsPage() {
                 picks once the event has started.
               </p>
             </div>
-            <div className="rounded-2xl bg-background px-4 py-2 text-sm font-medium text-foreground">
+            <Chip tone="info">
               {visibleActiveContests.length}
-            </div>
+            </Chip>
           </div>
 
           <ListStack className="mt-5">
