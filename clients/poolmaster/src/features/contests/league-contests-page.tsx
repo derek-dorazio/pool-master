@@ -20,6 +20,7 @@ import {
   EmptyState,
   ErrorState,
   LinkButton,
+  ListStack,
   LoadingState,
   MetricGrid,
   MetricTile,
@@ -227,7 +228,7 @@ export function LeagueContestsPage() {
             </div>
           </div>
 
-          <div className="mt-5 space-y-3">
+          <ListStack className="mt-5">
             {isMyEntriesFilter && myContestIdsQuery.isLoading ? (
               <p className="text-sm text-muted-foreground">
                 Loading your contests...
@@ -250,7 +251,7 @@ export function LeagueContestsPage() {
                 }
               />
             )}
-          </div>
+          </ListStack>
         </Tile>
       )}
     </section>

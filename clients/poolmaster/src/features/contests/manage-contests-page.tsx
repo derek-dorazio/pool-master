@@ -16,6 +16,7 @@ import {
   setRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
+import { LinkButton, ListCard, ListEmptyRow, ListStack } from '@/features/shared/ui';
 import { isHistoricalContest } from './contest-status';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
@@ -244,51 +245,43 @@ export function ManageContestsPage() {
               </div>
             </div>
 
-            <div className="mt-5 space-y-4">
+            <ListStack className="mt-5">
               {activeContests.length ? (
                 activeContests.map((contest) => (
-                  <div
-                    className="rounded-[1.5rem] border border-border bg-background p-5"
+                  <ListCard
+                    actions={
+                      <>
+                        <LinkButton
+                          data-testid={`manage-contests-open-${contest.id}`}
+                          to={buildLeagueContestPath(league.leagueCode, contest.id)}
+                          variant="secondary"
+                        >
+                          Open contest
+                        </LinkButton>
+                        <LinkButton
+                          data-testid={`manage-contests-manage-${contest.id}`}
+                          to={buildLeagueContestManagePath(league.leagueCode, contest.id)}
+                        >
+                          Manage contest
+                        </LinkButton>
+                      </>
+                    }
                     data-testid={`manage-contests-row-${contest.id}`}
+                    metadata={`${contest.selectionType} · ${contest.scoringEngine} · ${contest.status}`}
                     key={contest.id}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-foreground">{contest.name}</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          {contest.selectionType} · {contest.scoringEngine} · {contest.status}
-                        </p>
-                      </div>
-                      <div className="rounded-2xl bg-card px-4 py-3 text-right text-sm text-muted-foreground">
+                    title={contest.name}
+                    trailing={
+                      <>
                         <div>{contest.entryCount ?? 0} entries</div>
                         <div>{contest.sport}</div>
-                      </div>
-                    </div>
-
-                    <div className="mt-5 flex flex-wrap gap-3">
-                      <Link
-                        className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:bg-card"
-                        data-testid={`manage-contests-open-${contest.id}`}
-                        to={buildLeagueContestPath(league.leagueCode, contest.id)}
-                      >
-                        Open contest
-                      </Link>
-                      <Link
-                        className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90"
-                        data-testid={`manage-contests-manage-${contest.id}`}
-                        to={buildLeagueContestManagePath(league.leagueCode, contest.id)}
-                      >
-                        Manage contest
-                      </Link>
-                    </div>
-                  </div>
+                      </>
+                    }
+                  />
                 ))
               ) : (
-                <div className="rounded-[1.5rem] border border-dashed border-border bg-background p-5 text-sm text-muted-foreground">
-                  No active contests right now.
-                </div>
+                <ListEmptyRow>No active contests right now.</ListEmptyRow>
               )}
-            </div>
+            </ListStack>
           </section>
 
           <section className="rounded-[2rem] border border-border bg-card p-6">
@@ -305,51 +298,46 @@ export function ManageContestsPage() {
               </div>
             </div>
 
-            <div className="mt-5 space-y-4">
+            <ListStack className="mt-5">
               {historicalContests.length ? (
                 historicalContests.map((contest) => (
-                  <div
-                    className="rounded-[1.5rem] border border-border bg-background p-5"
+                  <ListCard
+                    actions={
+                      <>
+                        <LinkButton
+                          data-testid={`manage-contests-open-${contest.id}`}
+                          to={buildLeagueContestPath(league.leagueCode, contest.id)}
+                          variant="secondary"
+                        >
+                          Open contest
+                        </LinkButton>
+                        <LinkButton
+                          data-testid={`manage-contests-manage-${contest.id}`}
+                          to={buildLeagueContestManagePath(league.leagueCode, contest.id)}
+                          variant="secondary"
+                        >
+                          Manage contest
+                        </LinkButton>
+                      </>
+                    }
                     data-testid={`manage-contests-row-${contest.id}`}
+                    metadata={`${contest.selectionType} · ${contest.scoringEngine} · ${contest.status}`}
                     key={contest.id}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-foreground">{contest.name}</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          {contest.selectionType} · {contest.scoringEngine} · {contest.status}
-                        </p>
-                      </div>
-                      <div className="rounded-2xl bg-card px-4 py-3 text-right text-sm text-muted-foreground">
+                    title={contest.name}
+                    trailing={
+                      <>
                         <div>{contest.entryCount ?? 0} entries</div>
                         <div>{contest.sport}</div>
-                      </div>
-                    </div>
-
-                    <div className="mt-5 flex flex-wrap gap-3">
-                      <Link
-                        className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:bg-card"
-                        data-testid={`manage-contests-open-${contest.id}`}
-                        to={buildLeagueContestPath(league.leagueCode, contest.id)}
-                      >
-                        Open contest
-                      </Link>
-                      <Link
-                        className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:bg-card"
-                        data-testid={`manage-contests-manage-${contest.id}`}
-                        to={buildLeagueContestManagePath(league.leagueCode, contest.id)}
-                      >
-                        Manage contest
-                      </Link>
-                    </div>
-                  </div>
+                      </>
+                    }
+                  />
                 ))
               ) : (
-                <div className="rounded-[1.5rem] border border-dashed border-border bg-background p-5 text-sm text-muted-foreground">
+                <ListEmptyRow>
                   Historical contests will appear here once this league has completed events.
-                </div>
+                </ListEmptyRow>
               )}
-            </div>
+            </ListStack>
           </section>
         </>
       )}

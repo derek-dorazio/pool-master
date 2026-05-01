@@ -9,6 +9,7 @@ import {
 } from '@/lib/api';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import { buildLeagueContestsPath, buildLeaguePath, setRecentLeagueCode } from '@/features/leagues/league-routing';
+import { ListStack } from '@/features/shared/ui';
 import { useLogger } from '@/lib/logger';
 import { isHistoricalContest } from './contest-status';
 import { ContestListCard } from './contest-list-card';
@@ -159,7 +160,7 @@ export function LeagueContestHistoryPage() {
             </div>
           </div>
 
-          <div className="mt-5 space-y-3">
+          <ListStack className="mt-5">
             {historicalContests.length ? (
               historicalContests.map((contest) => (
                 <ContestListCard
@@ -174,7 +175,7 @@ export function LeagueContestHistoryPage() {
                 This league does not have any completed contests yet.
               </p>
             )}
-          </div>
+          </ListStack>
         </section>
       )}
     </section>
