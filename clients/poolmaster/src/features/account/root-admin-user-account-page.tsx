@@ -11,6 +11,7 @@ import {
   adminSetUserRootAdmin,
   type AdminGetUserDetailResponses,
 } from '@/lib/api';
+import { ConfirmDialog } from '@/features/shared/ui';
 import { useLogger } from '@/lib/logger';
 import { buildLeaguePath, buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { formatUserName } from './user-name';
@@ -705,12 +706,20 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         </div>
       </UserActionDialog>
 
-      <UserActionDialog
+      <ConfirmDialog
+        confirmLabel="Delete account"
+        confirmTestId="root-admin-user-submit-delete"
         description="Delete permanently only after the account is inactive and the email confirmation matches exactly."
+        isConfirmDisabled={!deleteConfirmationMatches}
+        isPending={deleteMutation.isPending}
+        onCancel={closeDialog}
+        onConfirm={() => void deleteMutation.mutateAsync(viewedUser).catch(() => undefined)}
         onOpenChange={(open) => (open ? openDialog('delete') : closeDialog())}
         open={activeDialog === 'delete'}
+        pendingLabel="Deleting..."
         testId="root-admin-user-delete-dialog"
         title="Delete account"
+        tone="danger"
       >
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
@@ -741,26 +750,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
             </div>
           ) : null}
         </div>
-
-        <div className="mt-5 flex justify-end gap-3">
-          <button
-            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-muted/50"
-            onClick={closeDialog}
-            type="button"
-          >
-            Cancel
-          </button>
-          <button
-            className="rounded-2xl bg-destructive px-4 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-            data-testid="root-admin-user-submit-delete"
-            disabled={!deleteConfirmationMatches || deleteMutation.isPending}
-            onClick={() => void deleteMutation.mutateAsync(viewedUser).catch(() => undefined)}
-            type="button"
-          >
-            {deleteMutation.isPending ? 'Deleting...' : 'Delete account'}
-          </button>
-        </div>
-      </UserActionDialog>
+      </ConfirmDialog>
     </section>
   );
 }

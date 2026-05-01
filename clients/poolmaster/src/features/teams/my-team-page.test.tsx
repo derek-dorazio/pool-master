@@ -768,6 +768,8 @@ describe('MyTeamPage', () => {
     renderMyTeamPage();
 
     fireEvent.click(await screen.findByTestId('my-team-inactivate'));
+    expect(await screen.findByTestId('my-team-inactivate-dialog')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('my-team-confirm-inactivate'));
 
     await waitFor(() =>
       expect(inactivateLeagueSquadMock).toHaveBeenCalledWith({
@@ -844,6 +846,8 @@ describe('MyTeamPage', () => {
     expect(screen.queryByTestId('my-team-inactivate')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('my-team-delete'));
+    expect(await screen.findByTestId('my-team-delete-dialog')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('my-team-confirm-delete'));
 
     await waitFor(() =>
       expect(deleteLeagueSquadMock).toHaveBeenCalledWith({

@@ -13,6 +13,7 @@ import {
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
+import { ConfirmDialog } from '@/features/shared/ui';
 import { useLogger } from '@/lib/logger';
 import { RootAdminUserAccountPage } from './root-admin-user-account-page';
 import { formatUserName } from './user-name';
@@ -969,8 +970,18 @@ export function UserPage() {
         </div>
       </UserActionDialog>
 
-      <UserActionDialog
+      <ConfirmDialog
+        confirmLabel="Delete account"
+        confirmTestId="user-page-delete-submit"
         description="Delete permanently only after the account is inactive and the email confirmation matches exactly."
+        isConfirmDisabled={!confirmationMatches}
+        isPending={deleteMutation.isPending}
+        onCancel={() => {
+          setActiveDialog(null);
+          setEmailConfirmation('');
+          deleteMutation.reset();
+        }}
+        onConfirm={() => void deleteMutation.mutateAsync(user.email).catch(() => undefined)}
         onOpenChange={(open) => {
           setActiveDialog(open ? 'delete' : null);
           if (!open) {
@@ -979,8 +990,10 @@ export function UserPage() {
           }
         }}
         open={activeDialog === 'delete'}
+        pendingLabel="Deleting..."
         testId="user-page-delete-dialog"
         title="Delete account"
+        tone="danger"
       >
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
@@ -1002,31 +1015,7 @@ export function UserPage() {
             </div>
           ) : null}
         </div>
-
-        <div className="mt-5 flex justify-end gap-3">
-          <button
-            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={deleteMutation.isPending}
-            onClick={() => {
-              setActiveDialog(null);
-              setEmailConfirmation('');
-              deleteMutation.reset();
-            }}
-            type="button"
-          >
-            Cancel
-          </button>
-          <button
-            className="rounded-2xl bg-destructive px-4 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-            data-testid="user-page-delete-submit"
-            disabled={!confirmationMatches || deleteMutation.isPending}
-            onClick={() => void deleteMutation.mutateAsync(user.email).catch(() => undefined)}
-            type="button"
-          >
-            {deleteMutation.isPending ? 'Deleting...' : 'Delete account'}
-          </button>
-        </div>
-      </UserActionDialog>
+      </ConfirmDialog>
     </section>
   );
 }

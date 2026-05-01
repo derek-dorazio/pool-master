@@ -22,6 +22,7 @@ import {
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { IconPickerModal } from '@/features/shared/icon-picker-modal';
+import { ConfirmDialog } from '@/features/shared/ui';
 import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
@@ -38,7 +39,7 @@ type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
 type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 type TeamMember = NonNullable<TeamSummary['members']>[number];
 type OwnerInvitation = ListSquadOwnerInvitationsResponses[200]['invitations'][number];
-type ActiveTeamDialog = 'name' | 'owners' | null;
+type ActiveTeamDialog = 'name' | 'owners' | 'inactivate' | 'delete' | null;
 
 function extractErrorMessage(error: unknown): string {
   return extractSharedErrorMessage(error, {
@@ -344,6 +345,7 @@ export function MyTeamPage() {
       return response.data.squad;
     },
     onSuccess: async (team) => {
+      setActiveDialog(null);
       setTeamInactivationNotice(
         `${team.name} is now inactive. Its active owners were removed from the league, and any user with no other active leagues was also inactivated.`,
       );
@@ -373,6 +375,7 @@ export function MyTeamPage() {
       return selectedTeam.name;
     },
     onSuccess: async (teamNameDeleted) => {
+      setActiveDialog(null);
       setTeamDeletionNotice(`${teamNameDeleted} was deleted.`);
       setTeamInactivationNotice(null);
       setReplaceTargetUserId(null);
@@ -900,7 +903,7 @@ export function MyTeamPage() {
                     className="w-full rounded-2xl border border-destructive/40 bg-destructive/5 px-4 py-4 text-left text-sm font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-60"
                     data-testid="my-team-delete"
                     disabled={!canDeleteSelectedTeam || isInactiveLeague || isBusy}
-                    onClick={() => void deleteTeamMutation.mutateAsync()}
+                    onClick={() => setActiveDialog('delete')}
                     type="button"
                   >
                     {deleteTeamMutation.isPending ? 'Deleting...' : 'Delete team'}
@@ -910,7 +913,7 @@ export function MyTeamPage() {
                     className="w-full rounded-2xl border border-destructive/40 bg-destructive/5 px-4 py-4 text-left text-sm font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-60"
                     data-testid="my-team-inactivate"
                     disabled={isInactiveLeague || isBusy || !canManageSelectedTeam}
-                    onClick={() => void inactivateTeamMutation.mutateAsync()}
+                    onClick={() => setActiveDialog('inactivate')}
                     type="button"
                   >
                     {inactivateTeamMutation.isPending ? 'Inactivating...' : 'Inactivate team'}
@@ -1034,6 +1037,74 @@ export function MyTeamPage() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+
+      <ConfirmDialog
+        confirmLabel="Inactivate team"
+        confirmTestId="my-team-confirm-inactivate"
+        description={
+          selectedTeam
+            ? `${selectedTeam.name} will become inactive. Active owners are removed from the league if they do not have another active team.`
+            : 'This team will become inactive.'
+        }
+        isPending={inactivateTeamMutation.isPending}
+        onCancel={() => {
+          if (!inactivateTeamMutation.isPending) {
+            inactivateTeamMutation.reset();
+            setActiveDialog(null);
+          }
+        }}
+        onConfirm={() => void inactivateTeamMutation.mutateAsync().catch(() => undefined)}
+        onOpenChange={(open) => {
+          if (open) {
+            setActiveDialog('inactivate');
+            return;
+          }
+
+          if (!inactivateTeamMutation.isPending) {
+            inactivateTeamMutation.reset();
+            setActiveDialog(null);
+          }
+        }}
+        open={activeDialog === 'inactivate'}
+        pendingLabel="Inactivating..."
+        testId="my-team-inactivate-dialog"
+        title="Inactivate team"
+        tone="danger"
+      />
+
+      <ConfirmDialog
+        confirmLabel="Delete team"
+        confirmTestId="my-team-confirm-delete"
+        description={
+          selectedTeam
+            ? `${selectedTeam.name} will be permanently deleted. This is only available after the team is inactive.`
+            : 'This inactive team will be permanently deleted.'
+        }
+        isPending={deleteTeamMutation.isPending}
+        onCancel={() => {
+          if (!deleteTeamMutation.isPending) {
+            deleteTeamMutation.reset();
+            setActiveDialog(null);
+          }
+        }}
+        onConfirm={() => void deleteTeamMutation.mutateAsync().catch(() => undefined)}
+        onOpenChange={(open) => {
+          if (open) {
+            setActiveDialog('delete');
+            return;
+          }
+
+          if (!deleteTeamMutation.isPending) {
+            deleteTeamMutation.reset();
+            setActiveDialog(null);
+          }
+        }}
+        open={activeDialog === 'delete'}
+        pendingLabel="Deleting..."
+        testId="my-team-delete-dialog"
+        title="Delete team"
+        tone="danger"
+      />
 
       <IconPickerModal
         canSave={!isInactiveLeague && !isBusy && (selectedTeam ? canManageSelectedTeam : canCreateOwnTeam)}

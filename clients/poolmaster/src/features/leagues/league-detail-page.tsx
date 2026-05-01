@@ -18,6 +18,7 @@ import {
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { IconPickerModal } from '@/features/shared/icon-picker-modal';
+import { ConfirmDialog } from '@/features/shared/ui';
 import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
 import { useLogger } from '@/lib/logger';
 import { removeLeagueSummary, syncLeagueCaches, type LeagueSummary } from './league-cache';
@@ -843,7 +844,19 @@ export function LeagueDetailPage() {
         </Dialog.Portal>
       </Dialog.Root>
 
-      <Dialog.Root
+      <ConfirmDialog
+        confirmLabel="Inactivate"
+        confirmTestId="league-inactivate"
+        description={(
+          <>
+            The league is currently <span className="font-medium text-foreground">Active</span>,
+            inactivating the league will prevent further usage but will maintain history.
+            The league can be deleted after being made inactive.
+          </>
+        )}
+        isPending={inactivateLeagueMutation.isPending}
+        onCancel={() => setActiveDialog(null)}
+        onConfirm={() => void inactivateLeagueMutation.mutateAsync()}
         onOpenChange={(open) => {
           if (open) {
             inactivateLeagueMutation.reset();
@@ -856,54 +869,16 @@ export function LeagueDetailPage() {
           }
         }}
         open={activeDialog === 'inactivate'}
+        pendingLabel="Inactivating..."
+        testId="league-inactivate-modal"
+        title="Inactivate league"
       >
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
-          <Dialog.Content
-            aria-describedby="league-inactivate-modal-description"
-            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
-            data-testid="league-inactivate-modal"
-          >
-            <Dialog.Title className="text-2xl font-semibold tracking-tight">
-              Inactivate league
-            </Dialog.Title>
-            <Dialog.Description
-              className="mt-3 text-sm leading-6 text-muted-foreground"
-              id="league-inactivate-modal-description"
-            >
-              The league is currently <span className="font-medium text-foreground">Active</span>,
-              inactivating the league will prevent further usage but will maintain history.
-              The league can be deleted after being made inactive.
-            </Dialog.Description>
-
-            {inactivateLeagueMutation.isError ? (
-              <p className="mt-4 text-sm text-destructive">
-                {extractErrorMessage(inactivateLeagueMutation.error, 'We could not inactivate this league.')}
-              </p>
-            ) : null}
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={inactivateLeagueMutation.isPending}
-                onClick={() => setActiveDialog(null)}
-                type="button"
-              >
-                Cancel
-              </button>
-              <button
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                data-testid="league-inactivate"
-                disabled={inactivateLeagueMutation.isPending}
-                onClick={() => void inactivateLeagueMutation.mutateAsync()}
-                type="button"
-              >
-                {inactivateLeagueMutation.isPending ? 'Inactivating...' : 'Inactivate'}
-              </button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+        {inactivateLeagueMutation.isError ? (
+          <p className="text-sm text-destructive">
+            {extractErrorMessage(inactivateLeagueMutation.error, 'We could not inactivate this league.')}
+          </p>
+        ) : null}
+      </ConfirmDialog>
 
       <Dialog.Root
         onOpenChange={(open) => {
@@ -979,7 +954,14 @@ export function LeagueDetailPage() {
         </Dialog.Portal>
       </Dialog.Root>
 
-      <Dialog.Root
+      <ConfirmDialog
+        confirmLabel="Delete league"
+        confirmTestId="league-delete-submit"
+        description="Enter the league code to permanently delete this inactive league."
+        isConfirmDisabled={!canDeleteLeague}
+        isPending={deleteLeagueMutation.isPending}
+        onCancel={handleCloseDeleteModal}
+        onConfirm={() => void deleteLeagueMutation.mutateAsync()}
         onOpenChange={(open) => {
           if (open) {
             setDeleteModalOpen(true);
@@ -989,78 +971,30 @@ export function LeagueDetailPage() {
           handleCloseDeleteModal();
         }}
         open={deleteModalOpen}
+        pendingLabel="Deleting..."
+        testId="league-delete-modal"
+        title="Delete league"
+        tone="danger"
       >
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
-          <Dialog.Content
-            aria-describedby="league-delete-modal-description"
-            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
-            data-testid="league-delete-modal"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <Dialog.Title className="text-2xl font-semibold tracking-tight">
-                  Delete league
-                </Dialog.Title>
-                <Dialog.Description
-                  className="mt-2 text-sm text-muted-foreground"
-                  id="league-delete-modal-description"
-                >
-                  Enter the league code to permanently delete this inactive league.
-                </Dialog.Description>
-              </div>
-              <button
-                aria-label="Close delete league modal"
-                className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-70"
-                disabled={deleteLeagueMutation.isPending}
-                onClick={handleCloseDeleteModal}
-                type="button"
-              >
-                Close
-              </button>
-            </div>
+        <label className="block space-y-2">
+          <span className="text-sm font-medium text-foreground">League code</span>
+          <input
+            className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-mono text-sm uppercase outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
+            data-testid="league-delete-confirmation"
+            disabled={deleteLeagueMutation.isPending}
+            onChange={(event) => setDeleteConfirmation(event.target.value)}
+            placeholder={leagueQuery.data.leagueCode}
+            type="text"
+            value={deleteConfirmation}
+          />
+        </label>
 
-            <label className="mt-5 block space-y-2">
-              <span className="text-sm font-medium text-foreground">League code</span>
-              <input
-                className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-mono text-sm uppercase outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
-                data-testid="league-delete-confirmation"
-                disabled={deleteLeagueMutation.isPending}
-                onChange={(event) => setDeleteConfirmation(event.target.value)}
-                placeholder={leagueQuery.data.leagueCode}
-                type="text"
-                value={deleteConfirmation}
-              />
-            </label>
-
-            {deleteLeagueMutation.isError ? (
-              <p className="mt-4 text-sm text-destructive">
-                {extractErrorMessage(deleteLeagueMutation.error, 'We could not delete this league.')}
-              </p>
-            ) : null}
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={deleteLeagueMutation.isPending}
-                onClick={handleCloseDeleteModal}
-                type="button"
-              >
-                Cancel
-              </button>
-              <button
-                className="rounded-2xl bg-red-700 px-4 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-red-300"
-                data-testid="league-delete-submit"
-                disabled={!canDeleteLeague || deleteLeagueMutation.isPending}
-                onClick={() => void deleteLeagueMutation.mutateAsync()}
-                type="button"
-              >
-                {deleteLeagueMutation.isPending ? 'Deleting...' : 'Delete league'}
-              </button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+        {deleteLeagueMutation.isError ? (
+          <p className="mt-4 text-sm text-destructive">
+            {extractErrorMessage(deleteLeagueMutation.error, 'We could not delete this league.')}
+          </p>
+        ) : null}
+      </ConfirmDialog>
 
       <IconPickerModal
         canSave={canEditLeague}
