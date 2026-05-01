@@ -1,7 +1,6 @@
-import * as Dialog from '@radix-ui/react-dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   changeAccountPassword,
   deleteAccount,
@@ -13,7 +12,21 @@ import {
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
-import { ConfirmDialog, DetailsActionsLayout } from '@/features/shared/ui';
+import {
+  ActionList,
+  ActionTile,
+  Alert,
+  Button,
+  ConfirmDialog,
+  DefinitionList,
+  DetailsActionsLayout,
+  FormField,
+  Input,
+  LinkButton,
+  Modal,
+  Select,
+  Tile,
+} from '@/features/shared/ui';
 import { useLogger } from '@/lib/logger';
 import { RootAdminUserAccountPage } from './root-admin-user-account-page';
 import { formatUserName } from './user-name';
@@ -90,41 +103,17 @@ function UserActionDialog({
   testId: string;
 }) {
   return (
-    <Dialog.Root onOpenChange={onOpenChange} open={open}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
-        <Dialog.Content
-          aria-describedby={`${testId}-description`}
-          className="fixed left-1/2 top-1/2 z-50 w-[min(96vw,40rem)] -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
-          data-testid={testId}
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <Dialog.Title className="text-2xl font-semibold tracking-tight text-foreground">
-                {title}
-              </Dialog.Title>
-              <Dialog.Description
-                className="mt-2 text-sm text-muted-foreground"
-                id={`${testId}-description`}
-              >
-                {description}
-              </Dialog.Description>
-            </div>
-            <Dialog.Close asChild>
-              <button
-                aria-label={`Close ${title}`}
-                className="rounded-full border border-border p-2 text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
-                type="button"
-              >
-                ×
-              </button>
-            </Dialog.Close>
-          </div>
-
-          <div className="mt-6">{children}</div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <Modal
+      closeLabel={`Close ${title}`}
+      description={description}
+      descriptionId={`${testId}-description`}
+      onOpenChange={onOpenChange}
+      open={open}
+      testId={testId}
+      title={title}
+    >
+      {children}
+    </Modal>
   );
 }
 
@@ -333,9 +322,9 @@ export function UserPage() {
   if (!user) {
     return (
       <section className="space-y-6" data-testid="user-page-loading">
-        <div className="rounded-[2rem] border border-border bg-card p-6 text-sm text-muted-foreground">
+        <Tile>
           Loading user page...
-        </div>
+        </Tile>
       </section>
     );
   }
@@ -347,7 +336,7 @@ export function UserPage() {
 
     return (
       <section className="space-y-6" data-testid="user-page-non-self-placeholder">
-        <div className="rounded-[2rem] border border-border bg-card p-8">
+        <Tile padding="lg">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
             User
           </p>
@@ -360,21 +349,22 @@ export function UserPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Requested user id: <span className="font-medium text-foreground">{userId}</span>
           </p>
-        </div>
+        </Tile>
 
-        <div className="rounded-[2rem] border border-border bg-card p-6">
+        <Tile>
           <p className="text-sm text-muted-foreground">
             Your own user page is ready now and contains profile, preferences, password, and
             lifecycle actions as dedicated dialogs.
           </p>
-          <Link
-            className="mt-5 inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+          <LinkButton
+            className="mt-5"
             data-testid="user-page-self-link"
+            variant="subtle"
             to={buildUserPath(selfUserId)}
           >
             Open my user page
-          </Link>
-        </div>
+          </LinkButton>
+        </Tile>
       </section>
     );
   }
@@ -389,7 +379,7 @@ export function UserPage() {
 
   return (
     <section className="space-y-6" data-testid="user-page">
-      <div className="rounded-[2rem] border border-border bg-card p-8">
+      <Tile padding="lg">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           My profile
         </h1>
@@ -397,25 +387,26 @@ export function UserPage() {
           Manage your user profile, preferences, login, and account information.
         </p>
         {isInactive ? (
-          <div
-            className="mt-5 rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          <Alert
+            className="mt-5"
             data-testid="user-page-inactive-banner"
+            tone="warning"
           >
             Your account is inactive. Self-service actions stay available here, but profile,
             preferences, and password edits remain read-only until you reactivate.
-          </div>
+          </Alert>
         ) : null}
-      </div>
+      </Tile>
 
       {deleteSuccess ? (
-        <div
-          className="rounded-[2rem] border border-emerald-200 bg-emerald-50 p-6 text-emerald-800"
+        <Alert
           data-testid="user-page-delete-success"
+          tone="success"
+          title="Your account was deleted."
         >
-          <div className="text-lg font-semibold">Your account was deleted.</div>
           <p className="mt-2 text-sm">You no longer have access to Prime Time Commissioner with this account.</p>
-          <button
-            className="mt-4 rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-95"
+          <Button
+            className="mt-4"
             onClick={() =>
               void auth.clearSession().then(() => {
                 queryClient.removeQueries({ queryKey: ['poolmaster', 'auth'] });
@@ -425,181 +416,101 @@ export function UserPage() {
             type="button"
           >
             Exit and sign out
-          </button>
-        </div>
+          </Button>
+        </Alert>
       ) : null}
 
       <DetailsActionsLayout
         actions={(
-          <>
-            <button
-              className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-5 py-4 text-left transition hover:border-primary/40 hover:bg-card"
+          <ActionList>
+            <ActionTile
+              description="Update the name and email shown in account surfaces."
               data-testid="user-page-open-profile"
+              label="Edit profile"
               onClick={() => setActiveDialog('profile')}
-              type="button"
-            >
-              <span>
-                <span className="block text-base font-semibold text-foreground">Edit profile</span>
-                <span className="mt-1 block text-sm text-muted-foreground">
-                  Update the name and email shown in account surfaces.
-                </span>
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">Open</span>
-            </button>
+              trailing="Open"
+            />
 
-            <button
-              className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-5 py-4 text-left transition hover:border-primary/40 hover:bg-card"
+            <ActionTile
+              description="Update the login username used for this account."
               data-testid="user-page-open-username"
+              label="Change username"
               onClick={() => setActiveDialog('username')}
-              type="button"
-            >
-              <span>
-                <span className="block text-base font-semibold text-foreground">
-                  Change username
-                </span>
-                <span className="mt-1 block text-sm text-muted-foreground">
-                  Update the login username used for this account.
-                </span>
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">Open</span>
-            </button>
+              trailing="Open"
+            />
 
-            <button
-              className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-5 py-4 text-left transition hover:border-primary/40 hover:bg-card"
+            <ActionTile
+              description="Manage timezone, locale, and date/time formatting."
               data-testid="user-page-open-preferences"
+              label="Edit preferences"
               onClick={() => setActiveDialog('preferences')}
-              type="button"
-            >
-              <span>
-                <span className="block text-base font-semibold text-foreground">
-                  Edit preferences
-                </span>
-                <span className="mt-1 block text-sm text-muted-foreground">
-                  Manage timezone, locale, and date/time formatting.
-                </span>
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">Open</span>
-            </button>
+              trailing="Open"
+            />
 
-            <button
-              className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-5 py-4 text-left transition hover:border-primary/40 hover:bg-card"
+            <ActionTile
+              description="Keep your current session while revoking your other refresh sessions."
               data-testid="user-page-open-password"
+              label="Change password"
               onClick={() => setActiveDialog('password')}
-              type="button"
-            >
-              <span>
-                <span className="block text-base font-semibold text-foreground">Change password</span>
-                <span className="mt-1 block text-sm text-muted-foreground">
-                  Keep your current session while revoking your other refresh sessions.
-                </span>
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">Open</span>
-            </button>
+              trailing="Open"
+            />
 
-            <button
-              className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-5 py-4 text-left transition hover:border-primary/40 hover:bg-card"
+            <ActionTile
+              description="Manage whether your account can sign in."
               data-testid="user-page-open-lifecycle"
+              label={isInactive ? 'Reactivate account' : 'Inactivate account'}
               onClick={() => setActiveDialog('lifecycle')}
-              type="button"
-            >
-              <span>
-                <span className="block text-base font-semibold text-foreground">
-                  {isInactive ? 'Reactivate account' : 'Inactivate account'}
-                </span>
-                <span className="mt-1 block text-sm text-muted-foreground">
-                  Manage whether your account can sign in.
-                </span>
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">Open</span>
-            </button>
+              trailing="Open"
+            />
 
-            <button
-              className="flex items-center justify-between rounded-[1.5rem] border border-destructive/30 bg-destructive/5 px-5 py-4 text-left transition hover:border-destructive/40"
+            <ActionTile
+              description="Permanent delete stays locked until the account is inactive."
               data-testid="user-page-open-delete"
               disabled={!isInactive || deleteMutation.isPending}
+              label="Delete account"
               onClick={() => setActiveDialog('delete')}
-              type="button"
-            >
-              <span>
-                <span className="block text-base font-semibold text-foreground">Delete account</span>
-                <span className="mt-1 block text-sm text-muted-foreground">
-                  Permanent delete stays locked until the account is inactive.
-                </span>
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">
-                {isInactive ? 'Open' : 'Locked'}
-              </span>
-            </button>
-          </>
+              tone="danger"
+              trailing={isInactive ? 'Open' : 'Locked'}
+            />
+          </ActionList>
         )}
         actionsTestId="user-page-actions-tile"
         details={(
           <>
-          <section
-            className="rounded-[1.75rem] border border-border bg-card p-6"
+          <Tile
             data-testid="user-page-identity-summary"
+            radius="lg"
           >
             <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
               Account summary
             </div>
-            <dl className="mt-4 grid gap-4">
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Name</dt>
-                <dd className="mt-1 break-words text-base font-medium text-foreground">
-                  {formatUserName(user.firstName, user.lastName)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Email</dt>
-                <dd className="mt-1 break-words text-base font-medium text-foreground">
-                  {user.email}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Username
-                </dt>
-                <dd className="mt-1 break-words text-base font-medium text-foreground">
-                  {user.username}
-                </dd>
-              </div>
-            </dl>
-          </section>
+            <DefinitionList
+              className="mt-4 sm:grid-cols-1"
+              items={[
+                { label: 'Name', value: formatUserName(user.firstName, user.lastName) },
+                { label: 'Email', value: user.email },
+                { label: 'Username', value: user.username },
+              ]}
+            />
+          </Tile>
 
-          <section
-            className="rounded-[1.75rem] border border-border bg-card p-6"
+          <Tile
             data-testid="user-page-account-details"
+            radius="lg"
           >
             <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
               Account details
             </div>
-            <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Member since
-                </dt>
-                <dd className="mt-1 text-base font-medium text-foreground">{memberSince}</dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Status</dt>
-                <dd className="mt-1 text-base font-medium text-foreground">
-                  {isInactive ? 'Inactive' : 'Active'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Role</dt>
-                <dd className="mt-1 text-base font-medium text-foreground">
-                  {user.isRootAdmin ? 'Root admin' : 'Member'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Method</dt>
-                <dd className="mt-1 text-base font-medium text-foreground">
-                  {user.authProvider ?? 'EMAIL'}
-                </dd>
-              </div>
-            </dl>
-          </section>
+            <DefinitionList
+              className="mt-4"
+              items={[
+                { label: 'Member since', value: memberSince },
+                { label: 'Status', value: isInactive ? 'Inactive' : 'Active' },
+                { label: 'Role', value: user.isRootAdmin ? 'Root admin' : 'Member' },
+                { label: 'Method', value: user.authProvider ?? 'EMAIL' },
+              ]}
+            />
+          </Tile>
           </>
         )}
       />
@@ -612,10 +523,8 @@ export function UserPage() {
         title="Edit profile"
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">First name</span>
-            <input
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+          <FormField label="First name">
+            <Input
               data-testid="user-page-first-name"
               disabled={disableProfileEditing}
               onChange={(event) => {
@@ -624,11 +533,9 @@ export function UserPage() {
               }}
               value={profileForm.firstName}
             />
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Last name</span>
-            <input
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+          </FormField>
+          <FormField label="Last name">
+            <Input
               data-testid="user-page-last-name"
               disabled={disableProfileEditing}
               onChange={(event) => {
@@ -637,11 +544,9 @@ export function UserPage() {
               }}
               value={profileForm.lastName}
             />
-          </label>
-          <label className="space-y-2 sm:col-span-2">
-            <span className="text-sm font-medium text-foreground">Email</span>
-            <input
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+          </FormField>
+          <FormField className="sm:col-span-2" label="Email">
+            <Input
               data-testid="user-page-email"
               disabled={disableProfileEditing}
               onChange={(event) => {
@@ -651,23 +556,22 @@ export function UserPage() {
               type="email"
               value={profileForm.email}
             />
-          </label>
+          </FormField>
         </div>
 
         {profileMutation.isError ? (
-          <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <Alert className="mt-4" tone="danger">
             {extractErrorMessage(profileMutation.error)}
-          </div>
+          </Alert>
         ) : null}
         {profileMutation.isSuccess ? (
-          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <Alert className="mt-4" tone="success">
             Your profile was updated.
-          </div>
+          </Alert>
         ) : null}
 
         <div className="mt-5 flex justify-end">
-          <button
-            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+          <Button
             data-testid="user-page-save-profile"
             disabled={
               disableProfileEditing
@@ -679,7 +583,7 @@ export function UserPage() {
             type="button"
           >
             {profileMutation.isPending ? 'Saving...' : 'Save profile'}
-          </button>
+          </Button>
         </div>
       </UserActionDialog>
 
@@ -690,10 +594,8 @@ export function UserPage() {
         testId="user-page-username-dialog"
         title="Change username"
       >
-        <label className="space-y-2">
-          <span className="text-sm font-medium text-foreground">Username</span>
-          <input
-            className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+        <FormField label="Username">
+          <Input
             data-testid="user-page-username"
             disabled={disableUsernameEditing}
             onChange={(event) => {
@@ -702,29 +604,28 @@ export function UserPage() {
             }}
             value={usernameForm.username}
           />
-        </label>
+        </FormField>
 
         {usernameMutation.isError ? (
-          <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <Alert className="mt-4" tone="danger">
             {extractErrorMessage(usernameMutation.error)}
-          </div>
+          </Alert>
         ) : null}
         {usernameMutation.isSuccess ? (
-          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <Alert className="mt-4" tone="success">
             Your username was updated.
-          </div>
+          </Alert>
         ) : null}
 
         <div className="mt-5 flex justify-end">
-          <button
-            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+          <Button
             data-testid="user-page-save-username"
             disabled={disableUsernameEditing || usernameForm.username.trim().length < 3}
             onClick={() => void usernameMutation.mutateAsync().catch(() => undefined)}
             type="button"
           >
             {usernameMutation.isPending ? 'Saving...' : 'Save username'}
-          </button>
+          </Button>
         </div>
       </UserActionDialog>
 
@@ -736,10 +637,8 @@ export function UserPage() {
         title="Edit preferences"
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Timezone</span>
-            <input
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+          <FormField label="Timezone">
+            <Input
               data-testid="user-page-timezone"
               disabled={disablePreferencesEditing}
               onChange={(event) => {
@@ -749,11 +648,9 @@ export function UserPage() {
               placeholder="America/New_York"
               value={preferencesForm.timezone}
             />
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Locale</span>
-            <input
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+          </FormField>
+          <FormField label="Locale">
+            <Input
               data-testid="user-page-locale"
               disabled={disablePreferencesEditing}
               onChange={(event) => {
@@ -763,11 +660,9 @@ export function UserPage() {
               placeholder="en-US"
               value={preferencesForm.locale}
             />
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Time format</span>
-            <select
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+          </FormField>
+          <FormField label="Time format">
+            <Select
               data-testid="user-page-time-format"
               disabled={disablePreferencesEditing}
               onChange={(event) => {
@@ -782,12 +677,10 @@ export function UserPage() {
               <option value="">System default</option>
               <option value="12H">12-hour</option>
               <option value="24H">24-hour</option>
-            </select>
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Date format</span>
-            <select
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+            </Select>
+          </FormField>
+          <FormField label="Date format">
+            <Select
               data-testid="user-page-date-format"
               disabled={disablePreferencesEditing}
               onChange={(event) => {
@@ -803,31 +696,30 @@ export function UserPage() {
               <option value="MDY">MM/DD/YYYY</option>
               <option value="DMY">DD/MM/YYYY</option>
               <option value="YMD">YYYY-MM-DD</option>
-            </select>
-          </label>
+            </Select>
+          </FormField>
         </div>
 
         {preferencesMutation.isError ? (
-          <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <Alert className="mt-4" tone="danger">
             {extractErrorMessage(preferencesMutation.error)}
-          </div>
+          </Alert>
         ) : null}
         {preferencesMutation.isSuccess ? (
-          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <Alert className="mt-4" tone="success">
             Your preferences were updated.
-          </div>
+          </Alert>
         ) : null}
 
         <div className="mt-5 flex justify-end">
-          <button
-            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+          <Button
             data-testid="user-page-save-preferences"
             disabled={disablePreferencesEditing}
             onClick={() => void preferencesMutation.mutateAsync().catch(() => undefined)}
             type="button"
           >
             {preferencesMutation.isPending ? 'Saving...' : 'Save preferences'}
-          </button>
+          </Button>
         </div>
       </UserActionDialog>
 
@@ -839,10 +731,8 @@ export function UserPage() {
         title="Change password"
       >
         <div className="space-y-4">
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Current password</span>
-            <input
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+          <FormField label="Current password">
+            <Input
               data-testid="user-page-current-password"
               disabled={disablePasswordEditing}
               onChange={(event) => {
@@ -855,11 +745,9 @@ export function UserPage() {
               type="password"
               value={passwordForm.currentPassword}
             />
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">New password</span>
-            <input
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+          </FormField>
+          <FormField label="New password">
+            <Input
               data-testid="user-page-new-password"
               disabled={disablePasswordEditing}
               onChange={(event) => {
@@ -872,11 +760,9 @@ export function UserPage() {
               type="password"
               value={passwordForm.newPassword}
             />
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Confirm new password</span>
-            <input
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+          </FormField>
+          <FormField label="Confirm new password">
+            <Input
               data-testid="user-page-confirm-password"
               disabled={disablePasswordEditing}
               onChange={(event) => {
@@ -889,23 +775,22 @@ export function UserPage() {
               type="password"
               value={passwordForm.confirmNewPassword}
             />
-          </label>
+          </FormField>
         </div>
 
         {passwordMutation.isError ? (
-          <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <Alert className="mt-4" tone="danger">
             {extractErrorMessage(passwordMutation.error)}
-          </div>
+          </Alert>
         ) : null}
         {passwordMutation.isSuccess ? (
-          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <Alert className="mt-4" tone="success">
             Your password was changed.
-          </div>
+          </Alert>
         ) : null}
 
         <div className="mt-5 flex justify-end">
-          <button
-            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+          <Button
             data-testid="user-page-save-password"
             disabled={
               disablePasswordEditing
@@ -917,7 +802,7 @@ export function UserPage() {
             type="button"
           >
             {passwordMutation.isPending ? 'Saving...' : 'Change password'}
-          </button>
+          </Button>
         </div>
       </UserActionDialog>
 
@@ -935,38 +820,37 @@ export function UserPage() {
               : 'Inactivating your account turns profile, preferences, and password management read-only until you reactivate or permanently delete the account.'}
           </p>
           {inactivateMutation.isError ? (
-            <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <Alert tone="danger">
               {extractErrorMessage(inactivateMutation.error)}
-            </div>
+            </Alert>
           ) : null}
           {reactivateMutation.isError ? (
-            <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <Alert tone="danger">
               {extractErrorMessage(reactivateMutation.error)}
-            </div>
+            </Alert>
           ) : null}
         </div>
 
         <div className="mt-5 flex justify-end">
           {isInactive ? (
-            <button
-              className="rounded-2xl border border-primary/30 bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+            <Button
               data-testid="user-page-reactivate"
               disabled={reactivateMutation.isPending || deleteMutation.isPending}
               onClick={() => void reactivateMutation.mutateAsync().catch(() => undefined)}
               type="button"
             >
               {reactivateMutation.isPending ? 'Reactivating...' : 'Reactivate account'}
-            </button>
+            </Button>
           ) : (
-            <button
-              className="rounded-2xl border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+            <Button
               data-testid="user-page-inactivate"
               disabled={inactivateMutation.isPending || deleteMutation.isPending}
               onClick={() => void inactivateMutation.mutateAsync().catch(() => undefined)}
+              variant="secondary"
               type="button"
             >
               {inactivateMutation.isPending ? 'Inactivating...' : 'Inactivate account'}
-            </button>
+            </Button>
           )}
         </div>
       </UserActionDialog>
@@ -1001,9 +885,8 @@ export function UserPage() {
             This action will delete your account and related data permanently. Enter{' '}
             <span className="font-medium text-foreground">{user.email}</span> to continue.
           </p>
-          <input
+          <Input
             autoComplete="email"
-            className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-destructive/40"
             data-testid="user-page-delete-confirmation"
             onChange={(event) => setEmailConfirmation(event.target.value)}
             placeholder="Enter your email exactly"
@@ -1011,9 +894,9 @@ export function UserPage() {
             value={emailConfirmation}
           />
           {deleteMutation.isError ? (
-            <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <Alert tone="danger">
               {extractErrorMessage(deleteMutation.error)}
-            </div>
+            </Alert>
           ) : null}
         </div>
       </ConfirmDialog>
