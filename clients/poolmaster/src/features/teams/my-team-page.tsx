@@ -22,7 +22,7 @@ import {
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { IconPickerModal } from '@/features/shared/icon-picker-modal';
-import { ConfirmDialog } from '@/features/shared/ui';
+import { ConfirmDialog, DetailsActionsLayout } from '@/features/shared/ui';
 import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
@@ -760,112 +760,9 @@ export function MyTeamPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <section className="rounded-[2rem] border border-border bg-card p-6" data-testid="my-team-details-tile">
-          <h3 className="text-xl font-semibold">{selectedTeam ? 'Team details' : 'Create your team'}</h3>
-
-          {selectedTeam ? (
-            <div className="mt-5 space-y-4">
-              <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-background px-4 py-4">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`}>
-                  <TeamIcon iconKey={currentIconKey} size="lg" />
-                </div>
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Team name
-                  </div>
-                  <div className="mt-1 text-base font-medium">{selectedTeam.name}</div>
-                </div>
-              </div>
-
-              <div className="grid gap-4 rounded-[1.25rem] border border-border bg-background px-4 py-4 sm:grid-cols-2">
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Status
-                  </div>
-                  <div className={`mt-1 text-base font-semibold ${teamStatusClass}`} data-testid="my-team-lifecycle-status">
-                    {teamLifecycleLabel}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Current icon
-                  </div>
-                  <div className="mt-1 text-base font-medium" data-testid="my-team-current-icon-label">
-                    {selectedIcon.label}
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-[1.25rem] border border-border bg-background px-4 py-4">
-                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Team owners
-                </div>
-                <div className="mt-3 space-y-2">
-                  {activeOwnerNames.length ? (
-                    activeOwnerNames.map((ownerName, index) => (
-                      <div className="text-base font-medium text-foreground" key={`${ownerName}-${index}`}>
-                        {ownerName}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-sm text-muted-foreground">No active owners</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-5 space-y-4">
-              <p className="text-sm text-muted-foreground">
-                A team is required for league participation. Start with a name and icon that feel right for your group.
-              </p>
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-foreground">Team name</span>
-                <input
-                  className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
-                  data-testid="my-team-name"
-                  disabled={isInactiveLeague || isBusy || !canCreateOwnTeam}
-                  maxLength={100}
-                  onChange={(event) => setTeamName(event.target.value)}
-                  value={teamName}
-                />
-              </label>
-              <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-background px-4 py-4">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`}>
-                  <TeamIcon iconKey={currentIconKey} size="lg" />
-                </div>
-                <button
-                  className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                  data-testid="my-team-change-icon"
-                  disabled={isInactiveLeague || isBusy || !canCreateOwnTeam}
-                  onClick={handleOpenIconModal}
-                  type="button"
-                >
-                  Change icon
-                </button>
-              </div>
-              <button
-                className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                data-testid="my-team-save"
-                disabled={!teamName.trim() || isInactiveLeague || isBusy || !canCreateOwnTeam}
-                onClick={() => void handleSaveTeam()}
-                type="button"
-              >
-                {isBusy ? 'Saving...' : canCreateOwnTeam ? 'Create team' : 'Choose a team first'}
-              </button>
-              {createTeamMutation.isSuccess ? (
-                <p className="text-sm text-emerald-700">Your team was created.</p>
-              ) : null}
-              {createTeamMutation.isError ? (
-                <p className="text-sm text-destructive">{extractErrorMessage(createTeamMutation.error)}</p>
-              ) : null}
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-[2rem] border border-border bg-card p-6" data-testid="my-team-actions-tile">
-          <h3 className="text-xl font-semibold">Actions</h3>
-          <div className="mt-5 space-y-3">
+      <DetailsActionsLayout
+        actions={(
+          <>
             {selectedTeam ? (
               <>
                 <button
@@ -944,9 +841,113 @@ export function MyTeamPage() {
             {deleteTeamMutation.isError ? (
               <p className="text-sm text-destructive">{extractErrorMessage(deleteTeamMutation.error)}</p>
             ) : null}
-          </div>
-        </section>
-      </div>
+          </>
+        )}
+        actionsTestId="my-team-actions-tile"
+        details={(
+          <section className="rounded-[2rem] border border-border bg-card p-6" data-testid="my-team-details-tile">
+            <h3 className="text-xl font-semibold">{selectedTeam ? 'Team details' : 'Create your team'}</h3>
+
+            {selectedTeam ? (
+              <div className="mt-5 space-y-4">
+                <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-background px-4 py-4">
+                  <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`}>
+                    <TeamIcon iconKey={currentIconKey} size="lg" />
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      Team name
+                    </div>
+                    <div className="mt-1 text-base font-medium">{selectedTeam.name}</div>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 rounded-[1.25rem] border border-border bg-background px-4 py-4 sm:grid-cols-2">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      Status
+                    </div>
+                    <div className={`mt-1 text-base font-semibold ${teamStatusClass}`} data-testid="my-team-lifecycle-status">
+                      {teamLifecycleLabel}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      Current icon
+                    </div>
+                    <div className="mt-1 text-base font-medium" data-testid="my-team-current-icon-label">
+                      {selectedIcon.label}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[1.25rem] border border-border bg-background px-4 py-4">
+                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Team owners
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {activeOwnerNames.length ? (
+                      activeOwnerNames.map((ownerName, index) => (
+                        <div className="text-base font-medium text-foreground" key={`${ownerName}-${index}`}>
+                          {ownerName}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-muted-foreground">No active owners</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-5 space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  A team is required for league participation. Start with a name and icon that feel right for your group.
+                </p>
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-foreground">Team name</span>
+                  <input
+                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
+                    data-testid="my-team-name"
+                    disabled={isInactiveLeague || isBusy || !canCreateOwnTeam}
+                    maxLength={100}
+                    onChange={(event) => setTeamName(event.target.value)}
+                    value={teamName}
+                  />
+                </label>
+                <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-background px-4 py-4">
+                  <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`}>
+                    <TeamIcon iconKey={currentIconKey} size="lg" />
+                  </div>
+                  <button
+                    className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                    data-testid="my-team-change-icon"
+                    disabled={isInactiveLeague || isBusy || !canCreateOwnTeam}
+                    onClick={handleOpenIconModal}
+                    type="button"
+                  >
+                    Change icon
+                  </button>
+                </div>
+                <button
+                  className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                  data-testid="my-team-save"
+                  disabled={!teamName.trim() || isInactiveLeague || isBusy || !canCreateOwnTeam}
+                  onClick={() => void handleSaveTeam()}
+                  type="button"
+                >
+                  {isBusy ? 'Saving...' : canCreateOwnTeam ? 'Create team' : 'Choose a team first'}
+                </button>
+                {createTeamMutation.isSuccess ? (
+                  <p className="text-sm text-emerald-700">Your team was created.</p>
+                ) : null}
+                {createTeamMutation.isError ? (
+                  <p className="text-sm text-destructive">{extractErrorMessage(createTeamMutation.error)}</p>
+                ) : null}
+              </div>
+            )}
+          </section>
+        )}
+      />
 
       <Dialog.Root
         onOpenChange={(open) => setActiveDialog(open ? 'name' : null)}

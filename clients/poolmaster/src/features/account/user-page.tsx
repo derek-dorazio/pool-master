@@ -13,7 +13,7 @@ import {
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
-import { ConfirmDialog } from '@/features/shared/ui';
+import { ConfirmDialog, DetailsActionsLayout } from '@/features/shared/ui';
 import { useLogger } from '@/lib/logger';
 import { RootAdminUserAccountPage } from './root-admin-user-account-page';
 import { formatUserName } from './user-name';
@@ -429,78 +429,9 @@ export function UserPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-        <div className="space-y-6">
-          <section
-            className="rounded-[1.75rem] border border-border bg-card p-6"
-            data-testid="user-page-identity-summary"
-          >
-            <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-              Account summary
-            </div>
-            <dl className="mt-4 grid gap-4">
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Name</dt>
-                <dd className="mt-1 break-words text-base font-medium text-foreground">
-                  {formatUserName(user.firstName, user.lastName)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Email</dt>
-                <dd className="mt-1 break-words text-base font-medium text-foreground">
-                  {user.email}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Username
-                </dt>
-                <dd className="mt-1 break-words text-base font-medium text-foreground">
-                  {user.username}
-                </dd>
-              </div>
-            </dl>
-          </section>
-
-          <section
-            className="rounded-[1.75rem] border border-border bg-card p-6"
-            data-testid="user-page-account-details"
-          >
-            <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-              Account details
-            </div>
-            <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Member since
-                </dt>
-                <dd className="mt-1 text-base font-medium text-foreground">{memberSince}</dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Status</dt>
-                <dd className="mt-1 text-base font-medium text-foreground">
-                  {isInactive ? 'Inactive' : 'Active'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Role</dt>
-                <dd className="mt-1 text-base font-medium text-foreground">
-                  {user.isRootAdmin ? 'Root admin' : 'Member'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Method</dt>
-                <dd className="mt-1 text-base font-medium text-foreground">
-                  {user.authProvider ?? 'EMAIL'}
-                </dd>
-              </div>
-            </dl>
-          </section>
-        </div>
-
-        <section className="rounded-[1.75rem] border border-border bg-card p-6">
-          <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Actions</div>
-          <div className="mt-4 grid gap-4">
+      <DetailsActionsLayout
+        actions={(
+          <>
             <button
               className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-5 py-4 text-left transition hover:border-primary/40 hover:bg-card"
               data-testid="user-page-open-profile"
@@ -599,9 +530,79 @@ export function UserPage() {
                 {isInactive ? 'Open' : 'Locked'}
               </span>
             </button>
-          </div>
-        </section>
-      </div>
+          </>
+        )}
+        actionsTestId="user-page-actions-tile"
+        details={(
+          <>
+          <section
+            className="rounded-[1.75rem] border border-border bg-card p-6"
+            data-testid="user-page-identity-summary"
+          >
+            <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+              Account summary
+            </div>
+            <dl className="mt-4 grid gap-4">
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Name</dt>
+                <dd className="mt-1 break-words text-base font-medium text-foreground">
+                  {formatUserName(user.firstName, user.lastName)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Email</dt>
+                <dd className="mt-1 break-words text-base font-medium text-foreground">
+                  {user.email}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Username
+                </dt>
+                <dd className="mt-1 break-words text-base font-medium text-foreground">
+                  {user.username}
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <section
+            className="rounded-[1.75rem] border border-border bg-card p-6"
+            data-testid="user-page-account-details"
+          >
+            <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+              Account details
+            </div>
+            <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Member since
+                </dt>
+                <dd className="mt-1 text-base font-medium text-foreground">{memberSince}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Status</dt>
+                <dd className="mt-1 text-base font-medium text-foreground">
+                  {isInactive ? 'Inactive' : 'Active'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Role</dt>
+                <dd className="mt-1 text-base font-medium text-foreground">
+                  {user.isRootAdmin ? 'Root admin' : 'Member'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Method</dt>
+                <dd className="mt-1 text-base font-medium text-foreground">
+                  {user.authProvider ?? 'EMAIL'}
+                </dd>
+              </div>
+            </dl>
+          </section>
+          </>
+        )}
+      />
 
       <UserActionDialog
         description="Keep your personal name accurate for membership and account surfaces."

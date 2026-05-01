@@ -18,7 +18,7 @@ import {
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { IconPickerModal } from '@/features/shared/icon-picker-modal';
-import { ConfirmDialog } from '@/features/shared/ui';
+import { ConfirmDialog, DetailsActionsLayout } from '@/features/shared/ui';
 import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
 import { useLogger } from '@/lib/logger';
 import { removeLeagueSummary, syncLeagueCaches, type LeagueSummary } from './league-cache';
@@ -470,87 +470,9 @@ export function LeagueDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <section className="rounded-[2rem] border border-border bg-card p-6" data-testid="league-details-tile">
-          <h3 className="text-xl font-semibold">League details</h3>
-          <div className="mt-5 grid gap-4 rounded-[1.5rem] border border-border bg-background p-5 sm:grid-cols-2">
-            <div>
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                League name
-              </div>
-              <div className="mt-1 text-base font-medium">{leagueQuery.data.name}</div>
-            </div>
-
-            <div>
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Status
-              </div>
-              <div
-                className={`mt-1 text-base font-semibold ${isInactiveLeague ? 'text-destructive' : 'text-foreground'}`}
-                data-testid="league-lifecycle-status"
-              >
-                {lifecycleStatusLabel}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                League code
-              </div>
-              <div className="mt-1 font-mono text-base font-medium">{leagueQuery.data.leagueCode}</div>
-            </div>
-
-            <div>
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Join policy
-              </div>
-              <div className="mt-1 text-base font-medium" data-testid="league-join-policy">
-                {leagueQuery.data.joinPolicy}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Created
-              </div>
-              <div className="mt-1 text-base font-medium">
-                {leagueQuery.data.createdAt
-                  ? new Date(leagueQuery.data.createdAt).toLocaleDateString()
-                  : 'Unknown'}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div
-                className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-primary/10 text-primary"
-                data-testid="league-current-icon"
-              >
-                <LeagueIcon iconKey={currentLeagueIconKey} size="lg" />
-              </div>
-              <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  League icon
-                </div>
-                <div className="mt-1 text-base font-medium" data-testid="league-current-icon-label">
-                  {selectedLeagueIcon.label}
-                </div>
-              </div>
-            </div>
-
-            <div className="sm:col-span-2">
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Description
-              </div>
-              <div className="mt-1 text-base text-foreground">
-                {leagueQuery.data.description?.trim() || 'No description'}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-[2rem] border border-border bg-card p-6" data-testid="league-actions-tile">
-          <h3 className="text-xl font-semibold">Actions</h3>
-          <div className="mt-5 space-y-3">
+      <DetailsActionsLayout
+        actions={(
+          <>
             {canManageLeague ? (
               <>
                 <button
@@ -650,9 +572,88 @@ export function LeagueDetailPage() {
                 <span>Open</span>
               </button>
             ) : null}
-          </div>
-        </section>
-      </div>
+          </>
+        )}
+        actionsTestId="league-actions-tile"
+        details={(
+          <section className="rounded-[2rem] border border-border bg-card p-6" data-testid="league-details-tile">
+            <h3 className="text-xl font-semibold">League details</h3>
+            <div className="mt-5 grid gap-4 rounded-[1.5rem] border border-border bg-background p-5 sm:grid-cols-2">
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  League name
+                </div>
+                <div className="mt-1 text-base font-medium">{leagueQuery.data.name}</div>
+              </div>
+
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Status
+                </div>
+                <div
+                  className={`mt-1 text-base font-semibold ${isInactiveLeague ? 'text-destructive' : 'text-foreground'}`}
+                  data-testid="league-lifecycle-status"
+                >
+                  {lifecycleStatusLabel}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  League code
+                </div>
+                <div className="mt-1 font-mono text-base font-medium">{leagueQuery.data.leagueCode}</div>
+              </div>
+
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Join policy
+                </div>
+                <div className="mt-1 text-base font-medium" data-testid="league-join-policy">
+                  {leagueQuery.data.joinPolicy}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Created
+                </div>
+                <div className="mt-1 text-base font-medium">
+                  {leagueQuery.data.createdAt
+                    ? new Date(leagueQuery.data.createdAt).toLocaleDateString()
+                    : 'Unknown'}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div
+                  className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-primary/10 text-primary"
+                  data-testid="league-current-icon"
+                >
+                  <LeagueIcon iconKey={currentLeagueIconKey} size="lg" />
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    League icon
+                  </div>
+                  <div className="mt-1 text-base font-medium" data-testid="league-current-icon-label">
+                    {selectedLeagueIcon.label}
+                  </div>
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Description
+                </div>
+                <div className="mt-1 text-base text-foreground">
+                  {leagueQuery.data.description?.trim() || 'No description'}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+      />
 
       <Dialog.Root
         onOpenChange={(open) => setActiveDialog(open ? 'details' : null)}
