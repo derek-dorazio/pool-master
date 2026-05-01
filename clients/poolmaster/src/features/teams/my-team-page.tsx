@@ -21,8 +21,7 @@ import {
   type ListLeagueSquadsResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
-import { IconPickerModal } from '@/features/shared/icon-picker-modal';
-import { ConfirmDialog, DetailsActionsLayout } from '@/features/shared/ui';
+import { ConfirmDialog, DetailsActionsLayout, IconPickerModal } from '@/features/shared/ui';
 import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';

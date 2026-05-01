@@ -17,8 +17,7 @@ import {
   type LeaveLeagueResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
-import { IconPickerModal } from '@/features/shared/icon-picker-modal';
-import { ConfirmDialog, DetailsActionsLayout } from '@/features/shared/ui';
+import { ConfirmDialog, DetailsActionsLayout, IconPickerModal } from '@/features/shared/ui';
 import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
 import { useLogger } from '@/lib/logger';
 import { removeLeagueSummary, syncLeagueCaches, type LeagueSummary } from './league-cache';

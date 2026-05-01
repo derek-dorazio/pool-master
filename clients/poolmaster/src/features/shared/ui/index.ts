@@ -21,6 +21,8 @@ export { Chip, StatusBadge } from "./status-badge";
 export { FormField, Input, Select, Textarea } from "./form-field";
 export type { InputProps, SelectProps, TextareaProps } from "./form-field";
 export { IconAvatar, IconBadge } from "./icon-avatar";
+export { IconPickerModal } from "./icon-picker-modal";
+export type { IconPickerOption } from "./icon-picker-modal";
 export { DefinitionList, MetricGrid, MetricTile } from "./metric-grid";
 export { EmptyState, ErrorState, LoadingState } from "./state";
 export { Pagination, ResultsSummary } from "./pagination";

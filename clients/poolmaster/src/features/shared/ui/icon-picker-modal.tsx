@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
-import { Button, Modal, Tile } from "@/features/shared/ui";
+import { Button } from "./button";
+import { Modal } from "./modal";
+import { Tile } from "./tile";
 
-type IconPickerOption<Key extends string> = {
+export type IconPickerOption<Key extends string> = {
   key: Key;
   label: string;
 };
@@ -10,56 +12,56 @@ type IconPickerModalProps<
   Key extends string,
   Option extends IconPickerOption<Key>,
 > = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
+  canSave: boolean;
+  canSelect: boolean;
+  closeLabel: string;
   description: string;
   descriptionId: string;
-  modalTestId: string;
-  paletteTestId: string;
-  optionTestIdPrefix: string;
-  saveTestId: string;
-  closeLabel: string;
-  options: Option[];
-  value: Key;
-  selectedLabel: string;
-  canSelect: boolean;
-  canSave: boolean;
-  isPending: boolean;
   errorMessage?: string | null;
-  onSelect: (key: Key) => void;
+  isPending: boolean;
+  modalTestId: string;
   onCancel: () => void;
+  onOpenChange: (open: boolean) => void;
   onSave: () => void;
-  renderSelectedIcon: () => ReactNode;
+  onSelect: (key: Key) => void;
+  open: boolean;
+  optionTestIdPrefix: string;
+  options: readonly Option[];
+  paletteTestId: string;
   renderOptionIcon: (option: Option) => ReactNode;
+  renderSelectedIcon: () => ReactNode;
+  saveTestId: string;
+  selectedLabel: string;
+  title: string;
+  value: Key;
 };
 
 export function IconPickerModal<
   Key extends string,
   Option extends IconPickerOption<Key>,
 >({
-  open,
-  onOpenChange,
-  title,
+  canSave,
+  canSelect,
+  closeLabel,
   description,
   descriptionId,
-  modalTestId,
-  paletteTestId,
-  optionTestIdPrefix,
-  saveTestId,
-  closeLabel,
-  options,
-  value,
-  selectedLabel,
-  canSelect,
-  canSave,
-  isPending,
   errorMessage,
-  onSelect,
+  isPending,
+  modalTestId,
   onCancel,
+  onOpenChange,
   onSave,
-  renderSelectedIcon,
+  onSelect,
+  open,
+  optionTestIdPrefix,
+  options,
+  paletteTestId,
   renderOptionIcon,
+  renderSelectedIcon,
+  saveTestId,
+  selectedLabel,
+  title,
+  value,
 }: IconPickerModalProps<Key, Option>) {
   return (
     <Modal
