@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { LinkButton, Tile } from '@/features/shared/ui';
 import { MANAGE_SECTION_DEFINITIONS } from './manage-navigation';
 
 export function RootAdminManageHubPage() {
@@ -9,9 +9,8 @@ export function RootAdminManageHubPage() {
     >
       <section className="grid gap-4 xl:grid-cols-2">
         {MANAGE_SECTION_DEFINITIONS.map((section) => (
-          <article
+          <Tile
             key={section.key}
-            className="rounded-[2rem] border border-border bg-card p-6"
           >
             <div>
               <div>
@@ -25,15 +24,15 @@ export function RootAdminManageHubPage() {
             </div>
 
             <div className="mt-5">
-              <Link
-                className="inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+              <LinkButton
                 data-testid={`root-admin-manage-link-${section.key}`}
                 to={section.to}
+                variant="subtle"
               >
                 Open {section.title}
-              </Link>
+              </LinkButton>
             </div>
-          </article>
+          </Tile>
         ))}
       </section>
     </section>

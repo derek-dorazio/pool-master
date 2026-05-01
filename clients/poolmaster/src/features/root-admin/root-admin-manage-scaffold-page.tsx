@@ -1,3 +1,4 @@
+import { Alert, Tile } from '@/features/shared/ui';
 import {
   getManageSectionDefinition,
   type ManageSectionKey,
@@ -17,7 +18,7 @@ export function RootAdminManageScaffoldPage({
       className="space-y-6"
       data-testid={`root-admin-manage-scaffold-page-${sectionKey}`}
     >
-      <div className="rounded-[2rem] border border-border bg-card p-6">
+      <Tile>
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
           Manage
         </p>
@@ -27,14 +28,14 @@ export function RootAdminManageScaffoldPage({
         <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
           {section.description}
         </p>
-      </div>
+      </Tile>
 
-      <section className="rounded-[2rem] border border-border bg-card p-6">
-        <p className="text-sm text-muted-foreground">
+      <Tile>
+        <Alert>
           This section already has a dedicated surface. Use the page navigation
           above if you need to switch areas.
-        </p>
-      </section>
+        </Alert>
+      </Tile>
     </section>
   );
 }

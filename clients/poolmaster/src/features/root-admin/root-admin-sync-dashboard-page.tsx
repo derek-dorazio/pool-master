@@ -1,17 +1,22 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import {
   adminListProviderSyncRuns,
   adminListProviders,
 } from '@/lib/api';
-import { DataGrid } from '@/features/shared/ui';
+import {
+  Alert,
+  DataGrid,
+  LinkButton,
+  MetricGrid,
+  MetricTile,
+  StatusBadge,
+  Tile,
+} from '@/features/shared/ui';
 import {
   buildPayloadSummary,
   getProviderName,
-  getProviderStatusClasses,
-  getSyncRunStatusClasses,
   type ProviderSummary,
   type ProviderSyncRun,
   formatJsonPayload,
@@ -68,6 +73,22 @@ function formatEventValue(eventId: string | null | undefined) {
   }
 
   return eventId;
+}
+
+function getStatusTone(status: string) {
+  switch (status) {
+    case 'COMPLETED':
+    case 'HEALTHY':
+      return 'success';
+    case 'FAILED':
+    case 'UNHEALTHY':
+      return 'danger';
+    case 'IN_PROGRESS':
+    case 'SUBMITTED':
+      return 'warning';
+    default:
+      return 'neutral';
+  }
 }
 
 export function RootAdminSyncDashboardPage() {
@@ -177,11 +198,9 @@ export function RootAdminSyncDashboardPage() {
       syncRunColumnHelper.accessor('status', {
         header: 'Status',
         cell: ({ getValue }) => (
-          <span
-            className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${getSyncRunStatusClasses(getValue())}`}
-          >
+          <StatusBadge tone={getStatusTone(getValue())}>
             {getValue()}
-          </span>
+          </StatusBadge>
         ),
       }),
       syncRunColumnHelper.accessor((run) => buildPayloadSummary(run.payload), {
@@ -210,102 +229,62 @@ export function RootAdminSyncDashboardPage() {
       className="space-y-6"
       data-testid="root-admin-sync-dashboard-page"
     >
-      <div className="rounded-[2rem] border border-border bg-card p-8">
+      <Tile padding="lg">
         <div className="flex flex-wrap gap-3">
-          <Link
-            className="inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+          <LinkButton
             data-testid="root-admin-open-run-sport-sync-page"
             to="/manage/sync/run-sport-sync"
+            variant="subtle"
           >
             Open sport sync page
-          </Link>
-          <Link
-            className="inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+          </LinkButton>
+          <LinkButton
             data-testid="root-admin-open-run-event-sync-page"
             to="/manage/sync/run-event-sync"
+            variant="subtle"
           >
             Open event sync page
-          </Link>
+          </LinkButton>
         </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-5">
-          <div className="rounded-[1.5rem] border border-border bg-background p-4">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Recent runs
-            </p>
-            <p className="mt-2 text-3xl font-semibold text-foreground">
-              {recentRuns.length}
-            </p>
-          </div>
-          <div className="rounded-[1.5rem] border border-border bg-background p-4">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Submitted
-            </p>
-            <p className="mt-2 text-3xl font-semibold text-foreground">
-              {summary.submitted}
-            </p>
-          </div>
-          <div className="rounded-[1.5rem] border border-border bg-background p-4">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Completed
-            </p>
-            <p className="mt-2 text-3xl font-semibold text-foreground">
-              {summary.completed}
-            </p>
-          </div>
-          <div className="rounded-[1.5rem] border border-border bg-background p-4">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              In progress
-            </p>
-            <p className="mt-2 text-3xl font-semibold text-foreground">
-              {summary.running}
-            </p>
-          </div>
-          <div className="rounded-[1.5rem] border border-border bg-background p-4">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Latest start
-            </p>
-            <p className="mt-2 text-sm font-medium text-foreground">
-              {formatDateTimeDisplay(summary.lastStartedAt)}
-            </p>
-          </div>
-        </div>
+        <MetricGrid className="mt-6 md:grid-cols-5">
+          <MetricTile label="Recent runs" value={recentRuns.length} />
+          <MetricTile label="Submitted" value={summary.submitted} />
+          <MetricTile label="Completed" value={summary.completed} />
+          <MetricTile label="In progress" value={summary.running} />
+          <MetricTile label="Latest start" value={formatDateTimeDisplay(summary.lastStartedAt)} />
+        </MetricGrid>
 
         {providersQuery.data && providersQuery.data.length > 0 ? (
           <div className="mt-6 flex flex-wrap gap-3">
             {providersQuery.data.map((provider) => (
-              <div
-                className="rounded-full border border-border bg-background px-4 py-2 text-xs text-muted-foreground"
-                key={provider.providerId}
-              >
+              <StatusBadge key={provider.providerId} tone="neutral">
                 <span className="font-medium text-foreground">
                   {provider.providerName}
                 </span>
-                <span
-                  className={`ml-2 inline-flex rounded-full border px-2 py-0.5 ${getProviderStatusClasses(provider.status)}`}
-                >
+                <StatusBadge className="ml-2 px-2 py-0.5" tone={getStatusTone(provider.status)}>
                   {provider.status}
-                </span>
-              </div>
+                </StatusBadge>
+              </StatusBadge>
             ))}
           </div>
         ) : null}
 
         {providersQuery.isError ? (
-          <p className="mt-4 text-sm text-muted-foreground">
+          <Alert className="mt-4">
             Provider health context is temporarily unavailable, but sync runs are
             still shown below.
-          </p>
+          </Alert>
         ) : null}
-      </div>
+      </Tile>
 
-      <section className="rounded-[2rem] border border-border bg-card p-6">
+      <Tile>
         {syncRunsQuery.isError ? (
-          <p className="text-sm text-rose-700">
+          <Alert tone="danger">
             {extractErrorMessage(
               syncRunsQuery.error,
               'We could not load provider sync runs right now.',
             )}
-          </p>
+          </Alert>
         ) : null}
 
         {!syncRunsQuery.isError ? (
@@ -318,7 +297,7 @@ export function RootAdminSyncDashboardPage() {
             tableTestId="root-admin-sync-history-table"
           />
         ) : null}
-      </section>
+      </Tile>
     </section>
   );
 }

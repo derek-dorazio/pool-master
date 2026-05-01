@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import {
   adminListProviders,
   adminPrepareSportSync,
 } from '@/lib/api';
 import { useLogger } from '@/lib/logger';
+import {
+  Alert,
+  Button,
+  FormField,
+  LinkButton,
+  Select,
+  Tile,
+} from '@/features/shared/ui';
 import {
   formatJsonPayload,
   getSportSyncPreset,
@@ -161,7 +168,7 @@ export function RootAdminRunSportSyncPage() {
       className="space-y-6"
       data-testid="root-admin-run-sport-sync-page"
     >
-      <div className="rounded-[2rem] border border-border bg-card p-6">
+      <Tile>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
@@ -176,21 +183,19 @@ export function RootAdminRunSportSyncPage() {
               sport-level ingestion workflow.
             </p>
           </div>
-          <Link
-            className="inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
+          <LinkButton
             to="/manage/sync"
+            variant="subtle"
           >
             Back to Sync dashboard
-          </Link>
+          </LinkButton>
         </div>
-      </div>
+      </Tile>
 
-      <section className="rounded-[2rem] border border-border bg-card p-6">
+      <Tile>
         <div className="space-y-3">
-          <label className="text-sm text-muted-foreground">
-            <span className="mb-2 block font-medium text-foreground">Preset</span>
-            <select
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
+          <FormField label="Preset">
+            <Select
               data-testid="root-admin-sport-sync-preset"
               disabled={syncMutation.isPending}
               onChange={(event) =>
@@ -202,13 +207,11 @@ export function RootAdminRunSportSyncPage() {
                   {preset.label}
                 </option>
               ))}
-            </select>
-          </label>
+            </Select>
+          </FormField>
 
-          <label className="text-sm text-muted-foreground">
-            <span className="mb-2 block font-medium text-foreground">Sport</span>
-            <select
-              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
+          <FormField label="Sport">
+            <Select
               data-testid="root-admin-sport-sync-sport"
               disabled={syncMutation.isPending}
               onChange={(event) =>
@@ -220,25 +223,24 @@ export function RootAdminRunSportSyncPage() {
                   {sport}
                 </option>
               ))}
-            </select>
-          </label>
+            </Select>
+          </FormField>
 
-          <div className="rounded-[1.5rem] border border-border bg-background p-4 text-sm text-muted-foreground">
+          <Tile radius="lg">
             <p className="font-medium text-foreground">Requested feeds</p>
             <p className="mt-2">{selectedPreset.feeds.join(' · ')}</p>
-          </div>
+          </Tile>
 
           {providersQuery.isError ? (
-            <p className="text-sm text-muted-foreground">
+            <Alert>
               {extractErrorMessage(
                 providersQuery.error,
                 'Provider health context is unavailable, so the sport list is using fallback options.',
               )}
-            </p>
+            </Alert>
           ) : null}
 
-          <button
-            className="rounded-2xl bg-foreground px-5 py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          <Button
             data-testid="root-admin-sport-sync-now"
             disabled={syncMutation.isPending}
             onClick={() =>
@@ -246,33 +248,29 @@ export function RootAdminRunSportSyncPage() {
                 sport: sportSyncSport,
                 presetId: sportSyncPresetId,
               })}
-            type="button"
           >
             {syncMutation.isPending ? 'Syncing...' : 'Run sport sync'}
-          </button>
+          </Button>
 
           {syncMutation.isError ? (
-            <p className="text-sm text-rose-700">
+            <Alert tone="danger">
               {extractErrorMessage(
                 syncMutation.error,
                 'We could not submit the sport sync right now.',
               )}
-            </p>
+            </Alert>
           ) : null}
 
           {syncMutation.isSuccess ? (
-            <div
-              className="rounded-[1.5rem] border border-border bg-background p-4 text-sm text-muted-foreground"
-              data-testid="root-admin-sport-sync-response"
-            >
+            <Tile data-testid="root-admin-sport-sync-response" radius="lg">
               <p className="font-medium text-foreground">Latest API payload</p>
               <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words text-xs">
                 {formatJsonPayload(syncMutation.data)}
               </pre>
-            </div>
+            </Tile>
           ) : null}
         </div>
-      </section>
+      </Tile>
     </section>
   );
 }
