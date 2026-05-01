@@ -18,11 +18,15 @@ import {
 } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
+import {
+  EditableSelectionGroup,
+  LockedSelectionGroup,
+  TiebreakerSelector,
+  type SelectionGroup,
+} from './contest-entry-selection';
 
 type ContestDetail = GetContestResponses[200]['contest'];
 type DraftState = GetDraftStateResponses[200];
-type SelectionGroup = NonNullable<DraftState['selectionGroups']>[number];
-type SelectionParticipant = SelectionGroup['participants'][number];
 
 const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
 
@@ -89,11 +93,6 @@ function getContestPhaseLabel(contest: ContestDetail) {
   }
 }
 
-function getSelectedParticipants(group: SelectionGroup) {
-  const selectedIds = new Set(group.selectedParticipantIds);
-  return group.participants.filter((participant) => selectedIds.has(participant.sportEventParticipantId));
-}
-
 function getCompletionStats(selectionGroups: SelectionGroup[]) {
   const completedTiers = selectionGroups.filter(
     (group) => group.selectedParticipantIds.length >= group.picksFromGroup,
@@ -116,18 +115,6 @@ function getCompletionStats(selectionGroups: SelectionGroup[]) {
 
 function getNextIncompleteGroupId(selectionGroups: SelectionGroup[]) {
   return selectionGroups.find((group) => group.selectedParticipantIds.length < group.picksFromGroup)?.groupId ?? null;
-}
-
-function getGroupStatusLabel(group: SelectionGroup) {
-  if (group.selectedParticipantIds.length >= group.picksFromGroup) {
-    return 'Complete';
-  }
-
-  if (group.selectedParticipantIds.length > 0) {
-    return 'In progress';
-  }
-
-  return 'Next up';
 }
 
 function getNextSelectedParticipantIds(group: SelectionGroup, participantId: string) {
@@ -175,168 +162,6 @@ function applyOptimisticSelection(draftState: DraftState, participantId: string)
     selectionGroups: nextSelectionGroups,
     isComplete: requiredSelections > 0 && totalSelections >= requiredSelections,
   };
-}
-
-function getParticipantMetaSummary(participant: SelectionParticipant) {
-  const parts: string[] = [];
-
-  if (participant.orderIndex) {
-    parts.push(`Contest rank #${participant.orderIndex}`);
-  }
-  if (participant.ranking !== undefined && participant.ranking !== null) {
-    parts.push(`World rank #${participant.ranking}`);
-  }
-  if (participant.price !== undefined && participant.price !== null) {
-    parts.push(`${participant.price} salary`);
-  }
-  if (participant.status) {
-    parts.push(`Status: ${participant.status}`);
-  }
-
-  return parts;
-}
-
-function SelectionParticipantCard({
-  canSelect,
-  group,
-  isBusy,
-  onSelect,
-  participant,
-}: {
-  canSelect: boolean;
-  group: SelectionGroup;
-  isBusy: boolean;
-  onSelect: (participant: SelectionParticipant) => void;
-  participant: SelectionParticipant;
-}) {
-  const selectedCount = group.selectedParticipantIds.length;
-  const groupIsFull = selectedCount >= group.picksFromGroup;
-  const isSelected = group.selectedParticipantIds.includes(participant.sportEventParticipantId);
-  const canReplace = groupIsFull && !isSelected;
-  const isDisabled =
-    isBusy
-    || !canSelect
-    || !participant.isAvailable
-    || (groupIsFull && !canReplace && !isSelected);
-
-  let actionLabel = 'Select golfer';
-  if (isSelected) {
-    actionLabel = 'Selected';
-  } else if (!participant.isAvailable) {
-    actionLabel = participant.unavailableReason ?? 'Unavailable';
-  } else if (canReplace) {
-    actionLabel = 'Replace selection';
-  } else if (groupIsFull) {
-    actionLabel = 'Tier filled';
-  }
-
-  return (
-    <button
-      className={`flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left transition ${
-        isSelected
-          ? 'border-primary bg-primary/5'
-          : 'border-border bg-card hover:border-foreground/30'
-      } disabled:cursor-not-allowed disabled:opacity-70`}
-      data-testid={`contest-entry-participant-${participant.sportEventParticipantId}`}
-      disabled={isDisabled}
-      onClick={() => onSelect(participant)}
-      type="button"
-    >
-      <input
-        aria-label={actionLabel}
-        checked={isSelected}
-        className="mt-1 h-4 w-4 accent-primary"
-        readOnly
-        tabIndex={-1}
-        type="checkbox"
-      />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="font-medium text-foreground">{participant.participantName}</div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              {participant.team ?? participant.position ?? 'Golf field participant'}
-            </div>
-          </div>
-          <span className="shrink-0 rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            {actionLabel}
-          </span>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-          {getParticipantMetaSummary(participant).map((part) => (
-            <span key={`${participant.sportEventParticipantId}-${part}`}>{part}</span>
-          ))}
-        </div>
-      </div>
-    </button>
-  );
-}
-
-function LockedSelectionGroup({
-  group,
-}: {
-  group: SelectionGroup;
-}) {
-  const selectedParticipants = getSelectedParticipants(group);
-
-  return (
-    <section
-      className="rounded-[1.75rem] border border-border bg-background p-4"
-      data-testid={`contest-entry-group-${group.groupId}`}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h4 className="text-lg font-semibold text-foreground">{group.groupName}</h4>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Frozen lineup from Tier {group.groupNumber}.
-          </p>
-        </div>
-        <span className="rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Locked
-        </span>
-      </div>
-
-      <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="grid grid-cols-[minmax(0,1.6fr)_100px_110px_90px] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          <span>Golfer</span>
-          <span className="text-right">Contest rank</span>
-          <span className="text-right">World rank</span>
-          <span className="text-right">Status</span>
-        </div>
-        <div className="divide-y divide-border">
-          {selectedParticipants.length ? (
-            selectedParticipants.map((participant) => (
-              <div
-                className="grid grid-cols-[minmax(0,1.6fr)_100px_110px_90px] gap-2 px-4 py-3 text-sm"
-                data-testid={`contest-entry-locked-participant-${group.groupId}-${participant.sportEventParticipantId}`}
-                key={participant.sportEventParticipantId}
-              >
-                <div className="min-w-0">
-                  <div className="truncate font-medium text-foreground">{participant.participantName}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {participant.team ?? participant.position ?? 'Golf field participant'}
-                  </div>
-                </div>
-                <span className="text-right text-foreground">
-                  {participant.orderIndex ? `#${participant.orderIndex}` : '—'}
-                </span>
-                <span className="text-right text-muted-foreground">
-                  {participant.ranking !== undefined && participant.ranking !== null ? `#${participant.ranking}` : '—'}
-                </span>
-                <span className="text-right text-muted-foreground">
-                  {participant.status ?? 'ACTIVE'}
-                </span>
-              </div>
-            ))
-          ) : (
-            <div className="px-4 py-4 text-sm text-muted-foreground">
-              No golfer was saved from this tier.
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  );
 }
 
 export function ContestEntryPage() {
@@ -945,104 +770,43 @@ export function ContestEntryPage() {
               }
 
               const isExpanded = expandedGroupId === group.groupId;
-              const selectedParticipants = getSelectedParticipants(group);
-              const isComplete = group.selectedParticipantIds.length >= group.picksFromGroup;
-              const statusLabel = getGroupStatusLabel(group);
 
               return (
-                <section
-                  className={`rounded-[1.75rem] border bg-background p-4 ${
-                    isComplete
-                      ? 'border-border'
-                      : 'border-amber-300 bg-amber-50/40'
-                  }`}
-                  data-testid={`contest-entry-group-${group.groupId}`}
+                <EditableSelectionGroup
+                  canSelect={isEditable && isMyEntry}
+                  group={group}
+                  isBusy={submitSelectionMutation.isPending}
+                  isExpanded={isExpanded}
                   key={group.groupId}
-                >
-                  <button
-                    className="flex w-full flex-wrap items-start justify-between gap-3 text-left"
-                    data-testid={`contest-entry-group-toggle-${group.groupId}`}
-                    onClick={() => setExpandedGroupId(isExpanded ? null : group.groupId)}
-                    ref={(element) => {
-                      groupToggleRefs.current[group.groupId] = element;
-                    }}
-                    type="button"
-                  >
-                    <div>
-                      <h4 className="text-lg font-semibold text-foreground">{group.groupName}</h4>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Choose {group.picksFromGroup} golfer{group.picksFromGroup === 1 ? '' : 's'} from this tier.
-                      </p>
-                      {selectedParticipants.length ? (
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                          {selectedParticipants.map((participant) => (
-                            <span
-                              className="rounded-full border border-border px-3 py-1"
-                              key={participant.sportEventParticipantId}
-                            >
-                              {participant.participantName}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <span
-                        className={`rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${
-                          isComplete
-                            ? 'border-border text-muted-foreground'
-                            : 'border-amber-300 bg-amber-100 text-amber-900'
-                        }`}
-                      >
-                        {statusLabel}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {group.selectedParticipantIds.length}/{group.picksFromGroup} saved
-                      </span>
-                      <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                        {isExpanded ? 'Hide tier' : isComplete ? 'Review tier' : 'Open tier'}
-                      </span>
-                    </div>
-                  </button>
+                  onParticipantSelect={async (nextParticipant) => {
+                    await submitSelectionMutation.mutateAsync(nextParticipant.sportEventParticipantId);
+                    setExpandedGroupId((current) => {
+                      if (current !== group.groupId) {
+                        return current;
+                      }
 
-                  {isExpanded ? (
-                    <div className="mt-4 grid gap-3">
-                      {group.participants.map((participant) => (
-                        <SelectionParticipantCard
-                          canSelect={isEditable && isMyEntry}
-                          group={group}
-                          isBusy={submitSelectionMutation.isPending}
-                          key={participant.sportEventParticipantId}
-                          onSelect={async (nextParticipant) => {
-                            await submitSelectionMutation.mutateAsync(nextParticipant.sportEventParticipantId);
-                            setExpandedGroupId((current) => {
-                              if (current !== group.groupId) {
-                                return current;
-                              }
+                      const currentIndex = selectionGroups.findIndex(
+                        (candidate) => candidate.groupId === group.groupId,
+                      );
+                      const nextSelectedIds = getNextSelectedParticipantIds(
+                        group,
+                        nextParticipant.sportEventParticipantId,
+                      );
+                      if (nextSelectedIds.length < group.picksFromGroup) {
+                        return group.groupId;
+                      }
+                      const nextGroup = selectionGroups
+                        .slice(currentIndex + 1)
+                        .find((candidate) => candidate.selectedParticipantIds.length < candidate.picksFromGroup);
 
-                              const currentIndex = selectionGroups.findIndex(
-                                (candidate) => candidate.groupId === group.groupId,
-                              );
-                              const nextSelectedIds = getNextSelectedParticipantIds(
-                                group,
-                                nextParticipant.sportEventParticipantId,
-                              );
-                              if (nextSelectedIds.length < group.picksFromGroup) {
-                                return group.groupId;
-                              }
-                              const nextGroup = selectionGroups
-                                .slice(currentIndex + 1)
-                                .find((candidate) => candidate.selectedParticipantIds.length < candidate.picksFromGroup);
-
-                              return nextGroup?.groupId ?? null;
-                            });
-                          }}
-                          participant={participant}
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-                </section>
+                      return nextGroup?.groupId ?? null;
+                    });
+                  }}
+                  onToggle={() => setExpandedGroupId(isExpanded ? null : group.groupId)}
+                  setToggleRef={(element) => {
+                    groupToggleRefs.current[group.groupId] = element;
+                  }}
+                />
               );
             })}
 
@@ -1053,34 +817,15 @@ export function ContestEntryPage() {
             ) : null}
 
             {isEditable && isMyEntry && lineupComplete ? (
-              <div className="rounded-[1.75rem] border border-border bg-background p-4">
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium text-foreground">Winning Score Relative to Par</span>
-                  <select
-                    className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
-                    data-testid="contest-entry-tiebreaker-select"
-                    disabled={saveEntryDetailsMutation.isPending}
-                    onChange={(event) => setTiebreakerDraft(event.target.value)}
-                    value={hasSelectedTiebreaker ? String(selectedTiebreakerValue) : ''}
-                  >
-                    <option value="">Select score</option>
-                    {TIEBREAKER_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {formatRelativeToPar(option)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  className="mt-4 rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                  data-testid="contest-entry-submit"
-                  disabled={finalSubmitDisabled}
-                  onClick={() => void submitEntry()}
-                  type="button"
-                >
-                  {saveEntryDetailsMutation.isPending ? 'Submitting...' : 'Submit entry'}
-                </button>
-              </div>
+              <TiebreakerSelector
+                disabled={saveEntryDetailsMutation.isPending}
+                isSubmitting={saveEntryDetailsMutation.isPending}
+                onChange={setTiebreakerDraft}
+                onSubmit={() => void submitEntry()}
+                options={TIEBREAKER_OPTIONS}
+                submitDisabled={finalSubmitDisabled}
+                value={hasSelectedTiebreaker ? String(selectedTiebreakerValue) : ''}
+              />
             ) : null}
           </div>
         </div>
