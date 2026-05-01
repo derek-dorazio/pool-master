@@ -1416,30 +1416,25 @@ export function CreateContestPage() {
                   </div>
                   <div className="mt-4 space-y-3">
                     {tiers.map((tier, index) => (
-                      <div
-                        className="grid gap-3 rounded-2xl border border-border/70 bg-card px-4 py-3 md:grid-cols-[0.8fr_1fr_1fr_0.8fr]"
+                      <Tile
+                        className="grid gap-3 md:grid-cols-[0.8fr_1fr_1fr_0.8fr]"
                         data-testid={`contest-tier-${tier.tierKey}`}
                         key={tier.tierKey}
+                        padding="sm"
+                        radius="lg"
+                        variant="default"
                       >
-                        <label className="space-y-1">
-                          <span className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                            Tier
-                          </span>
-                          <input
-                            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                        <FormField label="Tier">
+                          <Input
                             data-testid={`contest-tier-label-${tier.tierKey}`}
                             disabled={!isDraftEditable}
                             onChange={(event) => updateTier(index, { label: event.target.value })}
                             type="text"
                             value={tier.label}
                           />
-                        </label>
-                        <label className="space-y-1">
-                          <span className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                            Start
-                          </span>
-                          <input
-                            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                        </FormField>
+                        <FormField label="Start">
+                          <Input
                             data-testid={`contest-tier-start-${tier.tierKey}`}
                             disabled={!isDraftEditable}
                             min={1}
@@ -1450,13 +1445,9 @@ export function CreateContestPage() {
                             type="number"
                             value={tier.startPosition}
                           />
-                        </label>
-                        <label className="space-y-1">
-                          <span className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                            End
-                          </span>
-                          <input
-                            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                        </FormField>
+                        <FormField label="End">
+                          <Input
                             data-testid={`contest-tier-end-${tier.tierKey}`}
                             disabled={!isDraftEditable}
                             min={tier.startPosition}
@@ -1470,13 +1461,9 @@ export function CreateContestPage() {
                             type="number"
                             value={tier.endPosition ?? ''}
                           />
-                        </label>
-                        <label className="space-y-1">
-                          <span className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                            Picks
-                          </span>
-                          <input
-                            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                        </FormField>
+                        <FormField label="Picks">
+                          <Input
                             data-testid={`contest-tier-pick-count-${tier.tierKey}`}
                             disabled={!isDraftEditable}
                             min={1}
@@ -1487,8 +1474,8 @@ export function CreateContestPage() {
                             type="number"
                             value={tier.pickCount}
                           />
-                        </label>
-                      </div>
+                        </FormField>
+                      </Tile>
                     ))}
                   </div>
                 </Tile>
@@ -1507,66 +1494,61 @@ export function CreateContestPage() {
               </>
             ) : (
               <>
-                <div className="rounded-2xl border border-border bg-background p-4">
+                <Tile padding="sm" radius="lg" variant="subtle">
                   <h3 className="font-medium">Enabled categories</h3>
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     {CATEGORY_OPTIONS.map((category) => {
                       const isSelected = selectedCategories.includes(category.key);
                       return (
-                        <label
-                          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-sm"
-                          key={category.key}
-                        >
-                          <input
-                            checked={isSelected}
-                            data-testid={`contest-category-toggle-${category.key}`}
-                            onChange={() => toggleCategory(category.key)}
-                            type="checkbox"
-                          />
-                          <span>{category.label}</span>
-                        </label>
+                        <Tile key={category.key} padding="sm" radius="lg" variant="default">
+                          <label className="flex items-center gap-3 text-sm">
+                            <input
+                              checked={isSelected}
+                              data-testid={`contest-category-toggle-${category.key}`}
+                              onChange={() => toggleCategory(category.key)}
+                              type="checkbox"
+                            />
+                            <span>{category.label}</span>
+                          </label>
+                        </Tile>
                       );
                     })}
                   </div>
-                </div>
+                </Tile>
 
                 {showAdvanced ? (
-                  <div className="space-y-4 rounded-2xl border border-border bg-background p-4">
+                  <Tile className="space-y-4" padding="sm" radius="lg" variant="subtle">
                     <h3 className="font-medium">Advanced category settings</h3>
                     <div className="space-y-3">
-                      {selectedCategories.map((categoryKey) => (
-                        <label className="block space-y-2" key={categoryKey}>
-                          <span className="text-sm font-medium">
-                            {CATEGORY_OPTIONS.find((category) => category.key === categoryKey)?.label}
-                            {' '}pick count
-                          </span>
-                          <input
-                            className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
-                            data-testid={`contest-category-pick-count-${categoryKey}`}
-                            min={1}
-                            onChange={(event) =>
-                              setCategoryPickCounts((current) => ({
-                                ...current,
-                                [categoryKey]: event.target.value,
-                              }))}
-                            type="number"
-                            value={categoryPickCounts[categoryKey] ?? '1'}
-                          />
-                        </label>
-                      ))}
+                      {selectedCategories.map((categoryKey) => {
+                        const categoryLabel = CATEGORY_OPTIONS.find((category) => category.key === categoryKey)?.label;
+                        return (
+                          <FormField key={categoryKey} label={`${categoryLabel ?? categoryKey} pick count`}>
+                            <Input
+                              data-testid={`contest-category-pick-count-${categoryKey}`}
+                              min={1}
+                              onChange={(event) =>
+                                setCategoryPickCounts((current) => ({
+                                  ...current,
+                                  [categoryKey]: event.target.value,
+                                }))}
+                              type="number"
+                              value={categoryPickCounts[categoryKey] ?? '1'}
+                            />
+                          </FormField>
+                        );
+                      })}
                     </div>
-                    <label className="block space-y-2">
-                      <span className="text-sm font-medium">Missed-cut fallback score</span>
-                      <input
-                        className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm outline-none transition focus:border-primary"
+                    <FormField label="Missed-cut fallback score">
+                      <Input
                         data-testid="contest-category-fallback-score"
                         min={0}
                         onChange={(event) => setCategoryFallbackScore(event.target.value)}
                         type="number"
                         value={categoryFallbackScore}
                       />
-                    </label>
-                  </div>
+                    </FormField>
+                  </Tile>
                 ) : null}
               </>
             )}
