@@ -1,7 +1,6 @@
-import * as Dialog from '@radix-ui/react-dialog';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Copy } from 'lucide-react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
   activateLeague,
@@ -17,7 +16,25 @@ import {
   type LeaveLeagueResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
-import { ConfirmDialog, DetailsActionsLayout, IconPickerModal } from '@/features/shared/ui';
+import {
+  ActionList,
+  ActionTile,
+  Alert,
+  Button,
+  ConfirmDialog,
+  DefinitionList,
+  DetailsActionsLayout,
+  FormField,
+  IconAvatar,
+  IconPickerModal,
+  Input,
+  LinkButton,
+  MetricGrid,
+  MetricTile,
+  Modal,
+  Textarea,
+  Tile,
+} from '@/features/shared/ui';
 import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
 import { useLogger } from '@/lib/logger';
 import { removeLeagueSummary, syncLeagueCaches, type LeagueSummary } from './league-cache';
@@ -367,22 +384,20 @@ export function LeagueDetailPage() {
 
   if (leagueQuery.isLoading) {
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <p className="text-sm text-muted-foreground">Loading league detail...</p>
-      </section>
+      <Tile padding="lg">Loading league detail...</Tile>
     );
   }
 
   if (leagueQuery.isError || !leagueQuery.data) {
     const copy = getLeagueLoadErrorCopy(leagueQuery.error);
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
+      <Tile padding="lg">
         <h2 className="text-2xl font-semibold">{copy.title}</h2>
         <p className="mt-2 text-sm text-muted-foreground">{copy.body}</p>
-        <Link className="mt-4 inline-flex text-sm font-medium text-primary hover:underline" to="/welcome">
+        <LinkButton className="mt-4" to="/welcome" variant="subtle">
           Back to welcome
-        </Link>
-      </section>
+        </LinkButton>
+      </Tile>
     );
   }
 
@@ -421,28 +436,28 @@ export function LeagueDetailPage() {
   return (
     <section className="space-y-6" data-testid="league-home">
       {isInactiveLeague ? (
-        <div
-          className="rounded-[2rem] border border-amber-300 bg-amber-50 p-6 text-amber-950"
+        <Alert
           data-testid="league-inactive-banner"
+          tone="warning"
+          title="This league is not currently active."
         >
-          <h2 className="text-xl font-semibold">This league is not currently active.</h2>
-          <p className="mt-2 text-sm text-amber-900/90">
+          <p>
             League Home stays available in read-only mode while the league is inactive.
             Commissioner edits and invites are disabled while the league is inactive.
           </p>
-        </div>
+        </Alert>
       ) : null}
 
-      <div className="rounded-[2rem] border border-border bg-card p-8" data-testid="league-summary-tile">
+      <Tile data-testid="league-summary-tile" padding="lg">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
             <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
               {leagueQuery.data.isRootAdmin ? 'Root Admin' : formatRole(leagueQuery.data.memberType)}
             </span>
             <div className="flex items-start gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-primary/10 text-primary">
+              <IconAvatar label={`${leagueQuery.data.name} icon`} size="lg">
                 <LeagueIcon iconKey={leagueQuery.data.iconKey} size="lg" />
-              </div>
+              </IconAvatar>
               <div>
                 <h2 className="text-3xl font-semibold tracking-tight">{leagueQuery.data.name}</h2>
                 <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
@@ -452,397 +467,294 @@ export function LeagueDetailPage() {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 text-sm text-muted-foreground">
-            <div className="rounded-2xl bg-background px-4 py-4">
-              <div>Members</div>
-              <div className="mt-1 text-2xl font-semibold text-foreground">
-                {leagueQuery.data.memberCount}
-              </div>
-            </div>
-            <div className="rounded-2xl bg-background px-4 py-4">
-              <div>Active contests</div>
-              <div className="mt-1 text-2xl font-semibold text-foreground">
-                {leagueQuery.data.activeContestCount}
-              </div>
-            </div>
-          </div>
+          <MetricGrid className="grid-cols-2 sm:grid-cols-2">
+            <MetricTile label="Members" value={leagueQuery.data.memberCount} />
+            <MetricTile label="Active contests" value={leagueQuery.data.activeContestCount} />
+          </MetricGrid>
         </div>
-      </div>
+      </Tile>
 
       <DetailsActionsLayout
         actions={(
-          <>
+          <ActionList>
             {canManageLeague ? (
               <>
-                <button
-                  className="flex w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-4 text-left text-sm font-medium text-foreground transition hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+                <ActionTile
                   data-testid="league-open-details"
+                  label="Change league details"
                   disabled={!canEditLeague}
                   onClick={() => setActiveDialog('details')}
-                  type="button"
-                >
-                  <span>Change league details</span>
-                  <span className="text-muted-foreground">Open</span>
-                </button>
-                <button
-                  className="flex w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-4 text-left text-sm font-medium text-foreground transition hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  trailing="Open"
+                />
+                <ActionTile
                   data-testid="league-change-icon"
+                  label="Change league icon"
                   disabled={!canEditLeague}
                   onClick={handleOpenIconModal}
-                  type="button"
-                >
-                  <span>Change league icon</span>
-                  <span className="text-muted-foreground">Open</span>
-                </button>
-                <button
-                  className="flex w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-4 text-left text-sm font-medium text-foreground transition hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  trailing="Open"
+                />
+                <ActionTile
                   data-testid="league-open-invite-members"
+                  label="Invite members"
                   disabled={isInactiveLeague}
                   onClick={() => setActiveDialog('invite')}
-                  type="button"
-                >
-                  <span>Invite members</span>
-                  <span className="text-muted-foreground">Open</span>
-                </button>
+                  trailing="Open"
+                />
 
                 {isInactiveLeague ? (
-                  <div className="rounded-2xl border border-border bg-background px-4 py-4" data-testid="league-lifecycle-section">
+                  <Tile data-testid="league-lifecycle-section" radius="lg">
                     <p className="text-sm text-muted-foreground" data-testid="league-lifecycle-helper">
                       The league is currently <span className="font-medium text-destructive">Inactive</span>,
                       click Activate to reactivate your league.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-3">
-                      <button
-                        className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                      <Button
                         data-testid="league-activate"
                         disabled={activateLeagueMutation.isPending}
                         onClick={() => void activateLeagueMutation.mutateAsync()}
-                        type="button"
                       >
                         {activateLeagueMutation.isPending ? 'Activating...' : 'Activate'}
-                      </button>
-                      <button
-                        className="rounded-2xl border border-destructive/40 px-4 py-3 text-sm font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-60"
+                      </Button>
+                      <Button
                         data-testid="league-delete-open"
                         disabled={deleteLeagueMutation.isPending}
                         onClick={() => setDeleteModalOpen(true)}
-                        type="button"
+                        variant="danger"
                       >
                         Delete
-                      </button>
+                      </Button>
                     </div>
                     {activateLeagueMutation.isError ? (
-                      <p className="mt-3 text-sm text-destructive">
+                      <Alert className="mt-3" tone="danger">
                         {extractErrorMessage(activateLeagueMutation.error, 'We could not activate this league.')}
-                      </p>
+                      </Alert>
                     ) : null}
-                  </div>
+                  </Tile>
                 ) : (
-                  <button
-                    className="flex w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-4 text-left text-sm font-medium text-foreground transition hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  <ActionTile
                     data-testid="league-inactivate-open"
                     disabled={inactivateLeagueMutation.isPending}
+                    label="Inactivate league"
                     onClick={() => {
                       inactivateLeagueMutation.reset();
                       setActiveDialog('inactivate');
                     }}
-                    type="button"
-                  >
-                    <span>Inactivate league</span>
-                    <span className="text-muted-foreground">Open</span>
-                  </button>
+                    trailing="Open"
+                  />
                 )}
               </>
             ) : null}
 
             {!leagueQuery.data.isRootAdmin ? (
-              <button
-                className="flex w-full items-center justify-between rounded-2xl border border-destructive/30 bg-background px-4 py-4 text-left text-sm font-medium text-destructive transition hover:bg-destructive/5 disabled:cursor-not-allowed disabled:opacity-60"
+              <ActionTile
                 data-testid="league-leave-open"
                 disabled={isInactiveLeague}
+                label="Leave league"
                 onClick={() => {
                   setLeaveActionError(null);
                   setLeaveCompleted(false);
                   setActiveDialog('leave');
                 }}
-                type="button"
-              >
-                <span>Leave league</span>
-                <span>Open</span>
-              </button>
+                tone="danger"
+                trailing="Open"
+              />
             ) : null}
-          </>
+          </ActionList>
         )}
         actionsTestId="league-actions-tile"
         details={(
-          <section className="rounded-[2rem] border border-border bg-card p-6" data-testid="league-details-tile">
+          <Tile data-testid="league-details-tile">
             <h3 className="text-xl font-semibold">League details</h3>
-            <div className="mt-5 grid gap-4 rounded-[1.5rem] border border-border bg-background p-5 sm:grid-cols-2">
-              <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  League name
-                </div>
-                <div className="mt-1 text-base font-medium">{leagueQuery.data.name}</div>
-              </div>
-
-              <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Status
-                </div>
-                <div
-                  className={`mt-1 text-base font-semibold ${isInactiveLeague ? 'text-destructive' : 'text-foreground'}`}
-                  data-testid="league-lifecycle-status"
-                >
-                  {lifecycleStatusLabel}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  League code
-                </div>
-                <div className="mt-1 font-mono text-base font-medium">{leagueQuery.data.leagueCode}</div>
-              </div>
-
-              <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Join policy
-                </div>
-                <div className="mt-1 text-base font-medium" data-testid="league-join-policy">
-                  {leagueQuery.data.joinPolicy}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Created
-                </div>
-                <div className="mt-1 text-base font-medium">
-                  {leagueQuery.data.createdAt
+            <DefinitionList
+              className="mt-5"
+              items={[
+                { label: 'League name', value: leagueQuery.data.name },
+                {
+                  label: 'Status',
+                  value: (
+                    <span
+                      className={isInactiveLeague ? 'text-destructive' : undefined}
+                      data-testid="league-lifecycle-status"
+                    >
+                      {lifecycleStatusLabel}
+                    </span>
+                  ),
+                },
+                {
+                  label: 'League code',
+                  value: <span className="font-mono">{leagueQuery.data.leagueCode}</span>,
+                },
+                {
+                  label: 'Join policy',
+                  value: <span data-testid="league-join-policy">{leagueQuery.data.joinPolicy}</span>,
+                },
+                {
+                  label: 'Created',
+                  value: leagueQuery.data.createdAt
                     ? new Date(leagueQuery.data.createdAt).toLocaleDateString()
-                    : 'Unknown'}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div
-                  className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-primary/10 text-primary"
-                  data-testid="league-current-icon"
-                >
-                  <LeagueIcon iconKey={currentLeagueIconKey} size="lg" />
-                </div>
-                <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    League icon
-                  </div>
-                  <div className="mt-1 text-base font-medium" data-testid="league-current-icon-label">
-                    {selectedLeagueIcon.label}
-                  </div>
-                </div>
-              </div>
-
-              <div className="sm:col-span-2">
-                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Description
-                </div>
-                <div className="mt-1 text-base text-foreground">
-                  {leagueQuery.data.description?.trim() || 'No description'}
-                </div>
-              </div>
-            </div>
-          </section>
+                    : 'Unknown',
+                },
+                {
+                  label: 'League icon',
+                  value: (
+                    <span className="flex items-center gap-3">
+                      <span data-testid="league-current-icon">
+                        <IconAvatar size="md">
+                          <LeagueIcon iconKey={currentLeagueIconKey} size="lg" />
+                        </IconAvatar>
+                      </span>
+                      <span data-testid="league-current-icon-label">{selectedLeagueIcon.label}</span>
+                    </span>
+                  ),
+                },
+                {
+                  label: 'Description',
+                  value: leagueQuery.data.description?.trim() || 'No description',
+                },
+              ]}
+            />
+          </Tile>
         )}
       />
 
-      <Dialog.Root
+      <Modal
+        description="Update the public name and description shown for this league."
+        descriptionId="league-details-modal-description"
         onOpenChange={(open) => setActiveDialog(open ? 'details' : null)}
         open={activeDialog === 'details'}
+        testId="league-details-modal"
+        title="Change league details"
       >
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
-          <Dialog.Content
-            aria-describedby="league-details-modal-description"
-            className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
-            data-testid="league-details-modal"
+        <div className="space-y-4">
+          <FormField label="League name">
+            <Input
+              data-testid="league-details-name"
+              disabled={!canEditLeague}
+              onChange={(event) => setDetailsName(event.target.value)}
+              type="text"
+              value={detailsName}
+            />
+          </FormField>
+          <FormField label="Description">
+            <Textarea
+              data-testid="league-details-description"
+              disabled={!canEditLeague}
+              onChange={(event) => setDetailsDescription(event.target.value)}
+              value={detailsDescription}
+            />
+          </FormField>
+        </div>
+
+        {updateDetailsMutation.isError ? (
+          <Alert className="mt-4" tone="danger">
+            {extractErrorMessage(updateDetailsMutation.error, 'We could not save league details.')}
+          </Alert>
+        ) : null}
+
+        <div className="mt-6 flex justify-end gap-3">
+          <Button
+            disabled={updateDetailsMutation.isPending}
+            onClick={() => setActiveDialog(null)}
+            variant="secondary"
           >
-            <Dialog.Title className="text-2xl font-semibold tracking-tight">
-              Change league details
-            </Dialog.Title>
-            <Dialog.Description
-              className="mt-2 text-sm text-muted-foreground"
-              id="league-details-modal-description"
-            >
-              Update the public name and description shown for this league.
-            </Dialog.Description>
+            Cancel
+          </Button>
+          <Button
+            data-testid="league-save-details"
+            disabled={!canEditLeague || !detailsName.trim() || updateDetailsMutation.isPending}
+            isLoading={updateDetailsMutation.isPending}
+            onClick={() => void updateDetailsMutation.mutateAsync().then(() => setActiveDialog(null))}
+          >
+            {updateDetailsMutation.isPending ? 'Saving...' : 'Save details'}
+          </Button>
+        </div>
+      </Modal>
 
-            <div className="mt-5 space-y-4">
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-foreground">League name</span>
-                <input
-                  className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
-                  data-testid="league-details-name"
-                  disabled={!canEditLeague}
-                  onChange={(event) => setDetailsName(event.target.value)}
-                  type="text"
-                  value={detailsName}
-                />
-              </label>
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-foreground">Description</span>
-                <textarea
-                  className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
-                  data-testid="league-details-description"
-                  disabled={!canEditLeague}
-                  onChange={(event) => setDetailsDescription(event.target.value)}
-                  value={detailsDescription}
-                />
-              </label>
-            </div>
-
-            {updateDetailsMutation.isError ? (
-              <p className="mt-4 text-sm text-destructive">
-                {extractErrorMessage(updateDetailsMutation.error, 'We could not save league details.')}
-              </p>
-            ) : null}
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={updateDetailsMutation.isPending}
-                onClick={() => setActiveDialog(null)}
-                type="button"
-              >
-                Cancel
-              </button>
-              <button
-                className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                data-testid="league-save-details"
-                disabled={!canEditLeague || !detailsName.trim() || updateDetailsMutation.isPending}
-                onClick={() => void updateDetailsMutation.mutateAsync().then(() => setActiveDialog(null))}
-                type="button"
-              >
-                {updateDetailsMutation.isPending ? 'Saving...' : 'Save details'}
-              </button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-
-      <Dialog.Root
+      <Modal
+        description={`Invite new members to join the ${leagueQuery.data.name} league.`}
+        descriptionId="league-invite-modal-description"
         onOpenChange={(open) => setActiveDialog(open ? 'invite' : null)}
         open={activeDialog === 'invite'}
+        testId="league-invitations-section"
+        title="Invite Members"
       >
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
-          <Dialog.Content
-            aria-describedby="league-invite-modal-description"
-            className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
-            data-testid="league-invitations-section"
-          >
-            <Dialog.Title className="text-2xl font-semibold tracking-tight">
-              Invite Members
-            </Dialog.Title>
-            <Dialog.Description
-              className="mt-2 text-sm text-muted-foreground"
-              id="league-invite-modal-description"
-            >
-              Invite new members to join the {leagueQuery.data.name} league.
-            </Dialog.Description>
+        <DefinitionList
+          className="sm:grid-cols-1"
+          items={[{ label: 'Join policy', value: leagueQuery.data.joinPolicy }]}
+        />
 
-            <div className="mt-5 rounded-2xl border border-border bg-background p-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Join policy
-              </div>
-              <div className="mt-2 font-semibold text-foreground">
-                {leagueQuery.data.joinPolicy}
-              </div>
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-border bg-background p-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Join URL
-              </div>
-              <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-                <input
-                  className="min-w-0 flex-1 rounded-2xl border border-border bg-card px-4 py-3 font-mono text-sm disabled:cursor-not-allowed disabled:opacity-70"
-                  data-testid="league-join-url"
-                  disabled={isInactiveLeague}
-                  placeholder="Create a join URL"
-                  readOnly
-                  value={inviteLink}
-                />
-                <div className="flex gap-2">
-                  <button
-                    className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                    data-testid="league-create-join-url"
-                    disabled={inviteLinkMutation.isPending || isInactiveLeague}
-                    onClick={() => void handleGenerateInviteLink()}
-                    type="button"
-                  >
-                    {inviteLinkMutation.isPending ? 'Creating...' : inviteLink ? 'Refresh URL' : 'Create URL'}
-                  </button>
-                  <button
-                    aria-label="Copy join URL"
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                    data-testid="league-copy-join-url"
-                    disabled={!inviteLink || isInactiveLeague}
-                    onClick={() => void handleCopyInviteLink()}
-                    title="Copy join URL"
-                    type="button"
-                  >
-                    {inviteLinkCopied ? <Check aria-hidden size={18} /> : <Copy aria-hidden size={18} />}
-                  </button>
-                </div>
-              </div>
-              {inviteLinkMutation.isError ? (
-                <p className="mt-2 text-sm text-destructive">
-                  {extractErrorMessage(inviteLinkMutation.error, 'We could not create a join URL.')}
-                </p>
-              ) : null}
-            </div>
-
-            <label className="mt-5 block space-y-2">
-              <span className="text-sm font-medium">Invite by email</span>
-              <div className="flex gap-3">
-                <input
-                  className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-70"
-                  data-testid="league-invite-email"
-                  disabled={isInactiveLeague}
-                  onChange={(event) => setInviteEmail(event.target.value)}
-                  placeholder="member@example.com"
-                  type="email"
-                  value={inviteEmail}
-                />
-                <button
-                  className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                  data-testid="league-send-invite"
-                  disabled={sendInviteMutation.isPending || !inviteEmail.trim() || isInactiveLeague}
-                  onClick={() => void handleSendInvite()}
-                  type="button"
-                >
-                  {sendInviteMutation.isPending ? 'Sending...' : 'Send'}
-                </button>
-              </div>
-            </label>
-
-            {sendInviteMutation.isError ? (
-              <p className="mt-3 text-sm text-destructive">
-                {extractErrorMessage(sendInviteMutation.error, 'We could not send that invitation.')}
-              </p>
-            ) : null}
-
-            <div className="mt-6 flex justify-end">
-              <button
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
-                onClick={() => setActiveDialog(null)}
-                type="button"
+        <FormField className="mt-5" label="Join URL">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Input
+              className="min-w-0 flex-1 font-mono"
+              data-testid="league-join-url"
+              disabled={isInactiveLeague}
+              placeholder="Create a join URL"
+              readOnly
+              value={inviteLink}
+            />
+            <div className="flex gap-2">
+              <Button
+                data-testid="league-create-join-url"
+                disabled={inviteLinkMutation.isPending || isInactiveLeague}
+                onClick={() => void handleGenerateInviteLink()}
+                variant="secondary"
               >
-                Close
-              </button>
+                {inviteLinkMutation.isPending ? 'Creating...' : inviteLink ? 'Refresh URL' : 'Create URL'}
+              </Button>
+              <Button
+                aria-label="Copy join URL"
+                data-testid="league-copy-join-url"
+                disabled={!inviteLink || isInactiveLeague}
+                onClick={() => void handleCopyInviteLink()}
+                size="icon"
+                title="Copy join URL"
+                variant="icon"
+              >
+                {inviteLinkCopied ? <Check aria-hidden size={18} /> : <Copy aria-hidden size={18} />}
+              </Button>
             </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+          </div>
+        </FormField>
+
+        {inviteLinkMutation.isError ? (
+          <Alert className="mt-3" tone="danger">
+            {extractErrorMessage(inviteLinkMutation.error, 'We could not create a join URL.')}
+          </Alert>
+        ) : null}
+
+        <FormField className="mt-5" label="Invite by email">
+          <div className="flex gap-3">
+            <Input
+              data-testid="league-invite-email"
+              disabled={isInactiveLeague}
+              onChange={(event) => setInviteEmail(event.target.value)}
+              placeholder="member@example.com"
+              type="email"
+              value={inviteEmail}
+            />
+            <Button
+              data-testid="league-send-invite"
+              disabled={sendInviteMutation.isPending || !inviteEmail.trim() || isInactiveLeague}
+              onClick={() => void handleSendInvite()}
+            >
+              {sendInviteMutation.isPending ? 'Sending...' : 'Send'}
+            </Button>
+          </div>
+        </FormField>
+
+        {sendInviteMutation.isError ? (
+          <Alert className="mt-3" tone="danger">
+            {extractErrorMessage(sendInviteMutation.error, 'We could not send that invitation.')}
+          </Alert>
+        ) : null}
+
+        <div className="mt-6 flex justify-end">
+          <Button onClick={() => setActiveDialog(null)} variant="secondary">
+            Close
+          </Button>
+        </div>
+      </Modal>
 
       <ConfirmDialog
         confirmLabel="Inactivate"
@@ -874,85 +786,65 @@ export function LeagueDetailPage() {
         title="Inactivate league"
       >
         {inactivateLeagueMutation.isError ? (
-          <p className="text-sm text-destructive">
+          <Alert tone="danger">
             {extractErrorMessage(inactivateLeagueMutation.error, 'We could not inactivate this league.')}
-          </p>
+          </Alert>
         ) : null}
       </ConfirmDialog>
 
-      <Dialog.Root
+      <Modal
+        description="Leaving removes your membership from the active roster. If you are the last commissioner, appoint another commissioner before leaving."
+        descriptionId="league-leave-modal-description"
         onOpenChange={(open) => {
           if (!open && !leaveLeagueMutation.isPending) {
             setActiveDialog(null);
           }
         }}
         open={activeDialog === 'leave'}
+        testId="league-leave-modal"
+        title="Leave league"
       >
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
-          <Dialog.Content
-            aria-describedby="league-leave-modal-description"
-            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
-            data-testid="league-leave-modal"
-          >
-            <Dialog.Title className="text-2xl font-semibold tracking-tight">
-              Leave league
-            </Dialog.Title>
-            <Dialog.Description
-              className="mt-2 text-sm text-muted-foreground"
-              id="league-leave-modal-description"
-            >
-              Leaving removes your membership from the active roster. If you are the last
-              commissioner, appoint another commissioner before leaving.
-            </Dialog.Description>
-
-            {leaveCompleted ? (
-              <>
-                <p className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-                  You left {leagueQuery.data.name}.
-                </p>
-                <div className="mt-6 flex justify-end">
-                  <button
-                    className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
-                    data-testid="league-leave-ok"
-                    onClick={() => void handleLeaveCompletionAcknowledge()}
-                    type="button"
-                  >
-                    OK
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                {leaveActionError ? (
-                  <p className="mt-4 text-sm text-destructive" data-testid="league-leave-error">
-                    {leaveActionError}
-                  </p>
-                ) : null}
-                <div className="mt-6 flex justify-end gap-3">
-                  <button
-                    className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={leaveLeagueMutation.isPending}
-                    onClick={() => setActiveDialog(null)}
-                    type="button"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="rounded-2xl border border-destructive/30 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/5 disabled:cursor-not-allowed disabled:opacity-60"
-                    data-testid="league-leave"
-                    disabled={leaveLeagueMutation.isPending || isInactiveLeague}
-                    onClick={() => void handleLeaveLeague()}
-                    type="button"
-                  >
-                    {leaveLeagueMutation.isPending ? 'Leaving...' : 'Leave league'}
-                  </button>
-                </div>
-              </>
-            )}
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+        {leaveCompleted ? (
+          <>
+            <Alert className="mt-5" tone="success">
+              You left {leagueQuery.data.name}.
+            </Alert>
+            <div className="mt-6 flex justify-end">
+              <Button
+                data-testid="league-leave-ok"
+                onClick={() => void handleLeaveCompletionAcknowledge()}
+              >
+                OK
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            {leaveActionError ? (
+              <Alert className="mt-4" data-testid="league-leave-error" tone="danger">
+                {leaveActionError}
+              </Alert>
+            ) : null}
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                disabled={leaveLeagueMutation.isPending}
+                onClick={() => setActiveDialog(null)}
+                variant="secondary"
+              >
+                Cancel
+              </Button>
+              <Button
+                data-testid="league-leave"
+                disabled={leaveLeagueMutation.isPending || isInactiveLeague}
+                onClick={() => void handleLeaveLeague()}
+                variant="danger"
+              >
+                {leaveLeagueMutation.isPending ? 'Leaving...' : 'Leave league'}
+              </Button>
+            </div>
+          </>
+        )}
+      </Modal>
 
       <ConfirmDialog
         confirmLabel="Delete league"
@@ -976,10 +868,9 @@ export function LeagueDetailPage() {
         title="Delete league"
         tone="danger"
       >
-        <label className="block space-y-2">
-          <span className="text-sm font-medium text-foreground">League code</span>
-          <input
-            className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-mono text-sm uppercase outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
+        <FormField label="League code">
+          <Input
+            className="font-mono uppercase"
             data-testid="league-delete-confirmation"
             disabled={deleteLeagueMutation.isPending}
             onChange={(event) => setDeleteConfirmation(event.target.value)}
@@ -987,12 +878,12 @@ export function LeagueDetailPage() {
             type="text"
             value={deleteConfirmation}
           />
-        </label>
+        </FormField>
 
         {deleteLeagueMutation.isError ? (
-          <p className="mt-4 text-sm text-destructive">
+          <Alert className="mt-4" tone="danger">
             {extractErrorMessage(deleteLeagueMutation.error, 'We could not delete this league.')}
-          </p>
+          </Alert>
         ) : null}
       </ConfirmDialog>
 
@@ -1030,9 +921,9 @@ export function LeagueDetailPage() {
           </div>
         )}
         renderSelectedIcon={() => (
-          <div className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-primary/10 text-primary">
+          <IconAvatar size="lg">
             <LeagueIcon iconKey={iconDraftKey} size="lg" />
-          </div>
+          </IconAvatar>
         )}
         saveTestId="league-save-icon"
         selectedLabel={getLeagueIconOption(iconDraftKey).label}

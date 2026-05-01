@@ -1,4 +1,3 @@
-import * as Dialog from '@radix-ui/react-dialog';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -21,7 +20,22 @@ import {
   type ListLeagueSquadsResponses,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
-import { ConfirmDialog, DetailsActionsLayout, IconPickerModal } from '@/features/shared/ui';
+import {
+  ActionList,
+  ActionTile,
+  Alert,
+  Button,
+  ConfirmDialog,
+  DefinitionList,
+  DetailsActionsLayout,
+  FormField,
+  IconAvatar,
+  IconPickerModal,
+  Input,
+  LinkButton,
+  Modal,
+  Tile,
+} from '@/features/shared/ui';
 import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
@@ -443,27 +457,22 @@ export function MyTeamPage() {
 
   if (leagueQuery.isLoading) {
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <p className="text-sm text-muted-foreground">Loading your team...</p>
-      </section>
+      <Tile padding="lg">Loading your team...</Tile>
     );
   }
 
   if (leagueQuery.isError || !leagueQuery.data) {
     const copy = getLeagueLoadErrorCopy(leagueQuery.error);
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
+      <Tile padding="lg">
         <h2 className="text-2xl font-semibold">{copy.title}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           {copy.body}
         </p>
-        <Link
-          className="mt-4 inline-flex text-sm font-medium text-primary hover:underline"
-          to="/welcome"
-        >
+        <LinkButton className="mt-4" to="/welcome" variant="subtle">
           Back to welcome
-        </Link>
-      </section>
+        </LinkButton>
+      </Tile>
     );
   }
 
@@ -505,14 +514,13 @@ export function MyTeamPage() {
   const ownerManagementContent = (
     <div className="space-y-5" data-testid="my-team-owners-panel">
       {selectedTeam ? (
-        <div className="rounded-[1.5rem] border border-border bg-background p-4">
+        <Tile radius="lg">
           <h4 className="text-sm font-semibold text-foreground">Add co-owner</h4>
           <p className="mt-2 text-sm text-muted-foreground">
             Invite another person to co-manage this team. Existing league members are rejected automatically.
           </p>
           <div className="mt-4 flex gap-3">
-            <input
-              className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
+            <Input
               data-testid="my-team-owner-email"
               disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
               onChange={(event) => setCoOwnerEmail(event.target.value)}
@@ -520,23 +528,21 @@ export function MyTeamPage() {
               type="email"
               value={coOwnerEmail}
             />
-            <button
-              className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            <Button
               data-testid="my-team-owner-invite"
               disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam || !coOwnerEmail.trim()}
               onClick={() => void createOwnerInvitationMutation.mutateAsync(coOwnerEmail.trim())}
-              type="button"
             >
               Invite
-            </button>
+            </Button>
           </div>
           {createOwnerInvitationMutation.isSuccess ? (
-            <p className="mt-3 text-sm text-emerald-700">Co-owner invite created.</p>
+            <Alert className="mt-3" tone="success">Co-owner invite created.</Alert>
           ) : null}
           {createOwnerInvitationMutation.isError ? (
-            <p className="mt-3 text-sm text-destructive">{extractErrorMessage(createOwnerInvitationMutation.error)}</p>
+            <Alert className="mt-3" tone="danger">{extractErrorMessage(createOwnerInvitationMutation.error)}</Alert>
           ) : null}
-        </div>
+        </Tile>
       ) : null}
 
       <div className="space-y-3">
@@ -554,10 +560,11 @@ export function MyTeamPage() {
           </p>
         ) : (
           activeMembers.map((member: TeamMember) => (
-            <div
-              className="flex items-center justify-between rounded-2xl border border-border bg-background px-4 py-4"
+            <Tile
+              className="flex items-center justify-between gap-4"
               data-testid={`my-team-member-${member.userId}`}
               key={member.id}
+              radius="lg"
             >
               <div>
                 <div className="flex flex-wrap items-center gap-3">
@@ -599,34 +606,35 @@ export function MyTeamPage() {
                   teamId={selectedTeam.id}
                 />
                 {member.userId !== auth.user?.id ? (
-                  <button
-                    className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                  <Button
                     data-testid={`my-team-open-replace-${member.userId}`}
                     disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
                     onClick={() => {
                       setReplaceTargetUserId((current) => current === member.userId ? null : member.userId);
                       setReplaceEmail('');
                     }}
-                    type="button"
+                    size="sm"
+                    variant="secondary"
                   >
                     Replace owner
-                  </button>
+                  </Button>
                 ) : null}
               </div>
-            </div>
+            </Tile>
           ))
         )}
       </div>
 
       {selectedTeam && teamOwnerInvitations.length ? (
-        <div className="rounded-[1.5rem] border border-border bg-background p-4">
+        <Tile radius="lg">
           <h4 className="text-sm font-semibold text-foreground">Pending owner invites</h4>
           <div className="mt-4 space-y-3">
             {teamOwnerInvitations.map((invitation) => (
-              <div
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-4"
+              <Tile
+                className="flex flex-wrap items-center justify-between gap-3"
                 data-testid={`my-team-owner-invitation-${invitation.id}`}
                 key={invitation.id}
+                radius="lg"
               >
                 <div>
                   <div className="font-medium text-foreground">{invitation.email}</div>
@@ -635,31 +643,30 @@ export function MyTeamPage() {
                   </div>
                 </div>
                 {invitation.status === 'PENDING' ? (
-                  <button
-                    className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                  <Button
                     data-testid={`my-team-revoke-owner-invitation-${invitation.id}`}
                     disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
                     onClick={() => void revokeOwnerInvitationMutation.mutateAsync(invitation.id)}
-                    type="button"
+                    size="sm"
+                    variant="secondary"
                   >
                     Revoke
-                  </button>
+                  </Button>
                 ) : null}
-              </div>
+              </Tile>
             ))}
           </div>
-        </div>
+        </Tile>
       ) : null}
 
       {replaceTargetUserId ? (
-        <div className="rounded-[1.5rem] border border-border bg-background p-4">
+        <Tile radius="lg">
           <h4 className="text-sm font-semibold text-foreground">Replace owner</h4>
           <p className="mt-2 text-sm text-muted-foreground">
             Replacing an owner inactivates the selected current owner and starts the owner-invite flow for the replacement email.
           </p>
           <div className="mt-4 flex gap-3">
-            <input
-              className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
+            <Input
               data-testid="my-team-replace-email"
               disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
               onChange={(event) => setReplaceEmail(event.target.value)}
@@ -667,8 +674,7 @@ export function MyTeamPage() {
               type="email"
               value={replaceEmail}
             />
-            <button
-              className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            <Button
               data-testid="my-team-replace-submit"
               disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam || !replaceEmail.trim()}
               onClick={() =>
@@ -676,54 +682,52 @@ export function MyTeamPage() {
                   userId: replaceTargetUserId,
                   email: replaceEmail.trim(),
                 })}
-              type="button"
             >
               Replace
-            </button>
-            <button
-              className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
+            </Button>
+            <Button
               data-testid="my-team-replace-cancel"
               onClick={() => {
                 setReplaceTargetUserId(null);
                 setReplaceEmail('');
               }}
-              type="button"
+              variant="secondary"
             >
               Cancel
-            </button>
+            </Button>
           </div>
           {replaceOwnerMutation.isError ? (
-            <p className="mt-3 text-sm text-destructive">{extractErrorMessage(replaceOwnerMutation.error)}</p>
+            <Alert className="mt-3" tone="danger">{extractErrorMessage(replaceOwnerMutation.error)}</Alert>
           ) : null}
-        </div>
+        </Tile>
       ) : null}
 
       {revokeOwnerInvitationMutation.isError ? (
-        <p className="text-sm text-destructive">{extractErrorMessage(revokeOwnerInvitationMutation.error)}</p>
+        <Alert tone="danger">{extractErrorMessage(revokeOwnerInvitationMutation.error)}</Alert>
       ) : null}
       {teamInactivationNotice ? (
-        <p className="text-sm text-emerald-700">{teamInactivationNotice}</p>
+        <Alert tone="success">{teamInactivationNotice}</Alert>
       ) : null}
       {teamDeletionNotice ? (
-        <p className="text-sm text-emerald-700">{teamDeletionNotice}</p>
+        <Alert tone="success">{teamDeletionNotice}</Alert>
       ) : null}
       {inactivateTeamMutation.isError ? (
-        <p className="text-sm text-destructive">{extractErrorMessage(inactivateTeamMutation.error)}</p>
+        <Alert tone="danger">{extractErrorMessage(inactivateTeamMutation.error)}</Alert>
       ) : null}
       {deleteTeamMutation.isError ? (
-        <p className="text-sm text-destructive">{extractErrorMessage(deleteTeamMutation.error)}</p>
+        <Alert tone="danger">{extractErrorMessage(deleteTeamMutation.error)}</Alert>
       ) : null}
     </div>
   );
 
   return (
     <section className="space-y-6" data-testid="my-team-page">
-      <div className="rounded-[2rem] border border-border bg-card p-8">
+      <Tile padding="lg">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className={`flex h-16 w-16 items-center justify-center rounded-[1.4rem] ${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`}>
+            <IconAvatar className={`${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`} size="lg">
               <TeamIcon iconKey={currentIconKey} size="lg" />
-            </div>
+            </IconAvatar>
             <div>
               <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
                 {isManagingAnotherTeam ? 'Commissioner team view' : 'Team'}
@@ -740,147 +744,128 @@ export function MyTeamPage() {
               </p>
             </div>
           </div>
-          <Link
-            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
-            to={buildLeaguePath(leagueCode)}
-          >
+          <LinkButton to={buildLeaguePath(leagueCode)} variant="secondary">
             Back to league
-          </Link>
+          </LinkButton>
         </div>
-      </div>
+      </Tile>
 
       {isInactiveLeague ? (
-        <div className="rounded-[2rem] border border-amber-300 bg-amber-50 p-6 text-amber-950">
-          <h3 className="text-xl font-semibold">This league is inactive.</h3>
-          <p className="mt-2 text-sm text-amber-900/90">
+        <Alert tone="warning" title="This league is inactive.">
+          <p>
             Team information stays visible, but team updates are read-only while the league is
             inactive.
           </p>
-        </div>
+        </Alert>
       ) : null}
 
       <DetailsActionsLayout
         actions={(
-          <>
+          <ActionList>
             {selectedTeam ? (
               <>
-                <button
-                  className="flex w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-4 text-left text-sm font-medium text-foreground transition hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+                <ActionTile
                   data-testid="my-team-open-name"
                   disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
+                  label="Change team name"
                   onClick={() => setActiveDialog('name')}
-                  type="button"
-                >
-                  <span>Change team name</span>
-                  <span className="text-muted-foreground">Open</span>
-                </button>
-                <button
-                  className="flex w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-4 text-left text-sm font-medium text-foreground transition hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  trailing="Open"
+                />
+                <ActionTile
                   data-testid="my-team-change-icon"
                   disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
+                  label="Change team icon"
                   onClick={handleOpenIconModal}
-                  type="button"
-                >
-                  <span>Change team icon</span>
-                  <span className="text-muted-foreground">Open</span>
-                </button>
-                <button
-                  className="flex w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-4 text-left text-sm font-medium text-foreground transition hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  trailing="Open"
+                />
+                <ActionTile
                   data-testid="my-team-open-owners"
                   disabled={isBusy || !canManageSelectedTeam}
+                  label="Manage owners"
                   onClick={() => setActiveDialog('owners')}
-                  type="button"
-                >
-                  <span>Manage owners</span>
-                  <span className="text-muted-foreground">Open</span>
-                </button>
+                  trailing="Open"
+                />
                 {isInactiveTeam ? (
-                  <button
-                    className="w-full rounded-2xl border border-destructive/40 bg-destructive/5 px-4 py-4 text-left text-sm font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-60"
+                  <ActionTile
                     data-testid="my-team-delete"
                     disabled={!canDeleteSelectedTeam || isInactiveLeague || isBusy}
+                    label={deleteTeamMutation.isPending ? 'Deleting...' : 'Delete team'}
                     onClick={() => setActiveDialog('delete')}
-                    type="button"
-                  >
-                    {deleteTeamMutation.isPending ? 'Deleting...' : 'Delete team'}
-                  </button>
+                    tone="danger"
+                  />
                 ) : (
-                  <button
-                    className="w-full rounded-2xl border border-destructive/40 bg-destructive/5 px-4 py-4 text-left text-sm font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-60"
+                  <ActionTile
                     data-testid="my-team-inactivate"
                     disabled={isInactiveLeague || isBusy || !canManageSelectedTeam}
+                    label={inactivateTeamMutation.isPending ? 'Inactivating...' : 'Inactivate team'}
                     onClick={() => setActiveDialog('inactivate')}
-                    type="button"
-                  >
-                    {inactivateTeamMutation.isPending ? 'Inactivating...' : 'Inactivate team'}
-                  </button>
+                    tone="danger"
+                  />
                 )}
               </>
             ) : (
-              <p className="rounded-2xl border border-border bg-background px-4 py-4 text-sm text-muted-foreground">
+              <Alert>
                 Create your team before managing owners and lifecycle.
-              </p>
+              </Alert>
             )}
 
             {updateTeamMutation.isSuccess ? (
-              <p className="text-sm text-emerald-700">Your team was updated.</p>
+              <Alert tone="success">Your team was updated.</Alert>
             ) : null}
             {updateTeamMutation.isError ? (
-              <p className="text-sm text-destructive">{extractErrorMessage(updateTeamMutation.error)}</p>
+              <Alert tone="danger">{extractErrorMessage(updateTeamMutation.error)}</Alert>
             ) : null}
             {teamInactivationNotice ? (
-              <p className="text-sm text-emerald-700">{teamInactivationNotice}</p>
+              <Alert tone="success">{teamInactivationNotice}</Alert>
             ) : null}
             {teamDeletionNotice ? (
-              <p className="text-sm text-emerald-700">{teamDeletionNotice}</p>
+              <Alert tone="success">{teamDeletionNotice}</Alert>
             ) : null}
             {inactivateTeamMutation.isError ? (
-              <p className="text-sm text-destructive">{extractErrorMessage(inactivateTeamMutation.error)}</p>
+              <Alert tone="danger">{extractErrorMessage(inactivateTeamMutation.error)}</Alert>
             ) : null}
             {deleteTeamMutation.isError ? (
-              <p className="text-sm text-destructive">{extractErrorMessage(deleteTeamMutation.error)}</p>
+              <Alert tone="danger">{extractErrorMessage(deleteTeamMutation.error)}</Alert>
             ) : null}
-          </>
+          </ActionList>
         )}
         actionsTestId="my-team-actions-tile"
         details={(
-          <section className="rounded-[2rem] border border-border bg-card p-6" data-testid="my-team-details-tile">
+          <Tile data-testid="my-team-details-tile">
             <h3 className="text-xl font-semibold">{selectedTeam ? 'Team details' : 'Create your team'}</h3>
 
             {selectedTeam ? (
               <div className="mt-5 space-y-4">
-                <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-background px-4 py-4">
-                  <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`}>
+                <Tile className="flex items-center gap-4" radius="lg">
+                  <IconAvatar className={`${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`} size="md">
                     <TeamIcon iconKey={currentIconKey} size="lg" />
-                  </div>
+                  </IconAvatar>
                   <div>
                     <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                       Team name
                     </div>
                     <div className="mt-1 text-base font-medium">{selectedTeam.name}</div>
                   </div>
-                </div>
+                </Tile>
 
-                <div className="grid gap-4 rounded-[1.25rem] border border-border bg-background px-4 py-4 sm:grid-cols-2">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Status
-                    </div>
-                    <div className={`mt-1 text-base font-semibold ${teamStatusClass}`} data-testid="my-team-lifecycle-status">
-                      {teamLifecycleLabel}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Current icon
-                    </div>
-                    <div className="mt-1 text-base font-medium" data-testid="my-team-current-icon-label">
-                      {selectedIcon.label}
-                    </div>
-                  </div>
-                </div>
+                <DefinitionList
+                  items={[
+                    {
+                      label: 'Status',
+                      value: (
+                        <span className={teamStatusClass} data-testid="my-team-lifecycle-status">
+                          {teamLifecycleLabel}
+                        </span>
+                      ),
+                    },
+                    {
+                      label: 'Current icon',
+                      value: <span data-testid="my-team-current-icon-label">{selectedIcon.label}</span>,
+                    },
+                  ]}
+                />
 
-                <div className="rounded-[1.25rem] border border-border bg-background px-4 py-4">
+                <Tile radius="lg">
                   <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                     Team owners
                   </div>
@@ -895,148 +880,107 @@ export function MyTeamPage() {
                       <div className="text-sm text-muted-foreground">No active owners</div>
                     )}
                   </div>
-                </div>
+                </Tile>
               </div>
             ) : (
               <div className="mt-5 space-y-4">
                 <p className="text-sm text-muted-foreground">
                   A team is required for league participation. Start with a name and icon that feel right for your group.
                 </p>
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium text-foreground">Team name</span>
-                  <input
-                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
+                <FormField label="Team name">
+                  <Input
                     data-testid="my-team-name"
                     disabled={isInactiveLeague || isBusy || !canCreateOwnTeam}
                     maxLength={100}
                     onChange={(event) => setTeamName(event.target.value)}
                     value={teamName}
                   />
-                </label>
-                <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-background px-4 py-4">
-                  <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`}>
+                </FormField>
+                <Tile className="flex items-center gap-4" radius="lg">
+                  <IconAvatar className={`${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`} size="md">
                     <TeamIcon iconKey={currentIconKey} size="lg" />
-                  </div>
-                  <button
-                    className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                  </IconAvatar>
+                  <Button
                     data-testid="my-team-change-icon"
                     disabled={isInactiveLeague || isBusy || !canCreateOwnTeam}
                     onClick={handleOpenIconModal}
-                    type="button"
+                    variant="secondary"
                   >
                     Change icon
-                  </button>
-                </div>
-                <button
-                  className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                  </Button>
+                </Tile>
+                <Button
                   data-testid="my-team-save"
                   disabled={!teamName.trim() || isInactiveLeague || isBusy || !canCreateOwnTeam}
                   onClick={() => void handleSaveTeam()}
-                  type="button"
                 >
                   {isBusy ? 'Saving...' : canCreateOwnTeam ? 'Create team' : 'Choose a team first'}
-                </button>
+                </Button>
                 {createTeamMutation.isSuccess ? (
-                  <p className="text-sm text-emerald-700">Your team was created.</p>
+                  <Alert tone="success">Your team was created.</Alert>
                 ) : null}
                 {createTeamMutation.isError ? (
-                  <p className="text-sm text-destructive">{extractErrorMessage(createTeamMutation.error)}</p>
+                  <Alert tone="danger">{extractErrorMessage(createTeamMutation.error)}</Alert>
                 ) : null}
               </div>
             )}
-          </section>
+          </Tile>
         )}
       />
 
-      <Dialog.Root
+      <Modal
+        description="Update the team name shown across league and contest pages."
+        descriptionId="my-team-name-modal-description"
         onOpenChange={(open) => setActiveDialog(open ? 'name' : null)}
         open={activeDialog === 'name'}
+        testId="my-team-name-modal"
+        title="Change team name"
       >
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
-          <Dialog.Content
-            aria-describedby="my-team-name-modal-description"
-            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
-            data-testid="my-team-name-modal"
+        <FormField label="Team name">
+          <Input
+            data-testid="my-team-name"
+            disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
+            maxLength={100}
+            onChange={(event) => setTeamName(event.target.value)}
+            value={teamName}
+          />
+        </FormField>
+        <div className="mt-6 flex justify-end gap-3">
+          <Button
+            disabled={isBusy}
+            onClick={() => setActiveDialog(null)}
+            variant="secondary"
           >
-            <Dialog.Title className="text-2xl font-semibold tracking-tight">
-              Change team name
-            </Dialog.Title>
-            <Dialog.Description
-              className="mt-2 text-sm text-muted-foreground"
-              id="my-team-name-modal-description"
-            >
-              Update the team name shown across league and contest pages.
-            </Dialog.Description>
-            <label className="mt-5 block space-y-2">
-              <span className="text-sm font-medium text-foreground">Team name</span>
-              <input
-                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-70"
-                data-testid="my-team-name"
-                disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
-                maxLength={100}
-                onChange={(event) => setTeamName(event.target.value)}
-                value={teamName}
-              />
-            </label>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isBusy}
-                onClick={() => setActiveDialog(null)}
-                type="button"
-              >
-                Cancel
-              </button>
-              <button
-                className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                data-testid="my-team-save"
-                disabled={!teamName.trim() || isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
-                onClick={() => void handleSaveTeam().then(() => setActiveDialog(null))}
-                type="button"
-              >
-                {updateTeamMutation.isPending ? 'Saving...' : 'Save team'}
-              </button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+            Cancel
+          </Button>
+          <Button
+            data-testid="my-team-save"
+            disabled={!teamName.trim() || isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
+            onClick={() => void handleSaveTeam().then(() => setActiveDialog(null))}
+          >
+            {updateTeamMutation.isPending ? 'Saving...' : 'Save team'}
+          </Button>
+        </div>
+      </Modal>
 
-      <Dialog.Root
+      <Modal
+        description="Add, replace, or remove team owners."
+        descriptionId="my-team-owners-modal-description"
         onOpenChange={(open) => setActiveDialog(open ? 'owners' : null)}
         open={activeDialog === 'owners'}
+        size="lg"
+        testId="my-team-owners-modal"
+        title="Manage owners"
       >
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
-          <Dialog.Content
-            aria-describedby="my-team-owners-modal-description"
-            className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
-            data-testid="my-team-owners-modal"
-          >
-            <Dialog.Title className="text-2xl font-semibold tracking-tight">
-              Manage owners
-            </Dialog.Title>
-            <Dialog.Description
-              className="mt-2 text-sm text-muted-foreground"
-              id="my-team-owners-modal-description"
-            >
-              Add, replace, or remove team owners.
-            </Dialog.Description>
-            <div className="mt-5">
-              {ownerManagementContent}
-            </div>
-            <div className="mt-6 flex justify-end">
-              <button
-                className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground"
-                onClick={() => setActiveDialog(null)}
-                type="button"
-              >
-                Close
-              </button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+        <div className="mt-5">
+          {ownerManagementContent}
+        </div>
+        <div className="mt-6 flex justify-end">
+          <Button onClick={() => setActiveDialog(null)} variant="secondary">
+            Close
+          </Button>
+        </div>
+      </Modal>
 
       <ConfirmDialog
         confirmLabel="Inactivate team"
@@ -1140,9 +1084,9 @@ export function MyTeamPage() {
           </div>
         )}
         renderSelectedIcon={() => (
-          <div className={`flex h-16 w-16 items-center justify-center rounded-[1.25rem] ${draftIcon.surfaceClass} ${draftIcon.accentClass}`}>
+          <IconAvatar className={`${draftIcon.surfaceClass} ${draftIcon.accentClass}`} size="lg">
             <TeamIcon iconKey={iconDraftKey} size="lg" />
-          </div>
+          </IconAvatar>
         )}
         saveTestId="my-team-save-icon"
         selectedLabel={draftIcon.label}
