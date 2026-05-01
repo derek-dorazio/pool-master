@@ -201,7 +201,7 @@ async function seedImportedGolfEvent(options: {
           thru: 'F',
           finishPosition: index + 1,
         },
-        receivedAt: new Date(`2026-04-08T1${index}:00:00.000Z`),
+        receivedAt: new Date(now.getTime() + index * 1000),
       },
     });
 
@@ -235,7 +235,7 @@ describe('SDK Functional: Contests and Entries', () => {
     });
     const importedEvent = await seedImportedGolfEvent({
       eventName: 'Managed Masters Functional Event',
-      participantCount: 6,
+      participantCount: 80,
     });
 
     const templatesResponse = await listManagedContestTemplates({
