@@ -6,6 +6,7 @@ import {
   adminListProviderSyncRuns,
   adminListProviders,
 } from '@/lib/api';
+import { DataGrid } from '@/features/shared/ui';
 import {
   buildPayloadSummary,
   getProviderName,
@@ -15,7 +16,6 @@ import {
   type ProviderSyncRun,
   formatJsonPayload,
 } from './root-admin-sync-utils';
-import { AdminDataGrid } from './admin-data-grid';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
 
@@ -309,7 +309,7 @@ export function RootAdminSyncDashboardPage() {
         ) : null}
 
         {!syncRunsQuery.isError ? (
-          <AdminDataGrid
+          <DataGrid
             columns={syncHistoryColumns}
             data={recentRuns}
             emptyMessage="No sync runs matched the current filters."

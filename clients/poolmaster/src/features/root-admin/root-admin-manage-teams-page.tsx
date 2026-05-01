@@ -3,9 +3,9 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminListTeams, type AdminListTeamsResponses } from '@/lib/api';
 import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
+import { DataGrid, StatusBadge, Tile } from '@/features/shared/ui';
 import { TeamIcon } from '@/features/teams/team-icon';
 import { getTeamIconOption } from '@/features/teams/team-icon-catalog';
-import { AdminDataGrid } from './admin-data-grid';
 
 type ManagedTeam = AdminListTeamsResponses[200]['teams'][number];
 
@@ -34,12 +34,6 @@ function extractErrorMessage(error: unknown, fallback: string) {
 
 function formatActiveState(isActive: boolean) {
   return isActive ? 'Active' : 'Inactive';
-}
-
-function getActiveStateClasses(isActive: boolean) {
-  return isActive
-    ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
-    : 'border-amber-300 bg-amber-50 text-amber-900';
 }
 
 function buildOwnerLabel(team: ManagedTeam) {
@@ -122,11 +116,9 @@ export function RootAdminManageTeamsPage() {
           const isActive = getValue();
 
           return (
-            <span
-              className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${getActiveStateClasses(isActive)}`}
-            >
+            <StatusBadge tone={isActive ? 'active' : 'inactive'}>
               {formatActiveState(isActive)}
-            </span>
+            </StatusBadge>
           );
         },
       }),
@@ -136,7 +128,7 @@ export function RootAdminManageTeamsPage() {
 
   return (
     <section className="space-y-6" data-testid="root-admin-manage-teams-page">
-      <section className="rounded-[2rem] border border-border bg-card p-6">
+      <Tile>
         {teamsQuery.isLoading ? (
           <p className="text-sm text-muted-foreground">Loading teams...</p>
         ) : teamsQuery.isError ? (
@@ -144,7 +136,7 @@ export function RootAdminManageTeamsPage() {
             {extractErrorMessage(teamsQuery.error, 'We could not load teams right now.')}
           </p>
         ) : (
-          <AdminDataGrid
+          <DataGrid
             columns={columns}
             data={teamsQuery.data ?? []}
             emptyMessage="No teams matched the current filters."
@@ -153,7 +145,7 @@ export function RootAdminManageTeamsPage() {
             rowTestId={(team) => `root-admin-manage-team-row-${team.id}`}
           />
         )}
-      </section>
+      </Tile>
     </section>
   );
 }

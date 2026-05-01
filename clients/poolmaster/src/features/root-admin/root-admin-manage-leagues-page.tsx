@@ -4,12 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { adminListLeagues, type AdminListLeaguesResponses } from "@/lib/api";
 import { buildLeaguePath } from "@/features/leagues/league-routing";
 import {
+  DataGrid,
   ErrorState,
   LoadingState,
   StatusBadge,
   Tile,
 } from "@/features/shared/ui";
-import { AdminDataGrid } from "./admin-data-grid";
 
 type ManagedLeague = AdminListLeaguesResponses[200]["leagues"][number];
 const columnHelper = createColumnHelper<ManagedLeague>();
@@ -127,7 +127,7 @@ export function RootAdminManageLeaguesPage() {
             )}
           />
         ) : (
-          <AdminDataGrid
+          <DataGrid
             columns={columns}
             data={leaguesQuery.data ?? []}
             emptyMessage="No leagues matched the current filters."

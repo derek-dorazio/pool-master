@@ -150,7 +150,7 @@ describe('RootAdminManageLeaguesPage', () => {
       screen.queryByTestId('root-admin-manage-leagues-search'),
     ).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByTestId('admin-grid-filter-name'), {
+    fireEvent.change(screen.getByTestId('data-grid-filter-name'), {
       target: { value: 'Archive' },
     });
 

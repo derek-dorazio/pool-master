@@ -125,7 +125,7 @@ describe('RootAdminManageUsersPage', () => {
       },
     });
 
-    fireEvent.change(screen.getByTestId('admin-grid-filter-username'), {
+    fireEvent.change(screen.getByTestId('data-grid-filter-username'), {
       target: {
         value: 'jamie',
       },

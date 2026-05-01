@@ -7,40 +7,47 @@ import {
   type ColumnFiltersState,
   type SortingState,
   useReactTable,
-} from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
+} from "@tanstack/react-table";
+import { useMemo, useState, type AnchorHTMLAttributes } from "react";
+import { cn } from "./class-names";
 
-type AdminDataGridProps<TData> = {
+type DataGridProps<TData> = {
   columns: ColumnDef<TData, any>[];
   data: TData[];
   emptyMessage: string;
+  filterTestIdPrefix?: string;
   getRowId?: (row: TData, index: number) => string;
   getRowLink?: (row: TData) => string;
+  getRowLinkProps?: (
+    row: TData,
+  ) => Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">;
   rowTestId?: (row: TData, index: number) => string;
   tableTestId?: string;
 };
 
-function getSortIndicator(direction: false | 'asc' | 'desc') {
-  if (direction === 'asc') {
-    return '▲';
+function getSortIndicator(direction: false | "asc" | "desc") {
+  if (direction === "asc") {
+    return "▲";
   }
 
-  if (direction === 'desc') {
-    return '▼';
+  if (direction === "desc") {
+    return "▼";
   }
 
-  return '↕';
+  return "↕";
 }
 
-export function AdminDataGrid<TData>({
+export function DataGrid<TData>({
   columns,
   data,
   emptyMessage,
+  filterTestIdPrefix = "data-grid-filter",
   getRowId,
   getRowLink,
+  getRowLinkProps,
   rowTestId,
   tableTestId,
-}: AdminDataGridProps<TData>) {
+}: DataGridProps<TData>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -120,11 +127,16 @@ export function AdminDataGrid<TData>({
                   {header.isPlaceholder || !header.column.getCanFilter() ? null : (
                     <input
                       className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs normal-case tracking-normal text-foreground placeholder:text-muted-foreground"
-                      data-testid={`admin-grid-filter-${header.column.id}`}
-                      onChange={(event) => header.column.setFilterValue(event.target.value)}
-                      placeholder={`Filter ${header.column.columnDef.header?.toString() ?? header.column.id}`}
+                      data-testid={`${filterTestIdPrefix}-${header.column.id}`}
+                      onChange={(event) =>
+                        header.column.setFilterValue(event.target.value)
+                      }
+                      placeholder={`Filter ${
+                        header.column.columnDef.header?.toString() ??
+                        header.column.id
+                      }`}
                       type="search"
-                      value={(header.column.getFilterValue() ?? '') as string}
+                      value={(header.column.getFilterValue() ?? "") as string}
                     />
                   )}
                 </th>
@@ -136,6 +148,11 @@ export function AdminDataGrid<TData>({
           {rows.length > 0 ? (
             rows.map((row, index) => {
               const link = getRowLink?.(row.original);
+              const linkProps = getRowLinkProps?.(row.original);
+              const linkClassName = cn(
+                "inline-flex text-left hover:underline",
+                linkProps?.className,
+              );
 
               return (
                 <tr
@@ -145,9 +162,11 @@ export function AdminDataGrid<TData>({
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td className="px-4 py-4" key={cell.id}>
-                      {link && cell.column.id === row.getVisibleCells()[0]?.column.id ? (
+                      {link &&
+                      cell.column.id === row.getVisibleCells()[0]?.column.id ? (
                         <a
-                          className="inline-flex text-left hover:underline"
+                          {...linkProps}
+                          className={linkClassName}
                           href={link}
                         >
                           {flexRender(

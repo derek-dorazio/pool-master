@@ -104,8 +104,8 @@ describe('RootAdminSyncDashboardPage', () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText('Mock contest feed').length).toBeGreaterThan(0);
     expect(screen.getByTestId('root-admin-sync-history-table')).toBeInTheDocument();
-    expect(screen.getByTestId('admin-grid-filter-provider')).toBeInTheDocument();
-    expect(screen.getByTestId('admin-grid-filter-status')).toBeInTheDocument();
+    expect(screen.getByTestId('data-grid-filter-provider')).toBeInTheDocument();
+    expect(screen.getByTestId('data-grid-filter-status')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-provider-filter')).not.toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-sport-filter')).not.toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-status-filter')).not.toBeInTheDocument();
@@ -166,7 +166,7 @@ describe('RootAdminSyncDashboardPage', () => {
     renderDashboard();
 
     await screen.findByTestId('root-admin-sync-run-sync-run-1');
-    fireEvent.change(screen.getByTestId('admin-grid-filter-status'), {
+    fireEvent.change(screen.getByTestId('data-grid-filter-status'), {
       target: {
         value: 'FAILED',
       },

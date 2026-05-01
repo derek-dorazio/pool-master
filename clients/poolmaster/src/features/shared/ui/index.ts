@@ -5,6 +5,7 @@ export type { ButtonProps, LinkButtonProps } from "./button";
 export { BreadcrumbHeader, PageHeader } from "./page-header";
 export { cn } from "./class-names";
 export { CopyField } from "./copy-field";
+export { DataGrid } from "./data-grid";
 export { DateDisplay, DateTimeField, toDateTimeLocalValue } from "./date-time";
 export { Accordion, Disclosure } from "./disclosure";
 export {

@@ -3,12 +3,12 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { adminListUsers, type AdminListUsersResponses } from "@/lib/api";
 import {
+  DataGrid,
   ErrorState,
   LoadingState,
   StatusBadge,
   Tile,
 } from "@/features/shared/ui";
-import { AdminDataGrid } from "./admin-data-grid";
 
 type RootAdminUser = AdminListUsersResponses[200]["items"][number];
 const columnHelper = createColumnHelper<RootAdminUser>();
@@ -135,7 +135,7 @@ export function RootAdminManageUsersPage() {
             )}
           />
         ) : (
-          <AdminDataGrid
+          <DataGrid
             columns={columns}
             data={usersQuery.data?.items ?? []}
             emptyMessage="No users matched the current filters."
