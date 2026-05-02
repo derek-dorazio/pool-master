@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo } from "react";
 import {
   getMyContestEntry,
@@ -8,7 +8,7 @@ import {
   type GetLeagueByCodeResponses,
   type ListContestsResponses,
 } from "@/lib/api";
-import { getLeagueLoadErrorCopy } from "@/features/leagues/league-load-error";
+import { useLeagueContextGuard } from "@/features/leagues/league-context-guard";
 import {
   buildLeagueContestCreatePath,
   buildLeagueContestsManagePath,
@@ -142,31 +142,15 @@ export function LeagueContestsPage() {
     const myContestIds = myContestIdsQuery.data ?? new Set<string>();
     return activeContests.filter((contest) => myContestIds.has(contest.id));
   }, [activeContests, isMyEntriesFilter, myContestIdsQuery.data]);
+  const leagueContext = useLeagueContextGuard(leagueQuery, {
+    loadingBody: "Loading league contests...",
+  });
 
-  if (leagueQuery.isLoading) {
-    return <LoadingState body="Loading league contests..." />;
+  if (leagueContext.state === "blocked") {
+    return leagueContext.element;
   }
 
-  if (leagueQuery.isError || !leagueQuery.data) {
-    const copy = getLeagueLoadErrorCopy(leagueQuery.error);
-
-    return (
-      <ErrorState
-        action={
-          <Link
-            className="inline-flex text-sm font-medium text-primary hover:underline"
-            to="/welcome"
-          >
-            Back to welcome
-          </Link>
-        }
-        body={copy.body}
-        title={copy.title}
-      />
-    );
-  }
-
-  const league = leagueQuery.data;
+  const league = leagueContext.league;
   const canManageContests =
     league.leagueRelationship.commissioner || league.isRootAdmin;
 

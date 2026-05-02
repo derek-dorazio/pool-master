@@ -12,7 +12,7 @@ import {
   type ListSquadOwnerInvitationsResponses,
 } from '@/lib/api';
 import { buildUserPath } from '@/features/account/user-routing';
-import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
+import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
   buildLeaguePath,
   buildLeagueTeamHomePath,
@@ -182,33 +182,22 @@ export function TeamsPage() {
     );
   }, [leagueCode, leagueId, logger, ownerInvitationsQuery.error, ownerInvitationsQuery.isError]);
 
-  if (leagueQuery.isLoading) {
-    return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <p className="text-sm text-muted-foreground">Loading teams and owners...</p>
-      </section>
-    );
+  const leagueContext = useLeagueContextGuard(leagueQuery, {
+    loadingBody: 'Loading teams and owners...',
+  });
+
+  if (leagueContext.state === 'blocked') {
+    return leagueContext.element;
   }
 
-  if (leagueQuery.isError || !leagueQuery.data) {
-    const copy = getLeagueLoadErrorCopy(leagueQuery.error);
-    return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <h2 className="text-2xl font-semibold">{copy.title}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{copy.body}</p>
-        <Link className="mt-4 inline-flex text-sm font-medium text-primary hover:underline" to="/welcome">
-          Back to welcome
-        </Link>
-      </section>
-    );
-  }
+  const league = leagueContext.league;
 
   return (
     <section className="space-y-6" data-testid="teams-page">
       <div className="rounded-[2rem] border border-border bg-card p-8">
         <Link
           className="text-sm font-medium text-primary transition hover:opacity-80"
-          to={buildLeaguePath(leagueQuery.data.leagueCode)}
+          to={buildLeaguePath(league.leagueCode)}
         >
           Back to League Home
         </Link>
@@ -217,7 +206,7 @@ export function TeamsPage() {
         </span>
         <h2 className="mt-4 text-3xl font-semibold tracking-tight">Teams and Owners</h2>
         <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Browse every team in {leagueQuery.data.name}. Members use this as a directory, while
+          Browse every team in {league.name}. Members use this as a directory, while
           commissioners, root admins, and team co-owners can use the inline owner actions here and
           move to Team Home for deeper lifecycle work.
         </p>
@@ -271,7 +260,7 @@ export function TeamsPage() {
                         <Link
                           className="truncate text-lg font-semibold text-foreground hover:underline"
                           data-testid={`league-team-home-link-${team.id}`}
-                          to={buildLeagueTeamHomePath(leagueQuery.data.leagueCode, team.id)}
+                          to={buildLeagueTeamHomePath(league.leagueCode, team.id)}
                         >
                           {team.name}
                         </Link>
@@ -323,7 +312,7 @@ export function TeamsPage() {
                             activeOwnerCount={activeOwners.length}
                             canManageLeagueRole={canManageLeagueRole}
                             canRemoveOwner={canRemoveOwner}
-                            leagueCode={leagueQuery.data.leagueCode}
+                            leagueCode={league.leagueCode}
                             leagueId={leagueId}
                             ownerName={getOwnerLabel(owner.firstName, owner.lastName)}
                             ownerRole={leagueMember?.role}
