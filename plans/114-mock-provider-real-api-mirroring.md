@@ -171,7 +171,8 @@ mapping, but the pattern is consistent:
 |---|---|---|
 | Data Golf `GET /preds/get-dg-rankings` | `GET /mirror/datagolf/v1/preds/get-dg-rankings` | scenario rankings projection |
 | Data Golf `GET /preds/in-play` | `GET /mirror/datagolf/v1/preds/in-play?tour=pga&event_id=…` | scenario live-score randomizer keyed by tick |
-| The Odds API `GET /v4/sports/golf_masters/odds` | `GET /mirror/the-odds-api/v4/sports/golf_masters/odds` | scenario odds projection |
+| Data Golf `GET /betting-tools/outrights?market=win` | `GET /mirror/datagolf/v1/betting-tools/outrights?market=win` | scenario odds projection (win market for tier derivation; top-5/10/20/cut/FRL also supported) |
+| The Odds API `GET /v4/sports/{sport_key}/odds` | `GET /mirror/the-odds-api/v4/sports/{sport_key}/odds` | scenario odds projection (NCAA / soccer / tennis only — golf odds come from the Data Golf mirror) |
 | CFBD `GET /games?year=&week=` | `GET /mirror/cfbd/v2/games?year=&week=` | scenario schedule projection |
 | API-Football `GET /fixtures?league=1&season=2026` | `GET /mirror/api-football/v3/fixtures?league=1&season=2026` | scenario schedule projection |
 | API-Tennis `GET /tournaments?type=…` | `GET /mirror/api-tennis/v1/tournaments?type=…` | scenario draw projection |
@@ -192,15 +193,20 @@ Each mirror enforces presence and shape but accepts any non-empty value.
    directory; introduce `MOCK_PROVIDER_MIRRORS_ENABLED` config; no new
    endpoints yet. Canonical behavior unchanged.
 2. **Data Golf mirror.** First mirror, golf-only. Endpoints needed by
-   `data-golf-adapter` from plan 113 slice 4. Swagger published.
-3. **The Odds API mirror.** Endpoints needed by `the-odds-api-adapter`
-   from plan 113 slice 5. Multi-sport from day one because the real
-   adapter is multi-sport.
-4. **Adapter ↔ mirror integration tests.** A new test layer in
+   `data-golf-adapter` from plan 113 slice 4 — schedule, field, rankings,
+   in-play scoring, results, **and** outright odds via
+   `/betting-tools/outrights`. Swagger published. After this slice the
+   mock service can stand in for the entire golf production stack.
+3. **Adapter ↔ mirror integration tests.** A new test layer in
    `packages/core-api` that boots the mock service in mirror mode and
    exercises each adapter against the mirror, asserting the canonical
    `SportDataProvider` types are produced correctly. This test layer
    becomes the contract verification surface for every future provider.
+4. **The Odds API mirror.** Pairs with plan 113 slice 7 (the fresh
+   The Odds API adapter that activates alongside the first non-golf
+   sport). Multi-sport from day one because the real adapter is
+   multi-sport. Does **not** include golf — the Data Golf mirror is
+   the canonical golf-odds substrate.
 5. **CFBD mirror.** Pairs with plan 113 slice 8.
 6. **API-Football mirror.** Pairs with plan 113 slice 9.
 7. **API-Tennis mirror.** Pairs with plan 113 slice 10; gated on
@@ -259,8 +265,8 @@ the adapter never exists without a deterministic test substrate.
 
 | Plan 113 slice | Plan 114 slice that pairs with it |
 |---|---|
-| 4 — Data Golf adapter | 2 — Data Golf mirror |
-| 5 — The Odds API adapter | 3 — The Odds API mirror |
+| 4 — Data Golf adapter (incl. golf odds) | 2 — Data Golf mirror (incl. `/betting-tools/outrights`) |
+| 7 — The Odds API adapter (NCAA / soccer / tennis only) | 4 — The Odds API mirror |
 | 8 — CFBD adapter | 5 — CFBD mirror |
 | 9 — API-Football adapter | 6 — API-Football mirror |
 | 10 — API-Tennis adapter | 7 — API-Tennis mirror |

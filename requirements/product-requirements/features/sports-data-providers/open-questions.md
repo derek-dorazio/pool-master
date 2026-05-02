@@ -42,13 +42,16 @@ These question IDs are intended to stay stable as the discussion evolves.
 
 ## Resolved Decisions
 
-- `SDP-R1` First-pass golf provider pair `(Resolved — pending plan 113)`
-  - Data Golf for events / field / rankings / scoring / results.
-  - The Odds API for outright/matchup odds.
+- `SDP-R1` First-pass golf provider `(Resolved — pending plan 113)`
+  - **Data Golf alone** covers events, field, rankings, scoring, results,
+    and odds for golf — single subscription, single key, $30/mo.
+  - The Odds API is **not** required for first-pass golf; it earns its
+    place only when non-golf sports are activated.
 
 - `SDP-R2` Cross-sport odds spine `(Resolved — pending plan 113)`
-  - The Odds API is the cross-sport odds adapter for golf, NCAA, soccer,
-    and tennis. One subscription, one key, four sports.
+  - When NCAA, soccer, or tennis is activated, The Odds API is the
+    cross-sport odds adapter for those three sports. One subscription,
+    one key, three sports. Golf odds remain on Data Golf.
 
 - `SDP-R3` No single-vendor lock-in `(Resolved)`
   - PoolMaster integrates each provider behind the existing

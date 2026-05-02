@@ -125,7 +125,7 @@ GOLF + EVENTPARTICIPANTS   → DataGolfAdapter
 GOLF + PARTICIPANTRANKINGS → DataGolfAdapter
 GOLF + EVENTLIVESCORES     → DataGolfAdapter
 GOLF + EVENTRESULTS        → DataGolfAdapter
-GOLF + ODDS                → TheOddsApiAdapter
+GOLF + ODDS                → DataGolfAdapter   ← Data Golf provides odds too
 
 NCAA_BASKETBALL + EVENTSCHEDULE → CfbdAdapter
 NCAA_BASKETBALL + ODDS          → TheOddsApiAdapter
@@ -134,7 +134,8 @@ NCAA_BASKETBALL + ODDS          → TheOddsApiAdapter
 
 The scheduler asks the registry for the adapter that handles a specific
 (sport, feed) tuple and uses it for that fetch. The single-provider-per-sport
-case still works — every feed simply routes to the same adapter.
+case still works — for golf every feed (including odds) simply routes to
+the Data Golf adapter.
 
 ### Configuration Shape
 
@@ -194,7 +195,7 @@ are unreachable at runtime today. Each is decided here:
 | File | LoC | Disposition | Rationale |
 |---|---|---|---|
 | `pga-tour-adapter.ts` | 403 | **Delete** | PGA Tour direct access requires partnership/licensing; Pam's brief recommends Data Golf instead. Keeping the stub is misleading. Replaced by `data-golf-adapter.ts` in slice 4. |
-| `odds-api-adapter.ts` | 258 | **Replace in place** | The recommendation keeps The Odds API as the cross-sport odds spine. The current file is stub-quality and is rewritten end-to-end in slice 5; the filename and `providerId` are retained to minimize churn. |
+| `odds-api-adapter.ts` | 258 | **Delete now; reintroduce when first non-golf sport is activated** | Pam's revised brief: Data Golf provides golf odds in the same subscription, so The Odds API is not on the first-pass golf path. It is still the recommended cross-sport odds spine for NCAA / soccer / tennis, so a fresh `the-odds-api-adapter.ts` will be reintroduced alongside the first non-golf adapter (CFBD, API-Football, or API-Tennis — whichever ships first). The existing stub is kept out of the tree until then to avoid the same "exported but unreachable" trap we are cleaning up. |
 | `espn-adapter.ts` | 324 | **Delete** | ESPN's unofficial endpoints have no SLA, no terms-of-service authorization for production data products, and would only ever be a best-effort fallback. We do not want a "fallback that secretly hides production outages." If we later need ESPN data for a specific resilience use case, we re-introduce it intentionally. |
 | `openf1-adapter.ts` | 253 | **Delete** | Formula 1 is not on the recommended sport roadmap (golf → NCAA → soccer → tennis). The stub creates a false impression that F1 is supported. If F1 is added to the roadmap later, a fresh adapter built against the real port is cheaper than reviving a stale stub. |
 
@@ -212,30 +213,43 @@ adapters arrive.
    - Replace the hard-coded `if (defaultProviderId !== 'mock-contest-feed')`
      check in `provider-bindings.ts` with a registry-driven allowlist
      populated from the bindings config. Mock remains the safe default.
-   - Delete `espn-adapter.ts`, `pga-tour-adapter.ts`, and
-     `openf1-adapter.ts`. Update `adapters/index.ts` exports. Leave
-     `odds-api-adapter.ts` in place (rewritten in slice 5).
+   - Delete all four scaffolded stubs: `espn-adapter.ts`,
+     `pga-tour-adapter.ts`, `openf1-adapter.ts`, and `odds-api-adapter.ts`.
+     Update `adapters/index.ts` exports.
 2. **Bindings config persistence.** Add `PROVIDER_BINDINGS_CONFIG` key to
    `PlatformRuntimeConfig`. Boot loader merges env defaults with persisted
    overrides.
 3. **Secret resolver.** Introduce `keyEnvAlias` resolution in
    `provider-bindings.ts`; reject providers whose alias is missing or empty.
-4. **Data Golf adapter.** First real adapter. Implements all five canonical
-   feeds for `GOLF`. New file `data-golf-adapter.ts`.
-5. **The Odds API adapter (rewrite).** Rewrite `odds-api-adapter.ts` to
-   implement an `ODDS` feed only, keyed across multiple sports. Decision
-   driven by `SDP-001` — single sport-aware adapter is the target.
-6. **Admin UX — show bindings.** Read-only view first; lists
+4. **Data Golf adapter.** First real adapter. Implements **all six
+   canonical feeds for `GOLF`** — events, participants, rankings, live
+   scores, results, and odds (`/betting-tools/outrights` market=`win` for
+   tier derivation, with top-5/10/20/cut/FRL available for future
+   contests). New file `data-golf-adapter.ts`. After this slice golf is
+   end-to-end on a single real provider.
+5. **Admin UX — show bindings.** Read-only view first; lists
    `(sport, feed) → provider` and current health.
-7. **Admin UX — edit bindings.** Root-admin can swap a `(sport, feed)`
+6. **Admin UX — edit bindings.** Root-admin can swap a `(sport, feed)`
    to any registered provider, including the mock. Scheduler hot-reloads on
    commit.
-8. **CFBD adapter.** Adds NCAA basketball/football coverage.
-9. **API-Football adapter.** Adds soccer/World Cup coverage.
-10. **API-Tennis adapter.** Adds tennis coverage; gated on `SDP-004`
-    confirming production readiness.
+7. **The Odds API adapter (fresh build).** Activated alongside the first
+   non-golf sport (whichever of slice 8/9/10 ships first). New file
+   `the-odds-api-adapter.ts` implementing an `ODDS` feed across NCAA
+   basketball, NCAA football, soccer, and tennis. Decision driven by
+   `SDP-001` — single sport-aware adapter is the target. Golf odds stay
+   on Data Golf and do not migrate.
+8. **CFBD adapter.** Adds NCAA basketball/football events / rosters /
+   rankings / scoring / results.
+9. **API-Football adapter.** Adds soccer/World Cup events / lineups /
+   scoring / results.
+10. **API-Tennis adapter.** Adds tennis draws / rankings / scoring /
+    results; gated on `SDP-004` confirming production readiness.
 
-Each slice ships independently, in this order, behind feature flags or
+Slices 1–6 are the golf-only first pass and can ship without slice 7.
+Slice 7 is mandatory before any of slices 8–10 land in production, since
+those sports rely on it for odds.
+
+Each slice ships independently in this order, behind feature flags or
 config-only enablement so the live golf path is never broken.
 
 ## Testing Expectations

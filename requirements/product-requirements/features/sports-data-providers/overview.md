@@ -51,8 +51,8 @@ mock-provider mirror plan (`plans/114-…`).
 
 | Provider | Cost (USD) | Coverage | API Key | Notes |
 |---|---|---|---|---|
-| **Data Golf** | $30/mo or $270/yr (Scratch PLUS) `(Confirmed)` | schedule, field, predictions, live scoring (5-min cadence), historical archive, outright/matchup/3-ball odds from 11+ books | self-serve, single key, 45 RPM rate limit `(Confirmed)` | strong golf-only depth, well-loved in DFS community, modest rate limit |
-| **The Odds API** | Free 500 credits/mo; $30 / $59 / $119 / $249 paid tiers `(Confirmed)` | golf majors odds (Masters, PGA Championship, US Open, Open Championship), outrights/futures, 40+ books | self-serve, single key, credit-based metering | does NOT provide schedule/field/scoring beyond odds context — odds-only complement |
+| **Data Golf** | $30/mo or $270/yr (Scratch PLUS) `(Confirmed)` | schedule, field, predictions, live scoring (5-min cadence), historical archive, outright odds (win, top 5/10/20, make/miss cut, FRL) and matchup/3-ball odds aggregated from 11+ sportsbooks via `/betting-tools/outrights` `(Confirmed)` | self-serve, single key, 45 RPM rate limit `(Confirmed)` | covers all five canonical feeds **and** odds in a single subscription — no second vendor needed for golf-only first pass |
+| **The Odds API** | Free 500 credits/mo; $30 / $59 / $119 / $249 paid tiers `(Confirmed)` | golf majors odds (Masters, PGA Championship, US Open, Open Championship), outrights/futures, 40+ books | self-serve, single key, credit-based metering | redundant with Data Golf for golf alone; earns its place only as the cross-sport odds spine when NCAA / soccer / tennis are activated |
 | **SportsDataIO PGA Golf** | Not publicly priced; 1,000-call free trial; paid via sales (industry estimate $500–$1,000+/mo) `(Inferred)` | full PGA schedule, field, live scoring, results, world rankings | self-serve key after trial; paid tier requires sales | enterprise-grade, but pricing opacity violates frictionless-cost goal for first pass |
 | **SportRadar Golf** | Enterprise, sales-only (industry estimate $500–$1,000+/mo) `(Inferred)` | comprehensive PGA + LPGA + DP World + Champions, in-play, official | sales-gated keys | premium upgrade path; not first pass |
 | **PGA Tour direct** | Partnership/license required `(Inferred)` | first-party | not self-serve | scaffolded adapter exists but is non-viable without licensing |
@@ -61,23 +61,27 @@ mock-provider mirror plan (`plans/114-…`).
 
 ### Recommendation `(Inferred)`
 
-- **Primary events + field + scoring + results + rankings:** Data Golf
-  Scratch PLUS at $30/mo.
-- **Primary outright odds (for tier/price derivation):** The Odds API,
-  starting on the free 500-credit tier; upgrade to $30/mo only when usage
-  demands.
-- **Combined first-pass golf cost:** ~$30/mo, optionally $60/mo.
+- **Primary provider for everything:** Data Golf Scratch PLUS at $30/mo —
+  events, field, rankings, live scoring, results, **and** outright odds
+  for tier/price derivation, all from one subscription and one key.
+- **First-pass golf cost:** **$30/mo.** No second vendor needed.
 - **Premium upgrade path:** SportsDataIO or SportRadar when we outgrow
-  Data Golf's rate limit or need licensed/official feeds for redistribution.
+  Data Golf's 45 RPM rate limit or need licensed/official feeds for
+  redistribution.
 
-### Why this pair
+### Why Data Golf alone
 
-- Both have public self-serve keys and predictable pricing.
-- Together they cover all five canonical feeds plus odds without overlap.
-- Data Golf is golf-specific and deep; The Odds API is multi-sport, so the
-  same odds adapter can be reused for NCAA / soccer / tennis later.
-- Enterprise providers are deliberately deferred — their value is real but
-  their pricing and procurement model is hostile to a first-pass product.
+- Single self-serve key and predictable monthly price.
+- Covers all five canonical feeds plus the outright odds we need for tier
+  derivation (`win` market) and richer alt contests later (`top 5`,
+  `top 10`, `top 20`, `make-cut`, `FRL`, matchup, 3-ball).
+- Odds are aggregated from 11+ sportsbooks plus Data Golf's own model
+  prediction in the same payload, refreshed at ≤ 5-minute cadence.
+- The Odds API only earns its place when we activate non-golf sports;
+  binding it to golf would be paying twice for the same data.
+- Enterprise providers are deliberately deferred — their value is real
+  but their pricing and procurement model is hostile to a first-pass
+  product.
 
 ## Sport Family 2 — NCAA Tournaments `(Second Wave)`
 
@@ -173,7 +177,7 @@ mock-provider mirror plan (`plans/114-…`).
 | Feed | Recommended Provider |
 |---|---|
 | Golf events / field / rankings / scoring / results | Data Golf `(Inferred)` |
-| Golf odds | The Odds API `(Inferred)` |
+| Golf odds | Data Golf `(Inferred)` |
 | NCAA football events / rosters / scoring / results | CFBD `(Inferred)` |
 | NCAA basketball events / rosters / scoring / results | CFBD + NCAA-API resilience layer `(Inferred)` |
 | NCAA odds | The Odds API `(Inferred)` |
@@ -184,19 +188,26 @@ mock-provider mirror plan (`plans/114-…`).
 
 ### Steady-State Cost Envelope `(Inferred)`
 
-- **Always-on:** Data Golf $30/mo + The Odds API $30/mo = **$60/mo**.
-- **Plus active NCAA season:** $0 incremental (CFBD free).
-- **Plus active World Cup window:** +$19/mo (API-Football Pro).
-- **Plus active Grand Slam window:** +$19/mo (API-Tennis Pro).
-- **Cross-sport peak:** ≈ **$98/mo** during overlapping events.
+- **First-pass golf only:** **$30/mo** (Data Golf alone — events, field,
+  rankings, scoring, results, and odds in one subscription).
+- **+ Activate any non-golf sport:** add The Odds API at $30/mo as the
+  cross-sport odds spine for NCAA / soccer / tennis. Golf odds stay on
+  Data Golf.
+- **+ Active NCAA season:** $0 incremental for events/rosters/scoring
+  (CFBD free).
+- **+ Active World Cup window:** +$19/mo (API-Football Pro).
+- **+ Active Grand Slam window:** +$19/mo (API-Tennis Pro).
+- **Cross-sport peak (all sports active):** ≈ **$98/mo**.
 
 ### Provider Consolidation Note
 
-No single provider gives PoolMaster all sports for a reasonable price. The
-recommended approach uses **The Odds API as a single cross-sport odds spine**
-(one key, one bill, four sports) and **per-sport native providers for
-everything else**. This is exactly the use case the ports & adapters pattern
-exists to support.
+For golf-only first pass, **Data Golf is a true single-vendor solution** —
+it covers all five canonical feeds plus odds. When non-golf sports are
+activated, no single provider covers everything affordably; the pattern
+becomes **The Odds API as the cross-sport odds spine** for NCAA / soccer /
+tennis (one key, one bill, three sports) plus per-sport native providers
+for everything else. This is exactly the use case the ports & adapters
+pattern exists to support.
 
 ## Why Not Single-Vendor Coverage
 
