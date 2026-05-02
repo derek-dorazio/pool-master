@@ -267,6 +267,10 @@ access before role-route smoke tests run. Run it with:
 POOLMASTER_E2E_BASE_URL=https://qa.ultimateofficepoolmanager.com npm run test:poolmaster:browser-e2e
 ```
 
+When deployed QA data needs manual cleanup, use the real lifecycle flows in
+[QA-CLEANUP-RUNBOOK.md](./QA-CLEANUP-RUNBOOK.md). Do not clean normal browser
+residue with SQL unless the runbook identifies a product-flow gap.
+
 PoolMaster production builds emit `clients/poolmaster/dist/version-info.json` so deployed environments can expose the webapp version, generated client SDK version, service version, git SHAs, and build metadata. The core API also exposes public service build metadata at `/version` and `/api/v1/version` for QA stale-release and SHA-mismatch debugging.
 
 When the backend service is running, interactive API documentation is available
