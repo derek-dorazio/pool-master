@@ -35,6 +35,7 @@ import {
   LinkButton,
   LoadingState,
   Select,
+  SplitContentLayout,
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
@@ -1147,8 +1148,9 @@ export function CreateContestPage() {
         </div>
       </Tile>
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Tile>
+      <SplitContentLayout
+        main={(
+          <Tile>
           <div className="flex flex-wrap items-center gap-3">
             <Button
               data-testid="contest-mode-tiered"
@@ -1484,9 +1486,10 @@ export function CreateContestPage() {
               </LinkButton>
             </div>
           </div>
-        </Tile>
-
-        <aside className="space-y-6">
+          </Tile>
+        )}
+        aside={(
+          <>
           <ContestSetupSummary
             items={[
               { label: 'League', value: leagueQuery.data.name },
@@ -1531,8 +1534,9 @@ export function CreateContestPage() {
               formatReadinessReasons={formatReadinessReasons}
             />
           ) : null}
-        </aside>
-      </div>
+          </>
+        )}
+      />
     </section>
   );
 }

@@ -1,5 +1,11 @@
-import type { ReactNode } from "react";
-import { IconAvatar, MetricGrid, MetricTile, Tile } from "@/features/shared/ui";
+import type { ReactNode } from 'react';
+import {
+  IconAvatar,
+  MetricGrid,
+  MetricTile,
+  SummaryMediaLayout,
+  Tile,
+} from '@/features/shared/ui';
 
 export type LeagueSummaryCardProps = {
   activeContestCount: number;
@@ -20,7 +26,14 @@ export function LeagueSummaryCard({
 }: LeagueSummaryCardProps) {
   return (
     <Tile data-testid="league-summary-tile" padding="lg">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <SummaryMediaLayout
+        aside={(
+          <MetricGrid className="grid-cols-2 sm:grid-cols-2">
+            <MetricTile label="Members" value={memberCount} />
+            <MetricTile label="Active contests" value={activeContestCount} />
+          </MetricGrid>
+        )}
+      >
         <div className="space-y-3">
           <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
             {roleLabel}
@@ -38,11 +51,7 @@ export function LeagueSummaryCard({
             </div>
           </div>
         </div>
-        <MetricGrid className="grid-cols-2 sm:grid-cols-2">
-          <MetricTile label="Members" value={memberCount} />
-          <MetricTile label="Active contests" value={activeContestCount} />
-        </MetricGrid>
-      </div>
+      </SummaryMediaLayout>
     </Tile>
   );
 }

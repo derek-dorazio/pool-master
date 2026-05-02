@@ -26,9 +26,15 @@ export { IconAvatar, IconBadge } from "./icon-avatar";
 export { IconPickerModal } from "./icon-picker-modal";
 export type { IconPickerOption } from "./icon-picker-modal";
 export { ListCard, ListEmptyRow, ListStack } from "./list-card";
+export {
+  ResponsiveGridLayout,
+  SplitContentLayout,
+  SummaryMediaLayout,
+} from "./layout-presets";
 export { DefinitionList, MetricGrid, MetricTile } from "./metric-grid";
 export { ServerErrorBar, ServerErrorPanel } from "./server-error";
 export type { ServerErrorDisplayProps } from "./server-error";
+export { PageSection, SectionActions, SectionHeader } from "./section";
 export { EmptyState, ErrorState, LoadingState } from "./state";
 export { Pagination, ResultsSummary } from "./pagination";
 export { ProgressIndicator, Skeleton } from "./progress";

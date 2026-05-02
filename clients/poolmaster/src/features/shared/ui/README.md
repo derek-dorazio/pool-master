@@ -50,6 +50,21 @@ Modals should use the templates for predictable footer ordering, pending state,
 scroll behavior, and error placement. Add a new template only when a workflow
 shape repeats across multiple features or materially improves accessibility.
 
+## Mutation Feedback
+
+Use `useMutationActionWorkflow` with `MutationActionToast` for repeated
+action-tile and modal mutation workflows. The hook centralizes pending state,
+success and error feedback, query invalidation, modal close behavior, optional
+navigation, and lifecycle logging so pages do not each re-create the same
+mutation ceremony.
+
+Use inline `Alert`, `ServerErrorBar`, or `FormModal` errors for blocking form
+validation that the user must fix before submitting. Use mutation action toasts
+for completed create, update, lifecycle, copy, invite, and delete outcomes where
+the page can keep the user oriented after the mutation finishes. Avoid raw
+`alert()` calls or page-local toast wiring when the workflow fits the shared
+mutation action pattern.
+
 ## Theme Rules
 
 Feature code should use semantic shared components and theme tokens. Avoid raw

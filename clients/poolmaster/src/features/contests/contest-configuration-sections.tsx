@@ -10,6 +10,8 @@ import {
   Input,
   ListCard,
   ListStack,
+  ResponsiveGridLayout,
+  SectionHeader,
   StatusBadge,
   Tile,
 } from "@/features/shared/ui";
@@ -47,14 +49,16 @@ export function ContestTemplatePicker({
 
   return (
     <Tile className="space-y-3" padding="sm" radius="lg" variant="subtle">
-      <div>
-        <div className="text-sm font-medium">Contest template</div>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <SectionHeader
+        description={
+          <>
           Start from a seeded contest template. The selected template seeds the setup
           below, and any commissioner changes become the contest-specific configuration
           saved at creation time.
-        </p>
-      </div>
+          </>
+        }
+        title="Contest template"
+      />
       <ListStack>
         {templates.map((template) => (
           <ListCard
@@ -92,12 +96,10 @@ export function EventReadinessPanel({
   return (
     <Tile padding="sm" radius="lg" variant="subtle">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="text-sm font-medium text-foreground">Selected event readiness</div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {formatReadinessReasons(event)}
-          </p>
-        </div>
+        <SectionHeader
+          description={formatReadinessReasons(event)}
+          title="Selected event readiness"
+        />
         <StatusBadge tone={event.contestEligible ? "success" : "warning"}>
           {formatReadinessLabel(event)}
         </StatusBadge>
@@ -131,22 +133,24 @@ export function TierSettingsEditor({
 }: TierSettingsEditorProps) {
   return (
     <Tile padding="sm" radius="lg" variant="subtle">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h3 className="font-medium">Tier settings</h3>
-          <p className="text-sm text-muted-foreground">
+      <SectionHeader
+        actions={(
+          <Button
+            data-testid="contest-tiered-reset-tiers"
+            onClick={onResetTiers}
+            size="sm"
+            variant="secondary"
+          >
+            Reset tiers
+          </Button>
+        )}
+        description={
+          <>
             Adjust the participant rank ranges and picks for this contest.
-          </p>
-        </div>
-        <Button
-          data-testid="contest-tiered-reset-tiers"
-          onClick={onResetTiers}
-          size="sm"
-          variant="secondary"
-        >
-          Reset tiers
-        </Button>
-      </div>
+          </>
+        }
+        title="Tier settings"
+      />
       <div className="mt-4 space-y-3">
         {tiers.map((tier, index) => (
           <Tile
@@ -253,17 +257,17 @@ export function NoEligibleEventsAlert({
         loaded. Check back when the next tournament reaches contest-ready status.
       </p>
       {events.length ? (
-        <ul className="mt-4 space-y-2">
+        <ResponsiveGridLayout className="mt-4">
           {events.slice(0, 3).map((event) => (
-            <li key={event.id}>
+            <div className="text-sm" key={event.id}>
               {event.name}
               {" · "}
               {formatReadinessLabel(event)}
               {" · "}
               {formatReadinessReasons(event)}
-            </li>
+            </div>
           ))}
-        </ul>
+        </ResponsiveGridLayout>
       ) : null}
     </Alert>
   );
