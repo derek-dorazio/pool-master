@@ -5,6 +5,7 @@ import { cn } from "./class-names";
 import { ConfirmDialog } from "./confirm-dialog";
 import { FormField, Input } from "./form-field";
 import { Modal } from "./modal";
+import { ServerErrorBar } from "./server-error";
 import { StatusBadge } from "./status-badge";
 import { Tile } from "./tile";
 
@@ -21,7 +22,10 @@ export type FormModalProps = BaseModalTemplateProps & {
   canSave?: boolean;
   cancelLabel?: string;
   children: ReactNode;
+  error?: unknown;
+  errorFallback?: string;
   errorMessage?: ReactNode;
+  errorTitle?: string;
   isPending?: boolean;
   onSave: () => void;
   pendingLabel?: string;
@@ -35,7 +39,10 @@ export function FormModal({
   cancelLabel = "Cancel",
   children,
   description,
+  error,
+  errorFallback,
   errorMessage,
+  errorTitle,
   isPending = false,
   onCancel,
   onOpenChange,
@@ -83,7 +90,14 @@ export function FormModal({
       title={title}
     >
       {children}
-      {errorMessage ? (
+      {error ? (
+        <ServerErrorBar
+          className="mt-4"
+          error={error}
+          fallback={errorFallback}
+          title={errorTitle ?? "Save failed"}
+        />
+      ) : errorMessage ? (
         <p className="mt-4 text-sm font-medium text-destructive">
           {errorMessage}
         </p>

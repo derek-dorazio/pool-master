@@ -19,7 +19,7 @@ import {
   Button,
   ConfirmationModal,
   DefinitionList,
-  DetailWithActionsPage,
+  EntityDetailPage,
   FormModal,
   FormField,
   Input,
@@ -420,7 +420,7 @@ export function UserPage() {
         </Alert>
       ) : null}
 
-      <DetailWithActionsPage
+      <EntityDetailPage
         actions={(
           <ActionList>
             <ActionTile
@@ -523,6 +523,8 @@ export function UserPage() {
           && profileForm.lastName.trim().length > 0
         }
         description="Keep your personal name accurate for membership and account surfaces."
+        error={profileMutation.isError ? profileMutation.error : null}
+        errorFallback="We could not save your profile."
         isPending={profileMutation.isPending}
         onCancel={() => setActiveDialog(null)}
         onOpenChange={(open) => setActiveDialog(open ? 'profile' : null)}
@@ -571,11 +573,6 @@ export function UserPage() {
           </FormField>
         </div>
 
-        {profileMutation.isError ? (
-          <Alert className="mt-4" tone="danger">
-            {extractErrorMessage(profileMutation.error)}
-          </Alert>
-        ) : null}
         {profileMutation.isSuccess ? (
           <Alert className="mt-4" tone="success">
             Your profile was updated.
@@ -583,10 +580,19 @@ export function UserPage() {
         ) : null}
       </FormModal>
 
-      <UserActionDialog
+      <FormModal
+        canSave={!disableUsernameEditing && usernameForm.username.trim().length >= 3}
         description="Choose a unique username for signing in and identifying your account."
+        error={usernameMutation.isError ? usernameMutation.error : null}
+        errorFallback="We could not save your username."
+        isPending={usernameMutation.isPending}
+        onCancel={() => setActiveDialog(null)}
         onOpenChange={(open) => setActiveDialog(open ? 'username' : null)}
         open={activeDialog === 'username'}
+        onSave={() => void usernameMutation.mutateAsync().catch(() => undefined)}
+        pendingLabel="Saving..."
+        saveLabel="Save username"
+        saveTestId="user-page-save-username"
         testId="user-page-username-dialog"
         title="Change username"
       >
@@ -602,33 +608,26 @@ export function UserPage() {
           />
         </FormField>
 
-        {usernameMutation.isError ? (
-          <Alert className="mt-4" tone="danger">
-            {extractErrorMessage(usernameMutation.error)}
-          </Alert>
-        ) : null}
         {usernameMutation.isSuccess ? (
           <Alert className="mt-4" tone="success">
             Your username was updated.
           </Alert>
         ) : null}
+      </FormModal>
 
-        <div className="mt-5 flex justify-end">
-          <Button
-            data-testid="user-page-save-username"
-            disabled={disableUsernameEditing || usernameForm.username.trim().length < 3}
-            onClick={() => void usernameMutation.mutateAsync().catch(() => undefined)}
-            type="button"
-          >
-            {usernameMutation.isPending ? 'Saving...' : 'Save username'}
-          </Button>
-        </div>
-      </UserActionDialog>
-
-      <UserActionDialog
+      <FormModal
+        canSave={!disablePreferencesEditing}
         description="These settings control how dates, times, and locale-aware copy appear for you."
+        error={preferencesMutation.isError ? preferencesMutation.error : null}
+        errorFallback="We could not save your preferences."
+        isPending={preferencesMutation.isPending}
+        onCancel={() => setActiveDialog(null)}
         onOpenChange={(open) => setActiveDialog(open ? 'preferences' : null)}
         open={activeDialog === 'preferences'}
+        onSave={() => void preferencesMutation.mutateAsync().catch(() => undefined)}
+        pendingLabel="Saving..."
+        saveLabel="Save preferences"
+        saveTestId="user-page-save-preferences"
         testId="user-page-preferences-dialog"
         title="Edit preferences"
       >
@@ -696,28 +695,12 @@ export function UserPage() {
           </FormField>
         </div>
 
-        {preferencesMutation.isError ? (
-          <Alert className="mt-4" tone="danger">
-            {extractErrorMessage(preferencesMutation.error)}
-          </Alert>
-        ) : null}
         {preferencesMutation.isSuccess ? (
           <Alert className="mt-4" tone="success">
             Your preferences were updated.
           </Alert>
         ) : null}
-
-        <div className="mt-5 flex justify-end">
-          <Button
-            data-testid="user-page-save-preferences"
-            disabled={disablePreferencesEditing}
-            onClick={() => void preferencesMutation.mutateAsync().catch(() => undefined)}
-            type="button"
-          >
-            {preferencesMutation.isPending ? 'Saving...' : 'Save preferences'}
-          </Button>
-        </div>
-      </UserActionDialog>
+      </FormModal>
 
       <UserActionDialog
         description="Changing your password keeps the current session active and revokes your other refresh sessions."

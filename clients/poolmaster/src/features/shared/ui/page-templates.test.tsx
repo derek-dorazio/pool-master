@@ -6,6 +6,7 @@ import {
   AsyncPage,
   DataGridPage,
   DetailWithActionsPage,
+  EntityDetailPage,
   FormEditorSection,
   LifecycleActionSet,
   PublicInviteJoinPage,
@@ -127,6 +128,25 @@ describe("pool-master-3ew: shared page templates", () => {
     expect(
       screen.getByRole("button", { name: "Invite members" }),
     ).toBeInTheDocument();
+  });
+
+  it("pool-master-pjr.2: renders entity summary above detail/action content", () => {
+    render(
+      <EntityDetailPage
+        actions={<button type="button">Edit</button>}
+        actionsTestId="entity-actions"
+        details={<section aria-label="Entity details">Account metadata</section>}
+        summary={<section aria-label="Entity summary">Derek Dorazio</section>}
+      />,
+    );
+
+    expect(screen.getByLabelText("Entity summary")).toHaveTextContent(
+      "Derek Dorazio",
+    );
+    expect(screen.getByLabelText("Entity details")).toHaveTextContent(
+      "Account metadata",
+    );
+    expect(screen.getByTestId("entity-actions")).toHaveTextContent("Actions");
   });
 
   it("pool-master-3ew.4: renders editable form sections with footer and errors", () => {

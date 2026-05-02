@@ -35,6 +35,26 @@ describe("pool-master-3ew: shared modal templates", () => {
     expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
   });
 
+  it("pool-master-pjr.3: renders server errors through the form modal template", () => {
+    render(
+      <FormModal
+        error={{ error: { message: "Username is already taken." } }}
+        onCancel={vi.fn()}
+        onOpenChange={vi.fn()}
+        onSave={vi.fn()}
+        open
+        saveLabel="Save username"
+        title="Change username"
+      >
+        <input aria-label="Username" />
+      </FormModal>,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Username is already taken.",
+    );
+  });
+
   it("pool-master-3ew.8: gates confirmation on exact typed input", () => {
     const handleConfirm = vi.fn();
 

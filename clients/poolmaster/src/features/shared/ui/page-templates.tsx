@@ -235,7 +235,12 @@ export type DetailWithActionsPageProps = AsyncPageStateProps & {
   testId?: string;
 };
 
-export function DetailWithActionsPage({
+export type EntityDetailPageProps = DetailWithActionsPageProps & {
+  summary?: ReactNode;
+  summaryClassName?: string;
+};
+
+export function EntityDetailPage({
   actions,
   actionsClassName,
   actionsListClassName,
@@ -244,10 +249,13 @@ export function DetailWithActionsPage({
   details,
   detailsClassName,
   layoutClassName,
+  summary,
+  summaryClassName,
   ...shellProps
-}: DetailWithActionsPageProps) {
+}: EntityDetailPageProps) {
   return (
     <TemplatePageShell {...shellProps}>
+      {summary ? <div className={summaryClassName}>{summary}</div> : null}
       <DetailsActionsLayout
         actions={actions}
         actionsClassName={actionsClassName}
@@ -260,6 +268,10 @@ export function DetailWithActionsPage({
       />
     </TemplatePageShell>
   );
+}
+
+export function DetailWithActionsPage(props: DetailWithActionsPageProps) {
+  return <EntityDetailPage {...props} />;
 }
 
 export type FormEditorSectionProps = {
