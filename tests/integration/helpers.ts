@@ -17,6 +17,7 @@ import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
+import { startSmtpSinkServer, type SmtpSinkServer } from '../support/smtp-sink';
 
 // Plugins and modules from core-api
 import { healthPlugin } from '../../packages/core-api/src/plugins/health';
@@ -54,6 +55,19 @@ const INTEGRATION_TEST_PROVIDER_IDS = [
 
 let app: FastifyInstance;
 let prisma: PrismaClient;
+let integrationSmtpServer: SmtpSinkServer | undefined;
+let previousMailEnv: Partial<Record<MailEnvironmentKey, string | undefined>> | undefined;
+
+const MAIL_ENVIRONMENT_KEYS = [
+  'EMAIL_PROVIDER',
+  'SMTP_HOST',
+  'SMTP_PORT',
+  'SMTP_SECURE',
+  'SMTP_FROM',
+  'SMTP_USERNAME',
+  'SMTP_PASSWORD',
+] as const;
+type MailEnvironmentKey = (typeof MAIL_ENVIRONMENT_KEYS)[number];
 
 /** Get the shared Fastify app instance (created once per test suite). */
 export function getApp(): FastifyInstance {
@@ -121,6 +135,7 @@ export async function setupIntegrationTests(): Promise<void> {
   prisma = new PrismaClient();
   await prisma.$connect();
   await cleanupTestData();
+  await startIntegrationMailSink();
   app = await buildTestApp();
 }
 
@@ -128,6 +143,45 @@ export async function setupIntegrationTests(): Promise<void> {
 export async function teardownIntegrationTests(): Promise<void> {
   if (app) await app.close();
   if (prisma) await prisma.$disconnect();
+  await stopIntegrationMailSink();
+}
+
+async function startIntegrationMailSink(): Promise<void> {
+  if (integrationSmtpServer) {
+    return;
+  }
+
+  previousMailEnv = Object.fromEntries(
+    MAIL_ENVIRONMENT_KEYS.map((key) => [key, process.env[key]]),
+  ) as Partial<Record<MailEnvironmentKey, string | undefined>>;
+
+  const sink = await startSmtpSinkServer();
+  integrationSmtpServer = sink;
+
+  process.env.EMAIL_PROVIDER = 'smtp';
+  process.env.SMTP_HOST = '127.0.0.1';
+  process.env.SMTP_PORT = String(sink.port);
+  process.env.SMTP_SECURE = 'false';
+  process.env.SMTP_FROM = 'noreply@integration.test';
+  delete process.env.SMTP_USERNAME;
+  delete process.env.SMTP_PASSWORD;
+}
+
+async function stopIntegrationMailSink(): Promise<void> {
+  if (integrationSmtpServer) {
+    const server = integrationSmtpServer;
+    integrationSmtpServer = undefined;
+    await server.close();
+  }
+
+  if (previousMailEnv) {
+    for (const key of MAIL_ENVIRONMENT_KEYS) {
+      const value = previousMailEnv[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    previousMailEnv = undefined;
+  }
 }
 
 // ---------------------------------------------------------------------------
