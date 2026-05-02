@@ -24,6 +24,12 @@ import type {
   IngestionScheduler,
   SportSyncRequest,
 } from '../ingestion/core/ingestion-scheduler';
+import {
+  createMailDeliveryProvider,
+  readApplicationBaseUrl,
+  readMailDeliveryConfig,
+  type MailDeliveryProvider,
+} from '../email';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -333,8 +339,15 @@ export class ProviderService {
     private readonly scheduler?: IngestionScheduler,
     private readonly logger?: FastifyBaseLogger,
     private readonly ingestionConfigReader?: IngestionScheduleConfigReader,
+    mailDelivery?: MailDeliveryProvider,
+    appBaseUrl?: string,
   ) {
-    this.ingestionPersistence = new IngestionPersistence(prisma, logger);
+    this.ingestionPersistence = new IngestionPersistence(
+      prisma,
+      logger,
+      mailDelivery ?? createMailDeliveryProvider(readMailDeliveryConfig(process.env), logger),
+      appBaseUrl ?? readApplicationBaseUrl(process.env),
+    );
   }
 
   private getProviderOrThrow(providerId: string): SportDataProvider {

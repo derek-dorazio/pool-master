@@ -55,3 +55,9 @@ and invitation identifiers without logging email body content.
 Contest entry confirmation emails are best-effort receipts. The saved entry is
 not rolled back when provider submission fails; PoolMaster logs the template,
 league, contest, and entry identifiers for follow-up.
+
+Contest started summary emails are triggered by ingestion when a persisted sport
+event first transitions linked contests from `OPEN` or `LOCKED` to `ACTIVE`.
+Repeated syncs for an already-active contest do not resend the message. Delivery
+is best effort; ingestion remains successful if the provider rejects the email,
+and PoolMaster logs the template, league, contest, and user identifiers.

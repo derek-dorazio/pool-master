@@ -59,6 +59,11 @@ import { ingestionModule } from './modules/ingestion/routes';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
+import {
+  createMailDeliveryProvider,
+  readApplicationBaseUrl,
+  readMailDeliveryConfig,
+} from './modules/email';
 
 export function buildApp() {
   const app = Fastify({ logger: createFastifyLoggerOptions('core-api') });
@@ -70,7 +75,17 @@ export function buildApp() {
   const registry = new ProviderRegistry();
   registerConfiguredProviders(registry, process.env, app.log);
   const oddsAdapter = new OddsApiAdapter();
-  const ingestionPersistence = new IngestionPersistence(prisma, app.log);
+  const mailDelivery = createMailDeliveryProvider(
+    readMailDeliveryConfig(process.env),
+    app.log,
+  );
+  const appBaseUrl = readApplicationBaseUrl(process.env);
+  const ingestionPersistence = new IngestionPersistence(
+    prisma,
+    app.log,
+    mailDelivery,
+    appBaseUrl,
+  );
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
   const pollConfigService = new PollConfigService(runtimeConfigRepository, app.log);
   const ingestionConfigService = new IngestionConfigService(runtimeConfigRepository, app.log);
@@ -189,6 +204,8 @@ export function buildApp() {
     ingestionScheduler,
     app.log,
     ingestionConfigService,
+    mailDelivery,
+    appBaseUrl,
   );
 
   // =========================================================================

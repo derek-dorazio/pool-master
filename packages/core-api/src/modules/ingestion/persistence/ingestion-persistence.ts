@@ -7,7 +7,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import type { Sport } from '@poolmaster/shared/domain';
+import { ContestStatus, type Sport } from '@poolmaster/shared/domain';
 import type {
   SportEvent,
   SportEventDetail,
@@ -19,11 +19,55 @@ import {
   resolveEventTiming,
   selectTimingPolicy,
 } from '../../events/operational-timing';
+import {
+  renderSystemEmailTemplate,
+  type ContestStartedEntrySummary,
+  type MailDeliveryProvider,
+} from '../../email';
+
+interface ContestStartedEmailUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  isActive: boolean;
+}
+
+interface ContestStartedCandidate {
+  id: string;
+  leagueId: string;
+  name: string;
+  league: {
+    name: string;
+    leagueCode: string;
+    memberships: Array<{
+      role: string;
+      user: ContestStartedEmailUser;
+    }>;
+  };
+  sportEvent: {
+    name: string;
+    startDate: Date;
+  } | null;
+  entries: Array<{
+    id: string;
+    name: string;
+    squad: {
+      name: string;
+      memberships: Array<{
+        user: ContestStartedEmailUser;
+      }>;
+    };
+  }>;
+}
 
 export class IngestionPersistence {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
+    private readonly mailDelivery?: MailDeliveryProvider,
+    private readonly appBaseUrl = 'http://localhost:5173',
   ) {}
 
   /**
@@ -54,7 +98,7 @@ export class IngestionPersistence {
         metadata: event.metadata,
       }, timingPolicy);
 
-      await this.prisma.sportEvent.upsert({
+      const persistedEvent = await this.prisma.sportEvent.upsert({
         where: {
           providerId_externalId: {
             providerId: event.providerId,
@@ -93,6 +137,7 @@ export class IngestionPersistence {
           metadata: event.metadata as any,
         },
       });
+      await this.activateContestsForStartedEvent(persistedEvent.id, event);
       count++;
       this.logger?.debug({
         providerId: event.providerId,
@@ -107,6 +152,178 @@ export class IngestionPersistence {
 
     this.logger?.info({ count }, 'Persisted sport events from ingestion');
     return count;
+  }
+
+  private async activateContestsForStartedEvent(
+    sportEventId: string,
+    event: SportEvent,
+  ): Promise<void> {
+    if (event.status !== 'IN_PROGRESS') {
+      return;
+    }
+
+    const candidates = await this.prisma.contest.findMany({
+      where: {
+        sportEventId,
+        status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED] },
+      },
+      select: {
+        id: true,
+        leagueId: true,
+        name: true,
+        league: {
+          select: {
+            name: true,
+            leagueCode: true,
+            memberships: {
+              where: { status: 'ACTIVE', role: 'COMMISSIONER' },
+              select: {
+                role: true,
+                user: {
+                  select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    username: true,
+                    isActive: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        sportEvent: {
+          select: {
+            name: true,
+            startDate: true,
+          },
+        },
+        entries: {
+          where: { status: 'ACTIVE' },
+          orderBy: [{ entryNumber: 'asc' }, { name: 'asc' }],
+          select: {
+            id: true,
+            name: true,
+            squad: {
+              select: {
+                name: true,
+                memberships: {
+                  where: { status: 'ACTIVE' },
+                  select: {
+                    user: {
+                      select: {
+                        id: true,
+                        email: true,
+                        firstName: true,
+                        lastName: true,
+                        username: true,
+                        isActive: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }) as ContestStartedCandidate[];
+
+    for (const contest of candidates) {
+      const update = await this.prisma.contest.updateMany({
+        where: {
+          id: contest.id,
+          status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED] },
+        },
+        data: {
+          status: ContestStatus.ACTIVE,
+          startsAt: event.startDate,
+        },
+      });
+
+      if (update.count === 0) {
+        this.logger?.debug({
+          contestId: contest.id,
+          sportEventId,
+          providerId: event.providerId,
+          eventExternalId: event.externalId,
+        }, 'Skipped contest started email because contest was already active');
+        continue;
+      }
+
+      this.logger?.info({
+        contestId: contest.id,
+        sportEventId,
+        providerId: event.providerId,
+        eventExternalId: event.externalId,
+      }, 'Activated contest from in-progress sport event');
+      await this.deliverContestStartedSummaryEmails(contest, event);
+    }
+  }
+
+  private async deliverContestStartedSummaryEmails(
+    contest: ContestStartedCandidate,
+    event: SportEvent,
+  ): Promise<void> {
+    if (!this.mailDelivery) {
+      this.logger?.debug({
+        contestId: contest.id,
+        leagueId: contest.leagueId,
+      }, 'Skipped contest started summary email because mail delivery is unavailable');
+      return;
+    }
+
+    const recipients = collectContestStartedRecipients(contest);
+    const entries = buildContestStartedEntrySummary(contest);
+    const eventName = contest.sportEvent?.name ?? event.name;
+    const startedAt = contest.sportEvent?.startDate ?? event.startDate;
+    const contestUrl = buildContestUrl(
+      this.appBaseUrl,
+      contest.league.leagueCode,
+      contest.id,
+    );
+
+    for (const user of recipients) {
+      const message = renderSystemEmailTemplate('CONTEST_STARTED_SUMMARY', {
+        userName: formatUserName(user),
+        leagueName: contest.league.name,
+        contestName: contest.name,
+        eventName,
+        contestUrl,
+        startedAt,
+        entryCount: contest.entries.length,
+        entries,
+      });
+
+      try {
+        await this.mailDelivery.send({
+          to: user.email,
+          subject: message.subject,
+          text: message.text,
+          html: message.html,
+          metadata: {
+            templateKey: message.templateKey,
+            leagueId: contest.leagueId,
+            contestId: contest.id,
+          },
+        });
+        this.logger?.info({
+          contestId: contest.id,
+          leagueId: contest.leagueId,
+          userId: user.id,
+          templateKey: message.templateKey,
+        }, 'Delivered contest started summary email');
+      } catch (err) {
+        this.logger?.error({
+          contestId: contest.id,
+          leagueId: contest.leagueId,
+          userId: user.id,
+          templateKey: message.templateKey,
+          error: err instanceof Error ? err.message : String(err),
+        }, 'Failed to deliver contest started summary email');
+      }
+    }
   }
 
   async persistIngestionJob(job: IngestionJobRecord): Promise<void> {
@@ -478,4 +695,50 @@ export class IngestionPersistence {
     this.logger?.info({ count }, 'Persisted rankings from ingestion');
     return count;
   }
+}
+
+function collectContestStartedRecipients(
+  contest: ContestStartedCandidate,
+): ContestStartedEmailUser[] {
+  const recipients = new Map<string, ContestStartedEmailUser>();
+  const addUser = (user: ContestStartedEmailUser) => {
+    if (!user.isActive) return;
+    recipients.set(user.id, user);
+  };
+
+  for (const membership of contest.league.memberships) {
+    addUser(membership.user);
+  }
+  for (const entry of contest.entries) {
+    for (const membership of entry.squad.memberships) {
+      addUser(membership.user);
+    }
+  }
+
+  return Array.from(recipients.values());
+}
+
+function buildContestStartedEntrySummary(
+  contest: ContestStartedCandidate,
+): ContestStartedEntrySummary[] {
+  return contest.entries.map((entry) => ({
+    entryName: entry.name,
+    teamName: entry.squad.name,
+  }));
+}
+
+function formatUserName(user: ContestStartedEmailUser): string {
+  const fullName = [user.firstName, user.lastName]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(' ');
+  return fullName || user.username || user.email;
+}
+
+function buildContestUrl(
+  appBaseUrl: string,
+  leagueCode: string,
+  contestId: string,
+): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}/contests/${encodeURIComponent(contestId)}`;
 }
