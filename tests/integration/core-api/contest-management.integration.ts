@@ -23,11 +23,49 @@ afterAll(async () => {
 describe('Contest management integration', () => {
   let ownerHeaders: Record<string, string>;
   let leagueId: string;
+  let sportId: string;
   let sportEventId: string;
   let contestId: string;
   let topParticipantId: string;
   let secondParticipantId: string;
   let entryLocksAt: string;
+
+  async function addContestReadyGolfField(targetSize: number) {
+    const prisma = getPrisma();
+    const currentParticipantCount = await prisma.sportEventParticipant.count({
+      where: { sportEventId },
+    });
+    const missingParticipantCount = Math.max(0, targetSize - currentParticipantCount);
+
+    for (let index = 0; index < missingParticipantCount; index += 1) {
+      const rank = currentParticipantCount + index + 1;
+      const participant = await prisma.participant.create({
+        data: {
+          sportId,
+          name: `Template Golfer ${rank}`,
+          participantType: 'INDIVIDUAL',
+          status: 'ACTIVE',
+        },
+      });
+      const eventParticipant = await prisma.sportEventParticipant.create({
+        data: {
+          sportEventId,
+          participantId: participant.id,
+          status: 'ACTIVE',
+        },
+      });
+      await prisma.sportEventParticipantSourceData.create({
+        data: {
+          sportEventParticipantId: eventParticipant.id,
+          providerId: 'PGA',
+          externalId: `template-${rank}-${randomUUID().slice(0, 8)}`,
+          rawPayload: { metadata: { odds: rank + 10, ranking: rank } },
+          normalizedData: { odds: rank + 10, ranking: rank },
+          receivedAt: new Date(entryLocksAt),
+        },
+      });
+    }
+  }
 
   beforeAll(async () => {
     const eventTiming = buildContestEligibleEventTiming();
@@ -54,6 +92,7 @@ describe('Contest management integration', () => {
         participantType: 'INDIVIDUAL',
       },
     });
+    sportId = sport.id;
 
     const topParticipant = await prisma.participant.create({
       data: {
@@ -278,6 +317,9 @@ describe('Contest management integration', () => {
   });
 
   it('lists seeded templates and creates a contest from a selected template', async () => {
+    // pool-master-9y6: default tiered templates require a contest-ready field.
+    await addContestReadyGolfField(80);
+
     const templateRes = await getApp().inject({
       method: 'GET',
       url: `${API_ROUTES.contestManagement.templates(leagueId)}?sport=GOLF&contestType=SINGLE_EVENT`,

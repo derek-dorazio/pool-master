@@ -18,12 +18,13 @@ import {
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   ActionList,
+  ActionModal,
   ActionTile,
   Alert,
   Button,
   ConfirmDialog,
   DefinitionList,
-  DetailsActionsLayout,
+  DetailWithActionsPage,
   FormField,
   IconAvatar,
   IconPickerModal,
@@ -474,7 +475,7 @@ export function LeagueDetailPage() {
         </div>
       </Tile>
 
-      <DetailsActionsLayout
+      <DetailWithActionsPage
         actions={(
           <ActionList>
             {canManageLeague ? (
@@ -670,9 +671,14 @@ export function LeagueDetailPage() {
         </div>
       </Modal>
 
-      <Modal
+      <ActionModal
         description={`Invite new members to join the ${leagueQuery.data.name} league.`}
-        descriptionId="league-invite-modal-description"
+        footer={(
+          <Button onClick={() => setActiveDialog(null)} variant="secondary">
+            Close
+          </Button>
+        )}
+        onCancel={() => setActiveDialog(null)}
         onOpenChange={(open) => setActiveDialog(open ? 'invite' : null)}
         open={activeDialog === 'invite'}
         testId="league-invitations-section"
@@ -749,12 +755,7 @@ export function LeagueDetailPage() {
           </Alert>
         ) : null}
 
-        <div className="mt-6 flex justify-end">
-          <Button onClick={() => setActiveDialog(null)} variant="secondary">
-            Close
-          </Button>
-        </div>
-      </Modal>
+      </ActionModal>
 
       <ConfirmDialog
         confirmLabel="Inactivate"

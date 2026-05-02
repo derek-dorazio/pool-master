@@ -494,6 +494,28 @@ describe('Contract verification (web)', () => {
         status: 'ACTIVE',
       },
     });
+    // pool-master-9y6: default tiered templates require a contest-ready field.
+    for (let index = 2; index <= 80; index += 1) {
+      const fieldParticipant = await getPrisma().participant.create({
+        data: {
+          name: `Contract Field Golfer ${index} ${randomUUID().slice(0, 8)}`,
+          participantType: 'INDIVIDUAL',
+          status: 'ACTIVE',
+          sport: {
+            connect: {
+              name: Sport.GOLF,
+            },
+          },
+        },
+      });
+      await getPrisma().sportEventParticipant.create({
+        data: {
+          sportEventId: sportEvent.id,
+          participantId: fieldParticipant.id,
+          status: 'ACTIVE',
+        },
+      });
+    }
 
     const templateRes = await getApp().inject({
       method: 'GET',

@@ -6,12 +6,11 @@ import {
   adminUpdateIngestionSchedule,
 } from '@/lib/api';
 import {
+  AdminConfigPage,
   Button,
-  ErrorState,
   FormField,
+  FormEditorSection,
   Input,
-  LoadingState,
-  PageHeader,
   Tile,
 } from '@/features/shared/ui';
 import {
@@ -120,43 +119,59 @@ export function RootAdminIngestionSchedulePage() {
     });
   }
 
+  const pageState = ingestionConfigQuery.isError
+    ? 'error'
+    : ingestionConfigQuery.isLoading || !draft
+      ? 'loading'
+      : 'ready';
+
   return (
-    <section
-      className="space-y-6"
-      data-testid="root-admin-ingestion-schedule-page"
-    >
-      <PageHeader
-        actions={(
+    <AdminConfigPage
+      errorBody={extractAdminErrorMessage(
+        ingestionConfigQuery.error,
+        'We could not load ingestion schedule configuration right now.',
+      )}
+      header={{
+        actions: (
           <Button
             disabled={resetIngestionConfigMutation.isPending}
             onClick={() => resetIngestionConfigMutation.mutate()}
-            variant="secondary"
             type="button"
+            variant="secondary"
           >
             {resetIngestionConfigMutation.isPending
               ? 'Resetting...'
               : 'Reset ingestion schedule'}
           </Button>
-        )}
-        breadcrumbs={[
+        ),
+        breadcrumbs: [
           { href: '/manage/sync-config', label: 'Sync Configuration' },
           { label: 'Global Ingestion Schedule' },
-        ]}
-        description="Control the default cadence and lifecycle windows that scheduled ingestion uses across sports before per-sport overrides apply."
-        title="Global Ingestion Schedule"
-      />
-
-      {ingestionConfigQuery.isLoading || !draft ? (
-        <LoadingState body="Loading ingestion schedule configuration..." />
-      ) : ingestionConfigQuery.isError ? (
-        <ErrorState
-          body={extractAdminErrorMessage(
-            ingestionConfigQuery.error,
-            'We could not load ingestion schedule configuration right now.',
+        ],
+        description:
+          'Control the default cadence and lifecycle windows that scheduled ingestion uses across sports before per-sport overrides apply.',
+        title: 'Global Ingestion Schedule',
+      }}
+      loadingBody="Loading ingestion schedule configuration..."
+      state={pageState}
+      testId="root-admin-ingestion-schedule-page"
+    >
+      {draft ? (
+        <FormEditorSection
+          footer={(
+            <Button
+              data-testid="root-admin-ingestion-page-save"
+              disabled={ingestionConfigMutation.isPending}
+              onClick={() => ingestionConfigMutation.mutate(draft)}
+              type="button"
+            >
+              {ingestionConfigMutation.isPending
+                ? 'Saving...'
+                : 'Save ingestion schedule'}
+            </Button>
           )}
-        />
-      ) : (
-        <section className="space-y-3">
+          title="Schedule policies"
+        >
           <div className="space-y-3">
             {INGESTION_POLICY_FIELDS.map((field) => {
               const extraKey = 'extraKey' in field ? field.extraKey : undefined;
@@ -224,21 +239,8 @@ export function RootAdminIngestionSchedulePage() {
               );
             })}
           </div>
-
-          <div className="mt-5 flex justify-end">
-            <Button
-              data-testid="root-admin-ingestion-page-save"
-              disabled={ingestionConfigMutation.isPending}
-              onClick={() => draft && ingestionConfigMutation.mutate(draft)}
-              type="button"
-            >
-              {ingestionConfigMutation.isPending
-                ? 'Saving...'
-                : 'Save ingestion schedule'}
-            </Button>
-          </div>
-        </section>
-      )}
-    </section>
+        </FormEditorSection>
+      ) : null}
+    </AdminConfigPage>
   );
 }

@@ -1,10 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { TeamIconKey } from '@poolmaster/shared/domain';
 import { acceptInvitation, listLeagueSquads, updateLeagueSquad } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useLogger } from '@/lib/logger';
+import {
+  Button,
+  FormField,
+  Input,
+  LinkButton,
+  PublicInviteJoinPage,
+} from '@/features/shared/ui';
 import { InvitationContextCard } from './invitation-context-card';
 import {
   buildInvitePath,
@@ -204,10 +211,9 @@ export function JoinLeaguePage() {
 
   if (redirectMessage) {
     return (
-      <section className="mx-auto max-w-2xl rounded-[2rem] border border-border bg-card p-8">
-        <h2 className="text-2xl font-semibold">
-          {invitationQuery.data ? `Join ${invitationQuery.data.league.name}` : 'Join league'}
-        </h2>
+      <PublicInviteJoinPage
+        title={invitationQuery.data ? `Join ${invitationQuery.data.league.name}` : 'Join league'}
+      >
         <p className="mt-3 text-sm text-muted-foreground">{redirectMessage}</p>
         {invitationQuery.data ? (
           <div className="mt-5">
@@ -220,38 +226,39 @@ export function JoinLeaguePage() {
           </div>
         ) : null}
         <div className="mt-5 flex flex-wrap gap-3">
-          <Link
-            className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+          <LinkButton
             data-testid="invite-sign-in"
             state={{ from: buildInvitePath(inviteCode) }}
             to="/"
           >
             Sign in to continue
-          </Link>
-          <Link
-            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+          </LinkButton>
+          <LinkButton
             data-testid="invite-create-account"
             state={{ authMode: 'register', from: buildInvitePath(inviteCode) }}
             to="/"
+            variant="secondary"
           >
             Create account
-          </Link>
-          <Link className="rounded-2xl border border-border px-4 py-3 text-sm font-medium" to="/">
+          </LinkButton>
+          <LinkButton to="/" variant="secondary">
             Back to home
-          </Link>
+          </LinkButton>
         </div>
-      </section>
+      </PublicInviteJoinPage>
     );
   }
 
   return (
-    <section className="mx-auto max-w-3xl rounded-[2rem] border border-border bg-card p-8" data-testid="join-league-page">
-      <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-        Invitation
-      </span>
-      <h2 className="mt-4 text-3xl font-semibold tracking-tight">
-        {invitationQuery.data ? `Join ${invitationQuery.data.league.name}` : 'Accept your league invite'}
-      </h2>
+    <PublicInviteJoinPage
+      context={(
+        <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+          Invitation
+        </span>
+      )}
+      testId="join-league-page"
+      title={invitationQuery.data ? `Join ${invitationQuery.data.league.name}` : 'Accept your league invite'}
+    >
       <p className="mt-2 text-sm text-muted-foreground">
         Review the invitation, pick your team name and icon, and join when you&apos;re ready.
       </p>
@@ -280,16 +287,14 @@ export function JoinLeaguePage() {
           </p>
 
           <div className="mt-5 space-y-4">
-            <label className="block space-y-2">
-              <span className="text-sm font-medium text-foreground">Team name</span>
-              <input
-                className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground"
+            <FormField label="Team name">
+              <Input
                 data-testid="join-league-team-name"
                 maxLength={100}
                 onChange={(event) => setTeamName(event.target.value)}
                 value={teamName}
               />
-            </label>
+            </FormField>
 
             <div className="space-y-3">
               <div className="text-sm font-medium text-foreground">Team icon</div>
@@ -334,20 +339,19 @@ export function JoinLeaguePage() {
 
       {invitationQuery.data ? (
         <div className="mt-5 flex gap-3">
-          <button
-            className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+          <Button
             data-testid="invite-accept"
             disabled={acceptMutation.isPending || !teamName.trim()}
             onClick={() => acceptMutation.mutate()}
             type="button"
           >
             {acceptMutation.isPending ? 'Joining...' : 'Join league'}
-          </button>
-          <Link className="rounded-2xl border border-border px-4 py-3 text-sm font-medium" to="/welcome">
+          </Button>
+          <LinkButton to="/welcome" variant="secondary">
             Back
-          </Link>
+          </LinkButton>
         </div>
       ) : null}
-    </section>
+    </PublicInviteJoinPage>
   );
 }

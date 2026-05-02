@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminListTeams, type AdminListTeamsResponses } from '@/lib/api';
 import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
-import { DataGrid, StatusBadge, Tile } from '@/features/shared/ui';
+import { ManagementListPage, StatusBadge } from '@/features/shared/ui';
 import { TeamIcon } from '@/features/teams/team-icon';
 import { getTeamIconOption } from '@/features/teams/team-icon-catalog';
 
@@ -127,25 +127,22 @@ export function RootAdminManageTeamsPage() {
   );
 
   return (
-    <section className="space-y-6" data-testid="root-admin-manage-teams-page">
-      <Tile>
-        {teamsQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading teams...</p>
-        ) : teamsQuery.isError ? (
-          <p className="text-sm text-rose-700">
-            {extractErrorMessage(teamsQuery.error, 'We could not load teams right now.')}
-          </p>
-        ) : (
-          <DataGrid
-            columns={columns}
-            data={teamsQuery.data ?? []}
-            emptyMessage="No teams matched the current filters."
-            getRowId={(team) => team.id}
-            getRowLink={(team) => buildLeagueTeamHomePath(team.leagueCode, team.id)}
-            rowTestId={(team) => `root-admin-manage-team-row-${team.id}`}
-          />
-        )}
-      </Tile>
-    </section>
+    <ManagementListPage
+      columns={columns}
+      data={teamsQuery.data ?? []}
+      emptyMessage="No teams matched the current filters."
+      errorBody={extractErrorMessage(
+        teamsQuery.error,
+        'We could not load teams right now.',
+      )}
+      getRowId={(team) => team.id}
+      getRowLink={(team) => buildLeagueTeamHomePath(team.leagueCode, team.id)}
+      loadingBody="Loading teams..."
+      rowTestId={(team) => `root-admin-manage-team-row-${team.id}`}
+      state={
+        teamsQuery.isLoading ? 'loading' : teamsQuery.isError ? 'error' : 'ready'
+      }
+      testId="root-admin-manage-teams-page"
+    />
   );
 }

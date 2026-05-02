@@ -4,11 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { adminListLeagues, type AdminListLeaguesResponses } from "@/lib/api";
 import { buildLeaguePath } from "@/features/leagues/league-routing";
 import {
-  DataGrid,
-  ErrorState,
-  LoadingState,
+  ManagementListPage,
   StatusBadge,
-  Tile,
 } from "@/features/shared/ui";
 
 type ManagedLeague = AdminListLeaguesResponses[200]["leagues"][number];
@@ -115,30 +112,26 @@ export function RootAdminManageLeaguesPage() {
   );
 
   return (
-    <section className="space-y-6" data-testid="root-admin-manage-leagues-page">
-      <Tile>
-        {leaguesQuery.isLoading ? (
-          <LoadingState body="Loading leagues..." />
-        ) : leaguesQuery.isError ? (
-          <ErrorState
-            body={extractErrorMessage(
-              leaguesQuery.error,
-              "We could not load leagues right now.",
-            )}
-          />
-        ) : (
-          <DataGrid
-            columns={columns}
-            data={leaguesQuery.data ?? []}
-            emptyMessage="No leagues matched the current filters."
-            getRowId={(league) => league.id}
-            getRowLink={(league) => buildLeaguePath(league.leagueCode)}
-            rowTestId={(league) =>
-              `root-admin-manage-leagues-link-${league.id}`
-            }
-          />
-        )}
-      </Tile>
-    </section>
+    <ManagementListPage
+      columns={columns}
+      data={leaguesQuery.data ?? []}
+      emptyMessage="No leagues matched the current filters."
+      errorBody={extractErrorMessage(
+        leaguesQuery.error,
+        "We could not load leagues right now.",
+      )}
+      getRowId={(league) => league.id}
+      getRowLink={(league) => buildLeaguePath(league.leagueCode)}
+      loadingBody="Loading leagues..."
+      rowTestId={(league) => `root-admin-manage-leagues-link-${league.id}`}
+      state={
+        leaguesQuery.isLoading
+          ? "loading"
+          : leaguesQuery.isError
+            ? "error"
+            : "ready"
+      }
+      testId="root-admin-manage-leagues-page"
+    />
   );
 }

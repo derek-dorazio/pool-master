@@ -17,9 +17,10 @@ import {
   ActionTile,
   Alert,
   Button,
-  ConfirmDialog,
+  ConfirmationModal,
   DefinitionList,
-  DetailsActionsLayout,
+  DetailWithActionsPage,
+  FormModal,
   FormField,
   Input,
   LinkButton,
@@ -369,7 +370,6 @@ export function UserPage() {
     );
   }
 
-  const confirmationMatches = emailConfirmation.trim().toLowerCase() === user.email.toLowerCase();
   const isInactive = user.isActive === false;
   const memberSince = formatMemberSince(user.createdAt, user.dateFormat);
   const disableProfileEditing = isInactive || profileMutation.isPending;
@@ -420,7 +420,7 @@ export function UserPage() {
         </Alert>
       ) : null}
 
-      <DetailsActionsLayout
+      <DetailWithActionsPage
         actions={(
           <ActionList>
             <ActionTile
@@ -515,10 +515,22 @@ export function UserPage() {
         )}
       />
 
-      <UserActionDialog
+      <FormModal
+        canSave={
+          !disableProfileEditing
+          && profileForm.email.trim().length > 0
+          && profileForm.firstName.trim().length > 0
+          && profileForm.lastName.trim().length > 0
+        }
         description="Keep your personal name accurate for membership and account surfaces."
+        isPending={profileMutation.isPending}
+        onCancel={() => setActiveDialog(null)}
         onOpenChange={(open) => setActiveDialog(open ? 'profile' : null)}
         open={activeDialog === 'profile'}
+        onSave={() => void profileMutation.mutateAsync().catch(() => undefined)}
+        pendingLabel="Saving..."
+        saveLabel="Save profile"
+        saveTestId="user-page-save-profile"
         testId="user-page-profile-dialog"
         title="Edit profile"
       >
@@ -569,23 +581,7 @@ export function UserPage() {
             Your profile was updated.
           </Alert>
         ) : null}
-
-        <div className="mt-5 flex justify-end">
-          <Button
-            data-testid="user-page-save-profile"
-            disabled={
-              disableProfileEditing
-              || profileForm.email.trim().length === 0
-              || profileForm.firstName.trim().length === 0
-              || profileForm.lastName.trim().length === 0
-            }
-            onClick={() => void profileMutation.mutateAsync().catch(() => undefined)}
-            type="button"
-          >
-            {profileMutation.isPending ? 'Saving...' : 'Save profile'}
-          </Button>
-        </div>
-      </UserActionDialog>
+      </FormModal>
 
       <UserActionDialog
         description="Choose a unique username for signing in and identifying your account."
@@ -855,11 +851,18 @@ export function UserPage() {
         </div>
       </UserActionDialog>
 
-      <ConfirmDialog
+      <ConfirmationModal
         confirmLabel="Delete account"
         confirmTestId="user-page-delete-submit"
+        confirmationInput={{
+          expectedValue: user.email,
+          helperText: "Enter your email exactly to confirm permanent deletion.",
+          label: "Email confirmation",
+          onChange: setEmailConfirmation,
+          testId: "user-page-delete-confirmation",
+          value: emailConfirmation,
+        }}
         description="Delete permanently only after the account is inactive and the email confirmation matches exactly."
-        isConfirmDisabled={!confirmationMatches}
         isPending={deleteMutation.isPending}
         onCancel={() => {
           setActiveDialog(null);
@@ -885,21 +888,13 @@ export function UserPage() {
             This action will delete your account and related data permanently. Enter{' '}
             <span className="font-medium text-foreground">{user.email}</span> to continue.
           </p>
-          <Input
-            autoComplete="email"
-            data-testid="user-page-delete-confirmation"
-            onChange={(event) => setEmailConfirmation(event.target.value)}
-            placeholder="Enter your email exactly"
-            type="email"
-            value={emailConfirmation}
-          />
           {deleteMutation.isError ? (
             <Alert tone="danger">
               {extractErrorMessage(deleteMutation.error)}
             </Alert>
           ) : null}
         </div>
-      </ConfirmDialog>
+      </ConfirmationModal>
     </section>
   );
 }

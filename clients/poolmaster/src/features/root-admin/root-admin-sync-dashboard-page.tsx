@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   adminListProviderSyncRuns,
@@ -7,10 +7,12 @@ import {
 } from '@/lib/api';
 import {
   Alert,
+  Button,
   DataGrid,
   LinkButton,
   MetricGrid,
   MetricTile,
+  ReadOnlyDetailModal,
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
@@ -92,6 +94,7 @@ function getStatusTone(status: string) {
 }
 
 export function RootAdminSyncDashboardPage() {
+  const [payloadRun, setPayloadRun] = useState<ProviderSyncRun | null>(null);
   const providersQuery = useQuery({
     queryKey: ['poolmaster', 'root-admin', 'providers'],
     queryFn: async (): Promise<ProviderSummary[]> => {
@@ -209,14 +212,14 @@ export function RootAdminSyncDashboardPage() {
         cell: ({ row }) => (
           <div className="text-muted-foreground">
             <div>{buildPayloadSummary(row.original.payload)}</div>
-            <details className="mt-2">
-              <summary className="cursor-pointer text-xs font-medium uppercase tracking-[0.18em] text-primary">
+            <Button
+              className="mt-2 h-auto rounded-none p-0 text-xs uppercase tracking-[0.18em]"
+              onClick={() => setPayloadRun(row.original)}
+              type="button"
+              variant="ghost"
+            >
                 View payload
-              </summary>
-              <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-card p-3">
-                {formatJsonPayload(row.original.payload)}
-              </pre>
-            </details>
+            </Button>
           </div>
         ),
       }),
@@ -298,6 +301,41 @@ export function RootAdminSyncDashboardPage() {
           />
         ) : null}
       </Tile>
+      <ReadOnlyDetailModal
+        description="Provider sync run request and response details."
+        detailContent={
+          <pre className="whitespace-pre-wrap break-words">
+            {payloadRun ? formatJsonPayload(payloadRun.payload) : ''}
+          </pre>
+        }
+        details={
+          payloadRun
+            ? [
+                { label: 'Status', value: payloadRun.status },
+                { label: 'Sport', value: payloadRun.sport },
+                { label: 'Event', value: formatEventValue(payloadRun.eventId) },
+                {
+                  label: 'Provider',
+                  value: getProviderName(payloadRun.providerId, providersQuery.data),
+                },
+              ]
+            : undefined
+        }
+        onCancel={() => setPayloadRun(null)}
+        onCopy={() => {
+          if (payloadRun && navigator.clipboard) {
+            void navigator.clipboard.writeText(formatJsonPayload(payloadRun.payload));
+          }
+        }}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPayloadRun(null);
+          }
+        }}
+        open={Boolean(payloadRun)}
+        testId="root-admin-sync-payload-modal"
+        title="Sync payload"
+      />
     </section>
   );
 }

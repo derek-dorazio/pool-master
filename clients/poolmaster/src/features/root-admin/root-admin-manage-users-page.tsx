@@ -3,11 +3,8 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { adminListUsers, type AdminListUsersResponses } from "@/lib/api";
 import {
-  DataGrid,
-  ErrorState,
-  LoadingState,
+  ManagementListPage,
   StatusBadge,
-  Tile,
 } from "@/features/shared/ui";
 
 type RootAdminUser = AdminListUsersResponses[200]["items"][number];
@@ -123,28 +120,26 @@ export function RootAdminManageUsersPage() {
   );
 
   return (
-    <section className="space-y-6" data-testid="root-admin-manage-users-page">
-      <Tile>
-        {usersQuery.isLoading ? (
-          <LoadingState body="Loading users..." />
-        ) : usersQuery.isError ? (
-          <ErrorState
-            body={extractAdminError(
-              usersQuery.error,
-              "We could not load users right now.",
-            )}
-          />
-        ) : (
-          <DataGrid
-            columns={columns}
-            data={usersQuery.data?.items ?? []}
-            emptyMessage="No users matched the current filters."
-            getRowId={(user) => user.id}
-            getRowLink={(user) => `/users/${user.id}`}
-            rowTestId={(user) => `root-admin-manage-user-row-${user.id}`}
-          />
-        )}
-      </Tile>
-    </section>
+    <ManagementListPage
+      columns={columns}
+      data={usersQuery.data?.items ?? []}
+      emptyMessage="No users matched the current filters."
+      errorBody={extractAdminError(
+        usersQuery.error,
+        "We could not load users right now.",
+      )}
+      getRowId={(user) => user.id}
+      getRowLink={(user) => `/users/${user.id}`}
+      loadingBody="Loading users..."
+      rowTestId={(user) => `root-admin-manage-user-row-${user.id}`}
+      state={
+        usersQuery.isLoading
+          ? "loading"
+          : usersQuery.isError
+            ? "error"
+            : "ready"
+      }
+      testId="root-admin-manage-users-page"
+    />
   );
 }

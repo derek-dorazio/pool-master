@@ -40,5 +40,43 @@ export {
 export { NotificationCard, Toast, ToastProvider, ToastViewport } from "./toast";
 export { HelpText, Tooltip, TooltipProvider } from "./tooltip";
 export { Modal } from "./modal";
+export {
+  ActionModal,
+  ConfirmationModal,
+  FormModal,
+  PickerModal,
+  ReadOnlyDetailModal,
+  WizardModal,
+} from "./modal-templates";
+export type {
+  ActionModalProps,
+  ActionModalSection,
+  ConfirmationModalProps,
+  FormModalProps,
+  PickerModalItem,
+  PickerModalProps,
+  ReadOnlyDetailModalProps,
+  WizardModalProps,
+  WizardModalStep,
+} from "./modal-templates";
+export {
+  AdminConfigPage,
+  DetailWithActionsPage,
+  FormEditorAction,
+  FormEditorSection,
+  LifecycleActionSet,
+  ManagementListPage,
+  PublicInviteJoinPage,
+} from "./page-templates";
+export type {
+  AdminConfigPageProps,
+  DetailWithActionsPageProps,
+  FormEditorActionProps,
+  FormEditorSectionProps,
+  LifecycleAction,
+  LifecycleActionSetProps,
+  ManagementListPageProps,
+  PublicInviteJoinPageProps,
+} from "./page-templates";
 export { Tile } from "./tile";
 export type { TileProps } from "./tile";

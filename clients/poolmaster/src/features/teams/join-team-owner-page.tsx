@@ -1,9 +1,14 @@
 import { useEffect, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { acceptTeamOwnerInvitation } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
+import {
+  Button,
+  LinkButton,
+  PublicInviteJoinPage,
+} from '@/features/shared/ui';
 import { useLogger } from '@/lib/logger';
 import {
   buildLeaguePath,
@@ -165,10 +170,9 @@ export function JoinTeamOwnerPage() {
 
   if (redirectMessage) {
     return (
-      <section className="mx-auto max-w-2xl rounded-[2rem] border border-border bg-card p-8">
-        <h2 className="text-2xl font-semibold">
-          {invitationQuery.data ? `Join ${invitationQuery.data.team.name}` : 'Join team'}
-        </h2>
+      <PublicInviteJoinPage
+        title={invitationQuery.data ? `Join ${invitationQuery.data.team.name}` : 'Join team'}
+      >
         <p className="mt-3 text-sm text-muted-foreground">{redirectMessage}</p>
         {invitationQuery.data ? (
           <div className="mt-5 space-y-5">
@@ -197,38 +201,39 @@ export function JoinTeamOwnerPage() {
           </div>
         ) : null}
         <div className="mt-5 flex flex-wrap gap-3">
-          <Link
-            className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+          <LinkButton
             data-testid="team-invite-sign-in"
             state={{ from: buildTeamInvitePath(inviteCode) }}
             to="/"
           >
             Sign in to continue
-          </Link>
-          <Link
-            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+          </LinkButton>
+          <LinkButton
             data-testid="team-invite-create-account"
             state={{ authMode: 'register', from: buildTeamInvitePath(inviteCode) }}
             to="/"
+            variant="secondary"
           >
             Create account
-          </Link>
-          <Link className="rounded-2xl border border-border px-4 py-3 text-sm font-medium" to="/">
+          </LinkButton>
+          <LinkButton to="/" variant="secondary">
             Back to home
-          </Link>
+          </LinkButton>
         </div>
-      </section>
+      </PublicInviteJoinPage>
     );
   }
 
   return (
-    <section className="mx-auto max-w-2xl rounded-[2rem] border border-border bg-card p-8" data-testid="team-owner-invite-page">
-      <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-        Team invitation
-      </span>
-      <h2 className="mt-4 text-3xl font-semibold tracking-tight">
-        {invitationQuery.data ? `Join ${invitationQuery.data.team.name}` : 'Accept your team invite'}
-      </h2>
+    <PublicInviteJoinPage
+      context={(
+        <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+          Team invitation
+        </span>
+      )}
+      testId="team-owner-invite-page"
+      title={invitationQuery.data ? `Join ${invitationQuery.data.team.name}` : 'Accept your team invite'}
+    >
       <p className="mt-2 text-sm text-muted-foreground">
         This invitation adds you to an existing team. Team identity is already set, so you&apos;ll join as a co-owner instead of creating a separate team.
       </p>
@@ -271,23 +276,22 @@ export function JoinTeamOwnerPage() {
 
       {invitationQuery.data ? (
         <div className="mt-5 flex gap-3">
-          <button
-            className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+          <Button
             data-testid="team-invite-accept"
             disabled={acceptMutation.isPending}
             onClick={() => acceptMutation.mutate()}
             type="button"
           >
             {acceptMutation.isPending ? 'Joining...' : 'Join as co-owner'}
-          </button>
-          <Link
-            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium"
+          </Button>
+          <LinkButton
             to={buildLeaguePath(invitationQuery.data.league.leagueCode)}
+            variant="secondary"
           >
             Back
-          </Link>
+          </LinkButton>
         </div>
       ) : null}
-    </section>
+    </PublicInviteJoinPage>
   );
 }

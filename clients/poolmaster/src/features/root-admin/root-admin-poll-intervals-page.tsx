@@ -6,14 +6,12 @@ import {
   adminUpdatePollIntervals,
 } from '@/lib/api';
 import {
+  AdminConfigPage,
   Button,
-  ErrorState,
+  FormEditorSection,
   FormField,
   Input,
   LinkButton,
-  LoadingState,
-  PageHeader,
-  Tile,
 } from '@/features/shared/ui';
 import {
   clonePollConfig,
@@ -105,13 +103,20 @@ export function RootAdminPollIntervalsPage() {
     });
   }
 
+  const pageState = pollConfigQuery.isError
+      ? 'error'
+      : pollConfigQuery.isLoading || !draft
+        ? 'loading'
+        : 'ready';
+
   return (
-    <section
-      className="space-y-6"
-      data-testid="root-admin-poll-intervals-page"
-    >
-      <PageHeader
-        actions={(
+    <AdminConfigPage
+      errorBody={extractAdminErrorMessage(
+        pollConfigQuery.error,
+        'We could not load poll interval configuration right now.',
+      )}
+      header={{
+        actions: (
           <>
             <LinkButton to="/manage/sync-config" variant="secondary">
               Back to Sync Configuration
@@ -125,22 +130,28 @@ export function RootAdminPollIntervalsPage() {
               {resetPollConfigMutation.isPending ? 'Resetting...' : 'Reset poll intervals'}
             </Button>
           </>
-        )}
-        description="Client-facing refresh guidance stored durably in runtime config. Update these intervals when the webapp should poll more or less aggressively for standings, draft, notification, and contest state changes."
-        title="Poll Intervals"
-      />
-
-      {pollConfigQuery.isLoading || !draft ? (
-        <LoadingState body="Loading poll interval configuration..." />
-      ) : pollConfigQuery.isError ? (
-        <ErrorState
-          body={extractAdminErrorMessage(
-            pollConfigQuery.error,
-            'We could not load poll interval configuration right now.',
+        ),
+        description: 'Client-facing refresh guidance stored durably in runtime config. Update these intervals when the webapp should poll more or less aggressively for standings, draft, notification, and contest state changes.',
+        title: 'Poll Intervals',
+      }}
+      loadingBody="Loading poll interval configuration..."
+      state={pageState}
+      testId="root-admin-poll-intervals-page"
+    >
+      {draft ? (
+        <FormEditorSection
+          footer={(
+            <Button
+              data-testid="root-admin-poll-page-save"
+              disabled={pollConfigMutation.isPending}
+              onClick={() => pollConfigMutation.mutate(draft)}
+              type="button"
+            >
+              {pollConfigMutation.isPending ? 'Saving...' : 'Save poll intervals'}
+            </Button>
           )}
-        />
-      ) : (
-        <Tile>
+          title="Poll interval values"
+        >
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {POLL_INTERVAL_FIELDS.map(([key, label]) => (
               <FormField key={key} label={label}>
@@ -153,19 +164,8 @@ export function RootAdminPollIntervalsPage() {
               </FormField>
             ))}
           </div>
-
-          <div className="mt-5 flex justify-end">
-            <Button
-              data-testid="root-admin-poll-page-save"
-              disabled={pollConfigMutation.isPending}
-              onClick={() => draft && pollConfigMutation.mutate(draft)}
-              type="button"
-            >
-              {pollConfigMutation.isPending ? 'Saving...' : 'Save poll intervals'}
-            </Button>
-          </div>
-        </Tile>
-      )}
-    </section>
+        </FormEditorSection>
+      ) : null}
+    </AdminConfigPage>
   );
 }

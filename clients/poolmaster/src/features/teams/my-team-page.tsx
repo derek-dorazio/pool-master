@@ -22,17 +22,19 @@ import {
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   ActionList,
+  ActionModal,
   ActionTile,
   Alert,
   Button,
   ConfirmDialog,
   DefinitionList,
-  DetailsActionsLayout,
+  DetailWithActionsPage,
   FormField,
   IconAvatar,
   IconPickerModal,
   Input,
   LinkButton,
+  LifecycleActionSet,
   Modal,
   Tile,
 } from '@/features/shared/ui';
@@ -759,7 +761,7 @@ export function MyTeamPage() {
         </Alert>
       ) : null}
 
-      <DetailsActionsLayout
+      <DetailWithActionsPage
         actions={(
           <ActionList>
             {selectedTeam ? (
@@ -785,23 +787,35 @@ export function MyTeamPage() {
                   onClick={() => setActiveDialog('owners')}
                   trailing="Open"
                 />
-                {isInactiveTeam ? (
-                  <ActionTile
-                    data-testid="my-team-delete"
-                    disabled={!canDeleteSelectedTeam || isInactiveLeague || isBusy}
-                    label={deleteTeamMutation.isPending ? 'Deleting...' : 'Delete team'}
-                    onClick={() => setActiveDialog('delete')}
-                    tone="danger"
-                  />
-                ) : (
-                  <ActionTile
-                    data-testid="my-team-inactivate"
-                    disabled={isInactiveLeague || isBusy || !canManageSelectedTeam}
-                    label={inactivateTeamMutation.isPending ? 'Inactivating...' : 'Inactivate team'}
-                    onClick={() => setActiveDialog('inactivate')}
-                    tone="danger"
-                  />
-                )}
+                <LifecycleActionSet
+                  actions={[
+                    {
+                      key: 'inactivate',
+                      label: 'Inactivate team',
+                      pending: inactivateTeamMutation.isPending,
+                      pendingLabel: 'Inactivating...',
+                      disabled: isInactiveLeague || isBusy || !canManageSelectedTeam,
+                      onSelect: () => setActiveDialog('inactivate'),
+                      testId: 'my-team-inactivate',
+                      tone: 'danger',
+                      visibleForStatuses: ['Active'],
+                    },
+                    {
+                      key: 'delete',
+                      label: 'Delete team',
+                      pending: deleteTeamMutation.isPending,
+                      pendingLabel: 'Deleting...',
+                      disabled: !canDeleteSelectedTeam || isInactiveLeague || isBusy,
+                      onSelect: () => setActiveDialog('delete'),
+                      testId: 'my-team-delete',
+                      tone: 'danger',
+                      visibleForStatuses: ['Inactive'],
+                    },
+                  ]}
+                  currentStatus={isInactiveTeam ? 'Inactive' : 'Active'}
+                  statusTone={isInactiveTeam ? 'inactive' : 'active'}
+                  title="Team lifecycle"
+                />
               </>
             ) : (
               <Alert>
@@ -963,9 +977,14 @@ export function MyTeamPage() {
         </div>
       </Modal>
 
-      <Modal
+      <ActionModal
         description="Add, replace, or remove team owners."
-        descriptionId="my-team-owners-modal-description"
+        footer={(
+          <Button onClick={() => setActiveDialog(null)} variant="secondary">
+            Close
+          </Button>
+        )}
+        onCancel={() => setActiveDialog(null)}
         onOpenChange={(open) => setActiveDialog(open ? 'owners' : null)}
         open={activeDialog === 'owners'}
         size="lg"
@@ -975,12 +994,7 @@ export function MyTeamPage() {
         <div className="mt-5">
           {ownerManagementContent}
         </div>
-        <div className="mt-6 flex justify-end">
-          <Button onClick={() => setActiveDialog(null)} variant="secondary">
-            Close
-          </Button>
-        </div>
-      </Modal>
+      </ActionModal>
 
       <ConfirmDialog
         confirmLabel="Inactivate team"
