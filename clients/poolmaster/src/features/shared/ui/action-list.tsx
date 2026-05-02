@@ -24,14 +24,14 @@ const actionTileClassName =
 
 function actionToneClassName(tone: ActionTileBaseProps["tone"]) {
   if (tone === "danger") {
-    return "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15";
+    return "border-[color:var(--status-danger-border)] bg-[var(--workflow-danger-surface)] [color:var(--status-danger-text)] hover:bg-[var(--workflow-danger-hover-surface)]";
   }
 
   if (tone === "primary") {
-    return "border-primary/30 bg-primary/10 text-foreground hover:border-primary/40 hover:bg-primary/15";
+    return "border-[color:var(--status-active-border)] bg-[var(--workflow-primary-surface)] text-foreground hover:bg-[var(--workflow-primary-hover-surface)]";
   }
 
-  return "border-border bg-background text-foreground hover:border-primary/40 hover:bg-card";
+  return "border-border bg-[var(--workflow-default-surface)] text-foreground hover:border-[color:var(--status-active-border)] hover:bg-[var(--workflow-default-hover-surface)]";
 }
 
 function ActionTileContent({

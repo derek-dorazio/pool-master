@@ -425,7 +425,7 @@ export function ManageLeagueModal({
                   </div>
 
                   {isInactive ? (
-                    <p className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                    <p className="rounded-2xl border border-[color:var(--status-warning-border)] bg-[var(--status-warning-surface)] px-4 py-3 text-sm [color:var(--status-warning-text)]">
                       Inactive leagues are read-only here. Lifecycle remains the only place to
                       make further league changes.
                     </p>
@@ -436,7 +436,7 @@ export function ManageLeagueModal({
                   ) : null}
 
                   {detailsMutation.isSuccess ? (
-                    <p className="text-sm text-emerald-700">League details were saved.</p>
+                    <p className="text-sm [color:var(--status-active-text)]">League details were saved.</p>
                   ) : null}
 
                   <div className="flex justify-end">
@@ -509,7 +509,7 @@ export function ManageLeagueModal({
                     </div>
 
                     {isInactive ? (
-                      <p className="mt-4 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                      <p className="mt-4 rounded-2xl border border-[color:var(--status-warning-border)] bg-[var(--status-warning-surface)] px-4 py-3 text-sm [color:var(--status-warning-text)]">
                         Inactive leagues are read-only here. Lifecycle remains the only place to
                         make further league changes.
                       </p>
@@ -520,7 +520,7 @@ export function ManageLeagueModal({
                     ) : null}
 
                     {iconMutation.isSuccess ? (
-                      <p className="mt-4 text-sm text-emerald-700">League icon was saved.</p>
+                      <p className="mt-4 text-sm [color:var(--status-active-text)]">League icon was saved.</p>
                     ) : null}
 
                     <div className="mt-5 flex justify-end">
@@ -612,7 +612,7 @@ export function ManageLeagueModal({
 
                     {isInactive ? (
                       <p
-                        className="mt-4 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+                        className="mt-4 rounded-2xl border border-[color:var(--status-warning-border)] bg-[var(--status-warning-surface)] px-4 py-3 text-sm [color:var(--status-warning-text)]"
                         data-testid="manage-league-inactive-state"
                       >
                         This league is inactive. Delete is now available as a separate, irreversible
@@ -621,16 +621,16 @@ export function ManageLeagueModal({
                     ) : null}
                   </section>
 
-                  <section className="rounded-[1.5rem] border border-red-300 bg-red-50/80 p-5">
+                  <section className="rounded-[1.5rem] border border-[color:var(--status-danger-border)] bg-[var(--status-danger-surface)] p-5">
                     {deleteSuccess ? (
                       <div className="space-y-4" data-testid="manage-league-delete-success">
-                        <h4 className="text-lg font-semibold text-red-950">Your league was deleted.</h4>
-                        <p className="text-sm text-red-900">
+                        <h4 className="text-lg font-semibold [color:var(--status-danger-text)]">Your league was deleted.</h4>
+                        <p className="text-sm [color:var(--status-danger-text)]">
                           The league and its related data were removed. You can now return to your
                           home context.
                         </p>
                         <button
-                          className="rounded-2xl bg-red-700 px-4 py-3 text-sm font-medium text-white"
+                          className="rounded-2xl bg-destructive px-4 py-3 text-sm font-medium text-destructive-foreground"
                           onClick={onDeleted}
                           type="button"
                         >
@@ -640,23 +640,23 @@ export function ManageLeagueModal({
                     ) : (
                       <div className="space-y-5">
                         <div className="space-y-2">
-                          <h4 className="text-lg font-semibold text-red-950">Delete league</h4>
-                          <p className="text-sm text-red-900">
+                          <h4 className="text-lg font-semibold [color:var(--status-danger-text)]">Delete league</h4>
+                          <p className="text-sm [color:var(--status-danger-text)]">
                             This action will delete this league and all related data. This action
                             is irreversible. Are you sure you want to proceed?
                           </p>
                         </div>
 
-                        <div className="rounded-[1.25rem] border border-red-200 bg-white/80 p-4">
-                          <p className="text-sm text-red-900">
+                        <div className="rounded-[1.25rem] border border-[color:var(--status-danger-border)] bg-card p-4">
+                          <p className="text-sm [color:var(--status-danger-text)]">
                             Are you sure you want to proceed? This action is irreversible. Please
                             enter <span className="font-mono font-semibold">{league.leagueCode}</span>{' '}
                             to continue.
                           </p>
                           <label className="mt-4 block space-y-2">
-                            <span className="text-sm font-medium text-red-950">Confirmation code</span>
+                            <span className="text-sm font-medium [color:var(--status-danger-text)]">Confirmation code</span>
                             <input
-                              className="w-full rounded-2xl border border-red-200 bg-white px-4 py-3 font-mono text-sm uppercase outline-none transition focus:border-red-500"
+                              className="w-full rounded-2xl border border-[color:var(--status-danger-border)] bg-card px-4 py-3 font-mono text-sm uppercase outline-none transition focus:border-[color:var(--status-danger-text)]"
                               data-testid="manage-league-delete-confirmation"
                               disabled={!isInactive || deleteMutation.isPending}
                               onChange={(event) => setDeleteConfirmation(event.target.value)}
@@ -669,7 +669,7 @@ export function ManageLeagueModal({
 
                         <div className="flex flex-wrap items-center gap-3">
                           <button
-                            className="rounded-2xl bg-red-700 px-4 py-3 text-sm font-medium text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:bg-red-300"
+                            className="rounded-2xl bg-destructive px-4 py-3 text-sm font-medium text-destructive-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                             data-testid="manage-league-delete-submit"
                             disabled={!canDelete || deleteMutation.isPending}
                             onClick={() =>
@@ -688,7 +688,7 @@ export function ManageLeagueModal({
                             {deleteMutation.isPending ? 'Deleting...' : 'DELETE'}
                           </button>
                           {!isInactive ? (
-                            <span className="text-sm text-red-900">
+                            <span className="text-sm [color:var(--status-danger-text)]">
                               Delete is unavailable until the league is inactive.
                             </span>
                           ) : null}

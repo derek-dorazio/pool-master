@@ -5,10 +5,13 @@ import { cn } from "./class-names";
 const alertVariants = cva("rounded-2xl border px-4 py-3 text-sm", {
   variants: {
     tone: {
-      danger: "border-destructive/30 bg-destructive/10 text-destructive",
-      info: "border-border bg-background text-muted-foreground",
-      success: "border-primary/30 bg-primary/10 text-foreground",
-      warning: "border-border bg-muted/40 text-foreground",
+      danger:
+        "border-[color:var(--status-danger-border)] bg-[var(--status-danger-surface)] [color:var(--status-danger-text)]",
+      info: "border-[color:var(--status-info-border)] bg-[var(--status-info-surface)] [color:var(--status-info-text)]",
+      success:
+        "border-[color:var(--status-active-border)] bg-[var(--status-active-surface)] [color:var(--status-active-text)]",
+      warning:
+        "border-[color:var(--status-warning-border)] bg-[var(--status-warning-surface)] [color:var(--status-warning-text)]",
     },
   },
   defaultVariants: {

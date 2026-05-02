@@ -74,7 +74,7 @@ export function DataGrid<TData>({
   );
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-2xl border border-border bg-card">
       <table
         className="min-w-full border-collapse text-left text-sm"
         data-testid={tableTestId}
@@ -82,7 +82,7 @@ export function DataGrid<TData>({
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr
-              className="border-b border-border text-xs uppercase tracking-[0.18em] text-muted-foreground"
+              className="border-b border-border bg-[var(--table-header-surface)] text-xs uppercase tracking-[0.18em] text-muted-foreground"
               key={headerGroup.id}
             >
               {headerGroup.headers.map((header) => {
@@ -119,14 +119,14 @@ export function DataGrid<TData>({
           ))}
           {headerGroups.map((headerGroup) => (
             <tr
-              className="border-b border-border bg-background/60 text-xs text-muted-foreground"
+              className="border-b border-border bg-[var(--table-header-surface)] text-xs text-muted-foreground"
               key={`${headerGroup.id}-filters`}
             >
               {headerGroup.headers.map((header) => (
                 <th className="px-4 py-3 font-medium" key={`${header.id}-filter`}>
                   {header.isPlaceholder || !header.column.getCanFilter() ? null : (
                     <input
-                      className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs normal-case tracking-normal text-foreground placeholder:text-muted-foreground"
+                      className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs normal-case tracking-normal text-foreground placeholder:text-muted-foreground focus:border-[color:var(--status-active-border)]"
                       data-testid={`${filterTestIdPrefix}-${header.column.id}`}
                       onChange={(event) =>
                         header.column.setFilterValue(event.target.value)
@@ -156,7 +156,7 @@ export function DataGrid<TData>({
 
               return (
                 <tr
-                  className="border-b border-border/70 align-top text-foreground transition hover:bg-background/80"
+                  className="border-b border-border/70 align-top text-foreground transition hover:bg-[var(--table-row-hover-surface)]"
                   data-testid={rowTestId?.(row.original, index)}
                   key={row.id}
                 >

@@ -11,7 +11,7 @@ import {
   adminSetUserRootAdmin,
   type AdminGetUserDetailResponses,
 } from '@/lib/api';
-import { ConfirmDialog } from '@/features/shared/ui';
+import { Alert, ConfirmDialog } from '@/features/shared/ui';
 import { useLogger } from '@/lib/logger';
 import { buildLeaguePath, buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { formatUserName } from './user-name';
@@ -416,13 +416,14 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
           actions stay on Teams and Owners and Team Home.
         </p>
         {isInactive ? (
-          <div
-            className="mt-5 rounded-[1.5rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          <Alert
+            className="mt-5"
             data-testid="root-admin-user-inactive-banner"
+            tone="warning"
           >
             This account is inactive. Root-admin lifecycle controls can reactivate or permanently
             delete it here.
-          </div>
+          </Alert>
         ) : null}
       </div>
 
@@ -621,15 +622,15 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
             />
           </label>
           {temporaryPassword ? (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            <Alert tone="success">
               <div className="font-semibold">Temporary password</div>
-              <div className="mt-2 rounded-xl border border-emerald-200 bg-white px-3 py-2 font-mono text-foreground" data-testid="root-admin-user-temp-password">
+              <div className="mt-2 rounded-xl border border-[color:var(--status-active-border)] bg-card px-3 py-2 font-mono text-foreground" data-testid="root-admin-user-temp-password">
                 {temporaryPassword}
               </div>
-              <p className="mt-2 text-xs text-emerald-900/80">
+              <p className="mt-2 text-xs">
                 Relay this to the user and have them change it after signing in.
               </p>
-            </div>
+            </Alert>
           ) : null}
           {resetPasswordMutation.isError ? (
             <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">

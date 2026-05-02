@@ -159,7 +159,7 @@ export function RootAdminSportOverridesPage() {
             Loading sport override configuration...
           </p>
         ) : ingestionConfigQuery.isError ? (
-          <p className="mt-4 text-sm text-rose-700">
+          <p className="mt-4 text-sm text-destructive">
             {extractAdminErrorMessage(
               ingestionConfigQuery.error,
               'We could not load ingestion schedule configuration right now.',

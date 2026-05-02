@@ -19,6 +19,7 @@ import {
   setRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { useLogger } from '@/lib/logger';
+import { Alert } from '@/features/shared/ui';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
@@ -223,13 +224,15 @@ export function TeamsPage() {
       </div>
 
       {ownerInvitationsQuery.isError ? (
-        <section className="rounded-[2rem] border border-amber-300/60 bg-amber-50 p-6 text-amber-950">
-          <h3 className="text-lg font-semibold">Owner invitations are temporarily unavailable</h3>
-          <p className="mt-2 text-sm">
+        <Alert
+          tone="warning"
+          title="Owner invitations are temporarily unavailable"
+        >
+          <p>
             Active owners are still shown below, but pending owner invitations could not be loaded
             for this league right now.
           </p>
-        </section>
+        </Alert>
       ) : null}
 
       <section className="rounded-[2rem] border border-border bg-card p-6">

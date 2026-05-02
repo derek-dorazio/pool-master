@@ -1,12 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   adminListContestConfigTemplates,
   adminUpdateContestConfigTemplate,
   type AdminUpdateContestConfigTemplateResponses,
 } from '@/lib/api';
 import { useLogger } from '@/lib/logger';
+import {
+  AdminConfigPage,
+  Button,
+  FormEditorSection,
+  FormField,
+  Input,
+  LinkButton,
+  StatusBadge,
+  Textarea,
+  Tile,
+} from '@/features/shared/ui';
 import {
   cloneContestTemplate,
   getPicksPerTier,
@@ -123,42 +134,47 @@ export function RootAdminContentConfigurationDetailPage() {
     });
   }
 
-  return (
-    <section
-      className="space-y-6"
-      data-testid="root-admin-content-configuration-detail-page"
-    >
-      <div className="rounded-[2rem] border border-border bg-card p-6">
-        <Link
-          className="text-sm font-medium text-primary transition hover:opacity-80"
-          to="/manage/content-configuration"
-        >
-          Back to Content Configuration
-        </Link>
+  const pageState = templatesQuery.isError
+    ? 'error'
+    : templatesQuery.isLoading
+      ? 'loading'
+      : 'ready';
 
-        {templatesQuery.isLoading ? (
-          <p className="mt-4 text-sm text-muted-foreground">
-            Loading contest template...
+  return (
+    <AdminConfigPage
+      errorBody={extractErrorMessage(
+        templatesQuery.error,
+        'We could not load this contest template right now.',
+      )}
+      header={{
+        actions: (
+          <LinkButton to="/manage/content-configuration" variant="secondary">
+            Back to Content Configuration
+          </LinkButton>
+        ),
+        breadcrumbs: [
+          { href: '/manage/content-configuration', label: 'Content Configuration' },
+          { label: templateKey },
+        ],
+        title: draft?.name ?? templateKey,
+      }}
+      loadingBody="Loading contest template..."
+      state={pageState}
+      testId="root-admin-content-configuration-detail-page"
+    >
+      {!draft ? (
+        <>
+          <h2 className="text-2xl font-semibold text-foreground">
+            Template not found
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            No persisted contest template matched <span className="font-medium text-foreground">{templateKey}</span>.
           </p>
-        ) : templatesQuery.isError ? (
-          <p className="mt-4 text-sm text-rose-700">
-            {extractErrorMessage(
-              templatesQuery.error,
-              'We could not load this contest template right now.',
-            )}
-          </p>
-        ) : !draft ? (
-          <>
-            <h2 className="mt-3 text-2xl font-semibold text-foreground">
-              Template not found
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              No persisted contest template matched <span className="font-medium text-foreground">{templateKey}</span>.
-            </p>
-          </>
-        ) : (
-          <>
-            <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        </>
+      ) : (
+        <>
+          <Tile>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                   {draft.templateKey}
@@ -171,29 +187,43 @@ export function RootAdminContentConfigurationDetailPage() {
                 </p>
               </div>
               <div className="flex gap-2">
-                <span
-                  className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
-                    draft.active
-                      ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
-                      : 'border-border bg-card text-muted-foreground'
-                  }`}
-                >
+                <StatusBadge tone={draft.active ? 'active' : 'inactive'}>
                   {draft.active ? 'Active' : 'Inactive'}
-                </span>
+                </StatusBadge>
                 {draft.isDefault ? (
-                  <span className="inline-flex rounded-full border border-sky-300 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-900">
-                    Default
-                  </span>
+                  <StatusBadge tone="info">Default</StatusBadge>
                 ) : null}
               </div>
             </div>
+          </Tile>
 
-            <div className="mt-6 rounded-[1.5rem] border border-border bg-background p-5">
+          <FormEditorSection
+            errorMessage={
+              contestTemplateMutation.isError
+                ? extractErrorMessage(
+                    contestTemplateMutation.error,
+                    'We could not save this contest template right now.',
+                  )
+                : null
+            }
+            footer={(
+              <Button
+                data-testid="root-admin-content-config-save"
+                disabled={contestTemplateMutation.isPending}
+                onClick={() => contestTemplateMutation.mutate({
+                  templateId: draft.id,
+                  nextDraft: draft,
+                })}
+                type="button"
+              >
+                {contestTemplateMutation.isPending ? 'Saving...' : 'Save template'}
+              </Button>
+            )}
+            title="Template configuration"
+          >
               <div className="grid gap-3 md:grid-cols-2">
-                <label className="text-sm text-muted-foreground">
-                  <span className="mb-2 block font-medium text-foreground">Name</span>
-                  <input
-                    className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground"
+                <FormField label="Name">
+                  <Input
                     data-testid="root-admin-content-config-name"
                     onChange={(event) => updateDraft((current) => ({
                       ...current,
@@ -201,11 +231,9 @@ export function RootAdminContentConfigurationDetailPage() {
                     }))}
                     value={draft.name}
                   />
-                </label>
-                <label className="text-sm text-muted-foreground">
-                  <span className="mb-2 block font-medium text-foreground">Sort order</span>
-                  <input
-                    className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground"
+                </FormField>
+                <FormField label="Sort order">
+                  <Input
                     data-testid="root-admin-content-config-sort-order"
                     onChange={(event) => updateDraft((current) => ({
                       ...current,
@@ -214,11 +242,9 @@ export function RootAdminContentConfigurationDetailPage() {
                     type="number"
                     value={draft.sortOrder}
                   />
-                </label>
-                <label className="text-sm text-muted-foreground md:col-span-2">
-                  <span className="mb-2 block font-medium text-foreground">Description</span>
-                  <textarea
-                    className="min-h-[96px] w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground"
+                </FormField>
+                <FormField className="md:col-span-2" label="Description">
+                  <Textarea
                     data-testid="root-admin-content-config-description"
                     onChange={(event) => updateDraft((current) => ({
                       ...current,
@@ -226,7 +252,7 @@ export function RootAdminContentConfigurationDetailPage() {
                     }))}
                     value={draft.description}
                   />
-                </label>
+                </FormField>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
@@ -258,10 +284,8 @@ export function RootAdminContentConfigurationDetailPage() {
 
               {draft.configuration.mode === 'GOLF_TIERED' ? (
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <label className="text-sm text-muted-foreground">
-                    <span className="mb-2 block font-medium text-foreground">Tier count</span>
-                    <input
-                      className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground"
+                  <FormField label="Tier count">
+                    <Input
                       data-testid="root-admin-content-config-tier-count"
                       onChange={(event) => updateDraft((current) =>
                         updateTieredTemplateConfiguration(current, {
@@ -270,11 +294,9 @@ export function RootAdminContentConfigurationDetailPage() {
                       type="number"
                       value={getTierCount(draft)}
                     />
-                  </label>
-                  <label className="text-sm text-muted-foreground">
-                    <span className="mb-2 block font-medium text-foreground">Picks per tier</span>
-                    <input
-                      className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground"
+                  </FormField>
+                  <FormField label="Picks per tier">
+                    <Input
                       data-testid="root-admin-content-config-picks-per-tier"
                       onChange={(event) => updateDraft((current) =>
                         updateTieredTemplateConfiguration(current, {
@@ -283,11 +305,9 @@ export function RootAdminContentConfigurationDetailPage() {
                       type="number"
                       value={getPicksPerTier(draft)}
                     />
-                  </label>
-                  <label className="text-sm text-muted-foreground">
-                    <span className="mb-2 block font-medium text-foreground">Counted scores</span>
-                    <input
-                      className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground"
+                  </FormField>
+                  <FormField label="Counted scores">
+                    <Input
                       data-testid="root-admin-content-config-counted-scores"
                       onChange={(event) => updateDraft((current) =>
                         updateTieredTemplateConfiguration(current, {
@@ -296,11 +316,9 @@ export function RootAdminContentConfigurationDetailPage() {
                       type="number"
                       value={draft.configuration.countedScores}
                     />
-                  </label>
-                  <label className="text-sm text-muted-foreground">
-                    <span className="mb-2 block font-medium text-foreground">Tier size</span>
-                    <input
-                      className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground"
+                  </FormField>
+                  <FormField label="Tier size">
+                    <Input
                       data-testid="root-admin-content-config-tier-size"
                       onChange={(event) => updateDraft((current) =>
                         updateTieredTemplateConfiguration(current, {
@@ -309,11 +327,9 @@ export function RootAdminContentConfigurationDetailPage() {
                       type="number"
                       value={draft.configuration.tierGeneration.defaultTierSize}
                     />
-                  </label>
-                  <label className="text-sm text-muted-foreground">
-                    <span className="mb-2 block font-medium text-foreground">Cut score</span>
-                    <input
-                      className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground"
+                  </FormField>
+                  <FormField label="Cut score">
+                    <Input
                       data-testid="root-admin-content-config-cut-score"
                       onChange={(event) => updateDraft((current) =>
                         updateTieredTemplateConfiguration(current, {
@@ -322,39 +338,16 @@ export function RootAdminContentConfigurationDetailPage() {
                       type="number"
                       value={draft.configuration.cutRule.fixedScore}
                     />
-                  </label>
+                  </FormField>
                   <div className="rounded-2xl border border-border px-4 py-3 text-sm text-muted-foreground">
                     <div>Roster size: {draft.configuration.rosterSize}</div>
                     <div className="mt-1">Template tiers: {draft.configuration.tiers.length}</div>
                   </div>
                 </div>
               ) : null}
-
-              <button
-                className="mt-5 rounded-2xl bg-foreground px-5 py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                data-testid="root-admin-content-config-save"
-                disabled={contestTemplateMutation.isPending}
-                onClick={() => contestTemplateMutation.mutate({
-                  templateId: draft.id,
-                  nextDraft: draft,
-                })}
-                type="button"
-              >
-                {contestTemplateMutation.isPending ? 'Saving...' : 'Save template'}
-              </button>
-
-              {contestTemplateMutation.isError ? (
-                <p className="mt-3 text-sm text-rose-700">
-                  {extractErrorMessage(
-                    contestTemplateMutation.error,
-                    'We could not save this contest template right now.',
-                  )}
-                </p>
-              ) : null}
-            </div>
-          </>
-        )}
-      </div>
-    </section>
+          </FormEditorSection>
+        </>
+      )}
+    </AdminConfigPage>
   );
 }

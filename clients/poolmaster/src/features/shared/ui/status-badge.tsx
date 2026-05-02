@@ -7,17 +7,26 @@ const statusBadgeVariants = cva(
   {
     variants: {
       tone: {
-        active: "border-primary/30 bg-primary/10 text-primary",
-        completed: "border-primary/30 bg-primary/10 text-primary",
-        danger: "border-destructive/40 bg-destructive/10 text-destructive",
-        failed: "border-destructive/40 bg-destructive/10 text-destructive",
-        inactive: "border-border bg-background text-muted-foreground",
-        info: "border-border bg-background text-foreground",
-        live: "border-destructive/40 bg-destructive/10 text-destructive",
-        locked: "border-border bg-muted/40 text-foreground",
-        neutral: "border-border bg-background text-muted-foreground",
-        success: "border-primary/30 bg-primary/10 text-primary",
-        warning: "border-border bg-muted/40 text-foreground",
+        active:
+          "border-[color:var(--status-active-border)] bg-[var(--status-active-surface)] [color:var(--status-active-text)]",
+        completed:
+          "border-[color:var(--status-completed-border)] bg-[var(--status-completed-surface)] [color:var(--status-completed-text)]",
+        danger:
+          "border-[color:var(--status-danger-border)] bg-[var(--status-danger-surface)] [color:var(--status-danger-text)]",
+        failed:
+          "border-[color:var(--status-danger-border)] bg-[var(--status-danger-surface)] [color:var(--status-danger-text)]",
+        inactive:
+          "border-[color:var(--status-neutral-border)] bg-[var(--status-neutral-surface)] [color:var(--status-neutral-text)]",
+        info: "border-[color:var(--status-info-border)] bg-[var(--status-info-surface)] [color:var(--status-info-text)]",
+        live: "border-[color:var(--status-danger-border)] bg-[var(--status-danger-surface)] [color:var(--status-danger-text)] shadow-[var(--shadow-red-pulse)]",
+        locked:
+          "border-[color:var(--status-neutral-border)] bg-[var(--status-neutral-surface)] [color:var(--status-completed-text)]",
+        neutral:
+          "border-[color:var(--status-neutral-border)] bg-[var(--status-neutral-surface)] [color:var(--status-neutral-text)]",
+        success:
+          "border-[color:var(--status-active-border)] bg-[var(--status-active-surface)] [color:var(--status-active-text)]",
+        warning:
+          "border-[color:var(--status-warning-border)] bg-[var(--status-warning-surface)] [color:var(--status-warning-text)]",
       },
     },
     defaultVariants: {

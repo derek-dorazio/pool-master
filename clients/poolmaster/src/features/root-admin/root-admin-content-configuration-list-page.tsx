@@ -3,11 +3,8 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import { adminListContestConfigTemplates } from '@/lib/api';
 import {
-  DataGrid,
-  ErrorState,
-  LoadingState,
+  ManagementListPage,
   StatusBadge,
-  Tile,
 } from '@/features/shared/ui';
 import { useLogger } from '@/lib/logger';
 import type { ContestConfigTemplate } from './content-configuration-utils';
@@ -123,47 +120,42 @@ export function RootAdminContentConfigurationListPage() {
   );
 
   return (
-    <section
-      className="space-y-6"
-      data-testid="root-admin-content-configuration-list-page"
-    >
-      <Tile>
-        {templatesQuery.isLoading ? (
-          <LoadingState body="Loading contest templates..." />
-        ) : templatesQuery.isError ? (
-          <ErrorState
-            body={extractErrorMessage(
-              templatesQuery.error,
-              'We could not load contest templates right now.',
-            )}
-          />
-        ) : (
-          <DataGrid
-            columns={columns}
-            data={templates}
-            emptyMessage="No persisted contest templates are configured yet."
-            getRowId={(template) => template.id}
-            getRowLink={(template) =>
-              `/manage/content-configuration/${template.templateKey}`
-            }
-            getRowLinkProps={(template) => ({
-              'data-testid': `root-admin-content-config-link-${template.templateKey}`,
-              onClick: () => {
-                logger.info(
-                  {
-                    action: 'rootAdmin.contentConfiguration.openTemplate',
-                    data: {
-                      templateId: template.id,
-                      templateKey: template.templateKey,
-                    },
-                  },
-                  'Opened root-admin content configuration detail page',
-                );
+    <ManagementListPage
+      columns={columns}
+      data={templates}
+      emptyMessage="No persisted contest templates are configured yet."
+      errorBody={extractErrorMessage(
+        templatesQuery.error,
+        'We could not load contest templates right now.',
+      )}
+      getRowId={(template) => template.id}
+      getRowLink={(template) =>
+        `/manage/content-configuration/${template.templateKey}`
+      }
+      getRowLinkProps={(template) => ({
+        'data-testid': `root-admin-content-config-link-${template.templateKey}`,
+        onClick: () => {
+          logger.info(
+            {
+              action: 'rootAdmin.contentConfiguration.openTemplate',
+              data: {
+                templateId: template.id,
+                templateKey: template.templateKey,
               },
-            })}
-          />
-        )}
-      </Tile>
-    </section>
+            },
+            'Opened root-admin content configuration detail page',
+          );
+        },
+      })}
+      loadingBody="Loading contest templates..."
+      state={
+        templatesQuery.isLoading
+          ? 'loading'
+          : templatesQuery.isError
+            ? 'error'
+            : 'ready'
+      }
+      testId="root-admin-content-configuration-list-page"
+    />
   );
 }
