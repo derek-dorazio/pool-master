@@ -34,8 +34,8 @@ export function buildLeagueSeed(prefix: string) {
 
 export async function registerUser(page: Page, user: E2EUser) {
   await page.goto('/');
-  await expect(page.getByTestId('auth-register-tab')).toBeVisible();
-  await page.getByTestId('auth-register-tab').click();
+  await expect(page.getByRole('radio', { name: 'Create account' })).toBeVisible();
+  await page.getByRole('radio', { name: 'Create account' }).click();
   await page.getByTestId('auth-register-first-name').fill(user.firstName);
   await page.getByTestId('auth-register-last-name').fill(user.lastName);
   await page.getByTestId('auth-register-email').fill(user.email);

@@ -25,6 +25,7 @@ packages/*/src/**/*.d.ts.map
 
 # Testing
 coverage/
+clients/poolmaster/e2e/.auth/
 
 # Environment
 .env

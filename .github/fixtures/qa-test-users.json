@@ -6,5 +6,21 @@
     "firstName": "poolmaster",
     "lastName": "administrator",
     "isRootAdmin": true
+  },
+  {
+    "email": "derek.dorazio+qa-commissioner@gmail.com",
+    "username": "qa-commissioner",
+    "password": "poolmaster",
+    "firstName": "QA",
+    "lastName": "Commissioner",
+    "isRootAdmin": false
+  },
+  {
+    "email": "derek.dorazio+qa-member@gmail.com",
+    "username": "qa-member",
+    "password": "poolmaster",
+    "firstName": "QA",
+    "lastName": "Member",
+    "isRootAdmin": false
   }
 ]

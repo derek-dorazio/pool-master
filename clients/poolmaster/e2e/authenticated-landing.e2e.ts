@@ -1,42 +1,20 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
-async function registerUser(
-  page: Parameters<typeof test>[0]['page'],
-  user: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-  },
-) {
-  await page.getByTestId('auth-register-tab').click();
-  await page.getByTestId('auth-register-first-name').fill(user.firstName);
-  await page.getByTestId('auth-register-last-name').fill(user.lastName);
-  await page.getByTestId('auth-register-email').fill(user.email);
-  await page.getByTestId('auth-register-password').fill(user.password);
-  await page.getByTestId('auth-register-confirm-password').fill(user.password);
-  await page.getByTestId('auth-register-submit').click();
-}
+test('pool-master-xw5.2: fixture users can load their authenticated landing surfaces', async ({
+  commissionerPage,
+  memberPage,
+  rootAdminPage,
+  qaLeague,
+}) => {
+  await commissionerPage.goto(`/league/${qaLeague.code}`);
+  await expect(commissionerPage.getByTestId('league-home')).toBeVisible();
+  await expect(commissionerPage.getByTestId('app-menu-league-trigger')).toBeVisible();
 
-test('new user can sign up and land on the welcome page', async ({ page }) => {
-  const timestamp = Date.now();
-  const email = `playwright-commissioner-${timestamp}@example.test`;
-  const password = 'Playwright123!';
+  await memberPage.goto(`/league/${qaLeague.code}`);
+  await expect(memberPage.getByTestId('league-home')).toBeVisible();
+  await expect(memberPage.getByTestId('app-menu-my-team-trigger')).toBeVisible();
 
-  await page.goto('/');
-
-  await expect(page.getByTestId('auth-register-tab')).toBeVisible();
-
-  await registerUser(page, {
-    firstName: 'Playwright',
-    lastName: 'Commissioner',
-    email,
-    password,
-  });
-
-  await expect(page).toHaveURL(/\/welcome$/);
-  await expect(page.getByTestId('authenticated-landing')).toBeVisible();
-  await expect(
-    page.getByTestId('welcome-create-league'),
-  ).toBeVisible();
+  await rootAdminPage.goto('/manage');
+  await expect(rootAdminPage.getByTestId('root-admin-manage-layout')).toBeVisible();
+  await expect(rootAdminPage.getByTestId('root-admin-manage-hub-page')).toBeVisible();
 });

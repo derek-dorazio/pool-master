@@ -255,7 +255,17 @@ npm run test:service:integration:fresh
 npm run test:poolmaster:unit
 ```
 
-The active browser lane is the deployed Playwright journey suite for PoolMaster onboarding and league flows. It currently covers registration, explicit league creation, league-list navigation, multi-league switching, and invite/join behavior on the deployed QA environment.
+The active browser lane is the deployed Playwright journey suite for PoolMaster
+onboarding and league flows. It uses stable fixture accounts from
+`.github/fixtures/qa-test-users.json` plus one reusable QA league. The browser
+setup project signs in the root-admin, commissioner, and member fixture users,
+writes ignored storage state under `clients/poolmaster/e2e/.auth/`, creates or
+repairs the `QATESTLEAGUE` fixture league when needed, and verifies member
+access before role-route smoke tests run. Run it with:
+
+```bash
+POOLMASTER_E2E_BASE_URL=https://qa.ultimateofficepoolmanager.com npm run test:poolmaster:browser-e2e
+```
 
 PoolMaster production builds emit `clients/poolmaster/dist/version-info.json` so deployed environments can expose the webapp version, generated client SDK version, service version, git SHAs, and build metadata. The core API also exposes public service build metadata at `/version` and `/api/v1/version` for QA stale-release and SHA-mismatch debugging.
 

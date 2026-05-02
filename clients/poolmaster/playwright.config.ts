@@ -4,7 +4,6 @@ const browserChannel = process.env.POOLMASTER_E2E_BROWSER_CHANNEL;
 
 export default defineConfig({
   testDir: './e2e',
-  testMatch: /.*\.e2e\.ts/,
   fullyParallel: false,
   workers: 1,
   forbidOnly: Boolean(process.env.CI),
@@ -20,7 +19,13 @@ export default defineConfig({
   },
   projects: [
     {
+      name: 'auth setup',
+      testMatch: /.*\.setup\.ts/,
+    },
+    {
       name: 'chromium',
+      dependencies: ['auth setup'],
+      testMatch: /.*\.e2e\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         ...(browserChannel ? { channel: browserChannel } : {}),

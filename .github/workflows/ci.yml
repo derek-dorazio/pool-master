@@ -1067,4 +1067,4 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Base URL: \`$POOLMASTER_E2E_BASE_URL\`" >> $GITHUB_STEP_SUMMARY
           echo "- Expected release prefix: \`releases/${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Journeys: commissioner create flow, invited-member join flow, multi-league recent selection" >> $GITHUB_STEP_SUMMARY
+          echo "- Journeys: stable role auth setup, reusable QA league repair, commissioner/member/root-admin route smoke" >> $GITHUB_STEP_SUMMARY
