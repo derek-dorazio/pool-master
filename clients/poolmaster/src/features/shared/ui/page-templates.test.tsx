@@ -188,11 +188,15 @@ describe("pool-master-3ew: shared page templates", () => {
           },
         ]}
         currentStatus="Inactive"
+        errorMessage="Lifecycle failed"
+        helperText="Inactive entities can be reactivated or deleted."
         statusTone="inactive"
       />,
     );
 
     expect(screen.getByText("Inactive")).toBeInTheDocument();
+    expect(screen.getByText("Inactive entities can be reactivated or deleted.")).toBeInTheDocument();
+    expect(screen.getByText("Lifecycle failed")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Inactivate" }),
     ).not.toBeInTheDocument();

@@ -332,6 +332,7 @@ export type LifecycleAction = {
   pendingLabel?: ReactNode;
   testId?: string;
   tone?: "default" | "danger" | "primary";
+  trailing?: ReactNode;
   visibleForStatuses?: readonly string[];
 };
 
@@ -339,6 +340,8 @@ export type LifecycleActionSetProps = {
   actions: readonly LifecycleAction[];
   className?: string;
   currentStatus: string;
+  errorMessage?: ReactNode;
+  helperText?: ReactNode;
   statusTone?: "active" | "inactive" | "info" | "neutral" | "warning" | "danger";
   testId?: string;
   title?: ReactNode;
@@ -348,6 +351,8 @@ export function LifecycleActionSet({
   actions,
   className,
   currentStatus,
+  errorMessage,
+  helperText,
   statusTone = "neutral",
   testId,
   title = "Lifecycle",
@@ -367,6 +372,10 @@ export function LifecycleActionSet({
         <StatusBadge tone={statusTone}>{currentStatus}</StatusBadge>
       </div>
 
+      {helperText ? (
+        <div className="mt-3 text-sm text-muted-foreground">{helperText}</div>
+      ) : null}
+
       <ActionList className="mt-5">
         {visibleActions.map((action) => (
           <ActionTile
@@ -377,9 +386,16 @@ export function LifecycleActionSet({
             label={action.pending ? action.pendingLabel ?? action.label : action.label}
             onClick={action.onSelect}
             tone={action.tone}
+            trailing={action.trailing}
           />
         ))}
       </ActionList>
+
+      {errorMessage ? (
+        <p className="mt-4 text-sm font-medium text-destructive">
+          {errorMessage}
+        </p>
+      ) : null}
     </Tile>
   );
 }

@@ -30,8 +30,7 @@ import {
   IconPickerModal,
   Input,
   LinkButton,
-  MetricGrid,
-  MetricTile,
+  LifecycleActionSet,
   Modal,
   Textarea,
   Tile,
@@ -42,6 +41,7 @@ import { removeLeagueSummary, syncLeagueCaches, type LeagueSummary } from './lea
 import { getLeagueIconOption, LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { LeagueIcon } from './league-icon';
 import { getLeagueLoadErrorCopy } from './league-load-error';
+import { LeagueSummaryCard } from './league-summary-card';
 import { buildInvitePath, setRecentLeagueCode } from './league-routing';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
@@ -449,31 +449,14 @@ export function LeagueDetailPage() {
         </Alert>
       ) : null}
 
-      <Tile data-testid="league-summary-tile" padding="lg">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-3">
-            <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-              {leagueQuery.data.isRootAdmin ? 'Root Admin' : formatRole(leagueQuery.data.memberType)}
-            </span>
-            <div className="flex items-start gap-4">
-              <IconAvatar label={`${leagueQuery.data.name} icon`} size="lg">
-                <LeagueIcon iconKey={leagueQuery.data.iconKey} size="lg" />
-              </IconAvatar>
-              <div>
-                <h2 className="text-3xl font-semibold tracking-tight">{leagueQuery.data.name}</h2>
-                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                  {leagueQuery.data.description?.trim() ||
-                    'Manage league identity, commissioner controls, and member actions here.'}
-                </p>
-              </div>
-            </div>
-          </div>
-          <MetricGrid className="grid-cols-2 sm:grid-cols-2">
-            <MetricTile label="Members" value={leagueQuery.data.memberCount} />
-            <MetricTile label="Active contests" value={leagueQuery.data.activeContestCount} />
-          </MetricGrid>
-        </div>
-      </Tile>
+      <LeagueSummaryCard
+        activeContestCount={leagueQuery.data.activeContestCount}
+        description={leagueQuery.data.description}
+        icon={<LeagueIcon iconKey={leagueQuery.data.iconKey} size="lg" />}
+        memberCount={leagueQuery.data.memberCount}
+        name={leagueQuery.data.name}
+        roleLabel={leagueQuery.data.isRootAdmin ? 'Root Admin' : formatRole(leagueQuery.data.memberType)}
+      />
 
       <DetailWithActionsPage
         actions={(
@@ -502,47 +485,63 @@ export function LeagueDetailPage() {
                   trailing="Open"
                 />
 
-                {isInactiveLeague ? (
-                  <Tile data-testid="league-lifecycle-section" radius="lg">
-                    <p className="text-sm text-muted-foreground" data-testid="league-lifecycle-helper">
-                      The league is currently <span className="font-medium text-destructive">Inactive</span>,
-                      click Activate to reactivate your league.
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      <Button
-                        data-testid="league-activate"
-                        disabled={activateLeagueMutation.isPending}
-                        onClick={() => void activateLeagueMutation.mutateAsync()}
-                      >
-                        {activateLeagueMutation.isPending ? 'Activating...' : 'Activate'}
-                      </Button>
-                      <Button
-                        data-testid="league-delete-open"
-                        disabled={deleteLeagueMutation.isPending}
-                        onClick={() => setDeleteModalOpen(true)}
-                        variant="danger"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                    {activateLeagueMutation.isError ? (
-                      <Alert className="mt-3" tone="danger">
-                        {extractErrorMessage(activateLeagueMutation.error, 'We could not activate this league.')}
-                      </Alert>
-                    ) : null}
-                  </Tile>
-                ) : (
-                  <ActionTile
-                    data-testid="league-inactivate-open"
-                    disabled={inactivateLeagueMutation.isPending}
-                    label="Inactivate league"
-                    onClick={() => {
-                      inactivateLeagueMutation.reset();
-                      setActiveDialog('inactivate');
-                    }}
-                    trailing="Open"
-                  />
-                )}
+                <LifecycleActionSet
+                  actions={[
+                    {
+                      key: 'inactivate',
+                      label: 'Inactivate league',
+                      pending: inactivateLeagueMutation.isPending,
+                      pendingLabel: 'Inactivating...',
+                      disabled: inactivateLeagueMutation.isPending,
+                      onSelect: () => {
+                        inactivateLeagueMutation.reset();
+                        setActiveDialog('inactivate');
+                      },
+                      testId: 'league-inactivate-open',
+                      trailing: 'Open',
+                      visibleForStatuses: ['Active'],
+                    },
+                    {
+                      key: 'activate',
+                      label: 'Activate',
+                      pending: activateLeagueMutation.isPending,
+                      pendingLabel: 'Activating...',
+                      disabled: activateLeagueMutation.isPending,
+                      onSelect: () => void activateLeagueMutation.mutateAsync(),
+                      testId: 'league-activate',
+                      tone: 'primary',
+                      visibleForStatuses: ['Inactive'],
+                    },
+                    {
+                      key: 'delete',
+                      label: 'Delete',
+                      pending: deleteLeagueMutation.isPending,
+                      pendingLabel: 'Deleting...',
+                      disabled: deleteLeagueMutation.isPending,
+                      onSelect: () => setDeleteModalOpen(true),
+                      testId: 'league-delete-open',
+                      tone: 'danger',
+                      visibleForStatuses: ['Inactive'],
+                    },
+                  ]}
+                  currentStatus={lifecycleStatusLabel}
+                  errorMessage={
+                    activateLeagueMutation.isError
+                      ? extractErrorMessage(activateLeagueMutation.error, 'We could not activate this league.')
+                      : null
+                  }
+                  helperText={
+                    isInactiveLeague ? (
+                      <span data-testid="league-lifecycle-helper">
+                        The league is currently <span className="font-medium text-destructive">Inactive</span>,
+                        click Activate to reactivate your league.
+                      </span>
+                    ) : null
+                  }
+                  statusTone={isInactiveLeague ? 'inactive' : 'active'}
+                  testId="league-lifecycle-section"
+                  title="League lifecycle"
+                />
               </>
             ) : null}
 

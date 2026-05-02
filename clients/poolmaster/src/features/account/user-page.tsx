@@ -18,7 +18,6 @@ import {
   Alert,
   Button,
   ConfirmationModal,
-  DefinitionList,
   EntityDetailPage,
   FormModal,
   FormField,
@@ -32,6 +31,7 @@ import {
 } from '@/features/shared/ui';
 import { useLogger } from '@/lib/logger';
 import { RootAdminUserAccountPage } from './root-admin-user-account-page';
+import { UserAccountSummary } from './user-account-summary';
 import { formatUserName } from './user-name';
 import { buildUserPath } from './user-routing';
 
@@ -489,42 +489,15 @@ export function UserPage() {
         )}
         actionsTestId="user-page-actions-tile"
         details={(
-          <>
-          <Tile
-            data-testid="user-page-identity-summary"
-            radius="lg"
-          >
-            <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-              Account summary
-            </div>
-            <DefinitionList
-              className="mt-4 sm:grid-cols-1"
-              items={[
-                { label: 'Name', value: formatUserName(user.firstName, user.lastName) },
-                { label: 'Email', value: user.email },
-                { label: 'Username', value: user.username },
-              ]}
-            />
-          </Tile>
-
-          <Tile
-            data-testid="user-page-account-details"
-            radius="lg"
-          >
-            <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-              Account details
-            </div>
-            <DefinitionList
-              className="mt-4"
-              items={[
-                { label: 'Member since', value: memberSince },
-                { label: 'Status', value: isInactive ? 'Inactive' : 'Active' },
-                { label: 'Role', value: user.isRootAdmin ? 'Root admin' : 'Member' },
-                { label: 'Method', value: user.authProvider ?? 'EMAIL' },
-              ]}
-            />
-          </Tile>
-          </>
+          <UserAccountSummary
+            email={user.email}
+            memberSince={memberSince}
+            method={user.authProvider ?? 'EMAIL'}
+            name={formatUserName(user.firstName, user.lastName)}
+            role={user.isRootAdmin ? 'Root admin' : 'Member'}
+            status={isInactive ? 'Inactive' : 'Active'}
+            username={user.username}
+          />
         )}
       />
 
