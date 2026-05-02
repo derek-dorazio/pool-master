@@ -11,10 +11,10 @@ const AUTH_REFRESHABLE_ERROR_CODES = new Set([
   'ROOT_ADMIN_SESSION_INVALID',
 ]);
 
-function resolveBaseUrl() {
+export function resolveBaseUrl() {
   const envBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
   if (envBaseUrl) {
-    return envBaseUrl;
+    return envBaseUrl.replace(/\/+$/, '');
   }
 
   if (typeof window !== 'undefined' && window.location?.origin !== 'null') {

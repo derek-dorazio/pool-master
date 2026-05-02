@@ -1,7 +1,7 @@
 import { ReactNode, createContext, useContext, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser, logoutUser, refreshToken } from '@/lib/api';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import { useSessionStore } from './session-store';
 
 type AuthContextValue = {
@@ -15,7 +15,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'auth-provider',
   });
   const user = useSessionStore((state) => state.user);

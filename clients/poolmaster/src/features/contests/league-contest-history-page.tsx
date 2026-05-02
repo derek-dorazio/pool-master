@@ -19,7 +19,7 @@ import {
   PageHeader,
   Tile,
 } from '@/features/shared/ui';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import { isHistoricalContest } from './contest-status';
 import { ContestListCard } from './contest-list-card';
 
@@ -28,7 +28,7 @@ type ContestSummary = ListContestsResponses[200]['contests'][number];
 
 export function LeagueContestHistoryPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'league-contest-history-page',
   });
 

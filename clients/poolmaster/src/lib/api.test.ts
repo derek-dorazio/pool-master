@@ -78,6 +78,37 @@ describe('poolmaster API client correlation headers', () => {
     }
   });
 
+  it('pool-master-dxd.23 normalizes a trailing slash in VITE_API_BASE_URL before configuring the SDK', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test/');
+
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ user: null }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }),
+    );
+
+    vi.stubGlobal('fetch', fetchSpy);
+
+    try {
+      const { getCurrentUser, resolveBaseUrl } = await import('./api');
+
+      expect(resolveBaseUrl()).toBe('https://api.example.test');
+      await getCurrentUser();
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const request = fetchSpy.mock.calls[0]?.[0];
+      expect(request).toBeInstanceOf(Request);
+      expect((request as Request).url).toBe('https://api.example.test/api/v1/auth/me');
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
+    }
+  });
+
   it('pool-master-dxd.26 attaches the CSRF token cookie to mutating requests', async () => {
     document.cookie = `poolmaster_csrf=${encodeURIComponent('csrf-token-123')}; path=/`;
     const fetchSpy = vi.fn().mockResolvedValue(

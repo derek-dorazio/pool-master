@@ -43,7 +43,7 @@ import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import { buildLeaguePath, setRecentLeagueCode } from '@/features/leagues/league-routing';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption, TEAM_ICON_OPTIONS } from './team-icon-catalog';
 import { buildDefaultTeamName } from './team-defaults';
@@ -68,7 +68,7 @@ export function MyTeamPage() {
   const navigate = useNavigate();
   const auth = useAuth();
   const queryClient = useQueryClient();
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'my-team-page',
   });
   const [teamName, setTeamName] = useState('');

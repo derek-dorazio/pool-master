@@ -23,7 +23,7 @@ export const logger = createLogger({
   getContext: getLoggerContext,
 });
 
-export function useLogger() {
+export function getLogger() {
   return logger;
 }
 

@@ -19,7 +19,7 @@ import {
   updateManagedContestConfiguration,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   buildLeagueContestPath,
@@ -290,7 +290,7 @@ function buildCategoryDefinitions(
 }
 
 export function CreateContestPage() {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'create-contest-page',
   });
   const { leagueCode = '', contestId } = useParams<{ leagueCode: string; contestId?: string }>();

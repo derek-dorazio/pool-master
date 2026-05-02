@@ -18,7 +18,7 @@ const { mockLogger } = vi.hoisted(() => {
 
 vi.mock('@/lib/logger', () => ({
   logger: mockLogger,
-  useLogger: () => mockLogger,
+  getLogger: () => mockLogger,
 }));
 
 describe('NotFoundPage', () => {

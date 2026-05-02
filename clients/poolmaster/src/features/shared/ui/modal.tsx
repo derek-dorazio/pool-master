@@ -1,6 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "./button";
 import { cn } from "./class-names";
 
@@ -46,6 +46,31 @@ export function Modal({
   title,
   titleId,
 }: ModalProps) {
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open || typeof document === "undefined") {
+      return;
+    }
+
+    const activeElement = document.activeElement;
+    returnFocusRef.current =
+      activeElement instanceof HTMLElement ? activeElement : null;
+  }, [open]);
+
+  function returnFocusToTrigger() {
+    const target = returnFocusRef.current;
+    returnFocusRef.current = null;
+
+    if (!target || !document.contains(target)) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      target.focus();
+    });
+  }
+
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen && isCloseDisabled) {
       return;
@@ -53,6 +78,7 @@ export function Modal({
 
     if (!nextOpen) {
       onClose?.();
+      returnFocusToTrigger();
     }
 
     onOpenChange(nextOpen);
@@ -63,6 +89,7 @@ export function Modal({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
         <Dialog.Content
+          aria-describedby={description ? descriptionId : undefined}
           className={cn(
             "fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[2rem] border border-border bg-card p-6 shadow-2xl",
             modalSizeClassNames[size],

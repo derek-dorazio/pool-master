@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createLeague } from "@/lib/api";
-import { useLogger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import {
   Button,
   FormField,
@@ -88,7 +88,7 @@ export function CreateLeagueModal({
   onClose,
   onCreated,
 }: CreateLeagueModalProps) {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: "create-league-modal",
   });
   const queryClient = useQueryClient();

@@ -20,7 +20,7 @@ const { mockLogger } = vi.hoisted(() => {
 
 vi.mock('@/lib/logger', () => ({
   logger: mockLogger,
-  useLogger: () => mockLogger,
+  getLogger: () => mockLogger,
 }));
 
 function createUser(overrides?: Partial<ReturnType<typeof buildUser>>) {

@@ -28,7 +28,7 @@ import {
 } from "@/features/teams/team-owner-invitation-preview";
 import { parseRouteState } from "@/routes/route-state";
 import { extractErrorMessage } from "@/lib/errors";
-import { useLogger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { useSessionStore } from "./session-store";
 
 const loginFormSchema = LoginRequestSchema.extend({
@@ -100,7 +100,7 @@ function isUnexpectedAuthError(error: unknown): boolean {
 }
 
 export function AuthHomePage() {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: "auth-home-page",
   });
   const navigate = useNavigate();

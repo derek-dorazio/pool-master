@@ -36,7 +36,7 @@ import {
   Tile,
 } from '@/features/shared/ui';
 import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import { removeLeagueSummary, syncLeagueCaches, type LeagueSummary } from './league-cache';
 import { getLeagueIconOption, LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { LeagueIcon } from './league-icon';
@@ -74,7 +74,7 @@ export function LeagueDetailPage() {
   const auth = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'league-detail-page',
   });
   const [inviteEmail, setInviteEmail] = useState('');

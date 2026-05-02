@@ -29,7 +29,7 @@ import {
   Tile,
   useMutationActionWorkflow,
 } from '@/features/shared/ui';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import { RootAdminUserAccountPage } from './root-admin-user-account-page';
 import { UserAccountSummary } from './user-account-summary';
 import { formatUserName } from './user-name';
@@ -122,7 +122,7 @@ function UserActionDialog({
 
 export function UserPage() {
   const auth = useAuth();
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'user-page',
   });
   const navigate = useNavigate();

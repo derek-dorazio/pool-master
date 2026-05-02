@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { ListLeaguesResponses } from "@/lib/api";
-import { useLogger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { Tile } from "@/features/shared/ui";
 import {
   buildLeaguePath,
@@ -24,7 +24,7 @@ export function LeagueSelector({
   onCreateLeague,
   onNavigate,
 }: LeagueSelectorProps) {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: "league-selector",
   });
   const [isOpen, setIsOpen] = useState(false);

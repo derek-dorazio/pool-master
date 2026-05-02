@@ -6,13 +6,13 @@ import {
   DataGridPage,
   StatusBadge,
 } from '@/features/shared/ui';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import type { ContestConfigTemplate } from './content-configuration-utils';
 
 const columnHelper = createColumnHelper<ContestConfigTemplate>();
 
 export function RootAdminContentConfigurationListPage() {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'root-admin-content-configuration-list-page',
   });
 

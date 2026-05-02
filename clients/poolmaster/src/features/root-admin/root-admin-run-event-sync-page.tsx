@@ -6,7 +6,7 @@ import {
   listEvents,
   type ListEventsResponses,
 } from '@/lib/api';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import {
   Alert,
   Button,
@@ -85,7 +85,7 @@ function formatEventOptionLabel(event: EventSyncEvent) {
 }
 
 export function RootAdminRunEventSyncPage() {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'root-admin-run-event-sync-page',
   });
   const queryClient = useQueryClient();

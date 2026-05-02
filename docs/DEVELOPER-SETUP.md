@@ -112,6 +112,18 @@ AWS_ENDPOINT=http://localhost:4566
 
 See `.env.example` for the full list of variables.
 
+The React/Vite web app reads browser-exposed variables from
+`clients/poolmaster/.env*`, not the repository root `.env`. Use a local webapp
+env file only when you need to override the browser API origin:
+
+```bash
+cp clients/poolmaster/.env.example clients/poolmaster/.env.local
+```
+
+`VITE_API_BASE_URL` is optional. Leave it commented to call the same browser
+origin/proxy; set it to `http://localhost:3000` when the Vite app should call
+the core API directly.
+
 ---
 
 ## 4. Quick Start (Recommended)

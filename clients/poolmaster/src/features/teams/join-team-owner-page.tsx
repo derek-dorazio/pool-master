@@ -9,7 +9,7 @@ import {
   LinkButton,
   PublicInviteJoinPage,
 } from '@/features/shared/ui';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import {
   buildLeaguePath,
   buildLeagueTeamPath,
@@ -45,7 +45,7 @@ function getErrorMessage(error: unknown) {
 }
 
 export function JoinTeamOwnerPage() {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'join-team-owner-page',
   });
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();

@@ -18,7 +18,7 @@ import {
   buildLeagueTeamHomePath,
   setRecentLeagueCode,
 } from '@/features/leagues/league-routing';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import { Alert } from '@/features/shared/ui';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption } from './team-icon-catalog';
@@ -39,7 +39,7 @@ function getOwnerLabel(firstName?: string, lastName?: string) {
 }
 
 export function TeamsPage() {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'teams-page',
   });
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();

@@ -4,7 +4,7 @@ import {
   adminListProviders,
   adminPrepareSportSync,
 } from '@/lib/api';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import {
   Alert,
   Button,
@@ -46,7 +46,7 @@ function extractErrorMessage(error: unknown, fallback: string) {
 }
 
 export function RootAdminRunSportSyncPage() {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'root-admin-run-sport-sync-page',
   });
   const queryClient = useQueryClient();

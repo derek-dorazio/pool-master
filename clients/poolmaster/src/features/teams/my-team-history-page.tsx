@@ -19,7 +19,7 @@ import {
   buildLeagueTeamPath,
   setRecentLeagueCode,
 } from '@/features/leagues/league-routing';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import { isHistoricalContest } from '@/features/contests/contest-status';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
@@ -30,7 +30,7 @@ type ContestEntrySummary = ListContestEntriesResponses[200]['entries'][number];
 export function MyTeamHistoryPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const auth = useAuth();
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'my-team-history-page',
   });
 

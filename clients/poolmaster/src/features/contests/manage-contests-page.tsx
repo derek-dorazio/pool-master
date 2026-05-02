@@ -15,7 +15,7 @@ import {
   buildLeaguePath,
   setRecentLeagueCode,
 } from '@/features/leagues/league-routing';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import {
   Chip,
   EmptyState,
@@ -37,7 +37,7 @@ type ContestSummary = ListContestsResponses[200]['contests'][number];
 
 export function ManageContestsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'manage-contests-page',
   });
 

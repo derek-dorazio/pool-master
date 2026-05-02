@@ -16,7 +16,7 @@ import {
   buildLeagueContestPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import {
   Alert,
@@ -178,7 +178,7 @@ function applyOptimisticSelection(draftState: DraftState, participantId: string)
 }
 
 export function ContestEntryPage() {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'contest-entry-page',
   });
   const { contestId = '', entryId = '', leagueCode: routeLeagueCode } = useParams<{

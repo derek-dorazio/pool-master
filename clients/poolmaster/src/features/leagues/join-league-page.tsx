@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { TeamIconKey } from '@poolmaster/shared/domain';
 import { acceptInvitation, listLeagueSquads, updateLeagueSquad } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import {
   Button,
   FormField,
@@ -48,7 +48,7 @@ function getErrorMessage(error: unknown) {
 }
 
 export function JoinLeaguePage() {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'join-league-page',
   });
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();

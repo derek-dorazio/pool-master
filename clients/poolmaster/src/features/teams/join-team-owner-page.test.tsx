@@ -37,7 +37,7 @@ const {
 
 vi.mock('@/lib/logger', () => ({
   logger: mockLogger,
-  useLogger: () => mockLogger,
+  getLogger: () => mockLogger,
 }));
 
 vi.mock('@/lib/api', () => ({

@@ -20,7 +20,7 @@ import {
   buildLeagueContestManagePath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import {
   Alert,
@@ -174,7 +174,7 @@ export function ContestDetailPage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'contest-board',
   });
   const { contestId = '', leagueCode: routeLeagueCode } = useParams<{

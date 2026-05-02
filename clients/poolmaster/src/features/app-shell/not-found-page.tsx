@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 
 export function NotFoundPage() {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'not-found-page',
   });
 

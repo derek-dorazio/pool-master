@@ -4,10 +4,11 @@ import {
   Outlet,
   useLocation,
   useNavigate,
+  useParams,
   useSearchParams,
 } from "react-router-dom";
 import { useAuth } from "@/features/auth/auth-provider";
-import { useLogger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { AccountMenu } from "@/features/account/account-menu";
 import { buildUserPath } from "@/features/account/user-routing";
 import { formatUserName } from "@/features/account/user-name";
@@ -36,9 +37,10 @@ import { LeagueSelector } from "./league-selector";
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { leagueCode } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const auth = useAuth();
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: "app-shell",
   });
   const isManageRoute =
@@ -48,10 +50,7 @@ export function AppShell() {
   const leaguesQuery = useLeaguesQuery({
     enabled: shouldLoadLeagueShell,
   });
-  const activeLeagueCode = useMemo(() => {
-    const match = location.pathname.match(/^\/league\/([^/]+)/);
-    return match?.[1] ?? null;
-  }, [location.pathname]);
+  const activeLeagueCode = leagueCode ?? null;
   const activeLeague = useMemo(
     () =>
       leaguesQuery.data?.find(

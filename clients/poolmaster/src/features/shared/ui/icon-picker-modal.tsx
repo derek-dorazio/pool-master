@@ -95,6 +95,7 @@ export function IconPickerModal<
             const isSelected = value === icon.key;
             return (
               <button
+                aria-pressed={isSelected}
                 className={`rounded-[1rem] border px-2 py-3 text-center transition ${
                   isSelected
                     ? "border-primary bg-primary/10 text-foreground"

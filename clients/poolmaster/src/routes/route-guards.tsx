@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/auth-provider';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 
 export function MemberRouteGuard() {
   const auth = useAuth();
   const location = useLocation();
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'member-route-guard',
   });
 
@@ -67,7 +67,7 @@ export function MemberRouteGuard() {
 export function RootAdminRouteGuard() {
   const auth = useAuth();
   const location = useLocation();
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'root-admin-route-guard',
   });
 

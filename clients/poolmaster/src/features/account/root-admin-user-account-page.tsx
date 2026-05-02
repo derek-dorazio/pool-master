@@ -12,7 +12,7 @@ import {
   type AdminGetUserDetailResponses,
 } from '@/lib/api';
 import { Alert, ConfirmDialog } from '@/features/shared/ui';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import { buildLeaguePath, buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { formatUserName } from './user-name';
 
@@ -219,7 +219,7 @@ function UserActionDialog({
 }
 
 export function RootAdminUserAccountPage({ userId }: { userId: string }) {
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'root-admin-user-account-page',
   });
   const navigate = useNavigate();

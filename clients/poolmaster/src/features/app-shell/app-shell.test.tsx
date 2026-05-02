@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import appShellSource from './app-shell.tsx?raw';
 import { AppShell } from './app-shell';
 
 const {
@@ -50,7 +51,7 @@ vi.mock('@/features/auth/auth-provider', () => ({
 
 vi.mock('@/lib/logger', () => ({
   logger: mockLogger,
-  useLogger: () => mockLogger,
+  getLogger: () => mockLogger,
 }));
 
 vi.mock('@/features/account/account-menu', () => ({
@@ -355,5 +356,10 @@ describe('AppShell', () => {
       }),
       expect.any(String),
     );
+  });
+
+  it('pool-master-dxd.21 derives league context from router params instead of pathname regex', () => {
+    expect(appShellSource).not.toContain('location.pathname.match');
+    expect(appShellSource).toContain('useParams');
   });
 });

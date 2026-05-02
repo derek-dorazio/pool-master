@@ -35,7 +35,7 @@ vi.mock('@/lib/api', () => ({
 
 vi.mock('@/lib/logger', () => ({
   logger: mockLogger,
-  useLogger: () => mockLogger,
+  getLogger: () => mockLogger,
 }));
 
 function buildTemplate() {

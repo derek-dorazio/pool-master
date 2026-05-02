@@ -6,7 +6,7 @@ import {
   adminUpdateContestConfigTemplate,
   type AdminUpdateContestConfigTemplateResponses,
 } from '@/lib/api';
-import { useLogger } from '@/lib/logger';
+import { getLogger } from '@/lib/logger';
 import {
   AdminConfigPage,
   Button,
@@ -53,7 +53,7 @@ function extractErrorMessage(error: unknown, fallback: string) {
 
 export function RootAdminContentConfigurationDetailPage() {
   const { templateKey = '' } = useParams<{ templateKey: string }>();
-  const logger = useLogger().child({
+  const logger = getLogger().child({
     feature: 'root-admin-content-configuration-detail-page',
   });
   const queryClient = useQueryClient();

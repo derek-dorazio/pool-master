@@ -28,7 +28,7 @@ vi.mock('@/features/auth/auth-provider', () => ({
 
 vi.mock('@/lib/logger', () => ({
   logger: mockLogger,
-  useLogger: () => mockLogger,
+  getLogger: () => mockLogger,
 }));
 
 function renderMemberGuard(initialEntries = ['/league/LEAGUE1?tab=history']) {

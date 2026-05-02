@@ -72,7 +72,7 @@ vi.mock('@/features/auth/auth-provider', () => ({
 
 vi.mock('@/lib/logger', () => ({
   logger: mockLogger,
-  useLogger: () => mockLogger,
+  getLogger: () => mockLogger,
 }));
 
 function renderCreateContestPage() {
