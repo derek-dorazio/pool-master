@@ -29,18 +29,24 @@ import {
 import {
   Alert,
   Button,
-  DefinitionList,
   ErrorState,
   FormField,
   Input,
   LinkButton,
-  ListCard,
-  ListStack,
   LoadingState,
   Select,
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
+import {
+  ContestSetupSummary,
+  ContestTemplatePicker,
+  EventReadinessPanel,
+  NoEligibleEventsAlert,
+  TierSettingsEditor,
+  type TierDefinition,
+  type TierDefinitionUpdate,
+} from './contest-configuration-sections';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type SportEventSummary = ListEventsResponses[200]['events'][number];
@@ -55,14 +61,6 @@ type CategoryKey =
   | 'PREVIOUS_WINNER'
   | 'US_PLAYER'
   | 'INTERNATIONAL_PLAYER';
-
-type TierDefinition = {
-  tierKey: string;
-  label: string;
-  pickCount: number;
-  startPosition: number;
-  endPosition: number | null;
-};
 
 type CategoryOption = {
   key: CategoryKey;
@@ -1036,7 +1034,7 @@ export function CreateContestPage() {
     );
   }
 
-  function updateTier(index: number, updates: Partial<TierDefinition>) {
+  function updateTier(index: number, updates: TierDefinitionUpdate) {
     setTiers((current) =>
       current.map((tier, tierIndex) =>
         tierIndex === index
@@ -1190,37 +1188,12 @@ export function CreateContestPage() {
             ) : null}
 
             <fieldset className="space-y-5" disabled={!isDraftEditable}>
-            {!isEditMode ? (
-              <Tile className="space-y-3" padding="sm" radius="lg" variant="subtle">
-                <div>
-                  <div className="text-sm font-medium">Contest template</div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Start from a seeded contest template. The selected template seeds the setup
-                    below, and any commissioner changes become the contest-specific configuration
-                    saved at creation time.
-                  </p>
-                </div>
-                <ListStack>
-                  {visibleTemplates.map((template) => (
-                    <ListCard
-                      className={selectedTemplateId === template.id ? 'border-primary bg-primary/5' : undefined}
-                      data-testid={`contest-template-${template.templateKey}`}
-                      description={template.description}
-                      key={template.id}
-                      onClick={() => selectTemplate(template.id)}
-                      title={template.name}
-                      trailing={template.isDefault ? <StatusBadge tone="info">Default</StatusBadge> : null}
-                    />
-                  ))}
-                </ListStack>
-                {!isEditMode ? (
-                  <Alert>
-                    New contests currently use tiered entry. Existing category-picks contests can
-                    still be edited here.
-                  </Alert>
-                ) : null}
-              </Tile>
-            ) : null}
+            <ContestTemplatePicker
+              isEditMode={isEditMode}
+              onSelectTemplate={selectTemplate}
+              selectedTemplateId={selectedTemplateId}
+              templates={visibleTemplates}
+            />
 
             <FormField label="Contest name">
               <Input
@@ -1255,29 +1228,12 @@ export function CreateContestPage() {
             </FormField>
 
             {selectedEvent ? (
-              <Tile padding="sm" radius="lg" variant="subtle">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-medium text-foreground">Selected event readiness</div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {formatReadinessReasons(selectedEvent)}
-                    </p>
-                  </div>
-                  <StatusBadge tone={selectedEvent.contestEligible ? 'success' : 'warning'}>
-                    {formatReadinessLabel(selectedEvent)}
-                  </StatusBadge>
-                </div>
-
-                <DefinitionList
-                  className="mt-4"
-                  items={[
-                    { label: 'Participants loaded', value: selectedEvent.participantCount ?? 0 },
-                    { label: 'Release at', value: formatDateTimeDisplay(selectedEvent.releaseAt) },
-                    { label: 'Field locks at', value: formatDateTimeDisplay(selectedEvent.fieldLocksAt) },
-                    { label: 'Event status', value: selectedEvent.status },
-                  ]}
-                />
-              </Tile>
+              <EventReadinessPanel
+                event={selectedEvent}
+                formatDateTimeDisplay={formatDateTimeDisplay}
+                formatReadinessLabel={formatReadinessLabel}
+                formatReadinessReasons={formatReadinessReasons}
+              />
             ) : null}
 
             <Tile className="space-y-3" padding="sm" radius="lg" variant="subtle">
@@ -1397,88 +1353,12 @@ export function CreateContestPage() {
                   </FormField>
                 </div>
 
-                <Tile padding="sm" radius="lg" variant="subtle">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <h3 className="font-medium">Tier settings</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Adjust the participant rank ranges and picks for this contest.
-                      </p>
-                    </div>
-                    <Button
-                      data-testid="contest-tiered-reset-tiers"
-                      onClick={resetTiersFromDefaults}
-                      size="sm"
-                      variant="secondary"
-                    >
-                      Reset tiers
-                    </Button>
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    {tiers.map((tier, index) => (
-                      <Tile
-                        className="grid gap-3 md:grid-cols-[0.8fr_1fr_1fr_0.8fr]"
-                        data-testid={`contest-tier-${tier.tierKey}`}
-                        key={tier.tierKey}
-                        padding="sm"
-                        radius="lg"
-                        variant="default"
-                      >
-                        <FormField label="Tier">
-                          <Input
-                            data-testid={`contest-tier-label-${tier.tierKey}`}
-                            disabled={!isDraftEditable}
-                            onChange={(event) => updateTier(index, { label: event.target.value })}
-                            type="text"
-                            value={tier.label}
-                          />
-                        </FormField>
-                        <FormField label="Start">
-                          <Input
-                            data-testid={`contest-tier-start-${tier.tierKey}`}
-                            disabled={!isDraftEditable}
-                            min={1}
-                            onChange={(event) =>
-                              updateTier(index, {
-                                startPosition: Math.max(1, Number(event.target.value) || 1),
-                              })}
-                            type="number"
-                            value={tier.startPosition}
-                          />
-                        </FormField>
-                        <FormField label="End">
-                          <Input
-                            data-testid={`contest-tier-end-${tier.tierKey}`}
-                            disabled={!isDraftEditable}
-                            min={tier.startPosition}
-                            onChange={(event) =>
-                              updateTier(index, {
-                                endPosition: event.target.value
-                                  ? Math.max(tier.startPosition, Number(event.target.value) || tier.startPosition)
-                                  : null,
-                              })}
-                            placeholder={index === tiers.length - 1 ? 'Remainder' : undefined}
-                            type="number"
-                            value={tier.endPosition ?? ''}
-                          />
-                        </FormField>
-                        <FormField label="Picks">
-                          <Input
-                            data-testid={`contest-tier-pick-count-${tier.tierKey}`}
-                            disabled={!isDraftEditable}
-                            min={1}
-                            onChange={(event) =>
-                              updateTier(index, {
-                                pickCount: Math.max(1, Number(event.target.value) || 1),
-                              })}
-                            type="number"
-                            value={tier.pickCount}
-                          />
-                        </FormField>
-                      </Tile>
-                    ))}
-                  </div>
-                </Tile>
+                <TierSettingsEditor
+                  isDraftEditable={isDraftEditable}
+                  onResetTiers={resetTiersFromDefaults}
+                  onUpdateTier={updateTier}
+                  tiers={tiers}
+                />
 
                 {showAdvanced ? (
                   <FormField label="Missed-cut fallback score">
@@ -1607,32 +1487,28 @@ export function CreateContestPage() {
         </Tile>
 
         <aside className="space-y-6">
-          <Tile>
-            <h3 className="text-xl font-semibold">Current choices</h3>
-            <DefinitionList
-              className="mt-4 sm:grid-cols-1"
-              items={[
-                { label: 'League', value: leagueQuery.data.name },
-                { label: 'Mode', value: mode === 'GOLF_TIERED' ? 'Golf tiered contest' : 'Golf category picks' },
-                { label: 'Event', value: selectedEvent ? selectedEvent.name : 'Choose a golf event' },
-                {
-                  label: 'Event starts',
-                  value: selectedEvent ? formatDateTimeDisplay(selectedEvent.startDate) : 'Choose a golf event',
-                },
-                { label: 'Locks', value: derivedLockAt ? formatDateTimeDisplay(derivedLockAt) : 'Choose a golf event' },
-                { label: 'Entries per team', value: unlimitedEntries ? 'Unlimited' : maxEntriesPerTeam || '1' },
-                ...(mode === 'GOLF_TIERED'
-                  ? [
-                      { label: 'Golfers picked', value: rosterSize },
-                      { label: 'Count best', value: countedScores },
-                      { label: 'Tier source', value: tierSource === 'ODDS' ? 'Odds' : 'World rank' },
-                    ]
-                  : [
-                      { label: 'Enabled categories', value: selectedCategories.length },
-                    ]),
-              ]}
-            />
-          </Tile>
+          <ContestSetupSummary
+            items={[
+              { label: 'League', value: leagueQuery.data.name },
+              { label: 'Mode', value: mode === 'GOLF_TIERED' ? 'Golf tiered contest' : 'Golf category picks' },
+              { label: 'Event', value: selectedEvent ? selectedEvent.name : 'Choose a golf event' },
+              {
+                label: 'Event starts',
+                value: selectedEvent ? formatDateTimeDisplay(selectedEvent.startDate) : 'Choose a golf event',
+              },
+              { label: 'Locks', value: derivedLockAt ? formatDateTimeDisplay(derivedLockAt) : 'Choose a golf event' },
+              { label: 'Entries per team', value: unlimitedEntries ? 'Unlimited' : maxEntriesPerTeam || '1' },
+              ...(mode === 'GOLF_TIERED'
+                ? [
+                    { label: 'Golfers picked', value: rosterSize },
+                    { label: 'Count best', value: countedScores },
+                    { label: 'Tier source', value: tierSource === 'ODDS' ? 'Odds' : 'World rank' },
+                  ]
+                : [
+                    { label: 'Enabled categories', value: selectedCategories.length },
+                  ]),
+            ]}
+          />
 
           <Tile>
             <h3 className="text-xl font-semibold">Lifecycle truth</h3>
@@ -1649,29 +1525,11 @@ export function CreateContestPage() {
               commissioner can continue.
             </Alert>
           ) : !eligibleEvents.length ? (
-            <Alert
-              data-testid="create-contest-no-events"
-              title="No golf events are currently available for contest setup."
-              tone="warning"
-            >
-              <p>
-                Prime Time Commissioner only shows real imported events once they are released and the field is
-                loaded. Check back when the next tournament reaches contest-ready status.
-              </p>
-              {unavailableEvents.length ? (
-                <ul className="mt-4 space-y-2">
-                  {unavailableEvents.slice(0, 3).map((event) => (
-                    <li key={event.id}>
-                      {event.name}
-                      {' · '}
-                      {formatReadinessLabel(event)}
-                      {' · '}
-                      {formatReadinessReasons(event)}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </Alert>
+            <NoEligibleEventsAlert
+              events={unavailableEvents}
+              formatReadinessLabel={formatReadinessLabel}
+              formatReadinessReasons={formatReadinessReasons}
+            />
           ) : null}
         </aside>
       </div>
