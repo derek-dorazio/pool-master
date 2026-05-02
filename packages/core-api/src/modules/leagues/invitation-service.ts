@@ -20,6 +20,10 @@ import {
 } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
+import {
+  renderSystemEmailTemplate,
+  type MailDeliveryProvider,
+} from '../email';
 
 export interface SendInvitationsInput {
   leagueId: string;
@@ -52,6 +56,19 @@ export interface InvitationPreview {
 }
 
 const DEFAULT_INVITE_EXPIRY_DAYS = 7;
+const DEFAULT_INVITER_NAME = 'League commissioner';
+
+export class InvitationEmailDeliveryError extends Error {
+  constructor(
+    readonly invitationId: string,
+    readonly email: string,
+    cause: unknown,
+  ) {
+    super(`Failed to deliver league invitation email: ${invitationId}`);
+    this.name = 'InvitationEmailDeliveryError';
+    this.cause = cause;
+  }
+}
 
 export class InvitationService {
   constructor(
@@ -62,6 +79,8 @@ export class InvitationService {
     private readonly squadMembershipRepo?: SquadMembershipRepository,
     private readonly prisma?: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
+    private readonly mailDelivery?: MailDeliveryProvider,
+    private readonly appBaseUrl = 'http://localhost:5173',
   ) {}
 
   /** Creates email invitations, skipping existing members and pending duplicates. */
@@ -75,6 +94,10 @@ export class InvitationService {
       },
     }, 'Sending league email invitations');
     await this.membershipRepo.findByLeague(input.leagueId);
+    const [league, inviterName] = await Promise.all([
+      this.leagueRepo.findById(input.leagueId),
+      this.resolveInviterName(input.invitedBy),
+    ]);
     const memberEmails = new Set<string>();
     // Note: we don't have email on membership directly; this is a simplification.
     // In a full implementation we'd join with users. For now, skip based on pending invites.
@@ -113,6 +136,16 @@ export class InvitationService {
         invitedBy: input.invitedBy,
         expiresAt,
       });
+      await this.deliverLeagueInvitationEmail({
+        invitationId: invitation.id,
+        email: normalised,
+        inviterName,
+        leagueName: league?.name ?? 'your league',
+        leagueCode: league?.leagueCode ?? input.leagueId,
+        inviteCode: invitation.inviteCode,
+        expiresAt,
+        message: input.message,
+      });
       sent.push(invitation);
     }
     this.logger?.info({
@@ -126,6 +159,89 @@ export class InvitationService {
       },
     }, 'Processed league email invitations');
     return { sent, skippedMembers, skippedDuplicates };
+  }
+
+  private async deliverLeagueInvitationEmail(input: {
+    invitationId: string;
+    email: string;
+    inviterName: string;
+    leagueName: string;
+    leagueCode: string;
+    inviteCode: string;
+    expiresAt: Date;
+    message?: string;
+  }): Promise<void> {
+    if (!this.mailDelivery) {
+      this.logger?.debug({
+        action: 'leagueInvitation.emailDelivery.skipped',
+        data: { invitationId: input.invitationId },
+      }, 'No mail delivery provider configured for league invitation');
+      return;
+    }
+    const message = renderSystemEmailTemplate('LEAGUE_MEMBER_INVITE', {
+      recipientEmail: input.email,
+      inviterName: input.inviterName,
+      leagueName: input.leagueName,
+      leagueCode: input.leagueCode,
+      inviteUrl: buildInviteUrl(this.appBaseUrl, input.inviteCode),
+      message: input.message,
+      expiresAt: input.expiresAt,
+    });
+    this.logger?.debug({
+      action: 'leagueInvitation.emailDelivery.enter',
+      data: {
+        invitationId: input.invitationId,
+        templateKey: message.templateKey,
+      },
+    }, 'Delivering league invitation email');
+    try {
+      await this.mailDelivery.send({
+        to: input.email,
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
+        metadata: {
+          templateKey: message.templateKey,
+          invitationId: input.invitationId,
+        },
+      });
+      this.logger?.info({
+        action: 'leagueInvitation.emailDelivery.success',
+        data: {
+          invitationId: input.invitationId,
+          templateKey: message.templateKey,
+        },
+      }, 'Delivered league invitation email');
+    } catch (err) {
+      this.logger?.error({
+        action: 'leagueInvitation.emailDelivery.failure',
+        data: {
+          invitationId: input.invitationId,
+          templateKey: message.templateKey,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      }, 'Failed to deliver league invitation email');
+      throw new InvitationEmailDeliveryError(input.invitationId, input.email, err);
+    }
+  }
+
+  private async resolveInviterName(userId: string): Promise<string> {
+    if (!this.prisma) return DEFAULT_INVITER_NAME;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        firstName: true,
+        lastName: true,
+        username: true,
+        email: true,
+      },
+    });
+    if (!user) return DEFAULT_INVITER_NAME;
+    const fullName = [user.firstName, user.lastName]
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .join(' ');
+    return fullName || user.username || user.email || DEFAULT_INVITER_NAME;
   }
 
   /** Generates a shareable invite link for the league. */
@@ -360,6 +476,10 @@ export class InvitationService {
 /** Generates a short, URL-safe invite code. */
 function generateInviteCode(): string {
   return randomUUID().replace(/-/g, '').slice(0, 12);
+}
+
+function buildInviteUrl(appBaseUrl: string, inviteCode: string): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}/invite/${encodeURIComponent(inviteCode)}`;
 }
 
 export class InvitationNotFoundError extends Error {

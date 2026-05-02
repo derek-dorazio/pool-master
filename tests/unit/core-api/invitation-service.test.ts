@@ -1,5 +1,6 @@
 import {
   InvitationService,
+  InvitationEmailDeliveryError,
   InvitationNotFoundError,
   InvitationInvalidError,
 } from '../../../packages/core-api/src/modules/leagues/invitation-service';
@@ -156,6 +157,81 @@ describe('InvitationService', () => {
       });
       expect(result.sent).toHaveLength(2);
       expect(invitationRepo.create).toHaveBeenCalledTimes(2);
+    });
+
+    it('pool-master-7ij sends themed invite emails after invitation records are created', async () => {
+      const invitationRepo = createMockInvitationRepo();
+      const mailDelivery = {
+        providerName: 'smtp' as const,
+        send: jest.fn().mockResolvedValue({ provider: 'smtp' as const, messageId: 'mail-1' }),
+      };
+      const service = new InvitationService(
+        invitationRepo,
+        createMockMembershipRepo(),
+        createMockLeagueRepo({
+          findById: jest.fn().mockResolvedValue(buildLeague({
+            id: 'league-1',
+            name: 'Mathworks',
+            leagueCode: 'MATHWORKS',
+          })),
+        }),
+        undefined,
+        undefined,
+        createMockProvisioningPrisma() as any,
+        undefined,
+        mailDelivery,
+        'https://app.primetimecommissioner.com/',
+      );
+
+      const result = await service.sendEmailInvitations({
+        leagueId: 'league-1',
+        emails: ['Alice@Example.com'],
+        invitedBy: 'owner-1',
+        message: 'Join us for the office pool.',
+      });
+
+      expect(result.sent).toHaveLength(1);
+      expect(mailDelivery.send).toHaveBeenCalledTimes(1);
+      expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
+        to: 'alice@example.com',
+        subject: 'User One invited you to Mathworks',
+        metadata: {
+          templateKey: 'LEAGUE_MEMBER_INVITE',
+          invitationId: 'new-invite-id',
+        },
+      }));
+      const sentMessage = mailDelivery.send.mock.calls[0][0];
+      expect(sentMessage.text).toContain('Join league: https://app.primetimecommissioner.com/invite/');
+      expect(sentMessage.text).toContain('Message from User One: Join us for the office pool.');
+      expect(sentMessage.html).toContain('Prime Time Commissioner');
+      expect(sentMessage.html).toContain('Ultimate Office Pool Manager');
+    });
+
+    it('pool-master-7ij fails the send when provider submission fails', async () => {
+      const invitationRepo = createMockInvitationRepo();
+      const mailDelivery = {
+        providerName: 'ses' as const,
+        send: jest.fn().mockRejectedValue(new Error('SES rejected request')),
+      };
+      const service = new InvitationService(
+        invitationRepo,
+        createMockMembershipRepo(),
+        createMockLeagueRepo(),
+        undefined,
+        undefined,
+        createMockProvisioningPrisma() as any,
+        undefined,
+        mailDelivery,
+        'https://app.primetimecommissioner.com',
+      );
+
+      await expect(service.sendEmailInvitations({
+        leagueId: 'league-1',
+        emails: ['alice@example.com'],
+        invitedBy: 'owner-1',
+      })).rejects.toBeInstanceOf(InvitationEmailDeliveryError);
+      expect(invitationRepo.create).toHaveBeenCalledTimes(1);
+      expect(mailDelivery.send).toHaveBeenCalledTimes(1);
     });
 
     it('skips emails with existing pending invitations', async () => {

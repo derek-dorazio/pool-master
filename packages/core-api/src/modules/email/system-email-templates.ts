@@ -20,6 +20,7 @@ export interface LeagueMemberInviteEmailData {
   leagueName: string;
   leagueCode: string;
   inviteUrl: string;
+  message?: string;
   expiresAt?: Date | string;
 }
 
@@ -121,6 +122,9 @@ function renderLeagueMemberInviteEmail(
   const subject = `${data.inviterName} invited you to ${data.leagueName}`;
   const bodyBlocks = [
     paragraph(`${escapeHtml(data.inviterName)} invited you to join ${strong(data.leagueName)}.`),
+    ...(data.message?.trim()
+      ? [paragraph(`Message from ${escapeHtml(data.inviterName)}: ${escapeHtml(data.message)}`)]
+      : []),
     detailList([
       ['League code', data.leagueCode],
       ['Invite email', data.recipientEmail],
@@ -130,6 +134,7 @@ function renderLeagueMemberInviteEmail(
   ].join('');
   const textLines = [
     `${data.inviterName} invited you to join ${data.leagueName}.`,
+    ...(data.message?.trim() ? [`Message from ${data.inviterName}: ${data.message}`] : []),
     `League code: ${data.leagueCode}`,
     `Invite email: ${data.recipientEmail}`,
     ...(expiresLine ? [`Expires: ${expiresLine}`] : []),

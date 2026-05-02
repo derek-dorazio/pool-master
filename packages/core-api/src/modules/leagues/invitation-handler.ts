@@ -3,8 +3,12 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { InvitationService } from './invitation-service';
-import { InvitationInvalidError, InvitationNotFoundError } from './invitation-service';
+import type { InvitationService, SendInvitationsResult } from './invitation-service';
+import {
+  InvitationEmailDeliveryError,
+  InvitationInvalidError,
+  InvitationNotFoundError,
+} from './invitation-service';
 import { sendError } from '../../core/error-handler';
 
 export function createInvitationHandlers(invitationService: InvitationService) {
@@ -34,12 +38,33 @@ export function createInvitationHandlers(invitationService: InvitationService) {
       },
     }, 'Handling send league invitations request');
     const userId = request.authUser?.userId as string;
-    const result = await invitationService.sendEmailInvitations({
-      leagueId: request.params.id,
-      emails: request.body.emails,
-      invitedBy: userId,
-      message: request.body.message,
-    });
+    let result: SendInvitationsResult;
+    try {
+      result = await invitationService.sendEmailInvitations({
+        leagueId: request.params.id,
+        emails: request.body.emails,
+        invitedBy: userId,
+        message: request.body.message,
+      });
+    } catch (err) {
+      if (err instanceof InvitationEmailDeliveryError) {
+        logger.error({
+          action: 'leagueInvitationRoute.sendEmail.deliveryFailure',
+          data: {
+            leagueId: request.params.id,
+            userId,
+            invitationId: err.invitationId,
+          },
+        }, 'League invitation record was created but email delivery failed');
+        return sendError(
+          reply,
+          502,
+          'LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED',
+          'Invitation email delivery failed. Please try again or use the join URL.',
+        );
+      }
+      throw err;
+    }
     logger.info({
       action: 'leagueInvitationRoute.sendEmail.success',
       data: {

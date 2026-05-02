@@ -56,6 +56,9 @@ This starts:
 | **Push Mock Log** | http://localhost:3099/push-log | All push notifications sent to APNs/FCM mock |
 | **Prisma Studio** | `npm run db:studio` → http://localhost:5555 | Visual database browser — view/edit all tables |
 
+See [Email Delivery](./EMAIL-DELIVERY.md) for provider configuration, SES
+identity requirements, and delivery semantics.
+
 ### CLI Access to Infrastructure
 
 ```bash
@@ -93,9 +96,11 @@ The defaults work out of the box with Docker Compose. Key settings:
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster
 
 # Email: "smtp" sends to Mailpit (localhost:1025), "ses" sends to LocalStack
+APP_BASE_URL=http://localhost:5173
 EMAIL_PROVIDER=smtp
 SMTP_HOST=localhost
 SMTP_PORT=1025
+SMTP_FROM=noreply@poolmaster.local
 
 # Push: points to push-mock-server in dev
 APNS_BASE_URL=http://localhost:3099
@@ -432,6 +437,6 @@ npm run dev --workspace=@poolmaster/core-api
 | Database connection refused | Ensure Docker containers are running: `docker compose -f infrastructure/docker/docker-compose.dev.yml up -d` |
 | Port already in use | Check for running processes: `lsof -ti:3000` |
 | Tests fail with import errors | Ensure you're running from `tests/` directory or using `npm test` from root |
-| Emails not appearing in Mailpit | Ensure docker-compose is running and SMTP_HOST=localhost, SMTP_PORT=1025 |
+| Emails not appearing in Mailpit | Ensure docker-compose is running and `EMAIL_PROVIDER=smtp`, `SMTP_HOST=localhost`, `SMTP_PORT=1025` |
 | Push payloads not in push-log | Ensure push-mock container is running on port 3099 |
 | LocalStack SES errors | Run `awslocal ses get-send-statistics` to verify; check init script ran |

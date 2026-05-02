@@ -51,6 +51,11 @@ import { createDashboardHandlers } from './dashboard-handler';
 import { createAuditHandlers } from './audit-handler';
 import { createBulkHandlers } from './bulk-handler';
 import { getAppPrisma } from '../../core/prisma-context';
+import {
+  createMailDeliveryProvider,
+  readApplicationBaseUrl,
+  readMailDeliveryConfig,
+} from '../email';
 
 export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
@@ -61,6 +66,11 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const contestRepo = new PrismaContestRepository(prisma);
   const actionItemRepo = new PrismaActionItemRepository(prisma);
+  const mailDelivery = createMailDeliveryProvider(
+    readMailDeliveryConfig(process.env),
+    fastify.log,
+  );
+  const appBaseUrl = readApplicationBaseUrl(process.env);
 
   const leagueService = new LeagueService(
     leagueRepo,
@@ -78,6 +88,8 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
     squadMembershipRepo,
     prisma,
     fastify.log,
+    mailDelivery,
+    appBaseUrl,
   );
   const memberService = new MemberService(
     membershipRepo,
@@ -274,6 +286,7 @@ export async function leaguesModule(fastify: FastifyInstance): Promise<void> {
       response: {
         201: zodToJsonSchema(SendLeagueInvitationsResponseSchema),
         403: zodToJsonSchema(ErrorEnvelopeSchema),
+        502: zodToJsonSchema(ErrorEnvelopeSchema),
       },
     },
     preHandler: requireCommissioner(membershipRepo),

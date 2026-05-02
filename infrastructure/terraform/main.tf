@@ -65,7 +65,9 @@ locals {
     staging = "stage."
     prod    = ""
   }
-  app_domain = var.domain_name != "" ? "${local.env_subdomain_prefix[var.environment]}${var.domain_name}" : ""
+  app_domain     = var.domain_name != "" ? "${local.env_subdomain_prefix[var.environment]}${var.domain_name}" : ""
+  app_url        = local.app_domain != "" ? "https://${local.app_domain}" : "https://${aws_cloudfront_distribution.webapp.domain_name}"
+  ses_from_email = "noreply@${var.domain_name != "" ? var.domain_name : "poolmaster.dev"}"
 
   # Port mapping for backend services
   service_ports = {
@@ -469,6 +471,55 @@ resource "aws_iam_role" "ecs_task" {
   })
 }
 
+resource "aws_iam_role_policy" "ecs_task_ses_send" {
+  name = "${local.name_prefix}-ses-send"
+  role = aws_iam_role.ecs_task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "ses:SendEmail",
+        "ses:SendRawEmail",
+      ]
+      Resource = concat(
+        aws_ses_domain_identity.mail[*].arn,
+        aws_ses_email_identity.sender[*].arn,
+      )
+    }]
+  })
+}
+
+# --- SES identity for system email ---
+
+resource "aws_ses_domain_identity" "mail" {
+  count  = var.domain_name != "" ? 1 : 0
+  domain = var.domain_name
+}
+
+resource "aws_ses_domain_dkim" "mail" {
+  count  = var.domain_name != "" ? 1 : 0
+  domain = aws_ses_domain_identity.mail[0].domain
+}
+
+resource "aws_route53_record" "ses_dkim" {
+  for_each = var.domain_name != "" && var.route53_zone_id != "" ? {
+    for token in aws_ses_domain_dkim.mail[0].dkim_tokens : token => token
+  } : {}
+
+  zone_id = var.route53_zone_id
+  name    = "${each.value}._domainkey.${var.domain_name}"
+  type    = "CNAME"
+  ttl     = 600
+  records = ["${each.value}.dkim.amazonses.com"]
+}
+
+resource "aws_ses_email_identity" "sender" {
+  count = var.domain_name == "" ? 1 : 0
+  email = local.ses_from_email
+}
+
 # --- CloudWatch Log Groups ---
 
 resource "aws_cloudwatch_log_group" "services" {
@@ -518,8 +569,10 @@ resource "aws_ecs_task_definition" "core_api" {
     environment = concat(local.common_env, [
       { name = "PORT", value = "3000" },
       { name = "EMAIL_PROVIDER", value = "ses" },
+      { name = "APP_BASE_URL", value = local.app_url },
       { name = "AWS_REGION", value = var.region },
-      { name = "SES_FROM_EMAIL", value = "noreply@${var.domain_name != "" ? var.domain_name : "poolmaster.dev"}" },
+      { name = "SES_FROM_EMAIL", value = local.ses_from_email },
+      { name = "EMAIL_REPLY_TO", value = local.ses_from_email },
       { name = "ENVIRONMENT", value = var.environment },
       { name = "AUTO_START_SCHEDULER", value = "true" },
     ])
