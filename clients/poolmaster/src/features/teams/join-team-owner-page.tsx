@@ -185,7 +185,7 @@ export function JoinTeamOwnerPage() {
             <div className="rounded-[1.5rem] border border-border bg-background p-5">
               <div className="flex items-center gap-4">
                 {selectedIcon ? (
-                  <div className={`flex h-14 w-14 items-center justify-center rounded-[1.1rem] ${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`}>
+                  <div className={`flex h-14 w-14 items-center justify-center rounded-[1.1rem] ${selectedIcon.themeClass}`}>
                     <TeamIcon iconKey={invitationQuery.data.team.iconKey} size="md" />
                   </div>
                 ) : null}
@@ -251,7 +251,7 @@ export function JoinTeamOwnerPage() {
             />
             {selectedIcon ? (
               <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card p-4">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-[1.1rem] ${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`}>
+                <div className={`flex h-14 w-14 items-center justify-center rounded-[1.1rem] ${selectedIcon.themeClass}`}>
                   <TeamIcon iconKey={invitationQuery.data.team.iconKey} size="md" />
                 </div>
                 <div className="min-w-0">

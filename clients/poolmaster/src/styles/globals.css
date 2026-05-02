@@ -82,6 +82,16 @@
     --workflow-primary-hover-surface: rgba(245, 184, 0, 0.18);
     --workflow-danger-surface: rgba(168, 32, 45, 0.08);
     --workflow-danger-hover-surface: rgba(168, 32, 45, 0.12);
+    --team-icon-sunset-surface: var(--status-danger-surface);
+    --team-icon-sunset-text: var(--status-danger-text);
+    --team-icon-field-surface: var(--status-active-surface);
+    --team-icon-field-text: var(--status-active-text);
+    --team-icon-ocean-surface: var(--status-info-surface);
+    --team-icon-ocean-text: var(--status-info-text);
+    --team-icon-midnight-surface: var(--status-completed-surface);
+    --team-icon-midnight-text: var(--status-completed-text);
+    --team-icon-candy-surface: var(--workflow-primary-surface);
+    --team-icon-candy-text: var(--status-active-text);
 
     --background: 60 13% 95%;
     --foreground: 218 70% 15%;
@@ -158,5 +168,32 @@
 
   body {
     @apply bg-background font-body text-foreground;
+  }
+}
+
+@layer components {
+  .team-icon-theme-sunset {
+    background-color: var(--team-icon-sunset-surface);
+    color: var(--team-icon-sunset-text);
+  }
+
+  .team-icon-theme-field {
+    background-color: var(--team-icon-field-surface);
+    color: var(--team-icon-field-text);
+  }
+
+  .team-icon-theme-ocean {
+    background-color: var(--team-icon-ocean-surface);
+    color: var(--team-icon-ocean-text);
+  }
+
+  .team-icon-theme-midnight {
+    background-color: var(--team-icon-midnight-surface);
+    color: var(--team-icon-midnight-text);
+  }
+
+  .team-icon-theme-candy {
+    background-color: var(--team-icon-candy-surface);
+    color: var(--team-icon-candy-text);
   }
 }

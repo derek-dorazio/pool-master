@@ -33,32 +33,27 @@ const TEAM_ICON_THEMES = [
   {
     key: 'SUNSET',
     label: 'Sunset',
-    accentClass: 'text-rose-600',
-    surfaceClass: 'bg-rose-100',
+    themeClass: 'team-icon-theme-sunset',
   },
   {
     key: 'FIELD',
     label: 'Field',
-    accentClass: 'text-emerald-700',
-    surfaceClass: 'bg-emerald-100',
+    themeClass: 'team-icon-theme-field',
   },
   {
     key: 'OCEAN',
     label: 'Ocean',
-    accentClass: 'text-sky-700',
-    surfaceClass: 'bg-sky-100',
+    themeClass: 'team-icon-theme-ocean',
   },
   {
     key: 'MIDNIGHT',
     label: 'Midnight',
-    accentClass: 'text-indigo-700',
-    surfaceClass: 'bg-indigo-100',
+    themeClass: 'team-icon-theme-midnight',
   },
   {
     key: 'CANDY',
     label: 'Candy',
-    accentClass: 'text-fuchsia-700',
-    surfaceClass: 'bg-fuchsia-100',
+    themeClass: 'team-icon-theme-candy',
   },
 ] as const;
 
@@ -66,15 +61,13 @@ export const TEAM_ICON_OPTIONS: Array<{
   key: TeamIconKey;
   label: string;
   symbolId: string;
-  accentClass: string;
-  surfaceClass: string;
+  themeClass: string;
 }> = TEAM_ICON_BASES.flatMap((base) =>
   TEAM_ICON_THEMES.map((theme) => ({
     key: TeamIconKeyEnum[`${base.key}_${theme.key}` as keyof typeof TeamIconKeyEnum],
     label: `${base.label} ${theme.label}`,
     symbolId: base.symbolId,
-    accentClass: theme.accentClass,
-    surfaceClass: theme.surfaceClass,
+    themeClass: theme.themeClass,
   })),
 );
 

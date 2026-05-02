@@ -74,7 +74,7 @@ export function RootAdminManageTeamsPage() {
           return (
             <div className="flex min-w-0 items-start gap-3">
               <div
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] ${icon.surfaceClass} ${icon.accentClass}`}
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] ${icon.themeClass}`}
               >
                 <TeamIcon iconKey={row.original.iconKey} size="sm" />
               </div>

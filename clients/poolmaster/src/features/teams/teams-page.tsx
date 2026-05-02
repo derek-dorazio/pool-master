@@ -262,7 +262,7 @@ export function TeamsPage() {
                 >
                   <div className="flex min-w-0 items-start gap-4">
                     <div
-                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] ${icon.surfaceClass} ${icon.accentClass}`}
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] ${icon.themeClass}`}
                     >
                       <TeamIcon iconKey={team.iconKey} size="md" />
                     </div>

@@ -727,7 +727,7 @@ export function MyTeamPage() {
       <Tile padding="lg">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <IconAvatar className={`${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`} size="lg">
+            <IconAvatar className={selectedIcon.themeClass} size="lg">
               <TeamIcon iconKey={currentIconKey} size="lg" />
             </IconAvatar>
             <div>
@@ -851,7 +851,7 @@ export function MyTeamPage() {
             {selectedTeam ? (
               <div className="mt-5 space-y-4">
                 <Tile className="flex items-center gap-4" radius="lg">
-                  <IconAvatar className={`${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`} size="md">
+                  <IconAvatar className={selectedIcon.themeClass} size="md">
                     <TeamIcon iconKey={currentIconKey} size="lg" />
                   </IconAvatar>
                   <div>
@@ -911,7 +911,7 @@ export function MyTeamPage() {
                   />
                 </FormField>
                 <Tile className="flex items-center gap-4" radius="lg">
-                  <IconAvatar className={`${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`} size="md">
+                  <IconAvatar className={selectedIcon.themeClass} size="md">
                     <TeamIcon iconKey={currentIconKey} size="lg" />
                   </IconAvatar>
                   <Button
@@ -1093,12 +1093,12 @@ export function MyTeamPage() {
         options={TEAM_ICON_OPTIONS}
         paletteTestId="my-team-icon-palette"
         renderOptionIcon={(icon) => (
-          <div className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full ${icon.surfaceClass} ${icon.accentClass}`}>
+          <div className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full ${icon.themeClass}`}>
             <TeamIcon iconKey={icon.key} size="md" />
           </div>
         )}
         renderSelectedIcon={() => (
-          <IconAvatar className={`${draftIcon.surfaceClass} ${draftIcon.accentClass}`} size="lg">
+          <IconAvatar className={draftIcon.themeClass} size="lg">
             <TeamIcon iconKey={iconDraftKey} size="lg" />
           </IconAvatar>
         )}

@@ -299,7 +299,7 @@ export function JoinLeaguePage() {
             <div className="space-y-3">
               <div className="text-sm font-medium text-foreground">Team icon</div>
               <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card px-4 py-4">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${selectedIcon.surfaceClass} ${selectedIcon.accentClass}`}>
+                <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${selectedIcon.themeClass}`}>
                   <TeamIcon iconKey={selectedIconKey} size="lg" />
                 </div>
                 <div>
@@ -324,7 +324,7 @@ export function JoinLeaguePage() {
                       onClick={() => setSelectedIconKey(icon.key)}
                       type="button"
                     >
-                      <div className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full ${icon.surfaceClass} ${icon.accentClass}`}>
+                      <div className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full ${icon.themeClass}`}>
                         <TeamIcon iconKey={icon.key} size="md" />
                       </div>
                       <div className="mt-3 text-xs font-medium">{icon.label}</div>

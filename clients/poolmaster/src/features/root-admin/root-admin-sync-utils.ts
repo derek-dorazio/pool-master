@@ -144,32 +144,6 @@ export function buildPayloadSummary(payload: Record<string, unknown>) {
   return fallbackEntries[0] ?? 'Payload captured for operational review.';
 }
 
-export function getProviderStatusClasses(status: ProviderSummary['status']) {
-  switch (status) {
-    case 'HEALTHY':
-      return 'border-emerald-300 bg-emerald-50 text-emerald-900';
-    case 'DOWN':
-      return 'border-rose-300 bg-rose-50 text-rose-900';
-    case 'DEGRADED':
-      return 'border-amber-300 bg-amber-50 text-amber-900';
-  }
-}
-
-export function getSyncRunStatusClasses(status: ProviderSyncRun['status']) {
-  switch (status) {
-    case 'SUBMITTED':
-      return 'border-sky-300 bg-sky-50 text-sky-900';
-    case 'IN_PROGRESS':
-      return 'border-indigo-300 bg-indigo-50 text-indigo-900';
-    case 'FAILED':
-      return 'border-rose-300 bg-rose-50 text-rose-900';
-    case 'CANCELLED':
-      return 'border-amber-300 bg-amber-50 text-amber-900';
-    case 'COMPLETED':
-      return 'border-slate-300 bg-slate-50 text-slate-900';
-  }
-}
-
 export function getSportSyncPreset(presetId: SportSyncPresetId) {
   return SPORT_SYNC_PRESETS.find((preset) => preset.id === presetId) ?? SPORT_SYNC_PRESETS[0];
 }
