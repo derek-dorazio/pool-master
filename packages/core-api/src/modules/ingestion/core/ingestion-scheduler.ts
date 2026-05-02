@@ -78,7 +78,9 @@ export interface IngestionScheduledEventReader {
   listEventIdsForFeed(input: {
     sport: Sport;
     feed: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
+    from?: Date;
     now: Date;
+    to?: Date;
   }): Promise<string[]>;
 }
 
@@ -410,10 +412,13 @@ export class IngestionScheduler {
       lookaheadDays,
     }, 'Running configured sport participant sync');
     await this.runFieldSync(sport, from, to);
-    await this.runConfiguredActiveFieldSync(sport);
+    await this.runConfiguredActiveFieldSync(sport, { from, to });
   }
 
-  private async runConfiguredActiveFieldSync(sport: Sport): Promise<void> {
+  private async runConfiguredActiveFieldSync(
+    sport: Sport,
+    window: { from: Date; to: Date },
+  ): Promise<void> {
     const eventReader = this.options.eventReader;
     if (!eventReader) {
       this.logger?.debug({ sport }, 'Skipping active event participant sync because no event reader is configured');
@@ -423,7 +428,9 @@ export class IngestionScheduler {
     const eventIds = await eventReader.listEventIdsForFeed({
       sport,
       feed: 'EVENTPARTICIPANTS',
+      from: window.from,
       now: this.getNow(),
+      to: window.to,
     });
 
     this.logger?.debug({

@@ -15,11 +15,13 @@ export function createScheduledEventReader({
   logger,
 }: ScheduledEventReaderDependencies): IngestionScheduledEventReader {
   return {
-    async listEventIdsForFeed({ sport, feed, now }) {
+    async listEventIdsForFeed({ sport, feed, from, now, to }) {
       logger?.debug({
         sport,
         feed,
+        from: from?.toISOString() ?? null,
         now: now.toISOString(),
+        to: to?.toISOString() ?? null,
       }, 'Listing sport event ids for scheduled ingestion feed');
 
       const provider = registry.getProvider(sport);
@@ -35,14 +37,7 @@ export function createScheduledEventReader({
           externalId: {
             not: '',
           },
-          status: {
-            in: feed === 'EVENTRESULTS'
-              ? ['COMPLETED', 'OFFICIAL']
-              : ['IN_PROGRESS'],
-          },
-          ...(feed === 'EVENTRESULTS'
-            ? { updatedAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) } }
-            : {}),
+          ...toFeedWhere(feed, now, from, to),
         },
         select: {
           externalId: true,
@@ -57,5 +52,38 @@ export function createScheduledEventReader({
       }, 'Listed sport event ids for scheduled ingestion feed');
       return rows.map((row) => row.externalId);
     },
+  };
+}
+
+function toFeedWhere(
+  feed: Parameters<IngestionScheduledEventReader['listEventIdsForFeed']>[0]['feed'],
+  now: Date,
+  from?: Date,
+  to?: Date,
+) {
+  if (feed === 'EVENTRESULTS') {
+    return {
+      status: { in: ['COMPLETED', 'OFFICIAL'] },
+      updatedAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
+    };
+  }
+
+  if (feed === 'EVENTPARTICIPANTS') {
+    return {
+      OR: [
+        {
+          status: 'SCHEDULED',
+          startDate: {
+            gte: from ?? now,
+            ...(to ? { lte: to } : {}),
+          },
+        },
+        { status: 'IN_PROGRESS' },
+      ],
+    };
+  }
+
+  return {
+    status: { in: ['IN_PROGRESS'] },
   };
 }

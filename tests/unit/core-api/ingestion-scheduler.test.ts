@@ -491,7 +491,9 @@ describe('IngestionScheduler', () => {
       expect(eventReader.listEventIdsForFeed).toHaveBeenCalledWith({
         sport: 'GOLF',
         feed: 'EVENTPARTICIPANTS',
+        from: now,
         now,
+        to: new Date('2026-05-28T12:00:00.000Z'),
       });
       expect(provider.getEventDetails).toHaveBeenCalledWith('future-event');
       expect(provider.getEventDetails).toHaveBeenCalledWith('active-event');
