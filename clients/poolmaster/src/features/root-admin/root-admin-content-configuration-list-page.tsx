@@ -3,34 +3,13 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import { adminListContestConfigTemplates } from '@/lib/api';
 import {
-  ManagementListPage,
+  DataGridPage,
   StatusBadge,
 } from '@/features/shared/ui';
 import { useLogger } from '@/lib/logger';
 import type { ContestConfigTemplate } from './content-configuration-utils';
 
 const columnHelper = createColumnHelper<ContestConfigTemplate>();
-
-function extractErrorMessage(error: unknown, fallback: string) {
-  if (!error || typeof error !== 'object') {
-    return fallback;
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return fallback;
-}
 
 export function RootAdminContentConfigurationListPage() {
   const logger = useLogger().child({
@@ -120,14 +99,12 @@ export function RootAdminContentConfigurationListPage() {
   );
 
   return (
-    <ManagementListPage
+    <DataGridPage
       columns={columns}
       data={templates}
       emptyMessage="No persisted contest templates are configured yet."
-      errorBody={extractErrorMessage(
-        templatesQuery.error,
-        'We could not load contest templates right now.',
-      )}
+      error={templatesQuery.error}
+      errorBody="We could not load contest templates right now."
       getRowId={(template) => template.id}
       getRowLink={(template) =>
         `/manage/content-configuration/${template.templateKey}`

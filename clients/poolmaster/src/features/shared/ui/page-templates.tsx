@@ -7,11 +7,12 @@ import { cn } from "./class-names";
 import { DataGrid } from "./data-grid";
 import { DetailsActionsLayout } from "./details-actions-layout";
 import { PageHeader } from "./page-header";
-import { ErrorState, LoadingState } from "./state";
+import { ServerErrorPanel } from "./server-error";
+import { EmptyState, ErrorState, LoadingState } from "./state";
 import { StatusBadge } from "./status-badge";
 import { Tile } from "./tile";
 
-type TemplateState = "ready" | "loading" | "error";
+type TemplateState = "ready" | "loading" | "error" | "empty" | "forbidden";
 
 type HeaderConfig = {
   actions?: ReactNode;
@@ -26,16 +27,34 @@ type HeaderConfig = {
 };
 
 type AsyncPageStateProps = {
+  emptyAction?: ReactNode;
+  emptyBody?: ReactNode;
+  emptyTitle?: ReactNode;
   errorBody?: ReactNode;
+  error?: unknown;
+  errorAction?: ReactNode;
   errorTitle?: ReactNode;
   loadingBody?: ReactNode;
+  onRetry?: () => void;
+  permissionBody?: ReactNode;
+  permissionTitle?: ReactNode;
+  retryLabel?: string;
   state?: TemplateState;
 };
 
 function renderAsyncState({
+  emptyAction,
+  emptyBody,
+  emptyTitle,
+  error,
+  errorAction,
   errorBody,
   errorTitle,
   loadingBody,
+  onRetry,
+  permissionBody,
+  permissionTitle,
+  retryLabel,
   state = "ready",
 }: AsyncPageStateProps) {
   if (state === "loading") {
@@ -43,10 +62,47 @@ function renderAsyncState({
   }
 
   if (state === "error") {
+    if (error) {
+      return (
+        <ServerErrorPanel
+          action={errorAction}
+          error={error}
+          fallback={
+            typeof errorBody === "string"
+              ? errorBody
+              : "We could not load this information right now."
+          }
+          onRetry={onRetry}
+          retryLabel={retryLabel}
+          title={typeof errorTitle === "string" ? errorTitle : "Unable to load"}
+        />
+      );
+    }
+
     return (
       <ErrorState
+        action={errorAction}
         body={errorBody ?? "We could not load this information right now."}
         title={errorTitle}
+      />
+    );
+  }
+
+  if (state === "empty") {
+    return (
+      <EmptyState
+        action={emptyAction}
+        body={emptyBody ?? "There is nothing to show yet."}
+        title={emptyTitle}
+      />
+    );
+  }
+
+  if (state === "forbidden") {
+    return (
+      <ErrorState
+        body={permissionBody ?? "You do not have access to this page."}
+        title={permissionTitle ?? "Access unavailable"}
       />
     );
   }
@@ -82,6 +138,12 @@ function TemplatePageShell({
   );
 }
 
+export type AsyncPageProps = TemplatePageShellProps;
+
+export function AsyncPage(props: AsyncPageProps) {
+  return <TemplatePageShell {...props} />;
+}
+
 export type AdminConfigPageProps = TemplatePageShellProps;
 
 export function AdminConfigPage(props: AdminConfigPageProps) {
@@ -91,6 +153,7 @@ export function AdminConfigPage(props: AdminConfigPageProps) {
 export type ManagementListPageProps<TData> = AsyncPageStateProps & {
   className?: string;
   columns: ColumnDef<TData, any>[];
+  contentClassName?: string;
   data: TData[];
   emptyMessage: string;
   filterTestIdPrefix?: string;
@@ -105,9 +168,12 @@ export type ManagementListPageProps<TData> = AsyncPageStateProps & {
   testId?: string;
 };
 
-export function ManagementListPage<TData>({
+export type DataGridPageProps<TData> = ManagementListPageProps<TData>;
+
+export function DataGridPage<TData>({
   className,
   columns,
+  contentClassName,
   data,
   emptyMessage,
   filterTestIdPrefix,
@@ -123,6 +189,7 @@ export function ManagementListPage<TData>({
   return (
     <TemplatePageShell
       className={className}
+      contentClassName={contentClassName}
       header={header}
       testId={testId}
       {...stateProps}
@@ -142,6 +209,16 @@ export function ManagementListPage<TData>({
       </Tile>
     </TemplatePageShell>
   );
+}
+
+export type CollectionPageProps<TData> = DataGridPageProps<TData>;
+
+export function CollectionPage<TData>(props: CollectionPageProps<TData>) {
+  return <DataGridPage {...props} />;
+}
+
+export function ManagementListPage<TData>(props: ManagementListPageProps<TData>) {
+  return <DataGridPage {...props} />;
 }
 
 export type DetailWithActionsPageProps = AsyncPageStateProps & {

@@ -3,10 +3,11 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
   AdminConfigPage,
+  AsyncPage,
+  DataGridPage,
   DetailWithActionsPage,
   FormEditorSection,
   LifecycleActionSet,
-  ManagementListPage,
   PublicInviteJoinPage,
 } from "./page-templates";
 
@@ -52,7 +53,7 @@ describe("pool-master-3ew: shared page templates", () => {
 
   it("pool-master-3ew.2: renders a management grid with client-side filters", () => {
     render(
-      <ManagementListPage
+      <DataGridPage
         columns={columns}
         data={[
           { id: "one", name: "Alpha", status: "Active" },
@@ -72,6 +73,42 @@ describe("pool-master-3ew: shared page templates", () => {
     expect(screen.queryByTestId("row-one")).not.toBeInTheDocument();
     expect(screen.getByTestId("row-two")).toBeInTheDocument();
     expect(screen.getByTestId("management-grid")).toBeInTheDocument();
+  });
+
+  it("pool-master-pjr.1: renders async empty, forbidden, and server-error states", () => {
+    const { rerender } = render(
+      <AsyncPage
+        emptyBody="No sync runs matched."
+        emptyTitle="No runs"
+        state="empty"
+      >
+        <p>Loaded</p>
+      </AsyncPage>,
+    );
+
+    expect(screen.getByRole("heading", { name: "No runs" })).toBeInTheDocument();
+    expect(screen.queryByText("Loaded")).not.toBeInTheDocument();
+
+    rerender(
+      <AsyncPage permissionBody="Root admin required." state="forbidden">
+        <p>Loaded</p>
+      </AsyncPage>,
+    );
+
+    expect(screen.getByText("Root admin required.")).toBeInTheDocument();
+
+    rerender(
+      <AsyncPage
+        error={{ error: { message: "Provider health unavailable." } }}
+        state="error"
+      >
+        <p>Loaded</p>
+      </AsyncPage>,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Provider health unavailable.",
+    );
   });
 
   it("pool-master-3ew.3: composes details beside action menu content", () => {

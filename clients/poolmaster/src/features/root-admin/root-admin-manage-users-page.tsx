@@ -3,40 +3,12 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { adminListUsers, type AdminListUsersResponses } from "@/lib/api";
 import {
-  ManagementListPage,
+  DataGridPage,
   StatusBadge,
 } from "@/features/shared/ui";
 
 type RootAdminUser = AdminListUsersResponses[200]["items"][number];
 const columnHelper = createColumnHelper<RootAdminUser>();
-
-function extractAdminError(error: unknown, fallback: string) {
-  if (!error || typeof error !== "object") {
-    return fallback;
-  }
-
-  const candidate = error as {
-    error?: { code?: unknown; message?: unknown };
-    message?: unknown;
-  };
-
-  if (
-    typeof candidate.error?.code === "string" &&
-    typeof candidate.error?.message === "string"
-  ) {
-    return `${candidate.error.code}: ${candidate.error.message}`;
-  }
-
-  if (typeof candidate.error?.message === "string") {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === "string") {
-    return candidate.message;
-  }
-
-  return fallback;
-}
 
 function buildUserDisplayName(user: RootAdminUser) {
   const fullName = `${user.firstName} ${user.lastName}`.trim();
@@ -120,14 +92,12 @@ export function RootAdminManageUsersPage() {
   );
 
   return (
-    <ManagementListPage
+    <DataGridPage
       columns={columns}
       data={usersQuery.data?.items ?? []}
       emptyMessage="No users matched the current filters."
-      errorBody={extractAdminError(
-        usersQuery.error,
-        "We could not load users right now.",
-      )}
+      error={usersQuery.error}
+      errorBody="We could not load users right now."
       getRowId={(user) => user.id}
       getRowLink={(user) => `/users/${user.id}`}
       loadingBody="Loading users..."
