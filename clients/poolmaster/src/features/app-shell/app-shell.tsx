@@ -331,14 +331,7 @@ export function AppShell() {
                   }}
                 />
               </>
-            ) : (
-              <div className="rounded-2xl border border-inverse-border bg-on-inverse-subtle px-4 py-3 text-sm text-on-inverse-muted">
-                Current route:{" "}
-                <span className="font-medium text-on-inverse">
-                  {location.pathname}
-                </span>
-              </div>
-            )}
+            ) : null}
           </div>
         </div>
       </header>

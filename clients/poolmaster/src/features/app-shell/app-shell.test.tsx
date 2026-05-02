@@ -325,6 +325,17 @@ describe('AppShell', () => {
     expect(screen.queryByTestId('app-menu-league-trigger')).not.toBeInTheDocument();
   });
 
+  it('pool-master-fo5.5 does not render debug route copy for signed-out users', async () => {
+    authState.isAuthenticated = false;
+
+    renderAppShell(['/']);
+
+    expect(screen.getByText('Prime Time Commissioner')).toBeInTheDocument();
+    expect(screen.getByText('Ultimate Office Pool Manager')).toBeInTheDocument();
+    expect(screen.queryByText(/Current route/i)).not.toBeInTheDocument();
+    expect(listLeaguesMock).not.toHaveBeenCalled();
+  });
+
   it('logs logout completion when the app-shell logout action succeeds', async () => {
     clearSessionMock.mockResolvedValue(undefined);
     listLeaguesMock.mockResolvedValue({
