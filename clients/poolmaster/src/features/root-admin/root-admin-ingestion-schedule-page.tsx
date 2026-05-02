@@ -1,11 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import {
   adminGetIngestionSchedule,
   adminResetIngestionSchedule,
   adminUpdateIngestionSchedule,
 } from '@/lib/api';
+import {
+  Button,
+  ErrorState,
+  FormField,
+  Input,
+  LoadingState,
+  PageHeader,
+  Tile,
+} from '@/features/shared/ui';
 import {
   cloneIngestionConfig,
   extractAdminErrorMessage,
@@ -117,68 +125,56 @@ export function RootAdminIngestionSchedulePage() {
       className="space-y-6"
       data-testid="root-admin-ingestion-schedule-page"
     >
-      <div className="rounded-[2rem] border border-border bg-card p-6">
-        <Link
-          className="text-sm font-medium text-primary transition hover:opacity-80"
-          to="/manage/sync-config"
-        >
-          Back to Sync Configuration
-        </Link>
-        <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-              Global Ingestion Schedule
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-              Control the default cadence and lifecycle windows that scheduled
-              ingestion uses across sports before per-sport overrides apply.
-            </p>
-          </div>
-          <button
-            className="inline-flex items-center justify-center rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+      <PageHeader
+        actions={(
+          <Button
             disabled={resetIngestionConfigMutation.isPending}
             onClick={() => resetIngestionConfigMutation.mutate()}
+            variant="secondary"
             type="button"
           >
             {resetIngestionConfigMutation.isPending
               ? 'Resetting...'
               : 'Reset ingestion schedule'}
-          </button>
-        </div>
-      </div>
+          </Button>
+        )}
+        breadcrumbs={[
+          { href: '/manage/sync-config', label: 'Sync Configuration' },
+          { label: 'Global Ingestion Schedule' },
+        ]}
+        description="Control the default cadence and lifecycle windows that scheduled ingestion uses across sports before per-sport overrides apply."
+        title="Global Ingestion Schedule"
+      />
 
-      <section className="rounded-[2rem] border border-border bg-card p-6">
-        {ingestionConfigQuery.isLoading || !draft ? (
-          <p className="text-sm text-muted-foreground">
-            Loading ingestion schedule configuration...
-          </p>
-        ) : ingestionConfigQuery.isError ? (
-          <p className="text-sm text-rose-700">
-            {extractAdminErrorMessage(
-              ingestionConfigQuery.error,
-              'We could not load ingestion schedule configuration right now.',
-            )}
-          </p>
-        ) : (
-          <>
-            <div className="space-y-3">
-              {INGESTION_POLICY_FIELDS.map((field) => {
-                const extraKey = 'extraKey' in field ? field.extraKey : undefined;
-                const extraLabel =
-                  'extraLabel' in field ? field.extraLabel : undefined;
+      {ingestionConfigQuery.isLoading || !draft ? (
+        <LoadingState body="Loading ingestion schedule configuration..." />
+      ) : ingestionConfigQuery.isError ? (
+        <ErrorState
+          body={extractAdminErrorMessage(
+            ingestionConfigQuery.error,
+            'We could not load ingestion schedule configuration right now.',
+          )}
+        />
+      ) : (
+        <section className="space-y-3">
+          <div className="space-y-3">
+            {INGESTION_POLICY_FIELDS.map((field) => {
+              const extraKey = 'extraKey' in field ? field.extraKey : undefined;
+              const extraLabel =
+                'extraLabel' in field ? field.extraLabel : undefined;
 
-                return (
-                  <div
-                    className="rounded-2xl border border-border bg-background p-4"
-                    key={field.key}
-                  >
-                    <div className="grid gap-3 md:grid-cols-4">
-                      <label className="text-sm text-muted-foreground">
-                        <span className="mb-2 block font-medium text-foreground">
-                          {field.label}
-                        </span>
-                        <div className="flex h-[52px] items-center justify-between rounded-2xl border border-border bg-card px-4">
-                          <span className="text-sm text-foreground">Enabled</span>
+              return (
+                <Tile key={field.key} padding="sm" radius="lg" variant="subtle">
+                  <div className="grid gap-3 md:grid-cols-4">
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">{field.label}</div>
+                      <Tile
+                        padding="sm"
+                        radius="md"
+                        variant="default"
+                      >
+                        <label className="flex h-5 items-center justify-between gap-3 text-sm text-foreground">
+                          <span>Enabled</span>
                           <input
                             checked={draft[field.key].enabled}
                             data-testid={`root-admin-ingestion-page-${field.key}-enabled`}
@@ -190,68 +186,59 @@ export function RootAdminIngestionSchedulePage() {
                               )}
                             type="checkbox"
                           />
-                        </div>
-                      </label>
-                      <label className="text-sm text-muted-foreground">
-                        <span className="mb-2 block font-medium text-foreground">
-                          {field.intervalLabel}
-                        </span>
-                        <input
-                          className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground"
-                          data-testid={`root-admin-ingestion-page-${field.key}-${field.intervalKey}`}
+                        </label>
+                      </Tile>
+                    </div>
+                    <FormField label={field.intervalLabel}>
+                      <Input
+                        data-testid={`root-admin-ingestion-page-${field.key}-${field.intervalKey}`}
+                        onChange={(event) =>
+                          updateDraftValue(
+                            field.key,
+                            field.intervalKey as IngestionEditableField,
+                            event.target.value,
+                          )}
+                        type="number"
+                        value={draft[field.key][field.intervalKey] ?? ''}
+                      />
+                    </FormField>
+                    {extraKey ? (
+                      <FormField label={extraLabel}>
+                        <Input
+                          data-testid={`root-admin-ingestion-page-${field.key}-${extraKey}`}
                           onChange={(event) =>
                             updateDraftValue(
                               field.key,
-                              field.intervalKey as IngestionEditableField,
+                              extraKey as IngestionEditableField,
                               event.target.value,
                             )}
                           type="number"
-                          value={draft[field.key][field.intervalKey] ?? ''}
+                          value={draft[field.key][extraKey] ?? ''}
                         />
-                      </label>
-                      {extraKey ? (
-                        <label className="text-sm text-muted-foreground">
-                          <span className="mb-2 block font-medium text-foreground">
-                            {extraLabel}
-                          </span>
-                          <input
-                            className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground"
-                            data-testid={`root-admin-ingestion-page-${field.key}-${extraKey}`}
-                            onChange={(event) =>
-                              updateDraftValue(
-                                field.key,
-                                extraKey as IngestionEditableField,
-                                event.target.value,
-                              )}
-                            type="number"
-                            value={draft[field.key][extraKey] ?? ''}
-                          />
-                        </label>
-                      ) : (
-                        <div />
-                      )}
-                    </div>
+                      </FormField>
+                    ) : (
+                      <div />
+                    )}
                   </div>
-                );
-              })}
-            </div>
+                </Tile>
+              );
+            })}
+          </div>
 
-            <div className="mt-5 flex justify-end">
-              <button
-                className="rounded-2xl bg-foreground px-5 py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                data-testid="root-admin-ingestion-page-save"
-                disabled={ingestionConfigMutation.isPending}
-                onClick={() => draft && ingestionConfigMutation.mutate(draft)}
-                type="button"
-              >
-                {ingestionConfigMutation.isPending
-                  ? 'Saving...'
-                  : 'Save ingestion schedule'}
-              </button>
-            </div>
-          </>
-        )}
-      </section>
+          <div className="mt-5 flex justify-end">
+            <Button
+              data-testid="root-admin-ingestion-page-save"
+              disabled={ingestionConfigMutation.isPending}
+              onClick={() => draft && ingestionConfigMutation.mutate(draft)}
+              type="button"
+            >
+              {ingestionConfigMutation.isPending
+                ? 'Saving...'
+                : 'Save ingestion schedule'}
+            </Button>
+          </div>
+        </section>
+      )}
     </section>
   );
 }
