@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import {
   adminGetPollIntervals,
   adminResetPollIntervals,
   adminUpdatePollIntervals,
 } from '@/lib/api';
+import {
+  Button,
+  ErrorState,
+  FormField,
+  Input,
+  LinkButton,
+  LoadingState,
+  PageHeader,
+  Tile,
+} from '@/features/shared/ui';
 import {
   clonePollConfig,
   extractAdminErrorMessage,
@@ -101,81 +110,62 @@ export function RootAdminPollIntervalsPage() {
       className="space-y-6"
       data-testid="root-admin-poll-intervals-page"
     >
-      <div className="rounded-[2rem] border border-border bg-card p-6">
-        <Link
-          className="text-sm font-medium text-primary transition hover:opacity-80"
-          to="/manage/sync-config"
-        >
-          Back to Sync Configuration
-        </Link>
-        <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-              Poll Intervals
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-              Client-facing refresh guidance stored durably in runtime config.
-              Update these intervals when the webapp should poll more or less
-              aggressively for standings, draft, notification, and contest state
-              changes.
-            </p>
-          </div>
-          <button
-            className="inline-flex items-center justify-center rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={resetPollConfigMutation.isPending}
-            onClick={() => resetPollConfigMutation.mutate()}
-            type="button"
-          >
-            {resetPollConfigMutation.isPending ? 'Resetting...' : 'Reset poll intervals'}
-          </button>
-        </div>
-      </div>
-
-      <section className="rounded-[2rem] border border-border bg-card p-6">
-        {pollConfigQuery.isLoading || !draft ? (
-          <p className="text-sm text-muted-foreground">
-            Loading poll interval configuration...
-          </p>
-        ) : pollConfigQuery.isError ? (
-          <p className="text-sm text-rose-700">
-            {extractAdminErrorMessage(
-              pollConfigQuery.error,
-              'We could not load poll interval configuration right now.',
-            )}
-          </p>
-        ) : (
+      <PageHeader
+        actions={(
           <>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {POLL_INTERVAL_FIELDS.map(([key, label]) => (
-                <label className="text-sm text-muted-foreground" key={key}>
-                  <span className="mb-2 block font-medium text-foreground">
-                    {label}
-                  </span>
-                  <input
-                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground"
-                    data-testid={`root-admin-poll-page-${key}`}
-                    onChange={(event) => updateDraftValue(key, event.target.value)}
-                    type="number"
-                    value={draft[key]}
-                  />
-                </label>
-              ))}
-            </div>
-
-            <div className="mt-5 flex justify-end">
-              <button
-                className="rounded-2xl bg-foreground px-5 py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                data-testid="root-admin-poll-page-save"
-                disabled={pollConfigMutation.isPending}
-                onClick={() => draft && pollConfigMutation.mutate(draft)}
-                type="button"
-              >
-                {pollConfigMutation.isPending ? 'Saving...' : 'Save poll intervals'}
-              </button>
-            </div>
+            <LinkButton to="/manage/sync-config" variant="secondary">
+              Back to Sync Configuration
+            </LinkButton>
+            <Button
+              disabled={resetPollConfigMutation.isPending}
+              onClick={() => resetPollConfigMutation.mutate()}
+              type="button"
+              variant="secondary"
+            >
+              {resetPollConfigMutation.isPending ? 'Resetting...' : 'Reset poll intervals'}
+            </Button>
           </>
         )}
-      </section>
+        description="Client-facing refresh guidance stored durably in runtime config. Update these intervals when the webapp should poll more or less aggressively for standings, draft, notification, and contest state changes."
+        title="Poll Intervals"
+      />
+
+      {pollConfigQuery.isLoading || !draft ? (
+        <LoadingState body="Loading poll interval configuration..." />
+      ) : pollConfigQuery.isError ? (
+        <ErrorState
+          body={extractAdminErrorMessage(
+            pollConfigQuery.error,
+            'We could not load poll interval configuration right now.',
+          )}
+        />
+      ) : (
+        <Tile>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {POLL_INTERVAL_FIELDS.map(([key, label]) => (
+              <FormField key={key} label={label}>
+                <Input
+                  data-testid={`root-admin-poll-page-${key}`}
+                  onChange={(event) => updateDraftValue(key, event.target.value)}
+                  type="number"
+                  value={draft[key]}
+                />
+              </FormField>
+            ))}
+          </div>
+
+          <div className="mt-5 flex justify-end">
+            <Button
+              data-testid="root-admin-poll-page-save"
+              disabled={pollConfigMutation.isPending}
+              onClick={() => draft && pollConfigMutation.mutate(draft)}
+              type="button"
+            >
+              {pollConfigMutation.isPending ? 'Saving...' : 'Save poll intervals'}
+            </Button>
+          </div>
+        </Tile>
+      )}
     </section>
   );
 }

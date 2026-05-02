@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { LinkButton, ListCard } from '@/features/shared/ui';
 
 const SYNC_CONFIG_DESTINATIONS = [
   {
@@ -29,24 +29,20 @@ export function RootAdminSyncConfigPage() {
     <section className="space-y-6" data-testid="root-admin-sync-config-page">
       <section className="grid gap-4 xl:grid-cols-3">
         {SYNC_CONFIG_DESTINATIONS.map((destination) => (
-          <article
-            className="rounded-[2rem] border border-border bg-card p-6"
+          <ListCard
+            actions={(
+              <LinkButton
+                data-testid={`root-admin-sync-config-link-${destination.key}`}
+                to={destination.to}
+                variant="secondary"
+              >
+                Open {destination.title}
+              </LinkButton>
+            )}
+            description={destination.description}
             key={destination.key}
-          >
-            <h2 className="text-xl font-semibold text-foreground">
-              {destination.title}
-            </h2>
-            <p className="mt-3 text-sm text-muted-foreground">
-              {destination.description}
-            </p>
-            <Link
-              className="mt-5 inline-flex items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-primary/15"
-              data-testid={`root-admin-sync-config-link-${destination.key}`}
-              to={destination.to}
-            >
-              Open {destination.title}
-            </Link>
-          </article>
+            title={destination.title}
+          />
         ))}
       </section>
     </section>
