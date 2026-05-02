@@ -17,6 +17,8 @@ export interface MailDeliveryMessage {
   metadata?: {
     templateKey?: string;
     leagueId?: string;
+    contestId?: string;
+    entryId?: string;
     invitationId?: string;
   };
 }
@@ -108,6 +110,8 @@ export class SmtpMailDeliveryProvider implements MailDeliveryProvider {
         toCount: recipients.length,
         templateKey: message.metadata?.templateKey ?? null,
         leagueId: message.metadata?.leagueId ?? null,
+        contestId: message.metadata?.contestId ?? null,
+        entryId: message.metadata?.entryId ?? null,
         invitationId: message.metadata?.invitationId ?? null,
       },
     }, 'Submitting SMTP email');
@@ -128,6 +132,8 @@ export class SmtpMailDeliveryProvider implements MailDeliveryProvider {
           messageId: messageId ?? null,
           templateKey: message.metadata?.templateKey ?? null,
           leagueId: message.metadata?.leagueId ?? null,
+          contestId: message.metadata?.contestId ?? null,
+          entryId: message.metadata?.entryId ?? null,
           invitationId: message.metadata?.invitationId ?? null,
         },
       }, 'Submitted SMTP email');
@@ -139,6 +145,8 @@ export class SmtpMailDeliveryProvider implements MailDeliveryProvider {
           toCount: recipients.length,
           templateKey: message.metadata?.templateKey ?? null,
           leagueId: message.metadata?.leagueId ?? null,
+          contestId: message.metadata?.contestId ?? null,
+          entryId: message.metadata?.entryId ?? null,
           invitationId: message.metadata?.invitationId ?? null,
           error: err instanceof Error ? err.message : String(err),
         },
@@ -182,6 +190,8 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
         toCount: recipients.length,
         templateKey: message.metadata?.templateKey ?? null,
         leagueId: message.metadata?.leagueId ?? null,
+        contestId: message.metadata?.contestId ?? null,
+        entryId: message.metadata?.entryId ?? null,
         invitationId: message.metadata?.invitationId ?? null,
       },
     }, 'Submitting SES email');
@@ -208,6 +218,8 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
           messageId: result.MessageId ?? null,
           templateKey: message.metadata?.templateKey ?? null,
           leagueId: message.metadata?.leagueId ?? null,
+          contestId: message.metadata?.contestId ?? null,
+          entryId: message.metadata?.entryId ?? null,
           invitationId: message.metadata?.invitationId ?? null,
         },
       }, 'Submitted SES email');
@@ -219,6 +231,8 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
           toCount: recipients.length,
           templateKey: message.metadata?.templateKey ?? null,
           leagueId: message.metadata?.leagueId ?? null,
+          contestId: message.metadata?.contestId ?? null,
+          entryId: message.metadata?.entryId ?? null,
           invitationId: message.metadata?.invitationId ?? null,
           error: err instanceof Error ? err.message : String(err),
         },

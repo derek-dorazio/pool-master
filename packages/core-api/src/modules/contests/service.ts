@@ -34,6 +34,11 @@ import {
   toContestEntryDetailDto,
   type ContestEntryParticipantRow,
 } from '../../mappers/contests.mapper';
+import {
+  renderSystemEmailTemplate,
+  type ContestEntryCompletedTierSelection,
+  type MailDeliveryProvider,
+} from '../email';
 export interface CreateContestInput {
   leagueId: string;
   createdBy: string;
@@ -56,6 +61,61 @@ export interface UpdateContestInput {
   endsAt?: Date;
   lockAt?: Date;
   isExclusive?: boolean;
+}
+
+interface ContestEntryReceiptData {
+  id: string;
+  contestId: string;
+  name: string;
+  tiebreakerValue: number | null;
+  updatedAt: Date;
+  squad: {
+    name: string;
+  };
+  contest: {
+    id: string;
+    leagueId: string;
+    name: string;
+    configuration: {
+      tierConfig: unknown;
+      rosterSize: number | null;
+      pickCount: number | null;
+      rounds: number | null;
+    } | null;
+    league: {
+      name: string;
+      leagueCode: string;
+    };
+  };
+  rosterPicks: Array<{
+    pickedAt: Date;
+    sportEventParticipant: {
+      id: string;
+      participant: {
+        id: string;
+        name: string;
+      };
+      valuations: Array<{
+        tier: string | null;
+        orderIndex: number | null;
+      }>;
+    };
+  }>;
+}
+
+interface EmailTierDefinition {
+  tierId: string;
+  tierName: string;
+  tierNumber: number;
+  picksFromTier: number;
+  participantIds: string[];
+}
+
+interface EmailRecipientUser {
+  email: string;
+  firstName: string;
+  lastName: string;
+  username: string;
 }
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
@@ -82,6 +142,8 @@ export class ContestService {
     private readonly entryRepo?: ContestEntryRepository,
     private readonly prisma?: PrismaClient,
     private readonly logger: LifecycleLogger = createNoopLogger(),
+    private readonly mailDelivery?: MailDeliveryProvider,
+    private readonly appBaseUrl = 'http://localhost:5173',
   ) {}
 
   /** Creates a contest and its selection configuration atomically. */
@@ -527,8 +589,178 @@ export class ContestService {
 
     await this.requireEntryRepo().update(entryId, pendingUpdates);
     const dto = await this.loadEntryDtoById(entryId);
+    await this.deliverContestEntryCompletedEmail(contestId, entryId, userId);
     this.logger.info({ contestId, entryId, userId }, 'contest entry update completed');
     return dto;
+  }
+
+  private async deliverContestEntryCompletedEmail(
+    contestId: string,
+    entryId: string,
+    userId: string,
+  ): Promise<void> {
+    if (!this.mailDelivery || !this.prisma) {
+      this.logger.debug({
+        action: 'contestEntry.emailDelivery.skipped',
+        data: { contestId, entryId },
+      }, 'Skipped contest entry confirmation email because dependencies are unavailable');
+      return;
+    }
+
+    const [entry, user] = await Promise.all([
+      this.loadContestEntryReceiptData(entryId),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          email: true,
+          firstName: true,
+          lastName: true,
+          username: true,
+        },
+      }),
+    ]);
+
+    if (!entry || entry.contestId !== contestId) {
+      this.logger.warn({
+        action: 'contestEntry.emailDelivery.entryMissing',
+        data: { contestId, entryId },
+      }, 'Skipped contest entry confirmation email because entry data was unavailable');
+      return;
+    }
+    if (!user) {
+      this.logger.warn({
+        action: 'contestEntry.emailDelivery.userMissing',
+        data: { contestId, entryId, userId },
+      }, 'Skipped contest entry confirmation email because user data was unavailable');
+      return;
+    }
+
+    const requiredSelections = getRequiredSelectionCount(entry.contest.configuration);
+    if (requiredSelections <= 0 || entry.rosterPicks.length < requiredSelections) {
+      this.logger.debug({
+        action: 'contestEntry.emailDelivery.incompleteLineup',
+        data: {
+          contestId,
+          entryId,
+          requiredSelections,
+          savedSelections: entry.rosterPicks.length,
+        },
+      }, 'Skipped contest entry confirmation email because lineup is incomplete');
+      return;
+    }
+
+    if (entry.tiebreakerValue === null || entry.tiebreakerValue === undefined) {
+      this.logger.debug({
+        action: 'contestEntry.emailDelivery.missingTiebreaker',
+        data: { contestId, entryId },
+      }, 'Skipped contest entry confirmation email because tiebreaker is missing');
+      return;
+    }
+
+    const message = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', {
+      userName: formatUserName(user),
+      leagueName: entry.contest.league.name,
+      contestName: entry.contest.name,
+      teamName: entry.squad.name,
+      entryName: entry.name,
+      entryUrl: buildEntryUrl(
+        this.appBaseUrl,
+        entry.contest.league.leagueCode,
+        contestId,
+        entryId,
+      ),
+      submittedAt: entry.updatedAt,
+      tiebreaker: formatRelativeToPar(entry.tiebreakerValue),
+      tiers: buildEntryTierSelections(entry),
+    });
+
+    try {
+      await this.mailDelivery.send({
+        to: user.email,
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
+        metadata: {
+          templateKey: message.templateKey,
+          leagueId: entry.contest.leagueId,
+          contestId,
+          entryId,
+        },
+      });
+      this.logger.info({
+        action: 'contestEntry.emailDelivery.success',
+        data: {
+          contestId,
+          entryId,
+          templateKey: message.templateKey,
+        },
+      }, 'Delivered contest entry confirmation email');
+    } catch (err) {
+      this.logger.error({
+        action: 'contestEntry.emailDelivery.failure',
+        data: {
+          contestId,
+          entryId,
+          templateKey: message.templateKey,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      }, 'Failed to deliver contest entry confirmation email');
+    }
+  }
+
+  private async loadContestEntryReceiptData(
+    entryId: string,
+  ): Promise<ContestEntryReceiptData | null> {
+    const row = await this.requirePrisma().contestEntry.findUnique({
+      where: { id: entryId },
+      include: {
+        squad: {
+          select: { name: true },
+        },
+        contest: {
+          include: {
+            configuration: {
+              select: {
+                tierConfig: true,
+                rosterSize: true,
+                pickCount: true,
+                rounds: true,
+              },
+            },
+            league: {
+              select: {
+                name: true,
+                leagueCode: true,
+              },
+            },
+          },
+        },
+        rosterPicks: {
+          include: {
+            sportEventParticipant: {
+              include: {
+                participant: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+                valuations: {
+                  orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+                  take: 1,
+                  select: {
+                    tier: true,
+                    orderIndex: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
+        },
+      },
+    });
+    return row as ContestEntryReceiptData | null;
   }
 
   private async getEntryContext(
@@ -874,6 +1106,114 @@ export class ContestEntryNotFoundError extends Error {
 
 function buildDefaultEntryName(squadName: string, entryNumber: number): string {
   return `${squadName} Entry ${entryNumber}`;
+}
+
+function getRequiredSelectionCount(
+  configuration: ContestEntryReceiptData['contest']['configuration'],
+): number {
+  const tierDefinitions = readEmailTierDefinitions(configuration?.tierConfig);
+  if (tierDefinitions.length > 0) {
+    return tierDefinitions.reduce((sum, tier) => sum + tier.picksFromTier, 0);
+  }
+  return configuration?.rosterSize ?? configuration?.pickCount ?? configuration?.rounds ?? 0;
+}
+
+function buildEntryTierSelections(
+  entry: ContestEntryReceiptData,
+): ContestEntryCompletedTierSelection[] {
+  const tierDefinitions = readEmailTierDefinitions(entry.contest.configuration?.tierConfig);
+  if (tierDefinitions.length > 0) {
+    const picksByParticipantId = new Map<string, string[]>();
+    const assignedPickIds = new Set<string>();
+    for (const pick of entry.rosterPicks) {
+      const participantName = pick.sportEventParticipant.participant.name;
+      const participantIds = [
+        pick.sportEventParticipant.id,
+        pick.sportEventParticipant.participant.id,
+      ];
+      for (const participantId of participantIds) {
+        const existing = picksByParticipantId.get(participantId) ?? [];
+        existing.push(participantName);
+        picksByParticipantId.set(participantId, existing);
+      }
+    }
+
+    const selections = tierDefinitions.map((tier) => {
+      const participantNames: string[] = [];
+      for (const participantId of tier.participantIds) {
+        participantNames.push(...(picksByParticipantId.get(participantId) ?? []));
+      }
+      for (const pick of entry.rosterPicks) {
+        if (participantNames.includes(pick.sportEventParticipant.participant.name)) {
+          assignedPickIds.add(pick.sportEventParticipant.id);
+        }
+      }
+      return {
+        tierName: tier.tierName,
+        participantNames,
+      };
+    });
+
+    const unassigned = entry.rosterPicks
+      .filter((pick) => !assignedPickIds.has(pick.sportEventParticipant.id))
+      .map((pick) => pick.sportEventParticipant.participant.name);
+    if (unassigned.length > 0) {
+      selections.push({ tierName: 'Other selections', participantNames: unassigned });
+    }
+    return selections.filter((selection) => selection.participantNames.length > 0);
+  }
+
+  const groups = new Map<string, string[]>();
+  for (const pick of entry.rosterPicks) {
+    const tierName = pick.sportEventParticipant.valuations[0]?.tier ?? 'Selections';
+    const participants = groups.get(tierName) ?? [];
+    participants.push(pick.sportEventParticipant.participant.name);
+    groups.set(tierName, participants);
+  }
+  return Array.from(groups.entries()).map(([tierName, participantNames]) => ({
+    tierName,
+    participantNames,
+  }));
+}
+
+function readEmailTierDefinitions(tierConfig: unknown): EmailTierDefinition[] {
+  if (!Array.isArray(tierConfig)) return [];
+  return tierConfig
+    .map((tier, index) => {
+      const record = tier as Record<string, unknown>;
+      return {
+        tierId: String(record.tierId ?? record.tierName ?? `tier-${index + 1}`),
+        tierName: String(record.tierName ?? record.tierId ?? `Tier ${index + 1}`),
+        tierNumber: Number(record.tierNumber ?? index + 1),
+        picksFromTier: Number(record.picksFromTier ?? record.pickCount ?? 1),
+        participantIds: Array.isArray(record.participantIds)
+          ? record.participantIds.map((value) => String(value))
+          : [],
+      };
+    })
+    .sort((left, right) => left.tierNumber - right.tierNumber);
+}
+
+function formatRelativeToPar(value: number): string {
+  if (value > 0) return `+${value}`;
+  return String(value);
+}
+
+function formatUserName(user: EmailRecipientUser): string {
+  const fullName = [user.firstName, user.lastName]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(' ');
+  return fullName || user.username || user.email;
+}
+
+function buildEntryUrl(
+  appBaseUrl: string,
+  leagueCode: string,
+  contestId: string,
+  entryId: string,
+): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}/contests/${encodeURIComponent(contestId)}/entries/${encodeURIComponent(entryId)}`;
 }
 
 function normalizeLatestPerformance(value: unknown): Record<string, unknown> {

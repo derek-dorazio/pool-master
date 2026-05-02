@@ -46,6 +46,11 @@ import { ContestScoringRecalculationService } from '../contest-scoring';
 import { createContestHandlers } from './handler';
 import { createOverrideHandlers } from './override-handler';
 import { getAppPrisma } from '../../core/prisma-context';
+import {
+  createMailDeliveryProvider,
+  readApplicationBaseUrl,
+  readMailDeliveryConfig,
+} from '../email';
 
 export async function contestsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
@@ -55,6 +60,11 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
   const leagueRepo = new PrismaLeagueRepository(prisma);
+  const mailDelivery = createMailDeliveryProvider(
+    readMailDeliveryConfig(process.env),
+    fastify.log,
+  );
+  const appBaseUrl = readApplicationBaseUrl(process.env);
 
   const contestService = new ContestService(
     contestRepo,
@@ -66,6 +76,8 @@ export async function contestsModule(fastify: FastifyInstance): Promise<void> {
     undefined,
     prisma,
     fastify.log,
+    mailDelivery,
+    appBaseUrl,
   );
   const handlers = createContestHandlers(contestService);
 
@@ -117,6 +129,11 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
   const leagueRepo = new PrismaLeagueRepository(prisma);
   const entryRepo = new PrismaContestEntryRepository(prisma);
   const draftSessionRepo = new PrismaDraftSessionRepository(prisma);
+  const mailDelivery = createMailDeliveryProvider(
+    readMailDeliveryConfig(process.env),
+    fastify.log,
+  );
+  const appBaseUrl = readApplicationBaseUrl(process.env);
 
   const contestService = new ContestService(
     contestRepo,
@@ -128,6 +145,8 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     entryRepo,
     prisma,
     fastify.log,
+    mailDelivery,
+    appBaseUrl,
   );
   const overrideService = new OverrideService(
     contestRepo,

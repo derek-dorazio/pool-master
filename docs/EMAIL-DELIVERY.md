@@ -51,3 +51,7 @@ invitation record and submits the rendered email to the configured provider.
 If provider submission fails, the API returns
 `LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED` and logs provider, template, league,
 and invitation identifiers without logging email body content.
+
+Contest entry confirmation emails are best-effort receipts. The saved entry is
+not rolled back when provider submission fails; PoolMaster logs the template,
+league, contest, and entry identifiers for follow-up.

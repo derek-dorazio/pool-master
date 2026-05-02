@@ -1162,5 +1162,420 @@ describe('ContestService', () => {
       expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { tiebreakerValue: 271 });
       expect(result.tiebreakerValue).toBe(271);
     });
+
+    it('pool-master-95b sends confirmation email after a completed entry is saved', async () => {
+      const contest = buildContest({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        status: ContestStatus.OPEN,
+      });
+      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
+      const entryRepo = createMockEntryRepo({
+        findBySquad: jest.fn().mockResolvedValue([
+          {
+            id: 'entry-1',
+            contestId: 'contest-1',
+            squadId: 'squad-1',
+            entryNumber: 1,
+            name: "Derek's Squad Entry 1",
+            status: 'ACTIVE',
+            tiebreakerValue: null,
+            totalScore: 0,
+            standingsPosition: undefined,
+            isEliminated: false,
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          },
+        ]),
+      });
+      const contestEntryFindUnique = jest.fn()
+        .mockResolvedValueOnce({
+          id: 'entry-1',
+          contestId: 'contest-1',
+          squadId: 'squad-1',
+          entryNumber: 1,
+          name: "Derek's Squad Entry 1",
+          status: 'ACTIVE',
+          tiebreakerValue: 271,
+          totalScore: 0,
+          standingsPosition: null,
+          isEliminated: false,
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-02'),
+          squad: { id: 'squad-1', name: "Derek's Squad" },
+        })
+        .mockResolvedValueOnce({
+          id: 'entry-1',
+          contestId: 'contest-1',
+          squadId: 'squad-1',
+          entryNumber: 1,
+          name: "Derek's Squad Entry 1",
+          status: 'ACTIVE',
+          tiebreakerValue: 271,
+          updatedAt: new Date('2026-01-02T12:00:00.000Z'),
+          squad: { name: "Derek's Squad" },
+          contest: {
+            id: 'contest-1',
+            leagueId: 'league-1',
+            name: 'Masters Pick 2',
+            configuration: {
+              tierConfig: [
+                {
+                  tierId: 'tier-a',
+                  tierName: 'Tier A',
+                  tierNumber: 1,
+                  picksFromTier: 1,
+                  participantIds: ['participant-1'],
+                },
+                {
+                  tierId: 'tier-b',
+                  tierName: 'Tier B',
+                  tierNumber: 2,
+                  picksFromTier: 1,
+                  participantIds: ['participant-2'],
+                },
+              ],
+              rosterSize: 2,
+              pickCount: null,
+              rounds: null,
+            },
+            league: {
+              name: 'Mathworks',
+              leagueCode: 'MATHWORKS',
+            },
+          },
+          rosterPicks: [
+            {
+              pickedAt: new Date('2026-01-01T12:00:00.000Z'),
+              sportEventParticipant: {
+                id: 'sport-event-participant-1',
+                participant: { id: 'participant-1', name: 'Rory McIlroy' },
+                valuations: [{ tier: 'Tier A', orderIndex: 1 }],
+              },
+            },
+            {
+              pickedAt: new Date('2026-01-01T12:01:00.000Z'),
+              sportEventParticipant: {
+                id: 'sport-event-participant-2',
+                participant: { id: 'participant-2', name: 'Tommy Fleetwood' },
+                valuations: [{ tier: 'Tier B', orderIndex: 1 }],
+              },
+            },
+          ],
+        });
+      const prisma = createMockPrisma({
+        contestEntry: {
+          findMany: jest.fn().mockResolvedValue([]),
+          findUnique: contestEntryFindUnique,
+        },
+        rosterPick: {
+          count: jest.fn().mockResolvedValue(2),
+          groupBy: jest.fn().mockResolvedValue([]),
+          findMany: jest.fn().mockResolvedValue([]),
+        },
+        user: {
+          findUnique: jest.fn().mockResolvedValue({
+            email: 'derek@example.com',
+            firstName: 'Derek',
+            lastName: 'Dorazio',
+            username: 'derek',
+          }),
+        },
+      });
+      const mailDelivery = {
+        providerName: 'smtp' as const,
+        send: jest.fn().mockResolvedValue({ provider: 'smtp' as const, messageId: 'mail-1' }),
+      };
+      const service = new ContestService(
+        createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
+        createMockContestConfigurationRepo(),
+        createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue({
+            id: 'squad-membership-1',
+            squadId: 'squad-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            status: SquadMembershipStatus.ACTIVE,
+            joinedAt: new Date('2026-01-01'),
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }),
+        }),
+        entryRepo,
+        prisma as any,
+        undefined,
+        mailDelivery,
+        'https://app.primetimecommissioner.com',
+      );
+
+      await service.updateEntry('contest-1', 'entry-1', 'user-1', {
+        tiebreakerValue: 271,
+      });
+
+      expect(mailDelivery.send).toHaveBeenCalledTimes(1);
+      expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
+        to: 'derek@example.com',
+        subject: 'Entry submitted: Masters Pick 2',
+        metadata: {
+          templateKey: 'CONTEST_ENTRY_COMPLETED',
+          leagueId: 'league-1',
+          contestId: 'contest-1',
+          entryId: 'entry-1',
+        },
+      }));
+      const sentMessage = mailDelivery.send.mock.calls[0][0];
+      expect(sentMessage.text).toContain('Tier A: Rory McIlroy');
+      expect(sentMessage.text).toContain('Tier B: Tommy Fleetwood');
+      expect(sentMessage.text).toContain('Tiebreaker: +271');
+      expect(sentMessage.text).toContain(
+        'Review entry: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1/entries/entry-1',
+      );
+      expect(sentMessage.html).toContain('Prime Time Commissioner');
+    });
+
+    it('pool-master-95b skips confirmation email until roster and tiebreaker are complete', async () => {
+      const contest = buildContest({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        status: ContestStatus.OPEN,
+      });
+      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
+      const contestEntryFindUnique = jest.fn()
+        .mockResolvedValueOnce({
+          id: 'entry-1',
+          contestId: 'contest-1',
+          squadId: 'squad-1',
+          entryNumber: 1,
+          name: "Derek's Squad Entry 1",
+          status: 'ACTIVE',
+          tiebreakerValue: 271,
+          totalScore: 0,
+          standingsPosition: null,
+          isEliminated: false,
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-02'),
+          squad: { id: 'squad-1', name: "Derek's Squad" },
+        })
+        .mockResolvedValueOnce({
+          id: 'entry-1',
+          contestId: 'contest-1',
+          name: "Derek's Squad Entry 1",
+          tiebreakerValue: 271,
+          updatedAt: new Date('2026-01-02T12:00:00.000Z'),
+          squad: { name: "Derek's Squad" },
+          contest: {
+            id: 'contest-1',
+            leagueId: 'league-1',
+            name: 'Masters Pick 2',
+            configuration: {
+              tierConfig: [
+                { tierName: 'Tier A', tierNumber: 1, picksFromTier: 1, participantIds: ['participant-1'] },
+                { tierName: 'Tier B', tierNumber: 2, picksFromTier: 1, participantIds: ['participant-2'] },
+              ],
+              rosterSize: 2,
+              pickCount: null,
+              rounds: null,
+            },
+            league: { name: 'Mathworks', leagueCode: 'MATHWORKS' },
+          },
+          rosterPicks: [
+            {
+              pickedAt: new Date('2026-01-01T12:00:00.000Z'),
+              sportEventParticipant: {
+                id: 'sport-event-participant-1',
+                participant: { id: 'participant-1', name: 'Rory McIlroy' },
+                valuations: [{ tier: 'Tier A', orderIndex: 1 }],
+              },
+            },
+          ],
+        });
+      const mailDelivery = {
+        providerName: 'smtp' as const,
+        send: jest.fn(),
+      };
+      const service = new ContestService(
+        createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
+        createMockContestConfigurationRepo(),
+        createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue({
+            id: 'squad-membership-1',
+            squadId: 'squad-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            status: SquadMembershipStatus.ACTIVE,
+            joinedAt: new Date('2026-01-01'),
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }),
+        }),
+        createMockEntryRepo({
+          findBySquad: jest.fn().mockResolvedValue([
+            {
+              id: 'entry-1',
+              contestId: 'contest-1',
+              squadId: 'squad-1',
+              entryNumber: 1,
+              name: "Derek's Squad Entry 1",
+              status: 'ACTIVE',
+              tiebreakerValue: null,
+              totalScore: 0,
+              standingsPosition: undefined,
+              isEliminated: false,
+              createdAt: new Date('2026-01-01'),
+              updatedAt: new Date('2026-01-01'),
+            },
+          ]),
+        }),
+        createMockPrisma({
+          contestEntry: {
+            findMany: jest.fn().mockResolvedValue([]),
+            findUnique: contestEntryFindUnique,
+          },
+          rosterPick: {
+            count: jest.fn().mockResolvedValue(1),
+            groupBy: jest.fn().mockResolvedValue([]),
+            findMany: jest.fn().mockResolvedValue([]),
+          },
+        }) as any,
+        undefined,
+        mailDelivery,
+      );
+
+      await service.updateEntry('contest-1', 'entry-1', 'user-1', {
+        tiebreakerValue: 271,
+      });
+
+      expect(mailDelivery.send).not.toHaveBeenCalled();
+    });
+
+    it('pool-master-95b keeps the saved entry when confirmation email delivery fails', async () => {
+      const contest = buildContest({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        status: ContestStatus.OPEN,
+      });
+      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
+      const contestEntryFindUnique = jest.fn()
+        .mockResolvedValueOnce({
+          id: 'entry-1',
+          contestId: 'contest-1',
+          squadId: 'squad-1',
+          entryNumber: 1,
+          name: "Derek's Squad Entry 1",
+          status: 'ACTIVE',
+          tiebreakerValue: 271,
+          totalScore: 0,
+          standingsPosition: null,
+          isEliminated: false,
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-02'),
+          squad: { id: 'squad-1', name: "Derek's Squad" },
+        })
+        .mockResolvedValueOnce({
+          id: 'entry-1',
+          contestId: 'contest-1',
+          name: "Derek's Squad Entry 1",
+          tiebreakerValue: -12,
+          updatedAt: new Date('2026-01-02T12:00:00.000Z'),
+          squad: { name: "Derek's Squad" },
+          contest: {
+            id: 'contest-1',
+            leagueId: 'league-1',
+            name: 'Masters Pick 1',
+            configuration: {
+              tierConfig: [{ tierName: 'Tier A', tierNumber: 1, picksFromTier: 1, participantIds: ['participant-1'] }],
+              rosterSize: 1,
+              pickCount: null,
+              rounds: null,
+            },
+            league: { name: 'Mathworks', leagueCode: 'MATHWORKS' },
+          },
+          rosterPicks: [
+            {
+              pickedAt: new Date('2026-01-01T12:00:00.000Z'),
+              sportEventParticipant: {
+                id: 'sport-event-participant-1',
+                participant: { id: 'participant-1', name: 'Rory McIlroy' },
+                valuations: [{ tier: 'Tier A', orderIndex: 1 }],
+              },
+            },
+          ],
+        });
+      const entryRepo = createMockEntryRepo({
+        findBySquad: jest.fn().mockResolvedValue([
+          {
+            id: 'entry-1',
+            contestId: 'contest-1',
+            squadId: 'squad-1',
+            entryNumber: 1,
+            name: "Derek's Squad Entry 1",
+            status: 'ACTIVE',
+            tiebreakerValue: null,
+            totalScore: 0,
+            standingsPosition: undefined,
+            isEliminated: false,
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          },
+        ]),
+      });
+      const mailDelivery = {
+        providerName: 'ses' as const,
+        send: jest.fn().mockRejectedValue(new Error('SES rejected request')),
+      };
+      const service = new ContestService(
+        createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
+        createMockContestConfigurationRepo(),
+        createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue({
+            id: 'squad-membership-1',
+            squadId: 'squad-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            status: SquadMembershipStatus.ACTIVE,
+            joinedAt: new Date('2026-01-01'),
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }),
+        }),
+        entryRepo,
+        createMockPrisma({
+          contestEntry: {
+            findMany: jest.fn().mockResolvedValue([]),
+            findUnique: contestEntryFindUnique,
+          },
+          rosterPick: {
+            count: jest.fn().mockResolvedValue(1),
+            groupBy: jest.fn().mockResolvedValue([]),
+            findMany: jest.fn().mockResolvedValue([]),
+          },
+          user: {
+            findUnique: jest.fn().mockResolvedValue({
+              email: 'derek@example.com',
+              firstName: 'Derek',
+              lastName: 'Dorazio',
+              username: 'derek',
+            }),
+          },
+        }) as any,
+        undefined,
+        mailDelivery,
+      );
+
+      await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', {
+        tiebreakerValue: -12,
+      })).resolves.toEqual(expect.objectContaining({ id: 'entry-1' }));
+      expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { tiebreakerValue: -12 });
+      expect(mailDelivery.send).toHaveBeenCalledTimes(1);
+    });
   });
 });
