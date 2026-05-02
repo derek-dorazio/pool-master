@@ -29,6 +29,7 @@ export interface LeagueJoinSuccessEmailData {
   leagueName: string;
   leagueCode: string;
   leagueHomeUrl: string;
+  teamName?: string;
 }
 
 export interface ContestEntryCompletedTierSelection {
@@ -162,12 +163,14 @@ function renderLeagueJoinSuccessEmail(
     detailList([
       ['League', data.leagueName],
       ['League code', data.leagueCode],
+      ...(data.teamName ? ([['Team', data.teamName]] as Array<[string, string]>) : []),
     ]),
     button('Open league', data.leagueHomeUrl),
   ].join('');
   const textLines = [
     `${data.userName}, your account is registered and you joined ${data.leagueName}.`,
     `League code: ${data.leagueCode}`,
+    ...(data.teamName ? [`Team: ${data.teamName}`] : []),
     `Open league: ${data.leagueHomeUrl}`,
   ];
 

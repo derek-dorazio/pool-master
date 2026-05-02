@@ -400,6 +400,13 @@ export class InvitationService {
       acceptedBy: userId,
       ...(isFullyUsed && { status: InvitationStatus.ACCEPTED }),
     });
+    await this.deliverLeagueJoinSuccessEmail({
+      invitationId: invitation.id,
+      leagueId: league.id,
+      leagueName: league.name,
+      leagueCode: league.leagueCode,
+      userId,
+    });
     this.logger?.info({
       action: 'leagueInvitation.accept.success',
       data: {
@@ -412,6 +419,110 @@ export class InvitationService {
       },
     }, 'Accepted league invitation');
     return membership;
+  }
+
+  private async deliverLeagueJoinSuccessEmail(input: {
+    invitationId: string;
+    leagueId: string;
+    leagueName: string;
+    leagueCode: string;
+    userId: string;
+  }): Promise<void> {
+    if (!this.mailDelivery || !this.prisma) {
+      this.logger?.debug({
+        action: 'leagueInvitation.joinSuccessEmail.skipped',
+        data: { invitationId: input.invitationId, leagueId: input.leagueId },
+      }, 'Skipped league join success email because dependencies are unavailable');
+      return;
+    }
+    const [recipient, teamName] = await Promise.all([
+      this.resolveRecipientUser(input.userId),
+      this.resolveUserTeamName(input.leagueId, input.userId),
+    ]);
+    if (!recipient) {
+      this.logger?.warn({
+        action: 'leagueInvitation.joinSuccessEmail.recipientMissing',
+        data: {
+          invitationId: input.invitationId,
+          leagueId: input.leagueId,
+          userId: input.userId,
+        },
+      }, 'Skipped league join success email because recipient user was not found');
+      return;
+    }
+    const message = renderSystemEmailTemplate('LEAGUE_JOIN_SUCCESS', {
+      userName: recipient.name,
+      leagueName: input.leagueName,
+      leagueCode: input.leagueCode,
+      teamName,
+      leagueHomeUrl: buildLeagueUrl(this.appBaseUrl, input.leagueCode),
+    });
+    try {
+      await this.mailDelivery.send({
+        to: recipient.email,
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
+        metadata: {
+          templateKey: message.templateKey,
+          leagueId: input.leagueId,
+          invitationId: input.invitationId,
+        },
+      });
+      this.logger?.info({
+        action: 'leagueInvitation.joinSuccessEmail.success',
+        data: {
+          invitationId: input.invitationId,
+          leagueId: input.leagueId,
+          templateKey: message.templateKey,
+        },
+      }, 'Delivered league join success email');
+    } catch (err) {
+      this.logger?.error({
+        action: 'leagueInvitation.joinSuccessEmail.failure',
+        data: {
+          invitationId: input.invitationId,
+          leagueId: input.leagueId,
+          templateKey: message.templateKey,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      }, 'Failed to deliver league join success email');
+    }
+  }
+
+  private async resolveRecipientUser(userId: string): Promise<{ email: string; name: string } | null> {
+    if (!this.prisma) return null;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        firstName: true,
+        lastName: true,
+        username: true,
+      },
+    });
+    if (!user) return null;
+    const fullName = [user.firstName, user.lastName]
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .join(' ');
+    return {
+      email: user.email,
+      name: fullName || user.username || user.email,
+    };
+  }
+
+  private async resolveUserTeamName(leagueId: string, userId: string): Promise<string | undefined> {
+    if (!this.prisma) return undefined;
+    const squadMembership = await this.prisma.squadMembership.findFirst({
+      where: { leagueId, userId },
+      select: {
+        squad: {
+          select: { name: true },
+        },
+      },
+    });
+    return squadMembership?.squad.name;
   }
 
   private async ensureDefaultSquad(leagueId: string, userId: string): Promise<void> {
@@ -480,6 +591,10 @@ function generateInviteCode(): string {
 
 function buildInviteUrl(appBaseUrl: string, inviteCode: string): string {
   return `${appBaseUrl.replace(/\/+$/, '')}/invite/${encodeURIComponent(inviteCode)}`;
+}
+
+function buildLeagueUrl(appBaseUrl: string, leagueCode: string): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}`;
 }
 
 export class InvitationNotFoundError extends Error {

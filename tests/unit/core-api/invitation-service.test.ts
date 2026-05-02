@@ -136,6 +136,13 @@ function createMockProvisioningPrisma() {
       findUnique: jest.fn().mockResolvedValue({
         firstName: 'User',
         lastName: 'One',
+        username: 'user.one',
+        email: 'user.one@example.com',
+      }),
+    },
+    squadMembership: {
+      findFirst: jest.fn().mockResolvedValue({
+        squad: { name: "User One's Team" },
       }),
     },
   };
@@ -381,6 +388,126 @@ describe('InvitationService', () => {
       expect(createArg.role).toBe(LeagueRole.MEMBER);
       expect(createArg.userId).toBe('new-user');
       expect(invitationRepo.update).toHaveBeenCalled();
+    });
+
+    it('pool-master-d9x sends join success email after membership acceptance', async () => {
+      const invitation = buildInvitation({
+        id: 'invite-1',
+        leagueId: 'league-1',
+        inviteCode: 'valid-code',
+        status: InvitationStatus.PENDING,
+        expiresAt: new Date('2099-01-01'),
+      });
+      const invitationRepo = createMockInvitationRepo({
+        findByCode: jest.fn().mockResolvedValue(invitation),
+      });
+      const membershipRepo = createMockMembershipRepo();
+      const mailDelivery = {
+        providerName: 'smtp' as const,
+        send: jest.fn().mockResolvedValue({ provider: 'smtp' as const, messageId: 'mail-1' }),
+      };
+      const service = new InvitationService(
+        invitationRepo,
+        membershipRepo,
+        createMockLeagueRepo({
+          findById: jest.fn().mockResolvedValue(buildLeague({
+            id: 'league-1',
+            name: 'Mathworks',
+            leagueCode: 'MATHWORKS',
+          })),
+        }),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo(),
+        createMockProvisioningPrisma() as any,
+        undefined,
+        mailDelivery,
+        'https://app.primetimecommissioner.com',
+      );
+
+      await service.acceptInvitation('valid-code', 'new-user');
+
+      expect(mailDelivery.send).toHaveBeenCalledTimes(1);
+      expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
+        to: 'user.one@example.com',
+        subject: 'Welcome to Mathworks',
+        metadata: {
+          templateKey: 'LEAGUE_JOIN_SUCCESS',
+          leagueId: 'league-1',
+          invitationId: 'invite-1',
+        },
+      }));
+      const sentMessage = mailDelivery.send.mock.calls[0][0];
+      expect(sentMessage.text).toContain('League code: MATHWORKS');
+      expect(sentMessage.text).toContain("Team: User One's Team");
+      expect(sentMessage.text).toContain('Open league: https://app.primetimecommissioner.com/league/MATHWORKS');
+      expect(sentMessage.html).toContain('Prime Time Commissioner');
+    });
+
+    it('pool-master-d9x does not send duplicate success email for already-active members', async () => {
+      const invitation = buildInvitation({
+        id: 'invite-1',
+        leagueId: 'league-1',
+        inviteCode: 'valid-code',
+        status: InvitationStatus.PENDING,
+      });
+      const membershipRepo = createMockMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(buildMembership({
+          leagueId: 'league-1',
+          userId: 'existing-user',
+          status: LeagueMembershipStatus.ACTIVE,
+        })),
+      });
+      const mailDelivery = {
+        providerName: 'smtp' as const,
+        send: jest.fn(),
+      };
+      const service = new InvitationService(
+        createMockInvitationRepo({ findByCode: jest.fn().mockResolvedValue(invitation) }),
+        membershipRepo,
+        createMockLeagueRepo(),
+        undefined,
+        undefined,
+        createMockProvisioningPrisma() as any,
+        undefined,
+        mailDelivery,
+      );
+
+      await expect(service.acceptInvitation('valid-code', 'existing-user')).rejects.toThrow(
+        InvitationInvalidError,
+      );
+      expect(mailDelivery.send).not.toHaveBeenCalled();
+    });
+
+    it('pool-master-d9x keeps accepted membership when success email delivery fails', async () => {
+      const invitation = buildInvitation({
+        id: 'invite-1',
+        leagueId: 'league-1',
+        inviteCode: 'valid-code',
+        status: InvitationStatus.PENDING,
+        expiresAt: new Date('2099-01-01'),
+      });
+      const membershipRepo = createMockMembershipRepo();
+      const mailDelivery = {
+        providerName: 'ses' as const,
+        send: jest.fn().mockRejectedValue(new Error('SES rejected request')),
+      };
+      const service = new InvitationService(
+        createMockInvitationRepo({ findByCode: jest.fn().mockResolvedValue(invitation) }),
+        membershipRepo,
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo(),
+        createMockProvisioningPrisma() as any,
+        undefined,
+        mailDelivery,
+        'https://app.primetimecommissioner.com',
+      );
+
+      await expect(service.acceptInvitation('valid-code', 'new-user')).resolves.toEqual(
+        expect.objectContaining({ id: 'new-membership-id' }),
+      );
+      expect(membershipRepo.create).toHaveBeenCalledTimes(1);
+      expect(mailDelivery.send).toHaveBeenCalledTimes(1);
     });
 
     it('reactivates an inactive membership on valid invitation', async () => {

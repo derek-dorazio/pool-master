@@ -22,6 +22,11 @@ import {
 import { InvitationService } from '../leagues/invitation-service';
 import { createInvitationHandlers } from '../leagues/invitation-handler';
 import { getAppPrisma } from '../../core/prisma-context';
+import {
+  createMailDeliveryProvider,
+  readApplicationBaseUrl,
+  readMailDeliveryConfig,
+} from '../email';
 
 export async function invitationsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
@@ -30,6 +35,11 @@ export async function invitationsModule(fastify: FastifyInstance): Promise<void>
   const invitationRepo = new PrismaLeagueInvitationRepository(prisma);
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
+  const mailDelivery = createMailDeliveryProvider(
+    readMailDeliveryConfig(process.env),
+    fastify.log,
+  );
+  const appBaseUrl = readApplicationBaseUrl(process.env);
 
   const invitationService = new InvitationService(
     invitationRepo,
@@ -39,6 +49,8 @@ export async function invitationsModule(fastify: FastifyInstance): Promise<void>
     squadMembershipRepo,
     prisma,
     fastify.log,
+    mailDelivery,
+    appBaseUrl,
   );
   const handlers = createInvitationHandlers(invitationService);
 
