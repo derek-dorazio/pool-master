@@ -19,7 +19,7 @@ export function ToastViewport({
   );
 }
 
-type ToastProps = ComponentPropsWithoutRef<typeof ToastPrimitive.Root> & {
+type ToastProps = Omit<ComponentPropsWithoutRef<typeof ToastPrimitive.Root>, "title"> & {
   description?: ReactNode;
   title: ReactNode;
   tone?: "default" | "danger" | "success";

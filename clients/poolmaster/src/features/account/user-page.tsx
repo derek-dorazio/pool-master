@@ -25,8 +25,10 @@ import {
   Input,
   LinkButton,
   Modal,
+  MutationActionToast,
   Select,
   Tile,
+  useMutationActionWorkflow,
 } from '@/features/shared/ui';
 import { useLogger } from '@/lib/logger';
 import { RootAdminUserAccountPage } from './root-admin-user-account-page';
@@ -273,8 +275,8 @@ export function UserPage() {
     },
   });
 
-  const inactivateMutation = useMutation({
-    mutationFn: async () => {
+  const inactivateAccountAction = useMutationActionWorkflow({
+    action: async () => {
       const response = await inactivateAccount();
       if (!response.data?.user) {
         throw response.error ?? new Error('Inactivate-account response is missing data.');
@@ -283,12 +285,17 @@ export function UserPage() {
     },
     onSuccess: async (updatedUser) => {
       await applyUserToSession(updatedUser);
-      setActiveDialog(null);
+    },
+    onClose: () => setActiveDialog(null),
+    successToast: {
+      title: 'Account inactive',
+      description: 'Your account was inactivated.',
+      tone: 'success',
     },
   });
 
-  const reactivateMutation = useMutation({
-    mutationFn: async () => {
+  const reactivateAccountAction = useMutationActionWorkflow({
+    action: async () => {
       const response = await reactivateAccount();
       if (!response.data?.user) {
         throw response.error ?? new Error('Reactivate-account response is missing data.');
@@ -297,12 +304,17 @@ export function UserPage() {
     },
     onSuccess: async (updatedUser) => {
       await applyUserToSession(updatedUser);
-      setActiveDialog(null);
+    },
+    onClose: () => setActiveDialog(null),
+    successToast: {
+      title: 'Account active',
+      description: 'Your account was reactivated.',
+      tone: 'success',
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (confirmationEmail: string) => {
+  const deleteAccountAction = useMutationActionWorkflow({
+    action: async (confirmationEmail: string) => {
       const response = await deleteAccount({
         body: {
           email: confirmationEmail,
@@ -315,9 +327,9 @@ export function UserPage() {
     },
     onSuccess: () => {
       setDeleteSuccess(true);
-      setActiveDialog(null);
       setEmailConfirmation('');
     },
+    onClose: () => setActiveDialog(null),
   });
 
   if (!user) {
@@ -376,6 +388,7 @@ export function UserPage() {
   const disableUsernameEditing = isInactive || usernameMutation.isPending;
   const disablePreferencesEditing = isInactive || preferencesMutation.isPending;
   const disablePasswordEditing = isInactive || passwordMutation.isPending;
+  const activeLifecycleAction = isInactive ? reactivateAccountAction : inactivateAccountAction;
 
   return (
     <section className="space-y-6" data-testid="user-page">
@@ -466,7 +479,7 @@ export function UserPage() {
             <ActionTile
               description="Permanent delete stays locked until the account is inactive."
               data-testid="user-page-open-delete"
-              disabled={!isInactive || deleteMutation.isPending}
+              disabled={!isInactive || deleteAccountAction.isPending}
               label="Delete account"
               onClick={() => setActiveDialog('delete')}
               tone="danger"
@@ -787,7 +800,13 @@ export function UserPage() {
 
       <UserActionDialog
         description="Inactivate first, then delete permanently only after the account is inactive."
-        onOpenChange={(open) => setActiveDialog(open ? 'lifecycle' : null)}
+        onOpenChange={(open) => {
+          setActiveDialog(open ? 'lifecycle' : null);
+          if (!open) {
+            inactivateAccountAction.reset();
+            reactivateAccountAction.reset();
+          }
+        }}
         open={activeDialog === 'lifecycle'}
         testId="user-page-lifecycle-dialog"
         title={isInactive ? 'Reactivate account' : 'Inactivate account'}
@@ -798,14 +817,9 @@ export function UserPage() {
               ? 'Reactivating your account restores normal Prime Time Commissioner usage immediately.'
               : 'Inactivating your account turns profile, preferences, and password management read-only until you reactivate or permanently delete the account.'}
           </p>
-          {inactivateMutation.isError ? (
+          {activeLifecycleAction.isError ? (
             <Alert tone="danger">
-              {extractErrorMessage(inactivateMutation.error)}
-            </Alert>
-          ) : null}
-          {reactivateMutation.isError ? (
-            <Alert tone="danger">
-              {extractErrorMessage(reactivateMutation.error)}
+              {extractErrorMessage(activeLifecycleAction.error)}
             </Alert>
           ) : null}
         </div>
@@ -814,21 +828,23 @@ export function UserPage() {
           {isInactive ? (
             <Button
               data-testid="user-page-reactivate"
-              disabled={reactivateMutation.isPending || deleteMutation.isPending}
-              onClick={() => void reactivateMutation.mutateAsync().catch(() => undefined)}
+              disabled={reactivateAccountAction.isPending || deleteAccountAction.isPending}
+              isLoading={reactivateAccountAction.isPending}
+              onClick={() => void reactivateAccountAction.run().catch(() => undefined)}
               type="button"
             >
-              {reactivateMutation.isPending ? 'Reactivating...' : 'Reactivate account'}
+              {reactivateAccountAction.isPending ? 'Reactivating...' : 'Reactivate account'}
             </Button>
           ) : (
             <Button
               data-testid="user-page-inactivate"
-              disabled={inactivateMutation.isPending || deleteMutation.isPending}
-              onClick={() => void inactivateMutation.mutateAsync().catch(() => undefined)}
+              disabled={inactivateAccountAction.isPending || deleteAccountAction.isPending}
+              isLoading={inactivateAccountAction.isPending}
+              onClick={() => void inactivateAccountAction.run().catch(() => undefined)}
               variant="secondary"
               type="button"
             >
-              {inactivateMutation.isPending ? 'Inactivating...' : 'Inactivate account'}
+              {inactivateAccountAction.isPending ? 'Inactivating...' : 'Inactivate account'}
             </Button>
           )}
         </div>
@@ -846,18 +862,18 @@ export function UserPage() {
           value: emailConfirmation,
         }}
         description="Delete permanently only after the account is inactive and the email confirmation matches exactly."
-        isPending={deleteMutation.isPending}
+        isPending={deleteAccountAction.isPending}
         onCancel={() => {
           setActiveDialog(null);
           setEmailConfirmation('');
-          deleteMutation.reset();
+          deleteAccountAction.reset();
         }}
-        onConfirm={() => void deleteMutation.mutateAsync(user.email).catch(() => undefined)}
+        onConfirm={() => void deleteAccountAction.run(user.email).catch(() => undefined)}
         onOpenChange={(open) => {
           setActiveDialog(open ? 'delete' : null);
           if (!open) {
             setEmailConfirmation('');
-            deleteMutation.reset();
+            deleteAccountAction.reset();
           }
         }}
         open={activeDialog === 'delete'}
@@ -871,13 +887,22 @@ export function UserPage() {
             This action will delete your account and related data permanently. Enter{' '}
             <span className="font-medium text-foreground">{user.email}</span> to continue.
           </p>
-          {deleteMutation.isError ? (
+          {deleteAccountAction.isError ? (
             <Alert tone="danger">
-              {extractErrorMessage(deleteMutation.error)}
+              {extractErrorMessage(deleteAccountAction.error)}
             </Alert>
           ) : null}
         </div>
       </ConfirmationModal>
+
+      <MutationActionToast
+        onDismiss={inactivateAccountAction.dismissToast}
+        toast={inactivateAccountAction.toast}
+      />
+      <MutationActionToast
+        onDismiss={reactivateAccountAction.dismissToast}
+        toast={reactivateAccountAction.toast}
+      />
     </section>
   );
 }
