@@ -732,12 +732,9 @@ When an implementing persona (Brad, Fran, Archie, Dom, etc.) finishes a slice, t
 2. **Run all required local gates** (`rules/testing-rules.md §3`). Do not push on a "likely green" assumption.
 3. **Commit** with the Beads story ID in the footer: `pool-master-NNN`. One slice = one commit (squash later in the PR if multiple working commits exist).
 4. **Push the branch** to origin.
-5. **Open a PR** with `gh pr create`. Title: short imperative summary. Body: link to the parent Beads epic, the slice's Beads story (`pool-master-NNN`), one-paragraph context, and the gates that were run. For defect-fix slices, the PR body must explicitly state that the failing test was observed to fail before the fix landed.
-6. **Record the Riley review marker** in the PR body once PR-only flow is
-   confirmed for the repo: `<!-- riley:findings -->`. This marker is only an
-   auditable placeholder until the CI marker gate lands; do not treat it as a
-   substitute for the actual review.
-7. **Spawn Riley** as a subagent using the canonical spawn prompt below — Riley's review quality depends on what you pass.
+5. **Open a PR** with `gh pr create`. Title: short imperative summary. Body: link to the parent Beads epic, the slice's Beads story (`pool-master-NNN`), one-paragraph context, and the gates that were run. For defect-fix slices, the PR body must explicitly state that the failing test was observed to fail before the fix landed. The PR body must also include the Riley findings marker section described in step 7 — open the PR with the placeholder text in place; the actual findings table replaces the placeholder once Riley has reviewed.
+6. **Spawn Riley** as a subagent using the canonical spawn prompt below — Riley's review quality depends on what you pass.
+7. **Record Riley's findings in the PR body.** Replace the placeholder under the literal HTML comment `<!-- riley:findings -->` with Riley's findings table (or "No findings." if Riley reported zero). The marker is non-negotiable — CI greps the PR body for it on every PR via `npm run rules:check:pr-riley-marker`, and a PR without it cannot merge. The marker is auditable proof the review happened, not a substitute for the review itself.
 8. **Read Riley's findings table.** Then:
    - **Zero blocker-severity findings** (CRITICAL or HIGH) → `gh pr merge --squash --delete-branch`. Close the Beads story with a closing note per §1 *Beads conventions: story notes*. Return to the user with a summary.
    - **Any blocker-severity findings** → **do not merge**. Surface the findings to the user, await direction (fix-and-re-review, merge-anyway-with-justification, or park).

@@ -29,6 +29,26 @@ acceptance decisions.
 
 This project's branch + PR + Riley + auto-merge flow (per `rules/workflow-rules.md` §6) treats Riley's findings table as the merge signal. **Zero CRITICAL or HIGH findings = the implementing agent auto-merges. Any CRITICAL or HIGH finding blocks merge.** Severity calibration is therefore load-bearing — see *Severity Calibration* below.
 
+### Findings marker in the PR body
+
+Once Riley produces a findings table, the implementing agent must paste it into the PR body under the literal HTML comment `<!-- riley:findings -->`. CI greps every PR body for that marker via `npm run rules:check:pr-riley-marker`; a PR without it cannot merge. The marker is auditable proof Riley was actually invoked.
+
+The expected PR-body section format:
+
+```markdown
+## Riley findings
+
+<!-- riley:findings -->
+
+| Severity | Category | Finding | Location |
+|---|---|---|---|
+| ... | ... | ... | ... |
+
+(Or, when Riley reported zero blockers: "No findings.")
+```
+
+The marker line itself (`<!-- riley:findings -->`) is non-negotiable; the table format above is a recommended layout but Riley may use whatever shape best fits the slice.
+
 ## Required References
 
 - `AGENTS.md`

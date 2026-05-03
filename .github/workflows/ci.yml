@@ -30,6 +30,12 @@ jobs:
         run: npm run rules:check
       - name: Generated API freshness
         run: npm run api:check
+      - name: Riley findings marker (PRs only)
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/check-pr-riley-marker.mjs
       - name: Lint full repo
         run: npm run lint
       - name: Typecheck full repo
