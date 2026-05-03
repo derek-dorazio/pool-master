@@ -745,7 +745,7 @@ Every PR lands via a multi-pass review process. Each pass produces a findings re
 - Sage's findings are independent of Riley's; the gate is zero CRITICAL/HIGH per persona.
 
 **Pass 4 — Archie architecture review (conditional).**
-- Invoked when the slice touches shared contracts, cross-module boundaries, infrastructure, or active plans/ADRs (see `personas/archie.md § PR Architecture Review` for the trigger list).
+- Invoked when the slice touches shared contracts, cross-module boundaries, infrastructure, or active plans/ADRs (see `personas/archie.md` *PR Architecture Review* section for the trigger list).
 - Same shape as Pass 2/3.
 
 A PR is merge-ready when:
@@ -831,6 +831,11 @@ When an implementing persona (Brad, Fran, Archie, Dom, etc.) finishes a slice, t
 3. **Commit** with the Beads story ID in the footer: `pool-master-NNN`. One slice = one commit (squash later in the PR if multiple working commits exist).
 4. **Push the branch** to origin.
 5. **Open a PR** with `gh pr create`. Title: short imperative summary. Body: link to the parent Beads epic, the slice's Beads story (`pool-master-NNN`), one-paragraph context, and the gates that were run. For defect-fix slices, the PR body must explicitly state that the failing test was observed to fail before the fix landed. The PR body must also include the Riley findings marker section described in step 7 — open the PR with the placeholder text in place; the actual findings table replaces the placeholder once Riley has reviewed.
+
+   **Title convention by slice kind:**
+   - **Defect-fix slice** — `[pool-master-rop.<defect>][pool-master-rop.<epic>] <imperative summary>`. The `[]`-bracketed prefixes encode the defect ID and the parent epic ID for at-a-glance triage in `gh pr list` and the GitHub PR list view.
+   - **Feature slice with a parent epic** — `[pool-master-<epic>] <imperative summary>`. Single bracket since there's no separate defect ID.
+   - **Workflow-infrastructure slice with no parent epic** (rule changes, scripts, persona work, CI changes, doc additions) — no bracket prefix; just a short imperative summary naming the framework or process change. Example: `Add multi-pass review flow with GitHub Apps per agent runtime`.
 6. **Spawn Riley as the implementer self-check (Pass 1)** in your own runtime, using the canonical spawn prompt below — Riley's review quality depends on what you pass.
 7. **Record Riley's findings in the PR body.** Replace the placeholder under the literal HTML comment `<!-- riley:findings -->` with Riley's findings table (or "No findings." if Riley reported zero). CI greps the PR body for the marker on every PR via `npm run rules:check:pr-riley-marker`, and a PR without it cannot merge.
 8. **Request the cross-model secondary review (Pass 2).** A different agent runtime, operating under a different GitHub App, runs the Riley playbook against the diff and posts via `gh pr review`. If the slice touches security-sensitive code, also request Sage (Pass 3). If it touches shared contracts, infrastructure, or active plans, also request Archie (Pass 4). Each conditional pass is its own `gh pr review` from the appropriate App identity.
