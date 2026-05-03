@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
@@ -51,6 +51,20 @@ vi.mock('@/lib/api', () => ({
   updateLeagueSquad: (...args: unknown[]) => updateLeagueSquadMock(...args),
 }));
 
+function TeamRouteControls() {
+  const navigate = useNavigate();
+
+  return (
+    <button
+      data-testid="go-other-team"
+      onClick={() => navigate('/league/BIGDAWGS/team?teamId=team-2')}
+      type="button"
+    >
+      Other team
+    </button>
+  );
+}
+
 function renderMyTeamPage(initialEntry = '/league/BIGDAWGS/team') {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -65,7 +79,15 @@ function renderMyTeamPage(initialEntry = '/league/BIGDAWGS/team') {
       <AuthProvider>
         <MemoryRouter initialEntries={[initialEntry]}>
           <Routes>
-            <Route element={<MyTeamPage />} path="/league/:leagueCode/team" />
+            <Route
+              element={(
+                <>
+                  <TeamRouteControls />
+                  <MyTeamPage />
+                </>
+              )}
+              path="/league/:leagueCode/team"
+            />
             <Route element={<div data-testid="manage-teams-route-destination" />} path="/manage/teams" />
             <Route element={<div data-testid="user-route-destination" />} path="/users/:userId" />
           </Routes>
@@ -399,6 +421,104 @@ describe('MyTeamPage', () => {
     );
 
     expect(screen.getByTestId('my-team-name')).toHaveValue('Unsaved Team Name');
+  });
+
+  it('pool-master-rop.20 reseeds the team name draft when the selected team identity changes', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        league: buildLeagueDetail('COMMISSIONER'),
+      },
+    });
+    listLeagueSquadsMock.mockResolvedValue({
+      data: {
+        squads: [
+          buildTeamSummary({
+            id: 'team-1',
+            name: 'Original Team',
+            teamRelationship: {
+              leagueMember: true,
+              owner: true,
+              commissioner: true,
+            },
+          }),
+          buildTeamSummary({
+            id: 'team-2',
+            name: 'Other Team',
+            teamRelationship: {
+              leagueMember: true,
+              owner: false,
+              commissioner: true,
+            },
+            members: [],
+          }),
+        ],
+      },
+    });
+    listLeagueMembersMock.mockResolvedValue({
+      data: {
+        members: [],
+      },
+    });
+    listSquadOwnerInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [],
+      },
+    });
+    updateLeagueSquadMock.mockResolvedValue({
+      data: {
+        squad: buildTeamSummary({
+          id: 'team-2',
+          name: 'Renamed Other Team',
+          teamRelationship: {
+            leagueMember: true,
+            owner: false,
+            commissioner: true,
+          },
+          members: [],
+        }),
+      },
+    });
+
+    renderMyTeamPage('/league/BIGDAWGS/team?teamId=team-1');
+
+    fireEvent.click(await screen.findByTestId('my-team-open-name'));
+    await screen.findByTestId('my-team-name-modal');
+    fireEvent.change(screen.getByTestId('my-team-name'), {
+      target: { value: 'Unsaved Team Name' },
+    });
+
+    fireEvent.click(screen.getByTestId('go-other-team'));
+
+    await waitFor(() => expect(screen.getByTestId('my-team-name')).toHaveValue('Other Team'));
+
+    fireEvent.change(screen.getByTestId('my-team-name'), {
+      target: { value: 'Renamed Other Team' },
+    });
+    fireEvent.click(screen.getByTestId('my-team-save'));
+
+    await waitFor(() =>
+      expect(updateLeagueSquadMock).toHaveBeenCalledWith({
+        path: { id: 'league-1', squadId: 'team-2' },
+        body: { name: 'Renamed Other Team', iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD },
+      }),
+    );
+    expect(updateLeagueSquadMock).not.toHaveBeenCalledWith(expect.objectContaining({
+      path: { id: 'league-1', squadId: 'team-1' },
+    }));
   });
 
   // pool-master-dxd.14 — icon mutation response updates the query-owned team icon

@@ -72,6 +72,7 @@ export function MyTeamPage() {
     feature: 'my-team-page',
   });
   const [teamName, setTeamName] = useState('');
+  const [teamNameDraftTeamId, setTeamNameDraftTeamId] = useState<string | null>(null);
   const [iconModalOpen, setIconModalOpen] = useState(false);
   const [iconDraftKey, setIconDraftKey] = useState<TeamIconKey>(TeamIconKey.CAPTAIN_SMILE_FIELD);
   const [coOwnerEmail, setCoOwnerEmail] = useState('');
@@ -209,6 +210,23 @@ export function MyTeamPage() {
     setTeamInactivationNotice(null);
     setTeamDeletionNotice(null);
   }, [selectedTeam?.id]);
+
+  useEffect(() => {
+    if (activeDialog !== 'name') {
+      return;
+    }
+
+    if (!selectedTeam) {
+      setActiveDialog(null);
+      setTeamNameDraftTeamId(null);
+      return;
+    }
+
+    if (teamNameDraftTeamId && teamNameDraftTeamId !== selectedTeam.id) {
+      setTeamName(selectedTeam.name);
+      setTeamNameDraftTeamId(selectedTeam.id);
+    }
+  }, [activeDialog, selectedTeam, teamNameDraftTeamId]);
 
   const createTeamMutation = useMutation({
     mutationFn: async ({ nextTeamName, nextIconKey }: { nextTeamName: string; nextIconKey: TeamIconKey }) => {
@@ -412,10 +430,17 @@ export function MyTeamPage() {
       if (!canManageSelectedTeam) {
         return;
       }
+      const targetTeamId = activeDialog === 'name' ? teamNameDraftTeamId : selectedTeam.id;
+      const targetTeam = teamsQuery.data?.find((team) => team.id === targetTeamId) ?? selectedTeam;
+
+      if (!targetTeamId || targetTeamId !== targetTeam.id) {
+        throw new Error('Team selection changed before the team name could be saved.');
+      }
+
       await updateTeamMutation.mutateAsync({
-        teamId: selectedTeam.id,
+        teamId: targetTeamId,
         nextTeamName,
-        nextIconKey: selectedTeam.iconKey,
+        nextIconKey: targetTeam.iconKey,
       });
       return;
     }
@@ -437,8 +462,18 @@ export function MyTeamPage() {
     }
 
     setTeamName(selectedTeam.name);
+    setTeamNameDraftTeamId(selectedTeam.id);
     updateTeamMutation.reset();
     setActiveDialog('name');
+  }
+
+  function handleCloseTeamNameModal() {
+    if (isBusy) {
+      return;
+    }
+
+    setActiveDialog(null);
+    setTeamNameDraftTeamId(null);
   }
 
   function handleCloseIconModal() {
@@ -962,7 +997,7 @@ export function MyTeamPage() {
           }
 
           if (!isBusy) {
-            setActiveDialog(null);
+            handleCloseTeamNameModal();
           }
         }}
         open={activeDialog === 'name'}
@@ -981,15 +1016,22 @@ export function MyTeamPage() {
         <div className="mt-6 flex justify-end gap-3">
           <Button
             disabled={isBusy}
-            onClick={() => setActiveDialog(null)}
+            onClick={handleCloseTeamNameModal}
             variant="secondary"
           >
             Cancel
           </Button>
           <Button
             data-testid="my-team-save"
-            disabled={!teamName.trim() || isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
-            onClick={() => void handleSaveTeam().then(() => setActiveDialog(null))}
+            disabled={
+              !teamName.trim()
+              || isInactiveLeague
+              || isInactiveTeam
+              || isBusy
+              || !canManageSelectedTeam
+              || teamNameDraftTeamId !== selectedTeam?.id
+            }
+            onClick={() => void handleSaveTeam().then(handleCloseTeamNameModal)}
           >
             {updateTeamMutation.isPending ? 'Saving...' : 'Save team'}
           </Button>

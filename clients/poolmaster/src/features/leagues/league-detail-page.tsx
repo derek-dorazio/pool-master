@@ -83,6 +83,7 @@ export function LeagueDetailPage() {
   const [leaveActionError, setLeaveActionError] = useState<string | null>(null);
   const [detailsName, setDetailsName] = useState('');
   const [detailsDescription, setDetailsDescription] = useState('');
+  const [detailsDraftLeagueId, setDetailsDraftLeagueId] = useState<string | null>(null);
   const [iconModalOpen, setIconModalOpen] = useState(false);
   const [iconDraftKey, setIconDraftKey] = useState<LeagueDetail['iconKey']>('TROPHY');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -138,6 +139,18 @@ export function LeagueDetailPage() {
 
   const leagueId = leagueQuery.data?.id ?? '';
 
+  useEffect(() => {
+    if (activeDialog !== 'details' || !leagueQuery.data) {
+      return;
+    }
+
+    if (detailsDraftLeagueId && detailsDraftLeagueId !== leagueQuery.data.id) {
+      setDetailsName(leagueQuery.data.name);
+      setDetailsDescription(leagueQuery.data.description ?? '');
+      setDetailsDraftLeagueId(leagueQuery.data.id);
+    }
+  }, [activeDialog, detailsDraftLeagueId, leagueQuery.data]);
+
   const canManageLeague =
     leagueQuery.data?.leagueRelationship.commissioner === true || leagueQuery.data?.isRootAdmin === true;
   const isInactiveLeague = leagueQuery.data?.isActive === false;
@@ -179,8 +192,12 @@ export function LeagueDetailPage() {
 
   const updateDetailsMutation = useMutation({
     mutationFn: async () => {
+      if (!detailsDraftLeagueId || detailsDraftLeagueId !== leagueId) {
+        throw new Error('League selection changed before details could be saved.');
+      }
+
       const response = await updateLeagueDetails({
-        path: { id: leagueId },
+        path: { id: detailsDraftLeagueId },
         body: {
           name: detailsName.trim(),
           ...(detailsDescription.trim() ? { description: detailsDescription.trim() } : {}),
@@ -412,8 +429,18 @@ export function LeagueDetailPage() {
 
     setDetailsName(leagueQuery.data.name);
     setDetailsDescription(leagueQuery.data.description ?? '');
+    setDetailsDraftLeagueId(leagueQuery.data.id);
     updateDetailsMutation.reset();
     setActiveDialog('details');
+  }
+
+  function handleCloseDetailsModal() {
+    if (updateDetailsMutation.isPending) {
+      return;
+    }
+
+    setActiveDialog(null);
+    setDetailsDraftLeagueId(null);
   }
 
   function handleCloseIconModal() {
@@ -629,7 +656,7 @@ export function LeagueDetailPage() {
           }
 
           if (!updateDetailsMutation.isPending) {
-            setActiveDialog(null);
+            handleCloseDetailsModal();
           }
         }}
         open={activeDialog === 'details'}
@@ -665,16 +692,21 @@ export function LeagueDetailPage() {
         <div className="mt-6 flex justify-end gap-3">
           <Button
             disabled={updateDetailsMutation.isPending}
-            onClick={() => setActiveDialog(null)}
+            onClick={handleCloseDetailsModal}
             variant="secondary"
           >
             Cancel
           </Button>
           <Button
             data-testid="league-save-details"
-            disabled={!canEditLeague || !detailsName.trim() || updateDetailsMutation.isPending}
+            disabled={
+              !canEditLeague
+              || !detailsName.trim()
+              || updateDetailsMutation.isPending
+              || detailsDraftLeagueId !== leagueId
+            }
             isLoading={updateDetailsMutation.isPending}
-            onClick={() => void updateDetailsMutation.mutateAsync().then(() => setActiveDialog(null))}
+            onClick={() => void updateDetailsMutation.mutateAsync().then(handleCloseDetailsModal)}
           >
             {updateDetailsMutation.isPending ? 'Saving...' : 'Save details'}
           </Button>
