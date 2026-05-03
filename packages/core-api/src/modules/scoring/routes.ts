@@ -153,6 +153,7 @@ export async function scoringRoutes(
         operationId: 'getEntryScore',
         response: {
           200: zodToJsonSchema(EntryScoreDetailResponseSchema),
+          404: zodToJsonSchema(ErrorEnvelopeSchema),
           500: zodToJsonSchema(ErrorEnvelopeSchema),
         },
       },

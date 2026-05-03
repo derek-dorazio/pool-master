@@ -1,7 +1,8 @@
+import { ContestEntryNotFoundError } from '../../../packages/core-api/src/modules/contests/service';
 import { ScoringService } from '../../../packages/core-api/src/modules/scoring/service';
 
 describe('ScoringService', () => {
-  it('returns an empty entry breakdown when the entry is missing or belongs to another contest', async () => {
+  it('pool-master-rop.6: throws when the entry is missing or belongs to another contest', async () => {
     const standingsRollup = {
       rollupContest: jest.fn(),
       isRunning: jest.fn().mockReturnValue(false),
@@ -24,19 +25,13 @@ describe('ScoringService', () => {
       prisma,
     });
 
-    await expect(service.getEntryScore('contest-1', 'missing-entry')).resolves.toEqual({
-      entryId: 'missing-entry',
-      contestId: 'contest-1',
-      totalScore: 0,
-      timeline: [],
-    });
+    await expect(
+      service.getEntryScore('contest-1', 'missing-entry'),
+    ).rejects.toBeInstanceOf(ContestEntryNotFoundError);
 
-    await expect(service.getEntryScore('contest-1', 'entry-2')).resolves.toEqual({
-      entryId: 'entry-2',
-      contestId: 'contest-1',
-      totalScore: 0,
-      timeline: [],
-    });
+    await expect(
+      service.getEntryScore('contest-1', 'entry-2'),
+    ).rejects.toBeInstanceOf(ContestEntryNotFoundError);
   });
 
   it('reads persisted entry scoring events from the participant score ledger', async () => {
