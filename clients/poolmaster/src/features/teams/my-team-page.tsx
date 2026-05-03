@@ -190,25 +190,25 @@ export function MyTeamPage() {
   );
 
   useEffect(() => {
-    if (selectedTeam) {
-      setTeamName(selectedTeam.name);
-      setTeamInactivationNotice(null);
-      setTeamDeletionNotice(null);
-      return;
-    }
-
-    setTeamName(buildDefaultTeamName(auth.user?.firstName, auth.user?.lastName));
-    setTeamInactivationNotice(null);
-    setTeamDeletionNotice(null);
-  }, [auth.user?.firstName, auth.user?.lastName, selectedTeam]);
-
-  useEffect(() => {
     if (iconModalOpen) {
       return;
     }
 
     setIconDraftKey(selectedTeam?.iconKey ?? TeamIconKey.CAPTAIN_SMILE_FIELD);
   }, [iconModalOpen, selectedTeam?.iconKey]);
+
+  useEffect(() => {
+    if (selectedTeam) {
+      return;
+    }
+
+    setTeamName(buildDefaultTeamName(auth.user?.firstName, auth.user?.lastName));
+  }, [auth.user?.firstName, auth.user?.lastName, selectedTeam]);
+
+  useEffect(() => {
+    setTeamInactivationNotice(null);
+    setTeamDeletionNotice(null);
+  }, [selectedTeam?.id]);
 
   const createTeamMutation = useMutation({
     mutationFn: async ({ nextTeamName, nextIconKey }: { nextTeamName: string; nextIconKey: TeamIconKey }) => {
@@ -429,6 +429,16 @@ export function MyTeamPage() {
   function handleOpenIconModal() {
     setIconDraftKey(selectedTeam?.iconKey ?? iconDraftKey);
     setIconModalOpen(true);
+  }
+
+  function handleOpenTeamNameModal() {
+    if (!selectedTeam) {
+      return;
+    }
+
+    setTeamName(selectedTeam.name);
+    updateTeamMutation.reset();
+    setActiveDialog('name');
   }
 
   function handleCloseIconModal() {
@@ -770,7 +780,7 @@ export function MyTeamPage() {
                   data-testid="my-team-open-name"
                   disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
                   label="Change team name"
-                  onClick={() => setActiveDialog('name')}
+                  onClick={handleOpenTeamNameModal}
                   trailing="Open"
                 />
                 <ActionTile
@@ -945,7 +955,16 @@ export function MyTeamPage() {
       <Modal
         description="Update the team name shown across league and contest pages."
         descriptionId="my-team-name-modal-description"
-        onOpenChange={(open) => setActiveDialog(open ? 'name' : null)}
+        onOpenChange={(open) => {
+          if (open) {
+            handleOpenTeamNameModal();
+            return;
+          }
+
+          if (!isBusy) {
+            setActiveDialog(null);
+          }
+        }}
         open={activeDialog === 'name'}
         testId="my-team-name-modal"
         title="Change team name"

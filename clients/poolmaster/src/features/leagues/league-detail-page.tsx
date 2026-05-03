@@ -112,15 +112,6 @@ export function LeagueDetailPage() {
   }, [leagueQuery.data?.leagueCode]);
 
   useEffect(() => {
-    if (!leagueQuery.data) {
-      return;
-    }
-
-    setDetailsName(leagueQuery.data.name);
-    setDetailsDescription(leagueQuery.data.description ?? '');
-  }, [leagueQuery.data]);
-
-  useEffect(() => {
     if (!leagueQuery.data || iconModalOpen) {
       return;
     }
@@ -414,6 +405,17 @@ export function LeagueDetailPage() {
     setIconModalOpen(true);
   }
 
+  function handleOpenDetailsModal() {
+    if (!leagueQuery.data) {
+      return;
+    }
+
+    setDetailsName(leagueQuery.data.name);
+    setDetailsDescription(leagueQuery.data.description ?? '');
+    updateDetailsMutation.reset();
+    setActiveDialog('details');
+  }
+
   function handleCloseIconModal() {
     if (updateIconMutation.isPending) {
       return;
@@ -467,7 +469,7 @@ export function LeagueDetailPage() {
                   data-testid="league-open-details"
                   label="Change league details"
                   disabled={!canEditLeague}
-                  onClick={() => setActiveDialog('details')}
+                  onClick={handleOpenDetailsModal}
                   trailing="Open"
                 />
                 <ActionTile
@@ -620,7 +622,16 @@ export function LeagueDetailPage() {
       <Modal
         description="Update the public name and description shown for this league."
         descriptionId="league-details-modal-description"
-        onOpenChange={(open) => setActiveDialog(open ? 'details' : null)}
+        onOpenChange={(open) => {
+          if (open) {
+            handleOpenDetailsModal();
+            return;
+          }
+
+          if (!updateDetailsMutation.isPending) {
+            setActiveDialog(null);
+          }
+        }}
         open={activeDialog === 'details'}
         testId="league-details-modal"
         title="Change league details"

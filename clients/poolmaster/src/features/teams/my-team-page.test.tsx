@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -60,7 +60,7 @@ function renderMyTeamPage(initialEntry = '/league/BIGDAWGS/team') {
     },
   });
 
-  return render(
+  const renderResult = render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <MemoryRouter initialEntries={[initialEntry]}>
@@ -73,6 +73,11 @@ function renderMyTeamPage(initialEntry = '/league/BIGDAWGS/team') {
       </AuthProvider>
     </QueryClientProvider>,
   );
+
+  return {
+    ...renderResult,
+    queryClient,
+  };
 }
 
 function buildLeagueDetail(role: 'COMMISSIONER' | 'MEMBER' = 'MEMBER', isRootAdmin = false) {
@@ -309,6 +314,91 @@ describe('MyTeamPage', () => {
         body: { name: 'Updated Team', iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD },
       }),
     );
+  });
+
+  it('pool-master-rop.20 preserves an unsaved team name draft across team query refetches', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        league: buildLeagueDetail('MEMBER'),
+      },
+    });
+    listLeagueSquadsMock.mockResolvedValue({
+      data: {
+        squads: [
+          buildTeamSummary({
+            name: 'Original Team',
+          }),
+        ],
+      },
+    });
+    listLeagueMembersMock.mockResolvedValue({
+      data: {
+        members: [
+          {
+            id: 'league-member-1',
+            userId: 'user-1',
+            email: 'derek@example.com',
+            firstName: 'Derek',
+            lastName: 'Dorazio',
+            role: 'MEMBER',
+            joinedAt: '2026-04-15T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+    listSquadOwnerInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [],
+      },
+    });
+
+    const { queryClient } = renderMyTeamPage();
+
+    fireEvent.click(await screen.findByTestId('my-team-open-name'));
+    await screen.findByTestId('my-team-name-modal');
+    fireEvent.change(screen.getByTestId('my-team-name'), {
+      target: { value: 'Unsaved Team Name' },
+    });
+    listLeagueSquadsMock.mockResolvedValueOnce({
+      data: {
+        squads: [
+          buildTeamSummary({
+            name: 'Server Snapshot Team',
+          }),
+        ],
+      },
+    });
+
+    await act(async () => {
+      await queryClient.refetchQueries({ queryKey: ['poolmaster', 'league-teams', 'league-1'] });
+    });
+
+    await waitFor(() =>
+      expect(queryClient.getQueryData(['poolmaster', 'league-teams', 'league-1'])).toEqual([
+        expect.objectContaining({
+          name: 'Server Snapshot Team',
+        }),
+      ]),
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('my-team-details-tile')).toHaveTextContent('Server Snapshot Team'),
+    );
+
+    expect(screen.getByTestId('my-team-name')).toHaveValue('Unsaved Team Name');
   });
 
   // pool-master-dxd.14 — icon mutation response updates the query-owned team icon

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -241,6 +241,58 @@ describe('LeagueDetailPage', () => {
         name: 'Bigger Dawgs',
       }),
     ]);
+  });
+
+  it('pool-master-rop.20 preserves unsaved league detail drafts across query refetches', async () => {
+    primeCommonMocks();
+    const { queryClient } = renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByTestId('league-open-details'));
+    await screen.findByTestId('league-details-modal');
+    fireEvent.change(screen.getByTestId('league-details-name'), {
+      target: { value: 'Unsaved League Name' },
+    });
+    fireEvent.change(screen.getByTestId('league-details-description'), {
+      target: { value: 'Unsaved description' },
+    });
+
+    getLeagueByCodeMock.mockResolvedValueOnce({
+      data: {
+        league: {
+          id: 'league-1',
+          leagueCode: 'BIGDAWGS',
+          name: 'Server Snapshot League',
+          description: 'Server snapshot description',
+          isActive: true,
+          iconKey: 'TROPHY',
+          memberCount: 2,
+          activeContestCount: 1,
+          memberType: 'COMMISSIONER',
+          leagueRelationship: {
+            leagueMember: true,
+            commissioner: true,
+          },
+          isRootAdmin: false,
+          joinPolicy: 'COMMISSIONER_ONLY',
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+
+    await act(async () => {
+      await queryClient.refetchQueries({ queryKey: ['poolmaster', 'league', 'BIGDAWGS'] });
+    });
+
+    await waitFor(() =>
+      expect(queryClient.getQueryData(['poolmaster', 'league', 'BIGDAWGS'])).toMatchObject({
+        name: 'Server Snapshot League',
+        description: 'Server snapshot description',
+      }),
+    );
+
+    expect(screen.getByTestId('league-details-name')).toHaveValue('Unsaved League Name');
+    expect(screen.getByTestId('league-details-description')).toHaveValue('Unsaved description');
   });
 
   it('shows a clear handoff message when the last commissioner tries to leave', async () => {
