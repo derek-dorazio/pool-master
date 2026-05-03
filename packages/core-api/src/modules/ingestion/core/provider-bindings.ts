@@ -44,8 +44,17 @@ const providerFactories: Readonly<Record<string, ProviderFactory>> = {
   },
 };
 
+function getRuntimeEnvironment(env: NodeJS.ProcessEnv): string {
+  return (env.ENVIRONMENT ?? env.NODE_ENV ?? '').trim().toLowerCase();
+}
+
+function isDeployedRuntimeEnvironment(env: NodeJS.ProcessEnv): boolean {
+  const runtime = getRuntimeEnvironment(env);
+  return runtime === 'qa' || runtime === 'staging' || runtime === 'prod' || runtime === 'production';
+}
+
 function isMockRestrictedRuntimeEnvironment(env: NodeJS.ProcessEnv): boolean {
-  const runtime = (env.ENVIRONMENT ?? env.NODE_ENV ?? '').trim().toLowerCase();
+  const runtime = getRuntimeEnvironment(env);
   return runtime === 'staging' || runtime === 'prod' || runtime === 'production';
 }
 
@@ -53,7 +62,7 @@ function requireDefaultProviderConfigured(
   env: NodeJS.ProcessEnv,
   logger?: FastifyBaseLogger,
 ): void {
-  if (!isMockRestrictedRuntimeEnvironment(env)) {
+  if (!isDeployedRuntimeEnvironment(env)) {
     return;
   }
 
@@ -73,6 +82,11 @@ function isMockProviderOverrideEnabled(env: NodeJS.ProcessEnv): boolean {
   return env.SPORT_DATA_ALLOW_MOCK_PROVIDER_IN_STRICT_RUNTIME === 'true';
 }
 
+function getMockProviderOverrideReason(env: NodeJS.ProcessEnv): string | undefined {
+  const reason = env.SPORT_DATA_MOCK_PROVIDER_OVERRIDE_REASON?.trim();
+  return reason && reason.length >= 12 ? reason : undefined;
+}
+
 function requireMockProviderAllowed(
   providerId: string,
   env: NodeJS.ProcessEnv,
@@ -83,12 +97,17 @@ function requireMockProviderAllowed(
   }
 
   if (isMockProviderOverrideEnabled(env)) {
+    const reason = getMockProviderOverrideReason(env);
+    if (!reason) {
+      throw new Error('Mock sport data provider override requires SPORT_DATA_MOCK_PROVIDER_OVERRIDE_REASON.');
+    }
+
     logger?.error(
       {
         action: 'ingestion.providers.mockProviderOverride',
         environment: env.ENVIRONMENT ?? env.NODE_ENV,
         providerId,
-        reason: env.SPORT_DATA_MOCK_PROVIDER_OVERRIDE_REASON ?? 'No reason supplied',
+        reason,
       },
       'Mock sport data provider override enabled in restricted runtime.',
     );

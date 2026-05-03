@@ -97,14 +97,41 @@ describe('provider bindings', () => {
     ).toThrow('Mock sport data provider "mock-contest-feed" is not allowed in this runtime.');
   });
 
-  it('pool-master-rop.5: rejects missing default providers in production-like runtimes', () => {
+  it('pool-master-rop.5: rejects missing default providers in deployed runtimes', () => {
     const registry = new ProviderRegistry();
+    const qaRegistry = new ProviderRegistry();
 
     expect(() =>
       registerConfiguredProviders(registry, {
         ENVIRONMENT: 'production',
       }),
     ).toThrow('No sport data provider is configured for this runtime.');
+
+    expect(() =>
+      registerConfiguredProviders(qaRegistry, {
+        ENVIRONMENT: 'qa',
+      }),
+    ).toThrow('No sport data provider is configured for this runtime.');
+  });
+
+  it('pool-master-rop.5: requires a reason for restricted-runtime mock provider overrides', () => {
+    const registry = new ProviderRegistry();
+
+    expect(() =>
+      registerConfiguredProviders(registry, {
+        ENVIRONMENT: 'production',
+        SPORT_DATA_ALLOW_MOCK_PROVIDER_IN_STRICT_RUNTIME: 'true',
+        SPORT_DATA_MOCK_PROVIDER_OVERRIDE_REASON: ' test ',
+        SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
+        SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
+          providers: {
+            'mock-contest-feed': {
+              baseUrl: 'http://mock-contest-feed-provider.prod.poolmaster.internal:3105',
+            },
+          },
+        }),
+      }),
+    ).toThrow('Mock sport data provider override requires SPORT_DATA_MOCK_PROVIDER_OVERRIDE_REASON.');
   });
 
   it('pool-master-rop.5: allows mock providers in QA and only allows restricted-runtime override when explicit', () => {
