@@ -1,10 +1,17 @@
 import { Sport } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
+import type { SportDataProvider } from './provider-interface';
 import type { ProviderRegistry } from './provider-registry';
-import { MockContestFeedAdapter } from '../adapters';
+import {
+  EspnAdapter,
+  MockContestFeedAdapter,
+  OddsApiAdapter,
+  OpenF1Adapter,
+  PgaTourAdapter,
+} from '../adapters';
 
 export interface ProviderBinding {
-  readonly baseUrl: string;
+  readonly baseUrl?: string;
 }
 
 export interface ProviderBindingsConfig {
@@ -16,9 +23,68 @@ interface ProviderBindingsEnvelope {
   readonly providers?: Record<string, ProviderBinding>;
 }
 
-function isStrictRuntimeEnvironment(env: NodeJS.ProcessEnv): boolean {
+type ProviderFactory = (binding: ProviderBinding, env: NodeJS.ProcessEnv) => SportDataProvider;
+
+const providerFactories: Readonly<Record<string, ProviderFactory>> = {
+  'mock-contest-feed': (binding) => {
+    if (!binding.baseUrl) {
+      throw new Error('Provider "mock-contest-feed" requires a baseUrl binding.');
+    }
+    return new MockContestFeedAdapter(binding.baseUrl);
+  },
+  espn: () => new EspnAdapter(),
+  openf1: () => new OpenF1Adapter(),
+  'pga-tour': () => new PgaTourAdapter(),
+  'the-odds-api': (_binding, env) => {
+    const apiKey = env.ODDS_API_KEY?.trim();
+    if (!apiKey) {
+      throw new Error('Provider "the-odds-api" requires ODDS_API_KEY.');
+    }
+    return new OddsApiAdapter(apiKey);
+  },
+};
+
+function isMockRestrictedRuntimeEnvironment(env: NodeJS.ProcessEnv): boolean {
   const runtime = (env.ENVIRONMENT ?? env.NODE_ENV ?? '').trim().toLowerCase();
-  return runtime === 'qa' || runtime === 'staging' || runtime === 'prod' || runtime === 'production';
+  return runtime === 'staging' || runtime === 'prod' || runtime === 'production';
+}
+
+function isMockProviderOverrideEnabled(env: NodeJS.ProcessEnv): boolean {
+  return env.SPORT_DATA_ALLOW_MOCK_PROVIDER_IN_STRICT_RUNTIME === 'true';
+}
+
+function requireMockProviderAllowed(
+  providerId: string,
+  env: NodeJS.ProcessEnv,
+  logger?: FastifyBaseLogger,
+): void {
+  if (providerId !== 'mock-contest-feed' || !isMockRestrictedRuntimeEnvironment(env)) {
+    return;
+  }
+
+  if (isMockProviderOverrideEnabled(env)) {
+    logger?.error(
+      {
+        action: 'ingestion.providers.mockProviderOverride',
+        environment: env.ENVIRONMENT ?? env.NODE_ENV,
+        providerId,
+        reason: env.SPORT_DATA_MOCK_PROVIDER_OVERRIDE_REASON ?? 'No reason supplied',
+      },
+      'Mock sport data provider override enabled in restricted runtime.',
+    );
+    return;
+  }
+
+  const message = `Mock sport data provider "${providerId}" is not allowed in this runtime.`;
+  logger?.error(
+    {
+      action: 'ingestion.providers.mockProviderRejected',
+      environment: env.ENVIRONMENT ?? env.NODE_ENV,
+      providerId,
+    },
+    message,
+  );
+  throw new Error(message);
 }
 
 export function loadProviderBindingsFromEnv(
@@ -59,7 +125,7 @@ export function registerConfiguredProviders(
     logger?.error(
       {
         action: 'ingestion.providers.unconfigured',
-        strictRuntime: isStrictRuntimeEnvironment(env),
+        strictRuntime: isMockRestrictedRuntimeEnvironment(env),
       },
       'No sport data provider is configured. Ingestion will remain disabled until a provider binding is supplied.',
     );
@@ -79,7 +145,8 @@ export function registerConfiguredProviders(
     throw new Error(message);
   }
 
-  if (bindings.defaultProviderId !== 'mock-contest-feed') {
+  const providerFactory = providerFactories[bindings.defaultProviderId];
+  if (!providerFactory) {
     const message = `Unsupported sport data provider "${bindings.defaultProviderId}" configured for this service runtime.`;
     logger?.error(
       {
@@ -91,7 +158,9 @@ export function registerConfiguredProviders(
     throw new Error(message);
   }
 
-  const provider = new MockContestFeedAdapter(binding.baseUrl);
+  requireMockProviderAllowed(bindings.defaultProviderId, env, logger);
+
+  const provider = providerFactory(binding, env);
   for (const sport of provider.sportsCovered) {
     registry.register(sport as Sport, provider, 'PRIMARY');
   }
