@@ -2058,7 +2058,7 @@ export const listIngestionProviders = <ThrowOnError extends boolean = false>(opt
 /**
  * Trigger data sync for a sport
  *
- * Triggers a provider sync for the requested sport so ingestion jobs can be run manually from operational tools.
+ * Triggers a root-admin provider sync for the requested sport so ingestion jobs can be run manually from operational tools.
  */
 export const syncSportData = <ThrowOnError extends boolean = false>(options: Options<SyncSportDataData, ThrowOnError>) => (options.client ?? client).post<SyncSportDataResponses, SyncSportDataErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2073,7 +2073,7 @@ export const syncSportData = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Trigger feed-aware sync for a specific sport event
  *
- * Triggers explicit feed sync work for a single sport event such as participant hydration, live score polling, or final results.
+ * Triggers root-admin explicit feed sync work for a single sport event such as participant hydration, live score polling, or final results.
  */
 export const syncEventData = <ThrowOnError extends boolean = false>(options: Options<SyncEventDataData, ThrowOnError>) => (options.client ?? client).post<SyncEventDataResponses, SyncEventDataErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2088,7 +2088,7 @@ export const syncEventData = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Ingest scores for a sport event
  *
- * Triggers score ingestion for a specific sport event when manual or ad hoc score refresh is required.
+ * Triggers root-admin score ingestion for a specific sport event when manual or ad hoc score refresh is required.
  */
 export const ingestEventScores = <ThrowOnError extends boolean = false>(options: Options<IngestEventScoresData, ThrowOnError>) => (options.client ?? client).post<IngestEventScoresResponses, IngestEventScoresErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2099,7 +2099,7 @@ export const ingestEventScores = <ThrowOnError extends boolean = false>(options:
 /**
  * Ingest results for a sport event
  *
- * Triggers result ingestion for a specific sport event when final or corrected event outcomes need to be pulled in.
+ * Triggers root-admin result ingestion for a specific sport event when final or corrected event outcomes need to be pulled in.
  */
 export const ingestEventResults = <ThrowOnError extends boolean = false>(options: Options<IngestEventResultsData, ThrowOnError>) => (options.client ?? client).post<IngestEventResultsResponses, IngestEventResultsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2110,7 +2110,7 @@ export const ingestEventResults = <ThrowOnError extends boolean = false>(options
 /**
  * Ingest odds for a sport
  *
- * Triggers odds ingestion for the requested sport so odds-driven contest flows can refresh market data.
+ * Triggers root-admin odds ingestion for the requested sport so odds-driven contest flows can refresh market data.
  */
 export const ingestSportOdds = <ThrowOnError extends boolean = false>(options: Options<IngestSportOddsData, ThrowOnError>) => (options.client ?? client).post<IngestSportOddsResponses, IngestSportOddsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
