@@ -434,5 +434,7 @@ cannot invoke `node` directly. The wrappers are interchangeable.
 - `rules/react-ui-rules.md §7` — banned test patterns (the basis for the
   no-mocked-API gate)
 - `plans/115-rule-enforcement-hardening.md` — full root-cause analysis and
-  rationale for the gate rollout (deleted when epic `pool-master-1y8`
-  closes)
+  rationale for the gate rollout. **Deleted in commit `34ce656f`** (PR #3)
+  per `workflow-rules.md §0` once epic `pool-master-1y8` closed at 25/25.
+  Retrieve via `git show 34ce656f^:plans/115-rule-enforcement-hardening.md`
+  if needed.
