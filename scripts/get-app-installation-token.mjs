@@ -24,7 +24,7 @@
  * built-in node modules and the gh CLI, both of which are already required by
  * the rule-enforcement gates.
  *
- * See rules/workflow-rules.md §11 for the full multi-pass review identity model.
+ * See rules/workflow-rules.md §6 for the full multi-pass review identity model.
  */
 
 import { readFileSync } from 'node:fs';
@@ -48,7 +48,7 @@ if (!APP_ID || !INSTALLATION_ID || !KEY_PATH) {
       '  GH_APP_INSTALLATION_ID   — numeric Installation ID',
       '  GH_APP_PRIVATE_KEY_PATH  — path to the App private-key .pem',
       '',
-      'See rules/workflow-rules.md §11 (Identity model — GitHub Apps per runtime)',
+      'See rules/workflow-rules.md §6 (Identity model — GitHub Apps per runtime)',
       'and docs/CI-AND-QUALITY-GATES.md for the App setup runbook.',
     ].join('\n'),
   );

@@ -59,7 +59,7 @@ Choose the verdict that matches:
 - Any CRITICAL / HIGH → `gh pr review <PR> --request-changes --body-file <findings.md>`
 - Inability to evaluate → `gh pr review <PR> --comment --body-file <findings.md>` with explicit reason
 
-The review body must begin with the standard persona+pass+model header per `rules/workflow-rules.md §11`:
+The review body must begin with the standard persona+pass+model header per `rules/workflow-rules.md §6`:
 
 ```markdown
 > _Riley review · cross-model secondary pass · <model identity>_

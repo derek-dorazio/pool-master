@@ -99,7 +99,7 @@ the verdict that matches:
   with explicit reason in the body
 
 The review body must begin with the standard persona+pass+model header per
-`rules/workflow-rules.md §11`:
+`rules/workflow-rules.md §6`:
 
 ```
 > _Archie review · architecture pattern check · <model identity>_
