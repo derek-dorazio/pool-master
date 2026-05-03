@@ -67,7 +67,7 @@ describe('Scoring Read Integration', () => {
     );
   });
 
-  it('serves leaderboard, entry breakdown, participant history, and rollup from persisted score tables', async () => {
+  it('pool-master-rop.6: serves scoring reads and returns 404 for missing entry breakdowns', async () => {
     const owner = await createTestUser({ displayName: 'Scoring Read Owner' });
     const challenger = await createTestUser({
       displayName: 'Scoring Read Challenger',
@@ -310,6 +310,18 @@ describe('Scoring Read Integration', () => {
         }),
       ]),
     );
+
+    const missingEntryRes = await getApp().inject({
+      method: 'GET',
+      url: `/api/v1/scoring/contests/${contestId}/entry/00000000-0000-4000-8000-000000000000`,
+      headers: owner.headers,
+    });
+    expect(missingEntryRes.statusCode).toBe(404);
+    expect(missingEntryRes.json()).toEqual({
+      error: expect.objectContaining({
+        code: 'CONTEST_ENTRY_NOT_FOUND',
+      }),
+    });
 
     const participantRes = await getApp().inject({
       method: 'GET',
