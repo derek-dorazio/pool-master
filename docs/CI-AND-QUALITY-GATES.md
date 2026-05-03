@@ -167,15 +167,16 @@ pass.
 
 ## The lint-typecheck job
 
-This job runs four ordered steps after install. The order matters: cheaper,
+This job runs five ordered steps after install. The order matters: cheaper,
 broader gates run first so a violation surfaces with the smallest possible
 runtime cost.
 
 ```mermaid
 flowchart LR
-  I[npm ci + prisma generate] --> R[npm run rules:check]
+  I[npm ci + prisma generate + build shared] --> R[npm run rules:check]
   R --> A[npm run api:check]
-  A --> L[npm run lint]
+  A --> M[Riley marker (PRs only)]
+  M --> L[npm run lint]
   L --> TC[npm run typecheck]
 ```
 
@@ -183,13 +184,15 @@ flowchart LR
 |---|---|---|---|
 | 1 | `npm run rules:check` | ~1-2s (regex scan) | One sub-check is blocking; six are warn-only |
 | 2 | `npm run api:check` | ~20-30s (re-exports OpenAPI + regenerates SDK) | Yes |
-| 3 | `npm run lint` | ~10-20s | Yes |
-| 4 | `npm run typecheck` | ~30-60s | Yes |
+| 3 | Riley findings marker | <1s (single API call to GitHub) | Yes (PRs only) |
+| 4 | `npm run lint` | ~10-20s | Yes |
+| 5 | `npm run typecheck` | ~30-60s | Yes |
 
 ## The 8 gates
 
 `npm run rules:check` is a sequential `&&` chain of seven sub-scripts.
-`npm run api:check` is its own command. Together they are the eight quality
+`npm run api:check` is its own command. `npm run rules:check:pr-riley-marker`
+is the eighth gate, run only on PRs. Together they are the eight quality
 gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 
 | # | Gate | Command | Mode | Baseline | What it catches | Source |
@@ -202,15 +205,16 @@ gates added by the rule-enforcement hardening epic (`pool-master-1y8`).
 | 6 | Shared UI controls | `rules:check:shared-ui-controls` | warn-only | 52 | Bare `<button>`, `<input>`, `<textarea>` outside `clients/poolmaster/src/features/shared/ui/` | `scripts/check-shared-ui-controls.mjs` |
 | 7 | Form/query mirror | `rules:check:form-query-mirror` | warn-only | 19 | `useEffect` whose deps reference a TanStack Query result and whose body calls a `setState` (the form-overwrite-on-refetch hazard) | `scripts/check-form-query-mirror.mjs` |
 | 8 | Generated API freshness | `api:check` | **blocking** | clean | Re-exports OpenAPI to a tmp dir, regenerates the hey-api SDK, diffs against committed `packages/shared/generated/`. Fails if any file is stale. | `scripts/check-openapi-fresh.mjs` |
+| (PR-only) | Riley findings marker | `rules:check:pr-riley-marker` | **blocking** | clean | The PR body must contain the literal HTML comment `<!-- riley:findings -->`. Documents that Riley was actually invoked. Skipped on `push` events (no PR context). | `scripts/check-pr-riley-marker.mjs` |
 
 The six warn-only gates print findings with file:line locations and a `WARN`
 prefix. They exit 0 regardless of finding count, so they do not fail the
 build today. Their counts are visible in every CI run and are tracked as the
 "size of debt" for the parallel cleanup epics.
 
-The two blocking gates (`test-disable`, `api:check`) exit non-zero on any
-finding and fail the lint-typecheck job, which blocks the rest of CI and any
-PR merge.
+The blocking gates (`test-disable`, `api:check`, and the PR-only Riley
+marker) exit non-zero on any finding and fail the lint-typecheck job,
+which blocks the rest of CI and any PR merge.
 
 ## Detail: the api:check freshness gate
 
@@ -261,6 +265,28 @@ Without that comment, the gate fails and the build blocks. The remediation
 is either to add the SKIP comment with a real Beads story tracking the
 un-skip, or to remove the disable and either fix or delete the test.
 
+## Detail: the Riley findings marker gate
+
+This gate runs only on `pull_request` events. It calls
+`gh pr view <PR_NUMBER> --json body --jq .body` and greps for the literal
+HTML comment `<!-- riley:findings -->`. If the marker is missing, the gate
+fails and the PR cannot merge.
+
+The marker is auditable proof that Riley was actually invoked for the slice.
+The gate does not enforce the *content* under the marker — that's between
+the implementing agent and the Riley review process. The gate just enforces
+the structural requirement that the marker exists, which means the
+implementing agent at least followed the workflow.
+
+The marker is pre-populated in `.github/pull_request_template.md` so PR
+authors don't have to remember it. Removing the marker from a PR body
+fails the gate and blocks merge.
+
+The gate skips silently on `push` events (no `PR_NUMBER` in scope), so
+direct pushes to `main` (e.g., admin-bypass cleanup work) do not trip it.
+This is intentional: the marker is meaningful only in the PR review flow
+that branch protection enforces.
+
 ## Local equivalents
 
 Every CI gate runs locally with the same command CI uses. The common loops:
@@ -294,6 +320,14 @@ The shell wrappers under `scripts/check-*.sh` exist for environments that
 cannot call `node` directly. They forward arguments to the corresponding
 `.mjs` and are functionally identical.
 
+The Riley marker gate (`rules:check:pr-riley-marker`) skips silently when
+no `PR_NUMBER` is provided — it has no useful local invocation outside of
+CI. To test it locally against a real PR:
+
+```bash
+PR_NUMBER=42 node scripts/check-pr-riley-marker.mjs
+```
+
 ## Failure remediation
 
 | Gate | Failure means | Fix |
@@ -306,6 +340,7 @@ cannot call `node` directly. They forward arguments to the corresponding
 | `rules:check:shared-ui-controls` (warn) | A new bare `<button>`, `<input>`, or `<textarea>` was introduced outside `features/shared/ui/`. | Use the shared `Button` / `FormField` / `Input` / `Textarea` components. See `rules/react-ui-rules.md §5A`. |
 | `rules:check:form-query-mirror` (warn) | A `useEffect` reads from a query result and calls `setState`. | Refactor to seed form defaults at modal-open time using React Hook Form `defaultValues` plus a `key`-based reset, or pause the query while the modal is open. See `rules/react-ui-rules.md §5B`. |
 | `api:check` (**block**) | The committed generated SDK is stale relative to the live route schemas. | Run `npm run api:refresh` and commit the regenerated `packages/shared/generated/openapi.json` and `packages/shared/generated/hey-api/` files. |
+| `rules:check:pr-riley-marker` (**block**, PRs only) | The PR body is missing the `<!-- riley:findings -->` marker. | Edit the PR body to include the marker section. The PR template pre-populates it; removing it manually fails the gate. See `rules/workflow-rules.md §6` and `personas/riley.md`. |
 
 ## Baseline counts and the ramp to fail-on-new
 
@@ -373,6 +408,9 @@ scripts/check-unsafe-casts.mjs       — gate 5
 scripts/check-shared-ui-controls.mjs — gate 6
 scripts/check-form-query-mirror.mjs  — gate 7
 scripts/check-openapi-fresh.mjs      — gate 8
+scripts/check-pr-riley-marker.mjs    — Riley marker gate (PRs only)
+packages/core-api/scripts/export-openapi.ts — Fastify→OpenAPI export
+                                              used by api:check and api:refresh
 ```
 
 Each `.mjs` has a `.sh` shell wrapper alongside it for environments that
