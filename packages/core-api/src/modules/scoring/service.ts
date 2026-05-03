@@ -5,6 +5,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
+import { ContestEntryNotFoundError } from '../contests/service';
 import type { RollupResult, StandingsRollup } from './rollup/standings-rollup';
 import { assignRanks } from './rollup/standings-rollup';
 
@@ -114,12 +115,7 @@ export class ScoringService {
     });
     if (!entry || entry.contestId !== contestId) {
       this.logger?.warn({ contestId, entryId }, 'Scoring entry breakdown requested for missing or mismatched entry');
-      return {
-        entryId,
-        contestId,
-        totalScore: 0,
-        timeline: [],
-      };
+      throw new ContestEntryNotFoundError(contestId, entryId);
     }
 
     const scoreEvents = await this.prisma.contestEntryParticipantScoreEvent.findMany({
