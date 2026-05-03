@@ -53,6 +53,20 @@ front prevents Riley from "discovering" them as findings.
 Write "None" if there are none.
 -->
 
+## Riley findings
+
+<!-- riley:findings -->
+Pending Riley review.
+
+<!--
+Replace "Pending Riley review." above with the findings table once Riley
+has reviewed. Use "No findings." if Riley reported zero. The marker line
+above (the riley:findings HTML comment) MUST remain in the PR body — CI
+greps every PR for it via npm run rules:check:pr-riley-marker and will
+fail the build if it is missing. See rules/workflow-rules.md §6 and
+personas/riley.md.
+-->
+
 ## Riley auto-merge gate
 
 This PR will be auto-merged if Riley returns zero CRITICAL or HIGH findings.
