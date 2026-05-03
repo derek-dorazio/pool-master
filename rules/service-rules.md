@@ -40,6 +40,25 @@ This applies to all backend services and handlers.
 - If a dependency is missing, implement it or surface a real error. Do not fake the response.
 - The presence of mock data under `packages/*/src/` is a defect.
 
+### No Synthetic Lookups
+
+Backend code must not fabricate domain objects, scores, statuses, or aggregate
+rows when a real lookup misses.
+
+Rules:
+
+- A missing row returns a typed not-found/domain error, an empty list, or an
+  explicitly documented empty-state DTO. It does not return an invented
+  placeholder entity.
+- Do not synthesize zero scores, default entries, fallback owners, fake
+  participants, or sentinel values to keep a workflow moving.
+- Do not paper over missing joins with placeholder names such as `UNKNOWN`,
+  `Unassigned`, or empty strings in API-facing output.
+- If product behavior needs a default, model it explicitly in the domain and
+  document it in the DTO/API contract.
+- Tests that need missing-data scenarios must assert the real missing-data
+  behavior rather than relying on fabricated application responses.
+
 ---
 
 ## 3. Fastify Module Structure
@@ -85,7 +104,10 @@ Every module that registers Fastify routes **must** have a corresponding mapper 
 
 - Inline `.map()` transformations in route handlers or handler files are not acceptable as a substitute for a dedicated mapper.
 - The mapper is the single place where persistence/domain shapes are translated to API response shapes.
-- Modules exempt from this rule: `config` (static data only), `health` (no domain objects).
+- The only exempt modules are `config` (static data only) and `health` (no
+  domain objects). This exemption is closed: do not extend it casually, and do
+  not treat "admin", "internal", "small", "read-only", or "simple" routes as
+  equivalent exemptions.
 - Reusing an existing shared DTO on a new route surface does **not** justify
   local inline shaping in the handler. The route must call a mapper, and if no
   suitable shared mapper/helper exists yet, creating or extracting one is part
@@ -166,6 +188,25 @@ definition of done.
 - If the response is `{ success: true }`, schema must say `{ success: true }`.
 - Dates over the wire must be ISO 8601 strings, not `Date` objects.
 
+### List Envelope Discipline
+
+List endpoints must return a consistent envelope rather than ad hoc arrays or
+per-route pagination shapes.
+
+Rules:
+
+- Collection responses should use a named DTO envelope with the item array and
+  any metadata clients need.
+- Paginated endpoints should expose consistent pagination fields across the API
+  such as `items`, `page`, `pageSize`, `totalItems`, and `totalPages`, unless a
+  route has a documented domain-specific reason to use cursor pagination.
+- Non-paginated lookup lists should still use an explicit response object, for
+  example `{ events: [...] }`, not a bare array.
+- Route schemas and OpenAPI descriptions must document whether the list is
+  paginated, filtered, sorted, and what the default ordering is.
+- Frontend code must consume the DTO envelope from the generated SDK rather
+  than guessing at route-specific array shapes.
+
 ### Generated Artifacts Rules
 
 - Run `npm run api:refresh` after DTO/route changes that affect the contract.
@@ -211,6 +252,22 @@ definition of done.
   - MSW handlers
 - Do not create new duplicate route-constant registries.
 
+### Time and Timezone Discipline
+
+Time-sensitive behavior must be explicit about the clock and timezone it uses.
+
+Rules:
+
+- Persist instants as UTC timestamps.
+- API date/time fields must be ISO 8601 strings and must document whether the
+  field is an instant, a local date, or a display-only date.
+- Do not use local server timezone assumptions for contest locks, event
+  windows, ingestion lookahead, schedule boundaries, or scoring transitions.
+- If a workflow is user- or league-timezone aware, carry the timezone as an
+  explicit input/config value and test at least one non-UTC timezone.
+- Avoid `new Date()` scattered through business logic. Prefer injecting or
+  passing a clock when the behavior changes based on current time.
+
 ### Frontend Boundary Clarification
 
 - Frontend runtime app code should prefer the generated `hey-api` SDK over manual path constants when an operation exists.
@@ -247,7 +304,9 @@ All error responses must follow a consistent envelope so frontend clients can ha
 - Validation errors (400) should include `details` with per-field errors when available.
 - Not-found errors (404) should use domain-specific codes (e.g., `CONTEST_NOT_FOUND`, not generic `NOT_FOUND`).
 - Permission errors (403) should use codes that distinguish the denial reason (e.g., `INSUFFICIENT_PERMISSION`, `NOT_LEAGUE_MEMBER`).
-- Intentional application errors must use stable, descriptive, domain-specific codes rather than transport-only placeholders such as `BAD_REQUEST`, `FORBIDDEN`, or `NOT_FOUND` when the domain reason is known.
+- Intentional application errors must use stable, descriptive,
+  domain-specific codes rather than transport-only placeholders such as
+  `BAD_REQUEST`, `FORBIDDEN`, or `NOT_FOUND`.
 - Error codes must be specific enough for clients and tests to distinguish materially different failures that share the same HTTP status.
 - Human-readable messages must explain the real failure clearly without exposing unsafe internals.
 - When useful, `details` should carry structured machine-readable context rather than ad hoc string blobs.
@@ -255,6 +314,25 @@ All error responses must follow a consistent envelope so frontend clients can ha
 - Fastify's global error handler should format unhandled errors into this envelope where practical, and new route work should not bypass that standard.
 - Route schemas must declare error response shapes for the most relevant statuses such as `400`, `401`, `403`, and `404`.
 - Functional API, contract-verification, or data integration tests must validate representative error response shapes, not just success paths.
+
+### Typed Error Class Discipline
+
+Domain and service layers should throw typed application/domain errors rather
+than generic `Error` values when the error is expected and client-visible.
+
+Rules:
+
+- Expected application failures must carry a stable error code, HTTP status,
+  safe user-facing message, and optional structured details at the point the
+  error is created.
+- Route handlers should translate typed errors consistently through shared
+  error handling rather than switch on message text.
+- Do not infer domain meaning from a generic `Error.message` string in route
+  code.
+- If a new error condition is product-significant, add or reuse a typed error
+  class/value and cover it in the appropriate test layer.
+- Unexpected programming failures can remain untyped and should flow to the
+  global error handler.
 
 ---
 
@@ -309,6 +387,9 @@ Before committing backend code, scan changed files for these anti-patterns. This
 **Quick validation commands:**
 
 ```bash
+# Run the automated route discipline baseline scan
+npm run rules:check:route-discipline
+
 # Find inline JSON schemas in route files
 grep -rn "type: 'object', properties:" packages/core-api/src/modules/*/routes.ts
 

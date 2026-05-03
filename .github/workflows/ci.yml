@@ -25,6 +25,10 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npx prisma generate --schema=packages/core-api/prisma/schema.prisma
+      - name: Rule enforcement checks
+        run: npm run rules:check
+      - name: Generated API freshness
+        run: npm run api:check
       - name: Lint full repo
         run: npm run lint
       - name: Typecheck full repo
