@@ -1848,6 +1848,28 @@ export type SendLeagueInvitationsErrors = {
             details?: unknown;
         };
     };
+    /**
+     * Standard API error envelope.
+     */
+    502: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
 };
 
 export type SendLeagueInvitationsError = SendLeagueInvitationsErrors[keyof SendLeagueInvitationsErrors];

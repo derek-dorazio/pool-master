@@ -117,11 +117,24 @@ Three forms are acceptable; pick the one that fits the test layer:
 
 ### When use-case-style traceability does not apply
 
-For genuinely infrastructure-only tests (e.g., a utility helper, a serialization edge case with no product-visible flow), reference the rule or pattern it enforces — not just "tests serializeDate." Example: `// rule: ISO 8601 over the wire (service-rules §4)`. If neither a use case, business rule, defect, nor rule reference applies, the test probably should not exist.
+For genuinely infrastructure-only tests (e.g., a utility helper, a serialization edge case with no product-visible flow), reference the rule or pattern it enforces — not just "tests serializeDate." Example: `// rule: ISO 8601 over the wire (service-rules §4)`.
+
+Application-layer tests for product behavior should not use this rule-reference
+fallback. If a backend, frontend, or API test proves user-visible behavior, it
+needs a use-case ID, business-rule ID, or defect ID. If none exists, create or
+update the product/business-rule artifact before expanding the test suite.
+
+If neither a use case, business rule, defect, nor true infrastructure rule
+reference applies, the test probably should not exist.
 
 ### Why
 
 Riley and Quinn rely on these references to audit coverage; future agents rely on them to know which tests to update when a use case changes; reviewers rely on them to confirm the slice tested what it claimed.
+
+`npm run rules:check:test-traceability` records the current repository-wide
+baseline for test cases whose nearby text does not contain a UC, BR, defect, or
+rule reference. It is warn-only until the existing backlog is cleaned up, but
+new slices should reduce that count rather than add to it.
 
 ---
 
@@ -201,7 +214,9 @@ In those cases:
 
 ### Repository scan and CI
 
-A grep for the markers above (`grep -rE '\.(skip|todo|fails|failing)\(|^x(it|test|describe)\(' tests/ packages/*/src/ clients/*/src/`) should return zero matches that lack an adjacent `SKIP: pool-master-NNN` comment. This grep belongs in the `lint` or a dedicated `test:no-undocumented-skips` script.
+`npm run rules:check:test-disable` must return zero matches that lack an
+adjacent `SKIP: pool-master-NNN` comment. The same check runs in CI through
+`npm run rules:check`.
 
 Riley scans for this on every review:
 
@@ -235,17 +250,19 @@ Riley scans for this on every review:
 
 These are the default required checks before commit:
 
-1. `npx turbo typecheck --force`
-2. `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
-3. `npx jest --config tests/jest.config.js --forceExit`
-4. `npm run test:service:functional-api`
-5. `npm run test:poolmaster:unit`
-6. `npm run test:coverage:service:merged`
+1. `npm run rules:check`
+2. `npm run api:check`
+3. `npx turbo typecheck --force`
+4. `npx eslint 'packages/*/src/**/*.ts' 'clients/*/src/**/*.{ts,tsx}' --max-warnings 0`
+5. `npx jest --config tests/jest.config.js --forceExit`
+6. `npm run test:service:functional-api`
+7. `npm run test:poolmaster:unit`
+8. `npm run test:coverage:service:merged`
 
 Contract-verification-specific commands:
 
-7. `npm run api:refresh` when API schemas change
-8. `npm run api:validate` when OpenAPI output changes
+9. `npm run api:refresh` when API schemas change
+10. `npm run api:validate` when OpenAPI output changes
 
 Notes:
 

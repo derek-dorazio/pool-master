@@ -23,6 +23,11 @@ The repository uses layered artifacts. Each artifact has a clear lifetime and a 
 3. **Delete on ship, don't archive.** When a plan's parent Beads epic closes, the plan file is deleted in the same commit (or the next cleanup slice). When a tech spec's implementation lands on main, the spec is deleted. Git preserves history; `git show <sha>:path/to/file` retrieves any prior version. Archival directories are anti-patterns — files in the tree get read.
 4. **Capture durable decisions as ADRs.** Decisions that outlast a single slice (architectural choices, cross-cutting patterns, hard boundaries) are written as Architecture Decision Records in `docs/adr/`. Once accepted, ADRs are immutable; supersede with a new ADR rather than editing.
 5. **Rules absorb what plans learn.** If a plan introduces a durable pattern (a new convention, a hard boundary, a reusable approach), update `rules/` or write an ADR in the same effort. Don't leave the pattern only in the plan — it will be deleted when the epic closes.
+6. **Delete-on-ship applies to production source too.** When a replacement UI,
+   route, service, helper, or workflow ships, remove the superseded production
+   source in the same slice unless a Beads follow-up explicitly owns the
+   retirement. Dead source files are not harmless; future agents read and copy
+   them.
 
 ---
 
@@ -352,6 +357,27 @@ The retrospective should:
 Keep the retrospective short and high signal. The goal is to improve the
 project workflow steadily without turning every slice closeout into a long
 ceremony.
+
+### Periodic Cross-Stack Review
+
+Rule drift accumulates when every slice only inspects its own changed files.
+PoolMaster therefore needs a periodic cross-stack review pass that looks across
+frontend, backend, tests, generated contracts, and workflow rules together.
+
+Required cadence and triggers:
+
+- Run a cross-stack review after major refactors, large feature batches,
+  theme/component-system changes, or any period where repeated defects suggest
+  the rules are not being enforced.
+- The review should map findings back to existing rules first. If a finding
+  violates a rule that already exists, add automation or a tighter checklist
+  instead of only fixing the individual occurrence.
+- If a finding exposes a rule gap, update the appropriate `rules/*.md` file or
+  create a Beads story for that rule change.
+- Track thematic cleanup in Beads epics so repeated patterns are remediated in
+  batches, not as isolated one-off defects.
+- Review passes are not a substitute for slice-level validation; they are the
+  safety net that catches drift across slices.
 
 ### CI/CD Baseline Check
 
@@ -707,8 +733,12 @@ When an implementing persona (Brad, Fran, Archie, Dom, etc.) finishes a slice, t
 3. **Commit** with the Beads story ID in the footer: `pool-master-NNN`. One slice = one commit (squash later in the PR if multiple working commits exist).
 4. **Push the branch** to origin.
 5. **Open a PR** with `gh pr create`. Title: short imperative summary. Body: link to the parent Beads epic, the slice's Beads story (`pool-master-NNN`), one-paragraph context, and the gates that were run. For defect-fix slices, the PR body must explicitly state that the failing test was observed to fail before the fix landed.
-6. **Spawn Riley** as a subagent using the canonical spawn prompt below — Riley's review quality depends on what you pass.
-7. **Read Riley's findings table.** Then:
+6. **Record the Riley review marker** in the PR body once PR-only flow is
+   confirmed for the repo: `<!-- riley:findings -->`. This marker is only an
+   auditable placeholder until the CI marker gate lands; do not treat it as a
+   substitute for the actual review.
+7. **Spawn Riley** as a subagent using the canonical spawn prompt below — Riley's review quality depends on what you pass.
+8. **Read Riley's findings table.** Then:
    - **Zero blocker-severity findings** (CRITICAL or HIGH) → `gh pr merge --squash --delete-branch`. Close the Beads story with a closing note per §1 *Beads conventions: story notes*. Return to the user with a summary.
    - **Any blocker-severity findings** → **do not merge**. Surface the findings to the user, await direction (fix-and-re-review, merge-anyway-with-justification, or park).
 

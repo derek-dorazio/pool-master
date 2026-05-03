@@ -13,8 +13,8 @@ process.env.DATABASE_URL = 'postgresql://dummy:dummy@localhost:5432/dummy';
 process.env.NODE_ENV = 'development';
 process.env.OPENAPI_EXPORT = 'true';
 
-import { writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 
 async function main() {
   // Dynamic import after env vars are set
@@ -84,7 +84,10 @@ async function main() {
     }
   }
 
-  const outPath = resolve(__dirname, '../../../packages/shared/generated/openapi.json');
+  const outPath = process.env.OPENAPI_OUTPUT_PATH
+    ? resolve(process.cwd(), process.env.OPENAPI_OUTPUT_PATH)
+    : resolve(__dirname, '../../../packages/shared/generated/openapi.json');
+  mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, JSON.stringify(spec, null, 2) + '\n');
 
   console.log(`OpenAPI spec exported to ${outPath}`);

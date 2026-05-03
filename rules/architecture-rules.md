@@ -106,6 +106,9 @@ Required implications:
   - export spec
   - regenerate `hey-api` client
 - `npm run api:validate` must stay green. Missing JSON response content is a defect.
+- `npm run api:check` is the CI freshness gate. It regenerates OpenAPI and
+  the `hey-api` client into a temporary location and fails when committed
+  generated artifacts are stale.
 - Files under `packages/shared/generated/openapi.json` and `packages/shared/generated/hey-api/` are generated artifacts. Do not hand-edit them.
 
 ### Route Source of Truth
@@ -135,6 +138,28 @@ Related anti-patterns that are banned:
 - `queryFn: async () => mockData`
 - `catch { return mockData }`
 - hand-built success envelopes that do not reflect the real domain payload
+
+### Provider and Adapter Registry Discipline
+
+Provider, adapter, and integration factories are production architecture, even
+when one of the available providers is a mock or local-development provider.
+
+Rules:
+
+- Production and staging provider registries must be driven by explicit runtime
+  configuration, not by a hardcoded single provider id.
+- QA and local development may use mock providers when configured for that
+  environment. The provider must still be selected through the same registry
+  and configuration path that real providers use.
+- Production and staging must reject mock providers unless an explicit
+  emergency override is configured, and that override must log loudly at
+  startup with environment, provider id, and reason.
+- Adding a new provider means updating the registry, configuration schema,
+  validation, startup logging, and tests together.
+- A factory that silently falls back to a mock provider because configuration is
+  missing is a production defect. Missing provider configuration should surface
+  as disabled ingestion or a typed startup/configuration error, not fabricated
+  data.
 
 ---
 
@@ -167,6 +192,30 @@ The in-process event bus (`packages/shared/events/event-bus.ts`) is the primary 
 - Subscribers must not assume emission order or delivery guarantees beyond "at least once, in process."
 - Event payloads must be serializable (no Prisma models, no class instances, no functions).
 - When adding a new event type, update the event type registry and add appropriate tests for emission and affected subscriber behavior (see [Testing Rules §8](testing-rules.md)).
+
+### Event-Driven Mutation Discipline
+
+Any domain-event subscriber that mutates application state must be designed for
+at-least-once delivery and partial subscriber failure.
+
+Rules:
+
+- Subscriber side effects must be idempotent for the event key they process, or
+  the subscriber must maintain enough durable state to detect duplicates.
+- Recalculation or rollup subscribers that touch multiple rows must define the
+  transaction boundary explicitly. If the recalculation is logically atomic,
+  wrap the full mutation set in one transaction.
+- Subscribers that can be invoked concurrently for the same aggregate must
+  serialize per aggregate key, use idempotent upserts, or otherwise prove that
+  interleaving cannot corrupt state.
+- The event bus default failure policy is `allSettled`: one subscriber failure
+  must be logged and surfaced without preventing unrelated subscribers from
+  running. Use fail-fast behavior only when the event contract explicitly says
+  all subscribers are part of one atomic operation.
+- Subscriber failures must include event type, aggregate id, subscriber name,
+  and correlation context in logs.
+- Tests for event-driven mutations must cover duplicate event handling and at
+  least one subscriber failure path when the subscriber writes data.
 
 ---
 

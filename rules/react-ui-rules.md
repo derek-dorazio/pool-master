@@ -161,9 +161,62 @@ Do not leave post-mutation cache behavior implicit.
 
 - Use React Hook Form for non-trivial forms.
 - Keep validation clear and consistent with backend constraints.
-- Prefer reusable page sections/components over giant page files.
+- Pages must compose reusable page sections/components rather than growing into
+  giant page files.
 - Keep UI state distinct from server state.
 - Use Zustand for client-side state only when local component state or query state is insufficient.
+
+### Shared-Component and Helper Adoption Gate
+
+Before adding new page-local UI, data-formatting, error-parsing, or form helper
+code, check whether a shared component or helper already exists.
+
+Rules:
+
+- Use shared primitives for buttons, inputs, textareas, modals, tiles, page
+  headers, status badges, action tiles, error banners, and grid/table shells.
+- Do not use bare `<button>`, `<input>`, or `<textarea>` in feature code when a
+  shared primitive exists. New shared primitives belong under
+  `clients/poolmaster/src/features/shared/ui/`.
+- If the existing shared primitive is missing a needed variant, extend the
+  primitive rather than creating a page-local near-duplicate.
+- Duplicated helpers such as error-message extraction, date/number formatting,
+  or action-card rendering should be extracted once and reused.
+- `npm run rules:check:shared-ui-controls` records the current bare-control
+  baseline. New work should drive that count down, not add to it.
+
+### Server Data Form-State Hazard
+
+Forms may intentionally create local editable drafts, but they must not mirror
+server query data into form state in a way that overwrites user edits on
+refetch, route changes, or background refreshes.
+
+Rules:
+
+- Initialize form drafts from server data once per entity identity, not on every
+  query result object change.
+- Key draft resets by stable entity ids or explicit reset actions.
+- Do not use `useEffect` to blindly copy query data into form state whenever
+  the query data reference changes.
+- If server refreshes should update untouched fields in an active form, document
+  that merge behavior and test it.
+- Important edit flows must cover the "user typed, query refetched" case when
+  the page uses both TanStack Query and local form state.
+- `npm run rules:check:form-query-mirror` records a warn-only baseline for
+  suspicious `useEffect` state/form writes from query-like dependencies.
+
+### Page Decomposition Threshold
+
+A page or modal component crossing either threshold below must be decomposed in
+the same slice unless the slice explicitly records a temporary exception:
+
+- about 400 lines of production TSX in one component file, or
+- more than five independent mutations/actions in one page component.
+
+When a page crosses the threshold, extract meaningful sections, action menus,
+modal bodies, form objects, and pure helpers. Do not leave a large page intact
+because the feature "still works"; oversized page files are where duplicated
+state, stale actions, and unthemeable markup accumulate.
 
 ### URL, Cookie, And Store Ownership
 
