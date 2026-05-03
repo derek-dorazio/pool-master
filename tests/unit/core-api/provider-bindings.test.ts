@@ -97,6 +97,16 @@ describe('provider bindings', () => {
     ).toThrow('Mock sport data provider "mock-contest-feed" is not allowed in this runtime.');
   });
 
+  it('pool-master-rop.5: rejects missing default providers in production-like runtimes', () => {
+    const registry = new ProviderRegistry();
+
+    expect(() =>
+      registerConfiguredProviders(registry, {
+        ENVIRONMENT: 'production',
+      }),
+    ).toThrow('No sport data provider is configured for this runtime.');
+  });
+
   it('pool-master-rop.5: allows mock providers in QA and only allows restricted-runtime override when explicit', () => {
     const qaRegistry = new ProviderRegistry();
     const productionOverrideRegistry = new ProviderRegistry();

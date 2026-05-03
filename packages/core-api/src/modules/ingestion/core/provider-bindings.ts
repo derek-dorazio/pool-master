@@ -49,6 +49,26 @@ function isMockRestrictedRuntimeEnvironment(env: NodeJS.ProcessEnv): boolean {
   return runtime === 'staging' || runtime === 'prod' || runtime === 'production';
 }
 
+function requireDefaultProviderConfigured(
+  env: NodeJS.ProcessEnv,
+  logger?: FastifyBaseLogger,
+): void {
+  if (!isMockRestrictedRuntimeEnvironment(env)) {
+    return;
+  }
+
+  const message = 'No sport data provider is configured for this runtime.';
+  logger?.error(
+    {
+      action: 'ingestion.providers.unconfigured',
+      environment: env.ENVIRONMENT ?? env.NODE_ENV,
+      strictRuntime: true,
+    },
+    message,
+  );
+  throw new Error(message);
+}
+
 function isMockProviderOverrideEnabled(env: NodeJS.ProcessEnv): boolean {
   return env.SPORT_DATA_ALLOW_MOCK_PROVIDER_IN_STRICT_RUNTIME === 'true';
 }
@@ -122,6 +142,7 @@ export function registerConfiguredProviders(
   const bindings = loadProviderBindingsFromEnv(env);
 
   if (!bindings.defaultProviderId) {
+    requireDefaultProviderConfigured(env, logger);
     logger?.error(
       {
         action: 'ingestion.providers.unconfigured',

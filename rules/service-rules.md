@@ -28,6 +28,8 @@ These rules govern backend services in `packages/*/src`, especially Fastify modu
   invented placeholders in API-facing service output
 - Hand-editing generated OpenAPI/client output
 - Fixing generated-client problems with frontend casts instead of repairing backend schemas
+- Logging and continuing after required runtime configuration is missing,
+  malformed, or unsupported in staging/production paths
 
 ---
 
@@ -58,6 +60,26 @@ Rules:
   document it in the DTO/API contract.
 - Tests that need missing-data scenarios must assert the real missing-data
   behavior rather than relying on fabricated application responses.
+
+### No Silent Configuration Failures
+
+Backend services must surface required configuration problems as real startup or
+registration errors. Logging a missing dependency, credential, provider binding,
+endpoint, or feature-critical configuration value and then continuing is a
+defect in staging/production paths.
+
+Rules:
+
+- Missing required runtime configuration in staging/production must throw a
+  typed or explicit configuration error before the dependent workflow is
+  registered as usable.
+- Unsupported provider IDs, malformed binding JSON, missing credentials, and
+  missing required base URLs must fail fast. They must not silently disable a
+  production workflow.
+- Local/development opt-out behavior is allowed only when the workflow is
+  explicitly optional in that runtime and the disabled state is observable.
+- Emergency overrides must be explicit, auditable, and narrow. Do not make a
+  permissive fallback the normal behavior.
 
 ---
 
