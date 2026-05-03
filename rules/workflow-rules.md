@@ -716,13 +716,111 @@ If a plan exists without an associated Beads epic, that is a drift bug to fix: e
 
 ## 6. Branching, Review, and Merge Cadence
 
-This project uses a **branch-per-Beads-story** flow with implementing-agent self-review via Riley. Auto-merge on clean Riley findings is the default for solo work.
+This project uses a **branch-per-Beads-story** flow with a **multi-pass review** system: an implementer self-check pass plus one or more cross-model passes from independent agent runtimes. Branch protection on `main` requires `required_approving_review_count: 1`; that approval comes from the cross-model pass, not the implementer.
 
 ### Branch convention
 
 - One branch per Beads child story. Name: `pool-master-NNN-<short-slug>` where `NNN` is the story ID and `<short-slug>` is a 2–5 word kebab-case description (e.g., `pool-master-142-contest-archive-validation`, `pool-master-198-fix-status-null-on-archive`).
 - Branch off the current `main` HEAD at slice start. Do not stack branches unless the dependency is genuine (and modeled in Beads `blocked_by`).
-- Never push directly to `main`. The branch + PR + Riley + auto-merge loop is the only path.
+- Never push directly to `main`. The branch + PR + multi-pass review + merge loop is the only path.
+
+### Multi-pass review flow
+
+Every PR lands via a multi-pass review process. Each pass produces a findings record visible in the PR conversation. Each pass is performed by a **different agent runtime under a different GitHub identity** (a different GitHub App). The persona being applied is encoded in the review-body header, not in the bot identity.
+
+**Pass 1 — Implementer Riley self-check (required, always).**
+- Performed by the implementing agent's runtime against its own diff.
+- The agent spawns Riley as a subagent and pastes the findings table into the **PR body** under the literal HTML comment `<!-- riley:findings -->`.
+- The CI gate `npm run rules:check:pr-riley-marker` enforces marker presence.
+- This pass is **not** a `gh pr review` — it's a body marker. It does **not** satisfy `required_approving_review_count`.
+
+**Pass 2 — Cross-model Riley secondary (required, always).**
+- Performed by a different agent runtime under a different GitHub App identity.
+- The reviewing agent runs the Riley playbook against the diff and posts via `gh pr review --approve` / `--request-changes` / `--comment`.
+- Because the reviewer's GitHub identity is different from the PR author, this approval **does** satisfy `required_approving_review_count: 1`.
+
+**Pass 3 — Sage security review (conditional).**
+- Invoked when the slice touches auth, validation, secrets, or data exposure (see `personas/sage.md` for the trigger list).
+- Same shape as Pass 2: different agent runtime / GitHub App, formal `gh pr review`.
+- Sage's findings are independent of Riley's; the gate is zero CRITICAL/HIGH per persona.
+
+**Pass 4 — Archie architecture review (conditional).**
+- Invoked when the slice touches shared contracts, cross-module boundaries, infrastructure, or active plans/ADRs (see `personas/archie.md § PR Architecture Review` for the trigger list).
+- Same shape as Pass 2/3.
+
+A PR is merge-ready when:
+- The body has the Riley implementer-self-check marker filled in (Pass 1, CI-enforced).
+- At least one cross-model `gh pr review --approve` is recorded (Pass 2, branch-protection-enforced).
+- Any conditional passes (Sage, Archie) requested by the implementer or a reviewer have completed with zero CRITICAL/HIGH findings.
+
+### Review header convention
+
+Every PR review posted by an agent via `gh pr review` (Passes 2, 3, 4) must begin with a one-line header naming the persona, the pass type, and the model identity:
+
+```
+> _<Persona> review · <pass type> · <model identity>_
+```
+
+Examples:
+
+```
+> _Riley review · cross-model secondary pass · Claude Sonnet 4.6_
+
+> _Sage review · security focus · Claude Sonnet 4.6_
+
+> _Archie review · architecture pattern check · Codex_
+```
+
+The header is the canonical signal of which persona ran which pass. GitHub gives you the bot identity (`@<app-name>[bot]`) and the timestamp; the header gives you the persona+pass context that the bot identity alone doesn't carry, since the same App may post multiple persona reviews on a single PR.
+
+The first content line after the header is the explicit vote, mirrored by the formal `gh pr review` flag:
+
+```
+**Vote: APPROVE** | **Vote: REQUEST CHANGES** | **Vote: COMMENT**
+```
+
+The vote text is for human readers scanning conversation history. The formal flag (`--approve`, `--request-changes`, `--comment`) drives the GitHub review-state badge.
+
+### Identity model — GitHub Apps per runtime
+
+Each agent runtime acts under a distinct GitHub identity, implemented as a GitHub App. Each App provides:
+- A bot identity in the conversation tab (`@<app-name>[bot]`)
+- An installation token used for `gh` API calls
+- Permissions scoped to `pull_requests: write`, `contents: read`, `metadata: read`, `commit_statuses: read`
+
+Current Apps installed on `derek-dorazio/pool-master`:
+
+| App | Used by | Purpose |
+|---|---|---|
+| `derek-dorazio-agent-claude` | Claude runtimes | Cross-model review pass when Codex implements; can also implement |
+| `derek-dorazio-agent-codex` | Codex runtimes | Cross-model review pass when Claude implements; can also implement |
+
+(Adding a new runtime = creating a new App, installing it on the repo, generating a private key.)
+
+The agent's environment must export the App credentials before invoking `gh`:
+
+```bash
+export GH_APP_ID=...                          # numeric App ID
+export GH_APP_INSTALLATION_ID=...             # numeric Installation ID
+export GH_APP_PRIVATE_KEY_PATH=~/.config/github-apps/<app-name>.private-key.pem
+export GH_TOKEN=$(node scripts/get-app-installation-token.mjs)
+```
+
+The helper `scripts/get-app-installation-token.mjs` mints a fresh installation token (~1 hour validity) from the three credentials. Once `GH_TOKEN` is set, `gh` and the rest of the toolchain pick up the App's identity automatically. Verify with:
+
+```bash
+gh api user --jq '.login'   # → <app-slug>[bot]
+```
+
+The credentials and helper invocation are typically owned by each agent harness's session-startup; document the exact integration in your harness setup notes (per-runtime).
+
+### GitHub self-review constraint
+
+GitHub blocks `gh pr review --approve` from any identity that authored the PR. Practical implications:
+
+- The implementing agent cannot satisfy `required_approving_review_count: 1` itself, even if it spawns Riley as a subagent. The marker in the PR body is the implementer's self-check; the formal approval must come from a different identity.
+- A different agent runtime under a different App (Pass 2) supplies the approval.
+- The human merger (you) can also approve via the GitHub UI when needed; that bypasses the bot machinery and is appropriate when bots are unavailable or when the slice has special-pause conditions (see "When the user must be paused for approval" below).
 
 ### Implementing-agent slice closeout protocol
 
@@ -733,13 +831,14 @@ When an implementing persona (Brad, Fran, Archie, Dom, etc.) finishes a slice, t
 3. **Commit** with the Beads story ID in the footer: `pool-master-NNN`. One slice = one commit (squash later in the PR if multiple working commits exist).
 4. **Push the branch** to origin.
 5. **Open a PR** with `gh pr create`. Title: short imperative summary. Body: link to the parent Beads epic, the slice's Beads story (`pool-master-NNN`), one-paragraph context, and the gates that were run. For defect-fix slices, the PR body must explicitly state that the failing test was observed to fail before the fix landed. The PR body must also include the Riley findings marker section described in step 7 — open the PR with the placeholder text in place; the actual findings table replaces the placeholder once Riley has reviewed.
-6. **Spawn Riley** as a subagent using the canonical spawn prompt below — Riley's review quality depends on what you pass.
-7. **Record Riley's findings in the PR body.** Replace the placeholder under the literal HTML comment `<!-- riley:findings -->` with Riley's findings table (or "No findings." if Riley reported zero). The marker is non-negotiable — CI greps the PR body for it on every PR via `npm run rules:check:pr-riley-marker`, and a PR without it cannot merge. The marker is auditable proof the review happened, not a substitute for the review itself.
-8. **Read Riley's findings table.** Then:
-   - **Zero blocker-severity findings** (CRITICAL or HIGH) → `gh pr merge --squash --delete-branch`. Close the Beads story with a closing note per §1 *Beads conventions: story notes*. Return to the user with a summary.
-   - **Any blocker-severity findings** → **do not merge**. Surface the findings to the user, await direction (fix-and-re-review, merge-anyway-with-justification, or park).
+6. **Spawn Riley as the implementer self-check (Pass 1)** in your own runtime, using the canonical spawn prompt below — Riley's review quality depends on what you pass.
+7. **Record Riley's findings in the PR body.** Replace the placeholder under the literal HTML comment `<!-- riley:findings -->` with Riley's findings table (or "No findings." if Riley reported zero). CI greps the PR body for the marker on every PR via `npm run rules:check:pr-riley-marker`, and a PR without it cannot merge.
+8. **Request the cross-model secondary review (Pass 2).** A different agent runtime, operating under a different GitHub App, runs the Riley playbook against the diff and posts via `gh pr review`. If the slice touches security-sensitive code, also request Sage (Pass 3). If it touches shared contracts, infrastructure, or active plans, also request Archie (Pass 4). Each conditional pass is its own `gh pr review` from the appropriate App identity.
+9. **Read all review entries** — implementer marker (Pass 1) + each `gh pr review` (Passes 2/3/4). Then:
+   - **Zero blocker-severity findings across all passes** → `gh pr merge --squash --delete-branch`. Close the Beads story with a closing note per §1 *Beads conventions: story notes*. Return to the user with a summary.
+   - **Any blocker-severity findings on any pass** → **do not merge**. Surface the findings to the user, await direction (fix-and-re-review, merge-anyway-with-justification, or park).
 
-The implementing agent — not Riley — owns the merge decision. Subagents stay in the "findings only" lane.
+The implementing agent — not the reviewers — owns the merge decision. Reviewer agents (Pass 2/3/4) stay in the "findings + vote" lane; they recommend `--approve` / `--request-changes` but the implementer (or human merger) clicks merge.
 
 ### Riley spawn prompt
 
