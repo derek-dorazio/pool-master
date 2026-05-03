@@ -35,9 +35,9 @@ If none of those apply, Sage doesn't need to run.
 
 - `AGENTS.md`
 - `rules/workflow-rules.md`
-- `rules/service-rules.md` (esp. §1A No Synthetic Lookups, §7 Error Handling, §7A Typed Error Class Discipline)
-- `rules/architecture-rules.md` (esp. §3 No Mock Data, §3A Provider Registry Discipline, §6 App Identity and Access)
-- `rules/testing-rules.md` (§2C Forbidden Application-Code Patterns)
+- `rules/service-rules.md` (esp. §2 No Mock Data — see the *No Synthetic Lookups* subsection — and §7 Error Handling — see the *Typed Error Class Discipline* subsection)
+- `rules/architecture-rules.md` (esp. §3 No Mock Data — see the *Provider and Adapter Registry Discipline* subsection)
+- `rules/testing-rules.md` (esp. §1B Forbidden Application-Code Patterns)
 
 ## What To Check
 
@@ -46,7 +46,7 @@ If none of those apply, Sage doesn't need to run.
 - Is every new mutating route guarded by the right authority preHandler (`adminAuth`, `requireCommissioner`, `requireLeagueMembership`, etc.)?
 - Are auth checks placed at the route boundary, not scattered as inline `if (request.authUser?.isRootAdmin)` in handlers?
 - Are role-elevation paths (admin / root-admin / impersonation) properly gated and audit-logged where applicable?
-- Does the JWT secret come from a single bootstrap (not duplicated `??` fallbacks per `rules/workflow-rules.md §0`)?
+- Does the JWT secret come from a single bootstrap (not duplicated `??` fallbacks per `rules/service-rules.md §1` *Banned Backend Patterns*)?
 
 ### Input validation
 
@@ -77,7 +77,7 @@ If none of those apply, Sage doesn't need to run.
 
 ### Provider / mock-data discipline
 
-- Per `rules/architecture-rules.md §3A`: are mock providers gated by `ALLOW_MOCK_PROVIDERS` in production/staging? Could a misconfiguration silently downgrade a production environment to a mock provider?
+- Per `rules/architecture-rules.md §3` *Provider and Adapter Registry Discipline*: are mock providers gated by `ALLOW_MOCK_PROVIDERS` in production/staging? Could a misconfiguration silently downgrade a production environment to a mock provider?
 
 ## Severity Calibration
 

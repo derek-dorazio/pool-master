@@ -83,8 +83,10 @@ If none of those apply, Archie doesn't need to run on the PR.
   service → DTO → mapper → route → SDK → frontend)? Is it skipping a layer
   that the model-change-rules require?
 - **Cross-cutting consistency** — error envelopes, lifecycle conventions,
-  pagination policy (no pagination per `rules/service-rules.md §4A`),
-  timezone handling, etc. — does the slice match the established patterns?
+  pagination policy (no pagination per `rules/service-rules.md §4` *List
+  Envelope Discipline* subsection), timezone handling (`rules/service-rules.md §6`
+  *Time and Timezone Discipline* subsection), etc. — does the slice match the
+  established patterns?
 - **Deferred-work hygiene** — does the slice land "TODO" markers or partial
   implementations that should be tracked as Beads stories instead?
 
