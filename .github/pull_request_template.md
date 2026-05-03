@@ -60,10 +60,10 @@ Pending Riley review.
 
 <!--
 Replace "Pending Riley review." above with the findings table once Riley
-has reviewed. Use "No findings." if Riley reported zero. The literal HTML
-comment `<!-- riley:findings -->` MUST remain in the PR body — CI greps
-every PR for it via `npm run rules:check:pr-riley-marker` and will fail
-the build if it is missing. See rules/workflow-rules.md §6 and
+has reviewed. Use "No findings." if Riley reported zero. The marker line
+above (the riley:findings HTML comment) MUST remain in the PR body — CI
+greps every PR for it via npm run rules:check:pr-riley-marker and will
+fail the build if it is missing. See rules/workflow-rules.md §6 and
 personas/riley.md.
 -->
 
