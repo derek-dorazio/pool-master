@@ -18,6 +18,111 @@ A concurrency group cancels superseded runs on the same ref. The deploy
 stages (`publish-images`, `migrate-qa`, `poolmaster-browser-e2e`) are gated to
 push events on `main` only — they do not run for pull requests.
 
+## Repository setup — branch protection
+
+The CI gates only enforce discipline if `main` cannot be reached without going
+through them. This section documents the GitHub branch-protection ruleset that
+backs the workflow.
+
+Without this configuration, direct pushes to `main` bypass every gate:
+the rule-enforcement scanners, `api:check`, the Riley findings marker, and
+the test/build/coverage jobs. The `rules:check:pr-riley-marker` gate
+specifically becomes meaningless without enforced PR flow.
+
+### Where to configure
+
+GitHub UI: `Settings → Rules → Rulesets → New ruleset`. The ruleset replaces
+the older "Branch protection rules" UI; either works, but rulesets are the
+forward path and the API shape this doc describes.
+
+### Recommended ruleset configuration
+
+```
+Ruleset name:       protect-main
+Target:             branch
+Conditions:         ref_name include = ~DEFAULT_BRANCH
+Enforcement:        active
+
+Rules:
+  ✓ Restrict deletions
+  ✓ Block force pushes (non_fast_forward)
+  ✓ Require a pull request before merging
+      Required approving review count: 0   (raise per-team policy)
+      Dismiss stale pull request approvals when new commits are pushed: on
+      Required review thread resolution: on
+      Allowed merge methods: squash only
+  ✓ Require status checks to pass before merging
+      Require branches to be up to date before merging: on
+      Required status checks:
+        - lint-and-typecheck
+        - service-coverage-report
+        - poolmaster-unit-tests
+        - service-build
+        - mock-contest-feed-provider-build
+        - poolmaster-build
+
+Bypass list:
+  - Repository admin: bypass mode "always"   (solo-work escape hatch)
+    OR
+  - (empty)                                  (strict — no exceptions)
+```
+
+The status check names must match the `name:` of each job in
+`.github/workflows/ci.yml` exactly. If the workflow's job names change,
+update the ruleset to match — otherwise the protection silently stops
+gating the renamed check.
+
+### The bypass-list decision
+
+Two coherent positions:
+
+- **Admin bypass allowed (`bypass_actors: [{ actor_type: RepositoryRole, actor_id: 5, bypass_mode: always }]`)** — repository admins can push directly to `main` for cleanup or emergency work. The PR flow remains the default and is enforced for every other actor and for the admin's own team-coordinated work. This is the recommended setting for solo-developer workflows where an escape hatch is occasionally useful.
+- **Strict (`bypass_actors: []`, `current_user_can_bypass: "never"`)** — even repo admins must go through PRs. No exceptions. Aligns with the strictest reading of `rules/workflow-rules.md §6` ("Never push directly to main").
+
+There is no wrong answer; pick the one that matches the team's working model.
+
+### Verification via the GitHub API
+
+After saving the ruleset, verify the configuration with:
+
+```bash
+gh api repos/<org>/<repo>/rulesets --jq '.[] | select(.name == "protect-main") | .id'
+gh api repos/<org>/<repo>/rulesets/<ruleset-id> --jq '{
+  enforcement,
+  bypass_actors,
+  current_user_can_bypass,
+  strict_status_checks: (.rules[] | select(.type=="required_status_checks") | .parameters.strict_required_status_checks_policy),
+  required_status_checks: (.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks | map(.context)),
+  allowed_merge_methods: (.rules[] | select(.type=="pull_request") | .parameters.allowed_merge_methods)
+}'
+```
+
+Expected output for the recommended configuration:
+
+```json
+{
+  "enforcement": "active",
+  "bypass_actors": [{"actor_id": 5, "actor_type": "RepositoryRole", "bypass_mode": "always"}],
+  "current_user_can_bypass": "always",
+  "strict_status_checks": true,
+  "required_status_checks": ["lint-and-typecheck", "service-coverage-report", "poolmaster-unit-tests", "service-build", "mock-contest-feed-provider-build", "poolmaster-build"],
+  "allowed_merge_methods": ["squash"]
+}
+```
+
+If `bypass_actors` is empty and `current_user_can_bypass` is `"never"`, the
+ruleset is configured strictly. If the `required_status_checks` list does
+not include all six job names, the gates are partially bypassed — fix
+before treating the configuration as complete.
+
+### Why the marker gate matters here
+
+`rules:check:pr-riley-marker` (gate 8 below) reads the PR body for a
+literal `<!-- riley:findings -->` marker and fails if missing. If branch
+protection does not require PRs, a contributor can bypass the marker by
+direct-pushing to `main`, in which case the gate never runs. The marker
+gate's value depends entirely on PR flow being enforced.
+
 ## Job DAG
 
 ```mermaid
