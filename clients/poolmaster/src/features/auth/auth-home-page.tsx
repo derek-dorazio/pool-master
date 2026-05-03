@@ -8,7 +8,11 @@ import {
   LoginRequestSchema,
   RegisterRequestSchema,
 } from "@poolmaster/shared/dto";
-import { loginUser, registerUser } from "@/lib/api";
+import {
+  loginUser,
+  registerUser,
+  type GetCurrentUserResponses,
+} from "@/lib/api";
 import { InvitationContextCard } from "@/features/leagues/invitation-context-card";
 import {
   Alert,
@@ -78,9 +82,7 @@ function parseTeamInviteCode(path: string | undefined) {
   return match?.[1] ?? null;
 }
 
-type PostAuthUser = {
-  isRootAdmin?: boolean | null;
-};
+type PostAuthUser = Pick<GetCurrentUserResponses[200]["user"], "isRootAdmin">;
 
 export function resolvePostAuthDestination(
   user: PostAuthUser,
