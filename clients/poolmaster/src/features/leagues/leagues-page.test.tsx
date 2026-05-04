@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WelcomePage } from './leagues-page';
@@ -7,6 +8,7 @@ import { WelcomePage } from './leagues-page';
 const {
   listLeaguesMock,
   authState,
+  sharedStateCalls,
 } = vi.hoisted(() => ({
   listLeaguesMock: vi.fn(),
   authState: {
@@ -16,6 +18,11 @@ const {
       lastName: 'Dorazio',
     },
   },
+  sharedStateCalls: {
+    empty: vi.fn(),
+    error: vi.fn(),
+    loading: vi.fn(),
+  },
 }));
 
 vi.mock('@/lib/api', () => ({
@@ -24,6 +31,60 @@ vi.mock('@/lib/api', () => ({
 
 vi.mock('@/features/auth/auth-provider', () => ({
   useAuth: () => authState,
+}));
+
+vi.mock('@/features/shared/ui/state', () => ({
+  EmptyState: (props: {
+    action?: ReactNode;
+    body?: ReactNode;
+    testId?: string;
+    title?: ReactNode;
+  }) => {
+    sharedStateCalls.empty(props);
+
+    return (
+      <section data-testid={props.testId}>
+        <div data-testid="shared-empty-state" />
+        {props.title ? <h2>{props.title}</h2> : null}
+        {props.body ? <p>{props.body}</p> : null}
+        {props.action}
+      </section>
+    );
+  },
+  ErrorState: (props: {
+    action?: ReactNode;
+    body?: ReactNode;
+    testId?: string;
+    title?: ReactNode;
+  }) => {
+    sharedStateCalls.error(props);
+
+    return (
+      <section data-testid={props.testId}>
+        <div data-testid="shared-error-state" />
+        {props.title ? <h2>{props.title}</h2> : null}
+        {props.body ? <p>{props.body}</p> : null}
+        {props.action}
+      </section>
+    );
+  },
+  LoadingState: (props: {
+    action?: ReactNode;
+    body?: ReactNode;
+    testId?: string;
+    title?: ReactNode;
+  }) => {
+    sharedStateCalls.loading(props);
+
+    return (
+      <section data-testid={props.testId}>
+        <div data-testid="shared-loading-state" />
+        {props.title ? <h2>{props.title}</h2> : null}
+        {props.body ? <p>{props.body}</p> : null}
+        {props.action}
+      </section>
+    );
+  },
 }));
 
 function renderWelcomePage(initialEntries = ['/welcome']) {
@@ -54,9 +115,12 @@ function renderWelcomePage(initialEntries = ['/welcome']) {
 describe('WelcomePage', () => {
   beforeEach(() => {
     listLeaguesMock.mockReset();
+    sharedStateCalls.empty.mockClear();
+    sharedStateCalls.error.mockClear();
+    sharedStateCalls.loading.mockClear();
   });
 
-  it('shows the zero-league fallback and create action when the member has no leagues', async () => {
+  it('pool-master-rop.63: shows the shared zero-league state and create action when the member has no leagues', async () => {
     listLeaguesMock.mockResolvedValue({
       data: {
         leagues: [],
@@ -66,11 +130,34 @@ describe('WelcomePage', () => {
     renderWelcomePage();
 
     expect(await screen.findByTestId('authenticated-landing-empty')).toBeInTheDocument();
+    expect(screen.getByTestId('shared-empty-state')).toBeInTheDocument();
+    expect(sharedStateCalls.empty).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.stringContaining("Once you create leagues"),
+        testId: 'authenticated-landing-empty',
+        title: expect.stringContaining('Welcome to Ultimate Office Pool Manager'),
+      }),
+    );
     fireEvent.click(screen.getByTestId('welcome-create-league'));
     expect(screen.getByRole('button', { name: 'Create league' })).toBeInTheDocument();
   });
 
-  it('redirects members with leagues into the resolved league context', async () => {
+  it('pool-master-rop.63: renders the shared loading state while leagues load', () => {
+    listLeaguesMock.mockImplementation(() => new Promise(() => {}));
+
+    renderWelcomePage();
+
+    expect(screen.getByTestId('authenticated-landing-loading')).toBeInTheDocument();
+    expect(screen.getByTestId('shared-loading-state')).toBeInTheDocument();
+    expect(sharedStateCalls.loading).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: 'Loading your leagues...',
+        testId: 'authenticated-landing-loading',
+      }),
+    );
+  });
+
+  it('pool-master-rop.63: preserves redirect into the resolved league context', async () => {
     listLeaguesMock.mockResolvedValue({
       data: {
         leagues: [
@@ -96,12 +183,20 @@ describe('WelcomePage', () => {
     expect(await screen.findByTestId('league-home-destination')).toBeInTheDocument();
   });
 
-  it('pool-master-dxd.15: uses the shared no-retry leagues query policy', async () => {
+  it('pool-master-dxd.15: uses the shared no-retry leagues query policy and shared error state', async () => {
     listLeaguesMock.mockRejectedValue(new Error('League list unavailable'));
 
     renderWelcomePage();
 
     expect(await screen.findByTestId('authenticated-landing-error')).toBeInTheDocument();
+    expect(screen.getByTestId('shared-error-state')).toBeInTheDocument();
+    expect(sharedStateCalls.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: 'Try refreshing after signing in again.',
+        testId: 'authenticated-landing-error',
+        title: "We couldn't load your leagues.",
+      }),
+    );
     await waitFor(() => expect(listLeaguesMock).toHaveBeenCalledTimes(1));
   });
 });
