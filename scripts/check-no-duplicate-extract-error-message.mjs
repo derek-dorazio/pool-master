@@ -36,8 +36,13 @@ const CANONICAL_PATH = 'clients/poolmaster/src/lib/errors.ts';
 const { warnOnly } = parseRuleCheckArgs();
 const files = walkFiles(['clients/poolmaster/src'], {
   extensions: ['ts', 'tsx'],
+  // Match the canonical path against the full repo-relative path, not just
+  // the last two segments. Otherwise a future file at e.g.
+  // features/shared/lib/errors.ts would be silently excluded as if it were
+  // canonical, and any duplicate extractErrorMessage there would slip past
+  // the scanner.
   exclude: (path) =>
-    path.endsWith(`/${CANONICAL_PATH.split('/').slice(-2).join('/')}`) ||
+    path.endsWith(`/${CANONICAL_PATH}`) ||
     /\.(test|spec)\.tsx?$/.test(path),
 });
 
