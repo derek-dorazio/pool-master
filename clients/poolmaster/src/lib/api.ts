@@ -41,6 +41,7 @@ function createClientRequestId(): string {
     return crypto.randomUUID();
   }
 
+  // Correlation-only fallback for environments without Web Crypto; not a security identifier.
   return `pm-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
