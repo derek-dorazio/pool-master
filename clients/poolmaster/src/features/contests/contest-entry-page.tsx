@@ -195,6 +195,7 @@ export function ContestEntryPage() {
 
   const [entryNameDraft, setEntryNameDraft] = useState('');
   const [tiebreakerDraft, setTiebreakerDraft] = useState('');
+  const [draftDetailsSeedKey, setDraftDetailsSeedKey] = useState<string | null>(null);
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
 
   const contestQuery = useQuery({
@@ -259,13 +260,19 @@ export function ContestEntryPage() {
       return;
     }
 
+    const nextSeedKey = `${contestId}:${entryId}`;
+    if (draftDetailsSeedKey === nextSeedKey) {
+      return;
+    }
+
     setEntryNameDraft(draftStateQuery.data.selectedEntryName ?? '');
     setTiebreakerDraft(
       draftStateQuery.data.tiebreakerValue === null || draftStateQuery.data.tiebreakerValue === undefined
         ? ''
         : String(draftStateQuery.data.tiebreakerValue),
     );
-  }, [draftStateQuery.data]);
+    setDraftDetailsSeedKey(nextSeedKey);
+  }, [contestId, draftDetailsSeedKey, draftStateQuery.data, entryId]);
 
   useEffect(() => {
     const selectionGroups = draftStateQuery.data?.selectionGroups ?? [];

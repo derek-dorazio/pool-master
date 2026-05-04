@@ -256,10 +256,15 @@ describe('Contract verification (root admin)', () => {
     await teardownIntegrationTests();
   });
 
-  it('ingestion root-admin routes match their DTOs', async () => {
+  it('pool-master-rop.2: ingestion root-admin routes match their DTOs', async () => {
     const app = Fastify({ logger: false });
+    const rootAdmin = await createTestUser({
+      displayName: 'Ingestion Contract Root Admin',
+      isRootAdmin: true,
+    });
     const registry = new ProviderRegistry();
     registry.register('GOLF', new ContractProvider(), 'PRIMARY');
+    app.decorate('prisma', getPrisma());
     app.setErrorHandler(globalErrorHandler);
 
     await app.register(ingestionModule, {
@@ -341,6 +346,7 @@ describe('Contract verification (root admin)', () => {
     const providersRes = await app.inject({
       method: 'GET',
       url: '/api/v1/admin/ingestion/providers',
+      headers: rootAdmin.headers,
     });
     expect(providersRes.statusCode).toBe(200);
     expect(IngestionProvidersResponseSchema.safeParse(providersRes.json()).success).toBe(true);
@@ -351,6 +357,7 @@ describe('Contract verification (root admin)', () => {
       payload: {
         feeds: ['EVENTSCHEDULE'],
       },
+      headers: rootAdmin.headers,
     });
     expect(syncRes.statusCode).toBe(200);
     expect(IngestionJobsResponseSchema.safeParse(syncRes.json()).success).toBe(true);
@@ -358,6 +365,7 @@ describe('Contract verification (root admin)', () => {
     const oddsRes = await app.inject({
       method: 'POST',
       url: '/api/v1/admin/ingestion/odds/GOLF',
+      headers: withoutJsonBodyHeaders(rootAdmin.headers),
     });
     expect(oddsRes.statusCode).toBe(200);
     expect(IngestSportOddsResponseSchema.safeParse(oddsRes.json()).success).toBe(true);
