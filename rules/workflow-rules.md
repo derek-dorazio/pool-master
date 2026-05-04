@@ -168,11 +168,61 @@ The closing note is the canonical post-ship execution record for the slice. Plan
 
 ### Concurrent agents and JSONL conflict resolution
 
-`.beads/issues.jsonl` is line-oriented; merge conflicts are common when multiple agents edit Beads state in parallel.
+`.beads/issues.jsonl` is the canonical shared file (committed to git); each agent has a local Dolt DB in `.beads/embeddeddolt/` that's gitignored. `bd` commands mutate the local DB; the JSONL is a separate export step. When multiple PRs edit Beads state in parallel, the JSONL goes stale on whichever PR doesn't merge first — every sibling Beads change on `main` becomes a rebase conflict for the open PR.
 
-- Prefer running `bd` CLI commands rather than hand-editing `issues.jsonl`. The CLI keeps the file canonical.
-- When two agents update overlapping stories, the second-to-merge resolves by re-running the equivalent `bd` command on the merged result, not by hand-merging the JSONL.
-- Do not commit a partially-resolved JSONL — re-export from `bd` after resolving so the committed state matches the tracker's view.
+**Never hand-edit `.beads/issues.jsonl` to resolve a conflict.** Beads provides a structured-merge path through the CLI; bypassing it means a future `bd import` could partially overwrite the manual edits.
+
+**Recipe — rebase-and-resync (the canonical conflict resolution):**
+
+When rebasing a feature branch onto a main that has absorbed Beads changes from sibling PRs:
+
+```bash
+# 1. Start the rebase. Conflict on .beads/issues.jsonl is expected if main moved.
+git fetch origin
+git checkout pool-master-NNN-<slice-slug>
+git rebase origin/main
+# → CONFLICT (content): Merge conflict in .beads/issues.jsonl
+
+# 2. Take main's full version of the JSONL — discards the slice's stale snapshot.
+git checkout origin/main -- .beads/issues.jsonl
+
+# 3. Sync the local Dolt DB to main's JSONL (upsert; updates 415 records on
+#    the test repo). After this step the local DB matches main exactly.
+bd import .beads/issues.jsonl
+
+# 4. Re-apply only the slice's transition through the CLI. Examples:
+bd close pool-master-NNN --reason "<your slice's close-reason>"
+# or
+bd update pool-master-NNN --status in_progress
+# or
+bd note pool-master-NNN "<closing note>"
+
+# 5. Re-export the DB to the JSONL on disk. bd does NOT auto-write the file
+#    after a mutation — `bd export -o` is required.
+bd export -o .beads/issues.jsonl
+
+# 6. Stage the resolved file and continue the rebase.
+git add .beads/issues.jsonl
+git rebase --continue
+
+# 7. Force-push the rebased branch.
+git push --force-with-lease origin pool-master-NNN-<slice-slug>
+```
+
+After step 5 the diff vs `origin/main` on `.beads/issues.jsonl` should be exactly the records the slice transitioned. Verify before pushing:
+
+```bash
+git diff origin/main -- .beads/issues.jsonl | grep -E '^[+-]\{' | grep -oE '"id":"[^"]+"' | sort -u
+# → should print only the slice's Beads ID(s)
+```
+
+If the diff shows other IDs, the rebase didn't fully resolve — re-run `bd import .beads/issues.jsonl` to discard the stale state and re-apply the slice's transition.
+
+**Why this works:** `bd import` does an upsert against the local Dolt DB, so the local view becomes structurally identical to main. The subsequent `bd close` / `bd update` / `bd note` then mutates only the targeted record. `bd export -o` writes the full DB back to JSONL, producing a file that differs from main only in the rows the slice touched.
+
+**`updated_at` drift is expected** — every `bd` mutation bumps the `updated_at` timestamp on the target record, so even a no-op transition will show as a one-line diff vs main. That's accurate (the field reflects when bd ran), not a bug.
+
+**Don't commit a partially-resolved JSONL.** If a rebase resolution leaves stray records changed beyond the slice's scope, re-run the recipe from step 2.
 
 ### bd CLI quick reference
 
