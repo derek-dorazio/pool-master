@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { redactPayload } from './redact';
 
 describe('redact payload', () => {
-  it('redacts sensitive keys at the top level', () => {
+  it('rule: log redaction redacts sensitive keys at the top level', () => {
     const redacted = redactPayload({
       action: 'auth.login',
       data: {
@@ -22,7 +22,7 @@ describe('redact payload', () => {
     });
   });
 
-  it('redacts nested objects and arrays', () => {
+  it('rule: log redaction redacts nested objects and arrays', () => {
     const redacted = redactPayload({
       action: 'account.update',
       data: {
@@ -52,7 +52,7 @@ describe('redact payload', () => {
     });
   });
 
-  it('serializes and redacts error objects', () => {
+  it('rule: log redaction serializes and redacts error objects', () => {
     const error = new Error('boom');
     const redacted = redactPayload({
       action: 'app.error',
@@ -65,7 +65,7 @@ describe('redact payload', () => {
     });
   });
 
-  it('passes through primitive payload values unchanged', () => {
+  it('rule: log redaction passes through primitive payload values unchanged', () => {
     const redacted = redactPayload({
       action: 'contest.load',
       err: 'bad request',

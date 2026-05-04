@@ -7,20 +7,20 @@ describe('client trace id', () => {
     resetClientTraceIdForTests();
   });
 
-  it('reuses the session storage trace id when present', () => {
+  it('rule: client trace id reuses the session storage trace id when present', () => {
     window.sessionStorage.setItem('poolmaster_client_trace_id', 'trace-123');
 
     expect(getOrCreateClientTraceId()).toBe('trace-123');
   });
 
-  it('creates and stores a trace id when none exists', () => {
+  it('rule: client trace id creates and stores a trace id when none exists', () => {
     const traceId = getOrCreateClientTraceId();
 
     expect(traceId).toBeTruthy();
     expect(window.sessionStorage.getItem('poolmaster_client_trace_id')).toBe(traceId);
   });
 
-  it('falls back to an in-memory id when session storage throws', () => {
+  it('rule: client trace id falls back to an in-memory id when session storage throws', () => {
     const getItemSpy = vi
       .spyOn(Storage.prototype, 'getItem')
       .mockImplementation(() => {
@@ -41,7 +41,7 @@ describe('client trace id', () => {
     setItemSpy.mockRestore();
   });
 
-  it('creates different trace ids after reset', () => {
+  it('rule: client trace id creates different trace ids after reset', () => {
     const first = getOrCreateClientTraceId();
     resetClientTraceIdForTests();
     window.sessionStorage.clear();

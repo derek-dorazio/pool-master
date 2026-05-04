@@ -16,7 +16,7 @@ describe('poolmaster API client correlation headers', () => {
     document.cookie = 'poolmaster_csrf=; Max-Age=0; path=/';
   });
 
-  it('attaches stable client trace id and unique client request id to outbound requests', async () => {
+  it('rule: client observability attaches stable trace id and unique request id to outbound requests', async () => {
     const fetchSpy = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ user: null }), {
         status: 200,
@@ -75,7 +75,7 @@ describe('poolmaster API client correlation headers', () => {
     }
   });
 
-  it('prefers an explicit VITE_API_BASE_URL over the browser origin', async () => {
+  it('rule: SDK API base URL config prefers VITE_API_BASE_URL over the browser origin', async () => {
     vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
 
     const fetchSpy = vi.fn().mockResolvedValue(

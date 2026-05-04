@@ -32,7 +32,7 @@ describe('network sink', () => {
     vi.restoreAllMocks();
   });
 
-  it('flushes when the batch size threshold is reached', async () => {
+  it('rule: network log sink flushes when the batch size threshold is reached', async () => {
     const transport = vi.fn().mockResolvedValue({ ok: true, retryable: false });
     const sink = createNetworkSink({
       batchSize: 2,
@@ -59,7 +59,7 @@ describe('network sink', () => {
     );
   });
 
-  it('flushes on the timer when the buffer is below the batch threshold', async () => {
+  it('rule: network log sink flushes on the timer when the buffer is below the batch threshold', async () => {
     const transport = vi.fn().mockResolvedValue({ ok: true, retryable: false });
     const sink = createNetworkSink({
       batchSize: 5,
@@ -74,7 +74,7 @@ describe('network sink', () => {
     expect(transport).toHaveBeenCalledTimes(1);
   });
 
-  it('retries once for retryable error-level flush failures', async () => {
+  it('rule: network log sink retries once for retryable error-level flush failures', async () => {
     const transport = vi.fn()
       .mockResolvedValueOnce({ ok: false, retryable: true })
       .mockResolvedValueOnce({ ok: true, retryable: false });
@@ -97,7 +97,7 @@ describe('network sink', () => {
     });
   });
 
-  it('uses beacon flush when the page becomes hidden', async () => {
+  it('rule: network log sink uses beacon flush when the page becomes hidden', async () => {
     const visibilityHandlers: Array<(event: Event) => void> = [];
     const transport = vi.fn().mockResolvedValue({ ok: true, retryable: false });
     const documentLike = {

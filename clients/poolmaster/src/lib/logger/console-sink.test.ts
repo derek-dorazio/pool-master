@@ -16,7 +16,7 @@ describe('console sink', () => {
     vi.restoreAllMocks();
   });
 
-  it('routes debug logs to console.debug', () => {
+  it('rule: console sink routes debug logs to console.debug', () => {
     const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
 
     consoleSink.write('debug', { action: 'test.debug' }, 'debug message', META);
@@ -30,7 +30,7 @@ describe('console sink', () => {
     );
   });
 
-  it('routes info logs to console.info', () => {
+  it('rule: console sink routes info logs to console.info', () => {
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
 
     consoleSink.write('info', { action: 'test.info' }, 'info message', META);
@@ -44,7 +44,7 @@ describe('console sink', () => {
     );
   });
 
-  it('routes warn logs to console.warn', () => {
+  it('rule: console sink routes warn logs to console.warn', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
     consoleSink.write('warn', { action: 'test.warn' }, 'warn message', META);
@@ -58,7 +58,7 @@ describe('console sink', () => {
     );
   });
 
-  it('routes error and fatal logs to console.error', () => {
+  it('rule: console sink routes error and fatal logs to console.error', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     consoleSink.write('error', { action: 'test.error' }, 'error message', META);
