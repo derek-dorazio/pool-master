@@ -297,6 +297,12 @@ Before marking any backend slice task `Done`, run through this checklist for eve
 - [ ] `npm run api:refresh` succeeds
 - [ ] `npm run api:validate` succeeds
 
+**Docs and rules (ride with code):**
+- [ ] Every doc update triggered by this slice is in *this* PR, not a follow-up. Triggers include: README change, persona checklist update, rule cross-reference, API doc revision, setup-guide line, ADR cross-link.
+- [ ] Standalone doc-only PRs are not used as a workaround for "I forgot to update the README" — the doc update belongs with the code change that triggered it (per `§6 Docs ride with code`).
+- [ ] If the slice changed architecture, testing patterns, or developer workflow, the matching `rules/*.md` files were updated in the same diff (per `§2 Rule and Documentation Maintenance`).
+- [ ] If the slice deviates from an active plan, the plan file was updated in the same diff or the deviation was explicitly noted in the Beads closing note.
+
 A slice that lands the schema and service logic correctly but skips DTOs, mappers, or tests is `In Progress`, not `Done`.
 
 For user-facing or workflow-heavy slices, "tests" also means the team can
@@ -718,11 +724,72 @@ If a plan exists without an associated Beads epic, that is a drift bug to fix: e
 
 This project uses a **branch-per-Beads-story** flow with a **multi-pass review** system: an implementer self-check pass plus one or more cross-model passes from independent agent runtimes. Branch protection on `main` requires `required_approving_review_count: 1`; that approval comes from the cross-model pass, not the implementer.
 
+### What skips the PR flow
+
+Not every commit needs a branch + PR + multi-pass review. The carve-out below covers changes that are pure metadata, narrative, or trivial maintenance — direct-push to `main` is the default for these paths. The CI rule scanners only fire on PRs, so direct pushes bypass them; the carve-out is intentionally narrow to keep the gates meaningful for production code.
+
+**Direct-push lane (no PR, no review):**
+
+- `.beads/issues.jsonl` — Beads state changes (epic/story creation, status updates, close reasons, dependency edits, label edits).
+- `plans/<NN>-*.md` — narrative plan files updated *during* execution: mid-slice notes, status updates, deferred-section additions, completion notes. New plan files of substantial size should land with their first slice (see *Docs ride with code* below); trivial plan housekeeping pushes direct.
+- `docs/SESSION-HANDOFF.md` — session resume notes.
+- `requirements/` and `tech-specs/` artifacts under active design discussion (before implementation begins).
+- Trivial typo, link, or formatting fixes anywhere in `docs/` or `rules/` that do not change rule meaning.
+
+**Optional review for substantive plan/doc changes.** When a plan or doc change is large enough to warrant a second pair of eyes — a brand-new ADR, a workflow-rules rewrite, a new persona file, a multi-section rule addition, a coordinated cross-doc update — open a PR. The same multi-pass review flow applies if invoked. The cross-model pass on a doc-only PR can lean on Riley alone (Sage and Archie are usually not triggered for doc-only changes unless they touch security or architecture surface explicitly).
+
+Examples that warranted PRs in this repo's history:
+
+- The multi-pass review framework (rule rewrite + new personas + new scripts).
+- Workflow-rules additions that introduce new branching/review semantics.
+- A new ADR with cross-cutting impact.
+
+Examples that did not warrant PRs:
+
+- Adding a Beads defect with a file-anchored fix recommendation.
+- Closing a Beads story with a close-reason note.
+- Updating a plan with a mid-execution status note.
+- Fixing a broken cross-reference in a rule file.
+- Adding a session-handoff "resume here" note.
+
+### Substantive plan or rule change — ask before pushing
+
+Before pushing a non-trivial plan, rule, ADR, or persona change directly to `main`, the agent **must ask the user** whether to PR it or push direct. Phrasing:
+
+> "This <plan / rule / ADR / persona> change is substantive enough that you may want it to go through PR review — should I open a branch + PR, or push direct?"
+
+Substantive triggers (any of these → ask):
+
+- Changing the **meaning** of an existing rule (not just refining wording, fixing a typo, or updating a cross-reference).
+- Adding a **new rule section** that future slices will be audited against.
+- Creating a **new ADR** or modifying a published one.
+- **Rewriting a process** (workflow steps, review flow, branching convention, slice closeout).
+- **Adding, removing, or materially redefining a persona** (`personas/<name>.md`).
+- Any change a **future agent will read as canonical guidance** rather than as ephemeral execution notes.
+
+The cost of asking once is low; the cost of silently pushing a process change that should have been reviewed is high — process changes propagate through every future slice, and reverting them after the fact is awkward.
+
+If the user says "push direct," the agent pushes direct and notes the decision in the commit message. If the user says "PR it," the agent follows the standard branch + PR + multi-pass flow.
+
+### Docs ride with code (Definition of Done)
+
+When a code slice triggers a doc update — README change, persona checklist update, rule cross-reference, API doc revision, setup-guide line — the doc update lands in the **same PR** as the code change. The Beads story for that slice is not closeable until both are in the same merged commit.
+
+Why this matters:
+
+- Standalone doc-only PRs add review overhead and break the connection between the change and its rationale.
+- Doc updates filed as separate Beads stories drift — the code merges and the doc-update story sits open until it's stale or forgotten.
+- A reader looking at the PR for a code change should see the doc update next to the code, not have to chase a follow-up PR.
+
+Standalone doc-only PRs are reserved for the *substantive plan/doc* cases above (new docs, rule rewrites, cross-doc coordination). They are **not** a workaround for "I forgot to update the README in the code slice."
+
+The slice-completion checklist in §1 enforces this — the *Docs and rules* checkbox confirms that any triggered doc update is in the same diff, not deferred.
+
 ### Branch convention
 
 - One branch per Beads child story. Name: `pool-master-NNN-<short-slug>` where `NNN` is the story ID and `<short-slug>` is a 2–5 word kebab-case description (e.g., `pool-master-142-contest-archive-validation`, `pool-master-198-fix-status-null-on-archive`).
 - Branch off the current `main` HEAD at slice start. Do not stack branches unless the dependency is genuine (and modeled in Beads `blocked_by`).
-- Never push directly to `main`. The branch + PR + multi-pass review + merge loop is the only path.
+- Never push directly to `main` **except** for the direct-push lane carve-out above. The branch + PR + multi-pass review + merge loop is the only path for code, tests, contract changes, infrastructure, and substantive plan/rule/ADR/persona changes.
 
 ### Multi-pass review flow
 
