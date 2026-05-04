@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ContestEntryPage } from './contest-entry-page';
@@ -80,7 +80,7 @@ function renderContestEntryPage() {
     },
   });
 
-  return render(
+  const renderResult = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter
         initialEntries={[
@@ -102,6 +102,11 @@ function renderContestEntryPage() {
       </MemoryRouter>
     </QueryClientProvider>,
   );
+
+  return {
+    ...renderResult,
+    queryClient,
+  };
 }
 
 function primeCommonMocks(overrides?: {
@@ -436,6 +441,59 @@ describe('ContestEntryPage', () => {
       }),
       expect.any(String),
     );
+  });
+
+  it('pool-master-rop.20 preserves unsaved entry details across draft-state query refetches', async () => {
+    primeCommonMocks();
+    const selectionGroups = [
+      {
+        groupId: 'tier-1',
+        groupName: 'Tier A',
+        groupNumber: 1,
+        picksFromGroup: 1,
+        selectedParticipantIds: ['sep-1'],
+        participants: [
+          buildGolfParticipant('sep-1', 'Scottie Scheffler', 1, true),
+        ],
+      },
+    ];
+    getDraftStateMock.mockResolvedValue({
+      data: {
+        ...buildDraftState(selectionGroups),
+        tiebreakerValue: -8,
+      },
+    });
+
+    const { queryClient } = renderContestEntryPage();
+
+    await screen.findByTestId('contest-entry-name-input');
+    fireEvent.change(screen.getByTestId('contest-entry-name-input'), {
+      target: { value: 'Unsaved Sunday Charge' },
+    });
+    fireEvent.change(screen.getByTestId('contest-entry-tiebreaker-select'), {
+      target: { value: '-12' },
+    });
+    getDraftStateMock.mockResolvedValueOnce({
+      data: {
+        ...buildDraftState(selectionGroups),
+        selectedEntryName: 'Server Snapshot Entry',
+        tiebreakerValue: -3,
+      },
+    });
+
+    await act(async () => {
+      await queryClient.refetchQueries({ queryKey: ['poolmaster', 'draft-state', 'contest-1', 'entry-1'] });
+    });
+
+    await waitFor(() =>
+      expect(queryClient.getQueryData(['poolmaster', 'draft-state', 'contest-1', 'entry-1'])).toMatchObject({
+        selectedEntryName: 'Server Snapshot Entry',
+        tiebreakerValue: -3,
+      }),
+    );
+
+    expect(screen.getByTestId('contest-entry-name-input')).toHaveValue('Unsaved Sunday Charge');
+    expect(screen.getByTestId('contest-entry-tiebreaker-select')).toHaveValue('-12');
   });
 
   it('shows read-only entry detail once the contest is locked', async () => {

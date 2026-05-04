@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
@@ -44,6 +44,16 @@ vi.mock('@/lib/api', () => ({
   updateLeagueIcon: (...args: unknown[]) => updateLeagueIconMock(...args),
 }));
 
+function LeagueRouteControls() {
+  const navigate = useNavigate();
+
+  return (
+    <button data-testid="go-next-league" onClick={() => navigate('/league/NEWDOGS')} type="button">
+      Next league
+    </button>
+  );
+}
+
 function renderLeagueDetailPage() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -58,7 +68,15 @@ function renderLeagueDetailPage() {
       <AuthProvider>
         <MemoryRouter initialEntries={['/league/BIGDAWGS']}>
           <Routes>
-            <Route element={<LeagueDetailPage />} path="/league/:leagueCode" />
+            <Route
+              element={(
+                <>
+                  <LeagueRouteControls />
+                  <LeagueDetailPage />
+                </>
+              )}
+              path="/league/:leagueCode"
+            />
             <Route element={<div data-testid="team-page" />} path="/league/:leagueCode/teams/:teamId" />
             <Route
               element={<div data-testid="contest-page" />}
@@ -241,6 +259,144 @@ describe('LeagueDetailPage', () => {
         name: 'Bigger Dawgs',
       }),
     ]);
+  });
+
+  it('pool-master-rop.20 preserves unsaved league detail drafts across query refetches', async () => {
+    primeCommonMocks();
+    const { queryClient } = renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByTestId('league-open-details'));
+    await screen.findByTestId('league-details-modal');
+    fireEvent.change(screen.getByTestId('league-details-name'), {
+      target: { value: 'Unsaved League Name' },
+    });
+    fireEvent.change(screen.getByTestId('league-details-description'), {
+      target: { value: 'Unsaved description' },
+    });
+
+    getLeagueByCodeMock.mockResolvedValueOnce({
+      data: {
+        league: {
+          id: 'league-1',
+          leagueCode: 'BIGDAWGS',
+          name: 'Server Snapshot League',
+          description: 'Server snapshot description',
+          isActive: true,
+          iconKey: 'TROPHY',
+          memberCount: 2,
+          activeContestCount: 1,
+          memberType: 'COMMISSIONER',
+          leagueRelationship: {
+            leagueMember: true,
+            commissioner: true,
+          },
+          isRootAdmin: false,
+          joinPolicy: 'COMMISSIONER_ONLY',
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+
+    await act(async () => {
+      await queryClient.refetchQueries({ queryKey: ['poolmaster', 'league', 'BIGDAWGS'] });
+    });
+
+    await waitFor(() =>
+      expect(queryClient.getQueryData(['poolmaster', 'league', 'BIGDAWGS'])).toMatchObject({
+        name: 'Server Snapshot League',
+        description: 'Server snapshot description',
+      }),
+    );
+
+    expect(screen.getByTestId('league-details-name')).toHaveValue('Unsaved League Name');
+    expect(screen.getByTestId('league-details-description')).toHaveValue('Unsaved description');
+  });
+
+  it('pool-master-rop.20 reseeds league detail drafts when the league identity changes', async () => {
+    primeCommonMocks();
+    updateLeagueDetailsMock.mockResolvedValue({
+      data: {
+        league: {
+          id: 'league-2',
+          leagueCode: 'NEWDOGS',
+          name: 'Renamed New Dawgs',
+          description: 'Updated new description',
+          isActive: true,
+          iconKey: 'TROPHY',
+          memberCount: 2,
+          activeContestCount: 1,
+          memberType: 'COMMISSIONER',
+          leagueRelationship: {
+            leagueMember: true,
+            commissioner: true,
+          },
+          isRootAdmin: false,
+          joinPolicy: 'COMMISSIONER_ONLY',
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+    renderLeagueDetailPage();
+
+    await screen.findByTestId('league-home');
+    fireEvent.click(screen.getByTestId('league-open-details'));
+    await screen.findByTestId('league-details-modal');
+    fireEvent.change(screen.getByTestId('league-details-name'), {
+      target: { value: 'Unsaved League Name' },
+    });
+    fireEvent.change(screen.getByTestId('league-details-description'), {
+      target: { value: 'Unsaved description' },
+    });
+
+    getLeagueByCodeMock.mockResolvedValueOnce({
+      data: {
+        league: {
+          id: 'league-2',
+          leagueCode: 'NEWDOGS',
+          name: 'New Dawgs',
+          description: 'New league description',
+          isActive: true,
+          iconKey: 'TROPHY',
+          memberCount: 2,
+          activeContestCount: 1,
+          memberType: 'COMMISSIONER',
+          leagueRelationship: {
+            leagueMember: true,
+            commissioner: true,
+          },
+          isRootAdmin: false,
+          joinPolicy: 'COMMISSIONER_ONLY',
+          createdAt: '2026-04-15T00:00:00.000Z',
+        },
+      },
+    });
+
+    fireEvent.click(screen.getByTestId('go-next-league'));
+
+    await waitFor(() => expect(screen.getByTestId('league-details-name')).toHaveValue('New Dawgs'));
+    expect(screen.getByTestId('league-details-description')).toHaveValue('New league description');
+
+    fireEvent.change(screen.getByTestId('league-details-name'), {
+      target: { value: 'Renamed New Dawgs' },
+    });
+    fireEvent.change(screen.getByTestId('league-details-description'), {
+      target: { value: 'Updated new description' },
+    });
+    fireEvent.click(screen.getByTestId('league-save-details'));
+
+    await waitFor(() =>
+      expect(updateLeagueDetailsMock).toHaveBeenCalledWith({
+        path: { id: 'league-2' },
+        body: {
+          name: 'Renamed New Dawgs',
+          description: 'Updated new description',
+        },
+      }),
+    );
+    expect(updateLeagueDetailsMock).not.toHaveBeenCalledWith(expect.objectContaining({
+      path: { id: 'league-1' },
+    }));
   });
 
   it('shows a clear handoff message when the last commissioner tries to leave', async () => {
