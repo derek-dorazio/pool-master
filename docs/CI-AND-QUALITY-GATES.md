@@ -537,12 +537,10 @@ For completeness, the workflow continues with these jobs after
 lint-typecheck. Their behavior was not changed by the rule-enforcement
 hardening epic.
 
-- **`service-coverage-report`** — backend unit, integration, and FAPI test
-  suites with merged coverage; uploads coverage artifact.
-- **`poolmaster-unit-tests`** — Vitest unit tests for the React app with
-  coverage; uploads coverage artifact.
-- **`coverage-summary`** — consolidated coverage table in the GitHub Actions
-  step summary.
+- **Test suites** — `service-coverage-report`, `poolmaster-unit-tests`,
+  `coverage-summary`, and `poolmaster-browser-e2e`. See *Test suites*
+  below for each suite's purpose, runner, configuration, coverage
+  policy, and CI mapping.
 - **`service-build`** — backend service Docker build verification.
 - **`mock-contest-feed-provider-build`** — mock provider Docker build
   verification.
@@ -552,9 +550,114 @@ hardening epic.
   invalidates CloudFront.
 - **`migrate-qa`** (push to `main` only) — runs the migration ECS task,
   waits for ECS service stabilization, and dumps diagnostics on failure.
-- **`poolmaster-browser-e2e`** (push to `main` only) — verifies the deployed
-  release prefix is live, then runs Playwright against
-  `qa.ultimateofficepoolmanager.com`.
+
+## Test suites
+
+Five distinct test suites cover the codebase. Each has its own runner,
+configuration, scope, and CI mapping. The suites are layered: unit
+tests cover service logic in isolation, integration tests exercise
+real database interactions, functional API tests verify the full
+backend stack through the generated SDK, webapp unit tests cover React
+components and hooks, and browser E2E tests verify the deployed
+release.
+
+### 1. Backend unit (`tests/unit/**/*.test.ts`)
+
+- **Runner:** Jest with `ts-jest`.
+- **Config:** [`tests/jest.config.js`](../tests/jest.config.js).
+- **Environment:** Node (no DB, no Fastify server). Pure function tests against service classes, mappers, helpers, scoring math.
+- **Test count today:** ~62 files.
+- **Local commands:**
+  - `npm run test:service:unit` (or `npm test`) — run the suite
+  - `npm run test:coverage:service:unit` — run with coverage
+- **CI job:** runs as part of `service-coverage-report` via `npm run test:coverage:service:merged` (the merged-coverage runner runs unit, integration, and FAPI sequentially against the same coverage directory).
+- **Required pre-push gate:** `npx jest --config tests/jest.config.js --forceExit` (per `AGENTS.md` Quality Gates).
+- **Coverage policy:** **Threshold configured at the suite level** — `coverageThreshold.global` in `tests/jest.config.js`: 24% statements, 14.2% branches, 21.15% functions, 24.53% lines. These are floor values from the rule-enforcement epic baseline, not aspirational targets — they exist to prevent regression while real coverage targets are set per-feature.
+- **Database:** none. Pure unit tests must not touch Postgres; if a test needs a DB, it belongs in the integration suite.
+
+### 2. Backend integration (`tests/integration/**/*.integration.ts`)
+
+- **Runner:** Jest with `ts-jest`.
+- **Config:** [`tests/integration/jest.config.js`](../tests/integration/jest.config.js).
+- **Environment:** Node + a real Postgres test database (`poolmaster_test`). Tests typically use Fastify's `app.inject` to drive routes end-to-end through Prisma into Postgres without an HTTP listener.
+- **Test count today:** ~17 files.
+- **Concurrency:** `maxWorkers: 1` (serial). Tests share a database; running in parallel would corrupt fixtures.
+- **Test timeout:** 30s.
+- **Local commands:**
+  - `npm run test:service:integration` — run the suite (requires `DATABASE_URL` and a fresh DB)
+  - `npm run test:service:integration:fresh` — reset DB then run
+  - `npm run test:coverage:service:integration` — coverage variant
+- **CI job:** `service-coverage-report` (Postgres provided as a Docker service container).
+- **Required pre-push gate:** `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npm run test:service:integration`.
+- **Coverage policy:** **No threshold** in `tests/integration/jest.config.js`. Integration coverage feeds the merged report but isn't gated on its own.
+- **Database setup:** `npm run db:test:reset` recreates the test DB; `npm run db:test:migrate` applies migrations. `db:test:recreate` is the canonical pre-run reset.
+
+### 3. Backend functional API / FAPI (`tests/functional/**/*.functional.ts`)
+
+- **Runner:** Jest with `ts-jest` (custom config).
+- **Config:** [`tests/functional/jest.config.js`](../tests/functional/jest.config.js).
+- **Environment:** Node + real Postgres + real Fastify server bound to a port + the **generated SDK from `@poolmaster/shared`** as the test client. Each test exercises a full user-facing flow through the SDK exactly the way the React app does.
+- **Test count today:** ~10 files.
+- **Concurrency:** `maxWorkers: 1` (serial); shared DB and shared port.
+- **Test timeout:** 30s.
+- **Setup hooks:** `globalSetup` (`tests/functional/global-setup.cjs`) starts the Fastify server; `globalTeardown` shuts it down. The custom runner `scripts/run-service-functional-api.mjs` orchestrates this.
+- **Why this layer matters:** This is the only suite that runs the **full request → SDK → router → service → mapper → DTO → DB stack** and is therefore the load-bearing test for contract correctness. Routes, mappers, generated SDK, OpenAPI spec, and DTOs all have to be in sync for FAPI tests to pass — making it the de facto contract verification gate.
+- **Local commands:**
+  - `npm run test:service:functional-api` — run the suite (requires `DATABASE_URL`)
+  - `npm run test:service:functional-api:fresh` — reset DB then run
+  - `npm run test:coverage:service:functional-api` — coverage variant
+- **CI job:** `service-coverage-report` (runs as part of the merged coverage script).
+- **Required pre-push gate:** `DATABASE_URL=... npm run test:service:functional-api` (per `AGENTS.md` Quality Gates).
+- **Coverage policy:** No threshold; coverage feeds the merged report.
+
+### 4. Webapp unit (`clients/poolmaster/src/**/*.test.{ts,tsx}`)
+
+- **Runner:** Vitest with `@vitejs/plugin-react`.
+- **Config:** [`clients/poolmaster/vitest.config.ts`](../clients/poolmaster/vitest.config.ts).
+- **Environment:** jsdom. React Testing Library renders components; tests assert behavior via DOM queries and `data-testid` selectors.
+- **Test count today:** ~92 files / ~283 tests.
+- **Setup file:** `src/test-setup.ts` (jsdom polyfills, MSW setup if/when adopted, etc.).
+- **Local commands:**
+  - `npm run test:poolmaster:unit` — run the suite
+  - `npm run test:coverage:poolmaster:unit` — run with coverage (v8 provider, lcov + json-summary reporters)
+- **CI job:** `poolmaster-unit-tests` (uploads `coverage-webapp-unit` artifact).
+- **Required pre-push gate:** `npm run test:poolmaster:unit` (per `AGENTS.md` Quality Gates).
+- **Coverage policy:** **No threshold configured** in `vitest.config.ts`. Coverage is reported but not gated. (Riley flagged this in the rop.19 review; future work to set per-feature thresholds will need to add a `coverage.thresholds` block.)
+- **Known anti-pattern this suite has accumulated:** `vi.mock('@/lib/api')` at module level in 30+ tests — see `pool-master-rop.4`. The intent is for this suite to use **MSW** for HTTP boundary mocking instead of replacing the SDK; the migration is tracked in epic `pool-master-rop.71`.
+
+### 5. Webapp browser E2E (`clients/poolmaster/e2e/**/*.e2e.ts`)
+
+- **Runner:** Playwright (Chromium project).
+- **Config:** [`clients/poolmaster/playwright.config.ts`](../clients/poolmaster/playwright.config.ts).
+- **Environment:** Real browser (Chromium / optionally a system-installed channel via `POOLMASTER_E2E_BROWSER_CHANNEL`) hitting the **deployed QA frontend** at `qa.ultimateofficepoolmanager.com` (override via `POOLMASTER_E2E_BASE_URL`).
+- **Test count today:** ~5 `.e2e.ts` files plus `*.setup.ts` auth setup.
+- **Concurrency:** `fullyParallel: false`, `workers: 1`. Tests share state through the deployed environment.
+- **Retries:** none. CI fails immediately on flake; local failures are reproducible.
+- **Artifacts on failure:** trace, screenshot, video — all retained on failure for triage.
+- **Local commands:**
+  - `npm run test:poolmaster:browser-e2e` — run the suite
+  - `npm run test:poolmaster:browser-e2e:list` — list tests without running
+- **CI job:** `poolmaster-browser-e2e` (push-to-main only; not run on PR builds). Triggered after `migrate-qa` deploy succeeds.
+- **Required pre-push gate:** none. E2E is a **CI-only** signal; per `AGENTS.md` Quality Gates, browser E2E falls under "CI-only follow-up signals" and isn't required pre-push.
+- **Coverage policy:** N/A. E2E doesn't produce coverage artifacts.
+
+### Merged coverage and the consolidation job
+
+- **`test:coverage:service:merged`** (`scripts/run-backend-coverage.mjs`) runs all three backend suites (unit + integration + FAPI) with coverage collection and merges the results into `coverage/service-merged/`. This is the canonical local backend coverage command.
+- **`coverage-summary`** (CI job) downloads the `coverage-service-report` and `coverage-webapp-unit` artifacts and emits a single Markdown table to the GitHub Actions step summary covering Service / Web App Unit metrics.
+- **Why merged matters:** the same source file is often partly covered by a unit test (logic correctness) and partly by an integration test (real-DB behavior). Merging gives an honest count of "how much of this file is exercised by *any* test."
+
+### Coverage thresholds — current state and roadmap
+
+| Suite | Threshold today | Source of truth |
+|---|---|---|
+| Backend unit | 24% / 14.2% / 21.15% / 24.53% (stmts / branches / fns / lines) | `tests/jest.config.js` |
+| Backend integration | none | — |
+| Backend FAPI | none | — |
+| Webapp unit | none | — |
+| Webapp E2E | N/A | — |
+
+The single configured threshold is intentionally a **regression floor**, not a target. Real per-feature coverage targets are tracked in the rule-enforcement epic follow-ups; pages and modules touched by the q8h frontend rule hardening epic will gain explicit thresholds as part of that work. Until then, slice authors should aim for ≥ 80% statements on touched files but the suite-level gate stays at the floor.
 
 ## File reference
 
