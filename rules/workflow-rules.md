@@ -1010,5 +1010,7 @@ For migration / backfill / non-reversible slices specifically, the pause request
 ### Branch lifecycle
 
 - Open branches stay short-lived (hours to days). A branch that has been open longer than the Beads story has been `in_progress` is a sign the work has stalled — close or split it.
-- After merge, `--delete-branch` removes the remote branch. The local branch can be deleted with `git branch -d pool-master-NNN-<slug>` once switched back to `main`.
+- **The remote branch is deleted on merge automatically.** The repo has `delete_branch_on_merge: true` set at the repo level, so any merge (UI button, `gh pr merge`, API call) cleans up the head branch. Verify with `gh api repos/derek-dorazio/pool-master --jq '.delete_branch_on_merge'`. If a future repo deviates from this convention, branches will accumulate as cleanup tax.
+- **CLI merges should still pass `--delete-branch` explicitly.** `gh pr merge --squash --delete-branch` is the canonical form (already required by the implementing-agent slice closeout protocol above). The repo-level setting is the safety net for UI merges and any case where the flag is forgotten.
+- The local branch can be deleted with `git branch -d pool-master-NNN-<slug>` once switched back to `main`. Use `-D` only if the branch wasn't fully merged (rare; the merge-and-delete happens atomically when `--delete-branch` is used).
 - Reopened stories spawn a new branch with the same `pool-master-NNN-` prefix and a new slug; do not reuse a merged branch.
