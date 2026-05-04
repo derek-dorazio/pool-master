@@ -13,7 +13,7 @@ describe('logger', () => {
     vi.restoreAllMocks();
   });
 
-  it('filters logs below the configured level', () => {
+  it('rule: logger filters logs below the configured level', () => {
     const sink: LogSink = {
       write: vi.fn(),
     };
@@ -46,7 +46,7 @@ describe('logger', () => {
     );
   });
 
-  it('redacts sensitive payload data before dispatching to sinks', () => {
+  it('rule: logger redacts sensitive payload data before dispatching to sinks', () => {
     const sink: LogSink = {
       write: vi.fn(),
     };
@@ -88,7 +88,7 @@ describe('logger', () => {
     );
   });
 
-  it('isolates sink failures and continues writing to the remaining sinks', () => {
+  it('rule: logger isolates sink failures and continues writing to the remaining sinks', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const brokenSink: LogSink = {
       write: vi.fn(() => {
@@ -116,7 +116,7 @@ describe('logger', () => {
     );
   });
 
-  it('merges child bindings into payload data', () => {
+  it('rule: logger merges child bindings into payload data', () => {
     const sink: LogSink = {
       write: vi.fn(),
     };
@@ -157,7 +157,7 @@ describe('logger', () => {
     );
   });
 
-  it('honors an explicit configured log level', () => {
+  it('rule: logger honors an explicit configured log level', () => {
     expect(resolveConfiguredLogLevel('debug', 'production')).toBe('debug');
     expect(resolveConfiguredLogLevel('verbose', 'production')).toBe('info');
   });

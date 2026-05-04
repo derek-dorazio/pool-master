@@ -18,7 +18,7 @@ describe('registerGlobalBrowserFailureHandlers', () => {
     vi.restoreAllMocks();
   });
 
-  it('logs window errors at fatal level', () => {
+  it('rule: frontend fatal logging captures window errors', () => {
     const logger = createLogger();
     const teardown = registerGlobalBrowserFailureHandlers(logger);
 
@@ -48,7 +48,7 @@ describe('registerGlobalBrowserFailureHandlers', () => {
     teardown();
   });
 
-  it('logs unhandled promise rejections at fatal level', () => {
+  it('rule: frontend fatal logging captures unhandled promise rejections', () => {
     const logger = createLogger();
     const teardown = registerGlobalBrowserFailureHandlers(logger);
     const rejectionEvent = new Event('unhandledrejection') as PromiseRejectionEvent;
@@ -70,7 +70,7 @@ describe('registerGlobalBrowserFailureHandlers', () => {
     teardown();
   });
 
-  it('removes listeners on teardown', () => {
+  it('rule: browser failure handlers remove listeners on teardown', () => {
     const logger = createLogger();
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
 

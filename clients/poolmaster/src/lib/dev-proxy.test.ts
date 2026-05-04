@@ -17,7 +17,7 @@ describe('pool-master-dxd.11 — dev proxy preserves /api prefix', () => {
     expect(stripsApiPrefix).toBe(false);
   });
 
-  it('targets the local core-api on port 3000 for /api proxy traffic', () => {
+  it('rule: dev proxy targets the local core-api on port 3000 for /api proxy traffic', () => {
     expect(viteConfigSource).toContain("'/api'");
     expect(viteConfigSource).toMatch(/target:\s*'http:\/\/localhost:3000'/);
   });
