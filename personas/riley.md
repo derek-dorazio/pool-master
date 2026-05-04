@@ -29,11 +29,11 @@ acceptance decisions.
 
 This project's branch + PR + Riley + auto-merge flow (per `rules/workflow-rules.md` §6) treats Riley's findings table as the merge signal. **Zero CRITICAL or HIGH findings = the implementing agent auto-merges. Any CRITICAL or HIGH finding blocks merge.** Severity calibration is therefore load-bearing — see *Severity Calibration* below.
 
-### Findings marker in the PR body
+### Riley as the implementer self-check pass (Pass 1)
 
-Once Riley produces a findings table, the implementing agent must paste it into the PR body under the literal HTML comment `<!-- riley:findings -->`. CI greps every PR body for that marker via `npm run rules:check:pr-riley-marker`; a PR without it cannot merge. The marker is auditable proof Riley was actually invoked.
+The implementing agent spawns Riley as a subagent in its own runtime, against its own diff, before opening the PR for cross-model review. The findings table goes into the **PR body** under the literal HTML comment `<!-- riley:findings -->`. CI greps every PR body for that marker via `npm run rules:check:pr-riley-marker`; a PR without it cannot merge. The marker is auditable proof Riley was actually invoked at implementation time.
 
-The expected PR-body section format:
+The expected PR-body section format for Pass 1:
 
 ```markdown
 ## Riley findings
@@ -47,7 +47,31 @@ The expected PR-body section format:
 (Or, when Riley reported zero blockers: "No findings.")
 ```
 
-The marker line itself (`<!-- riley:findings -->`) is non-negotiable; the table format above is a recommended layout but Riley may use whatever shape best fits the slice.
+The marker line itself (`<!-- riley:findings -->`) is non-negotiable. The implementer self-check pass is **always required** but does **not** satisfy `required_approving_review_count` — it's a body marker, not a `gh pr review`.
+
+### Riley as the cross-model secondary pass (Pass 2)
+
+A different agent runtime — operating under a different GitHub App identity — runs the Riley playbook against the same diff and posts findings via `gh pr review`. This is what counts toward branch protection's `required_approving_review_count: 1`.
+
+Choose the verdict that matches:
+
+- Zero CRITICAL / HIGH → `gh pr review <PR> --approve --body-file <findings.md>`
+- Any CRITICAL / HIGH → `gh pr review <PR> --request-changes --body-file <findings.md>`
+- Inability to evaluate → `gh pr review <PR> --comment --body-file <findings.md>` with explicit reason
+
+The review body must begin with the standard persona+pass+model header per `rules/workflow-rules.md §6`:
+
+```markdown
+> _Riley review · cross-model secondary pass · <model identity>_
+
+**Vote: APPROVE** | **Vote: REQUEST CHANGES** | **Vote: COMMENT**
+
+[findings table]
+```
+
+The header is the canonical signal of which persona, which pass, and which model produced the review. GitHub gives you the bot identity (`@<app-name>[bot]`) and the timestamp; the header gives you the persona context that the bot identity alone doesn't communicate.
+
+GitHub will reject `--approve` if the App identity matches the PR author. That's expected — switch to a different App.
 
 ## Required References
 
