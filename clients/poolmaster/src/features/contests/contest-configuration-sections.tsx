@@ -108,10 +108,10 @@ export function EventReadinessPanel({
       <DefinitionList
         className="mt-4"
         items={[
-          { label: "Participants loaded", value: event.participantCount ?? 0 },
-          { label: "Release at", value: formatDateTimeDisplay(event.releaseAt) },
-          { label: "Field locks at", value: formatDateTimeDisplay(event.fieldLocksAt) },
-          { label: "Event status", value: event.status },
+          { id: "participants-loaded", label: "Participants loaded", value: event.participantCount ?? 0 },
+          { id: "release-at", label: "Release at", value: formatDateTimeDisplay(event.releaseAt) },
+          { id: "field-locks-at", label: "Field locks at", value: formatDateTimeDisplay(event.fieldLocksAt) },
+          { id: "event-status", label: "Event status", value: event.status },
         ]}
       />
     </Tile>
@@ -221,6 +221,7 @@ export function TierSettingsEditor({
 
 type ContestSetupSummaryProps = {
   items: Array<{
+    id: string;
     label: string;
     value: string | number;
   }>;

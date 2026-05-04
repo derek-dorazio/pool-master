@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import {
   ActionModal,
@@ -8,6 +9,18 @@ import {
   ReadOnlyDetailModal,
   WizardModal,
 } from "./modal-templates";
+
+function StatefulDetailValue({
+  testId,
+  value,
+}: {
+  testId: string;
+  value: string;
+}) {
+  const [initialValue] = useState(value);
+
+  return <span data-testid={testId}>{initialValue}</span>;
+}
 
 describe("pool-master-3ew: shared modal templates", () => {
   it("pool-master-3ew.7: renders form modal actions and pending save state", () => {
@@ -153,7 +166,7 @@ describe("pool-master-3ew: shared modal templates", () => {
     render(
       <ReadOnlyDetailModal
         detailContent={<pre>{"{ \"status\": \"COMPLETED\" }"}</pre>}
-        details={[{ label: "Status", value: "Completed" }]}
+        details={[{ id: "status", label: "Status", value: "Completed" }]}
         onCancel={vi.fn()}
         onCopy={handleCopy}
         onOpenChange={vi.fn()}
@@ -166,6 +179,48 @@ describe("pool-master-3ew: shared modal templates", () => {
     expect(screen.getByText("Completed")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Copy details" }));
     expect(handleCopy).toHaveBeenCalledTimes(1);
+  });
+
+  it("pool-master-rop.62: keeps read-only detail values keyed by item identity after reorder", () => {
+    const buildDetails = (order: Array<"status" | "duration">) =>
+      order.map((id) => ({
+        id,
+        label: id === "status" ? "Status" : "Duration",
+        value: (
+          <StatefulDetailValue
+            testId={`${id}-detail-value`}
+            value={id === "status" ? "Completed" : "42s"}
+          />
+        ),
+      }));
+    const { rerender } = render(
+      <ReadOnlyDetailModal
+        detailContent={<pre>{"{}"}</pre>}
+        details={buildDetails(["status", "duration"])}
+        onCancel={vi.fn()}
+        onOpenChange={vi.fn()}
+        open
+        title="Sync payload"
+      />,
+    );
+
+    rerender(
+      <ReadOnlyDetailModal
+        detailContent={<pre>{"{}"}</pre>}
+        details={buildDetails(["duration", "status"])}
+        onCancel={vi.fn()}
+        onOpenChange={vi.fn()}
+        open
+        title="Sync payload"
+      />,
+    );
+
+    expect(screen.getByTestId("duration-detail-value")).toHaveTextContent(
+      "42s",
+    );
+    expect(screen.getByTestId("status-detail-value")).toHaveTextContent(
+      "Completed",
+    );
   });
 
   it("pool-master-3ew.12: renders wizard progress and next-step action", () => {

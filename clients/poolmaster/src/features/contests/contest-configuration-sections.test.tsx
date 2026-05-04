@@ -94,8 +94,8 @@ describe("pool-master-pjr.8: contest configuration section components", () => {
     render(
       <ContestSetupSummary
         items={[
-          { label: "League", value: "Mathworks" },
-          { label: "Mode", value: "Golf tiered contest" },
+          { id: "league", label: "League", value: "Mathworks" },
+          { id: "mode", label: "Mode", value: "Golf tiered contest" },
         ]}
       />,
     );

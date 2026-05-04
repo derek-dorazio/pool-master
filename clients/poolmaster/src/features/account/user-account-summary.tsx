@@ -28,9 +28,9 @@ export function UserAccountSummary({
         <DefinitionList
           className="mt-4 sm:grid-cols-1"
           items={[
-            { label: "Name", value: name },
-            { label: "Email", value: email },
-            { label: "Username", value: username },
+            { id: "name", label: "Name", value: name },
+            { id: "email", label: "Email", value: email },
+            { id: "username", label: "Username", value: username },
           ]}
         />
       </Tile>
@@ -42,10 +42,10 @@ export function UserAccountSummary({
         <DefinitionList
           className="mt-4"
           items={[
-            { label: "Member since", value: memberSince },
-            { label: "Status", value: status },
-            { label: "Role", value: role },
-            { label: "Method", value: method },
+            { id: "member-since", label: "Member since", value: memberSince },
+            { id: "status", label: "Status", value: status },
+            { id: "role", label: "Role", value: role },
+            { id: "method", label: "Method", value: method },
           ]}
         />
       </Tile>

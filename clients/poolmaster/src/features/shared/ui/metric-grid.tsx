@@ -33,6 +33,7 @@ export function MetricTile({ helperText, label, value }: MetricTileProps) {
 }
 
 type DefinitionItem = {
+  id: string;
   label: ReactNode;
   value: ReactNode;
 };
@@ -50,8 +51,11 @@ export function DefinitionList({ className, items }: DefinitionListProps) {
         className,
       )}
     >
-      {items.map((item, index) => (
-        <div className="rounded-2xl bg-background px-4 py-4" key={index}>
+      {items.map((item) => (
+        <div
+          className="rounded-2xl bg-background px-4 py-4"
+          key={item.id}
+        >
           <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
             {item.label}
           </dt>

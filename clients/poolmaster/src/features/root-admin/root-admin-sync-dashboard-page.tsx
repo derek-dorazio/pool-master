@@ -291,10 +291,11 @@ export function RootAdminSyncDashboardPage() {
         details={
           payloadRun
             ? [
-                { label: 'Status', value: payloadRun.status },
-                { label: 'Sport', value: payloadRun.sport },
-                { label: 'Event', value: formatEventValue(payloadRun.eventId) },
+                { id: 'status', label: 'Status', value: payloadRun.status },
+                { id: 'sport', label: 'Sport', value: payloadRun.sport },
+                { id: 'event', label: 'Event', value: formatEventValue(payloadRun.eventId) },
                 {
+                  id: 'provider',
                   label: 'Provider',
                   value: getProviderName(payloadRun.providerId, providersQuery.data),
                 },

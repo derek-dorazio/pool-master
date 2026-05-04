@@ -675,17 +675,18 @@ export function ContestEntryPage() {
             <DefinitionList
               className="mt-5"
               items={[
-                { label: 'Entry status', value: entrySummary?.status ?? 'ACTIVE' },
-                { label: 'Contest phase', value: getContestPhaseLabel(contest) },
-                { label: 'Score', value: `${entrySummary?.totalScore ?? 0} pts` },
+                { id: 'entry-status', label: 'Entry status', value: entrySummary?.status ?? 'ACTIVE' },
+                { id: 'contest-phase', label: 'Contest phase', value: getContestPhaseLabel(contest) },
+                { id: 'score', label: 'Score', value: `${entrySummary?.totalScore ?? 0} pts` },
                 {
+                  id: 'standing',
                   label: 'Standing',
                   value: entrySummary?.standingsPosition
                     ? `#${entrySummary.standingsPosition}`
                     : 'Rank pending',
                 },
-                { label: 'Created', value: formatDateTimeDisplay(entrySummary?.createdAt) },
-                { label: 'Last updated', value: formatDateTimeDisplay(entrySummary?.updatedAt) },
+                { id: 'created', label: 'Created', value: formatDateTimeDisplay(entrySummary?.createdAt) },
+                { id: 'last-updated', label: 'Last updated', value: formatDateTimeDisplay(entrySummary?.updatedAt) },
               ]}
             />
 

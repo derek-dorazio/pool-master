@@ -1472,23 +1472,24 @@ export function CreateContestPage() {
           <>
           <ContestSetupSummary
             items={[
-              { label: 'League', value: leagueQuery.data.name },
-              { label: 'Mode', value: mode === 'GOLF_TIERED' ? 'Golf tiered contest' : 'Golf category picks' },
-              { label: 'Event', value: selectedEvent ? selectedEvent.name : 'Choose a golf event' },
+              { id: 'league', label: 'League', value: leagueQuery.data.name },
+              { id: 'mode', label: 'Mode', value: mode === 'GOLF_TIERED' ? 'Golf tiered contest' : 'Golf category picks' },
+              { id: 'event', label: 'Event', value: selectedEvent ? selectedEvent.name : 'Choose a golf event' },
               {
+                id: 'event-starts',
                 label: 'Event starts',
                 value: selectedEvent ? formatDateTimeDisplay(selectedEvent.startDate) : 'Choose a golf event',
               },
-              { label: 'Locks', value: derivedLockAt ? formatDateTimeDisplay(derivedLockAt) : 'Choose a golf event' },
-              { label: 'Entries per team', value: unlimitedEntries ? 'Unlimited' : maxEntriesPerTeam || '1' },
+              { id: 'locks', label: 'Locks', value: derivedLockAt ? formatDateTimeDisplay(derivedLockAt) : 'Choose a golf event' },
+              { id: 'entries-per-team', label: 'Entries per team', value: unlimitedEntries ? 'Unlimited' : maxEntriesPerTeam || '1' },
               ...(mode === 'GOLF_TIERED'
                 ? [
-                    { label: 'Golfers picked', value: rosterSize },
-                    { label: 'Count best', value: countedScores },
-                    { label: 'Tier source', value: tierSource === 'ODDS' ? 'Odds' : 'World rank' },
+                    { id: 'golfers-picked', label: 'Golfers picked', value: rosterSize },
+                    { id: 'count-best', label: 'Count best', value: countedScores },
+                    { id: 'tier-source', label: 'Tier source', value: tierSource === 'ODDS' ? 'Odds' : 'World rank' },
                   ]
                 : [
-                    { label: 'Enabled categories', value: selectedCategories.length },
+                    { id: 'enabled-categories', label: 'Enabled categories', value: selectedCategories.length },
                   ]),
             ]}
           />
