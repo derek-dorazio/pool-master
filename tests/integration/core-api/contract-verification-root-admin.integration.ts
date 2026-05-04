@@ -256,7 +256,7 @@ describe('Contract verification (root admin)', () => {
     await teardownIntegrationTests();
   });
 
-  it('ingestion root-admin routes match their DTOs', async () => {
+  it('pool-master-rop.2: ingestion root-admin routes match their DTOs', async () => {
     const app = Fastify({ logger: false });
     const rootAdmin = await createTestUser({
       displayName: 'Ingestion Contract Root Admin',
