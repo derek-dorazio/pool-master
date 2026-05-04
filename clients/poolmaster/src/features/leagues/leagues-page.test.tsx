@@ -183,7 +183,7 @@ describe('WelcomePage', () => {
     expect(await screen.findByTestId('league-home-destination')).toBeInTheDocument();
   });
 
-  it('pool-master-dxd.15: uses the shared no-retry leagues query policy and shared error state', async () => {
+  it('pool-master-dxd.15/pool-master-rop.63: uses the shared no-retry leagues query policy and shared error state', async () => {
     listLeaguesMock.mockRejectedValue(new Error('League list unavailable'));
 
     renderWelcomePage();
