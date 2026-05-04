@@ -26,30 +26,10 @@ import {
   type ContestConfigTemplate,
   updateTieredTemplateConfiguration,
 } from './content-configuration-utils';
+import { extractErrorMessage } from '@/lib/errors';
 
 type ContestConfigTemplateUpdateResult =
   AdminUpdateContestConfigTemplateResponses[200]['template'];
-
-function extractErrorMessage(error: unknown, fallback: string) {
-  if (!error || typeof error !== 'object') {
-    return fallback;
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return fallback;
-}
 
 export function RootAdminContentConfigurationDetailPage() {
   const { templateKey = '' } = useParams<{ templateKey: string }>();
@@ -144,7 +124,7 @@ export function RootAdminContentConfigurationDetailPage() {
     <AdminConfigPage
       errorBody={extractErrorMessage(
         templatesQuery.error,
-        'We could not load this contest template right now.',
+        { fallback: 'We could not load this contest template right now.' },
       )}
       header={{
         actions: (
@@ -202,7 +182,7 @@ export function RootAdminContentConfigurationDetailPage() {
               contestTemplateMutation.isError
                 ? extractErrorMessage(
                     contestTemplateMutation.error,
-                    'We could not save this contest template right now.',
+                    { fallback: 'We could not save this contest template right now.' },
                   )
                 : null
             }

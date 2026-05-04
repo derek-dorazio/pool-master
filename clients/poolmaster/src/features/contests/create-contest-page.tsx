@@ -48,6 +48,7 @@ import {
   type TierDefinition,
   type TierDefinitionUpdate,
 } from './contest-configuration-sections';
+import { extractErrorMessage } from '@/lib/errors';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type SportEventSummary = ListEventsResponses[200]['events'][number];
@@ -87,27 +88,6 @@ const LOCK_PRESET_OPTIONS: Array<{
   { value: 'ONE_HOUR', label: '1 hour before start', minutes: 60 },
   { value: 'CUSTOM', label: 'Custom', minutes: null },
 ];
-
-function extractErrorMessage(error: unknown): string {
-  if (!error || typeof error !== 'object') {
-    return 'We could not create that contest. Please try again.';
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return 'We could not create that contest. Please try again.';
-}
 
 function buildTierKey(index: number) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -952,7 +932,7 @@ export function CreateContestPage() {
       } else {
         logger.warn(payload, isEditMode ? 'Contest update was rejected' : 'Contest create was rejected');
       }
-      setFormError(extractErrorMessage(error));
+      setFormError(extractErrorMessage(error, { fallback: 'We could not create that contest. Please try again.' }));
     },
   });
 
@@ -1013,7 +993,7 @@ export function CreateContestPage() {
       } else {
         logger.warn(payload, 'Contest delete was rejected');
       }
-      setFormError(extractErrorMessage(error));
+      setFormError(extractErrorMessage(error, { fallback: 'We could not create that contest. Please try again.' }));
     },
   });
 

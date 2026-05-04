@@ -37,32 +37,12 @@ import {
   TiebreakerSelector,
   type SelectionGroup,
 } from './contest-entry-selection';
+import { extractErrorMessage } from '@/lib/errors';
 
 type ContestDetail = GetContestResponses[200]['contest'];
 type DraftState = GetDraftStateResponses[200];
 
 const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
-
-function extractErrorMessage(error: unknown) {
-  if (!error || typeof error !== 'object') {
-    return 'We could not save this entry right now.';
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return 'We could not save this entry right now.';
-}
 
 function formatDateTimeDisplay(isoString: string | null | undefined) {
   if (!isoString) {
@@ -723,7 +703,7 @@ export function ContestEntryPage() {
                   </FormField>
                   {saveEntryDetailsMutation.isError ? (
                     <Alert tone="danger">
-                      {extractErrorMessage(saveEntryDetailsMutation.error)}
+                      {extractErrorMessage(saveEntryDetailsMutation.error, { fallback: 'We could not save this entry right now.' })}
                     </Alert>
                   ) : null}
                 </Tile>
@@ -800,7 +780,7 @@ export function ContestEntryPage() {
 
             {submitSelectionMutation.isError ? (
               <Alert tone="danger">
-                {extractErrorMessage(submitSelectionMutation.error)}
+                {extractErrorMessage(submitSelectionMutation.error, { fallback: 'We could not save this entry right now.' })}
               </Alert>
             ) : null}
 

@@ -14,6 +14,7 @@ import { buildLeaguePath } from './league-routing';
 import { LeagueIcon } from './league-icon';
 import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { removeLeagueSummary, syncLeagueCaches } from './league-cache';
+import { extractErrorMessage } from '@/lib/errors';
 
 type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
@@ -55,27 +56,6 @@ function roleLabel(role: string | null | undefined) {
     .split('_')
     .map((part) => part.slice(0, 1).toUpperCase() + part.slice(1).toLowerCase())
     .join(' ');
-}
-
-function extractErrorMessage(error: unknown): string {
-  if (!error || typeof error !== 'object') {
-    return 'We could not complete that league action. Please try again.';
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return 'We could not complete that league action. Please try again.';
 }
 
 export function ManageLeagueModal({
@@ -432,7 +412,7 @@ export function ManageLeagueModal({
                   ) : null}
 
                   {detailsMutation.isError ? (
-                    <p className="text-sm text-destructive">{extractErrorMessage(detailsMutation.error)}</p>
+                    <p className="text-sm text-destructive">{extractErrorMessage(detailsMutation.error, { fallback: 'We could not complete that league action. Please try again.' })}</p>
                   ) : null}
 
                   {detailsMutation.isSuccess ? (
@@ -516,7 +496,7 @@ export function ManageLeagueModal({
                     ) : null}
 
                     {iconMutation.isError ? (
-                      <p className="mt-4 text-sm text-destructive">{extractErrorMessage(iconMutation.error)}</p>
+                      <p className="mt-4 text-sm text-destructive">{extractErrorMessage(iconMutation.error, { fallback: 'We could not complete that league action. Please try again.' })}</p>
                     ) : null}
 
                     {iconMutation.isSuccess ? (
@@ -606,7 +586,7 @@ export function ManageLeagueModal({
 
                     {inactivateMutation.isError ? (
                       <p className="mt-4 text-sm text-destructive">
-                        {extractErrorMessage(inactivateMutation.error)}
+                        {extractErrorMessage(inactivateMutation.error, { fallback: 'We could not complete that league action. Please try again.' })}
                       </p>
                     ) : null}
 
@@ -696,7 +676,7 @@ export function ManageLeagueModal({
 
                         {deleteMutation.isError ? (
                           <p className="text-sm text-destructive">
-                            {extractErrorMessage(deleteMutation.error)}
+                            {extractErrorMessage(deleteMutation.error, { fallback: 'We could not complete that league action. Please try again.' })}
                           </p>
                         ) : null}
                       </div>

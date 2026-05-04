@@ -7,30 +7,10 @@ import {
   ManagementListPage,
   StatusBadge,
 } from "@/features/shared/ui";
+import { extractErrorMessage } from '@/lib/errors';
 
 type ManagedLeague = AdminListLeaguesResponses[200]["leagues"][number];
 const columnHelper = createColumnHelper<ManagedLeague>();
-
-function extractErrorMessage(error: unknown, fallback: string) {
-  if (!error || typeof error !== "object") {
-    return fallback;
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === "string") {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === "string") {
-    return candidate.message;
-  }
-
-  return fallback;
-}
 
 export function RootAdminManageLeaguesPage() {
   const leaguesQuery = useQuery({
@@ -118,7 +98,7 @@ export function RootAdminManageLeaguesPage() {
       emptyMessage="No leagues matched the current filters."
       errorBody={extractErrorMessage(
         leaguesQuery.error,
-        "We could not load leagues right now.",
+        { fallback: "We could not load leagues right now." },
       )}
       getRowId={(league) => league.id}
       getRowLink={(league) => buildLeaguePath(league.leagueCode)}

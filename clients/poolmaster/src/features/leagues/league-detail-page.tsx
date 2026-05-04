@@ -35,7 +35,7 @@ import {
   Textarea,
   Tile,
 } from '@/features/shared/ui';
-import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
+import { extractErrorMessage } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { removeLeagueSummary, syncLeagueCaches, type LeagueSummary } from './league-cache';
 import { getLeagueIconOption, LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
@@ -59,15 +59,10 @@ function formatRole(role: string | null | undefined) {
     .join(' ');
 }
 
-function extractErrorMessage(error: unknown, fallback: string) {
-  return extractSharedErrorMessage(error, {
-    fallback,
-    codeMessages: {
-      LEAGUE_LAST_COMMISSIONER_REQUIRED:
-        'Appoint another commissioner before the last commissioner leaves or steps down.',
-    },
-  });
-}
+const LEAGUE_DETAIL_ERROR_CODE_MESSAGES: Record<string, string> = {
+  LEAGUE_LAST_COMMISSIONER_REQUIRED:
+    'Appoint another commissioner before the last commissioner leaves or steps down.',
+};
 
 export function LeagueDetailPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -328,7 +323,7 @@ export function LeagueDetailPage() {
     },
     onError: (error) => {
       setLeaveActionError(
-        extractErrorMessage(error, 'We could not complete that leave request right now.'),
+        extractErrorMessage(error, { fallback: 'We could not complete that leave request right now.', codeMessages: LEAGUE_DETAIL_ERROR_CODE_MESSAGES }),
       );
     },
   });
@@ -556,7 +551,7 @@ export function LeagueDetailPage() {
                   currentStatus={lifecycleStatusLabel}
                   errorMessage={
                     activateLeagueMutation.isError
-                      ? extractErrorMessage(activateLeagueMutation.error, 'We could not activate this league.')
+                      ? extractErrorMessage(activateLeagueMutation.error, { fallback: 'We could not activate this league.', codeMessages: LEAGUE_DETAIL_ERROR_CODE_MESSAGES })
                       : null
                   }
                   helperText={
@@ -685,7 +680,7 @@ export function LeagueDetailPage() {
 
         {updateDetailsMutation.isError ? (
           <Alert className="mt-4" tone="danger">
-            {extractErrorMessage(updateDetailsMutation.error, 'We could not save league details.')}
+            {extractErrorMessage(updateDetailsMutation.error, { fallback: 'We could not save league details.', codeMessages: LEAGUE_DETAIL_ERROR_CODE_MESSAGES })}
           </Alert>
         ) : null}
 
@@ -767,7 +762,7 @@ export function LeagueDetailPage() {
 
         {inviteLinkMutation.isError ? (
           <Alert className="mt-3" tone="danger">
-            {extractErrorMessage(inviteLinkMutation.error, 'We could not create a join URL.')}
+            {extractErrorMessage(inviteLinkMutation.error, { fallback: 'We could not create a join URL.', codeMessages: LEAGUE_DETAIL_ERROR_CODE_MESSAGES })}
           </Alert>
         ) : null}
 
@@ -793,7 +788,7 @@ export function LeagueDetailPage() {
 
         {sendInviteMutation.isError ? (
           <Alert className="mt-3" tone="danger">
-            {extractErrorMessage(sendInviteMutation.error, 'We could not send that invitation.')}
+            {extractErrorMessage(sendInviteMutation.error, { fallback: 'We could not send that invitation.', codeMessages: LEAGUE_DETAIL_ERROR_CODE_MESSAGES })}
           </Alert>
         ) : null}
 
@@ -830,7 +825,7 @@ export function LeagueDetailPage() {
       >
         {inactivateLeagueMutation.isError ? (
           <Alert tone="danger">
-            {extractErrorMessage(inactivateLeagueMutation.error, 'We could not inactivate this league.')}
+            {extractErrorMessage(inactivateLeagueMutation.error, { fallback: 'We could not inactivate this league.', codeMessages: LEAGUE_DETAIL_ERROR_CODE_MESSAGES })}
           </Alert>
         ) : null}
       </ConfirmDialog>
@@ -925,7 +920,7 @@ export function LeagueDetailPage() {
 
         {deleteLeagueMutation.isError ? (
           <Alert className="mt-4" tone="danger">
-            {extractErrorMessage(deleteLeagueMutation.error, 'We could not delete this league.')}
+            {extractErrorMessage(deleteLeagueMutation.error, { fallback: 'We could not delete this league.', codeMessages: LEAGUE_DETAIL_ERROR_CODE_MESSAGES })}
           </Alert>
         ) : null}
       </ConfirmDialog>
@@ -938,7 +933,7 @@ export function LeagueDetailPage() {
         descriptionId="league-icon-modal-description"
         errorMessage={
           updateIconMutation.isError
-            ? extractErrorMessage(updateIconMutation.error, 'We could not save the league icon.')
+            ? extractErrorMessage(updateIconMutation.error, { fallback: 'We could not save the league icon.', codeMessages: LEAGUE_DETAIL_ERROR_CODE_MESSAGES })
             : null
         }
         isPending={updateIconMutation.isPending}

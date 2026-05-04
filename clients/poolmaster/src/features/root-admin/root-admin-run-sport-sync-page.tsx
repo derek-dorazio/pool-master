@@ -23,27 +23,7 @@ import {
   type SportSyncSubmission,
   type SyncSport,
 } from './root-admin-sync-utils';
-
-function extractErrorMessage(error: unknown, fallback: string) {
-  if (!error || typeof error !== 'object') {
-    return fallback;
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return fallback;
-}
+import { extractErrorMessage } from '@/lib/errors';
 
 export function RootAdminRunSportSyncPage() {
   const logger = getLogger().child({
@@ -235,7 +215,7 @@ export function RootAdminRunSportSyncPage() {
             <Alert>
               {extractErrorMessage(
                 providersQuery.error,
-                'Provider health context is unavailable, so the sport list is using fallback options.',
+                { fallback: 'Provider health context is unavailable, so the sport list is using fallback options.' },
               )}
             </Alert>
           ) : null}
@@ -256,7 +236,7 @@ export function RootAdminRunSportSyncPage() {
             <Alert tone="danger">
               {extractErrorMessage(
                 syncMutation.error,
-                'We could not submit the sport sync right now.',
+                { fallback: 'We could not submit the sport sync right now.' },
               )}
             </Alert>
           ) : null}
