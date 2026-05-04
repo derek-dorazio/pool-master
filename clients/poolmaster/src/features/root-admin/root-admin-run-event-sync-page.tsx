@@ -25,29 +25,9 @@ import {
   type ProviderSummary,
   type SyncSport,
 } from './root-admin-sync-utils';
+import { extractErrorMessage } from '@/lib/errors';
 
 type EventSyncEvent = ListEventsResponses[200]['events'][number];
-
-function extractErrorMessage(error: unknown, fallback: string) {
-  if (!error || typeof error !== 'object') {
-    return fallback;
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return fallback;
-}
 
 function getValidEventStatusesForPreset(
   presetId: EventSyncPresetId,
@@ -333,7 +313,7 @@ export function RootAdminRunEventSyncPage() {
             <Alert>
               {extractErrorMessage(
                 providersQuery.error,
-                'Provider health context is unavailable, so the sport list is using fallback options.',
+                { fallback: 'Provider health context is unavailable, so the sport list is using fallback options.' },
               )}
             </Alert>
           ) : null}
@@ -342,7 +322,7 @@ export function RootAdminRunEventSyncPage() {
             <Alert>
               {extractErrorMessage(
                 eventsQuery.error,
-                'Loaded events are unavailable right now.',
+                { fallback: 'Loaded events are unavailable right now.' },
               )}
             </Alert>
           ) : null}
@@ -372,7 +352,7 @@ export function RootAdminRunEventSyncPage() {
             <Alert tone="danger">
               {extractErrorMessage(
                 eventSyncMutation.error,
-                'We could not submit the event sync right now.',
+                { fallback: 'We could not submit the event sync right now.' },
               )}
             </Alert>
           ) : null}

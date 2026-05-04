@@ -23,29 +23,9 @@ import {
   type ProviderSyncRun,
   formatJsonPayload,
 } from './root-admin-sync-utils';
+import { extractErrorMessage } from '@/lib/errors';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
-
-function extractErrorMessage(error: unknown, fallback: string) {
-  if (!error || typeof error !== 'object') {
-    return fallback;
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return fallback;
-}
 
 function formatDateTimeDisplay(isoString: string | null | undefined) {
   if (!isoString) {
@@ -285,7 +265,7 @@ export function RootAdminSyncDashboardPage() {
           <Alert tone="danger">
             {extractErrorMessage(
               syncRunsQuery.error,
-              'We could not load provider sync runs right now.',
+              { fallback: 'We could not load provider sync runs right now.' },
             )}
           </Alert>
         ) : null}

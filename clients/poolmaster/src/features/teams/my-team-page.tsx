@@ -38,7 +38,7 @@ import {
   Modal,
   Tile,
 } from '@/features/shared/ui';
-import { extractErrorMessage as extractSharedErrorMessage } from '@/lib/errors';
+import { extractErrorMessage } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
@@ -56,11 +56,7 @@ type TeamMember = NonNullable<TeamSummary['members']>[number];
 type OwnerInvitation = ListSquadOwnerInvitationsResponses[200]['invitations'][number];
 type ActiveTeamDialog = 'name' | 'owners' | 'inactivate' | 'delete' | null;
 
-function extractErrorMessage(error: unknown): string {
-  return extractSharedErrorMessage(error, {
-    fallback: 'We could not complete that team action. Please try again.',
-  });
-}
+const TEAM_PAGE_FALLBACK_ERROR = 'We could not complete that team action. Please try again.';
 
 export function MyTeamPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -587,7 +583,7 @@ export function MyTeamPage() {
             <Alert className="mt-3" tone="success">Co-owner invite created.</Alert>
           ) : null}
           {createOwnerInvitationMutation.isError ? (
-            <Alert className="mt-3" tone="danger">{extractErrorMessage(createOwnerInvitationMutation.error)}</Alert>
+            <Alert className="mt-3" tone="danger">{extractErrorMessage(createOwnerInvitationMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
           ) : null}
         </Tile>
       ) : null}
@@ -744,13 +740,13 @@ export function MyTeamPage() {
             </Button>
           </div>
           {replaceOwnerMutation.isError ? (
-            <Alert className="mt-3" tone="danger">{extractErrorMessage(replaceOwnerMutation.error)}</Alert>
+            <Alert className="mt-3" tone="danger">{extractErrorMessage(replaceOwnerMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
           ) : null}
         </Tile>
       ) : null}
 
       {revokeOwnerInvitationMutation.isError ? (
-        <Alert tone="danger">{extractErrorMessage(revokeOwnerInvitationMutation.error)}</Alert>
+        <Alert tone="danger">{extractErrorMessage(revokeOwnerInvitationMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
       ) : null}
       {teamInactivationNotice ? (
         <Alert tone="success">{teamInactivationNotice}</Alert>
@@ -759,10 +755,10 @@ export function MyTeamPage() {
         <Alert tone="success">{teamDeletionNotice}</Alert>
       ) : null}
       {inactivateTeamMutation.isError ? (
-        <Alert tone="danger">{extractErrorMessage(inactivateTeamMutation.error)}</Alert>
+        <Alert tone="danger">{extractErrorMessage(inactivateTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
       ) : null}
       {deleteTeamMutation.isError ? (
-        <Alert tone="danger">{extractErrorMessage(deleteTeamMutation.error)}</Alert>
+        <Alert tone="danger">{extractErrorMessage(deleteTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
       ) : null}
     </div>
   );
@@ -872,7 +868,7 @@ export function MyTeamPage() {
               <Alert tone="success">Your team was updated.</Alert>
             ) : null}
             {updateTeamMutation.isError ? (
-              <Alert tone="danger">{extractErrorMessage(updateTeamMutation.error)}</Alert>
+              <Alert tone="danger">{extractErrorMessage(updateTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
             ) : null}
             {teamInactivationNotice ? (
               <Alert tone="success">{teamInactivationNotice}</Alert>
@@ -881,10 +877,10 @@ export function MyTeamPage() {
               <Alert tone="success">{teamDeletionNotice}</Alert>
             ) : null}
             {inactivateTeamMutation.isError ? (
-              <Alert tone="danger">{extractErrorMessage(inactivateTeamMutation.error)}</Alert>
+              <Alert tone="danger">{extractErrorMessage(inactivateTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
             ) : null}
             {deleteTeamMutation.isError ? (
-              <Alert tone="danger">{extractErrorMessage(deleteTeamMutation.error)}</Alert>
+              <Alert tone="danger">{extractErrorMessage(deleteTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
             ) : null}
           </ActionList>
         )}
@@ -979,7 +975,7 @@ export function MyTeamPage() {
                   <Alert tone="success">Your team was created.</Alert>
                 ) : null}
                 {createTeamMutation.isError ? (
-                  <Alert tone="danger">{extractErrorMessage(createTeamMutation.error)}</Alert>
+                  <Alert tone="danger">{extractErrorMessage(createTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
                 ) : null}
               </div>
             )}
@@ -1133,7 +1129,7 @@ export function MyTeamPage() {
         descriptionId="my-team-icon-modal-description"
         errorMessage={
           updateTeamIconMutation.isError
-            ? extractErrorMessage(updateTeamIconMutation.error)
+            ? extractErrorMessage(updateTeamIconMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })
             : null
         }
         isPending={updateTeamIconMutation.isPending}

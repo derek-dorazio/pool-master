@@ -34,6 +34,7 @@ import { RootAdminUserAccountPage } from './root-admin-user-account-page';
 import { UserAccountSummary } from './user-account-summary';
 import { formatUserName } from './user-name';
 import { buildUserPath } from './user-routing';
+import { extractErrorMessage } from '@/lib/errors';
 
 type AccountPreferencesFormState = {
   timezone: string;
@@ -43,27 +44,6 @@ type AccountPreferencesFormState = {
 };
 
 type ActiveDialog = 'profile' | 'username' | 'preferences' | 'password' | 'lifecycle' | 'delete' | null;
-
-function extractErrorMessage(error: unknown): string {
-  if (!error || typeof error !== 'object') {
-    return 'We could not complete that account action. Please try again.';
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return 'We could not complete that account action. Please try again.';
-}
 
 function formatMemberSince(createdAt?: string, dateFormat?: 'MDY' | 'DMY' | 'YMD') {
   if (!createdAt) {
@@ -745,7 +725,7 @@ export function UserPage() {
 
         {passwordMutation.isError ? (
           <Alert className="mt-4" tone="danger">
-            {extractErrorMessage(passwordMutation.error)}
+            {extractErrorMessage(passwordMutation.error, { fallback: 'We could not complete that account action. Please try again.' })}
           </Alert>
         ) : null}
         {passwordMutation.isSuccess ? (
@@ -792,7 +772,7 @@ export function UserPage() {
           </p>
           {activeLifecycleAction.isError ? (
             <Alert tone="danger">
-              {extractErrorMessage(activeLifecycleAction.error)}
+              {extractErrorMessage(activeLifecycleAction.error, { fallback: 'We could not complete that account action. Please try again.' })}
             </Alert>
           ) : null}
         </div>
@@ -862,7 +842,7 @@ export function UserPage() {
           </p>
           {deleteAccountAction.isError ? (
             <Alert tone="danger">
-              {extractErrorMessage(deleteAccountAction.error)}
+              {extractErrorMessage(deleteAccountAction.error, { fallback: 'We could not complete that account action. Please try again.' })}
             </Alert>
           ) : null}
         </div>

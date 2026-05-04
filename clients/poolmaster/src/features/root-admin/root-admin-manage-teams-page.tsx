@@ -6,31 +6,11 @@ import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { ManagementListPage, StatusBadge } from '@/features/shared/ui';
 import { TeamIcon } from '@/features/teams/team-icon';
 import { getTeamIconOption } from '@/features/teams/team-icon-catalog';
+import { extractErrorMessage } from '@/lib/errors';
 
 type ManagedTeam = AdminListTeamsResponses[200]['teams'][number];
 
 const columnHelper = createColumnHelper<ManagedTeam>();
-
-function extractErrorMessage(error: unknown, fallback: string) {
-  if (!error || typeof error !== 'object') {
-    return fallback;
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === 'string') {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === 'string') {
-    return candidate.message;
-  }
-
-  return fallback;
-}
 
 function formatActiveState(isActive: boolean) {
   return isActive ? 'Active' : 'Inactive';
@@ -133,7 +113,7 @@ export function RootAdminManageTeamsPage() {
       emptyMessage="No teams matched the current filters."
       errorBody={extractErrorMessage(
         teamsQuery.error,
-        'We could not load teams right now.',
+        { fallback: 'We could not load teams right now.' },
       )}
       getRowId={(team) => team.id}
       getRowLink={(team) => buildLeagueTeamHomePath(team.leagueCode, team.id)}

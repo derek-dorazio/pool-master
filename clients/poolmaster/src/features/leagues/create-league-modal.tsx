@@ -15,6 +15,7 @@ import {
 } from "@/features/shared/ui";
 import { buildLeaguePath, setRecentLeagueCode } from "./league-routing";
 import { syncLeagueCaches } from "./league-cache";
+import { extractErrorMessage } from '@/lib/errors';
 
 const LEAGUE_CODE_PATTERN = /^[A-Z0-9]{3,16}$/;
 const WIZARD_STEP_DETAILS = "details";
@@ -54,27 +55,6 @@ function normalizeLeagueCode(value: string) {
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, "")
     .slice(0, 16);
-}
-
-function extractErrorMessage(error: unknown): string {
-  if (!error || typeof error !== "object") {
-    return "We could not create your league. Please try again.";
-  }
-
-  const candidate = error as {
-    error?: { message?: unknown };
-    message?: unknown;
-  };
-
-  if (typeof candidate.error?.message === "string") {
-    return candidate.error.message;
-  }
-
-  if (typeof candidate.message === "string") {
-    return candidate.message;
-  }
-
-  return "We could not create your league. Please try again.";
 }
 
 type CreateLeagueModalProps = {
@@ -415,7 +395,7 @@ export function CreateLeagueModal({
             className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
             role="alert"
           >
-            {extractErrorMessage(createLeagueMutation.error)}
+            {extractErrorMessage(createLeagueMutation.error, { fallback: 'We could not create your league. Please try again.' })}
           </div>
         ) : null}
 
