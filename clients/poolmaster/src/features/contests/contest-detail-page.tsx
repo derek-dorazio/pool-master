@@ -646,10 +646,10 @@ export function ContestDetailPage() {
         <DefinitionList
           className="mt-5"
           items={[
-            { label: 'Contest type', value: contest.contestType },
-            { label: 'Selection type', value: contest.selectionType },
-            { label: 'Scoring engine', value: contest.scoringEngine },
-            { label: 'Status', value: contest.status },
+            { id: 'contest-type', label: 'Contest type', value: contest.contestType },
+            { id: 'selection-type', label: 'Selection type', value: contest.selectionType },
+            { id: 'scoring-engine', label: 'Scoring engine', value: contest.scoringEngine },
+            { id: 'status', label: 'Status', value: contest.status },
           ]}
         />
       </Tile>

@@ -384,6 +384,7 @@ export function PickerModal<TItem extends PickerModalItem>({
 export type ReadOnlyDetailModalProps = BaseModalTemplateProps & {
   copyLabel?: string;
   details?: Array<{
+    id: string;
     label: ReactNode;
     value: ReactNode;
   }>;
@@ -428,8 +429,8 @@ export function ReadOnlyDetailModal({
     >
       {details?.length ? (
         <dl className="grid gap-3 rounded-2xl border border-border bg-background p-4 sm:grid-cols-2">
-          {details.map((detail, index) => (
-            <div key={index}>
+          {details.map((detail) => (
+            <div key={detail.id}>
               <dt className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 {detail.label}
               </dt>

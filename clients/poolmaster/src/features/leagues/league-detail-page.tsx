@@ -592,8 +592,9 @@ export function LeagueDetailPage() {
             <DefinitionList
               className="mt-5"
               items={[
-                { label: 'League name', value: leagueQuery.data.name },
+                { id: 'league-name', label: 'League name', value: leagueQuery.data.name },
                 {
+                  id: 'status',
                   label: 'Status',
                   value: (
                     <span
@@ -605,20 +606,24 @@ export function LeagueDetailPage() {
                   ),
                 },
                 {
+                  id: 'league-code',
                   label: 'League code',
                   value: <span className="font-mono">{leagueQuery.data.leagueCode}</span>,
                 },
                 {
+                  id: 'join-policy',
                   label: 'Join policy',
                   value: <span data-testid="league-join-policy">{leagueQuery.data.joinPolicy}</span>,
                 },
                 {
+                  id: 'created',
                   label: 'Created',
                   value: leagueQuery.data.createdAt
                     ? new Date(leagueQuery.data.createdAt).toLocaleDateString()
                     : 'Unknown',
                 },
                 {
+                  id: 'league-icon',
                   label: 'League icon',
                   value: (
                     <span className="flex items-center gap-3">
@@ -632,6 +637,7 @@ export function LeagueDetailPage() {
                   ),
                 },
                 {
+                  id: 'description',
                   label: 'Description',
                   value: leagueQuery.data.description?.trim() || 'No description',
                 },
@@ -723,7 +729,7 @@ export function LeagueDetailPage() {
       >
         <DefinitionList
           className="sm:grid-cols-1"
-          items={[{ label: 'Join policy', value: leagueQuery.data.joinPolicy }]}
+          items={[{ id: 'join-policy', label: 'Join policy', value: leagueQuery.data.joinPolicy }]}
         />
 
         <FormField className="mt-5" label="Join URL">

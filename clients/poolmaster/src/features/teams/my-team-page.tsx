@@ -906,6 +906,7 @@ export function MyTeamPage() {
                 <DefinitionList
                   items={[
                     {
+                      id: 'status',
                       label: 'Status',
                       value: (
                         <span className={teamStatusClass} data-testid="my-team-lifecycle-status">
@@ -914,6 +915,7 @@ export function MyTeamPage() {
                       ),
                     },
                     {
+                      id: 'current-icon',
                       label: 'Current icon',
                       value: <span data-testid="my-team-current-icon-label">{selectedIcon.label}</span>,
                     },
