@@ -36,6 +36,15 @@ function isAuthLifecycleRequest(request: Request) {
     || pathname === '/api/v1/auth/register';
 }
 
+function createClientRequestId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  // Correlation-only fallback for environments without Web Crypto; not a security identifier.
+  return `pm-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 async function readErrorCode(response: Response): Promise<string | null> {
   if (response.status !== 401) {
     return null;
@@ -58,7 +67,7 @@ async function readErrorCode(response: Response): Promise<string | null> {
 
 function withRetryHeaders(request: Request) {
   const headers = new Headers(request.headers);
-  headers.set('X-Client-Request-Id', crypto.randomUUID());
+  headers.set('X-Client-Request-Id', createClientRequestId());
   headers.set('X-PoolMaster-Auth-Retry', '1');
 
   if (isStateChangingMethod(request.method)) {
@@ -77,7 +86,7 @@ async function refreshAccessSession(request: Request, fetchImpl: typeof fetch) {
   const refreshUrl = new URL('/api/v1/auth/refresh', request.url);
   const headers = new Headers({
     'X-Client-Trace-Id': getOrCreateClientTraceId(),
-    'X-Client-Request-Id': crypto.randomUUID(),
+    'X-Client-Request-Id': createClientRequestId(),
   });
 
   const response = await fetchImpl(refreshUrl, {
@@ -122,7 +131,7 @@ client.setConfig(
 
 client.interceptors.request.use((request: Request) => {
   request.headers.set('X-Client-Trace-Id', getOrCreateClientTraceId());
-  request.headers.set('X-Client-Request-Id', crypto.randomUUID());
+  request.headers.set('X-Client-Request-Id', createClientRequestId());
 
   if (
     typeof document !== 'undefined'

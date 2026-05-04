@@ -47,6 +47,34 @@ describe('poolmaster API client correlation headers', () => {
     }
   });
 
+  it('pool-master-rop.64 falls back to a client request id when crypto.randomUUID is unavailable', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ user: null }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }),
+    );
+
+    vi.stubGlobal('crypto', {});
+    vi.stubGlobal('fetch', fetchSpy);
+
+    try {
+      const { getCurrentUser } = await import('./api');
+
+      await getCurrentUser();
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const request = fetchSpy.mock.calls[0]?.[0];
+      expect(request).toBeInstanceOf(Request);
+      expect((request as Request).headers.get('X-Client-Request-Id')).toMatch(/^pm-\d+-[a-f0-9]+$/);
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('prefers an explicit VITE_API_BASE_URL over the browser origin', async () => {
     vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test');
 
