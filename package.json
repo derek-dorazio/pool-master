@@ -8,8 +8,8 @@
     "clients/*"
   ],
   "scripts": {
-    "build": "turbo run build --filter=@poolmaster/shared --filter=@poolmaster/core-api --filter=@poolmaster/poolmaster",
-    "build:service": "npm run build --workspace @poolmaster/shared && npm run build --workspace @poolmaster/core-api",
+    "build": "turbo run build --filter=@poolmaster/shared --filter=@poolmaster/core-api --filter=@poolmaster/poolmaster && npm run api:check && npm run api:validate",
+    "build:service": "npm run build --workspace @poolmaster/shared && npm run build --workspace @poolmaster/core-api && npm run api:check && npm run api:validate",
     "build:poolmaster": "npm run build --workspace @poolmaster/shared && npm run build --workspace @poolmaster/poolmaster",
     "dev": "turbo run dev --parallel --filter=@poolmaster/core-api --filter=@poolmaster/poolmaster",
     "dev:start": "./scripts/dev-start.sh",

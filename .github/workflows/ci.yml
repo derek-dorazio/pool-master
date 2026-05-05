@@ -30,6 +30,8 @@ jobs:
         run: npm run rules:check
       - name: Generated API freshness
         run: npm run api:check
+      - name: Generated API spec quality
+        run: npm run api:validate
       - name: Riley findings marker (PRs only)
         if: github.event_name == 'pull_request'
         env:
