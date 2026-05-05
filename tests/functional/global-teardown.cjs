@@ -38,12 +38,41 @@ function hasActiveRunStateFiles() {
     return false;
   }
 
-  return fs.readdirSync(runsDir, { withFileTypes: true }).some((entry) => {
-    if (!entry.isDirectory()) {
-      return false;
+  // Per pool-master-rop.71.1: a state file's mere existence is not proof of an
+  // active run — crashed runs leave stale files that previously caused this
+  // function to keep the shared daemon alive even though no run was using it.
+  // Liveness is determined by probing the runnerPid embedded in each state
+  // file (the jest CLI pid, varies per run). Stale entries are removed in-place
+  // so future checks do not keep reviving the daemon either.
+  let active = false;
+  for (const entry of fs.readdirSync(runsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const stateFile = path.join(runsDir, entry.name, 'server-state.json');
+    if (!fs.existsSync(stateFile)) continue;
+    let runnerPid = null;
+    try {
+      const parsed = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
+      if (typeof parsed?.runnerPid === 'number') runnerPid = parsed.runnerPid;
+    } catch {
+      // Malformed file — treat as stale below.
     }
-    return fs.existsSync(path.join(runsDir, entry.name, 'server-state.json'));
-  });
+    if (runnerPid && isPidAlive(runnerPid)) {
+      active = true;
+      // Keep iterating so stale neighbours still get cleaned.
+      continue;
+    }
+    fs.rmSync(path.join(runsDir, entry.name), { recursive: true, force: true });
+  }
+  return active;
+}
+
+function isPidAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return !(error && error.code === 'ESRCH');
+  }
 }
 
 function sleep(ms) {

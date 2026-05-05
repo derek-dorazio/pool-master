@@ -136,7 +136,16 @@ function writeRunState(serverState, runId) {
   fs.writeFileSync(
     stateFilePath,
     JSON.stringify({
+      // pid is the shared daemon's pid (used by teardown to send SIGTERM when
+      // no other runs are still active).
       pid: serverState.pid,
+      // runnerPid is THIS jest CLI's pid (varies per concurrent run). Probed
+      // for liveness by global-teardown's hasActiveRunStateFiles, server.ts's
+      // watchdog, and run-service-functional-api.mjs's orphan check — together
+      // they distinguish active concurrent runs from stale state files left
+      // by crashed runs. Critical for concurrent-fapi safety per
+      // pool-master-rop.71.1 (Codex Pass 2 P1 finding 1).
+      runnerPid: process.pid,
       port: serverState.port,
       baseUrl: serverState.baseUrl,
       runId,
