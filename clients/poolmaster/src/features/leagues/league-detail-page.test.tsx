@@ -5,6 +5,22 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
 import { LeagueDetailPage } from './league-detail-page';
+import {
+  activateLeagueData,
+  apiSuccess,
+  buildCurrentUser,
+  buildGeneratedInviteLink,
+  buildLeagueDetail,
+  buildLeagueSquad,
+  buildLeagueSquadMember,
+  deleteLeagueData,
+  generateInviteLinkData,
+  getLeagueByCodeData,
+  inactivateLeagueData,
+  listLeagueSquadsData,
+  updateLeagueDetailsData,
+  updateLeagueIconData,
+} from './test/fixtures';
 
 const deleteLeagueMock = vi.fn();
 const enterContestMock = vi.fn();
@@ -105,81 +121,32 @@ function primeCommonMocks({
   leagueRole?: 'COMMISSIONER' | 'MEMBER';
   isActive?: boolean;
 } = {}) {
-  getCurrentUserMock.mockResolvedValue({
-    data: {
-      user: {
-        id: 'user-1',
-        email: 'commissioner@example.com',
-        firstName: 'Casey',
-        lastName: 'Commissioner',
-        isActive: true,
-        isRootAdmin,
-        createdAt: '2026-04-15T00:00:00.000Z',
-      },
-    },
-  });
+  getCurrentUserMock.mockResolvedValue(apiSuccess({
+    user: buildCurrentUser({ isRootAdmin }),
+  }));
   refreshTokenMock.mockResolvedValue({ data: null });
-  getLeagueByCodeMock.mockResolvedValue({
-    data: {
-      league: {
-        id: 'league-1',
-        leagueCode: 'BIGDAWGS',
-        name: 'Big Dawgs',
-        description: 'A test league',
-        isActive,
-        iconKey: 'TROPHY',
-        memberCount: 2,
-        activeContestCount: 1,
-        memberType: leagueRole,
-        leagueRelationship: {
-          leagueMember: true,
-          commissioner: leagueRole === 'COMMISSIONER',
-        },
-        isRootAdmin,
-        joinPolicy: 'COMMISSIONER_ONLY',
-        createdAt: '2026-04-15T00:00:00.000Z',
-      },
+  getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(buildLeagueDetail({
+    isActive,
+    memberType: leagueRole,
+    leagueRelationship: {
+      leagueMember: true,
+      commissioner: leagueRole === 'COMMISSIONER',
     },
-  });
+    isRootAdmin,
+  }))));
   listContestsMock.mockResolvedValue({
     data: {
       contests: [],
     },
   });
-  listLeagueSquadsMock.mockResolvedValue({
-    data: {
-      squads: [
-        {
-          id: 'team-1',
-          leagueId: 'league-1',
-          createdBy: 'user-1',
-          name: 'Casey Crushers',
-          iconKey: 'CAPTAIN_SMILE_FIELD',
-          status: 'ACTIVE',
-          memberCount: 1,
-          createdAt: '2026-04-15T00:00:00.000Z',
-          updatedAt: '2026-04-15T00:00:00.000Z',
-          members: [
-            {
-              id: 'team-membership-1',
-              squadId: 'team-1',
-              leagueId: 'league-1',
-              userId: 'user-1',
-              firstName: 'Casey',
-              lastName: 'Commissioner',
-              status: 'ACTIVE',
-              joinedAt: '2026-04-15T00:00:00.000Z',
-              createdAt: '2026-04-15T00:00:00.000Z',
-              updatedAt: '2026-04-15T00:00:00.000Z',
-            },
-          ],
-        },
-      ],
-    },
-  });
+  listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
+    buildLeagueSquad({
+      members: [buildLeagueSquadMember()],
+    }),
+  ])));
 }
 
-describe('LeagueDetailPage', () => {
+describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
   afterEach(() => {
     activateLeagueMock.mockReset();
     deleteLeagueMock.mockReset();
@@ -201,31 +168,13 @@ describe('LeagueDetailPage', () => {
     useSessionStore.getState().clearSession();
   });
 
-  it('updates league details by syncing the cached league detail instead of refetching it', async () => {
+  it('pool-master-rop.23: updates league details by syncing the cached league detail instead of refetching it', async () => {
     primeCommonMocks();
     const { queryClient } = renderLeagueDetailPage();
-    updateLeagueDetailsMock.mockResolvedValue({
-      data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Bigger Dawgs',
-          description: 'Updated description',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 1,
-          memberType: 'COMMISSIONER',
-          leagueRelationship: {
-            leagueMember: true,
-            commissioner: true,
-          },
-          isRootAdmin: false,
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
-        },
-      },
-    });
+    updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeagueDetail({
+      name: 'Bigger Dawgs',
+      description: 'Updated description',
+    }))));
 
     await screen.findByTestId('league-home');
     fireEvent.click(screen.getByTestId('league-open-details'));
@@ -275,28 +224,10 @@ describe('LeagueDetailPage', () => {
       target: { value: 'Unsaved description' },
     });
 
-    getLeagueByCodeMock.mockResolvedValueOnce({
-      data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Server Snapshot League',
-          description: 'Server snapshot description',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 1,
-          memberType: 'COMMISSIONER',
-          leagueRelationship: {
-            leagueMember: true,
-            commissioner: true,
-          },
-          isRootAdmin: false,
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
-        },
-      },
-    });
+    getLeagueByCodeMock.mockResolvedValueOnce(apiSuccess(getLeagueByCodeData(buildLeagueDetail({
+      name: 'Server Snapshot League',
+      description: 'Server snapshot description',
+    }))));
 
     await act(async () => {
       await queryClient.refetchQueries({ queryKey: ['poolmaster', 'league', 'BIGDAWGS'] });
@@ -315,28 +246,12 @@ describe('LeagueDetailPage', () => {
 
   it('pool-master-rop.20 reseeds league detail drafts when the league identity changes', async () => {
     primeCommonMocks();
-    updateLeagueDetailsMock.mockResolvedValue({
-      data: {
-        league: {
-          id: 'league-2',
-          leagueCode: 'NEWDOGS',
-          name: 'Renamed New Dawgs',
-          description: 'Updated new description',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 1,
-          memberType: 'COMMISSIONER',
-          leagueRelationship: {
-            leagueMember: true,
-            commissioner: true,
-          },
-          isRootAdmin: false,
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
-        },
-      },
-    });
+    updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeagueDetail({
+      id: 'league-2',
+      leagueCode: 'NEWDOGS',
+      name: 'Renamed New Dawgs',
+      description: 'Updated new description',
+    }))));
     renderLeagueDetailPage();
 
     await screen.findByTestId('league-home');
@@ -349,28 +264,12 @@ describe('LeagueDetailPage', () => {
       target: { value: 'Unsaved description' },
     });
 
-    getLeagueByCodeMock.mockResolvedValueOnce({
-      data: {
-        league: {
-          id: 'league-2',
-          leagueCode: 'NEWDOGS',
-          name: 'New Dawgs',
-          description: 'New league description',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 1,
-          memberType: 'COMMISSIONER',
-          leagueRelationship: {
-            leagueMember: true,
-            commissioner: true,
-          },
-          isRootAdmin: false,
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
-        },
-      },
-    });
+    getLeagueByCodeMock.mockResolvedValueOnce(apiSuccess(getLeagueByCodeData(buildLeagueDetail({
+      id: 'league-2',
+      leagueCode: 'NEWDOGS',
+      name: 'New Dawgs',
+      description: 'New league description',
+    }))));
 
     fireEvent.click(screen.getByTestId('go-next-league'));
 
@@ -399,7 +298,7 @@ describe('LeagueDetailPage', () => {
     }));
   });
 
-  it('shows a clear handoff message when the last commissioner tries to leave', async () => {
+  it('pool-master-rop.23: shows a clear handoff message when the last commissioner tries to leave', async () => {
     primeCommonMocks();
     leaveLeagueMock.mockResolvedValue({
       error: {
@@ -438,28 +337,9 @@ describe('LeagueDetailPage', () => {
 
   it('pool-master-dxd.37 opens active league inactivation in a confirmation modal', async () => {
     primeCommonMocks();
-    inactivateLeagueMock.mockResolvedValue({
-      data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Big Dawgs',
-          description: 'A test league',
-          isActive: false,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 1,
-          memberType: 'COMMISSIONER',
-          leagueRelationship: {
-            leagueMember: true,
-            commissioner: true,
-          },
-          isRootAdmin: false,
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
-        },
-      },
-    });
+    inactivateLeagueMock.mockResolvedValue(apiSuccess(inactivateLeagueData(buildLeagueDetail({
+      isActive: false,
+    }))));
 
     renderLeagueDetailPage();
 
@@ -492,28 +372,9 @@ describe('LeagueDetailPage', () => {
   // pool-master-4uq — inactive leagues expose activate/delete in the compact lifecycle row.
   it('shows inactive lifecycle actions and activates immediately', async () => {
     primeCommonMocks({ isActive: false });
-    activateLeagueMock.mockResolvedValue({
-      data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Big Dawgs',
-          description: 'A test league',
-          isActive: true,
-          iconKey: 'TROPHY',
-          memberCount: 2,
-          activeContestCount: 1,
-          memberType: 'COMMISSIONER',
-          leagueRelationship: {
-            leagueMember: true,
-            commissioner: true,
-          },
-          isRootAdmin: false,
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
-        },
-      },
-    });
+    activateLeagueMock.mockResolvedValue(apiSuccess(activateLeagueData(buildLeagueDetail({
+      isActive: true,
+    }))));
 
     renderLeagueDetailPage();
 
@@ -542,13 +403,9 @@ describe('LeagueDetailPage', () => {
     Object.assign(navigator, {
       clipboard: { writeText: writeTextMock },
     });
-    generateInviteLinkMock.mockResolvedValue({
-      data: {
-        invitation: {
-          inviteCode: 'invite-abc',
-        },
-      },
-    });
+    generateInviteLinkMock.mockResolvedValue(apiSuccess(generateInviteLinkData(buildGeneratedInviteLink({
+      inviteCode: 'invite-abc',
+    }))));
 
     renderLeagueDetailPage();
 
@@ -583,28 +440,9 @@ describe('LeagueDetailPage', () => {
   // with only the modal draft held locally while editing.
   it('updates the league icon from a modal and returns to League Home with the new icon', async () => {
     primeCommonMocks();
-    updateLeagueIconMock.mockResolvedValue({
-      data: {
-        league: {
-          id: 'league-1',
-          leagueCode: 'BIGDAWGS',
-          name: 'Big Dawgs',
-          description: 'A test league',
-          isActive: true,
-          iconKey: 'GOLF_BALL',
-          memberCount: 2,
-          activeContestCount: 1,
-          memberType: 'COMMISSIONER',
-          leagueRelationship: {
-            leagueMember: true,
-            commissioner: true,
-          },
-          isRootAdmin: false,
-          joinPolicy: 'COMMISSIONER_ONLY',
-          createdAt: '2026-04-15T00:00:00.000Z',
-        },
-      },
-    });
+    updateLeagueIconMock.mockResolvedValue(apiSuccess(updateLeagueIconData(buildLeagueDetail({
+      iconKey: 'GOLF_BALL',
+    }))));
 
     renderLeagueDetailPage();
 
@@ -627,13 +465,9 @@ describe('LeagueDetailPage', () => {
     expect(screen.getByTestId('league-current-icon-label')).toHaveTextContent('Golf Ball');
   });
 
-  it('lets a commissioner delete an inactive league after modal confirmation', async () => {
+  it('pool-master-rop.23: lets a commissioner delete an inactive league after modal confirmation', async () => {
     primeCommonMocks({ isActive: false });
-    deleteLeagueMock.mockResolvedValue({
-      data: {
-        success: true,
-      },
-    });
+    deleteLeagueMock.mockResolvedValue(apiSuccess(deleteLeagueData()));
 
     renderLeagueDetailPage();
 
@@ -655,11 +489,7 @@ describe('LeagueDetailPage', () => {
 
   it('pool-master-hna returns root admins to Manage Leagues after deleting an inactive league', async () => {
     primeCommonMocks({ isActive: false, isRootAdmin: true });
-    deleteLeagueMock.mockResolvedValue({
-      data: {
-        success: true,
-      },
-    });
+    deleteLeagueMock.mockResolvedValue(apiSuccess(deleteLeagueData()));
 
     renderLeagueDetailPage();
 

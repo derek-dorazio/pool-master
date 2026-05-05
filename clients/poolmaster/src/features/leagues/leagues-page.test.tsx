@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WelcomePage } from './leagues-page';
+import { apiSuccess, buildLeagueSummary, listLeaguesData } from './test/fixtures';
 
 const {
   listLeaguesMock,
@@ -112,7 +113,7 @@ function renderWelcomePage(initialEntries = ['/welcome']) {
   );
 }
 
-describe('WelcomePage', () => {
+describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
   beforeEach(() => {
     listLeaguesMock.mockReset();
     sharedStateCalls.empty.mockClear();
@@ -121,11 +122,7 @@ describe('WelcomePage', () => {
   });
 
   it('pool-master-rop.63: shows the shared zero-league state and create action when the member has no leagues', async () => {
-    listLeaguesMock.mockResolvedValue({
-      data: {
-        leagues: [],
-      },
-    });
+    listLeaguesMock.mockResolvedValue(apiSuccess(listLeaguesData([])));
 
     renderWelcomePage();
 
@@ -158,25 +155,18 @@ describe('WelcomePage', () => {
   });
 
   it('pool-master-rop.63: preserves redirect into the resolved league context', async () => {
-    listLeaguesMock.mockResolvedValue({
-      data: {
-        leagues: [
-          {
-            id: 'league-1',
-            leagueCode: 'LEAGUE1',
-            name: 'League One',
-            isActive: true,
-            iconKey: 'TROPHY',
-            memberCount: 10,
-            activeContestCount: 2,
-            memberType: 'MEMBER',
-            leagueRelationship: { leagueMember: true, commissioner: false },
-            isRootAdmin: false,
-            createdAt: '2026-04-20T12:00:00.000Z',
-          },
-        ],
-      },
-    });
+    listLeaguesMock.mockResolvedValue(apiSuccess(listLeaguesData([
+      buildLeagueSummary({
+        id: 'league-1',
+        leagueCode: 'LEAGUE1',
+        name: 'League One',
+        memberCount: 10,
+        activeContestCount: 2,
+        memberType: 'MEMBER',
+        leagueRelationship: { leagueMember: true, commissioner: false },
+        createdAt: '2026-04-20T12:00:00.000Z',
+      }),
+    ])));
 
     renderWelcomePage();
 

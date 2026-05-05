@@ -1,8 +1,18 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ListLeaguesResponses } from '@/lib/api';
 import { ManageLeagueModal } from './manage-league-modal';
+import {
+  apiSuccess,
+  buildLeagueDetail,
+  buildLeagueSummary,
+  deleteLeagueData,
+  getLeagueData,
+  inactivateLeagueData,
+  updateLeagueDetailsData,
+  updateLeagueIconData,
+  type LeagueSummary,
+} from './test/fixtures';
 
 const inactivateLeagueMock = vi.fn();
 const deleteLeagueMock = vi.fn();
@@ -17,8 +27,6 @@ vi.mock('@/lib/api', () => ({
   updateLeagueDetails: (...args: unknown[]) => updateLeagueDetailsMock(...args),
   updateLeagueIcon: (...args: unknown[]) => updateLeagueIconMock(...args),
 }));
-
-type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
 function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummary[]> }) {
   const leaguesQuery = useQuery({
@@ -46,25 +54,13 @@ function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummary[]
   );
 }
 
-const commissionerLeague: LeagueSummary = {
-  id: 'league-1',
-  leagueCode: 'BIGDAWGS',
-  name: 'Big Dawgs',
+const commissionerLeague = buildLeagueSummary({
   description: 'Neighborhood league',
-  isActive: true,
-  iconKey: 'TROPHY',
   memberCount: 4,
-  activeContestCount: 1,
-  memberType: 'COMMISSIONER',
-  leagueRelationship: {
-    leagueMember: true,
-    commissioner: true,
-  },
-  isRootAdmin: false,
   createdAt: '2026-04-15T10:00:00.000Z',
-};
+});
 
-describe('ManageLeagueModal', () => {
+describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
   afterEach(() => {
     getLeagueMock.mockReset();
     inactivateLeagueMock.mockReset();
@@ -73,24 +69,12 @@ describe('ManageLeagueModal', () => {
     updateLeagueIconMock.mockReset();
   });
 
-  it('opens on the lifecycle tab and inactivates the league', async () => {
-    getLeagueMock.mockResolvedValue({
-      data: {
-        league: {
-          ...commissionerLeague,
-          iconKey: 'TROPHY',
-          joinPolicy: 'COMMISSIONER_ONLY',
-        },
-      },
-    });
-    inactivateLeagueMock.mockResolvedValue({
-      data: {
-        league: {
-          ...commissionerLeague,
-          isActive: false,
-        },
-      },
-    });
+  it('pool-master-rop.23: opens on the lifecycle tab and inactivates the league', async () => {
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail(commissionerLeague))));
+    inactivateLeagueMock.mockResolvedValue(apiSuccess(inactivateLeagueData(buildLeagueDetail({
+      ...commissionerLeague,
+      isActive: false,
+    }))));
 
     const queryClient = new QueryClient({
       defaultOptions: {
@@ -118,16 +102,8 @@ describe('ManageLeagueModal', () => {
     );
   });
 
-  it('keeps delete disabled until the confirmation code matches', async () => {
-    getLeagueMock.mockResolvedValue({
-      data: {
-        league: {
-          ...commissionerLeague,
-          iconKey: 'TROPHY',
-          joinPolicy: 'COMMISSIONER_ONLY',
-        },
-      },
-    });
+  it('pool-master-rop.23: keeps delete disabled until the confirmation code matches', async () => {
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail(commissionerLeague))));
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
@@ -163,21 +139,9 @@ describe('ManageLeagueModal', () => {
     await waitFor(() => expect(deleteButton).not.toBeDisabled());
   });
 
-  it('deletes an inactive league and shows success state', async () => {
-    getLeagueMock.mockResolvedValue({
-      data: {
-        league: {
-          ...commissionerLeague,
-          iconKey: 'TROPHY',
-          joinPolicy: 'COMMISSIONER_ONLY',
-        },
-      },
-    });
-    deleteLeagueMock.mockResolvedValue({
-      data: {
-        success: true,
-      },
-    });
+  it('pool-master-rop.23: deletes an inactive league and shows success state', async () => {
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail(commissionerLeague))));
+    deleteLeagueMock.mockResolvedValue(apiSuccess(deleteLeagueData()));
 
     const onDeleted = vi.fn();
     const queryClient = new QueryClient({
@@ -220,27 +184,13 @@ describe('ManageLeagueModal', () => {
     expect(onDeleted).toHaveBeenCalled();
   });
 
-  it('updates league details from the details tab', async () => {
-    getLeagueMock.mockResolvedValue({
-      data: {
-        league: {
-          ...commissionerLeague,
-          iconKey: 'TROPHY',
-          joinPolicy: 'COMMISSIONER_ONLY',
-        },
-      },
-    });
-    updateLeagueDetailsMock.mockResolvedValue({
-      data: {
-        league: {
-          ...commissionerLeague,
-          iconKey: 'TROPHY',
-          name: 'Edited Dawgs',
-          description: 'Updated description',
-          joinPolicy: 'COMMISSIONER_ONLY',
-        },
-      },
-    });
+  it('pool-master-rop.23: updates league details from the details tab', async () => {
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail(commissionerLeague))));
+    updateLeagueDetailsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeagueDetail({
+      ...commissionerLeague,
+      name: 'Edited Dawgs',
+      description: 'Updated description',
+    }))));
 
     const queryClient = new QueryClient({
       defaultOptions: {
@@ -289,25 +239,12 @@ describe('ManageLeagueModal', () => {
     ]);
   });
 
-  it('updates the league icon by syncing the shell league list without refetching it', async () => {
-    getLeagueMock.mockResolvedValue({
-      data: {
-        league: {
-          ...commissionerLeague,
-          iconKey: 'TROPHY',
-          joinPolicy: 'COMMISSIONER_ONLY',
-        },
-      },
-    });
-    updateLeagueIconMock.mockResolvedValue({
-      data: {
-        league: {
-          ...commissionerLeague,
-          iconKey: 'GOLF_BALL',
-          joinPolicy: 'COMMISSIONER_ONLY',
-        },
-      },
-    });
+  it('pool-master-rop.23: updates the league icon by syncing the shell league list without refetching it', async () => {
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail(commissionerLeague))));
+    updateLeagueIconMock.mockResolvedValue(apiSuccess(updateLeagueIconData(buildLeagueDetail({
+      ...commissionerLeague,
+      iconKey: 'GOLF_BALL',
+    }))));
     const leaguesQueryFn = vi
       .fn<() => Promise<LeagueSummary[]>>()
       .mockResolvedValue([commissionerLeague]);
@@ -359,17 +296,11 @@ describe('ManageLeagueModal', () => {
     ]);
   });
 
-  it('shows details as read-only when the league is inactive', async () => {
-    getLeagueMock.mockResolvedValue({
-      data: {
-        league: {
-          ...commissionerLeague,
-          isActive: false,
-          iconKey: 'TROPHY',
-          joinPolicy: 'COMMISSIONER_ONLY',
-        },
-      },
-    });
+  it('pool-master-rop.23: shows details as read-only when the league is inactive', async () => {
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail({
+      ...commissionerLeague,
+      isActive: false,
+    }))));
 
     const queryClient = new QueryClient({
       defaultOptions: {
@@ -398,25 +329,12 @@ describe('ManageLeagueModal', () => {
     expect(screen.getByTestId('manage-league-save-details')).toBeDisabled();
   });
 
-  it('updates league icon from the curated catalog', async () => {
-    getLeagueMock.mockResolvedValue({
-      data: {
-        league: {
-          ...commissionerLeague,
-          iconKey: 'TROPHY',
-          joinPolicy: 'COMMISSIONER_ONLY',
-        },
-      },
-    });
-    updateLeagueIconMock.mockResolvedValue({
-      data: {
-        league: {
-          ...commissionerLeague,
-          iconKey: 'SOCCER_BALL',
-          joinPolicy: 'COMMISSIONER_ONLY',
-        },
-      },
-    });
+  it('pool-master-rop.23: updates league icon from the curated catalog', async () => {
+    getLeagueMock.mockResolvedValue(apiSuccess(getLeagueData(buildLeagueDetail(commissionerLeague))));
+    updateLeagueIconMock.mockResolvedValue(apiSuccess(updateLeagueIconData(buildLeagueDetail({
+      ...commissionerLeague,
+      iconKey: 'SOCCER_BALL',
+    }))));
 
     const queryClient = new QueryClient({
       defaultOptions: {

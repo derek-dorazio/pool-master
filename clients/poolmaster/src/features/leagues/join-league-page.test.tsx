@@ -6,6 +6,18 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { useSessionStore } from '@/features/auth/session-store';
 import { JoinLeaguePage } from './join-league-page';
+import {
+  acceptInvitationData,
+  apiSuccess,
+  buildAcceptedLeagueMembership,
+  buildCurrentUser,
+  buildInvitationPreview,
+  buildLeagueSquad,
+  buildLeagueSquadMember,
+  getInvitationPreviewData,
+  listLeagueSquadsData,
+  updateLeagueSquadData,
+} from './test/fixtures';
 
 const {
   acceptInvitationMock,
@@ -78,7 +90,7 @@ function renderJoinLeaguePage(initialEntry = '/invite/LEAGUE123') {
   );
 }
 
-describe('JoinLeaguePage', () => {
+describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
   afterEach(() => {
     acceptInvitationMock.mockReset();
     getCurrentUserMock.mockReset();
@@ -94,92 +106,46 @@ describe('JoinLeaguePage', () => {
     useSessionStore.getState().clearSession();
   });
 
-  it('lets an authenticated member set team name and icon during join', async () => {
-    getCurrentUserMock.mockResolvedValue({
-      data: {
-        user: {
-          id: 'user-1',
-          email: 'derek@example.com',
-          firstName: 'Derek',
-          lastName: 'Dorazio',
-          isActive: true,
-          isRootAdmin: false,
-          createdAt: '2026-04-16T00:00:00.000Z',
-        },
-      },
-    });
+  it('pool-master-rop.23: lets an authenticated member set team name and icon during join', async () => {
+    getCurrentUserMock.mockResolvedValue(apiSuccess({
+      user: buildCurrentUser({
+        email: 'derek@example.com',
+        username: 'derek@example.com',
+        firstName: 'Derek',
+        lastName: 'Dorazio',
+        createdAt: '2026-04-16T00:00:00.000Z',
+      }),
+    }));
     refreshTokenMock.mockResolvedValue({ data: null });
-    getInvitationPreviewMock.mockResolvedValue({
-      data: {
-        invitation: {
-          inviteCode: 'LEAGUE123',
-          status: 'PENDING',
-          league: {
-            id: 'league-1',
-            leagueCode: 'BIGDAWGS',
-            name: 'Big Dawgs',
-          },
-        },
-      },
-    });
-    acceptInvitationMock.mockResolvedValue({
-      data: {
-        membership: {
-          id: 'membership-1',
-          leagueId: 'league-1',
-          userId: 'user-1',
-          role: 'MEMBER',
-          status: 'ACTIVE',
-        },
-      },
-    });
-    listLeagueSquadsMock.mockResolvedValue({
-      data: {
-        squads: [
-          {
-            id: 'team-1',
-            leagueId: 'league-1',
-            createdBy: 'user-1',
-            name: "Derek Dorazio's Team",
-            iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-            status: 'ACTIVE',
-            memberCount: 1,
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(
+      buildInvitationPreview(),
+    )));
+    acceptInvitationMock.mockResolvedValue(apiSuccess(acceptInvitationData(
+      buildAcceptedLeagueMembership(),
+    )));
+    listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
+      buildLeagueSquad({
+        name: "Derek Dorazio's Team",
+        createdAt: '2026-04-16T00:00:00.000Z',
+        updatedAt: '2026-04-16T00:00:00.000Z',
+        members: [
+          buildLeagueSquadMember({
+            firstName: 'Derek',
+            lastName: 'Dorazio',
+            joinedAt: '2026-04-16T00:00:00.000Z',
             createdAt: '2026-04-16T00:00:00.000Z',
             updatedAt: '2026-04-16T00:00:00.000Z',
-            members: [
-              {
-                id: 'membership-1',
-                squadId: 'team-1',
-                leagueId: 'league-1',
-                userId: 'user-1',
-                firstName: 'Derek',
-                lastName: 'Dorazio',
-                status: 'ACTIVE',
-                joinedAt: '2026-04-16T00:00:00.000Z',
-                createdAt: '2026-04-16T00:00:00.000Z',
-                updatedAt: '2026-04-16T00:00:00.000Z',
-              },
-            ],
-          },
+          }),
         ],
-      },
-    });
-    updateLeagueSquadMock.mockResolvedValue({
-      data: {
-        squad: {
-          id: 'team-1',
-          leagueId: 'league-1',
-          createdBy: 'user-1',
-          name: 'Beer Bellies',
-          iconKey: TeamIconKey.TURBO_TURTLE_MIDNIGHT,
-          status: 'ACTIVE',
-          memberCount: 1,
-          createdAt: '2026-04-16T00:00:00.000Z',
-          updatedAt: '2026-04-16T00:00:00.000Z',
-          members: [],
-        },
-      },
-    });
+      }),
+    ])));
+    updateLeagueSquadMock.mockResolvedValue(apiSuccess(updateLeagueSquadData(buildLeagueSquad({
+      name: 'Beer Bellies',
+      iconKey: TeamIconKey.TURBO_TURTLE_MIDNIGHT,
+      createdAt: '2026-04-16T00:00:00.000Z',
+      updatedAt: '2026-04-16T00:00:00.000Z',
+      members: [],
+    }))));
 
     renderJoinLeaguePage();
 
@@ -208,34 +174,20 @@ describe('JoinLeaguePage', () => {
     );
   });
 
-  it('shows the rejection message when accepting the invitation fails with an expected error payload', async () => {
-    getCurrentUserMock.mockResolvedValue({
-      data: {
-        user: {
-          id: 'user-1',
-          email: 'derek@example.com',
-          firstName: 'Derek',
-          lastName: 'Dorazio',
-          isActive: true,
-          isRootAdmin: false,
-          createdAt: '2026-04-16T00:00:00.000Z',
-        },
-      },
-    });
+  it('pool-master-rop.23: shows the rejection message when accepting the invitation fails with an expected error payload', async () => {
+    getCurrentUserMock.mockResolvedValue(apiSuccess({
+      user: buildCurrentUser({
+        email: 'derek@example.com',
+        username: 'derek@example.com',
+        firstName: 'Derek',
+        lastName: 'Dorazio',
+        createdAt: '2026-04-16T00:00:00.000Z',
+      }),
+    }));
     refreshTokenMock.mockResolvedValue({ data: null });
-    getInvitationPreviewMock.mockResolvedValue({
-      data: {
-        invitation: {
-          inviteCode: 'LEAGUE123',
-          status: 'PENDING',
-          league: {
-            id: 'league-1',
-            leagueCode: 'BIGDAWGS',
-            name: 'Big Dawgs',
-          },
-        },
-      },
-    });
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(
+      buildInvitationPreview(),
+    )));
     acceptInvitationMock.mockResolvedValue({
       error: {
         message: 'This invitation has already been accepted.',
