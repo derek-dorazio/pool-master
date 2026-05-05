@@ -855,6 +855,7 @@ Every PR lands via a multi-pass review process. Each pass produces a findings re
 - Performed by a different agent runtime under a different GitHub App identity.
 - The reviewing agent runs the Riley playbook against the diff and posts via `gh pr review --approve` / `--request-changes` / `--comment`.
 - Because the reviewer's GitHub identity is different from the PR author, this approval **does** satisfy `required_approving_review_count: 1`.
+- After Pass 1 lands (and after any fix-up commits), the implementer posts a one-line PR comment naming the head SHA Pass 2 should review and the Pass 1 status — e.g., `Pass 2 head: 0ffeb013. Pass 1: approved.` No focus areas, no scope restatement; the reviewer reads the PR body plus the Pass 1 marker and forms their own framing. The user's prompt to the next agent then collapses to `Pass 2 review PR #N`.
 
 **Pass 3 — Sage security review (conditional).**
 - Invoked when the slice touches auth, validation, secrets, or data exposure (see `personas/sage.md` for the trigger list).
