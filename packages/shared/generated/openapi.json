@@ -4897,8 +4897,79 @@
                       "type": "array",
                       "items": {
                         "type": "object",
-                        "additionalProperties": {},
-                        "description": "Arbitrary JSON object payload."
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Audit-log entry id."
+                          },
+                          "leagueId": {
+                            "type": "string",
+                            "description": "League this entry belongs to."
+                          },
+                          "contestId": {
+                            "type": "string",
+                            "description": "Contest this entry references when the action is contest-scoped."
+                          },
+                          "actorId": {
+                            "type": "string",
+                            "description": "User id of the commissioner / actor that performed the action."
+                          },
+                          "action": {
+                            "type": "string",
+                            "description": "Action verb in dotted form (e.g., \"league.member.role.changed\")."
+                          },
+                          "category": {
+                            "type": "string",
+                            "enum": [
+                              "LEAGUE",
+                              "CONTEST",
+                              "DRAFT",
+                              "SCORING",
+                              "PAYOUT",
+                              "MEMBER",
+                              "COMMUNICATION"
+                            ],
+                            "description": "Audit-log entry category — broad classification of the action that produced this entry."
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Human-readable description of what happened."
+                          },
+                          "beforeState": {
+                            "type": "object",
+                            "additionalProperties": {},
+                            "description": "Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract."
+                          },
+                          "afterState": {
+                            "type": "object",
+                            "additionalProperties": {},
+                            "description": "Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract."
+                          },
+                          "reason": {
+                            "type": "string",
+                            "description": "Optional human-supplied reason / justification for the action."
+                          },
+                          "ipAddress": {
+                            "type": "string",
+                            "description": "IP address from which the action originated, when available."
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the audit entry was recorded."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "leagueId",
+                          "actorId",
+                          "action",
+                          "category",
+                          "description",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Commissioner audit-log entry."
                       }
                     }
                   },
@@ -4983,8 +5054,79 @@
                       "type": "array",
                       "items": {
                         "type": "object",
-                        "additionalProperties": {},
-                        "description": "Arbitrary JSON object payload."
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Audit-log entry id."
+                          },
+                          "leagueId": {
+                            "type": "string",
+                            "description": "League this entry belongs to."
+                          },
+                          "contestId": {
+                            "type": "string",
+                            "description": "Contest this entry references when the action is contest-scoped."
+                          },
+                          "actorId": {
+                            "type": "string",
+                            "description": "User id of the commissioner / actor that performed the action."
+                          },
+                          "action": {
+                            "type": "string",
+                            "description": "Action verb in dotted form (e.g., \"league.member.role.changed\")."
+                          },
+                          "category": {
+                            "type": "string",
+                            "enum": [
+                              "LEAGUE",
+                              "CONTEST",
+                              "DRAFT",
+                              "SCORING",
+                              "PAYOUT",
+                              "MEMBER",
+                              "COMMUNICATION"
+                            ],
+                            "description": "Audit-log entry category — broad classification of the action that produced this entry."
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Human-readable description of what happened."
+                          },
+                          "beforeState": {
+                            "type": "object",
+                            "additionalProperties": {},
+                            "description": "Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract."
+                          },
+                          "afterState": {
+                            "type": "object",
+                            "additionalProperties": {},
+                            "description": "Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract."
+                          },
+                          "reason": {
+                            "type": "string",
+                            "description": "Optional human-supplied reason / justification for the action."
+                          },
+                          "ipAddress": {
+                            "type": "string",
+                            "description": "IP address from which the action originated, when available."
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the audit entry was recorded."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "leagueId",
+                          "actorId",
+                          "action",
+                          "category",
+                          "description",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Commissioner audit-log entry."
                       }
                     }
                   },

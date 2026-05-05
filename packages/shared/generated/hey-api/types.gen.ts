@@ -2825,7 +2825,58 @@ export type GetLeagueAuditLogResponses = {
      */
     200: {
         entries: Array<{
-            [key: string]: unknown;
+            /**
+             * Audit-log entry id.
+             */
+            id: string;
+            /**
+             * League this entry belongs to.
+             */
+            leagueId: string;
+            /**
+             * Contest this entry references when the action is contest-scoped.
+             */
+            contestId?: string;
+            /**
+             * User id of the commissioner / actor that performed the action.
+             */
+            actorId: string;
+            /**
+             * Action verb in dotted form (e.g., "league.member.role.changed").
+             */
+            action: string;
+            /**
+             * Audit-log entry category — broad classification of the action that produced this entry.
+             */
+            category: 'LEAGUE' | 'CONTEST' | 'DRAFT' | 'SCORING' | 'PAYOUT' | 'MEMBER' | 'COMMUNICATION';
+            /**
+             * Human-readable description of what happened.
+             */
+            description: string;
+            /**
+             * Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract.
+             */
+            beforeState?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract.
+             */
+            afterState?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Optional human-supplied reason / justification for the action.
+             */
+            reason?: string;
+            /**
+             * IP address from which the action originated, when available.
+             */
+            ipAddress?: string;
+            /**
+             * When the audit entry was recorded.
+             */
+            createdAt: string;
         }>;
     };
 };
@@ -2896,7 +2947,58 @@ export type GetMemberAuditLogResponses = {
      */
     200: {
         entries: Array<{
-            [key: string]: unknown;
+            /**
+             * Audit-log entry id.
+             */
+            id: string;
+            /**
+             * League this entry belongs to.
+             */
+            leagueId: string;
+            /**
+             * Contest this entry references when the action is contest-scoped.
+             */
+            contestId?: string;
+            /**
+             * User id of the commissioner / actor that performed the action.
+             */
+            actorId: string;
+            /**
+             * Action verb in dotted form (e.g., "league.member.role.changed").
+             */
+            action: string;
+            /**
+             * Audit-log entry category — broad classification of the action that produced this entry.
+             */
+            category: 'LEAGUE' | 'CONTEST' | 'DRAFT' | 'SCORING' | 'PAYOUT' | 'MEMBER' | 'COMMUNICATION';
+            /**
+             * Human-readable description of what happened.
+             */
+            description: string;
+            /**
+             * Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract.
+             */
+            beforeState?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract.
+             */
+            afterState?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Optional human-supplied reason / justification for the action.
+             */
+            reason?: string;
+            /**
+             * IP address from which the action originated, when available.
+             */
+            ipAddress?: string;
+            /**
+             * When the audit entry was recorded.
+             */
+            createdAt: string;
         }>;
     };
 };

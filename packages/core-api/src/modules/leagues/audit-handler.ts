@@ -1,8 +1,14 @@
 /**
  * Audit log route handlers — commissioner and member audit trail views.
+ *
+ * Per pool-master-rop.14.1, these handlers apply `mapLeagueAuditEntryToDto`
+ * before sending the response so the wire format matches the typed
+ * `LeagueAuditEntryDtoSchema` (rather than emitting service-layer
+ * `AuditLogEntry` objects with raw `Date` values).
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { mapLeagueAuditEntryToDto } from '../../mappers/leagues-audit.mapper';
 import type { AuditService, AuditCategory } from './audit-service';
 
 export function createAuditHandlers(auditService: AuditService) {
@@ -29,7 +35,7 @@ export function createAuditHandlers(auditService: AuditService) {
       limit ?? 50,
       offset ?? 0,
     );
-    return reply.send({ entries });
+    return reply.send({ entries: entries.map(mapLeagueAuditEntryToDto) });
   }
 
   async function getMemberAuditLog(
@@ -43,7 +49,7 @@ export function createAuditHandlers(auditService: AuditService) {
       request.params.id,
       request.query.limit ?? 50,
     );
-    return reply.send({ entries });
+    return reply.send({ entries: entries.map(mapLeagueAuditEntryToDto) });
   }
 
   async function getContestAuditLog(
@@ -57,6 +63,6 @@ export function createAuditHandlers(auditService: AuditService) {
       request.params.contestId,
       request.query.limit ?? 50,
     );
-    return reply.send({ entries });
+    return reply.send({ entries: entries.map(mapLeagueAuditEntryToDto) });
   }
 }
