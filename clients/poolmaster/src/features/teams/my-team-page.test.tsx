@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -157,7 +157,24 @@ function buildTeamSummary(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe('MyTeamPage', () => {
+function mockCurrentUser() {
+  getCurrentUserMock.mockResolvedValue({
+    data: {
+      user: {
+        id: 'user-1',
+        email: 'derek@example.com',
+        firstName: 'Derek',
+        lastName: 'Dorazio',
+        isActive: true,
+        isRootAdmin: false,
+        createdAt: '2026-04-15T00:00:00.000Z',
+      },
+    },
+  });
+  refreshTokenMock.mockResolvedValue({ data: null });
+}
+
+describe('pool-master-rop.22: MyTeamPage', () => {
   beforeEach(() => {
     listLeagueMembersMock.mockResolvedValue({ data: { members: [] } });
   });
@@ -186,7 +203,116 @@ describe('MyTeamPage', () => {
     useSessionStore.getState().clearSession();
   });
 
-  it('creates a team when the current user does not yet belong to one', async () => {
+  it('pool-master-rop.22: renders a loading state while team page league context is pending', async () => {
+    mockCurrentUser();
+    getLeagueByCodeMock.mockReturnValue(new Promise(() => undefined));
+
+    renderMyTeamPage();
+
+    expect(await screen.findByText('Loading your team...')).toBeInTheDocument();
+  });
+
+  it('pool-master-rop.22: renders access-denied copy when league membership is rejected', async () => {
+    mockCurrentUser();
+    getLeagueByCodeMock.mockResolvedValue({
+      error: {
+        code: 'LEAGUE_MEMBERSHIP_REQUIRED',
+        message: 'League membership is required.',
+      },
+    });
+
+    renderMyTeamPage();
+
+    expect(await screen.findByText('You do not have access to this league.')).toBeInTheDocument();
+    expect(screen.getByText(/Open one of your active leagues/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to welcome' })).toHaveAttribute('href', '/welcome');
+  });
+
+  it('pool-master-rop.22: blocks team creation when the league relationship is not a member', async () => {
+    mockCurrentUser();
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        league: {
+          ...buildLeagueDetail('MEMBER', true),
+          leagueRelationship: {
+            leagueMember: false,
+            commissioner: false,
+          },
+        },
+      },
+    });
+    listLeagueSquadsMock.mockResolvedValue({
+      data: {
+        squads: [],
+      },
+    });
+    listLeagueMembersMock.mockResolvedValue({
+      data: {
+        members: [],
+      },
+    });
+    listSquadOwnerInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [],
+      },
+    });
+
+    renderMyTeamPage();
+
+    await screen.findByTestId('my-team-page');
+    expect(screen.getByText(/Select a team from Teams and Owners/)).toBeInTheDocument();
+    expect(screen.getByTestId('my-team-name')).toBeDisabled();
+    expect(screen.getByTestId('my-team-save')).toBeDisabled();
+    expect(screen.getByTestId('my-team-save')).toHaveTextContent('Choose a team first');
+  });
+
+  it('pool-master-rop.22: surfaces create-team rejection without losing the typed team name', async () => {
+    mockCurrentUser();
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        league: buildLeagueDetail('MEMBER'),
+      },
+    });
+    listLeagueSquadsMock.mockResolvedValue({
+      data: {
+        squads: [],
+      },
+    });
+    listLeagueMembersMock.mockResolvedValue({
+      data: {
+        members: [
+          {
+            id: 'league-member-1',
+            userId: 'user-1',
+            email: 'derek@example.com',
+            firstName: 'Derek',
+            lastName: 'Dorazio',
+            role: 'MEMBER',
+            joinedAt: '2026-04-15T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+    listSquadOwnerInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [],
+      },
+    });
+    createLeagueSquadMock.mockRejectedValue(new Error('Team name is already taken.'));
+
+    renderMyTeamPage();
+
+    await screen.findByTestId('my-team-page');
+    fireEvent.change(screen.getByTestId('my-team-name'), {
+      target: { value: 'Derek Squad' },
+    });
+    fireEvent.click(screen.getByTestId('my-team-save'));
+
+    expect(await screen.findByText('Team name is already taken.')).toBeInTheDocument();
+    expect(screen.getByTestId('my-team-name')).toHaveValue('Derek Squad');
+  });
+
+  it('pool-master-rop.22: creates a team when the current user does not yet belong to one', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {
         user: {
@@ -258,7 +384,7 @@ describe('MyTeamPage', () => {
     );
   });
 
-  it('updates the current team name when the user already belongs to a team', async () => {
+  it('pool-master-rop.22: updates the current team name when the user already belongs to a team', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {
         user: {
@@ -336,6 +462,63 @@ describe('MyTeamPage', () => {
         body: { name: 'Updated Team', iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD },
       }),
     );
+  });
+
+  it('pool-master-rop.22: surfaces update-team rejection inside the name modal without losing the draft', async () => {
+    mockCurrentUser();
+    getLeagueByCodeMock.mockResolvedValue({
+      data: {
+        league: buildLeagueDetail('MEMBER'),
+      },
+    });
+    listLeagueSquadsMock.mockResolvedValue({
+      data: {
+        squads: [
+          buildTeamSummary({
+            name: 'Original Team',
+          }),
+        ],
+      },
+    });
+    listLeagueMembersMock.mockResolvedValue({
+      data: {
+        members: [
+          {
+            id: 'league-member-1',
+            userId: 'user-1',
+            email: 'derek@example.com',
+            firstName: 'Derek',
+            lastName: 'Dorazio',
+            role: 'MEMBER',
+            joinedAt: '2026-04-15T00:00:00.000Z',
+          },
+        ],
+      },
+    });
+    listSquadOwnerInvitationsMock.mockResolvedValue({
+      data: {
+        invitations: [],
+      },
+    });
+    updateLeagueSquadMock.mockRejectedValue(new Error('Team update was rejected.'));
+
+    renderMyTeamPage();
+
+    fireEvent.click(await screen.findByTestId('my-team-open-name'));
+    const modal = await screen.findByTestId('my-team-name-modal');
+    fireEvent.change(within(modal).getByTestId('my-team-name'), {
+      target: { value: 'Rejected Team Name' },
+    });
+    fireEvent.click(within(modal).getByTestId('my-team-save'));
+
+    expect(await within(modal).findByText('Team update was rejected.')).toBeInTheDocument();
+    expect(within(modal).getByTestId('my-team-name')).toHaveValue('Rejected Team Name');
+    expect(screen.getByTestId('my-team-name-modal')).toBeInTheDocument();
+
+    fireEvent.click(within(modal).getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => expect(screen.queryByTestId('my-team-name-modal')).not.toBeInTheDocument());
+    expect(screen.queryByText('Team update was rejected.')).not.toBeInTheDocument();
   });
 
   it('pool-master-rop.20 preserves an unsaved team name draft across team query refetches', async () => {
@@ -672,7 +855,7 @@ describe('MyTeamPage', () => {
     );
   });
 
-  it('creates, replaces, removes, and revokes owner invites for an existing team', async () => {
+  it('pool-master-rop.22: creates, replaces, removes, and revokes owner invites for an existing team', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {
         user: {
@@ -910,7 +1093,7 @@ describe('MyTeamPage', () => {
     );
   });
 
-  it('inactivates the current team', async () => {
+  it('pool-master-rop.22: inactivates the current team', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {
         user: {
@@ -1128,7 +1311,7 @@ describe('MyTeamPage', () => {
     expect(screen.queryByTestId('my-team-history-contest-contest-complete')).not.toBeInTheDocument();
   });
 
-  it('lets a commissioner promote an owner from Team Home', async () => {
+  it('pool-master-rop.22: lets a commissioner promote an owner from Team Home', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {
         user: {
