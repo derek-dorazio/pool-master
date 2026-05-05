@@ -11,11 +11,13 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { mapLeagueAuditEntryToDto } from '../../mappers/leagues-audit.mapper';
 import type { AuditService, AuditCategory } from './audit-service';
 
+// Note: the contest audit-log route lives in `packages/core-api/src/modules/contests/routes.ts`
+// (not wired through this leagues handler). It applies the same
+// `mapLeagueAuditEntryToDto` mapper at its own call site. See pool-master-rop.14.1.
 export function createAuditHandlers(auditService: AuditService) {
   return {
     getLeagueAuditLog,
     getMemberAuditLog,
-    getContestAuditLog,
   };
 
   async function getLeagueAuditLog(
@@ -47,20 +49,6 @@ export function createAuditHandlers(auditService: AuditService) {
   ): Promise<void> {
     const entries = await auditService.getMemberAuditLog(
       request.params.id,
-      request.query.limit ?? 50,
-    );
-    return reply.send({ entries: entries.map(mapLeagueAuditEntryToDto) });
-  }
-
-  async function getContestAuditLog(
-    request: FastifyRequest<{
-      Params: { contestId: string };
-      Querystring: { limit?: number };
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const entries = await auditService.getContestAuditLog(
-      request.params.contestId,
       request.query.limit ?? 50,
     );
     return reply.send({ entries: entries.map(mapLeagueAuditEntryToDto) });

@@ -333,16 +333,23 @@ export const LeagueAuditEntryDtoSchema = z
     action: z.string().describe('Action verb in dotted form (e.g., "league.member.role.changed").'),
     category: LeagueAuditCategorySchema,
     description: z.string().describe('Human-readable description of what happened.'),
-    beforeState: JsonObjectSchema
-      .optional()
+    // Inline `z.record(z.unknown())` rather than the shared `JsonObjectSchema`
+    // singleton — `zodToJsonSchema` deduplicates by underlying schema reference,
+    // and reusing the same singleton makes the generator emit the same description
+    // for both fields (the first one wins). Inline schemas are distinct
+    // instances and produce per-field descriptions.
+    beforeState: z
+      .record(z.unknown())
       .describe(
         'Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract.',
-      ),
-    afterState: JsonObjectSchema
-      .optional()
+      )
+      .optional(),
+    afterState: z
+      .record(z.unknown())
       .describe(
         'Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract.',
-      ),
+      )
+      .optional(),
     reason: z
       .string()
       .optional()
