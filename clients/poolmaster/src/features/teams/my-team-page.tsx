@@ -574,7 +574,8 @@ export function MyTeamPage() {
             <Button
               data-testid="my-team-owner-invite"
               disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam || !coOwnerEmail.trim()}
-              onClick={() => void createOwnerInvitationMutation.mutateAsync(coOwnerEmail.trim())}
+              onClick={() =>
+                void createOwnerInvitationMutation.mutateAsync(coOwnerEmail.trim()).catch(() => undefined)}
             >
               Invite
             </Button>
@@ -689,7 +690,8 @@ export function MyTeamPage() {
                   <Button
                     data-testid={`my-team-revoke-owner-invitation-${invitation.id}`}
                     disabled={isInactiveLeague || isInactiveTeam || isBusy || !canManageSelectedTeam}
-                    onClick={() => void revokeOwnerInvitationMutation.mutateAsync(invitation.id)}
+                    onClick={() =>
+                      void revokeOwnerInvitationMutation.mutateAsync(invitation.id).catch(() => undefined)}
                     size="sm"
                     variant="secondary"
                   >
@@ -724,7 +726,7 @@ export function MyTeamPage() {
                 void replaceOwnerMutation.mutateAsync({
                   userId: replaceTargetUserId,
                   email: replaceEmail.trim(),
-                })}
+                }).catch(() => undefined)}
             >
               Replace
             </Button>
@@ -867,9 +869,6 @@ export function MyTeamPage() {
             {updateTeamMutation.isSuccess ? (
               <Alert tone="success">Your team was updated.</Alert>
             ) : null}
-            {updateTeamMutation.isError ? (
-              <Alert tone="danger">{extractErrorMessage(updateTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}</Alert>
-            ) : null}
             {teamInactivationNotice ? (
               <Alert tone="success">{teamInactivationNotice}</Alert>
             ) : null}
@@ -969,7 +968,7 @@ export function MyTeamPage() {
                 <Button
                   data-testid="my-team-save"
                   disabled={!teamName.trim() || isInactiveLeague || isBusy || !canCreateOwnTeam}
-                  onClick={() => void handleSaveTeam()}
+                  onClick={() => void handleSaveTeam().catch(() => undefined)}
                 >
                   {isBusy ? 'Saving...' : canCreateOwnTeam ? 'Create team' : 'Choose a team first'}
                 </Button>
@@ -1011,6 +1010,11 @@ export function MyTeamPage() {
             value={teamName}
           />
         </FormField>
+        {updateTeamMutation.isError ? (
+          <Alert className="mt-4" tone="danger">
+            {extractErrorMessage(updateTeamMutation.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}
+          </Alert>
+        ) : null}
         <div className="mt-6 flex justify-end gap-3">
           <Button
             disabled={isBusy}
@@ -1029,7 +1033,10 @@ export function MyTeamPage() {
               || !canManageSelectedTeam
               || teamNameDraftTeamId !== selectedTeam?.id
             }
-            onClick={() => void handleSaveTeam().then(handleCloseTeamNameModal)}
+            onClick={() =>
+              void handleSaveTeam()
+                .then(handleCloseTeamNameModal)
+                .catch(() => undefined)}
           >
             {updateTeamMutation.isPending ? 'Saving...' : 'Save team'}
           </Button>
@@ -1145,7 +1152,7 @@ export function MyTeamPage() {
 
           handleCloseIconModal();
         }}
-        onSave={() => void handleSaveTeamIcon()}
+        onSave={() => void handleSaveTeamIcon().catch(() => undefined)}
         onSelect={setIconDraftKey}
         open={iconModalOpen}
         optionTestIdPrefix="my-team-icon"
