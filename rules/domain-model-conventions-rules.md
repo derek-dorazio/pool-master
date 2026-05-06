@@ -279,25 +279,46 @@ variable-cardinality data), and the DTO must expose it as a typed Zod schema.
 
 ### One canonical DTO per entity
 
-Each domain entity has **one** canonical response DTO, used for list, detail,
-dashboard, and any other read view. Frontend filters fields it doesn't render.
+Each domain entity has **one canonical response DTO** that represents the
+full shape of the entity for any caller with full access. It's used for list,
+detail, dashboard, and any other read view at the full-access level.
+Frontend filters fields it doesn't render.
 
 - Per-page DTO variants (`LeagueListDto`, `LeagueDashboardDto`) are forbidden.
   They drift.
-- The canonical DTO is the single source of truth for the entity on the wire.
+- The canonical DTO is the single source of truth for the entity's full
+  shape on the wire.
+- Permission-driven thin/redacted variants (see next rule) are
+  **supplementary** contracts for restricted access levels. They do not
+  replace the canonical DTO for callers with full access; they exist
+  alongside it.
 
 ### Mutation inputs derive from the canonical DTO
 
-Create / update bodies are derived from the canonical entity DTO using `Pick`,
-`Omit`, or `Partial` — not hand-shaped from scratch.
+Create / update body schemas are derived from the canonical entity Zod schema
+using `.pick()`, `.omit()`, or `.partial()` — not hand-shaped from scratch.
+The TypeScript types are inferred from the derived schema, not declared
+separately.
 
 ```ts
-// Correct
-type CreateLeagueBody = Omit<LeagueDto, 'id' | 'createdAt' | 'updatedAt'>;
+// Correct — Zod-first, TypeScript inferred
+export const CreateLeagueBodySchema = LeagueDtoSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type CreateLeagueBody = z.infer<typeof CreateLeagueBodySchema>;
 
-// Forbidden — drifts from LeagueDto silently
-type CreateLeagueBody = { name: string; ... };
+// Forbidden — hand-shaped, drifts from LeagueDtoSchema silently
+export const CreateLeagueBodySchema = z.object({
+  name: z.string(),
+  // ...
+});
 ```
+
+Deriving the schema means every change to the canonical DTO automatically
+flows to its mutation inputs at compile time. Hand-shaping breaks that
+guarantee.
 
 ### DTO variants are permission-driven, not view-driven
 
@@ -321,8 +342,8 @@ Examples:
 
 ### Discriminated unions are physical, not nullable-conditional
 
-When variant data has minimal cross-variant overlap, split into separate
-tables on the discriminator axis.
+When variant data has minimal cross-variant overlap, the table must be split
+into separate tables on the discriminator axis.
 
 A single table with nullable columns whose meaning depends on a discriminator
 column is a JSON blob in column syntax — same anti-pattern, same problems:
@@ -334,10 +355,18 @@ column is a JSON blob in column syntax — same anti-pattern, same problems:
 - Application code has to branch on the discriminator before reading any
   variant column.
 
-When the variant data IS a small superset of a shared core (e.g., `audit_log`
-with shared fields plus 1–2 type-specific fields), a single table with the
-discriminator is appropriate. When the variants share only bookkeeping
-columns (id, parent_id, audit timestamps), split.
+The decider is the schema-as-documentation test below: if every column of a
+candidate single table applies to every row regardless of the discriminator
+value, the single table is correct. If some columns are meaningful only when
+the discriminator has a specific value, the table must be split. There is no
+threshold around "how many nullable columns is too many" — the test is
+binary.
+
+A common case where a single table is correct: an `audit_log` /
+`commissioner_audit_log` table whose columns (`actor_id`, `action`,
+`before_state`, `after_state`, `created_at`) apply uniformly across every
+action type. The action-type discriminator narrows interpretation of the
+existing fields, not which fields exist.
 
 ### Make impossible states unrepresentable at the storage layer
 
@@ -345,7 +374,7 @@ The database schema enforces what it can — `NOT NULL`, foreign keys, unique
 indexes, check constraints. Application code is the second line of defense,
 not the first.
 
-- Failure proximity: a wrong write should fail at insert time with a
+- Failure proximity: a wrong write must fail at insert time with a
   constraint error, not at read time with a confused renderer.
 - "We'll enforce that in the service layer" is acceptable only when the
   constraint genuinely cannot be expressed in the schema.
@@ -353,7 +382,7 @@ not the first.
 ### Schema-as-documentation
 
 Every column in a table applies to every row. If a column is meaningful only
-when another column has a specific value, the table should be split.
+when another column has a specific value, the table must be split.
 
 Test: can you describe what a column means without referencing any other
 column's value? If yes, it belongs. If no, the table is two tables in
@@ -385,7 +414,7 @@ unprefixed.
 
 ## 11. Open-Ended Additive Substrate Design
 
-Schema designs should accommodate future variants (new sports, new contest
+Schema designs must accommodate future variants (new sports, new contest
 types, new event formats) by **additive table creation**, not by altering
 existing tables.
 

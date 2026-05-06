@@ -7,20 +7,36 @@ sporting events: bracket pools, knockout pools, roster picks, weekly pick'em,
 survivor, predict-top-N. Members of a league submit entries and compete on a
 leaderboard for the duration of the event.
 
-PoolMaster is **not**:
+PoolMaster is **categorically not** any of the following — these are
+different product spaces with different economics, regulation, and substrate
+needs:
 
-| Pattern | Why it's out of scope |
+| Pattern | Why it's categorically out of scope |
 |---|---|
 | Season-long fantasy sports (waivers, trades, weekly lineup management) | Persistent player ownership and transactional team management is a different product |
 | Daily Fantasy Sports (DraftKings / FanDuel — daily contests, salary cap, stat-based scoring) | Different cadence and stat economy than office pools |
 | Sportsbook (moneyline / spread / parlay betting) | Odds-based settlement is a regulated product space PoolMaster does not enter |
 | Prop bets (over/under specific stats, first-to-score, etc.) | Per-stat resolution per event is a different product shape |
-| Squares pools (Super Bowl 100-square grid) | Classic office pool, but a different substrate (grid + cell + score-digit, not participant + pick); deferred to future work if/when added |
 
 This scope statement bounds the substrate. Models, DTOs, and contracts
 described in PoolMaster's design plans assume the office-pool product space —
-they should not be extended to absorb fantasy / DFS / sportsbook / prop-bet
+they must not be extended to absorb fantasy / DFS / sportsbook / prop-bet
 products without a deliberate, multi-phase substrate redesign.
+
+### Deferred — possible future scope
+
+Some patterns are office pools at heart but require a different substrate
+than the participant-pick model. They are not in scope today but may become
+in-scope later via an additive substrate epic:
+
+| Pattern | Substrate it would need |
+|---|---|
+| Squares pools (Super Bowl 100-square grid; classic office pool) | Grid + cell + score-digit, layered on top of the existing Sport / SportEvent / Contest / ContestEntry shape |
+
+When evaluating whether a new pool format is in scope, the question is
+whether the office-pool framing applies — not whether today's substrate
+already supports it. Squares are office pools and may eventually ship;
+sportsbook bets are not office pools and will not.
 
 ## Sporting Event
 
