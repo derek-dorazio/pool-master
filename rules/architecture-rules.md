@@ -120,6 +120,35 @@ Required implications:
   - MSW handlers
 - For **frontend runtime application code**, the generated SDK is the primary path source of truth. Do not add new manual path-building code when a generated operation exists.
 
+### Validity / Compatibility Matrices Source of Truth
+
+Small enumerated compatibility matrices — e.g., `(tournamentFormat × contestType) → valid?`, supported provider × sport combinations, allowed selection-mode-per-contest-type combinations — live in code as TypeScript const maps, not in the database.
+
+Pattern:
+
+```ts
+export const VALID_CONTEST_TYPES_BY_FORMAT: Record<TournamentFormat, ContestType[]> = {
+  STROKE_PLAY_TOURNAMENT: ['ROSTER'],
+  KNOCKOUT_BRACKET:       ['ROSTER', 'BRACKET'],
+  // ... exhaustive over TournamentFormat
+};
+```
+
+Use code over DB when:
+
+- Matrix is small (tens of cells, not thousands).
+- Cells change at the cadence of code releases, not user actions.
+- Compile-time exhaustiveness checking adds value (TypeScript fails the build if a new enum value lacks a matrix entry).
+- There's no genuine product requirement for runtime configurability by non-developers.
+
+Use DB instead when:
+
+- Cells change as part of normal admin-configured workflow.
+- Matrix size is genuinely large (hundreds of entries or more).
+- Tenant-specific overrides are required.
+
+Defaulting to DB is over-engineering for matrices that meet the "code" criteria above. The hidden costs of DB-backed matrices are real: migration on every change, runtime caching, queries on every validation, no compile-time check that all enum values are covered.
+
 ---
 
 ## 3. No Mock Data in Application Code
