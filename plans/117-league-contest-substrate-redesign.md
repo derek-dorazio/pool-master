@@ -109,9 +109,10 @@ The substrate has two halves connected by a single FK.
 | Table | Purpose | Notable fields |
 |---|---|---|
 | `Sport` | Granular: one row per pool target (e.g., "PGA Masters", "NCAA Tournament", "F1 World Championship"). Display name + structural metadata. | `name` (display), `category` (`GOLF` / `BASKETBALL` / `NFL` / `F1` / `NASCAR` / `TENNIS` / `SOCCER`), `tournamentFormat` (`STROKE_PLAY_TOURNAMENT` / `KNOCKOUT_BRACKET` / `SERIES_PLAYOFF` / `ROUND_ROBIN_SEASON` / `WEEKLY_GAMES_SEASON` / `TIME_TRIAL_RACE` / `SEASON_OF_RACES` / `GROUP_STAGE_KNOCKOUT` / `MATCH_PLAY`) |
-| `SportEvent` | A specific instance of competition: "PGA Masters 2026", "NCAA Tournament 2026", "Monaco GP 2026". | `sportId`, `name`, `startsAt`, `endsAt`, `status` (workflow enum), sport-event-level config (e.g., `parForRound: number` for golf events) |
-| `SportEventParticipant` | A real-world entity competing in one event: a golfer in The Masters, a team in the NCAA Tournament, a driver in Monaco GP. References a per-event participant; the same person/team in two events is two rows. | `sportEventId`, `name`, `worldRanking?` (per-event snapshot from provider), `oddsToWin?` (per-event from provider), `seedNumber?` (event-relative seed), sport-specific identity fields |
-| `SportEventParticipant<Category>Detail` | Per-category detail child. Different relational shape per category. Cardinality varies: golf has up to 4 rows per golfer, NCAA basketball has 1–6 rows per team, F1 has 1 row per driver per race. | See §6 for per-category specs |
+| `Participant` | Canonical per-sport identity (e.g., Tiger Woods, the persistent golfer entity). Spans many events. Stable display fields and external IDs only — no per-event mutable data lives here. | `sportId` FK, `name`, external provider IDs |
+| `SportEvent` | A specific instance of competition: "PGA Masters 2026", "NCAA Tournament 2026", "Monaco GP 2026". | `sportId` FK, `name`, `startsAt`, `endsAt`, `status` (workflow enum), sport-event-level config (e.g., `parForRound: number` for golf events) |
+| `SportEventParticipant` | A real-world entity in one event: Tiger Woods in The Masters 2026. The same `Participant` competing in two events produces two `SportEventParticipant` rows with different per-event data. | `sportEventId` FK, `participantId` FK → `Participant`, `worldRanking?` (per-event snapshot from provider), `oddsToWin?` (per-event from provider), `seedNumber?` (event-relative seed) |
+| `SportEventParticipant<Category>Detail` | Per-category detail child of `SportEventParticipant`. Different relational shape per category. Cardinality varies: golf has up to 4 rows per golfer per event, NCAA basketball has 1–6 rows per team, F1 has 1 row per driver per race. | See §6 for per-category specs |
 
 The `worldRanking` / `oddsToWin` fields land on `SportEventParticipant`, not on `Sport.name`-level entities — provider feeds emit these per event, not per season. (Phase 1 audit §6 + design conversation: `ParticipantSeasonRecord` was a Codex misinterpretation; dropped in this redesign.)
 
@@ -151,12 +152,12 @@ This is more tables (~14 once all sports/contests ship) but every column is mean
 
 ## 5. Naming convention
 
-Per `rules/domain-model-conventions-rules.md §10`: no bare noun used for two distinct concepts.
+Per `rules/domain-model-conventions-rules.md §10`: no bare noun used for two distinct concepts. The rule is collision-driven, not strict-prefix.
 
 - `Sport` — uniquely the sport concept; no other "sport" entity exists in the domain.
-- `SportEvent` — distinct from the in-process event-bus "event."
-- `SportEventParticipant` — the real-world entity in an event.
-- `Participant` (bare) — **forbidden as an entity name** in the redesigned schema. Old `participants` table is renamed to `sport_event_participants` (with `sport_id` FK preserved); the bare `Participant` token is reserved for documentation context.
+- `SportEvent` — distinct from the in-process event-bus "event"; the prefix prevents that overload.
+- `Participant` (bare) — **acceptable as the per-sport canonical entity** (e.g., Tiger Woods, the persistent golfer entity). The pool-app side uses `Pick`, not "Participant" — so there's no domain collision and no rename is required.
+- `SportEventParticipant` — the per-event row (Tiger Woods in The Masters 2026), with `participantId` FK back to the canonical `Participant`. Each event materializes its own row with per-event data (`worldRanking`, `oddsToWin`, `seedNumber`).
 - `Contest`, `ContestEntry`, `ContestEntryPick` — pool-app side, prefix-disambiguated where collision is possible.
 - `Pick` (bare) — discouraged in entity names; always prefixed (e.g., `ContestEntryPick`).
 
@@ -164,7 +165,7 @@ Per-`<Category>` tables on the real-world side: `SportEventParticipantGolfRound`
 
 Per-`<Category><ContestType>` tables on the pool-app side: `ContestEntryPickGolfRosterContribution`, `ContestEntryPickBasketballBracketContribution`, etc.
 
-The verbosity is the price of unambiguous schema-as-documentation.
+The verbosity is the price of unambiguous schema-as-documentation. Bare names that have only one referent in the domain (`Participant` is the canonical per-sport entity; nothing else is named "participant") stay unprefixed.
 
 ---
 
@@ -372,7 +373,7 @@ The aggregate `ContestEntry.totalScore = SUM(contribution)` across all this entr
 
 ## 9. Validity matrix — `tournamentFormat × contestType`
 
-Per `rules/architecture-rules.md §2`: code-side typed const map.
+Per `rules/architecture-rules.md §2 / "Validity / Compatibility Matrices Source of Truth"`: code-side typed const map.
 
 ```ts
 // packages/shared/domain/contest-validity.ts
@@ -681,16 +682,16 @@ One Prisma migration. Per `rules/model-change-rules.md` "No-Data Clean Reworks" 
 - `participant_season_records` (Codex misinterpretation per design conversation; per-event ranking/odds belong on `SportEventParticipant`)
 - `sport_event_participant_source_data` (replaced by per-category detail tables)
 
-### 13.2 Reshape
+### 13.2 Reshape (alters to existing tables — no renames)
 
 - `roster_picks` → `contest_entry_picks` — rename + add optional columns (`period`, `slot`, `tier`, `cost`, `isAutoPicked`)
-- `participants` → renamed `sport_participants` — keeps `sportId` FK, drops `metadata` Json column (per-event metadata moves to `SportEventParticipant`)
-- `sports` → add `category` and `tournament_format` enum columns; drop `stat_schema` Json column
+- `participants` — drop `metadata` Json column (per-event metadata now lives on `SportEventParticipant` — the canonical `Participant` row keeps only stable identity fields). Table name stays the same.
+- `sport_event_participants` — add `world_ranking`, `odds_to_win`, `seed_number` columns (per-event mutable data, sourced from provider feeds at ingestion time). Table name stays the same.
+- `sports` — add `category` and `tournament_format` enum columns; drop `stat_schema` Json column.
 
-### 13.3 Adds
+### 13.3 Adds (new tables)
 
-- `sport_event_participants` (renamed expansion of existing `sport_event_participants`; adds `worldRanking`, `oddsToWin`, etc.)
-- `contest_sport_events` (M:N join)
+- `contest_sport_events` (M:N join `Contest` ↔ `SportEvent`)
 - `sport_event_participant_golf_round`
 - `contest_entry_pick_golf_roster_contribution`
 
@@ -892,7 +893,31 @@ Each slice's PR follows the multi-pass review flow. Each Beads child closes with
 
 ---
 
-## 17. Open questions for Phase 4
+## 17. Audit §9 question disposition
+
+The Phase 1 audit listed 17 open questions for Phase 2. Each is resolved-by-design somewhere in this plan, deferred to a Phase 4 slice, or left as a Phase 1 snapshot.
+
+| Q | Topic | Disposition |
+|---|---|---|
+| Q1 | Canonical "League summary" DTO | **Resolved** — §2 governing principle #2 (one canonical DTO per entity) + the rule landed in `domain-model-conventions-rules.md §8` (canonical full-shape DTO; permission-driven thin variants only). League DTO is league-scoped and stable; this redesign doesn't reshape it. |
+| Q2 | Canonical "Contest summary" DTO | **Resolved** by §12.1 — `ContestDtoSchema` is the single canonical DTO used for list, detail, and dashboard. |
+| Q3 | Canonical `ContestEntry` DTO including `latestPerformance` | **Resolved** by §12.1 — `ContestEntryDtoSchema` is canonical; the equivalent of `latestPerformance` is the typed `contributions` discriminated union (§12.1 example), backed by per-(category × contestType) contribution tables. |
+| Q4 | Locking strategy for concurrent stat events | **Resolved** by §11.4 — per-contest pessimistic advisory lock. |
+| Q5 | Recalc + rollup unification | **Resolved** by §11.3 — kill periodic rollup; stat-event-driven only. |
+| Q6 | Transaction boundary for per-stat-event scoring | **Resolved** by §11.5 — one transaction per (contest, stat event). |
+| Q7 | Debouncing / batching of stat events | **Resolved** by §11.6 — no batching; per-event latency is acceptable for office-pool sizes. |
+| Q8 | Canonical `LatestPerformanceSnapshotDto` shape (tagged union vs generic) | **Resolved by design** — §6 + §8 collapse the question. Per-category detail tables (§6) and per-(category × contestType) contribution tables (§8) replace the polymorphic single shape with physically separate typed tables. There is no `LatestPerformanceSnapshotDto`; performance data lives in typed per-sport tables. |
+| Q9 | Mock-feed-provider SDK strategy | **Resolved** by §10.5 — delete the hand-rolled SDK, consume the generated SDK in `mock-contest-feed-adapter.ts`. Folded into Phase 4 slice `rop.78.13`. |
+| Q10 | `ProviderStatEvent` validation at the bus boundary | **Resolved** by §10.3 — Zod-validated `LiveScoreResult` at `publishLiveScoreUpdate`. |
+| Q11 | Zustand vs React Query split | **Resolved** by §14.3 — React Query owns server data; Zustand owns ephemeral UI state only. Folded into Phase 4 slice `rop.78.11`. |
+| Q12 | Per-feature `query-keys.ts` factory | **Resolved** by §14.1 — central factory shape. Folded into Phase 4 slice `rop.78.9`. |
+| Q13 | Cache-invalidation contract enforcement | **Resolved** by §14.2 — hook-wrapper that declares invalidations per mutation. Folded into Phase 4 slice `rop.78.10`. |
+| Q14 | MSW migration strategy | **Resolved** by §15.4 — page-by-page, opportunistic. |
+| Q15 | E2E FAPI test scenario for live-scoring | **Resolved** by §15.1 — single FAPI scenario covering the full pipeline. Folded into Phase 4 slice `rop.78.12`. |
+| Q16 | Re-parent existing rop.* defects under rop.78 | **Resolved** by §16.2 — fold-in plan per audit §8.2. |
+| Q17 | Phase 4 slice ordering | **Resolved** by §16.1 — 12 slices in dependency order. |
+
+## 18. Open questions for Phase 4
 
 These are deliberately deferred — not blocking on Phase 2 sign-off. Each surfaces during its corresponding slice and gets a small design call there.
 
@@ -904,7 +929,7 @@ These are deliberately deferred — not blocking on Phase 2 sign-off. Each surfa
 
 ---
 
-## 18. What this plan does NOT cover
+## 19. What this plan does NOT cover
 
 - **Auth / authz.** Permission boundaries are mentioned in §12.2 (thin/full DTO) but the actual permission predicates live in existing auth middleware. No changes.
 - **League / squad / membership entities.** The substrate redesign does not touch the `League`, `LeagueMembership`, `Squad`, or invitation tables. Those are stable.
@@ -914,7 +939,7 @@ These are deliberately deferred — not blocking on Phase 2 sign-off. Each surfa
 
 ---
 
-## 19. Phase 3 review gate
+## 20. Phase 3 review gate
 
 This plan does not auto-progress to Phase 4. The user reviews this document, pushes back on framing or open decisions, and signs off before any `rop.78.<N>` implementation slice spawns.
 
