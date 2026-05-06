@@ -14,6 +14,33 @@ This file is intentionally separate from
 
 ---
 
+## Guiding Principle: Strongly Typed End-to-End
+
+PoolMaster's domain model is **strongly typed at every layer** — Prisma schema,
+service-layer interfaces, shared Zod DTOs, generated SDK, and React consumers
+all agree on the same shape for the same entity. Drift between layers is a
+defect, not a tolerable trade-off.
+
+Specifically:
+
+- **Amorphous shapes are forbidden** when the application code already knows
+  the shape. `Json` columns, `z.record(z.unknown())`, `Record<string, unknown>`,
+  and discriminator-driven nullable columns are all variations of the same
+  anti-pattern: pushing interpretation onto the reader instead of encoding it in
+  the type system.
+- **The only acceptable use of opaque shapes is at integration boundaries**
+  where the shape genuinely cannot be enforced — raw provider payloads
+  pre-normalization, opaque audit-log snapshots whose shape varies by source
+  entity. After normalization, the shape is typed.
+- **Strongly typed beats more concise.** Verbose table names, more mapper
+  files, and more discriminated-union variants are acceptable costs when the
+  alternative is nullable interpretation, JSON-blob fields, or
+  schema-as-context-dependent.
+
+The rules below are concrete applications of this principle.
+
+---
+
 ## 1. Purpose
 
 PoolMaster should use consistent domain-model patterns so that:
@@ -229,3 +256,149 @@ These conventions match the current intended direction for PoolMaster:
 
 As PoolMaster evolves, update this file when the domain conventions themselves
 change, not merely when a specific feature is being implemented.
+
+---
+
+## 8. Typed-End-to-End DTO Conventions
+
+These rules apply specifically to keeping types aligned across all layers of
+the contract chain.
+
+### Type alignment across layers
+
+If a TypeScript interface exists in the service layer for an entity's data,
+the Prisma schema must store it as typed columns (or as a child table for
+variable-cardinality data), and the DTO must expose it as a typed Zod schema.
+
+- A shape that's typed in `packages/core-api/src/.../types.ts` but stored as
+  Prisma `Json` or wired as `z.record(z.unknown())` is drift.
+- The fix is to promote the shape: typed Prisma columns or child tables, typed
+  Zod schema, regenerate the SDK.
+- Drift between any two of the three layers (storage, service, wire) is a
+  defect, not a tolerable trade-off.
+
+### One canonical DTO per entity
+
+Each domain entity has **one** canonical response DTO, used for list, detail,
+dashboard, and any other read view. Frontend filters fields it doesn't render.
+
+- Per-page DTO variants (`LeagueListDto`, `LeagueDashboardDto`) are forbidden.
+  They drift.
+- The canonical DTO is the single source of truth for the entity on the wire.
+
+### Mutation inputs derive from the canonical DTO
+
+Create / update bodies are derived from the canonical entity DTO using `Pick`,
+`Omit`, or `Partial` — not hand-shaped from scratch.
+
+```ts
+// Correct
+type CreateLeagueBody = Omit<LeagueDto, 'id' | 'createdAt' | 'updatedAt'>;
+
+// Forbidden — drifts from LeagueDto silently
+type CreateLeagueBody = { name: string; ... };
+```
+
+### DTO variants are permission-driven, not view-driven
+
+A redacted DTO that hides fields based on the viewer's access level is a
+legitimate variant — it's a different contract for a different access level.
+
+A list-view DTO that omits fields "for performance" is forbidden — that's view
+convenience and drifts from the canonical entity shape.
+
+Examples:
+
+- ✅ `ContestEntryThinDto` (id, name, squadName) shown to non-owners
+  pre-event-live, while `ContestEntryDto` (with picks + scores) shown to
+  owners — permission boundary.
+- ❌ `LeagueSummaryDto` for list view + `LeagueDetailDto` for detail page —
+  view convenience, drifts.
+
+---
+
+## 9. Schema Design — Discriminated Unions and Constraints
+
+### Discriminated unions are physical, not nullable-conditional
+
+When variant data has minimal cross-variant overlap, split into separate
+tables on the discriminator axis.
+
+A single table with nullable columns whose meaning depends on a discriminator
+column is a JSON blob in column syntax — same anti-pattern, same problems:
+
+- Schema stops being self-documenting (readers need outside context to
+  interpret a row).
+- Database constraints become impossible (`UNIQUE` over partially-NULL tuples
+  is ambiguous).
+- Application code has to branch on the discriminator before reading any
+  variant column.
+
+When the variant data IS a small superset of a shared core (e.g., `audit_log`
+with shared fields plus 1–2 type-specific fields), a single table with the
+discriminator is appropriate. When the variants share only bookkeeping
+columns (id, parent_id, audit timestamps), split.
+
+### Make impossible states unrepresentable at the storage layer
+
+The database schema enforces what it can — `NOT NULL`, foreign keys, unique
+indexes, check constraints. Application code is the second line of defense,
+not the first.
+
+- Failure proximity: a wrong write should fail at insert time with a
+  constraint error, not at read time with a confused renderer.
+- "We'll enforce that in the service layer" is acceptable only when the
+  constraint genuinely cannot be expressed in the schema.
+
+### Schema-as-documentation
+
+Every column in a table applies to every row. If a column is meaningful only
+when another column has a specific value, the table should be split.
+
+Test: can you describe what a column means without referencing any other
+column's value? If yes, it belongs. If no, the table is two tables in
+disguise.
+
+---
+
+## 10. Naming Disambiguation
+
+No bare noun is reused across the domain for two distinct concepts.
+
+If `Participant` exists as a real-world entity (e.g., a golfer in a
+tournament), the pool-app side uses a different word (`Pick`) for the
+analogous concept. Disambiguate at the entity-name level, not via context.
+
+When a bare noun would otherwise collide across two domains, the
+longer-prefixed name wins:
+
+- `ContestEntryPick` not `Pick` — there are multiple pick-like entities; the
+  prefix clarifies the parent.
+- `SportEvent` not `Event` — `Event` overloads with the in-process event bus.
+
+This is **not** a rule to prefix every entity. It's a rule to disambiguate
+where there's collision risk. Bare names that have only one referent in the
+domain (`Participant` is fine if no other "participant" concept exists) stay
+unprefixed.
+
+---
+
+## 11. Open-Ended Additive Substrate Design
+
+Schema designs should accommodate future variants (new sports, new contest
+types, new event formats) by **additive table creation**, not by altering
+existing tables.
+
+- Adding a new sport: create per-category detail tables, create per-(category
+  × contestType) contribution tables, add a Sport row, add scoring rule
+  functions. **No alterations to existing tables.**
+- Adding a new contest type within an existing sport: create the per-(category
+  × contestType) contribution table for the new combo. **No alterations to
+  existing tables.**
+- Adding a new variant within an existing axis: a new row in an existing table
+  is fine; a new nullable column on an existing table to support a new variant
+  is the smell to avoid.
+
+The substrate test is: "can the next sport / contest type / variant ship
+without altering any existing table?" If no, the design is too coupled to
+today's variants.
