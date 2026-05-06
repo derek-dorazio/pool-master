@@ -123,12 +123,14 @@ The `worldRanking` / `oddsToWin` fields land on `SportEventParticipant`, not on 
 | `Contest` | A pool. Sport-scoped, contest-type-scoped, league-scoped. | `leagueId`, `sportId`, `contestType` (enum: `ROSTER` / `BRACKET` / `PICKEM_CONFIDENCE` / `SURVIVOR` / `PREDICT_TOP_N`), `selectionConfig` (per-contestType typed config), `scoringConfig` (per-contestType typed scoring rules), `status` (workflow), `lockedAt`, `closedAt` |
 | `ContestSportEvent` | M:N join from `Contest` to `SportEvent`. Golf-tournament-roster contests have 1 row (one tournament); NFL weekly pick'em contests have 16 rows (one per week's games); F1 season-long contests have ~22 rows (one per race). | `contestId`, `sportEventId` |
 | `ContestEntry` | A user's submission to a contest. Owned by a squad (PoolMaster team). | `contestId`, `squadId`, `name` (entry display name), `totalScore: Decimal` (aggregate), `rank: Int?`, `tiebreakerValue: Int?` (entry-level tiebreaker; bracket pools use this) |
-| `ContestEntryPick` | A pick on an entry — references a `SportEventParticipant`. **Unified across contest types**; optional metadata fields disambiguate. | `contestEntryId`, `sportEventParticipantId`, `period?` (week / draft round / bracket round), `slot?` (matchup index / draft pick order / predicted position), `tier?` (selection tier), `cost?` (budget cost), `isAutoPicked: Boolean` |
+| `ContestEntryPick` | A pick on an entry — references a `SportEventParticipant`. **Unified across contest types**; optional metadata fields disambiguate. | `contestEntryId`, `sportEventParticipantId`, `contestType` (denormalized from parent `Contest.contestType`; enables partial-index uniqueness — see §7.1), `period?` (week / draft round / bracket round), `slot?` (matchup index / draft pick order / predicted position), `tier?` (selection tier), `cost?` (budget cost), `isAutoPicked: Boolean` |
 | `ContestEntryPick<Category><ContestType>Contribution` | Per-(category × contestType) contribution detail. The bridge between a pick, a real-world result, and contest scoring rules. | See §8 for per-combo specs |
 
 ### 4.3 Why `ContestEntryPick` is unified
 
-The four pre-redesign pick tables (`RosterPick`, `ContestPick`, `BracketPrediction`, `DraftPick`) collapse into one table because — once the contest-type-specific bookkeeping is moved to optional fields — every pick is fundamentally an `(entry, picked-participant)` relationship. The contest type lives on `Contest.contestType` and `Contest.selectionConfig`; the pick itself is uniform.
+The current schema has only one active pick table — `RosterPick` (`roster_picks`); earlier-considered tables (`contest_picks`, `bracket_predictions`, `draft_picks`) were dropped in pre-redesign migrations. `DraftSession` + `DraftPickHistory` exist as a separate snake-draft mechanism (22 active call sites) and are **out of scope for this redesign** — future snake-draft contest types may fold into `ContestEntryPick`, but Phase 4 leaves them alone.
+
+The unification claim in the redesign is forward-looking: once the substrate ships, future contest types (BRACKET, PICKEM_CONFIDENCE, SURVIVOR, PREDICT_TOP_N) populate `ContestEntryPick` directly via optional metadata, rather than each adding its own pick table. The pre-redesign zombie tables that "would have collapsed" never actually existed when the redesign begins; the principle is "any new contest type uses the unified table from day one."
 
 | Contest type | `period` | `slot` | `tier` | `cost` | Notes |
 |---|---|---|---|---|---|
@@ -319,11 +321,38 @@ The `ContestEntryPick` table defined in §4.2 is the single pick shape across al
 
 ### 7.1 Constraints on `ContestEntryPick`
 
-- `(contestEntryId, sportEventParticipantId)` — UNIQUE for ROSTER contests (no double-picking the same golfer).
-- `(contestEntryId, period, slot)` — UNIQUE for BRACKET / PICKEM contests (no two picks on the same matchup / game).
-- `(contestEntryId, slot)` — UNIQUE for PREDICT_TOP_N (no two picks for the same predicted position).
+`ContestEntryPick.contestType` is denormalized from `Contest.contestType` via the parent `ContestEntry`. This is safe because `Contest.contestType` is immutable post-creation (changing it would invalidate every pick anyway). The denormalization is what makes contest-type-specific partial unique indexes implementable — Postgres partial indexes can predicate on local columns but not on joined parent columns.
 
-Constraints are conditional on contest type. Implementation: per-contest-type partial unique indexes (Postgres supports `CREATE UNIQUE INDEX ... WHERE ...`), or service-layer enforcement augmented by the canonical-shape constraints. Phase 4 implementation slice decides which.
+Per-contest-type partial unique indexes (all predicate on local columns):
+
+```sql
+-- ROSTER: no double-picking the same participant
+CREATE UNIQUE INDEX uq_pick_roster_participant
+  ON contest_entry_picks (contest_entry_id, sport_event_participant_id)
+  WHERE contest_type = 'ROSTER';
+
+-- BRACKET / PICKEM_CONFIDENCE: no two picks on the same matchup / confidence rank
+CREATE UNIQUE INDEX uq_pick_period_slot
+  ON contest_entry_picks (contest_entry_id, period, slot)
+  WHERE contest_type IN ('BRACKET', 'PICKEM_CONFIDENCE');
+
+-- PREDICT_TOP_N: no two picks for the same predicted position
+CREATE UNIQUE INDEX uq_pick_predicted_position
+  ON contest_entry_picks (contest_entry_id, slot)
+  WHERE contest_type = 'PREDICT_TOP_N';
+
+-- SURVIVOR: one pick per week per entry
+CREATE UNIQUE INDEX uq_pick_survivor_week
+  ON contest_entry_picks (contest_entry_id, period)
+  WHERE contest_type = 'SURVIVOR';
+```
+
+**Consistency guarantee on the denormalized column:**
+- Service-layer enforcement at insert time: pick-creation always reads `Contest.contestType` from the parent contest and writes it to the pick row. No insert path bypasses this.
+- A check-constraint test asserts `ContestEntryPick.contestType` matches `Contest.contestType` for every pick (Phase 4 implementation slice's contract test).
+- A migration-time consistency check covers the rename of `roster_picks` → `contest_entry_picks` (every existing roster_picks row gets `contestType = 'ROSTER'`).
+
+This satisfies the "make impossible states unrepresentable at storage" principle: the database directly enforces no double-picks per (contest type, entry).
 
 ---
 
@@ -674,38 +703,56 @@ packages/core-api/src/mappers/
 
 One Prisma migration. Per `rules/model-change-rules.md` "No-Data Clean Reworks" rule.
 
-### 13.1 Drops
+### 13.1 Current schema state — what actually exists
 
-- `contest_picks` (zombie — 0 prod call sites; survivor / pick'em not built)
-- `bracket_predictions` (zombie — 0 prod call sites)
-- `draft_picks` (zombie — 0 prod call sites)
-- `participant_season_records` (Codex misinterpretation per design conversation; per-event ranking/odds belong on `SportEventParticipant`)
-- `sport_event_participant_source_data` (replaced by per-category detail tables)
+Verified against `packages/core-api/prisma/schema.prisma` at the time of this plan:
 
-### 13.2 Reshape (alters to existing tables — no renames)
+- `roster_picks` (model `RosterPick`) — the only active pick table
+- `draft_sessions` (model `DraftSession`) + `draft_pick_histories` (model `DraftPickHistory`) — separate snake-draft mechanism, 22 active call sites; **out of scope for this redesign**
+- `contest_picks`, `bracket_predictions`, `draft_picks` — already dropped in earlier migrations; **not present in current schema** (the original audit / earlier draft of this plan referred to them as "zombies to drop"; that was incorrect)
+- `participants` — canonical per-sport identity
+- `sport_event_participants` — per-event row
+- `sport_event_participant_source_data` — opaque JSON storage to be replaced by per-category detail tables
+- `participant_season_records` — Codex misinterpretation per design conversation; per-event ranking/odds belong on `SportEventParticipant`
+- `sports` — has `stat_schema` JSON column to drop
 
-- `roster_picks` → `contest_entry_picks` — rename + add optional columns (`period`, `slot`, `tier`, `cost`, `isAutoPicked`)
-- `participants` — drop `metadata` Json column (per-event metadata now lives on `SportEventParticipant` — the canonical `Participant` row keeps only stable identity fields). Table name stays the same.
-- `sport_event_participants` — add `world_ranking`, `odds_to_win`, `seed_number` columns (per-event mutable data, sourced from provider feeds at ingestion time). Table name stays the same.
-- `sports` — add `category` and `tournament_format` enum columns; drop `stat_schema` Json column.
+### 13.2 Drops
 
-### 13.3 Adds (new tables)
+- `participant_season_records` (data not used; per-event ranking/odds move to `sport_event_participants`)
+- `sport_event_participant_source_data` (replaced by per-category detail tables — `sport_event_participant_golf_round` etc.)
+- `participants.metadata` (column drop — per-event metadata now lives on `sport_event_participants`)
+- `sports.stat_schema` (column drop)
+
+`draft_sessions` + `draft_pick_histories` are **NOT dropped**. They support snake-draft contest types whose redesign is deferred to a future epic. If/when snake-draft contests are built under the new substrate, that future epic decides whether to fold them into `ContestEntryPick` or keep them as a separate mechanism.
+
+### 13.3 Reshape
+
+- `roster_picks` → renamed to `contest_entry_picks`; add columns: `contest_type` (enum, NOT NULL — denormalized from parent contest, see §7.1), `period?`, `slot?`, `tier?`, `cost?`, `is_auto_picked: Boolean`. Existing rows backfilled with `contest_type = 'ROSTER'` (every roster_pick is by definition a ROSTER pick).
+- `sport_event_participants` — add `world_ranking?`, `odds_to_win?`, `seed_number?` columns. Table name stays the same.
+- `sports` — add `category` and `tournament_format` enum columns. Table name stays the same.
+
+### 13.4 Adds (new tables)
 
 - `contest_sport_events` (M:N join `Contest` ↔ `SportEvent`)
 - `sport_event_participant_golf_round`
 - `contest_entry_pick_golf_roster_contribution`
 
-### 13.4 Migration ordering
+### 13.5 Migration ordering
 
-Per the migration rules: one migration file. Sequence within it:
-1. Create new enums (`SportCategory`, `TournamentFormat`)
-2. Create new tables (`contest_sport_events`, `sport_event_participant_golf_round`, `contest_entry_pick_golf_roster_contribution`)
-3. Add columns to existing tables (`sports.category`, `sports.tournament_format`; `sport_event_participants.world_ranking`, `.odds_to_win`)
-4. Rename `roster_picks` → `contest_entry_picks`; add optional columns
-5. Drop dropped tables
-6. Drop dropped columns
+Single migration file; statements ordered so every FK references an already-existing table:
 
-No data preservation. Dev/test databases reseed; CI runs the migration on a fresh DB each test run.
+1. Create new enums (`SportCategory`, `TournamentFormat`, expanded `ContestType` if new variants are introduced).
+2. Add columns to existing tables (`sports.category`, `sports.tournament_format`; `sport_event_participants.world_ranking`, `.odds_to_win`, `.seed_number`).
+3. **Rename `roster_picks` → `contest_entry_picks`** + add new columns (`contest_type` NOT NULL with backfill default 'ROSTER', `period`, `slot`, `tier`, `cost`, `is_auto_picked`). This must precede any new table that FKs to it.
+4. Create per-contest-type partial unique indexes on `contest_entry_picks` (per §7.1).
+5. Create `contest_sport_events`, `sport_event_participant_golf_round` (no FK to `contest_entry_picks`).
+6. Create `contest_entry_pick_golf_roster_contribution` (FK to `contest_entry_picks` — table now exists under that name from step 3).
+7. Drop `participants.metadata` column.
+8. Drop `sports.stat_schema` column.
+9. Drop `participant_season_records` table.
+10. Drop `sport_event_participant_source_data` table.
+
+No backfill of cross-table data. Dev/test databases reseed; CI runs the migration on a fresh DB each test run. The single non-trivial backfill (`contest_entry_picks.contest_type = 'ROSTER'` for existing roster_picks rows) is a literal default applied during the rename in step 3.
 
 ---
 
@@ -922,10 +969,10 @@ The Phase 1 audit listed 17 open questions for Phase 2. Each is resolved-by-desi
 These are deliberately deferred — not blocking on Phase 2 sign-off. Each surfaces during its corresponding slice and gets a small design call there.
 
 1. **Per-contest scoring lock implementation detail.** Postgres advisory lock identifier derivation: hash(contestId)? bigint(contestId substring)? Phase 4 slice `rop.78.8` decides.
-2. **`ContestEntryPick` per-contest-type partial unique indexes vs. service-layer enforcement.** Postgres supports `CREATE UNIQUE INDEX ... WHERE contest_type = 'ROSTER'` but it's an indirection. Phase 4 slice `rop.78.6` decides.
-3. **Tiebreaker semantics across contest types.** Bracket pools use `tiebreakerValue = predicted NCG total points`. What's the equivalent for other contest types? Not blocking — Phase 4 slices add per-contest-type tiebreaker columns as needed.
-4. **Provider adapter retry / backoff on validation failure.** When a provider's `LiveScoreResult` fails Zod validation, does the adapter retry the call? Log and skip? Phase 4 slice `rop.78.3` decides.
-5. **Migration of `sports.name` granularity.** Some current `Sport` rows are coarse (`GOLF`); the redesign expects granular (`PGA Masters` etc.). Migration writes a default `category` and `tournament_format` for each existing row, but the granular per-tournament rows are added per-tournament as live data arrives. Phase 4 slice `rop.78.4` decides whether to seed historical tournaments or wait for the live-scoring slice.
+2. **Tiebreaker semantics across contest types.** Bracket pools use `tiebreakerValue = predicted NCG total points`. What's the equivalent for other contest types? Not blocking — Phase 4 slices add per-contest-type tiebreaker columns as needed.
+3. **Provider adapter retry / backoff on validation failure.** When a provider's `LiveScoreResult` fails Zod validation, does the adapter retry the call? Log and skip? Phase 4 slice `rop.78.3` decides.
+4. **Migration of `sports.name` granularity.** Some current `Sport` rows are coarse (`GOLF`); the redesign expects granular (`PGA Masters` etc.). Migration writes a default `category` and `tournament_format` for each existing row, but the granular per-tournament rows are added per-tournament as live data arrives. Phase 4 slice `rop.78.4` decides whether to seed historical tournaments or wait for the live-scoring slice.
+5. **Future fold-in of `DraftSession` / `DraftPickHistory` into `ContestEntryPick`.** Snake-draft contests are out of scope for this redesign. When a future epic builds a snake-draft contest type under the new substrate, that epic decides whether to fold the existing `draft_sessions` + `draft_pick_histories` tables into `ContestEntryPick` or keep them as a separate mechanism.
 
 ---
 
