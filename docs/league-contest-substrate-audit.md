@@ -187,7 +187,7 @@ Mappers that import `Record<string, unknown>` or accept it as input:
 
 - **`leagues/routes.ts:411–419 getLeagueDashboard`** — handler returns `dashboardService.getDashboard(id)` (`CommissionerDashboard | null`) directly. No mapper. DTO uses `JsonObjectSchema` for `league` and `contests` because the wire format isn't shaped.
 - **`leagues/routes.ts:484, 501 copySeason / importMembers`** — handlers return `bulkService.copyLastSeason(...)` and `bulkService.importMembersFromCsv(...)` directly. Single shared `LeagueBulkOperationResponseSchema = JsonObjectSchema` masks two distinct shapes.
-- **`leagues/audit-handler.ts`** — handlers return `{ entries: AuditLogEntry[] }` from `auditService.*` directly. DTO uses `JsonObjectSchema` for entries.
+- **`leagues/audit-handler.ts`** — handlers return `{ entries: AuditLogEntry[] }` from `auditService.*` directly. DTO uses `JsonObjectSchema` for entries. *(Resolved post-audit by PR #21 / rop.14.1: typed `LeagueAuditEntryDtoSchema` shipped + `mapLeagueAuditEntryToDto` applied at all three audit-log routes including `contests/routes.ts`. Section preserved for historical context — Phase 2 verifies the shipped shape against the redesigned pattern.)*
 - **`history/*`** — full audit needed; `HistoryObjectSchema = JsonObjectSchema` blanket-opaque.
 - **(Probably more)** — full audit per route would require enumerating every handler return.
 
@@ -411,7 +411,7 @@ This section is written **after** sections 1–7 so the audit's framing isn't sh
 |---|---|---|
 | `JsonObjectSchema` leakage in 24 DTOs (`§3.1`) | `pool-master-rop.14` (umbrella, parent of .1 / .2 / .3 / .4 / .5; covers 5 of the 24 sites) | Existing defect covers only the contests + leagues area sites. **19 other sites unfiled** in admin / history / ingestion / scoring / participants / common DTOs. |
 | Routes emit domain objects without a mapper (`§3.3`) | (none directly) | Symptom of the broader contract-first gap; should be filed as a new defect or absorbed into rop.78's design phase. |
-| Audit log DTO opaque (`§3.1`, `§2.3`) | `pool-master-rop.14.1` | Independently tractable — user already approved shipping it. |
+| Audit log DTO opaque (`§3.1`, `§2.3`) | `pool-master-rop.14.1` *(shipped)* | Shipped post-audit via PR #21 — typed `LeagueAuditEntryDtoSchema` + mapper at all three audit-log routes. Phase 2 verifies post-redesign compliance. |
 | Dashboard payload opaque (`§3.1`, `§3.3`) | `pool-master-rop.14.2`, `pool-master-rop.14.3` | Needs canonical dashboard-summary DTO design. |
 | Bulk-op payload single opaque schema for 2 shapes (`§3.1`) | `pool-master-rop.14.4` | Needs split / discriminated union / generic envelope decision. |
 | `latestPerformance` opaque + provider passthrough (`§2.3`, `§3.1`, `§6.4`) | `pool-master-rop.14.5` (DTO angle), `pool-master-rop.16` (provider SDK angle), `pool-master-rop.1` (ingestion-scoring decoupling) | All three converge on "no canonical cross-provider performance shape." |
@@ -438,7 +438,7 @@ Phase 2 should decide whether each in-scope defect:
 
 **Audit's preliminary lean** (Phase 2 confirms / overrides):
 
-- `rop.14.1` — **stay independent, ship now** (already user-approved); audit will verify post-design compliance
+- `rop.14.1` — **shipped** via PR #21 (merged 2026-05-05); Phase 2 verifies the shipped shape complies with the redesigned pattern, with a follow-up Phase 4 slice if it doesn't
 - `rop.14.2 / .3 / .4 / .5` — **fold into Phase 4 slices** that adopt the redesigned dashboard / bulk-op / performance shapes
 - `rop.18` — **fold into Phase 4** (state-mirror cleanup; need new pattern for Zustand-as-ephemeral-only)
 - `rop.20` (closed) — pattern recurrence sweep is **q8h-7wj.7 backsweep**; rop.78 doesn't re-open
