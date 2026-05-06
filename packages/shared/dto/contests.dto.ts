@@ -209,7 +209,7 @@ export const ContestEntryDtoSchema = z.object({
 export type ContestEntryDto = z.infer<typeof ContestEntryDtoSchema>;
 
 export const ContestEntryParticipantDetailDtoSchema = z.object({
-  rosterPickId: z.string(),
+  pickId: z.string(),
   sportEventParticipantId: z.string(),
   participantId: z.string(),
   participantName: z.string(),

@@ -224,7 +224,7 @@ export interface ContestPrizeDefinition extends DomainEntity {
 /** Aggregate participant score record for a contest entry. */
 export interface ContestEntryParticipantScore extends DomainEntity {
   entryId: string;
-  rosterPickId: string;
+  pickId: string;
   pointsEarned: number;
 }
 
