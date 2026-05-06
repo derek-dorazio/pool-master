@@ -9,6 +9,7 @@ import {
   SelectionType,
 } from '@poolmaster/shared/domain';
 import { JsonObjectSchema } from './common.dto';
+import { LeagueAuditEntryDtoSchema, type LeagueAuditEntryDto } from './leagues.dto';
 import {
   GolfCategoryDefinitionSchema,
   GolfContestTierSchema,
@@ -324,21 +325,16 @@ export type ContestRecalculationResponse = z.infer<typeof ContestRecalculationRe
 export const ContestStandingsRecalculationResponseSchema =
   ContestRecalculationResponseSchema;
 
-export const ContestAuditLogEntryDtoSchema = z.object({
-  id: z.string(),
-  leagueId: z.string(),
-  contestId: z.string().nullable().optional(),
-  actorId: z.string(),
-  action: z.string(),
-  category: z.string(),
-  description: z.string(),
-  beforeState: z.record(z.unknown()).nullable().optional(),
-  afterState: z.record(z.unknown()).nullable().optional(),
-  reason: z.string().nullable().optional(),
-  ipAddress: z.string().nullable().optional(),
-  createdAt: z.string().datetime().describe('When the audit entry was created.'),
-}).describe('Audit-log entry for contest changes and administrative actions.');
-export type ContestAuditLogEntryDto = z.infer<typeof ContestAuditLogEntryDtoSchema>;
+// Per pool-master-rop.14.1: the audit-log entry shape is identical for league
+// and contest scopes — both endpoints query the same `commissionerAuditLog`
+// table via `AuditService` and emit the same `AuditLogEntry` interface. The
+// previous duplication (this schema diverged from `LeagueAuditEntryDtoSchema`
+// with `category: z.string()` and slightly different optionality) was a
+// contract-drift hazard. Aliased to the canonical schema in `leagues.dto.ts`
+// so both endpoints stay type-aligned and the same `mapLeagueAuditEntryToDto`
+// mapper serves both route handlers.
+export const ContestAuditLogEntryDtoSchema = LeagueAuditEntryDtoSchema;
+export type ContestAuditLogEntryDto = LeagueAuditEntryDto;
 
 export const ContestAuditLogResponseSchema = z.object({
   entries: z.array(ContestAuditLogEntryDtoSchema),

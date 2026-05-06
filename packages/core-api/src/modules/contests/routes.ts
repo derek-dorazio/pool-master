@@ -441,9 +441,12 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     handler: async (request, reply) => {
       const { contestId } = request.params as { contestId: string };
       const { AuditService: AuditSvc } = await import('../leagues/audit-service.js');
+      const { mapLeagueAuditEntryToDto } = await import(
+        '../../mappers/leagues-audit.mapper.js'
+      );
       const auditService = new AuditSvc(prisma);
       const entries = await auditService.getContestAuditLog(contestId);
-      return reply.send({ entries });
+      return reply.send({ entries: entries.map(mapLeagueAuditEntryToDto) });
     },
   });
 }

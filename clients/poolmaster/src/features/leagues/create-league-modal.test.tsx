@@ -1,10 +1,15 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { GetLeagueResponses, ListLeaguesResponses } from '@/lib/api';
+import type { ListLeaguesResponses } from '@/lib/api';
 import { CreateLeagueModal, suggestLeagueCode } from './create-league-modal';
-
-type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
+import {
+  apiSuccess,
+  buildLeagueDetail,
+  buildLeagueSummary,
+  createLeagueData,
+  type LeagueSummary,
+} from './test/fixtures';
 
 const { createLeagueMock, mockLogger } = vi.hoisted(() => {
   const logger = {
@@ -57,7 +62,7 @@ function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummary[]
   );
 }
 
-describe('CreateLeagueModal', () => {
+describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
   afterEach(() => {
     createLeagueMock.mockReset();
     mockLogger.debug.mockReset();
@@ -67,13 +72,13 @@ describe('CreateLeagueModal', () => {
     document.cookie = 'poolmaster_recent_league=; Path=/; Max-Age=0';
   });
 
-  it('suggests a league code from the league name', () => {
+  it('pool-master-rop.23: suggests a league code from the league name', () => {
     expect(suggestLeagueCode('Big Dawgs 2026')).toBe('BIGDAWGS2026');
     expect(suggestLeagueCode('A')).toBe('A');
   });
 
-  it('creates a league by syncing the shell league list without refetching it', async () => {
-    const createdLeague: GetLeagueResponses[200]['league'] = {
+  it('pool-master-rop.23: creates a league by syncing the shell league list without refetching it', async () => {
+    const createdLeague = buildLeagueDetail({
       id: 'league-1',
       leagueCode: 'BIGDAWGS',
       name: 'Big Dawgs',
@@ -90,12 +95,8 @@ describe('CreateLeagueModal', () => {
       isRootAdmin: false,
       createdAt: '2026-04-15T00:00:00.000Z',
       joinPolicy: 'COMMISSIONER_ONLY',
-    };
-    createLeagueMock.mockResolvedValue({
-      data: {
-        league: createdLeague,
-      },
     });
+    createLeagueMock.mockResolvedValue(apiSuccess(createLeagueData(createdLeague)));
 
     const onCreated = vi.fn();
     const leaguesQueryFn = vi.fn<() => Promise<LeagueSummary[]>>().mockResolvedValue([]);
@@ -142,7 +143,7 @@ describe('CreateLeagueModal', () => {
     await waitFor(() => expect(screen.getByTestId('league-list-state')).toHaveTextContent('BIGDAWGS'));
     expect(leaguesQueryFn).toHaveBeenCalledTimes(1);
     expect(queryClient.getQueryData<ListLeaguesResponses[200]['leagues']>(['poolmaster', 'leagues'])).toEqual([
-      {
+      buildLeagueSummary({
         id: 'league-1',
         leagueCode: 'BIGDAWGS',
         name: 'Big Dawgs',
@@ -158,7 +159,7 @@ describe('CreateLeagueModal', () => {
         },
         isRootAdmin: false,
         createdAt: '2026-04-15T00:00:00.000Z',
-      },
+      }),
     ]);
     expect(queryClient.getQueryData(['poolmaster', 'league', 'BIGDAWGS'])).toEqual(createdLeague);
     expect(mockLogger.info).toHaveBeenCalledWith(
@@ -172,7 +173,7 @@ describe('CreateLeagueModal', () => {
     );
   });
 
-  it('stops overwriting league code after the user edits it', async () => {
+  it('pool-master-rop.23: stops overwriting league code after the user edits it', async () => {
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: {
@@ -204,7 +205,7 @@ describe('CreateLeagueModal', () => {
     await waitFor(() => expect(screen.getByTestId('create-league-code')).toHaveValue('BIGDOGS26'));
   });
 
-  it('shows a rejection message when league creation is rejected with a validation payload', async () => {
+  it('pool-master-rop.23: shows a rejection message when league creation is rejected with a validation payload', async () => {
     createLeagueMock.mockResolvedValue({
       error: {
         message: 'League code is already taken.',

@@ -162,6 +162,32 @@ layers are still shaped like the old model, the slice remains `In Progress`.
 
 ---
 
+## No-Data Clean Reworks
+
+When there is no production deployment with real persistent data — and dev /
+test rows reset on every reseed — prefer **clean reworks** over backfill
+scripts, dual-write phases, compatibility tables, or zombie tables kept "in
+case we need them later."
+
+The check before writing migration / compatibility code:
+
+- Does the table have rows in any persistent (non-dev) database? If no, drop or
+  reshape freely.
+- Is application code reading or writing the table? If no (zero call sites),
+  drop it.
+- Are there persisted rows in dev / test / CI databases? Those reset on every
+  reseed; they're not data to preserve.
+
+When all three answers are no, the right migration is a single Prisma
+migration that drops, reshapes, and adds in one step. No backfill, no
+dual-write, no shim period.
+
+The point: deferring cleanup under "we might need to migrate someday" creates
+exactly the drift this ruleset is designed to prevent. If the data isn't real,
+the cleanup isn't optional.
+
+---
+
 ## Seed Data Rules
 
 - The only acceptable baseline seed target is the minimal bootstrap required to operate the system, currently the root admin user.
