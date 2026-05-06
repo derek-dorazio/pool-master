@@ -5,7 +5,7 @@ CREATE TYPE "PrismaSportCategory" AS ENUM ('GOLF', 'BASKETBALL', 'FOOTBALL', 'F1
 CREATE TYPE "PrismaTournamentFormat" AS ENUM ('STROKE_PLAY_TOURNAMENT', 'KNOCKOUT_BRACKET', 'SERIES_PLAYOFF', 'ROUND_ROBIN_SEASON', 'WEEKLY_GAMES_SEASON', 'TIME_TRIAL_RACE', 'SEASON_OF_RACES', 'GROUP_STAGE_KNOCKOUT', 'MATCH_PLAY');
 
 -- CreateEnum
-CREATE TYPE "PrismaContestType" AS ENUM ('ROSTER', 'BRACKET', 'PICKEM_CONFIDENCE', 'SURVIVOR', 'PREDICT_TOP_N');
+CREATE TYPE "PrismaContestFormat" AS ENUM ('ROSTER', 'BRACKET', 'PICKEM_CONFIDENCE', 'SURVIVOR', 'PREDICT_TOP_N');
 
 -- DropForeignKey
 ALTER TABLE "contest_configurations" DROP CONSTRAINT "contest_configurations_contest_id_fkey";
@@ -85,6 +85,10 @@ ALTER COLUMN "updated_at" DROP DEFAULT;
 ALTER TABLE "contest_timing_policies" ALTER COLUMN "updated_at" DROP DEFAULT;
 
 -- AlterTable
+ALTER TABLE "contests" DROP COLUMN "contest_type",
+ADD COLUMN     "contest_format" "PrismaContestFormat" NOT NULL DEFAULT 'ROSTER';
+
+-- AlterTable
 ALTER TABLE "draft_pick_histories" RENAME CONSTRAINT "draft_picks_pkey" TO "draft_pick_histories_pkey",
 DROP COLUMN "roster_pick_id",
 ADD COLUMN     "pick_id" UUID NOT NULL;
@@ -153,7 +157,7 @@ CREATE TABLE "contest_entry_picks" (
     "id" UUID NOT NULL,
     "entry_id" UUID NOT NULL,
     "sport_event_participant_id" UUID NOT NULL,
-    "contest_type" "PrismaContestType" NOT NULL,
+    "contest_format" "PrismaContestFormat" NOT NULL,
     "period" INTEGER,
     "slot" INTEGER,
     "tier" VARCHAR(50),

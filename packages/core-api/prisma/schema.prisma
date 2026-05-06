@@ -264,10 +264,14 @@ enum PrismaTournamentFormat {
   MATCH_PLAY
 }
 
-/// Contest type — pool format applied to a SportEvent (or set of events
-/// via ContestSportEvent). Validity vs. tournamentFormat is enforced by
-/// the const map in packages/shared/domain (see plans/117 §9).
-enum PrismaContestType {
+/// Contest format — the pool format applied to a SportEvent (or set of
+/// events via ContestSportEvent). Validity vs. tournamentFormat is
+/// enforced by the const map in packages/shared/domain (see plans/117 §9).
+/// Replaces the legacy `ContestType.SINGLE_EVENT` enum which was a
+/// duration/scope concept that turned out not to be load-bearing —
+/// duration is now expressed by the ContestSportEvent M:N join (a
+/// contest covers 1 or N events).
+enum PrismaContestFormat {
   ROSTER
   BRACKET
   PICKEM_CONFIDENCE
@@ -613,7 +617,7 @@ model Contest {
   sportEventId              String?   @map("sport_event_id") @db.Uuid
   name                      String
   status                    String    @default("DRAFT")
-  contestType               String    @map("contest_type")
+  contestFormat             PrismaContestFormat @default(ROSTER) @map("contest_format")
   selectionType             String    @map("selection_type")
   scoringEngine             String    @map("scoring_engine")
   isExclusive               Boolean   @default(false) @map("is_exclusive")
@@ -805,15 +809,15 @@ model ContestEntry {
 }
 
 /// A pick on a contest entry — references a SportEventParticipant.
-/// Unified across contest types: optional period / slot / tier / cost
-/// fields disambiguate per-contest-type usage. The `contestType` column
-/// is denormalized from the parent Contest to enable per-contest-type
-/// partial unique indexes (see plans/117 §7.1).
+/// Unified across contest formats: optional period / slot / tier / cost
+/// fields disambiguate per-format usage. The `contestFormat` column is
+/// denormalized from the parent Contest to enable per-format partial
+/// unique indexes (see plans/117 §7.1).
 model ContestEntryPick {
   id                      String   @id @default(uuid()) @db.Uuid
   entryId                 String   @map("entry_id") @db.Uuid
   sportEventParticipantId String   @map("sport_event_participant_id") @db.Uuid
-  contestType             PrismaContestType @map("contest_type")
+  contestFormat           PrismaContestFormat @map("contest_format")
   period                  Int?
   slot                    Int?
   tier                    String?  @db.VarChar(50)
