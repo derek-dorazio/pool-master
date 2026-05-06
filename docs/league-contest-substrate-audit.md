@@ -138,7 +138,7 @@ Read by `contestPicksRevealed(status)` in `contests/service.ts:1239` to gate pic
 
 Domain interfaces exist for almost every entity, but **the wire-format DTOs do not always match**. Specifically:
 
-- `LeagueAuditEntry` has a real shape in `audit-service.ts:13` (`AuditLogEntry` interface — id, leagueId, contestId?, actorId, action, category, description, beforeState?, afterState?, reason?, ipAddress?, createdAt) but the DTO is `JsonObjectSchema` (untyped passthrough). Frontend reads opaque `Record<string, unknown>`.
+- `LeagueAuditEntry` has a real shape in `audit-service.ts:13` (`AuditLogEntry` interface — id, leagueId, contestId?, actorId, action, category, description, beforeState?, afterState?, reason?, ipAddress?, createdAt) but the DTO is `JsonObjectSchema` (untyped passthrough). Frontend reads opaque `Record<string, unknown>`. *(Resolved post-audit by PR #21 / rop.14.1: typed `LeagueAuditEntryDtoSchema` shipped + mapper applied at all three audit-log routes; entry retained for historical context.)*
 - `CommissionerDashboard` has a real shape in `types.ts:504` (League + ActionItem[] + Contest[] + counts + activity) but the DTO emits `JsonObjectSchema` for the embedded League and Contest payloads.
 - `LatestPerformance` is deliberately opaque even at the service layer — `normalizeLatestPerformance(value: unknown): Record<string, unknown>` in `contests/service.ts:1219` just type-asserts a passthrough; the underlying shape varies per provider.
 - Bulk-operation responses (`copySeason`, `importMembers`) share a single `JsonObjectSchema` despite emitting two distinct shapes.
@@ -169,10 +169,10 @@ Sweep across `packages/shared/dto/*.dto.ts` for `JsonObjectSchema` or `z.record(
 | `ingestion.dto.ts` | 2 | `errorLog` + `odds` arrays are opaque element-wise |
 | `scoring.dto.ts` | 1 | `config: z.record(z.unknown()).optional()` in the validated-scoring-config response |
 | `participants.dto.ts` | 1 | `metadata: JsonObjectSchema` — provider-normalized metadata |
-| `leagues.dto.ts` | 4 | `LeagueAuditEntryDtoSchema`, `LeagueDashboardResponseSchema.league`, `.contests`, `LeagueBulkOperationResponseSchema` |
+| `leagues.dto.ts` | 3 ¹ | `LeagueDashboardResponseSchema.league`, `.contests`, `LeagueBulkOperationResponseSchema` |
 | `contests.dto.ts` | 3 | `latestPerformance` + `beforeState` + `afterState` |
 
-**Total: 24 distinct `JsonObjectSchema` / `z.record(z.unknown())` sites.** The defect surface from `pool-master-rop.14` covers 5 of these (in leagues.dto.ts and contests.dto.ts — the contest-area ones); the other 19 are not yet filed as defects.
+**Original audit total: 24 distinct `JsonObjectSchema` / `z.record(z.unknown())` sites.** ¹ Post-audit, PR #21 / rop.14.1 typed `LeagueAuditEntryDtoSchema`, dropping the leagues.dto.ts count from 4 to 3 and the working total from 24 to **23 remaining**. The defect surface from `pool-master-rop.14` originally covered 5 of these (in leagues.dto.ts and contests.dto.ts — the contest-area ones); now covers 4 with rop.14.1 shipped. The other 19 are not yet filed as defects.
 
 ### 3.2 Mapper coverage
 
@@ -197,7 +197,7 @@ As of PR #14 (rop.17, merged today):
 - `api:check` enforces freshness — committed `openapi.json` matches what current source generates
 - `api:validate` enforces priority-route quality — every route in the priority list has `operationId`, `summary`, `tags`, JSON response schema (passes 146 / 146 today)
 
-**These do NOT detect `JsonObjectSchema` leakage.** A DTO that emits `z.record(z.unknown())` produces a valid OpenAPI spec (just an opaque object schema); the freshness check sees no diff; the validate check sees a real schema. The 24 sites slip through both gates.
+**These do NOT detect `JsonObjectSchema` leakage.** A DTO that emits `z.record(z.unknown())` produces a valid OpenAPI spec (just an opaque object schema); the freshness check sees no diff; the validate check sees a real schema. All 24 sites the audit found originally slipped through both gates; the 23 still-opaque sites continue to slip through.
 
 ---
 
@@ -397,7 +397,7 @@ Each implements `provider-interface.ts` (currently `getUpcomingEvents`, `getEven
 - **Provider failure modes.** Adapter throws, returns malformed `ProviderStatEvent`, returns empty array — not exercised.
 - **Cache-invalidation edge cases.** Mutation succeeds but invalidates wrong key, mutation fails and optimistic update isn't rolled back — not exercised.
 - **State-mirror hazard on previously unfixed pages.** rop.20 closed three specific pages; the pattern's existence on other pages isn't caught by the warn-only `check-form-query-mirror.mjs`.
-- **Audit log shape.** `LeagueAuditEntryDtoSchema = JsonObjectSchema`; no test verifies the actual fields the UI reads.
+- **Audit log shape.** *(Resolved post-audit by PR #21 / rop.14.1.)* At audit-authoring time, `LeagueAuditEntryDtoSchema = JsonObjectSchema` and no test verified the actual fields the UI reads. PR #21 typed the schema and added unit-test coverage at `tests/unit/core-api/leagues-audit-mapper.test.ts` (7 tests, 100% line/branch on the mapper).
 
 ---
 
@@ -409,7 +409,7 @@ This section is written **after** sections 1–7 so the audit's framing isn't sh
 
 | Audit finding | Existing defect(s) | Notes |
 |---|---|---|
-| `JsonObjectSchema` leakage in 24 DTOs (`§3.1`) | `pool-master-rop.14` (umbrella, parent of .1 / .2 / .3 / .4 / .5; covers 5 of the 24 sites) | Existing defect covers only the contests + leagues area sites. **19 other sites unfiled** in admin / history / ingestion / scoring / participants / common DTOs. |
+| `JsonObjectSchema` leakage in DTOs (`§3.1`) | `pool-master-rop.14` (umbrella, parent of .1 / .2 / .3 / .4 / .5) | Original audit found 24 sites; PR #21 typed rop.14.1, leaving **23 remaining**. rop.14 covers 4 of those (leagues / contests area); the other **19 are unfiled** in admin / history / ingestion / scoring / participants / common DTOs. |
 | Routes emit domain objects without a mapper (`§3.3`) | (none directly) | Symptom of the broader contract-first gap; should be filed as a new defect or absorbed into rop.78's design phase. |
 | Audit log DTO opaque (`§3.1`, `§2.3`) | `pool-master-rop.14.1` *(shipped)* | Shipped post-audit via PR #21 — typed `LeagueAuditEntryDtoSchema` + mapper at all three audit-log routes. Phase 2 verifies post-redesign compliance. |
 | Dashboard payload opaque (`§3.1`, `§3.3`) | `pool-master-rop.14.2`, `pool-master-rop.14.3` | Needs canonical dashboard-summary DTO design. |
