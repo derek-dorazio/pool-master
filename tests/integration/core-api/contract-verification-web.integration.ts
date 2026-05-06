@@ -540,7 +540,7 @@ describe('Contract verification (web)', () => {
       payload: {
         name: 'Contract Managed Contest',
         sportEventId: sportEvent.id,
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         templateId: defaultTemplate.id,
       },
     });
@@ -705,7 +705,7 @@ describe('Contract verification (web)', () => {
       payload: {
         name: 'Contract Draft Contest',
         sport: 'GOLF',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {

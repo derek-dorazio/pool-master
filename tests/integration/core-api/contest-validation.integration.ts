@@ -46,7 +46,7 @@ describe('Contest Validation Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Broken Tiered Contest',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
@@ -87,7 +87,7 @@ describe('Contest Validation Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: `Deferred ${selectionType}`,
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType,
         scoringEngine: ScoringEngine.STROKE_PLAY,
       },

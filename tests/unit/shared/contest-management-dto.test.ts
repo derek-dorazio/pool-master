@@ -10,7 +10,7 @@ describe('contest-management dto schemas', () => {
     const parsed = CreateContestManagementRequestSchema.parse({
       name: 'Masters Pick 6',
       sportEventId: '11111111-1111-1111-1111-111111111111',
-      contestType: 'SINGLE_EVENT',
+      contestType: 'ROSTER',
       configuration: {
         mode: 'GOLF_TIERED',
         locksAt: '2026-04-10T12:00:00.000Z',
@@ -65,7 +65,7 @@ describe('contest-management dto schemas', () => {
     const parsed = CreateContestManagementRequestSchema.parse({
       name: 'Masters Template Contest',
       sportEventId: '11111111-1111-1111-1111-111111111111',
-      contestType: 'SINGLE_EVENT',
+      contestType: 'ROSTER',
       templateId: '11111111-1111-4111-8111-111111111111',
     });
 
@@ -75,14 +75,14 @@ describe('contest-management dto schemas', () => {
   it('accepts template list query params and template dto payloads', () => {
     const query = ListContestConfigTemplatesQuerySchema.parse({
       sport: 'GOLF',
-      contestType: 'SINGLE_EVENT',
+      contestType: 'ROSTER',
     });
     expect(query.sport).toBe('GOLF');
 
     const template = ContestConfigTemplateDtoSchema.parse({
       id: '11111111-1111-4111-8111-111111111111',
       sport: 'GOLF',
-      contestType: 'SINGLE_EVENT',
+      contestType: 'ROSTER',
       configMode: 'GOLF_TIERED',
       templateKey: 'golf-tiered-pick-6',
       name: 'Select one from each tier, 4 count',

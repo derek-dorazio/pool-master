@@ -21,7 +21,7 @@ vi.mock('@/features/contests/hooks/use-contest', () => ({
         id: contestId,
         name: contestName,
         status: 'ACTIVE',
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         selectionType: contestSelectionType,
         scoringEngine: 'CUMULATIVE',
         leagueId: 'league-1',

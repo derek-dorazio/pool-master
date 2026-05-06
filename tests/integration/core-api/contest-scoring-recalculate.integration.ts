@@ -102,7 +102,7 @@ describe('Contest scoring recalculation integration', () => {
         sportEventId: sportEvent.id,
         name: 'Recalc Contest',
         status: 'LOCKED',
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         selectionType: 'TIERED',
         scoringEngine: 'REGISTRY',
       },

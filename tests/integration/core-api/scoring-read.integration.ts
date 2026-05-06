@@ -110,7 +110,7 @@ describe('Scoring Read Integration', () => {
       payload: {
         name: 'Scoring Read Contest',
         sport: 'NCAA_BASKETBALL',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {

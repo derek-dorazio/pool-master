@@ -141,7 +141,7 @@ async function seedSnakeDraftFixture() {
     },
     body: {
       name: 'Draft Functional Contest',
-      contestType: ContestType.SINGLE_EVENT,
+      contestType: ContestFormat.ROSTER,
       selectionType: SelectionType.SNAKE_DRAFT,
       scoringEngine: ScoringEngine.STROKE_PLAY,
       contestConfiguration: {
@@ -291,7 +291,7 @@ async function seedBudgetPickFixture() {
     },
     body: {
       name: 'Budget Functional Contest',
-      contestType: ContestType.SINGLE_EVENT,
+      contestType: ContestFormat.ROSTER,
       selectionType: SelectionType.BUDGET_PICK,
       scoringEngine: ScoringEngine.STROKE_PLAY,
       contestConfiguration: {
@@ -449,7 +449,7 @@ async function seedTieredDraftFixture(options: {
     },
     body: {
       name: 'Tiered Draft Functional Contest',
-      contestType: ContestType.SINGLE_EVENT,
+      contestType: ContestFormat.ROSTER,
       selectionType: SelectionType.TIERED,
       scoringEngine: ScoringEngine.STROKE_PLAY,
       contestConfiguration: {

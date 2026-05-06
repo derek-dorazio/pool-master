@@ -103,7 +103,7 @@ describe('History Read Fallback Integration', () => {
       payload: {
         name: 'History Fallback Contest',
         sport: 'GOLF',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {

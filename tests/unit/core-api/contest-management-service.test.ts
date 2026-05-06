@@ -111,7 +111,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
   const template = {
     id: '11111111-1111-4111-8111-111111111111',
     sport: 'GOLF',
-    contestType: 'SINGLE_EVENT',
+    contestType: 'ROSTER',
     configMode: 'GOLF_TIERED',
     templateKey: 'golf-tiered-pick-6',
     name: 'Select one from each tier, 4 count',
@@ -327,7 +327,7 @@ describe('ContestManagementService', () => {
       {
         name: 'Masters Pick 6',
         sportEventId: '11111111-1111-1111-1111-111111111111',
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         configuration: {
           mode: 'GOLF_TIERED',
           locksAt: '2026-04-10T12:00:00.000Z',
@@ -430,7 +430,7 @@ describe('ContestManagementService', () => {
         {
           name: 'Invalid tiers',
           sportEventId: '11111111-1111-1111-1111-111111111111',
-          contestType: 'SINGLE_EVENT',
+          contestType: 'ROSTER',
           configuration: {
             mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T12:00:00.000Z',
@@ -499,7 +499,7 @@ describe('ContestManagementService', () => {
       {
         name: 'Masters Categories',
         sportEventId: '11111111-1111-1111-1111-111111111111',
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         configuration: {
           mode: 'GOLF_CATEGORY_PICKS',
           locksAt: '2026-04-10T12:00:00.000Z',
@@ -763,7 +763,7 @@ describe('ContestManagementService', () => {
       {
         name: 'Masters Template Contest',
         sportEventId: '11111111-1111-1111-1111-111111111111',
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         templateId: '11111111-1111-4111-8111-111111111111',
       },
     );
@@ -807,7 +807,7 @@ describe('ContestManagementService', () => {
         {
           name: 'Missing Template Contest',
           sportEventId: '11111111-1111-1111-1111-111111111111',
-          contestType: 'SINGLE_EVENT',
+          contestType: 'ROSTER',
           templateId: 'missing-template-id',
         },
       );
@@ -872,7 +872,7 @@ describe('ContestManagementService', () => {
       {
         name: 'Missing Field Contest',
         sportEventId: '11111111-1111-1111-1111-111111111111',
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         configuration: {
           mode: 'GOLF_TIERED',
           locksAt: '2026-04-10T12:00:00.000Z',
@@ -934,7 +934,7 @@ describe('ContestManagementService', () => {
       {
         name: 'Unreleased Event Contest',
         sportEventId: '11111111-1111-1111-1111-111111111111',
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         configuration: {
           mode: 'GOLF_TIERED',
           locksAt: '2026-04-10T12:00:00.000Z',

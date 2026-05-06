@@ -31,7 +31,6 @@ export type {
   SportEventReadinessReason,
   SportEventReadinessStatus,
   SportEventParticipant,
-  SportEventParticipantSourceData,
   SportEventParticipantValuation,
 } from './contest-management-types';
 export {

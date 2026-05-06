@@ -66,7 +66,7 @@ describe('SurvivorStyle enum', () => {
 
 describe('ContestType enum', () => {
   it('has single-event', () => {
-    expect(ContestType.SINGLE_EVENT).toBe('SINGLE_EVENT');
+    expect(ContestFormat.ROSTER).toBe('ROSTER');
   });
 });
 

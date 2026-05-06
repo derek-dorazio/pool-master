@@ -86,7 +86,7 @@ describe('History Read Integration', () => {
       payload: {
         name: 'History Contest',
         sport: 'GOLF',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {

@@ -53,7 +53,7 @@ export class PrismaContestCoreRepository implements ContestCoreRepository {
         sportEventId: contest.sportEventId,
         name: contest.name,
         status: contest.status,
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         selectionType: contest.selectionType,
         scoringEngine: contest.scoringEngine,
       },

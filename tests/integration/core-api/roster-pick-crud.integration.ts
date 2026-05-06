@@ -101,7 +101,7 @@ describe('RosterPick CRUD integration', () => {
       payload: {
         name: 'Roster Pick CRUD Contest',
         sportEventId: sportEvent.id,
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         configuration: {
           mode: 'GOLF_TIERED',
           locksAt: entryLocksAt,

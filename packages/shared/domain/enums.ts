@@ -81,7 +81,7 @@ export type PoolType = (typeof PoolType)[keyof typeof PoolType];
 
 /**
  * Pool format applied to a contest. Replaces the legacy
- * `ContestType.SINGLE_EVENT` enum (a duration/scope concept that turned
+ * `ContestFormat.ROSTER` enum (a duration/scope concept that turned
  * out not to be load-bearing — duration is now expressed by the
  * ContestSportEvent M:N join). See plans/117-league-contest-substrate-redesign.md §4.2.
  */

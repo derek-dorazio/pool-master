@@ -268,7 +268,7 @@ async function createScoringFixture() {
       sportEventId: sportEvent.id,
       name: 'Scoring Integration Contest',
       status: 'DRAFT',
-      contestType: 'SINGLE_EVENT',
+      contestType: 'ROSTER',
       selectionType: 'TIERED',
       scoringEngine: 'REGISTRY',
     },

@@ -6,7 +6,7 @@ const contest = {
   id: 'contest-1',
   name: 'Masters Pool',
   status: 'OPEN',
-  contestType: 'SINGLE_EVENT',
+  contestType: 'ROSTER',
   selectionType: 'BUDGET_PICK',
   scoringEngine: 'STROKE_PLAY',
   leagueId: 'league-1',

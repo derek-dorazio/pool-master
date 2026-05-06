@@ -10,7 +10,7 @@
 import type {
   AuthProvider,
   ContestStatus,
-  ContestType,
+  ContestFormat,
   DateFormat,
   DraftStatus,
   InjuryStatusCode,
@@ -191,7 +191,7 @@ export interface Contest extends DomainEntity {
   sportEventId?: string;
   name: string;
   status: ContestStatus;
-  contestType: ContestType;
+  contestFormat: ContestFormat;
   selectionType: SelectionType;
   scoringEngine: ScoringEngine;
   sport?: Sport;
@@ -276,7 +276,7 @@ export interface ContestEntry extends DomainEntity {
 export interface ContestEntryPick extends DomainEntity {
   entryId: string;
   sportEventParticipantId: string;
-  contestType: ContestType;
+  contestFormat: ContestFormat;
   period?: number;
   slot?: number;
   tier?: string;

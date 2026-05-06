@@ -95,7 +95,7 @@ describe('League Dashboard Read Integration', () => {
       payload: {
         name: 'Dashboard Future Contest',
         sport: 'GOLF',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         startsAt: '2026-05-06T12:00:00.000Z',

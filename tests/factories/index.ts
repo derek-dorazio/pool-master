@@ -103,7 +103,7 @@ export function buildContest(overrides: Partial<Contest> = {}): Contest {
     sportEventId: undefined,
     name: 'Masters Pool 2026',
     status: ContestStatus.DRAFT,
-    contestType: ContestType.SINGLE_EVENT,
+    contestType: ContestFormat.ROSTER,
     selectionType: SelectionType.SNAKE_DRAFT,
     scoringEngine: ScoringEngine.STROKE_PLAY,
     isExclusive: false,

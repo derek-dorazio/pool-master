@@ -153,7 +153,7 @@ function primeCommonMocks() {
         {
           id: '11111111-1111-4111-8111-111111111111',
           sport: 'GOLF',
-          contestType: 'SINGLE_EVENT',
+          contestType: 'ROSTER',
           configMode: 'GOLF_TIERED',
           templateKey: 'golf-tiered-pick-6',
           name: 'Select one from each tier, 4 count',
@@ -186,7 +186,7 @@ function primeCommonMocks() {
         {
           id: '33333333-3333-4333-8333-333333333333',
           sport: 'GOLF',
-          contestType: 'SINGLE_EVENT',
+          contestType: 'ROSTER',
           configMode: 'GOLF_TIERED',
           templateKey: 'golf-tiered-pick-12',
           name: 'Select two from each tier, 8 count',
@@ -219,7 +219,7 @@ function primeCommonMocks() {
         {
           id: '44444444-4444-4444-8444-444444444444',
           sport: 'GOLF',
-          contestType: 'SINGLE_EVENT',
+          contestType: 'ROSTER',
           configMode: 'GOLF_CATEGORY_PICKS',
           templateKey: 'golf-category-picks',
           name: 'Category picks',
@@ -293,7 +293,7 @@ describe('CreateContestPage', () => {
         body: expect.objectContaining({
           name: 'Masters Pick 6',
           sportEventId: 'event-1',
-          contestType: 'SINGLE_EVENT',
+          contestType: 'ROSTER',
           templateId: '11111111-1111-4111-8111-111111111111',
           configurationOverrides: expect.objectContaining({
             mode: 'GOLF_TIERED',

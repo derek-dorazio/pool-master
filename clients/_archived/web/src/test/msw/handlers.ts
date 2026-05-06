@@ -253,7 +253,7 @@ export const contestHandlers = [
 
   http.post('/api/v1/leagues/:id/contests', () => {
     return HttpResponse.json({
-      contest: { id: 'contest-1', name: 'Test Contest', status: 'DRAFT', contestType: 'SINGLE_EVENT', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY', leagueId: 'league-1' },
+      contest: { id: 'contest-1', name: 'Test Contest', status: 'DRAFT', contestType: 'ROSTER', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY', leagueId: 'league-1' },
     }, { status: 201 });
   }),
 
@@ -266,7 +266,7 @@ export const contestHandlers = [
 
   http.get('/api/v1/contests/:id', () => {
     return HttpResponse.json({
-      contest: { id: 'contest-1', name: 'Test Contest', status: 'DRAFT', contestType: 'SINGLE_EVENT', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY', leagueId: 'league-1' },
+      contest: { id: 'contest-1', name: 'Test Contest', status: 'DRAFT', contestType: 'ROSTER', selectionType: 'SNAKE_DRAFT', scoringEngine: 'STROKE_PLAY', leagueId: 'league-1' },
       selectionConfig: null,
     });
   }),

@@ -152,7 +152,7 @@ function primeMocks(opts?: {
         id: 'contest-1',
         name: 'Masters Pick 6',
         status: contestStatus,
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         selectionType: 'TIERED',
         scoringEngine: 'STROKE_PLAY',
         leagueId: 'league-1',

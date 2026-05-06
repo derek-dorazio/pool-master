@@ -245,7 +245,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       query: {
         sport: Sport.GOLF,
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
       },
     });
 
@@ -263,7 +263,7 @@ describe('SDK Functional: Contests and Entries', () => {
       body: {
         name: `${league.name} Managed Masters Functional Event`,
         sportEventId: importedEvent.sportEventId,
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         templateId: defaultTemplate?.id as string,
       },
     });
@@ -330,7 +330,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       query: {
         sport: Sport.GOLF,
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
       },
     });
     const defaultTemplate = templatesResponse.data?.templates.find(
@@ -346,7 +346,7 @@ describe('SDK Functional: Contests and Entries', () => {
       body: {
         name: `${league.name} Managed Selection Event`,
         sportEventId: importedEvent.sportEventId,
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         templateId: defaultTemplate?.id as string,
         configurationOverrides: {
           mode: 'GOLF_TIERED',
@@ -469,7 +469,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       query: {
         sport: Sport.GOLF,
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
       },
     });
     const defaultTemplate = templatesResponse.data?.templates.find(
@@ -485,7 +485,7 @@ describe('SDK Functional: Contests and Entries', () => {
       body: {
         name: 'Missing Template Contest',
         sportEventId: importedEvent.sportEventId,
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         templateId: '00000000-0000-4000-8000-000000000000',
       },
     });
@@ -503,7 +503,7 @@ describe('SDK Functional: Contests and Entries', () => {
       body: {
         name: 'Mismatch Template Contest',
         sportEventId: importedEvent.sportEventId,
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         templateId: defaultTemplate?.id as string,
         configurationOverrides: {
           mode: 'GOLF_CATEGORY_PICKS',
@@ -547,7 +547,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Functional Contest',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.BUDGET_PICK,
         scoringEngine: ScoringEngine.POSITION,
       },
@@ -639,7 +639,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Entry Lifecycle Contest',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.BUDGET_PICK,
         scoringEngine: ScoringEngine.POSITION,
       },
@@ -779,7 +779,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Rename Contest',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.BUDGET_PICK,
         scoringEngine: ScoringEngine.POSITION,
       },
@@ -874,7 +874,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Tiebreaker Contest',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.BUDGET_PICK,
         scoringEngine: ScoringEngine.POSITION,
       },
@@ -940,7 +940,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Entry Detail Contest',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
@@ -1128,7 +1128,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Outsider Contest',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.BUDGET_PICK,
         scoringEngine: ScoringEngine.POSITION,
       },
@@ -1195,7 +1195,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Locked Contest',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
@@ -1221,7 +1221,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Selection Contest',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
@@ -1416,7 +1416,7 @@ describe('SDK Functional: Contests and Entries', () => {
       path: { id: league.id },
       body: {
         name: 'Visibility Contest',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
@@ -1604,7 +1604,7 @@ describe('SDK Functional: Contests and Entries', () => {
       path: { id: league.id },
       body: {
         name: 'List Visibility Contest',
-        contestType: ContestType.SINGLE_EVENT,
+        contestType: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {

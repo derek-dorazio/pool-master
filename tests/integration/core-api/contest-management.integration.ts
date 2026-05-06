@@ -173,7 +173,7 @@ describe('Contest management integration', () => {
       payload: {
         name: 'Masters Pick 6',
         sportEventId,
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         configuration: {
           mode: 'GOLF_TIERED',
           locksAt: entryLocksAt,
@@ -343,7 +343,7 @@ describe('Contest management integration', () => {
       payload: {
         name: 'Masters Template Contest',
         sportEventId,
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         templateId: defaultTemplate.id,
       },
     });
@@ -370,7 +370,7 @@ describe('Contest management integration', () => {
       payload: {
         name: 'Invalid Masters Pick 6',
         sportEventId,
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         configuration: {
           selectionType: 'BUDGET_PICK',
         },

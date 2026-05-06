@@ -143,7 +143,7 @@ async function seedCompletedContestFixture() {
     },
     body: {
       name: 'History Functional Contest',
-      contestType: 'SINGLE_EVENT',
+      contestType: 'ROSTER',
       selectionType: 'TIERED',
       scoringEngine: 'STROKE_PLAY',
       contestConfiguration: {

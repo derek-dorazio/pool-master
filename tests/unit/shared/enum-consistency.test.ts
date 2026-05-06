@@ -24,7 +24,7 @@ function enumValues<T extends Record<string, string>>(obj: T): string[] {
 // update these constants and the corresponding test will catch the drift.
 
 // From packages/core-api/src/modules/contests/routes.ts — POST / body schema
-const ROUTE_CONTEST_TYPES = ['SINGLE_EVENT'];
+const ROUTE_CONTEST_TYPES = ['ROSTER'];
 const ROUTE_SELECTION_TYPES = [
   'SNAKE_DRAFT',
   'TIERED',
@@ -57,7 +57,7 @@ describe('Enum consistency — route schemas vs domain enums', () => {
   });
 
   it('ContestType enum only contains SINGLE_EVENT', () => {
-    expect(enumValues(ContestType)).toEqual(['SINGLE_EVENT']);
+    expect(enumValues(ContestType)).toEqual(['ROSTER']);
   });
 
   // --- SelectionType ---

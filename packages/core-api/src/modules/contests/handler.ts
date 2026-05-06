@@ -67,7 +67,7 @@ const ContestConfigurationBodySchema = zod.object({
 const CreateContestBodySchema = zod.object({
   name: zod.string().min(1).max(100),
   eventId: zod.string().optional(),
-  contestType: zod.enum([ContestType.SINGLE_EVENT]),
+  contestType: zod.enum([ContestFormat.ROSTER]),
   selectionType: zod.enum([
     SelectionType.SNAKE_DRAFT,
     SelectionType.TIERED,

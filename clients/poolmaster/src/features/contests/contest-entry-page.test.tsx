@@ -119,7 +119,7 @@ function primeCommonMocks(overrides?: {
         leagueId: 'league-1',
         name: 'Bohler Masters Tiered',
         status: overrides?.contestStatus ?? 'OPEN',
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         selectionType: 'TIERED',
         scoringEngine: 'STROKE_PLAY',
         lockAt: '2026-04-22T16:00:00.000Z',
