@@ -232,6 +232,50 @@ enum PrismaSport {
 }
 
 // =============================================================================
+// Substrate redesign — pool-master-rop.78 / Phase 4 (rop.78.4)
+// =============================================================================
+
+/// Sport category — drives per-category detail table dispatch.
+/// One row per category; multiple Sport rows may share the same category
+/// (e.g., "PGA Masters" and "Wimbledon" use different category but share
+/// the ROSTER pool format via tournamentFormat).
+enum PrismaSportCategory {
+  GOLF
+  BASKETBALL
+  FOOTBALL
+  F1
+  NASCAR
+  TENNIS
+  SOCCER
+}
+
+/// Tournament structural format — drives which contest types are valid
+/// pool formats for a given Sport. Composes with category to form the
+/// (sport × pool format) compatibility matrix in shared/domain.
+enum PrismaTournamentFormat {
+  STROKE_PLAY_TOURNAMENT
+  KNOCKOUT_BRACKET
+  SERIES_PLAYOFF
+  ROUND_ROBIN_SEASON
+  WEEKLY_GAMES_SEASON
+  TIME_TRIAL_RACE
+  SEASON_OF_RACES
+  GROUP_STAGE_KNOCKOUT
+  MATCH_PLAY
+}
+
+/// Contest type — pool format applied to a SportEvent (or set of events
+/// via ContestSportEvent). Validity vs. tournamentFormat is enforced by
+/// the const map in packages/shared/domain (see plans/117 §9).
+enum PrismaContestType {
+  ROSTER
+  BRACKET
+  PICKEM_CONFIDENCE
+  SURVIVOR
+  PREDICT_TOP_N
+}
+
+// =============================================================================
 // UTC Storage Convention
 // =============================================================================
 //
@@ -482,12 +526,13 @@ model CommissionerActionItem {
 // =============================================================================
 
 model Sport {
-  id              String   @id @default(uuid()) @db.Uuid
-  name            String   @unique
-  participantType PrismaParticipantType @map("participant_type")
-  statSchema      Json     @default("{}") @map("stat_schema")
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id               String   @id @default(uuid()) @db.Uuid
+  name             String   @unique
+  participantType  PrismaParticipantType @map("participant_type")
+  category         PrismaSportCategory   @default(GOLF)
+  tournamentFormat PrismaTournamentFormat @default(STROKE_PLAY_TOURNAMENT) @map("tournament_format")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   seasons      Season[]
   participants Participant[]
@@ -516,7 +561,6 @@ model Participant {
   name            String
   participantType PrismaParticipantType @map("participant_type")
   externalId      String?  @map("external_id")
-  metadata        Json     @default("{}")
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -534,43 +578,12 @@ model Participant {
   externalIds     Json     @default("{}") @map("external_ids")
 
   sport            Sport                       @relation(fields: [sportId], references: [id])
-  seasonRecords    ParticipantSeasonRecord[]
   providerMappings ParticipantProviderMapping[]
   sportEventParticipants SportEventParticipant[]
 
   @@index([sportId])
   @@index([sportId, status])
   @@map("participants")
-}
-
-model ParticipantSeasonRecord {
-  id              String   @id @default(uuid()) @db.Uuid
-  participantId   String   @map("participant_id") @db.Uuid
-  sport           PrismaSport
-  season          String   @db.VarChar(20)
-  rankings        Json     @default("[]")
-  budgetPrice     Int      @default(0) @map("budget_price")
-  priceTier       String?  @map("price_tier") @db.VarChar(50)
-  priceUpdatedAt  DateTime? @map("price_updated_at") @db.Timestamptz
-  eventsEntered   Int      @default(0) @map("events_entered")
-  eventsCompleted Int      @default(0) @map("events_completed")
-  wins            Int      @default(0)
-  top5Finishes    Int      @default(0) @map("top_5_finishes")
-  top10Finishes   Int      @default(0) @map("top_10_finishes")
-  top25Finishes   Int      @default(0) @map("top_25_finishes")
-  seasonStats     Json     @default("{}") @map("season_stats")
-  formRating      Decimal  @default(50.0) @map("form_rating") @db.Decimal(5, 2)
-  formTrend       PrismaParticipantFormTrend @default(STABLE) @map("form_trend")
-  lastUpdated     DateTime @default(now()) @map("last_updated") @db.Timestamptz
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  participant Participant @relation(fields: [participantId], references: [id])
-
-  @@unique([participantId, season])
-  @@index([sport, season])
-  @@index([budgetPrice])
-  @@map("participant_season_records")
 }
 
 model ParticipantProviderMapping {
@@ -616,11 +629,34 @@ model Contest {
   configuration   ContestConfiguration?
   entries         ContestEntry[]
   draftSession    DraftSession?
+  contestSportEvents ContestSportEvent[]
 
   @@index([leagueId])
   @@index([sportEventId])
   @@index([status])
   @@map("contests")
+}
+
+/// M:N join between Contest and SportEvent. Golf-tournament and bracket
+/// contests have one row (Contest:Event = 1:1; equivalent to the legacy
+/// Contest.sportEventId column which stays for backward read paths).
+/// NFL weekly pick'em contests have N rows (one per week's games);
+/// season-long racing contests have ~22 rows (one per race). See
+/// plans/117 §4.2.
+model ContestSportEvent {
+  id           String   @id @default(uuid()) @db.Uuid
+  contestId    String   @map("contest_id") @db.Uuid
+  sportEventId String   @map("sport_event_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  contest    Contest    @relation(fields: [contestId], references: [id])
+  sportEvent SportEvent @relation(fields: [sportEventId], references: [id])
+
+  @@unique([contestId, sportEventId])
+  @@index([contestId])
+  @@index([sportEventId])
+  @@map("contest_sport_events")
 }
 
 model ContestConfiguration {
@@ -758,53 +794,85 @@ model ContestEntry {
   contest Contest @relation(fields: [contestId], references: [id])
   squad   Squad   @relation(fields: [squadId], references: [id])
 
-  rosterPicks RosterPick[]
+  picks              ContestEntryPick[]
   draftPickHistories DraftPickHistory[]
-  participantScores ContestEntryParticipantScore[]
-  prizeAwards ContestEntryPrizeAward[]
+  participantScores  ContestEntryParticipantScore[]
+  prizeAwards        ContestEntryPrizeAward[]
 
   @@unique([contestId, squadId, entryNumber])
   @@index([contestId, standingsPosition])
   @@map("contest_entries")
 }
 
-/// A participant picked for a squad selection contest (snake, tiered, budget, open).
-model RosterPick {
-  id              String   @id @default(uuid()) @db.Uuid
-  entryId         String   @map("entry_id") @db.Uuid
-  sportEventParticipantId String @map("sport_event_participant_id") @db.Uuid
-  draftRound      Int?     @map("draft_round")
-  draftPickNumber Int?     @map("draft_pick_number")
-  pickedAt        DateTime @default(now()) @map("picked_at") @db.Timestamptz
-  autoPicked      Boolean  @default(false) @map("auto_picked")
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+/// A pick on a contest entry — references a SportEventParticipant.
+/// Unified across contest types: optional period / slot / tier / cost
+/// fields disambiguate per-contest-type usage. The `contestType` column
+/// is denormalized from the parent Contest to enable per-contest-type
+/// partial unique indexes (see plans/117 §7.1).
+model ContestEntryPick {
+  id                      String   @id @default(uuid()) @db.Uuid
+  entryId                 String   @map("entry_id") @db.Uuid
+  sportEventParticipantId String   @map("sport_event_participant_id") @db.Uuid
+  contestType             PrismaContestType @map("contest_type")
+  period                  Int?
+  slot                    Int?
+  tier                    String?  @db.VarChar(50)
+  cost                    Decimal? @db.Decimal(12, 2)
+  isAutoPicked            Boolean  @default(false) @map("is_auto_picked")
+  draftRound              Int?     @map("draft_round")
+  draftPickNumber         Int?     @map("draft_pick_number")
+  pickedAt                DateTime @default(now()) @map("picked_at") @db.Timestamptz
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  entry       ContestEntry @relation(fields: [entryId], references: [id])
+  entry                 ContestEntry @relation(fields: [entryId], references: [id])
   sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
-  participantScores ContestEntryParticipantScore[]
-  draftPickHistories DraftPickHistory[]
+  participantScores     ContestEntryParticipantScore[]
+  draftPickHistories    DraftPickHistory[]
+  golfRosterContributions ContestEntryPickGolfRosterContribution[]
 
   @@index([entryId])
-  @@unique([entryId, sportEventParticipantId])
-  @@map("roster_picks")
+  @@map("contest_entry_picks")
+}
+
+/// Per-pick per-round golf-roster contribution. The bridge between a
+/// ContestEntryPick, a SportEventParticipantGolfRound, and the contest's
+/// scoring rules. Replaces the JSON `detailsJson` on
+/// ContestEntryParticipantScoreEvent for golf-roster contests.
+/// See plans/117 §8.1.
+model ContestEntryPickGolfRosterContribution {
+  id                 String   @id @default(uuid()) @db.Uuid
+  contestEntryPickId String   @map("contest_entry_pick_id") @db.Uuid
+  round              Int
+  strokes            Int
+  scoreToPar         Int      @map("score_to_par")
+  contribution       Decimal  @db.Decimal(12, 4)
+  contributedAt      DateTime @default(now()) @map("contributed_at") @db.Timestamptz
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  pick ContestEntryPick @relation(fields: [contestEntryPickId], references: [id])
+
+  @@unique([contestEntryPickId, round])
+  @@index([contestEntryPickId])
+  @@map("contest_entry_pick_golf_roster_contributions")
 }
 
 model ContestEntryParticipantScore {
-  id           String   @id @default(uuid()) @db.Uuid
-  entryId       String   @map("entry_id") @db.Uuid
-  rosterPickId  String   @map("roster_pick_id") @db.Uuid
-  pointsEarned  Float    @default(0) @map("points_earned")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id              String   @id @default(uuid()) @db.Uuid
+  entryId         String   @map("entry_id") @db.Uuid
+  pickId          String   @map("pick_id") @db.Uuid
+  pointsEarned    Float    @default(0) @map("points_earned")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  entry      ContestEntry @relation(fields: [entryId], references: [id])
-  rosterPick RosterPick   @relation(fields: [rosterPickId], references: [id])
-  events     ContestEntryParticipantScoreEvent[]
+  entry ContestEntry     @relation(fields: [entryId], references: [id])
+  pick  ContestEntryPick @relation(fields: [pickId], references: [id])
+  events ContestEntryParticipantScoreEvent[]
 
-  @@unique([entryId, rosterPickId])
+  @@unique([entryId, pickId])
   @@index([entryId])
-  @@index([rosterPickId])
+  @@index([pickId])
   @@map("contest_entry_participant_scores")
 }
 
@@ -869,7 +937,7 @@ model DraftSession {
 model DraftPickHistory {
   id             String   @id @default(uuid()) @db.Uuid
   draftSessionId String   @map("draft_session_id") @db.Uuid
-  rosterPickId   String   @map("roster_pick_id") @db.Uuid
+  pickId         String   @map("pick_id") @db.Uuid
   entryId        String   @map("entry_id") @db.Uuid
   pickNumber     Int      @map("pick_number")
   round          Int
@@ -878,13 +946,13 @@ model DraftPickHistory {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  session     DraftSession @relation(fields: [draftSessionId], references: [id])
-  rosterPick  RosterPick   @relation(fields: [rosterPickId], references: [id])
-  entry       ContestEntry @relation(fields: [entryId], references: [id])
+  session DraftSession     @relation(fields: [draftSessionId], references: [id])
+  pick    ContestEntryPick @relation(fields: [pickId], references: [id])
+  entry   ContestEntry     @relation(fields: [entryId], references: [id])
 
   @@unique([draftSessionId, pickNumber])
   @@index([draftSessionId])
-  @@index([rosterPickId])
+  @@index([pickId])
   @@map("draft_pick_histories")
 }
 
@@ -918,6 +986,7 @@ model SportEvent {
 
   contests               Contest[]
   sportEventParticipants SportEventParticipant[]
+  contestSportEvents     ContestSportEvent[]
 
   @@unique([providerId, externalId])
   @@index([sport, status])
@@ -947,15 +1016,18 @@ model SportEventParticipant {
   sportEventId  String   @map("sport_event_id") @db.Uuid
   participantId String   @map("participant_id") @db.Uuid
   status        String?  @db.VarChar(50)
+  worldRanking  Int?     @map("world_ranking")
+  oddsToWin     Decimal? @map("odds_to_win") @db.Decimal(10, 2)
+  seedNumber    Int?     @map("seed_number")
   metadata      Json     @default("{}")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   sportEvent  SportEvent @relation(fields: [sportEventId], references: [id])
   participant Participant @relation(fields: [participantId], references: [id])
-  sourceData  SportEventParticipantSourceData[]
   valuations  SportEventParticipantValuation[]
-  rosterPicks RosterPick[]
+  picks       ContestEntryPick[]
+  golfRounds  SportEventParticipantGolfRound[]
 
   @@unique([sportEventId, participantId])
   @@index([sportEventId])
@@ -963,22 +1035,27 @@ model SportEventParticipant {
   @@map("sport_event_participants")
 }
 
-model SportEventParticipantSourceData {
+/// Per-event per-participant golf round result. Sport-polymorphic detail
+/// child of SportEventParticipant; cardinality 1..N where N is the
+/// tournament's round count (4 for standard PGA tournament). Replaces the
+/// untyped JSON storage in the dropped SportEventParticipantSourceData.
+/// See plans/117 §6.1 for the column contract.
+model SportEventParticipantGolfRound {
   id                      String   @id @default(uuid()) @db.Uuid
   sportEventParticipantId String   @map("sport_event_participant_id") @db.Uuid
-  providerId              String   @map("provider_id") @db.VarChar(100)
-  externalId              String   @map("external_id") @db.VarChar(255)
-  rawPayload              Json     @default("{}") @map("raw_payload")
-  normalizedData          Json     @default("{}") @map("normalized_data")
-  receivedAt              DateTime @map("received_at") @db.Timestamptz
+  round                   Int
+  strokes                 Int
+  scoreToPar              Int      @map("score_to_par")
+  status                  String   @default("PENDING") @db.VarChar(20)
+  completedAt             DateTime? @map("completed_at") @db.Timestamptz
   createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
 
-  @@index([sportEventParticipantId, receivedAt(sort: Desc)])
-  @@index([providerId, externalId])
-  @@map("sport_event_participant_source_data")
+  @@unique([sportEventParticipantId, round])
+  @@index([sportEventParticipantId])
+  @@map("sport_event_participant_golf_rounds")
 }
 
 model SportEventParticipantValuation {
