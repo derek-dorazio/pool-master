@@ -185,6 +185,20 @@ export class LiveScoreConsumer {
           rules: config,
         });
 
+        // Delete contribution rows for this pick whose round is no longer
+        // in the computed contribution set. A previously COMPLETED round
+        // can be corrected to DNF / DSQ / PENDING (status filter drops it),
+        // or a TOP_N_BEST / SPECIFIC_ROUNDS rule can stop selecting it
+        // after a correction. Without this delete, the totalScore aggregate
+        // below would still sum the stale row.
+        const liveRounds = contributions.map((c) => c.round);
+        await tx.contestEntryPickGolfRosterContribution.deleteMany({
+          where: {
+            contestEntryPickId: pick.id,
+            ...(liveRounds.length > 0 ? { round: { notIn: liveRounds } } : {}),
+          },
+        });
+
         for (const contribution of contributions) {
           await tx.contestEntryPickGolfRosterContribution.upsert({
             where: {
@@ -245,7 +259,13 @@ export class LiveScoreConsumer {
       // Rerank + emit standings.updated outside the scoring transaction so
       // the rollup uses the freshly committed totalScore values and so a
       // rerank failure doesn't roll back the contribution writes.
-      await this.standingsRollup.rollupContest(contestId);
+      // Golf-roster ranks lower-is-better: an entry at -5 (under par) wins
+      // over an entry at +2. The rollup defaults to higher-is-better for
+      // the rest of the pool formats (BRACKET / PICKEM_CONFIDENCE /
+      // SURVIVOR / future basketball-roster / etc.).
+      await this.standingsRollup.rollupContest(contestId, {
+        rankDirection: 'LOWER_IS_BETTER',
+      });
     }
   }
 }

@@ -65,6 +65,7 @@ function buildPrismaWithGolfPicks({
   aggregateContribution = -1,
 } = {}) {
   const upsert = jest.fn().mockResolvedValue({});
+  const deleteMany = jest.fn().mockResolvedValue({ count: 0 });
   const update = jest.fn().mockResolvedValue({});
   const aggregate = jest.fn().mockResolvedValue({ _sum: { contribution: aggregateContribution } });
   const findManyAffected = jest.fn().mockResolvedValue(
@@ -83,12 +84,12 @@ function buildPrismaWithGolfPicks({
 
   return {
     contestEntryPick: { findMany: contestEntryPickFindMany },
-    contestEntryPickGolfRosterContribution: { upsert, aggregate },
+    contestEntryPickGolfRosterContribution: { upsert, deleteMany, aggregate },
     contestEntry: { update },
     $queryRaw: jest.fn().mockResolvedValue([{ acquired: acquireLock }]),
     $transaction: jest.fn().mockImplementation(async (fn: any) => fn({
       contestEntryPick: { findMany: contestEntryPickFindMany },
-      contestEntryPickGolfRosterContribution: { upsert, aggregate },
+      contestEntryPickGolfRosterContribution: { upsert, deleteMany, aggregate },
       contestEntry: { update },
       $queryRaw: jest.fn().mockResolvedValue([{ acquired: acquireLock }]),
     })),
@@ -182,8 +183,86 @@ describe('pool-master-rop.78.7 / plans/117 §11.3-§11.5 — LiveScoreConsumer',
         }),
       );
       // Rerank handoff happens once per affected contest, after the
-      // scoring transaction commits.
-      expect(rollup.rollupContest).toHaveBeenCalledWith('contest-1');
+      // scoring transaction commits. Golf-roster ranks lower-is-better
+      // (scoreToPar of -5 wins over +2) so the consumer must pass
+      // `rankDirection: 'LOWER_IS_BETTER'` to the rollup — without it the
+      // rollup defaults to descending and inverts the leaderboard.
+      expect(rollup.rollupContest).toHaveBeenCalledWith(
+        'contest-1',
+        { rankDirection: 'LOWER_IS_BETTER' },
+      );
+    });
+
+    it('deletes contribution rows whose round is no longer in the computed contribution set', async () => {
+      // Pick had rounds 1-4 completed previously (and rows persisted by an
+      // earlier event). On this event, round 3 was corrected to DNF — it
+      // must drop out of the contribution set, otherwise the totalScore
+      // aggregate keeps summing the stale row.
+      const prisma = buildPrismaWithGolfPicks({
+        picks: [
+          {
+            id: 'pick-1',
+            entryId: 'entry-1',
+            contestFormat: 'ROSTER',
+            sportEventParticipant: {
+              id: 'sep-1',
+              sportEventId: 'sport-event-1',
+              golfRounds: [
+                { round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
+                { round: 2, strokes: 73, scoreToPar: 1, status: 'COMPLETED' },
+                { round: 3, strokes: 0, scoreToPar: 0, status: 'DNF' },
+                { round: 4, strokes: 71, scoreToPar: -1, status: 'COMPLETED' },
+              ],
+            },
+          },
+        ],
+      });
+      const consumer = new LiveScoreConsumer({ prisma, eventBus: buildBus(), standingsRollup: buildRollup() });
+      await consumer.handle(buildEvent());
+
+      // Live rounds = 1, 2, 4. Round 3 must be deleted if a stale row exists.
+      expect(prisma.contestEntryPickGolfRosterContribution.deleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            contestEntryPickId: 'pick-1',
+            round: { notIn: [1, 2, 4] },
+          }),
+        }),
+      );
+      expect(prisma.contestEntryPickGolfRosterContribution.upsert).toHaveBeenCalledTimes(3);
+    });
+
+    it('deletes ALL contribution rows for the pick when no completed rounds remain (full retraction)', async () => {
+      // All previously completed rounds were corrected to DNF — nothing
+      // should count, including any prior contribution rows.
+      const prisma = buildPrismaWithGolfPicks({
+        picks: [
+          {
+            id: 'pick-1',
+            entryId: 'entry-1',
+            contestFormat: 'ROSTER',
+            sportEventParticipant: {
+              id: 'sep-1',
+              sportEventId: 'sport-event-1',
+              golfRounds: [
+                { round: 1, strokes: 0, scoreToPar: 0, status: 'DNF' },
+                { round: 2, strokes: 0, scoreToPar: 0, status: 'DNF' },
+              ],
+            },
+          },
+        ],
+      });
+      const consumer = new LiveScoreConsumer({ prisma, eventBus: buildBus(), standingsRollup: buildRollup() });
+      await consumer.handle(buildEvent());
+
+      // With no live rounds the deleteMany WHERE narrows to just the pick id
+      // (no `round` filter), retracting any prior rows.
+      expect(prisma.contestEntryPickGolfRosterContribution.deleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { contestEntryPickId: 'pick-1' },
+        }),
+      );
+      expect(prisma.contestEntryPickGolfRosterContribution.upsert).not.toHaveBeenCalled();
     });
 
     it('skips contributions and rerank when the advisory lock is contended', async () => {
@@ -219,8 +298,11 @@ describe('pool-master-rop.78.7 / plans/117 §11.3-§11.5 — LiveScoreConsumer',
         expect.objectContaining({ action: 'liveScoreConsumer.scoreContestFailed' }),
         expect.any(String),
       );
-      // contest-good still gets reranked.
-      expect(rollup.rollupContest).toHaveBeenCalledWith('contest-good');
+      // contest-good still gets reranked, with golf-roster direction.
+      expect(rollup.rollupContest).toHaveBeenCalledWith(
+        'contest-good',
+        { rankDirection: 'LOWER_IS_BETTER' },
+      );
     });
   });
 });
