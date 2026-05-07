@@ -1,4 +1,10 @@
-import { ContestStatus } from '@poolmaster/shared/domain';
+import {
+  ContestFormat,
+  ContestStatus,
+  Sport,
+  TournamentFormat,
+} from '@poolmaster/shared/domain';
+import type { CreateContestManagementRequest } from '@poolmaster/shared/dto';
 import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
@@ -22,6 +28,7 @@ function createContestCoreRepo(): ContestCoreRepository {
       sportEventId: '11111111-1111-1111-1111-111111111111',
       name: 'Contest 1',
       status: ContestStatus.DRAFT,
+      contestFormat: ContestFormat.ROSTER,
       selectionType: 'TIERED',
       scoringEngine: 'STROKE_PLAY',
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
@@ -261,6 +268,8 @@ function createSportEventReader(overrides?: Partial<{
   releaseAt: Date;
   fieldLocksAt: Date;
   fieldLocked: boolean;
+  sport: Sport;
+  tournamentFormat: TournamentFormat;
   participantCount: number | null;
   loadedParticipantCount: number;
 }>): {
@@ -272,6 +281,9 @@ function createSportEventReader(overrides?: Partial<{
       releaseAt: overrides?.releaseAt ?? new Date('2026-04-22T12:00:00.000Z'),
       fieldLocksAt: overrides?.fieldLocksAt ?? new Date('2026-05-10T12:00:00.000Z'),
       fieldLocked: overrides?.fieldLocked ?? false,
+      sport: overrides?.sport ?? Sport.GOLF,
+      tournamentFormat:
+        overrides?.tournamentFormat ?? TournamentFormat.STROKE_PLAY_TOURNAMENT,
       participantCount: overrides?.participantCount ?? 72,
       loadedParticipantCount: overrides?.loadedParticipantCount ?? 72,
     }),
@@ -343,6 +355,7 @@ describe('ContestManagementService', () => {
       name: 'Masters Pick 6',
       selectionType: 'TIERED',
       scoringEngine: 'STROKE_PLAY',
+      contestFormat: ContestFormat.ROSTER,
       status: ContestStatus.OPEN,
     });
     expect(result.configuration.mode).toBe('GOLF_TIERED');
@@ -448,6 +461,192 @@ describe('ContestManagementService', () => {
     ).rejects.toMatchObject({
       code: 'CONTEST_TIER_FIELD_OUT_OF_RANGE',
       message: 'Tier B starts at field position 111, but the selected event only has 80 participants.',
+    });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('pool-master-rop.78.14 rejects contest creation when the event sport does not allow the requested format', async () => {
+    const contestCoreRepo = createContestCoreRepo();
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      createContestConfigurationRepo(),
+      createParticipantScoringRuleRepo(),
+      createAggregationRuleRepo(),
+      createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader({ sport: Sport.GOLF }),
+    );
+
+    await expect(
+      service.createContest(
+        { leagueId: 'league-1' },
+        {
+          name: 'Invalid bracket',
+          sportEventId: '11111111-1111-1111-1111-111111111111',
+          contestFormat: ContestFormat.BRACKET,
+          configuration: {
+            mode: 'GOLF_TIERED',
+            locksAt: '2026-04-10T12:00:00.000Z',
+            maxEntriesPerSquad: 3,
+            rosterSize: 4,
+            countedScores: 4,
+            tierSource: 'ODDS',
+            tierGeneration: {
+              defaultTierSize: 10,
+            },
+            tiers: [
+              {
+                tierKey: 'A',
+                label: 'Tier A',
+                pickCount: 4,
+                startPosition: 1,
+                endPosition: 10,
+              },
+            ],
+            cutRule: {
+              type: 'FIXED_SCORE',
+              fixedScore: 80,
+            },
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+            displayScoring: 'TO_PAR',
+            tiebreaker: {
+              type: 'PREDICT_WINNING_SCORE',
+            },
+          },
+        } as unknown as CreateContestManagementRequest,
+      ),
+    ).rejects.toMatchObject({
+      code: 'CONTEST_FORMAT_NOT_ALLOWED',
+      message: 'Selected sporting event does not support that contest format.',
+    });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('pool-master-rop.78.14 rejects valid future formats until creation support exists', async () => {
+    const contestCoreRepo = createContestCoreRepo();
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      createContestConfigurationRepo(),
+      createParticipantScoringRuleRepo(),
+      createAggregationRuleRepo(),
+      createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader({
+        sport: Sport.NCAA_BASKETBALL,
+        tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET,
+      }),
+    );
+
+    await expect(
+      service.createContest(
+        { leagueId: 'league-1' },
+        {
+          name: 'Bracket Pool',
+          sportEventId: '11111111-1111-1111-1111-111111111111',
+          contestFormat: ContestFormat.BRACKET,
+          configuration: {
+            mode: 'GOLF_TIERED',
+            locksAt: '2026-04-10T12:00:00.000Z',
+            maxEntriesPerSquad: 3,
+            rosterSize: 4,
+            countedScores: 4,
+            tierSource: 'ODDS',
+            tierGeneration: {
+              defaultTierSize: 10,
+            },
+            tiers: [
+              {
+                tierKey: 'A',
+                label: 'Tier A',
+                pickCount: 4,
+                startPosition: 1,
+                endPosition: 10,
+              },
+            ],
+            cutRule: {
+              type: 'FIXED_SCORE',
+              fixedScore: 80,
+            },
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+            displayScoring: 'TO_PAR',
+            tiebreaker: {
+              type: 'PREDICT_WINNING_SCORE',
+            },
+          },
+        } as unknown as CreateContestManagementRequest,
+      ),
+    ).rejects.toMatchObject({
+      code: 'CONTEST_FORMAT_NOT_SUPPORTED',
+      message: 'This contest format is not available for managed contest creation yet.',
+    });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('pool-master-rop.78.14 rejects non-golf managed creation until sport-specific configs exist', async () => {
+    const contestCoreRepo = createContestCoreRepo();
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      createContestConfigurationRepo(),
+      createParticipantScoringRuleRepo(),
+      createAggregationRuleRepo(),
+      createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createSportEventParticipantValuationRepo(),
+      undefined,
+      createSportEventReader({
+        sport: Sport.NCAA_BASKETBALL,
+        tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET,
+      }),
+    );
+
+    await expect(
+      service.createContest(
+        { leagueId: 'league-1' },
+        {
+          name: 'Basketball Roster Pool',
+          sportEventId: '11111111-1111-1111-1111-111111111111',
+          contestFormat: ContestFormat.ROSTER,
+          configuration: {
+            mode: 'GOLF_TIERED',
+            locksAt: '2026-04-10T12:00:00.000Z',
+            maxEntriesPerSquad: 3,
+            rosterSize: 4,
+            countedScores: 4,
+            tierSource: 'ODDS',
+            tierGeneration: {
+              defaultTierSize: 10,
+            },
+            tiers: [
+              {
+                tierKey: 'A',
+                label: 'Tier A',
+                pickCount: 4,
+                startPosition: 1,
+                endPosition: 10,
+              },
+            ],
+            cutRule: {
+              type: 'FIXED_SCORE',
+              fixedScore: 80,
+            },
+            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
+            displayScoring: 'TO_PAR',
+            tiebreaker: {
+              type: 'PREDICT_WINNING_SCORE',
+            },
+          },
+        },
+      ),
+    ).rejects.toMatchObject({
+      code: 'CONTEST_SPORT_NOT_SUPPORTED',
+      message: 'Managed contest creation currently supports golf events only.',
     });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });

@@ -5442,7 +5442,10 @@ export type CreateContestData = {
     body: {
         name: string;
         eventId?: string;
-        contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
+        /**
+         * First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.
+         */
+        contestFormat: 'ROSTER';
         selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
         /**
          * Contest-configuration payload used by contest create and update endpoints.
@@ -6040,7 +6043,10 @@ export type CreateManagedContestData = {
          * Sport-event identifier that anchors the contest.
          */
         sportEventId: string;
-        contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
+        /**
+         * First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility.
+         */
+        contestFormat: 'ROSTER';
         /**
          * Approved commissioner-managed contest configuration payload for golf-first contest creation.
          */
@@ -6167,7 +6173,10 @@ export type CreateManagedContestData = {
          * Sport-event identifier that anchors the contest.
          */
         sportEventId: string;
-        contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
+        /**
+         * First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility.
+         */
+        contestFormat: 'ROSTER';
         /**
          * Seeded contest template selected for the create flow.
          */

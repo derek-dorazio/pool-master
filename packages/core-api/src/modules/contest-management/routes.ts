@@ -1,4 +1,6 @@
 import type { FastifyInstance } from 'fastify';
+import type { Sport, TournamentFormat } from '@poolmaster/shared/domain';
+import { getDefaultTournamentFormatForSport } from '@poolmaster/shared/domain';
 import {
   ContestConfigTemplateListResponseSchema,
   ContestConfigurationRequestSchema,
@@ -55,12 +57,21 @@ export async function contestManagementModule(
         if (!row) {
           return null;
         }
+        const sport = row.sport as Sport;
+        const sportRow = await prisma.sport.findUnique({
+          where: { name: row.sport },
+          select: { tournamentFormat: true },
+        });
 
         return {
           id: row.id,
           releaseAt: row.releaseAt,
           fieldLocksAt: row.fieldLocksAt,
           fieldLocked: row.fieldLocked,
+          sport,
+          tournamentFormat:
+            (sportRow?.tournamentFormat as TournamentFormat | undefined)
+            ?? getDefaultTournamentFormatForSport(sport),
           participantCount: row.participantCount,
           loadedParticipantCount: row._count.sportEventParticipants,
         };

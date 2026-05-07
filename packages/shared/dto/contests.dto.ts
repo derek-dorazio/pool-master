@@ -54,7 +54,9 @@ export const ContestCrudConfigurationRequestSchema = z.object({
 export const CreateContestRequestSchema = z.object({
   name: z.string().min(1).max(100),
   eventId: z.string().optional(),
-  contestFormat: z.enum(Object.values(ContestFormat) as [string, ...string[]]),
+  contestFormat: z.literal(ContestFormat.ROSTER).describe(
+    'First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.',
+  ),
   selectionType: z.enum([
     SelectionType.SNAKE_DRAFT,
     SelectionType.TIERED,

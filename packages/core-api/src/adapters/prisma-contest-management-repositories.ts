@@ -51,7 +51,7 @@ export class PrismaContestCoreRepository implements ContestCoreRepository {
         sportEventId: contest.sportEventId,
         name: contest.name,
         status: contest.status,
-        contestFormat: 'ROSTER',
+        contestFormat: contest.contestFormat,
         selectionType: contest.selectionType,
         scoringEngine: contest.scoringEngine,
       },
@@ -72,6 +72,9 @@ export class PrismaContestCoreRepository implements ContestCoreRepository {
         }),
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.status !== undefined && { status: updates.status }),
+        ...(updates.contestFormat !== undefined && {
+          contestFormat: updates.contestFormat,
+        }),
       },
     });
     return mapContest(row);
@@ -746,6 +749,7 @@ function mapContest(row: {
   sportEventId: string | null;
   name: string;
   status: string;
+  contestFormat: string;
   selectionType: string;
   scoringEngine: string;
   createdAt: Date;
@@ -757,6 +761,7 @@ function mapContest(row: {
     sportEventId: row.sportEventId ?? '',
     name: row.name,
     status: row.status as ContestCoreSummary['status'],
+    contestFormat: row.contestFormat as ContestCoreSummary['contestFormat'],
     selectionType: row.selectionType as ContestCoreSummary['selectionType'],
     scoringEngine: row.scoringEngine as ContestCoreSummary['scoringEngine'],
     createdAt: row.createdAt,

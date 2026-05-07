@@ -1,4 +1,5 @@
 export * from './enums';
+export * from './contest-validity';
 export {
   AggregationDefinitionIdSchema,
   ParticipantScoringDefinitionIdSchema,

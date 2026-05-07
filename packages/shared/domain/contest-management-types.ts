@@ -253,6 +253,7 @@ export interface ContestCoreSummary extends DomainEntity {
   sportEventId: string;
   name: string;
   status: ContestStatus;
+  contestFormat: ContestFormat;
   selectionType: SelectionType;
   scoringEngine: ScoringEngine;
 }

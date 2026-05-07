@@ -122,12 +122,12 @@ Required implications:
 
 ### Validity / Compatibility Matrices Source of Truth
 
-Small enumerated compatibility matrices — e.g., `(tournamentFormat × contestType) → valid?`, supported provider × sport combinations, allowed selection-mode-per-contest-type combinations — live in code as TypeScript const maps, not in the database.
+Small enumerated compatibility matrices — e.g., `(tournamentFormat × contestFormat) → valid?`, supported provider × sport combinations, allowed selection-mode-per-contest-format combinations — live in code as TypeScript const maps, not in the database.
 
 Pattern:
 
 ```ts
-export const VALID_CONTEST_TYPES_BY_FORMAT: Record<TournamentFormat, ContestType[]> = {
+export const VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT: Record<TournamentFormat, ContestFormat[]> = {
   STROKE_PLAY_TOURNAMENT: ['ROSTER'],
   KNOCKOUT_BRACKET:       ['ROSTER', 'BRACKET'],
   // ... exhaustive over TournamentFormat
@@ -140,6 +140,8 @@ Use code over DB when:
 - Cells change at the cadence of code releases, not user actions.
 - Compile-time exhaustiveness checking adds value (TypeScript fails the build if a new enum value lacks a matrix entry).
 - There's no genuine product requirement for runtime configurability by non-developers.
+
+The validity matrix is a domain catalog, not a blanket write permission. Creation and mutation paths must also gate against the combinations that are implemented in the current configuration, scoring, and UI contracts.
 
 Use DB instead when:
 

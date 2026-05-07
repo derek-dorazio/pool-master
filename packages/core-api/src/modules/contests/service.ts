@@ -26,7 +26,11 @@ import {
   ContestFormat,
   ScoringEngine,
   SelectionType,
+  Sport,
   SquadMembershipStatus,
+  TournamentFormat,
+  getDefaultTournamentFormatForSport,
+  isContestFormatValidForTournamentFormat,
 } from '@poolmaster/shared/domain';
 import type { ContestEntryDetailDto, ContestEntryDto } from '@poolmaster/shared/dto';
 import {
@@ -161,6 +165,8 @@ export class ContestService {
       this.logger.warn({ leagueId: input.leagueId }, 'contest create missing league');
       throw new ContestOperationError('League not found', 'LEAGUE_NOT_FOUND');
     }
+    await this.assertContestFormatAllowedForSportEvent(input);
+    this.assertContestCreationSupported(input.contestFormat);
     const contest = await this.contestRepo.create({
       leagueId: input.leagueId,
       sportEventId: input.sportEventId || undefined,
@@ -192,6 +198,67 @@ export class ContestService {
       selectionType: input.selectionType,
     }, 'contest create completed');
     return { contest, contestConfiguration };
+  }
+
+  private assertContestCreationSupported(contestFormat: ContestFormat): void {
+    if (contestFormat === ContestFormat.ROSTER) {
+      return;
+    }
+
+    throw new ContestOperationError(
+      'This contest format is not available for contest creation yet.',
+      'CONTEST_FORMAT_NOT_SUPPORTED',
+    );
+  }
+
+  private async assertContestFormatAllowedForSportEvent(
+    input: Pick<CreateContestInput, 'sportEventId' | 'contestFormat'>,
+  ): Promise<void> {
+    if (!input.sportEventId || !this.prisma) {
+      return;
+    }
+
+    const sportEvent = await this.prisma.sportEvent.findUnique({
+      where: { id: input.sportEventId },
+      select: { sport: true },
+    });
+    if (!sportEvent) {
+      this.logger.warn(
+        { sportEventId: input.sportEventId },
+        'contest create missing sport event',
+      );
+      throw new ContestOperationError(
+        'Selected sporting event was not found.',
+        'SPORT_EVENT_NOT_FOUND',
+      );
+    }
+
+    const sport = sportEvent.sport as Sport;
+    const sportRow = await this.prisma.sport.findUnique({
+      where: { name: sportEvent.sport },
+      select: { tournamentFormat: true },
+    });
+    const tournamentFormat =
+      (sportRow?.tournamentFormat as TournamentFormat | undefined)
+      ?? getDefaultTournamentFormatForSport(sport);
+
+    if (isContestFormatValidForTournamentFormat(tournamentFormat, input.contestFormat)) {
+      return;
+    }
+
+    this.logger.warn(
+      {
+        sportEventId: input.sportEventId,
+        sport,
+        tournamentFormat,
+        contestFormat: input.contestFormat,
+      },
+      'contest create rejected for invalid sport contest format',
+    );
+    throw new ContestOperationError(
+      'Selected sporting event does not support that contest format.',
+      'CONTEST_FORMAT_NOT_ALLOWED',
+    );
   }
 
   async getContest(
