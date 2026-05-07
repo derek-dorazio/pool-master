@@ -78,6 +78,7 @@ export interface ContestantRecord {
   readonly participantStatus?: ParticipantStatusKind;
   readonly odds?: number;
   readonly ranking?: number;
+  readonly strokes?: number;
   readonly score?: number;
   readonly result?: ContestantOutcomeKind;
   readonly note?: string;
@@ -92,6 +93,7 @@ export interface ContestantDeltaRecord {
   readonly participantStatus?: ParticipantStatusKind;
   readonly odds?: number;
   readonly ranking?: number;
+  readonly strokes?: number;
   readonly score?: number;
   readonly result?: ContestantOutcomeKind;
   readonly note?: string;
@@ -262,6 +264,7 @@ export const contestantRecordSchema = {
     participantStatus: { type: 'string', enum: participantStatusKindsSchemaEnum },
     odds: { type: 'number' },
     ranking: { type: 'number' },
+    strokes: { type: 'number' },
     score: { type: 'number' },
     result: { type: 'string', enum: contestantOutcomeKindsSchemaEnum },
     note: { type: 'string' },
@@ -281,6 +284,7 @@ export const contestantDeltaRecordSchema = {
     participantStatus: { type: 'string', enum: participantStatusKindsSchemaEnum },
     odds: { type: 'number' },
     ranking: { type: 'number' },
+    strokes: { type: 'number' },
     score: { type: 'number' },
     result: { type: 'string', enum: contestantOutcomeKindsSchemaEnum },
     note: { type: 'string' },

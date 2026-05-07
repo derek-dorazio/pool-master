@@ -116,6 +116,7 @@ export type GetMockContestFeedScenarioResponses = {
                         participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                         odds?: number;
                         ranking?: number;
+                        strokes?: number;
                         score?: number;
                         result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                         note?: string;
@@ -134,6 +135,7 @@ export type GetMockContestFeedScenarioResponses = {
                             participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                             odds?: number;
                             ranking?: number;
+                            strokes?: number;
                             score?: number;
                             result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                             note?: string;
@@ -151,6 +153,7 @@ export type GetMockContestFeedScenarioResponses = {
                             participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                             odds?: number;
                             ranking?: number;
+                            strokes?: number;
                             score?: number;
                             result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                             note?: string;
@@ -168,6 +171,7 @@ export type GetMockContestFeedScenarioResponses = {
                             participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                             odds?: number;
                             ranking?: number;
+                            strokes?: number;
                             score?: number;
                             result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                             note?: string;
@@ -189,6 +193,7 @@ export type GetMockContestFeedScenarioResponses = {
                         participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                         odds?: number;
                         ranking?: number;
+                        strokes?: number;
                         score?: number;
                         result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                         note?: string;
@@ -285,6 +290,7 @@ export type GetMockContestFeedScenarioEventResponses = {
                     participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                     odds?: number;
                     ranking?: number;
+                    strokes?: number;
                     score?: number;
                     result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                     note?: string;
@@ -303,6 +309,7 @@ export type GetMockContestFeedScenarioEventResponses = {
                         participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                         odds?: number;
                         ranking?: number;
+                        strokes?: number;
                         score?: number;
                         result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                         note?: string;
@@ -320,6 +327,7 @@ export type GetMockContestFeedScenarioEventResponses = {
                         participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                         odds?: number;
                         ranking?: number;
+                        strokes?: number;
                         score?: number;
                         result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                         note?: string;
@@ -337,6 +345,7 @@ export type GetMockContestFeedScenarioEventResponses = {
                         participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                         odds?: number;
                         ranking?: number;
+                        strokes?: number;
                         score?: number;
                         result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                         note?: string;
@@ -358,6 +367,7 @@ export type GetMockContestFeedScenarioEventResponses = {
                     participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                     odds?: number;
                     ranking?: number;
+                    strokes?: number;
                     score?: number;
                     result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                     note?: string;
@@ -432,6 +442,7 @@ export type GetMockContestFeedScenarioEventDetailResponses = {
                     participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                     odds?: number;
                     ranking?: number;
+                    strokes?: number;
                     score?: number;
                     result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                     note?: string;
@@ -450,6 +461,7 @@ export type GetMockContestFeedScenarioEventDetailResponses = {
                         participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                         odds?: number;
                         ranking?: number;
+                        strokes?: number;
                         score?: number;
                         result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                         note?: string;
@@ -467,6 +479,7 @@ export type GetMockContestFeedScenarioEventDetailResponses = {
                         participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                         odds?: number;
                         ranking?: number;
+                        strokes?: number;
                         score?: number;
                         result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                         note?: string;
@@ -484,6 +497,7 @@ export type GetMockContestFeedScenarioEventDetailResponses = {
                         participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                         odds?: number;
                         ranking?: number;
+                        strokes?: number;
                         score?: number;
                         result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                         note?: string;
@@ -505,6 +519,7 @@ export type GetMockContestFeedScenarioEventDetailResponses = {
                     participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                     odds?: number;
                     ranking?: number;
+                    strokes?: number;
                     score?: number;
                     result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                     note?: string;
@@ -546,6 +561,7 @@ export type GetMockContestFeedFieldSnapshotResponses = {
             participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
             odds?: number;
             ranking?: number;
+            strokes?: number;
             score?: number;
             result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
             note?: string;
@@ -585,6 +601,7 @@ export type GetMockContestFeedOddsSnapshotResponses = {
             participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
             odds?: number;
             ranking?: number;
+            strokes?: number;
             score?: number;
             result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
             note?: string;
@@ -624,6 +641,7 @@ export type GetMockContestFeedRankingsSnapshotResponses = {
             participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
             odds?: number;
             ranking?: number;
+            strokes?: number;
             score?: number;
             result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
             note?: string;
@@ -663,6 +681,7 @@ export type GetMockContestFeedResultsSnapshotResponses = {
             participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
             odds?: number;
             ranking?: number;
+            strokes?: number;
             score?: number;
             result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
             note?: string;
@@ -704,6 +723,7 @@ export type GetMockContestFeedScoresSnapshotResponses = {
             participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
             odds?: number;
             ranking?: number;
+            strokes?: number;
             score?: number;
             result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
             note?: string;
@@ -746,6 +766,7 @@ export type GetMockContestFeedEventUpdatesResponses = {
                 participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
                 odds?: number;
                 ranking?: number;
+                strokes?: number;
                 score?: number;
                 result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
                 note?: string;

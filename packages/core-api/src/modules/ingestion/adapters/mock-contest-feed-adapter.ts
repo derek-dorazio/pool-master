@@ -123,12 +123,10 @@ export class MockContestFeedAdapter implements SportDataProvider {
 
   /**
    * Emits a typed `LiveScoreResult` per plans/117 §10.2 for the mock-feed
-   * scenario. The mock provider only carries cumulative scoreToPar at the
-   * snapshot level (no per-round breakdown), so the adapter emits a single
-   * round-1 update per contestant — the test scenarios exercise the typed
-   * pipeline shape, not multi-round detail. rop.78.7 will replace the
-   * round-1-as-cumulative degeneracy with proper per-round emission once
-   * the contribution-table scoring path lands.
+   * scenario. Most mock snapshots only carry cumulative scoreToPar, so their
+   * updates keep `strokes: null` and are intentionally skipped by persistence.
+   * rop.78.12 scenarios may carry real round strokes; those rows are safe to
+   * persist and can drive the event-driven golf-roster scoring path.
    */
   async getLiveScores(eventId: string): Promise<LiveScoreResult> {
     const empty: LiveScoreResult = { category: 'GOLF', externalEventId: eventId, rounds: [] };
@@ -143,17 +141,20 @@ export class MockContestFeedAdapter implements SportDataProvider {
 
     const rounds: GolfRoundUpdate[] = liveScores.contestants
       .filter((contestant) => typeof contestant.score === 'number')
-      .map((contestant) => ({
-        participantExternalId: contestant.contestantId,
-        round: 1,
-        // Mock provider exposes only cumulative scoreToPar; per-round
-        // strokes are not in the snapshot. Emit null so downstream
-        // persistence skips this row until rop.78.7 supplies real
-        // strokes from PGA Tour. No synthesis.
-        strokes: null,
-        scoreToPar: contestant.score as number,
-        status: 'IN_PROGRESS',
-      }));
+      .map((contestant) => {
+        const strokes = typeof contestant.strokes === 'number'
+          ? contestant.strokes
+          : null;
+        return {
+          participantExternalId: contestant.contestantId,
+          round: 1,
+          // No synthesis: only persist strokes when the mock feed fixture
+          // supplies them explicitly.
+          strokes,
+          scoreToPar: contestant.score as number,
+          status: strokes === null ? 'IN_PROGRESS' : 'COMPLETED',
+        };
+      });
 
     return { category: 'GOLF', externalEventId: eventId, rounds };
   }

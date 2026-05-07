@@ -326,7 +326,7 @@ test('routes expose detail and field endpoints', async () => {
 
     const liveScoresResponse = await app.inject({
       method: 'GET',
-      url: '/v1/live/scenarios/golf-major-2026/events/golf-masters-2026/scores?tick=2',
+      url: '/v1/scenarios/golf-major-2026/events/golf-masters-2026/scores?tick=2',
     });
     assert.equal(liveScoresResponse.statusCode, 200);
     const liveScoresJson = liveScoresResponse.json();
