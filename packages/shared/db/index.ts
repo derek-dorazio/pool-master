@@ -22,7 +22,6 @@ export type {
   ParticipantProviderMappingRepository,
   ParticipantRepository,
   ParticipantSearchFilters,
-  ContestEntryPickRepository,
   SeasonRepository,
   SportRepository,
   SquadMembershipRepository,

@@ -106,6 +106,9 @@ try {
 
   run('npx', ['@hey-api/openapi-ts', '-f', tempConfig]);
 
+  const tempApiTypes = join(tempRoot, 'api-types.ts');
+  run('npx', ['openapi-typescript', tempOpenApi, '-o', tempApiTypes]);
+
   const differences = [];
   compareFile(
     resolve(root, 'packages/shared/generated/openapi.json'),
@@ -117,6 +120,12 @@ try {
     resolve(root, 'packages/shared/generated/hey-api'),
     tempGenerated,
     'hey-api client',
+    differences,
+  );
+  compareFile(
+    resolve(root, 'packages/shared/generated/api-types.ts'),
+    tempApiTypes,
+    'api-types.ts',
     differences,
   );
 

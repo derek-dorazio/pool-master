@@ -12,7 +12,6 @@ import type {
   DraftPickHistory,
   DraftSession,
   League,
-  ContestEntryPick,
   LeagueInvitation,
   LeagueMembership,
   Participant,
@@ -159,11 +158,6 @@ export interface ContestEntryRepository {
   create(entry: Omit<ContestEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntry>;
   update(id: string, updates: Partial<ContestEntry>): Promise<ContestEntry>;
   delete(id: string): Promise<void>;
-}
-
-export interface ContestEntryPickRepository {
-  findByEntry(entryId: string): Promise<ContestEntryPick[]>;
-  create(pick: Omit<ContestEntryPick, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntryPick>;
 }
 
 // --- Draft Session (Snake Draft only) ---

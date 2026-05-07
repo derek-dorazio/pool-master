@@ -60,7 +60,7 @@
     "test:api": "jest --config tests/jest.config.js tests/api",
     "format": "prettier --write .",
     "api:export": "npm run build --workspace @poolmaster/shared && node --import tsx packages/core-api/scripts/export-openapi.ts",
-    "api:generate": "npx @hey-api/openapi-ts -f packages/shared/openapi-ts.config.ts",
+    "api:generate": "npx @hey-api/openapi-ts -f packages/shared/openapi-ts.config.ts && npx openapi-typescript packages/shared/generated/openapi.json -o packages/shared/generated/api-types.ts",
     "api:check": "node scripts/check-openapi-fresh.mjs",
     "api:validate": "node --import tsx scripts/validate-openapi-spec.ts",
     "api:refresh": "npm run api:export && npm run api:generate"

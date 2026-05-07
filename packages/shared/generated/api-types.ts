@@ -1350,46 +1350,6 @@ export interface paths {
         patch: operations["updateParticipant"];
         trace?: never;
     };
-    "/api/v1/participants/{id}/seasons": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get all season records for a participant
-         * @description Returns every stored season record for the participant so history and scoring surfaces can inspect longitudinal performance.
-         */
-        get: operations["getParticipantSeasonRecords"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/participants/{id}/seasons/{season}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get a specific season record for a participant
-         * @description Returns the participant season record for a specific season value.
-         */
-        get: operations["getParticipantSeasonRecord"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/contests/{contestId}/standings/": {
         parameters: {
             query?: never;
@@ -3037,7 +2997,7 @@ export interface paths {
         put?: never;
         /**
          * Trigger data sync for a sport
-         * @description Triggers a provider sync for the requested sport so ingestion jobs can be run manually from operational tools.
+         * @description Triggers a root-admin provider sync for the requested sport so ingestion jobs can be run manually from operational tools.
          */
         post: operations["syncSportData"];
         delete?: never;
@@ -3057,7 +3017,7 @@ export interface paths {
         put?: never;
         /**
          * Trigger feed-aware sync for a specific sport event
-         * @description Triggers explicit feed sync work for a single sport event such as participant hydration, live score polling, or final results.
+         * @description Triggers root-admin explicit feed sync work for a single sport event such as participant hydration, live score polling, or final results.
          */
         post: operations["syncEventData"];
         delete?: never;
@@ -3077,7 +3037,7 @@ export interface paths {
         put?: never;
         /**
          * Ingest scores for a sport event
-         * @description Triggers score ingestion for a specific sport event when manual or ad hoc score refresh is required.
+         * @description Triggers root-admin score ingestion for a specific sport event when manual or ad hoc score refresh is required.
          */
         post: operations["ingestEventScores"];
         delete?: never;
@@ -3097,7 +3057,7 @@ export interface paths {
         put?: never;
         /**
          * Ingest results for a sport event
-         * @description Triggers result ingestion for a specific sport event when final or corrected event outcomes need to be pulled in.
+         * @description Triggers root-admin result ingestion for a specific sport event when final or corrected event outcomes need to be pulled in.
          */
         post: operations["ingestEventResults"];
         delete?: never;
@@ -3117,7 +3077,7 @@ export interface paths {
         put?: never;
         /**
          * Ingest odds for a sport
-         * @description Triggers odds ingestion for the requested sport so odds-driven contest flows can refresh market data.
+         * @description Triggers root-admin odds ingestion for the requested sport so odds-driven contest flows can refresh market data.
          */
         post: operations["ingestSportOdds"];
         delete?: never;
@@ -4681,6 +4641,25 @@ export interface operations {
                     };
                 };
             };
+            /** @description Standard API error envelope. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
         };
     };
     generateInviteLink: {
@@ -5437,7 +5416,40 @@ export interface operations {
                 content: {
                     "application/json": {
                         entries: {
-                            [key: string]: unknown;
+                            /** @description Audit-log entry id. */
+                            id: string;
+                            /** @description League this entry belongs to. */
+                            leagueId: string;
+                            /** @description Contest this entry references when the action is contest-scoped. */
+                            contestId?: string;
+                            /** @description User id of the commissioner / actor that performed the action. */
+                            actorId: string;
+                            /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
+                            action: string;
+                            /**
+                             * @description Audit-log entry category — broad classification of the action that produced this entry.
+                             * @enum {string}
+                             */
+                            category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
+                            /** @description Human-readable description of what happened. */
+                            description: string;
+                            /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
+                            beforeState?: {
+                                [key: string]: unknown;
+                            };
+                            /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
+                            afterState?: {
+                                [key: string]: unknown;
+                            };
+                            /** @description Optional human-supplied reason / justification for the action. */
+                            reason?: string;
+                            /** @description IP address from which the action originated, when available. */
+                            ipAddress?: string;
+                            /**
+                             * Format: date-time
+                             * @description When the audit entry was recorded.
+                             */
+                            createdAt: string;
                         }[];
                     };
                 };
@@ -5482,7 +5494,40 @@ export interface operations {
                 content: {
                     "application/json": {
                         entries: {
-                            [key: string]: unknown;
+                            /** @description Audit-log entry id. */
+                            id: string;
+                            /** @description League this entry belongs to. */
+                            leagueId: string;
+                            /** @description Contest this entry references when the action is contest-scoped. */
+                            contestId?: string;
+                            /** @description User id of the commissioner / actor that performed the action. */
+                            actorId: string;
+                            /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
+                            action: string;
+                            /**
+                             * @description Audit-log entry category — broad classification of the action that produced this entry.
+                             * @enum {string}
+                             */
+                            category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
+                            /** @description Human-readable description of what happened. */
+                            description: string;
+                            /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
+                            beforeState?: {
+                                [key: string]: unknown;
+                            };
+                            /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
+                            afterState?: {
+                                [key: string]: unknown;
+                            };
+                            /** @description Optional human-supplied reason / justification for the action. */
+                            reason?: string;
+                            /** @description IP address from which the action originated, when available. */
+                            ipAddress?: string;
+                            /**
+                             * Format: date-time
+                             * @description When the audit entry was recorded.
+                             */
+                            createdAt: string;
                         }[];
                     };
                 };
@@ -7776,7 +7821,7 @@ export interface operations {
                             /** @enum {string} */
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @enum {string} */
-                            contestType: "SINGLE_EVENT";
+                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /** @enum {string} */
                             selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @enum {string} */
@@ -7815,8 +7860,11 @@ export interface operations {
                 "application/json": {
                     name: string;
                     eventId?: string;
-                    /** @enum {string} */
-                    contestType: "SINGLE_EVENT";
+                    /**
+                     * @description First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix.
+                     * @enum {string}
+                     */
+                    contestFormat: "ROSTER";
                     /** @enum {string} */
                     selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK";
                     /** @description Contest-configuration payload used by contest create and update endpoints. */
@@ -7892,7 +7940,7 @@ export interface operations {
                             /** @enum {string} */
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @enum {string} */
-                            contestType: "SINGLE_EVENT";
+                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /** @enum {string} */
                             selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @enum {string} */
@@ -8062,7 +8110,7 @@ export interface operations {
                 /** @description Sport to filter templates by. */
                 sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
                 /** @description Contest type to filter templates by. */
-                contestType: "SINGLE_EVENT";
+                contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                 /** @description Optional event type used to narrow template selection. */
                 eventType?: string;
             };
@@ -8098,7 +8146,7 @@ export interface operations {
                              * @description Contest type that may use the template.
                              * @enum {string}
                              */
-                            contestType: "SINGLE_EVENT";
+                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /**
                              * @description Configuration mode seeded by the template.
                              * @enum {string}
@@ -8290,8 +8338,11 @@ export interface operations {
                      * @description Sport-event identifier that anchors the contest.
                      */
                     sportEventId: string;
-                    /** @enum {string} */
-                    contestType: "SINGLE_EVENT";
+                    /**
+                     * @description First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility.
+                     * @enum {string}
+                     */
+                    contestFormat: "ROSTER";
                     /** @description Approved commissioner-managed contest configuration payload for golf-first contest creation. */
                     configuration: {
                         /** @enum {string} */
@@ -8389,8 +8440,11 @@ export interface operations {
                      * @description Sport-event identifier that anchors the contest.
                      */
                     sportEventId: string;
-                    /** @enum {string} */
-                    contestType: "SINGLE_EVENT";
+                    /**
+                     * @description First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility.
+                     * @enum {string}
+                     */
+                    contestFormat: "ROSTER";
                     /**
                      * Format: uuid
                      * @description Seeded contest template selected for the create flow.
@@ -9294,7 +9348,7 @@ export interface operations {
                             /** @enum {string} */
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @enum {string} */
-                            contestType: "SINGLE_EVENT";
+                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /** @enum {string} */
                             selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @enum {string} */
@@ -9479,7 +9533,7 @@ export interface operations {
                             /** @enum {string} */
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @enum {string} */
-                            contestType: "SINGLE_EVENT";
+                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /** @enum {string} */
                             selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @enum {string} */
@@ -9767,7 +9821,7 @@ export interface operations {
                             updatedAt: string;
                             /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
                             participants?: {
-                                rosterPickId: string;
+                                pickId: string;
                                 sportEventParticipantId: string;
                                 participantId: string;
                                 participantName: string;
@@ -9881,7 +9935,7 @@ export interface operations {
                             updatedAt: string;
                             /** @description Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad). */
                             participants?: {
-                                rosterPickId: string;
+                                pickId: string;
                                 sportEventParticipantId: string;
                                 participantId: string;
                                 participantName: string;
@@ -10560,7 +10614,7 @@ export interface operations {
                             /** @enum {string} */
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @enum {string} */
-                            contestType: "SINGLE_EVENT";
+                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /** @enum {string} */
                             selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @enum {string} */
@@ -10719,7 +10773,7 @@ export interface operations {
                             /** @enum {string} */
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @enum {string} */
-                            contestType: "SINGLE_EVENT";
+                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /** @enum {string} */
                             selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @enum {string} */
@@ -10883,7 +10937,7 @@ export interface operations {
                             /** @enum {string} */
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @enum {string} */
-                            contestType: "SINGLE_EVENT";
+                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /** @enum {string} */
                             selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @enum {string} */
@@ -11047,7 +11101,7 @@ export interface operations {
                             /** @enum {string} */
                             status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
                             /** @enum {string} */
-                            contestType: "SINGLE_EVENT";
+                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /** @enum {string} */
                             selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
                             /** @enum {string} */
@@ -11192,24 +11246,38 @@ export interface operations {
                 content: {
                     "application/json": {
                         entries: {
+                            /** @description Audit-log entry id. */
                             id: string;
+                            /** @description League this entry belongs to. */
                             leagueId: string;
-                            contestId?: string | null;
+                            /** @description Contest this entry references when the action is contest-scoped. */
+                            contestId?: string;
+                            /** @description User id of the commissioner / actor that performed the action. */
                             actorId: string;
+                            /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
                             action: string;
-                            category: string;
+                            /**
+                             * @description Audit-log entry category — broad classification of the action that produced this entry.
+                             * @enum {string}
+                             */
+                            category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
+                            /** @description Human-readable description of what happened. */
                             description: string;
+                            /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
                             beforeState?: {
                                 [key: string]: unknown;
-                            } | null;
+                            };
+                            /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
                             afterState?: {
                                 [key: string]: unknown;
-                            } | null;
-                            reason?: string | null;
-                            ipAddress?: string | null;
+                            };
+                            /** @description Optional human-supplied reason / justification for the action. */
+                            reason?: string;
+                            /** @description IP address from which the action originated, when available. */
+                            ipAddress?: string;
                             /**
                              * Format: date-time
-                             * @description When the audit entry was created.
+                             * @description When the audit entry was recorded.
                              */
                             createdAt: string;
                         }[];
@@ -11341,10 +11409,6 @@ export interface operations {
                             participantType: "INDIVIDUAL" | "TEAM";
                             /** @description Primary provider identifier when one exists. */
                             externalId?: string;
-                            /** @description Provider-normalized metadata retained for the participant. */
-                            metadata: {
-                                [key: string]: unknown;
-                            };
                             /** @description First name when the participant is a person. */
                             firstName?: string;
                             /** @description Last name when the participant is a person. */
@@ -11434,7 +11498,6 @@ export interface operations {
                     nationality?: string;
                     position?: string;
                     teamAffiliation?: string;
-                    metadata?: Record<string, never>;
                     externalIds?: Record<string, never>;
                 };
             };
@@ -11462,10 +11525,6 @@ export interface operations {
                             participantType: "INDIVIDUAL" | "TEAM";
                             /** @description Primary provider identifier when one exists. */
                             externalId?: string;
-                            /** @description Provider-normalized metadata retained for the participant. */
-                            metadata: {
-                                [key: string]: unknown;
-                            };
                             /** @description First name when the participant is a person. */
                             firstName?: string;
                             /** @description Last name when the participant is a person. */
@@ -11565,10 +11624,6 @@ export interface operations {
                             participantType: "INDIVIDUAL" | "TEAM";
                             /** @description Primary provider identifier when one exists. */
                             externalId?: string;
-                            /** @description Provider-normalized metadata retained for the participant. */
-                            metadata: {
-                                [key: string]: unknown;
-                            };
                             /** @description First name when the participant is a person. */
                             firstName?: string;
                             /** @description Last name when the participant is a person. */
@@ -11677,7 +11732,6 @@ export interface operations {
                     status?: "ACTIVE" | "INACTIVE" | "RETIRED" | "SUSPENDED";
                     injuryStatus?: Record<string, never>;
                     photoUrl?: string;
-                    metadata?: Record<string, never>;
                     externalIds?: Record<string, never>;
                 };
             };
@@ -11705,10 +11759,6 @@ export interface operations {
                             participantType: "INDIVIDUAL" | "TEAM";
                             /** @description Primary provider identifier when one exists. */
                             externalId?: string;
-                            /** @description Provider-normalized metadata retained for the participant. */
-                            metadata: {
-                                [key: string]: unknown;
-                            };
                             /** @description First name when the participant is a person. */
                             firstName?: string;
                             /** @description Last name when the participant is a person. */
@@ -11767,209 +11817,6 @@ export interface operations {
                             /**
                              * Format: date-time
                              * @description When the participant record was last updated.
-                             */
-                            updatedAt: string;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getParticipantSeasonRecords: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Participant season-record list response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        seasonRecords: {
-                            id: string;
-                            participantId: string;
-                            /** @enum {string} */
-                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                            season: string;
-                            /** @description Ranking snapshots associated with the season record. */
-                            rankings: {
-                                /** @description Ranking system name, such as world ranking or tour points. */
-                                rankingType: string;
-                                /** @description Participant rank under the specified ranking system. */
-                                rank: number;
-                                /** @description Optional ranking points associated with the ranking. */
-                                points?: number;
-                                /**
-                                 * Format: date-time
-                                 * @description Date when the ranking snapshot was valid.
-                                 */
-                                asOfDate: string;
-                            }[];
-                            /** @description Current budget-draft price for the participant. */
-                            budgetPrice: number;
-                            /** @description Optional price tier label derived for the participant. */
-                            priceTier?: string;
-                            /**
-                             * Format: date-time
-                             * @description When the participant price was last refreshed.
-                             */
-                            priceUpdatedAt?: string;
-                            /** @description How many events the participant entered in the season. */
-                            eventsEntered: number;
-                            /** @description How many events the participant completed in the season. */
-                            eventsCompleted: number;
-                            /** @description Season win count. */
-                            wins: number;
-                            /** @description Top-five finish count for the season. */
-                            top5Finishes: number;
-                            /** @description Top-ten finish count for the season. */
-                            top10Finishes: number;
-                            /** @description Top-twenty-five finish count for the season. */
-                            top25Finishes: number;
-                            /** @description Provider-normalized season statistics keyed by stat name. */
-                            seasonStats: {
-                                [key: string]: number;
-                            };
-                            /** @description Derived form score used for participant valuation and sorting. */
-                            formRating: number;
-                            /**
-                             * @description Trend direction for the participant recent form.
-                             * @enum {string}
-                             */
-                            formTrend: "RISING" | "STABLE" | "FALLING";
-                            /**
-                             * Format: date-time
-                             * @description When the season record source data was last refreshed.
-                             */
-                            lastUpdated: string;
-                            /**
-                             * Format: date-time
-                             * @description When the season record was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the season record was last updated.
-                             */
-                            updatedAt: string;
-                        }[];
-                    };
-                };
-            };
-        };
-    };
-    getParticipantSeasonRecord: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-                season: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Single participant season-record response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Participant season record used by draft-search and participant detail APIs. */
-                        seasonRecord: {
-                            id: string;
-                            participantId: string;
-                            /** @enum {string} */
-                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                            season: string;
-                            /** @description Ranking snapshots associated with the season record. */
-                            rankings: {
-                                /** @description Ranking system name, such as world ranking or tour points. */
-                                rankingType: string;
-                                /** @description Participant rank under the specified ranking system. */
-                                rank: number;
-                                /** @description Optional ranking points associated with the ranking. */
-                                points?: number;
-                                /**
-                                 * Format: date-time
-                                 * @description Date when the ranking snapshot was valid.
-                                 */
-                                asOfDate: string;
-                            }[];
-                            /** @description Current budget-draft price for the participant. */
-                            budgetPrice: number;
-                            /** @description Optional price tier label derived for the participant. */
-                            priceTier?: string;
-                            /**
-                             * Format: date-time
-                             * @description When the participant price was last refreshed.
-                             */
-                            priceUpdatedAt?: string;
-                            /** @description How many events the participant entered in the season. */
-                            eventsEntered: number;
-                            /** @description How many events the participant completed in the season. */
-                            eventsCompleted: number;
-                            /** @description Season win count. */
-                            wins: number;
-                            /** @description Top-five finish count for the season. */
-                            top5Finishes: number;
-                            /** @description Top-ten finish count for the season. */
-                            top10Finishes: number;
-                            /** @description Top-twenty-five finish count for the season. */
-                            top25Finishes: number;
-                            /** @description Provider-normalized season statistics keyed by stat name. */
-                            seasonStats: {
-                                [key: string]: number;
-                            };
-                            /** @description Derived form score used for participant valuation and sorting. */
-                            formRating: number;
-                            /**
-                             * @description Trend direction for the participant recent form.
-                             * @enum {string}
-                             */
-                            formTrend: "RISING" | "STABLE" | "FALLING";
-                            /**
-                             * Format: date-time
-                             * @description When the season record source data was last refreshed.
-                             */
-                            lastUpdated: string;
-                            /**
-                             * Format: date-time
-                             * @description When the season record was created.
-                             */
-                            createdAt: string;
-                            /**
-                             * Format: date-time
-                             * @description When the season record was last updated.
                              */
                             updatedAt: string;
                         };
@@ -14995,7 +14842,7 @@ export interface operations {
                 /** @description Optional sport filter for root-admin contest template management. */
                 sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
                 /** @description Optional contest-type filter for root-admin contest template management. */
-                contestType?: "SINGLE_EVENT";
+                contestFormat?: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                 /** @description Optional active-state filter for root-admin contest template management. */
                 active?: boolean;
             };
@@ -15029,7 +14876,7 @@ export interface operations {
                              * @description Contest type that may use the template.
                              * @enum {string}
                              */
-                            contestType: "SINGLE_EVENT";
+                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /**
                              * @description Configuration mode seeded by the template.
                              * @enum {string}
@@ -15304,7 +15151,7 @@ export interface operations {
                              * @description Contest type that may use the template.
                              * @enum {string}
                              */
-                            contestType: "SINGLE_EVENT";
+                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
                             /**
                              * @description Configuration mode seeded by the template.
                              * @enum {string}
@@ -20571,6 +20418,25 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -21047,6 +20913,44 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -21134,6 +21038,44 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -21209,6 +21151,44 @@ export interface operations {
                             errorLog: {
                                 [key: string]: unknown;
                             }[];
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
                         };
                     };
                 };
@@ -21294,6 +21274,44 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -21343,6 +21361,44 @@ export interface operations {
                         odds: {
                             [key: string]: unknown;
                         }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
                     };
                 };
             };

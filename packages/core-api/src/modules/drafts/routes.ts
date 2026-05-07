@@ -26,6 +26,7 @@ import {
 import {
   PrismaContestEntryRepository,
 } from '../../adapters';
+import { ContestEntryPickService } from '../contest-entry-picks';
 import { createErrorEnvelope } from '../../core/error-handler';
 import { getAppPrisma } from '../../core/prisma-context';
 import crypto from 'node:crypto';
@@ -792,6 +793,9 @@ async function buildDraftStateResponse(
 export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
   const engine = new SnakeDraftEngine(fastify.log);
+  // Module-scoped (one per fastify register) — see plans/117 §7.1; the service
+  // resolves Contest.contestFormat in the same Prisma transaction at insert time.
+  const pickService = new ContestEntryPickService(prisma, fastify.log);
 
   fastify.get('/:contestId', {
     schema: {
@@ -1168,15 +1172,15 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         },
       });
 
-      await prisma.contestEntryPick.create({
-        data: {
-          entryId,
-          sportEventParticipantId: participantId,
-          contestFormat: 'ROSTER',
-          draftRound,
-          draftPickNumber: globalPickCount + 1,
-          isAutoPicked: false,
-        },
+      // pool-master-rop.78.6 — go through ContestEntryPickService so the
+      // denormalized contestFormat is read from the parent contest in the same
+      // transaction (plans/117 §7.1 — "no insert path bypasses this").
+      await pickService.createPick({
+        entryId,
+        sportEventParticipantId: participantId,
+        draftRound,
+        draftPickNumber: globalPickCount + 1,
+        isAutoPicked: false,
       });
 
       return buildRosterSelectionResponse(prisma, context, entryId, requestUserId);
