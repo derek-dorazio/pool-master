@@ -57,12 +57,14 @@ describe('Scoring Read Integration', () => {
       headers: user.headers,
     });
     expect(healthRes.statusCode).toBe(200);
+    // pool-master-rop.78.8 — periodic StandingsRollup retired; the
+    // health response no longer carries `rollupRunning` / `activeContests`
+    // and surfaces `eventDriven: true` instead.
     expect(healthRes.json()).toEqual(
       expect.objectContaining({
         status: 'ok',
         service: 'scoring-service',
-        rollupRunning: expect.any(Boolean),
-        activeContests: expect.any(Number),
+        eventDriven: true,
       }),
     );
   });
