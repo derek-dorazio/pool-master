@@ -3,7 +3,10 @@
  */
 
 import type { FastifyReply, FastifyRequest, preHandlerHookHandler } from 'fastify';
-import type { LeagueMembershipRepository } from '@poolmaster/shared/db';
+import type {
+  ContestRepository,
+  LeagueMembershipRepository,
+} from '@poolmaster/shared/db';
 import { LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
 
@@ -153,5 +156,108 @@ export function requireCommissioner(
       action: 'leaguePermission.requireCommissioner.success',
       data: { leagueId: membership.leagueId, userId: membership.userId },
     }, 'Granted commissioner-only action');
+  };
+}
+
+/**
+ * Contest-scoped commissioner gate. Used by override-style endpoints whose
+ * route paths use `:contestId` rather than `:id` (the league id), so the
+ * standard `requireCommissioner` cannot resolve the league from params.
+ *
+ * Looks up the contest, resolves `leagueId` from it, and asserts the caller
+ * is an active commissioner of that league (root-admins bypass). Returns 401
+ * unauthenticated, 404 contest-not-found, 403 not-a-member or not-a-commissioner.
+ */
+export function requireCommissionerForContest(
+  contestRepo: ContestRepository,
+  membershipRepo: LeagueMembershipRepository,
+): preHandlerHookHandler {
+  return async function checkContestCommissioner(request, reply): Promise<void> {
+    const logger = request.contextLogger ?? request.log;
+    const userId = request.authUser?.userId;
+    const contestId = (request.params as { contestId?: string }).contestId;
+    logger.debug({
+      action: 'leaguePermission.requireCommissionerForContest.enter',
+      data: { contestId: contestId ?? null },
+    }, 'Checking contest-scoped commissioner permission');
+    if (!userId) {
+      logger.warn({
+        action: 'leaguePermission.requireCommissionerForContest.unauthenticated',
+        data: { contestId: contestId ?? null },
+      }, 'Rejected contest commissioner check without authenticated session');
+      void sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
+      return;
+    }
+    if (!contestId) {
+      logger.warn({
+        action: 'leaguePermission.requireCommissionerForContest.missingContestId',
+        data: { userId },
+      }, 'Rejected contest commissioner check without contest id');
+      void sendError(reply, 400, 'CONTEST_ID_REQUIRED', 'Contest id is required');
+      return;
+    }
+    const contest = await contestRepo.findById(contestId);
+    if (!contest) {
+      logger.warn({
+        action: 'leaguePermission.requireCommissionerForContest.contestNotFound',
+        data: { contestId, userId },
+      }, 'Rejected contest commissioner check for missing contest');
+      void sendError(reply, 404, 'CONTEST_NOT_FOUND', 'Contest not found');
+      return;
+    }
+    if (request.authUser?.isRootAdmin === true) {
+      logger.debug({
+        action: 'leaguePermission.requireCommissionerForContest.rootAdminBypass',
+        data: { contestId, leagueId: contest.leagueId, userId },
+      }, 'Granted contest commissioner permission via root-admin override');
+      return;
+    }
+    const membership = await membershipRepo.findByLeagueAndUser(
+      contest.leagueId,
+      userId,
+    );
+    if (!membership) {
+      logger.warn({
+        action: 'leaguePermission.requireCommissionerForContest.missingMembership',
+        data: { contestId, leagueId: contest.leagueId, userId },
+      }, 'Rejected contest commissioner check for missing membership');
+      void sendError(
+        reply,
+        403,
+        'LEAGUE_MEMBERSHIP_REQUIRED',
+        'You must be an active member of this league to perform this action',
+      );
+      return;
+    }
+    if (membership.status !== LeagueMembershipStatus.ACTIVE) {
+      logger.warn({
+        action: 'leaguePermission.requireCommissionerForContest.inactiveMembership',
+        data: { contestId, leagueId: contest.leagueId, userId, status: membership.status },
+      }, 'Rejected contest commissioner check for inactive membership');
+      void sendError(
+        reply,
+        403,
+        'LEAGUE_MEMBERSHIP_INACTIVE',
+        'Your membership in this league is inactive',
+      );
+      return;
+    }
+    if (membership.role !== LeagueRole.COMMISSIONER) {
+      logger.warn({
+        action: 'leaguePermission.requireCommissionerForContest.denied',
+        data: { contestId, leagueId: contest.leagueId, userId, role: membership.role },
+      }, 'Rejected commissioner-only contest override');
+      void sendError(
+        reply,
+        403,
+        'LEAGUE_PERMISSION_DENIED',
+        'You do not have permission for this action',
+      );
+      return;
+    }
+    logger.debug({
+      action: 'leaguePermission.requireCommissionerForContest.success',
+      data: { contestId, leagueId: contest.leagueId, userId },
+    }, 'Granted commissioner-only contest override');
   };
 }

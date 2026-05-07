@@ -133,4 +133,3 @@ export type ParticipantListResponse = z.infer<typeof ParticipantListResponseSche
 export const ParticipantResponseSchema = z.object({
   participant: ParticipantDtoSchema,
 }).describe('Single-participant detail response.');
-

@@ -368,4 +368,3 @@ ALTER INDEX "sport_event_participant_valuations_sport_event_participant_id_i" RE
 
 -- RenameIndex
 ALTER INDEX "sport_event_participant_valuations_unique_source" RENAME TO "sport_event_participant_valuations_sport_event_participant__key";
-

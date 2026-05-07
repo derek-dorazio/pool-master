@@ -39,7 +39,10 @@ import {
   PrismaSquadMembershipRepository,
   PrismaSquadRepository,
 } from '../../adapters';
-import { requireCommissioner } from '../leagues/permissions';
+import {
+  requireCommissioner,
+  requireCommissionerForContest,
+} from '../leagues/permissions';
 import { ContestService } from './service';
 import { OverrideService } from './override-service';
 import { ContestScoringRecalculationService } from '../contest-scoring';
@@ -156,6 +159,15 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
   );
   const handlers = createContestHandlers(contestService);
   const overrides = createOverrideHandlers(overrideService);
+  // Sage Pass 3 — every override route below mutates contest state on
+  // behalf of a commissioner. The fastify-level auth guard only proves a
+  // valid session, not league commissioner role; without this gate any
+  // authenticated user could call recalculate / adjust / undo-pick / etc.
+  // The contest-scoped helper resolves leagueId from the contest's row.
+  const requireContestCommissioner = requireCommissionerForContest(
+    contestRepo,
+    membershipRepo,
+  );
 
   // --- Contest CRUD ---
   fastify.get('/:contestId', {
@@ -316,6 +328,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       body: zodToJsonSchema(UndoContestDraftSelectionRequestSchema),
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
+    preHandler: requireContestCommissioner,
     handler: overrides.undoPick,
   });
   fastify.post('/:contestId/draft/pause', {
@@ -328,6 +341,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       body: zodToJsonSchema(PauseContestDraftRequestSchema),
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
+    preHandler: requireContestCommissioner,
     handler: overrides.pauseDraft,
   });
   fastify.post('/:contestId/draft/resume', {
@@ -339,6 +353,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       operationId: 'resumeContestDraft',
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
+    preHandler: requireContestCommissioner,
     handler: overrides.resumeDraft,
   });
   fastify.post('/:contestId/draft/extend-clock', {
@@ -351,6 +366,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       body: zodToJsonSchema(ExtendPickClockRequestSchema),
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
+    preHandler: requireContestCommissioner,
     handler: overrides.extendPickClock,
   });
 
@@ -365,6 +381,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       body: zodToJsonSchema(AdjustContestScoreRequestSchema),
       response: { 200: zodToJsonSchema(SuccessSchema) },
     },
+    preHandler: requireContestCommissioner,
     handler: overrides.adjustScore,
   });
   fastify.post('/:contestId/scoring/recalculate', {
@@ -376,6 +393,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       operationId: 'recalculateStandings',
       response: { 200: zodToJsonSchema(ContestRecalculationResponseSchema) },
     },
+    preHandler: requireContestCommissioner,
     handler: overrides.recalculateStandings,
   });
 
@@ -390,6 +408,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       body: zodToJsonSchema(ReopenContestRequestSchema),
       response: { 200: zodToJsonSchema(ContestResponseSchema) },
     },
+    preHandler: requireContestCommissioner,
     handler: overrides.reopenContest,
   });
   fastify.post('/:contestId/close', {
@@ -402,6 +421,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       body: zodToJsonSchema(CloseContestRequestSchema),
       response: { 200: zodToJsonSchema(ContestResponseSchema) },
     },
+    preHandler: requireContestCommissioner,
     handler: overrides.closeContest,
   });
   fastify.post('/:contestId/extend-deadline', {
@@ -414,6 +434,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       body: zodToJsonSchema(ExtendContestDeadlineRequestSchema),
       response: { 200: zodToJsonSchema(ContestResponseSchema) },
     },
+    preHandler: requireContestCommissioner,
     handler: overrides.extendDeadline,
   });
   fastify.post('/:contestId/update-lock', {
@@ -426,6 +447,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       body: zodToJsonSchema(UpdateContestLockTimeRequestSchema),
       response: { 200: zodToJsonSchema(ContestResponseSchema) },
     },
+    preHandler: requireContestCommissioner,
     handler: overrides.updateLockTime,
   });
   // --- Contest Audit Log ---
