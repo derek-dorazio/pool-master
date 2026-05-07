@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { useSessionStore } from '@/features/auth/session-store';
 import { LeagueContestHistoryPage } from './league-contest-history-page';
 import { LeagueContestsPage } from './league-contests-page';
 
@@ -101,7 +100,6 @@ describe('LeagueContestsPage', () => {
     listContestsMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
-    useSessionStore.getState().clearSession();
   });
 
   it('pool-master-9ef shows active contests only on Active Contests', async () => {

@@ -11,7 +11,11 @@ import {
   updateAccountUsername,
 } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
-import { useSessionStore } from '@/features/auth/session-store';
+import {
+  AUTH_ME_QUERY_KEY,
+  setAuthSessionUser,
+  type AuthSessionUserUpdate,
+} from '@/features/auth/auth-session-cache';
 import {
   ActionList,
   ActionTile,
@@ -107,7 +111,6 @@ export function UserPage() {
   });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const setSession = useSessionStore((state) => state.setSession);
   const { userId = '' } = useParams<{ userId: string }>();
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const [emailConfirmation, setEmailConfirmation] = useState('');
@@ -170,10 +173,9 @@ export function UserPage() {
     );
   }, [isSelf, logger, user, userId]);
 
-  const applyUserToSession = async (updatedUser: Parameters<typeof setSession>[0]) => {
-    setSession(updatedUser);
-    queryClient.setQueryData(['poolmaster', 'auth', 'me'], updatedUser);
-    await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'auth', 'me'] });
+  const applyUserToSession = async (updatedUser: AuthSessionUserUpdate) => {
+    setAuthSessionUser(queryClient, updatedUser);
+    await queryClient.invalidateQueries({ queryKey: AUTH_ME_QUERY_KEY });
   };
 
   const profileMutation = useMutation({
@@ -402,7 +404,6 @@ export function UserPage() {
             className="mt-4"
             onClick={() =>
               void auth.clearSession().then(() => {
-                queryClient.removeQueries({ queryKey: ['poolmaster', 'auth'] });
                 navigate('/', { replace: true });
               })
             }

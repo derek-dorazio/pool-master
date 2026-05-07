@@ -14,7 +14,8 @@ This is intentionally a **current-state** document. It describes what the code d
 
 - **Authentication**: proving who the caller is
 - **Authorization**: deciding what an authenticated caller is allowed to do
-- **Access token**: JWT used on authenticated API requests
+- **Access token**: JWT used on authenticated API requests, normally carried by
+  the backend-owned access cookie for browser clients
 - **Refresh token**: opaque token stored in Postgres and exchanged for a new access token
 - **Tenant**: the logical workspace boundary used by the member-facing app
 
@@ -23,11 +24,11 @@ This is intentionally a **current-state** document. It describes what the code d
 ### Web app
 
 - Uses username-or-email/password login via `POST /api/v1/auth/login`
-- Receives an app-issued JWT access token plus refresh token
-- Stores the access token in `localStorage`
-- Sends the access token as `Authorization: Bearer ...`
+- Receives backend-owned access, refresh, and CSRF cookies plus an identity payload
+- Does not store JWTs in browser JavaScript state
+- Sends cookies automatically and attaches `X-CSRF-Token` for mutating requests
 - Backend validates the JWT with the shared auth guard
-- Tenant context is derived primarily from the JWT `tenantId` claim
+- Tenant context is derived from authenticated request context and league membership
 - Route-level authorization is based on:
   - authenticated user identity
   - league membership
@@ -68,9 +69,10 @@ It:
 - skips public routes:
   - `/health`
   - `/api/v1/auth/*`
-- requires `Authorization: Bearer <token>` on protected routes
+- requires a bearer token or backend-owned access cookie on protected routes
+- requires a matching CSRF header for state-changing cookie-session requests
 - verifies the JWT
-- attaches `request.authUser = { userId, email, tenantId }`
+- attaches `request.authUser = { userId, email, isRootAdmin, sessionId }`
 - also writes `x-user-id` into the request headers for backward compatibility with older handlers
 
 ### 3. Tenant context plugin
@@ -94,22 +96,26 @@ It:
 
 - collects username-or-email plus password
 - calls `loginUser({ client, body })`
-- stores `access_token` in `localStorage`
-- stores the user in the Zustand auth store
-- navigates to `/dashboard` or the requested redirect target
+- relies on backend-managed auth cookies; JWTs are not stored in browser JavaScript state
+- stores the authenticated user in the TanStack Query `['poolmaster', 'auth', 'me']` cache
+- navigates to `/welcome`, `/manage` for root admins, or the requested redirect target
 
 The active web API client is configured in [api.ts](../clients/poolmaster/src/lib/api.ts).
 
 It automatically attaches:
 
-- `Authorization: Bearer <access_token>`
+- `credentials: 'include'`
+- `X-Client-Trace-Id`
+- `X-Client-Request-Id`
+- `X-CSRF-Token` for mutating requests when the `poolmaster_csrf` cookie is present
 
-The active session store is in [session-store.ts](../clients/poolmaster/src/features/auth/session-store.ts).
+The active auth session cache helpers are in [auth-session-cache.ts](../clients/poolmaster/src/features/auth/auth-session-cache.ts).
 
-It hydrates from:
+They use:
 
-- `access_token`
-- `auth_user`
+- TanStack Query as the single source of truth for current-user server state
+- `AUTH_ME_QUERY_KEY` for the current user
+- `clearAuthSession` for logout and failed-refresh cleanup
 
 ### Web authentication sequence
 
@@ -127,12 +133,11 @@ sequenceDiagram
     Auth->>DB: find user by email or username
     Auth->>Auth: bcrypt.compare(password, passwordHash)
     Auth->>DB: create refresh token row
-    Auth-->>API: user + token pair
-    API-->>Web: 200 AuthResponse
-    Web->>Web: store access_token in localStorage
-    Web->>Web: store user in auth store
-    Web->>API: Protected request with Authorization header
-    API->>API: auth-guard verifies JWT
+    Auth-->>API: user + token bundle
+    API-->>Web: Set-Cookie + AuthResponse user
+    Web->>Web: write user to TanStack Query auth cache
+    Web->>API: Protected request with cookies + CSRF on mutations
+    API->>API: auth-guard verifies access cookie JWT
     API->>API: tenant-context derives tenantId
     API-->>Web: protected resource
 ```
@@ -183,7 +188,7 @@ sequenceDiagram
     participant Route as League/Contest Handler
 
     User->>Web: Click privileged action (example: create contest)
-    Web->>API: POST protected league route with Bearer token
+    Web->>API: POST protected league route with cookies + CSRF token
     API->>Guard: Verify JWT
     Guard-->>API: authUser + x-user-id
     API->>Tenant: Resolve tenantId
@@ -323,7 +328,7 @@ sequenceDiagram
     Admin->>UI: Enter username or email + password
     UI->>API: POST /api/v1/auth/login
     API->>Auth: login(identifier, password)
-    Auth-->>UI: JWT access token + user payload
+    Auth-->>UI: Set-Cookie + user payload
     UI->>API: GET /api/v1/admin/... with Bearer token or access cookie
     API->>AdminPlugin: validate root-admin session
     AdminPlugin->>DB: load current user
@@ -349,8 +354,8 @@ sequenceDiagram
     participant Perm as requireAdminPermission()
 
     Admin->>UI: Use admin auth flow
-    UI->>API: GET /api/v1/admin/... with Bearer token
-    API->>Plugin: validate token
+    UI->>API: GET /api/v1/admin/... with authenticated session
+    API->>Plugin: validate session
     Plugin->>DB: load root-admin user by id
     Plugin-->>API: request.rootAdminContext
     API->>Perm: check required admin permission
@@ -367,9 +372,9 @@ sequenceDiagram
 | Concern | Web app | Admin app |
 |---|---|---|
 | Login endpoint | `POST /api/v1/auth/login` | currently also `POST /api/v1/auth/login` |
-| Access token storage | `access_token` | same authenticated session or cookie model |
-| User store | Zustand `useAuthStore` | Zustand `useAdminAuthStore` |
-| Auth header | `Authorization` | `Authorization` |
+| Access token storage | Backend-managed auth cookie | same authenticated session or cookie model |
+| User store | TanStack Query `AUTH_ME_QUERY_KEY` | same webapp auth cache |
+| Auth header | Cookie-based session plus CSRF header for mutations | Cookie-based session plus root-admin gate |
 | Extra identity headers | none | none required |
 | Backend auth gate | real JWT auth guard | real root-admin auth plugin |
 | Tenant enforcement | yes | not central in admin flow |
@@ -407,20 +412,18 @@ The web and admin apps can still remain separate frontends and separate route sp
 
 ### Why a unified cookie/session model is better
 
-Right now:
+Current state:
 
 - web uses a real JWT auth guard
-- admin uses a browser-supplied identity-header workaround
+- active web auth uses backend-owned cookies plus CSRF protection
+- root-admin routes use the live root-admin plugin on top of the authenticated user session
 - admin role/permission logic exists, but it is not the live runtime gate
-- both browser apps still keep auth credentials in `localStorage`
 
 That creates avoidable complexity:
 
-- two mental models for auth
+- remaining split between current root-admin capability checks and the fuller admin role model
 - higher risk of drift between frontend and backend
-- weaker trust boundaries for admin requests
 - more code paths to test
-- browser-readable auth credentials
 
 A unified model would reduce this to:
 
@@ -546,9 +549,10 @@ Important detail:
 
 The backend should continue to rely on the authenticated session plus server-side root-admin lookup, not browser-supplied identity headers.
 
-#### 2. Stop storing access tokens in `localStorage`
+#### 2. Keep browser-managed access-token storage retired
 
-Replace browser-managed token persistence with backend-owned `HttpOnly` cookies for both web and admin.
+The active PoolMaster web app uses backend-owned cookies instead of
+browser-managed token persistence. Keep future web/admin surfaces on that model.
 
 That means:
 
@@ -619,11 +623,12 @@ Yes, I recommend moving to:
 
 And specifically:
 
-- stop storing access tokens in `localStorage`
+- keep access tokens out of `localStorage`
 - issue `HttpOnly`, `Secure` auth cookies from the backend
-- let the backend own refresh, logout, and revocation more completely
+- let the backend own refresh, logout, and revocation
 
-That would be a meaningful improvement over the current split, especially because the current admin implementation is already halfway there architecturally but not yet wired through as the true runtime boundary.
+That keeps the browser trust boundary narrow while the remaining admin-role model
+work matures on top of the live root-admin plugin.
 
 ## Recommended Review Questions
 
@@ -654,5 +659,6 @@ If you are reviewing this architecture, the most important questions are:
 ### Frontend
 
 - [api.ts](../clients/poolmaster/src/lib/api.ts)
-- [session-store.ts](../clients/poolmaster/src/features/auth/session-store.ts)
+- [auth-session-cache.ts](../clients/poolmaster/src/features/auth/auth-session-cache.ts)
+- [auth-provider.tsx](../clients/poolmaster/src/features/auth/auth-provider.tsx)
 - [auth-home-page.tsx](../clients/poolmaster/src/features/auth/auth-home-page.tsx)

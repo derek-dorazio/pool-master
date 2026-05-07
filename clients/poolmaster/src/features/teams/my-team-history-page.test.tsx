@@ -4,7 +4,6 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { useSessionStore } from '@/features/auth/session-store';
 import { MyTeamHistoryPage } from './my-team-history-page';
 
 const getCurrentUserMock = vi.fn();
@@ -65,7 +64,6 @@ describe('MyTeamHistoryPage', () => {
     listLeagueSquadsMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
-    useSessionStore.getState().clearSession();
   });
 
   it('renders historical contest entries on the dedicated history route', async () => {

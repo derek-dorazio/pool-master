@@ -9,7 +9,7 @@ The PoolMaster web app is a React 18 + TypeScript application using:
 - Vite
 - React Router
 - TanStack Query
-- Zustand
+- React local state for component/UI state
 - React Hook Form
 - TailwindCSS
 - shadcn/ui
@@ -164,7 +164,10 @@ Do not leave post-mutation cache behavior implicit.
 - Pages must compose reusable page sections/components rather than growing into
   giant page files.
 - Keep UI state distinct from server state.
-- Use Zustand for client-side state only when local component state or query state is insufficient.
+- TanStack Query owns server state. Do not mirror current-user, league, team,
+  contest, or other API response data into Zustand or another client store.
+- If Zustand is reintroduced, use it only for ephemeral client-side UI state
+  when local component state or query state is insufficient.
 
 ### Shared-Component and Helper Adoption Gate
 
@@ -225,12 +228,13 @@ state, stale actions, and unthemeable markup accumulate.
   - search params
 - Persistent default-context state may live in cookies when it influences app
   entry behavior, such as the recent-league routing rule.
-- Zustand is for client-side UI/application state, not for server data already
-  owned by TanStack Query.
-- Do not put route-shaped or shareable navigation state into Zustand when the
-  URL should be the source of truth.
-- Do not duplicate the same state across URL, query cache, and Zustand unless
-  there is a clearly documented reason.
+- If a shared client store such as Zustand is reintroduced, it is for
+  client-side UI/application state, not for server data already owned by
+  TanStack Query.
+- Do not put route-shaped or shareable navigation state into a client store when
+  the URL should be the source of truth.
+- Do not duplicate the same state across URL, query cache, and client store
+  unless there is a clearly documented reason.
 
 ### Pending UI Is Required
 

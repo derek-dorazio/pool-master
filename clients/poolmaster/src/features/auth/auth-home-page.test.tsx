@@ -2,10 +2,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { useSessionStore } from './session-store';
+import {
+  AUTH_ME_QUERY_KEY,
+  type AuthSessionUser,
+} from './auth-session-cache';
 import { AuthHomePage } from './auth-home-page';
 
 const {
+  authState,
   fetchInvitationPreviewMock,
   fetchTeamOwnerInvitationPreviewMock,
   loginUserMock,
@@ -26,6 +30,13 @@ const {
   return {
     fetchInvitationPreviewMock: vi.fn(),
     fetchTeamOwnerInvitationPreviewMock: vi.fn(),
+    authState: {
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      isRootAdmin: false,
+      clearSession: vi.fn(),
+    },
     loginUserMock: vi.fn(),
     mockLogger: logger,
     registerUserMock: vi.fn(),
@@ -40,6 +51,10 @@ vi.mock('@/lib/logger', () => ({
 vi.mock('@/lib/api', () => ({
   loginUser: (...args: unknown[]) => loginUserMock(...args),
   registerUser: (...args: unknown[]) => registerUserMock(...args),
+}));
+
+vi.mock('./auth-provider', () => ({
+  useAuth: () => authState,
 }));
 
 vi.mock('@/features/leagues/invitation-context-card', () => ({
@@ -97,7 +112,7 @@ function renderAuthHomePage(
     },
   });
 
-  return render(
+  const utils = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
@@ -109,6 +124,8 @@ function renderAuthHomePage(
       </MemoryRouter>
     </QueryClientProvider>,
   );
+
+  return { ...utils, queryClient };
 }
 
 describe('AuthHomePage', () => {
@@ -123,7 +140,10 @@ describe('AuthHomePage', () => {
     mockLogger.error.mockReset();
     mockLogger.fatal.mockReset();
     mockLogger.child.mockClear();
-    useSessionStore.getState().clearSession();
+    authState.user = null;
+    authState.isAuthenticated = false;
+    authState.isRootAdmin = false;
+    authState.clearSession.mockReset();
   });
 
   it('signs in successfully and navigates to the destination', async () => {
@@ -133,7 +153,7 @@ describe('AuthHomePage', () => {
       },
     });
 
-    renderAuthHomePage();
+    const { queryClient } = renderAuthHomePage();
 
     fireEvent.change(screen.getByTestId('auth-login-identifier'), {
       target: { value: 'derek@example.com' },
@@ -145,7 +165,7 @@ describe('AuthHomePage', () => {
 
     await screen.findByTestId('welcome-destination');
 
-    expect(useSessionStore.getState().user?.id).toBe('user-1');
+    expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)?.id).toBe('user-1');
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.login.succeeded',
@@ -267,6 +287,49 @@ describe('AuthHomePage', () => {
       }),
       expect.any(String),
     );
+  });
+
+  it('pool-master-rop.78.11 writes registered users to the auth query cache', async () => {
+    registerUserMock.mockResolvedValue({
+      data: {
+        user: createUser({
+          id: 'user-registered',
+          email: 'registered@example.com',
+          username: 'registered',
+        }),
+      },
+    });
+
+    const { queryClient } = renderAuthHomePage();
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Create account' }));
+    fireEvent.change(screen.getByTestId('auth-register-first-name'), {
+      target: { value: 'Reg' },
+    });
+    fireEvent.change(screen.getByTestId('auth-register-last-name'), {
+      target: { value: 'User' },
+    });
+    fireEvent.change(screen.getByTestId('auth-register-email'), {
+      target: { value: 'registered@example.com' },
+    });
+    fireEvent.change(screen.getByTestId('auth-register-username'), {
+      target: { value: 'registered' },
+    });
+    fireEvent.change(screen.getByTestId('auth-register-password'), {
+      target: { value: 'password123' },
+    });
+    fireEvent.change(screen.getByTestId('auth-register-confirm-password'), {
+      target: { value: 'password123' },
+    });
+    fireEvent.click(screen.getByTestId('auth-register-submit'));
+
+    await screen.findByTestId('welcome-destination');
+
+    expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
+      id: 'user-registered',
+      email: 'registered@example.com',
+      username: 'registered',
+    });
   });
 
   it('treats a malformed login response as an unexpected error path', async () => {

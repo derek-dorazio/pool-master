@@ -69,14 +69,14 @@ Six recurring patterns account for nearly every frontend defect logged so far. E
 **Defects:**
 
 - `pool-master-rop.20` (closed, PR #7) — `useEffect` mirrors server query data into form state on every render. Background refetch overwrites the user's in-progress edits.
-- `pool-master-rop.18` (open, P1) — Zustand session-store duplicates the TanStack Query `me`-cache. Server-side user data lives in both stores; updates drift.
+- `pool-master-rop.18` / `pool-master-rop.78.11` — Zustand session-store duplicated the TanStack Query `me`-cache. The cleanup slice removes that duplicate and keeps current-user server state in React Query only.
 
-**Root cause.** Frontend rules don't draw a hard line between "server state" (React Query owns) and "client state" (Zustand owns for ephemeral UI; nothing owns server data twice). Without that line, agents reach for `useState` + `useEffect` to "make a copy I can edit" and ship draft-overwrite hazards. No rule says "server data does NOT go in Zustand"; it does today.
+**Root cause.** Frontend rules did not draw a hard line between "server state" (React Query owns) and "client state" (Zustand owns for ephemeral UI; nothing owns server data twice). Without that line, agents reach for `useState` + `useEffect` to "make a copy I can edit" and ship draft-overwrite hazards.
 
 **Rules / gates response:**
 
 - **Existing gate:** `scripts/check-form-query-mirror.mjs` — narrowly catches the rop.20 pattern (useEffect writes from query-like dependencies); currently warn-only baseline.
-- **Planned rule (`pool-master-q8h.1`):** `react-ui-rules.md §X State Management Discipline` — React Query owns server state; Zustand owns ephemeral UI state ONLY; no `useState`/`useEffect` fetch loops; no Redux. Server data does not mirror into Zustand. CRITICAL finding if violated.
+- **Rule added:** `react-ui-rules.md §5 State Structure Rules` — React Query owns server state; Zustand owns ephemeral UI state ONLY. Server data does not mirror into Zustand or another client store.
 - **Planned rule (`pool-master-q8h.2`):** `react-ui-rules.md §X Query Keys + Invalidation` — per-feature `query-keys.ts` factory; mutation invalidation discipline. Stale cache after mutation = CRITICAL.
 - **Planned reviewer (Felix, q8h.10):** STATE finding category covers server-data-in-Zustand, fetch loops, missing query invalidation.
 
@@ -169,7 +169,7 @@ Three meta-patterns explain why the categories above repeat:
 | Closed | rop.64 — `crypto.randomUUID` fallback | PR #11 |
 | In progress | rop.62 — index-as-key in DefinitionList / MetricGrid | Codex (open branch) |
 | Open / queued | rop.4 — vi.mock SDK in 30+ tests; MSW migration | Epic `pool-master-rop.71` |
-| Open / queued | rop.18 — Zustand session-store / TanStack Query duplication | Epic `pool-master-rop.71` |
+| In progress | rop.78.11 / rop.18 — Zustand session-store / TanStack Query duplication | Phase 4 substrate cleanup |
 | Open / queued | rop.21 / rop.22 / rop.23 — frontend test depth + fixture cleanup | Epic `pool-master-rop.71` |
 | Planned | §A1–A9 react-ui-rules additions (state mgmt, query keys, SDK only, component reuse, CSS variables, form state, state communication, logging, env access) | Epic `pool-master-q8h` §A (9 stories) |
 | Planned | Felix — frontend-discipline reviewer (Pass 5) + wrappers | Epic `pool-master-q8h` §B (4 stories) |

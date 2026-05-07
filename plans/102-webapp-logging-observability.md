@@ -24,8 +24,8 @@ Task state for this plan lives in Beads under epic `pool-master-hwt`. Use `bd sh
 
 ### 2. Frontend stack (what we're adding to)
 
-- `clients/poolmaster`: **React 18 + TypeScript**, **Vite 5** bundler, **React Router 6** (`createBrowserRouter`), **TanStack Query 5**, **Zustand** for session store, **@hey-api/client-fetch** generated SDK at `@/lib/api`.
-- **Auth model**: cookie-based. Access cookie is set by the backend; `X-CSRF-Token` is read from `poolmaster_csrf` cookie and attached to mutating requests via the client interceptor in `clients/poolmaster/src/lib/api.ts:18-29`. `credentials: 'include'`. Session user is held in a Zustand store (`features/auth/session-store.ts`). JWTs are not in JS memory.
+- `clients/poolmaster`: **React 18 + TypeScript**, **Vite 5** bundler, **React Router 6** (`createBrowserRouter`), **TanStack Query 5** for server state, **@hey-api/client-fetch** generated SDK at `@/lib/api`.
+- **Auth model**: cookie-based. Access cookie is set by the backend; `X-CSRF-Token` is read from `poolmaster_csrf` cookie and attached to mutating requests via the client interceptor in `clients/poolmaster/src/lib/api.ts:18-29`. `credentials: 'include'`. Session user server state lives in the TanStack Query `['poolmaster', 'auth', 'me']` cache via `features/auth/auth-session-cache.ts`. JWTs are not in JS memory.
 - **Existing logging / error-tracking**: none. No `console.*` calls in `src/`, no error boundary component, no Sentry/Datadog/RUM, no existing correlation header. The app only catches and swallows query errors via TanStack Query; there is no global uncaught-error handler and no `window.onerror` / `unhandledrejection` listener. `main.tsx` is wrapped only in `React.StrictMode`.
 - **Test harness**: Vitest + jsdom + React Testing Library + MSW (already a devDependency). `vitest.config.ts` enables coverage (`v8`, lcov). Tests may run in Node environment via `src/test-setup.ts`.
 
@@ -148,7 +148,7 @@ Deliverable: a working logger with console output, wired into one or two call si
    - `child(bindings)` returns a new logger whose payloads are merged with those bindings (matches Fastify's `log.child` ergonomics).
 
 6. **New file** `clients/poolmaster/src/lib/logger/index.ts`
-   - Module singleton: creates `const logger = createLogger({ sinks: [consoleSink], minLevel: ..., getContext: () => ({...}) })`. `getContext` reads `useSessionStore.getState().user`, resolves `webappVersion` from `getEmbeddedVersionInfo()`, resolves `route` from `window.location.pathname`.
+   - Module singleton: creates `const logger = createLogger({ sinks: [consoleSink], minLevel: ..., getContext: () => ({...}) })`. `getContext` reads the TanStack Query auth cache, resolves `webappVersion` from `getEmbeddedVersionInfo()`, resolves `route` from `window.location.pathname`.
    - Exports `logger` and `useLogger()` convenience hook (the hook just returns the singleton but is easier to spy in component tests).
 
 7. **Tests** (new files under `clients/poolmaster/src/lib/logger/`):
@@ -236,7 +236,7 @@ Deliverable: every meaningful positive/negative branch across the frontend is lo
 
 Ownership slices (disjoint, parallelizable, each follows the same "log + prove" protocol):
 
-- **F-A** — `features/auth/*` (auth-provider, session-store, auth-home-page): `auth.login.*`, `auth.register.*`, `auth.refresh.*`, `auth.logout.*`, `auth.me.missing`, `auth.session.cleared`.
+- **F-A** — `features/auth/*` (auth-provider, auth-session-cache, auth-home-page): `auth.login.*`, `auth.register.*`, `auth.refresh.*`, `auth.logout.*`, `auth.me.missing`, auth cache clear paths.
 - **F-B** — `features/leagues/*` + `features/teams/*`: league join/create/detail, team join/create. Positive milestones at `info`, validation failures at `warn`, 5xx at `error`.
 - **F-C** — `features/contests/*`: create contest, contest detail, entry create/edit. Same pattern.
 - **F-D** — `features/account/*` + `features/root-admin/*`: account ops, root-admin surfaces.

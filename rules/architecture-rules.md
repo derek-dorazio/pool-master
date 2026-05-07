@@ -40,7 +40,7 @@ All plan documents and implementation work must conform to these rules. This is 
 | UI library | Radix primitives, shadcn-style components, and TailwindCSS utilities | [React UI Rules](react-ui-rules.md) |
 | Build tool | Vite | [React UI Rules](react-ui-rules.md) |
 | Server state | TanStack Query | [React UI Rules](react-ui-rules.md) |
-| Client state | Zustand | [React UI Rules](react-ui-rules.md) |
+| Client/UI state | React local state; shared client stores only for ephemeral UI state if explicitly reintroduced | [React UI Rules](react-ui-rules.md) |
 | Forms | React Hook Form | [React UI Rules](react-ui-rules.md) |
 | Routing | React Router | [React UI Rules](react-ui-rules.md) |
 | API access | Shared generated `hey-api` SDK from `packages/shared/generated/hey-api` | [React UI Rules](react-ui-rules.md) |

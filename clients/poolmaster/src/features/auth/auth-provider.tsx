@@ -1,14 +1,20 @@
 import { ReactNode, createContext, useContext, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getCurrentUser, logoutUser, refreshToken } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
-import { useSessionStore } from './session-store';
+import {
+  AUTH_ME_QUERY_KEY,
+  AUTH_REFRESH_QUERY_KEY,
+  clearAuthSession,
+  setAuthSessionUser,
+  type AuthSessionData,
+} from './auth-session-cache';
 
 type AuthContextValue = {
   isAuthenticated: boolean;
   isLoading: boolean;
   isRootAdmin: boolean;
-  user: ReturnType<typeof useSessionStore.getState>['user'];
+  user: AuthSessionData;
   clearSession: () => Promise<void>;
 };
 
@@ -18,10 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logger = getLogger().child({
     feature: 'auth-provider',
   });
-  const user = useSessionStore((state) => state.user);
-  const setSession = useSessionStore((state) => state.setSession);
-  const setSessionId = useSessionStore((state) => state.setSessionId);
-  const clearSessionState = useSessionStore((state) => state.clearSession);
+  const queryClient = useQueryClient();
   // The refresh-guard ref intentionally only resets in the refresh-success
   // path (after a /auth/refresh attempt that recovers a valid session). It is
   // not reset on me-query data updates or error-to-null transitions, because
@@ -29,8 +32,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // and clear the local session each time refresh fails. See pool-master-dxd.12.
   const attemptedRefreshRef = useRef(false);
 
-  const meQuery = useQuery({
-    queryKey: ['poolmaster', 'auth', 'me'],
+  const meQuery = useQuery<AuthSessionData>({
+    queryKey: AUTH_ME_QUERY_KEY,
     queryFn: async () => {
       logger.debug(
         {
@@ -49,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const refreshQuery = useQuery({
-    queryKey: ['poolmaster', 'auth', 'refresh'],
+    queryKey: AUTH_REFRESH_QUERY_KEY,
     queryFn: async () => {
       logger.debug(
         {
@@ -70,7 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setSession(meQuery.data);
     logger.info(
       {
         action: 'auth.me.succeeded',
@@ -81,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       'Hydrated authenticated user session',
     );
-  }, [meQuery.data, setSession]);
+  }, [meQuery.data, logger]);
 
   useEffect(() => {
     if (!meQuery.error) {
@@ -116,11 +118,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             },
             'Refresh did not return session data',
           );
-          clearSessionState();
+          clearAuthSession(queryClient);
           return;
         }
-
-        setSessionId(result.data.sessionId);
 
         const meResult = await meQuery.refetch();
         if (cancelled) {
@@ -137,9 +137,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             },
             'Refresh succeeded but current user reload returned no user',
           );
-          clearSessionState();
+          clearAuthSession(queryClient);
           return;
         }
+
+        const refreshedUser = setAuthSessionUser(queryClient, {
+          ...meResult.data,
+          sessionId: result.data.sessionId,
+        });
 
         attemptedRefreshRef.current = false;
         logger.info(
@@ -147,7 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             action: 'auth.refresh.succeeded',
             data: {
               sessionId: result.data.sessionId,
-              userId: meResult.data.id,
+              userId: refreshedUser.id,
             },
           },
           'Recovered authenticated session from refresh',
@@ -162,14 +167,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             },
             'Refresh failed; clearing auth session',
           );
-          clearSessionState();
+          clearAuthSession(queryClient);
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [clearSessionState, meQuery.error, meQuery.refetch, refreshQuery.refetch, setSessionId]);
+  }, [meQuery.error, meQuery.refetch, queryClient, refreshQuery.refetch]);
+
+  const user = meQuery.data ?? null;
 
   const value: AuthContextValue = {
     isAuthenticated: Boolean(user),
@@ -196,7 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           'Logout request failed; clearing local session anyway',
         );
       });
-      clearSessionState();
+      clearAuthSession(queryClient);
       logger.info(
         {
           action: 'auth.logout.completed',

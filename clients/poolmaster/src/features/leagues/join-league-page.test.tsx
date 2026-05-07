@@ -4,7 +4,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { useSessionStore } from '@/features/auth/session-store';
 import { JoinLeaguePage } from './join-league-page';
 import {
   acceptInvitationData,
@@ -103,7 +102,6 @@ describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
     mockLogger.info.mockReset();
     mockLogger.warn.mockReset();
     mockLogger.error.mockReset();
-    useSessionStore.getState().clearSession();
   });
 
   it('pool-master-rop.23: lets an authenticated member set team name and icon during join', async () => {
