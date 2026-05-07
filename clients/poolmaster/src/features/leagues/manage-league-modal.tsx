@@ -16,7 +16,7 @@ import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { removeLeagueSummary, syncLeagueCaches } from './league-cache';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
@@ -104,7 +104,7 @@ export function ManageLeagueModal({
     },
   });
 
-  const inactivateMutation = createMutationHook({
+  const inactivateMutation = useInvalidatingMutation({
     mutationFn: async (leagueId: string) => {
       const response = await inactivateLeague({
         path: { id: leagueId },
@@ -122,7 +122,7 @@ export function ManageLeagueModal({
     invalidates: [],
   });
 
-  const detailsMutation = createMutationHook({
+  const detailsMutation = useInvalidatingMutation({
     mutationFn: async ({
       leagueId,
       name,
@@ -154,7 +154,7 @@ export function ManageLeagueModal({
     invalidates: [],
   });
 
-  const iconMutation = createMutationHook({
+  const iconMutation = useInvalidatingMutation({
     mutationFn: async ({ leagueId, iconKey }: { leagueId: string; iconKey: LeagueIconKey }) => {
       const response = await updateLeagueIcon({
         path: { id: leagueId },
@@ -174,7 +174,7 @@ export function ManageLeagueModal({
     invalidates: [],
   });
 
-  const deleteMutation = createMutationHook({
+  const deleteMutation = useInvalidatingMutation({
     mutationFn: async ({ leagueId, leagueCode }: { leagueId: string; leagueCode: string }) => {
       const response = await deleteLeague({
         path: { id: leagueId },

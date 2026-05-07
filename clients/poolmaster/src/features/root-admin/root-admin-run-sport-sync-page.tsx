@@ -25,7 +25,7 @@ import {
 } from './root-admin-sync-utils';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 export function RootAdminRunSportSyncPage() {
   const logger = getLogger().child({
@@ -62,7 +62,7 @@ export function RootAdminRunSportSyncPage() {
     }
   }, [sportSyncSport, supportedSyncSports]);
 
-  const syncMutation = createMutationHook({
+  const syncMutation = useInvalidatingMutation({
     mutationFn: async (input: {
       sport: SyncSport;
       presetId: SportSyncPresetId;

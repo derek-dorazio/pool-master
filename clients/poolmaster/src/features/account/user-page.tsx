@@ -14,7 +14,6 @@ import { useAuth } from '@/features/auth/auth-provider';
 import {
   AUTH_ME_QUERY_KEY,
   setAuthSessionUser,
-  type AuthSessionUserUpdate,
 } from '@/features/auth/auth-session-cache';
 import {
   ActionList,
@@ -39,7 +38,7 @@ import { UserAccountSummary } from './user-account-summary';
 import { formatUserName } from './user-name';
 import { buildUserPath } from './user-routing';
 import { extractErrorMessage } from '@/lib/errors';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type AccountPreferencesFormState = {
   timezone: string;
@@ -174,11 +173,7 @@ export function UserPage() {
     );
   }, [isSelf, logger, user, userId]);
 
-  const applyUserToSession = (updatedUser: AuthSessionUserUpdate) => {
-    setAuthSessionUser(queryClient, updatedUser);
-  };
-
-  const profileMutation = createMutationHook({
+  const profileMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await updateAccountProfile({
         body: {
@@ -193,12 +188,12 @@ export function UserPage() {
       return response.data.user;
     },
     onSuccess: async (updatedUser) => {
-      applyUserToSession(updatedUser);
+      setAuthSessionUser(queryClient, updatedUser);
     },
     invalidates: [AUTH_ME_QUERY_KEY],
   });
 
-  const usernameMutation = createMutationHook({
+  const usernameMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await updateAccountUsername({
         body: {
@@ -211,12 +206,12 @@ export function UserPage() {
       return response.data.user;
     },
     onSuccess: async (updatedUser) => {
-      applyUserToSession(updatedUser);
+      setAuthSessionUser(queryClient, updatedUser);
     },
     invalidates: [AUTH_ME_QUERY_KEY],
   });
 
-  const preferencesMutation = createMutationHook({
+  const preferencesMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await updateAccountPreferences({
         body: {
@@ -232,12 +227,12 @@ export function UserPage() {
       return response.data.user;
     },
     onSuccess: async (updatedUser) => {
-      applyUserToSession(updatedUser);
+      setAuthSessionUser(queryClient, updatedUser);
     },
     invalidates: [AUTH_ME_QUERY_KEY],
   });
 
-  const passwordMutation = createMutationHook({
+  const passwordMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await changeAccountPassword({
         body: {
@@ -270,7 +265,7 @@ export function UserPage() {
       return response.data.user;
     },
     onSuccess: async (updatedUser) => {
-      applyUserToSession(updatedUser);
+      setAuthSessionUser(queryClient, updatedUser);
     },
     invalidateQueries: [AUTH_ME_QUERY_KEY],
     onClose: () => setActiveDialog(null),
@@ -290,7 +285,7 @@ export function UserPage() {
       return response.data.user;
     },
     onSuccess: async (updatedUser) => {
-      applyUserToSession(updatedUser);
+      setAuthSessionUser(queryClient, updatedUser);
     },
     invalidateQueries: [AUTH_ME_QUERY_KEY],
     onClose: () => setActiveDialog(null),

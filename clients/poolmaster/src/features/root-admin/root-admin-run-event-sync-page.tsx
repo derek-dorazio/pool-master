@@ -27,7 +27,7 @@ import {
 } from './root-admin-sync-utils';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type EventSyncEvent = ListEventsResponses[200]['events'][number];
 
@@ -142,7 +142,7 @@ export function RootAdminRunEventSyncPage() {
     }
   }, [selectableEvents, selectedEventExternalId]);
 
-  const eventSyncMutation = createMutationHook({
+  const eventSyncMutation = useInvalidatingMutation({
     mutationFn: async (input: {
       sport: SyncSport;
       eventId: string;

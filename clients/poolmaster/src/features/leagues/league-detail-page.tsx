@@ -44,7 +44,7 @@ import { getLeagueLoadErrorCopy } from './league-load-error';
 import { LeagueSummaryCard } from './league-summary-card';
 import { buildInvitePath, setRecentLeagueCode } from './league-routing';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
 type LeaveLeagueResponse = LeaveLeagueResponses[200];
@@ -154,7 +154,7 @@ export function LeagueDetailPage() {
   const currentLeagueIconKey = leagueQuery.data?.iconKey ?? iconDraftKey;
   const selectedLeagueIcon = getLeagueIconOption(currentLeagueIconKey);
 
-  const inviteLinkMutation = createMutationHook({
+  const inviteLinkMutation = useInvalidatingMutation({
     mutationFn: async (): Promise<string> => {
       const response = await generateInviteLink({
         path: { id: leagueId },
@@ -171,7 +171,7 @@ export function LeagueDetailPage() {
     invalidates: [],
   });
 
-  const sendInviteMutation = createMutationHook({
+  const sendInviteMutation = useInvalidatingMutation({
     mutationFn: async (email: string) => {
       const response = await sendLeagueInvitations({
         path: { id: leagueId },
@@ -189,7 +189,7 @@ export function LeagueDetailPage() {
     invalidates: [],
   });
 
-  const updateDetailsMutation = createMutationHook({
+  const updateDetailsMutation = useInvalidatingMutation({
     mutationFn: async () => {
       if (!detailsDraftLeagueId || detailsDraftLeagueId !== leagueId) {
         throw new Error('League selection changed before details could be saved.');
@@ -217,7 +217,7 @@ export function LeagueDetailPage() {
     invalidates: [],
   });
 
-  const updateIconMutation = createMutationHook({
+  const updateIconMutation = useInvalidatingMutation({
     mutationFn: async (iconKey: LeagueDetail['iconKey']) => {
       const response = await updateLeagueIcon({
         path: { id: leagueId },
@@ -238,7 +238,7 @@ export function LeagueDetailPage() {
     invalidates: [],
   });
 
-  const inactivateLeagueMutation = createMutationHook({
+  const inactivateLeagueMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await inactivateLeague({
         path: { id: leagueId },
@@ -265,7 +265,7 @@ export function LeagueDetailPage() {
     invalidates: [],
   });
 
-  const activateLeagueMutation = createMutationHook({
+  const activateLeagueMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await activateLeague({
         path: { id: leagueId },
@@ -283,7 +283,7 @@ export function LeagueDetailPage() {
     invalidates: [],
   });
 
-  const deleteLeagueMutation = createMutationHook({
+  const deleteLeagueMutation = useInvalidatingMutation({
     mutationFn: async () => {
       if (!leagueQuery.data) {
         throw new Error('League detail response is missing data.');
@@ -310,7 +310,7 @@ export function LeagueDetailPage() {
     invalidates: [QueryKeys.rootAdmin.manageLeagues],
   });
 
-  const leaveLeagueMutation = createMutationHook({
+  const leaveLeagueMutation = useInvalidatingMutation({
     mutationFn: async (): Promise<LeaveLeagueResponse> => {
       const response = await leaveLeague({
         path: { id: leagueId },

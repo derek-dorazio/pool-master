@@ -39,7 +39,7 @@ import {
 } from './contest-entry-selection';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type ContestDetail = GetContestResponses[200]['contest'];
 type DraftState = GetDraftStateResponses[200];
@@ -347,7 +347,7 @@ export function ContestEntryPage() {
     );
   }, [contestEntriesQuery.data, contestId, contestQuery.data, draftStateQuery.data, entryId, logger]);
 
-  const saveEntryDetailsMutation = createMutationHook({
+  const saveEntryDetailsMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const trimmedName = entryNameDraft.trim();
       const normalizedTiebreaker = tiebreakerDraft.trim();
@@ -435,7 +435,7 @@ export function ContestEntryPage() {
     },
   });
 
-  const submitSelectionMutation = createMutationHook({
+  const submitSelectionMutation = useInvalidatingMutation({
     mutationFn: async (participantId: string) => {
       const response = await submitContestSelection({
         path: { contestId },

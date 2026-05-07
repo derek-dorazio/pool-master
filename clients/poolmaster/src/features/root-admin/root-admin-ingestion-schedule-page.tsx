@@ -22,7 +22,7 @@ import {
   type IngestionScheduleConfig,
 } from './root-admin-sync-config-utils';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type IngestionEditableField =
   | 'enabled'
@@ -54,7 +54,7 @@ export function RootAdminIngestionSchedulePage() {
     setDraft(cloneIngestionConfig(ingestionConfigQuery.data));
   }, [ingestionConfigQuery.data]);
 
-  const ingestionConfigMutation = createMutationHook({
+  const ingestionConfigMutation = useInvalidatingMutation({
     mutationFn: async (nextDraft: IngestionScheduleConfig) => {
       const response = await adminUpdateIngestionSchedule({
         body: {
@@ -79,7 +79,7 @@ export function RootAdminIngestionSchedulePage() {
     invalidates: [QueryKeys.rootAdmin.ingestionConfig],
   });
 
-  const resetIngestionConfigMutation = createMutationHook({
+  const resetIngestionConfigMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await adminResetIngestionSchedule();
       if (!response.data) {

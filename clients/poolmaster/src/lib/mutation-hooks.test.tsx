@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { createMutationHook } from './mutation-hooks';
+import { useInvalidatingMutation } from './mutation-hooks';
 import { QueryKeys } from './query-keys';
 
 function createWrapper(queryClient: QueryClient) {
@@ -15,7 +15,7 @@ function createWrapper(queryClient: QueryClient) {
   };
 }
 
-describe('pool-master-rop.78.10: createMutationHook invalidation contract', () => {
+describe('pool-master-rop.78.10: useInvalidatingMutation invalidation contract', () => {
   it('pool-master-rop.78.10: declares invalidation keys from mutation variables and invalidates them on success', async () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -28,7 +28,7 @@ describe('pool-master-rop.78.10: createMutationHook invalidation contract', () =
 
     const { result } = renderHook(
       () =>
-        createMutationHook({
+        useInvalidatingMutation({
           mutationFn: async (variables: { contestId: string }) => ({
             saved: true,
             contestId: variables.contestId,
@@ -58,7 +58,7 @@ describe('pool-master-rop.78.10: createMutationHook invalidation contract', () =
 
     const { result } = renderHook(
       () =>
-        createMutationHook({
+        useInvalidatingMutation({
           mutationFn: async () => ({ updated: true }),
           invalidates: [],
         }),

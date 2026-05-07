@@ -16,7 +16,7 @@ import { getLogger } from '@/lib/logger';
 import { buildLeaguePath, buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { formatUserName } from './user-name';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type RootAdminViewedUser = AdminGetUserDetailResponses[200];
 type ActiveDialog = 'role' | 'reset-password' | 'lifecycle' | 'delete' | null;
@@ -265,7 +265,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     );
   }, [logger, viewedUser]);
 
-  const roleMutation = createMutationHook({
+  const roleMutation = useInvalidatingMutation({
     mutationFn: async (targetUser: RootAdminViewedUser) => {
       const response = await adminSetUserRootAdmin({
         path: { userId: targetUser.id },
@@ -289,7 +289,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     ],
   });
 
-  const resetPasswordMutation = createMutationHook({
+  const resetPasswordMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await adminResetUserPassword({
         path: { userId },
@@ -310,7 +310,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     invalidates: [],
   });
 
-  const lifecycleMutation = createMutationHook({
+  const lifecycleMutation = useInvalidatingMutation({
     mutationFn: async (targetUser: RootAdminViewedUser) => {
       if (targetUser.isActive) {
         await adminDisableUser({
@@ -336,7 +336,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     ],
   });
 
-  const deleteMutation = createMutationHook({
+  const deleteMutation = useInvalidatingMutation({
     mutationFn: async (targetUser: RootAdminViewedUser) => {
       const response = await adminDeleteUser({
         path: { userId: targetUser.id },
