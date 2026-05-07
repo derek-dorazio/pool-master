@@ -166,7 +166,7 @@ async function seedContestFixture(contestFormat: string): Promise<FixtureContext
   };
 }
 
-describe('plans/117 §7.1 — ContestEntryPick partial unique indexes', () => {
+describe('pool-master-rop.78.6 / plans/117 §7.1 — ContestEntryPick partial unique indexes', () => {
   it('uq_pick_roster_participant — rejects duplicate ROSTER picks for the same sport-event participant on one entry', async () => {
     const prisma = getPrisma();
     const fixture = await seedContestFixture('ROSTER');

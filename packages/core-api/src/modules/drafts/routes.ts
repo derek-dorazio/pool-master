@@ -793,6 +793,9 @@ async function buildDraftStateResponse(
 export async function draftsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
   const engine = new SnakeDraftEngine(fastify.log);
+  // Module-scoped (one per fastify register) — see plans/117 §7.1; the service
+  // resolves Contest.contestFormat in the same Prisma transaction at insert time.
+  const pickService = new ContestEntryPickService(prisma, fastify.log);
 
   fastify.get('/:contestId', {
     schema: {
@@ -1172,7 +1175,6 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
       // pool-master-rop.78.6 — go through ContestEntryPickService so the
       // denormalized contestFormat is read from the parent contest in the same
       // transaction (plans/117 §7.1 — "no insert path bypasses this").
-      const pickService = new ContestEntryPickService(prisma, fastify.log);
       await pickService.createPick({
         entryId,
         sportEventParticipantId: participantId,

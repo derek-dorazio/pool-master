@@ -141,7 +141,7 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
   };
 }
 
-describe('plans/117 §7.1 — ContestEntryPick.contestFormat denormalization invariant', () => {
+describe('pool-master-rop.78.6 / plans/117 §7.1 — ContestEntryPick.contestFormat denormalization invariant', () => {
   it('reads the parent contest format and writes it onto the pick row regardless of caller intent', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(prisma);
