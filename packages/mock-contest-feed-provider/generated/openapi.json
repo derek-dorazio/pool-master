@@ -2685,6 +2685,153 @@
         }
       }
     },
+    "/v1/scenarios/{scenarioId}/events/{eventId}/scores": {
+      "get": {
+        "operationId": "getMockContestFeedScoresSnapshot",
+        "summary": "Get live scoring snapshot for an event",
+        "tags": [
+          "Feeds"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "query",
+            "name": "tick",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "scenarioId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "scenarioId",
+                    "eventId",
+                    "eventName",
+                    "feedKind",
+                    "asOf",
+                    "contestants"
+                  ],
+                  "properties": {
+                    "scenarioId": {
+                      "type": "string"
+                    },
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "eventName": {
+                      "type": "string"
+                    },
+                    "feedKind": {
+                      "type": "string",
+                      "enum": [
+                        "field",
+                        "odds",
+                        "rankings",
+                        "results"
+                      ]
+                    },
+                    "asOf": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "contestants": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "contestantId",
+                          "name"
+                        ],
+                        "properties": {
+                          "contestantId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "teamName": {
+                            "type": "string"
+                          },
+                          "countryCode": {
+                            "type": "string"
+                          },
+                          "seed": {
+                            "type": "number"
+                          },
+                          "participantStatus": {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "provisional",
+                              "withdrawn",
+                              "alternate",
+                              "cut",
+                              "eliminated",
+                              "inactive"
+                            ]
+                          },
+                          "odds": {
+                            "type": "number"
+                          },
+                          "ranking": {
+                            "type": "number"
+                          },
+                          "score": {
+                            "type": "number"
+                          },
+                          "result": {
+                            "type": "string",
+                            "enum": [
+                              "win",
+                              "loss",
+                              "tie",
+                              "cut",
+                              "withdrawn",
+                              "pending"
+                            ]
+                          },
+                          "note": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/scenarios/{scenarioId}/events/{eventId}/updates": {
       "get": {
         "operationId": "getMockContestFeedEventUpdates",

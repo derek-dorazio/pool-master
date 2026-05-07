@@ -8,6 +8,8 @@ module.exports = {
   },
   moduleNameMapper: {
     '^@poolmaster/shared/(.*)$': '<rootDir>/packages/shared/$1',
+    '^@poolmaster/mock-contest-feed-provider/generated/hey-api/types$':
+      '<rootDir>/packages/mock-contest-feed-provider/generated/hey-api/types.gen.ts',
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   coverageDirectory: '<rootDir>/coverage',

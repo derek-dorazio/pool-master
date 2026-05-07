@@ -2,6 +2,12 @@
   "name": "@poolmaster/mock-contest-feed-provider",
   "version": "0.1.0",
   "private": true,
+  "exports": {
+    "./generated/hey-api/types": {
+      "types": "./generated/hey-api/types.gen.ts",
+      "default": "./generated/hey-api/types.gen.ts"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/index.ts",

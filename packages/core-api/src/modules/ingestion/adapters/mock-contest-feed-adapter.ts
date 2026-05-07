@@ -11,117 +11,36 @@ import type {
   SportEvent,
   SportEventDetail,
 } from '../core/provider-interface';
+// pool-master-rop.78.13 — consume the generated mock-contest-feed SDK
+// types instead of the hand-rolled response interfaces. The SDK is the
+// single source of truth for the mock-feed contract; replacing the
+// hand-rolled types with these aliases prevents future drift between
+// the adapter and the OpenAPI spec.
+import type {
+  ListMockContestFeedScenariosResponse,
+  ListMockContestFeedScenarioEventsResponse,
+  GetMockContestFeedScenarioEventDetailResponse,
+  GetMockContestFeedScoresSnapshotResponse,
+  GetMockContestFeedResultsSnapshotResponse,
+} from '@poolmaster/mock-contest-feed-provider/generated/hey-api/types';
 
-type SupportedMockSport = 'GOLF' | 'TENNIS' | 'NCAA_BASKETBALL';
+type ScenarioSummaryResponse = ListMockContestFeedScenariosResponse;
+type EventListResponse = ListMockContestFeedScenarioEventsResponse;
+type EventDetailResponse = GetMockContestFeedScenarioEventDetailResponse;
+type FeedSnapshotResponse =
+  | GetMockContestFeedScoresSnapshotResponse
+  | GetMockContestFeedResultsSnapshotResponse;
 
-interface ScenarioSummaryResponse {
-  readonly scenarios: Array<{
-    readonly scenarioId: string;
-    readonly sport: SupportedMockSport;
-  }>;
-}
-
-interface EventListResponse {
-  readonly scenarioId: string;
-  readonly events: Array<{
-    readonly eventId: string;
-    readonly name: string;
-    readonly status: 'scheduled' | 'field_announced' | 'in_progress' | 'completed' | 'corrected';
-    readonly startsAt: string;
-    readonly endsAt?: string;
-    readonly releaseAt?: string;
-    readonly fieldLocksAt?: string;
-    readonly venueName?: string;
-    readonly fieldStatus: 'provisional' | 'announced' | 'locked' | 'final';
-    readonly contestantCount: number;
-  }>;
-}
-
-interface EventDetailResponse {
-  readonly scenarioId: string;
-  readonly sport: SupportedMockSport;
-  readonly season: {
-    readonly seasonId: string;
-    readonly name: string;
-    readonly year: number;
-  };
-  readonly event: {
-    readonly eventId: string;
-    readonly name: string;
-    readonly status: 'scheduled' | 'field_announced' | 'in_progress' | 'completed' | 'corrected';
-    readonly schedule: {
-      readonly startsAt: string;
-      readonly endsAt?: string;
-      readonly releaseAt?: string;
-      readonly fieldLocksAt?: string;
-    };
-    readonly venue?: {
-      readonly name: string;
-      readonly city?: string;
-      readonly region?: string;
-      readonly countryCode?: string;
-    };
-    readonly metadata?: {
-      readonly officialName?: string;
-      readonly eventType?: string;
-      readonly tour?: string;
-      readonly externalEventId?: string;
-    };
-    readonly field: {
-      readonly asOf: string;
-      readonly status: 'provisional' | 'announced' | 'locked' | 'final';
-      readonly contestants: ContestantRecord[];
-    };
-    readonly feeds: {
-      readonly odds: FeedSnapshot;
-      readonly rankings: FeedSnapshot;
-      readonly results: FeedSnapshot;
-    };
-  };
-}
-
-interface FeedSnapshotResponse {
-  readonly scenarioId?: string;
-  readonly eventId?: string;
-  readonly eventName?: string;
-  readonly feedKind?: 'field' | 'odds' | 'rankings' | 'results';
-  readonly asOf?: string;
-  readonly note?: string;
-  readonly contestants: ContestantRecord[];
-}
-
-interface FeedSnapshot {
-  readonly asOf: string;
-  readonly contestants: ContestantDelta[];
-}
-
-interface ContestantRecord {
-  readonly contestantId: string;
-  readonly name: string;
-  readonly teamName?: string;
-  readonly countryCode?: string;
-  readonly seed?: number;
-  readonly participantStatus?: string;
-  readonly odds?: number;
-  readonly ranking?: number;
-  readonly score?: number;
-  readonly result?: string;
-  readonly note?: string;
-}
-
-interface ContestantDelta {
-  readonly contestantId: string;
-  readonly name?: string;
-  readonly teamName?: string;
-  readonly countryCode?: string;
-  readonly seed?: number;
-  readonly participantStatus?: string;
-  readonly odds?: number;
-  readonly ranking?: number;
-  readonly score?: number;
-  readonly result?: string;
-  readonly note?: string;
-}
+type SupportedMockSport = ScenarioSummaryResponse['scenarios'][number]['sport'];
+type ContestantRecord = NonNullable<
+  EventDetailResponse['event']['field']['contestants']
+>[number];
+// `ContestantDelta` is the per-feed override shape — same shape as a
+// full record but with `name` optional, since the snapshot diff only
+// repeats name when it changed.
+type ContestantDelta = NonNullable<
+  EventDetailResponse['event']['feeds']['odds']['contestants']
+>[number];
 
 export class MockContestFeedAdapter implements SportDataProvider {
   readonly providerId = 'mock-contest-feed';
@@ -151,7 +70,7 @@ export class MockContestFeedAdapter implements SportDataProvider {
     }
 
     const detail = await this.fetchJson<EventDetailResponse>(
-      `/v1/pre-event/scenarios/${match.scenarioId}/events/${eventId}/detail`,
+      `/v1/scenarios/${match.scenarioId}/events/${eventId}/detail`,
     );
     const participants = resolveParticipants(detail);
 
@@ -219,7 +138,7 @@ export class MockContestFeedAdapter implements SportDataProvider {
     }
 
     const liveScores = await this.fetchJson<FeedSnapshotResponse>(
-      `/v1/live/scenarios/${match.scenarioId}/events/${eventId}/scores`,
+      `/v1/scenarios/${match.scenarioId}/events/${eventId}/scores`,
     );
 
     const rounds: GolfRoundUpdate[] = liveScores.contestants
@@ -246,10 +165,10 @@ export class MockContestFeedAdapter implements SportDataProvider {
     }
 
     const detail = await this.fetchJson<EventDetailResponse>(
-      `/v1/pre-event/scenarios/${match.scenarioId}/events/${eventId}/detail`,
+      `/v1/scenarios/${match.scenarioId}/events/${eventId}/detail`,
     );
     const resultsSnapshot = await this.fetchJson<FeedSnapshotResponse>(
-      `/v1/live/scenarios/${match.scenarioId}/events/${eventId}/results`,
+      `/v1/scenarios/${match.scenarioId}/events/${eventId}/results`,
     );
 
     const merged = new Map<string, ContestantRecord>();
@@ -330,7 +249,7 @@ export class MockContestFeedAdapter implements SportDataProvider {
         events.map(async (event) => ({
           scenarioId,
           detail: await this.fetchJson<EventDetailResponse>(
-            `/v1/pre-event/scenarios/${scenarioId}/events/${event.eventId}/detail`,
+            `/v1/scenarios/${scenarioId}/events/${event.eventId}/detail`,
           ),
         })),
       ),
@@ -378,7 +297,18 @@ function isRelativeManualTestEventId(eventId: string): boolean {
   return /^golf-relative-manual-test-\d{8}t\d{6}z$/.test(eventId);
 }
 
-function toDomainSport(sport: SupportedMockSport): Sport {
+/**
+ * Maps a mock-feed sport literal to its domain `Sport`. Returns `null`
+ * for sports the adapter intentionally does not surface — currently
+ * the generic `'TEAM_TOURNAMENT'` showcase scenarios. Pre-rop.78.13 the
+ * adapter's local `SupportedMockSport` union didn't include
+ * `'TEAM_TOURNAMENT'` at all, so the runtime fallthrough silently
+ * filtered those scenarios out. The generated SDK now exposes
+ * `'TEAM_TOURNAMENT'`, so the filter has to be explicit — defaulting
+ * the value to a real `Sport` would cross-contaminate (e.g. routing
+ * the `correction-and-tie-2026` showcase event into NCAA basketball).
+ */
+function toDomainSport(sport: SupportedMockSport): Sport | null {
   switch (sport) {
     case 'GOLF':
       return Sport.GOLF;
@@ -386,6 +316,8 @@ function toDomainSport(sport: SupportedMockSport): Sport {
       return Sport.TENNIS;
     case 'NCAA_BASKETBALL':
       return Sport.NCAA_BASKETBALL;
+    case 'TEAM_TOURNAMENT':
+      return null;
   }
 }
 
@@ -395,11 +327,19 @@ function toProviderParticipant(
   contestant: ContestantRecord,
 ): ProviderParticipant {
   const [firstName, ...lastParts] = contestant.name.split(/\s+/);
+  const domainSport = toDomainSport(sport);
+  if (!domainSport) {
+    // Unreachable in practice — listScenarioEvents filters unsupported
+    // sports out before any participant projection runs. Throw here so a
+    // future caller skipping the filter fails loudly instead of emitting
+    // a participant with the wrong sport.
+    throw new Error(`Unsupported mock-feed sport for participant projection: ${sport}`);
+  }
 
   return {
     externalId: contestant.contestantId,
     providerId,
-    sport: toDomainSport(sport),
+    sport: domainSport,
     name: contestant.name,
     firstName,
     lastName: lastParts.join(' ') || undefined,
@@ -425,10 +365,15 @@ function toSportEvent(
   detail: EventDetailResponse,
   participantCount: number,
 ): SportEvent {
+  const domainSport = toDomainSport(detail.sport);
+  if (!domainSport) {
+    // Unreachable in practice — see toProviderParticipant for rationale.
+    throw new Error(`Unsupported mock-feed sport for event projection: ${detail.sport}`);
+  }
   return {
     externalId: detail.event.metadata?.externalEventId ?? detail.event.eventId,
     providerId,
-    sport: toDomainSport(detail.sport),
+    sport: domainSport,
     name: detail.event.name,
     venue: detail.event.venue?.name,
     location: [detail.event.venue?.city, detail.event.venue?.region].filter(Boolean).join(', ')
