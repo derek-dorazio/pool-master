@@ -127,7 +127,7 @@ export class ScoringService {
       include: {
         participantScore: {
           include: {
-            rosterPick: {
+            pick: {
               include: {
                 sportEventParticipant: {
                   include: {
@@ -153,7 +153,7 @@ export class ScoringService {
       totalScore: entry.totalScore,
       timeline: scoreEvents.map((event) => {
         const participant =
-          event.participantScore.rosterPick.sportEventParticipant.participant;
+          event.participantScore.pick.sportEventParticipant.participant;
         runningTotal += event.points;
         return {
           contestId,
@@ -197,7 +197,7 @@ export class ScoringService {
       where: {
         participantScore: {
           entry: { contestId },
-          rosterPick: {
+          pick: {
             sportEventParticipant: { participantId },
           },
         },
@@ -205,7 +205,7 @@ export class ScoringService {
       include: {
         participantScore: {
           include: {
-            rosterPick: {
+            pick: {
               include: {
                 sportEventParticipant: {
                   include: {
@@ -221,7 +221,7 @@ export class ScoringService {
     });
 
     const participantName =
-      scoreEvents[0]?.participantScore.rosterPick.sportEventParticipant.participant.name ?? null;
+      scoreEvents[0]?.participantScore.pick.sportEventParticipant.participant.name ?? null;
     const scores = scoreEvents.map((event) => ({
       contestId,
       participantId,

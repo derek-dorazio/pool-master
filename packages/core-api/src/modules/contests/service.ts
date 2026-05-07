@@ -23,7 +23,7 @@ import type {
 } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
-  ContestType,
+  ContestFormat,
   ScoringEngine,
   SelectionType,
   SquadMembershipStatus,
@@ -44,7 +44,7 @@ export interface CreateContestInput {
   createdBy: string;
   sportEventId?: string;
   name: string;
-  contestType: ContestType;
+  contestFormat: ContestFormat;
   selectionType: SelectionType;
   contestConfiguration: Partial<Omit<ContestConfiguration, 'id' | 'contestId' | 'createdAt' | 'updatedAt'>>;
   scoringEngine: ScoringEngine;
@@ -87,7 +87,7 @@ interface ContestEntryReceiptData {
       leagueCode: string;
     };
   };
-  rosterPicks: Array<{
+  picks: Array<{
     pickedAt: Date;
     sportEventParticipant: {
       id: string;
@@ -153,7 +153,7 @@ export class ContestService {
     this.logger.debug({
       leagueId: input.leagueId,
       sportEventId: input.sportEventId ?? null,
-      contestType: input.contestType,
+      contestFormat: input.contestFormat,
       selectionType: input.selectionType,
     }, 'contest create start');
     const league = await this.leagueRepo.findById(input.leagueId);
@@ -166,7 +166,7 @@ export class ContestService {
       sportEventId: input.sportEventId || undefined,
       name: input.name,
       status: ContestStatus.DRAFT,
-      contestType: input.contestType,
+      contestFormat: input.contestFormat,
       selectionType: input.selectionType,
       scoringEngine: input.scoringEngine,
       isExclusive: input.isExclusive ?? false,
@@ -341,16 +341,12 @@ export class ContestService {
       },
       include: {
         squad: true,
-        rosterPicks: {
+        picks: {
           include: {
             participantScores: true,
             sportEventParticipant: {
               include: {
                 participant: true,
-                sourceData: {
-                  orderBy: [{ receivedAt: 'desc' }, { createdAt: 'desc' }],
-                  take: 1,
-                },
               },
             },
           },
@@ -373,14 +369,14 @@ export class ContestService {
       {
         ...row,
         status: row.status as ContestEntry['status'],
-        picksCount: row.rosterPicks.length,
+        picksCount: row.picks.length,
       },
       {
         name: row.squad.name,
       },
       includeParticipants
-        ? row.rosterPicks.map((pick) => ({
-          rosterPickId: pick.id,
+        ? row.picks.map((pick) => ({
+          pickId: pick.id,
           sportEventParticipantId: pick.sportEventParticipantId,
           participantId: pick.sportEventParticipant.participantId,
           participantName: pick.sportEventParticipant.participant.name,
@@ -389,9 +385,9 @@ export class ContestService {
           teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
           contestPoints: pick.participantScores.reduce((sum, score) => sum + score.pointsEarned, 0),
           pickedAt: pick.pickedAt,
-          latestPerformance: normalizeLatestPerformance(
-            pick.sportEventParticipant.sourceData[0]?.normalizedData,
-          ),
+          // latestPerformance — was sourced from dropped sportEventParticipantSourceData;
+          // rop.78.7 will rebuild via SportEventParticipantGolfRound + contribution table.
+          latestPerformance: {},
         }))
         : null,
     );
@@ -636,14 +632,14 @@ export class ContestService {
     }
 
     const requiredSelections = getRequiredSelectionCount(entry.contest.configuration);
-    if (requiredSelections <= 0 || entry.rosterPicks.length < requiredSelections) {
+    if (requiredSelections <= 0 || entry.picks.length < requiredSelections) {
       this.logger.debug({
         action: 'contestEntry.emailDelivery.incompleteLineup',
         data: {
           contestId,
           entryId,
           requiredSelections,
-          savedSelections: entry.rosterPicks.length,
+          savedSelections: entry.picks.length,
         },
       }, 'Skipped contest entry confirmation email because lineup is incomplete');
       return;
@@ -735,7 +731,7 @@ export class ContestService {
             },
           },
         },
-        rosterPicks: {
+        picks: {
           include: {
             sportEventParticipant: {
               include: {
@@ -881,7 +877,7 @@ export class ContestService {
       return new Map();
     }
     const prisma = this.requirePrisma();
-    const rows = await prisma.rosterPick.groupBy({
+    const rows = await prisma.contestEntryPick.groupBy({
       by: ['entryId'],
       where: { entryId: { in: entryIds } },
       _count: { id: true },
@@ -893,17 +889,13 @@ export class ContestService {
     entryIds: string[],
   ): Promise<Map<string, ContestEntryParticipantRow[]>> {
     const prisma = this.requirePrisma();
-    const picks = await prisma.rosterPick.findMany({
+    const picks = await prisma.contestEntryPick.findMany({
       where: { entryId: { in: entryIds } },
       include: {
         participantScores: true,
         sportEventParticipant: {
           include: {
             participant: true,
-            sourceData: {
-              orderBy: [{ receivedAt: 'desc' }, { createdAt: 'desc' }],
-              take: 1,
-            },
           },
         },
       },
@@ -914,7 +906,7 @@ export class ContestService {
     for (const pick of picks) {
       const list = grouped.get(pick.entryId) ?? [];
       list.push({
-        rosterPickId: pick.id,
+        pickId: pick.id,
         sportEventParticipantId: pick.sportEventParticipantId,
         participantId: pick.sportEventParticipant.participantId,
         participantName: pick.sportEventParticipant.participant.name,
@@ -923,9 +915,9 @@ export class ContestService {
         teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
         contestPoints: pick.participantScores.reduce((sum, score) => sum + score.pointsEarned, 0),
         pickedAt: pick.pickedAt,
-        latestPerformance: normalizeLatestPerformance(
-          pick.sportEventParticipant.sourceData[0]?.normalizedData,
-        ),
+        // latestPerformance — was sourced from dropped sportEventParticipantSourceData;
+        // rop.78.7 will rebuild via SportEventParticipantGolfRound + contribution table.
+        latestPerformance: {},
       });
       grouped.set(pick.entryId, list);
     }
@@ -948,7 +940,7 @@ export class ContestService {
       );
     }
 
-    const pickCount = await this.requirePrisma().rosterPick.count({
+    const pickCount = await this.requirePrisma().contestEntryPick.count({
       where: { entryId: row.id },
     });
 
@@ -988,11 +980,11 @@ export class ContestService {
 
   private async entryHasSelections(entryId: string): Promise<boolean> {
     const prisma = this.requirePrisma();
-    const [rosterPickCount, draftPickHistoryCount] = await Promise.all([
-      prisma.rosterPick.count({ where: { entryId } }),
+    const [pickCount, draftPickHistoryCount] = await Promise.all([
+      prisma.contestEntryPick.count({ where: { entryId } }),
       prisma.draftPickHistory.count({ where: { entryId } }),
     ]);
-    return rosterPickCount + draftPickHistoryCount > 0;
+    return pickCount + draftPickHistoryCount > 0;
   }
 
   private async requireSquadForEntry(
@@ -1125,7 +1117,7 @@ function buildEntryTierSelections(
   if (tierDefinitions.length > 0) {
     const picksByParticipantId = new Map<string, string[]>();
     const assignedPickIds = new Set<string>();
-    for (const pick of entry.rosterPicks) {
+    for (const pick of entry.picks) {
       const participantName = pick.sportEventParticipant.participant.name;
       const participantIds = [
         pick.sportEventParticipant.id,
@@ -1143,7 +1135,7 @@ function buildEntryTierSelections(
       for (const participantId of tier.participantIds) {
         participantNames.push(...(picksByParticipantId.get(participantId) ?? []));
       }
-      for (const pick of entry.rosterPicks) {
+      for (const pick of entry.picks) {
         if (participantNames.includes(pick.sportEventParticipant.participant.name)) {
           assignedPickIds.add(pick.sportEventParticipant.id);
         }
@@ -1154,7 +1146,7 @@ function buildEntryTierSelections(
       };
     });
 
-    const unassigned = entry.rosterPicks
+    const unassigned = entry.picks
       .filter((pick) => !assignedPickIds.has(pick.sportEventParticipant.id))
       .map((pick) => pick.sportEventParticipant.participant.name);
     if (unassigned.length > 0) {
@@ -1164,7 +1156,7 @@ function buildEntryTierSelections(
   }
 
   const groups = new Map<string, string[]>();
-  for (const pick of entry.rosterPicks) {
+  for (const pick of entry.picks) {
     const tierName = pick.sportEventParticipant.valuations[0]?.tier ?? 'Selections';
     const participants = groups.get(tierName) ?? [];
     participants.push(pick.sportEventParticipant.participant.name);
@@ -1214,14 +1206,6 @@ function buildEntryUrl(
   entryId: string,
 ): string {
   return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}/contests/${encodeURIComponent(contestId)}/entries/${encodeURIComponent(entryId)}`;
-}
-
-function normalizeLatestPerformance(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return {};
-  }
-
-  return value as Record<string, unknown>;
 }
 
 function isContestJoinable(status: ContestStatus): boolean {

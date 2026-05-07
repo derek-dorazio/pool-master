@@ -10,7 +10,7 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
-  ContestType,
+  ContestFormat,
   InvitationStatus,
   ScoringEngine,
   SelectionType,
@@ -110,7 +110,7 @@ describe('Scoring Read Integration', () => {
       payload: {
         name: 'Scoring Read Contest',
         sport: 'NCAA_BASKETBALL',
-        contestType: ContestType.SINGLE_EVENT,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
@@ -152,7 +152,6 @@ describe('Scoring Read Integration', () => {
       data: {
         name: `Scoring Sport ${Date.now()}`,
         participantType: 'TEAM',
-        statSchema: {},
       },
     });
     const participant = await prisma.participant.create({
@@ -183,10 +182,11 @@ describe('Scoring Read Integration', () => {
       },
     });
 
-    const ownerPick = await prisma.rosterPick.create({
+    const ownerPick = await prisma.contestEntryPick.create({
       data: {
         entryId: ownerEntryId,
         sportEventParticipantId: eventParticipant.id,
+        contestFormat: 'ROSTER',
       },
     });
 
@@ -230,7 +230,7 @@ describe('Scoring Read Integration', () => {
     const participantScore = await prisma.contestEntryParticipantScore.create({
       data: {
         entryId: ownerEntryId,
-        rosterPickId: ownerPick.id,
+        pickId: ownerPick.id,
         pointsEarned: 11,
       },
     });

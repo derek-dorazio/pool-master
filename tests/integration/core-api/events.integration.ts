@@ -30,7 +30,6 @@ describe('events routes', () => {
         id: randomUUID(),
         name: Sport.UFC,
         participantType: 'INDIVIDUAL',
-        statSchema: {},
       },
     });
 
@@ -134,7 +133,6 @@ describe('events routes', () => {
         id: randomUUID(),
         name: Sport.UFC,
         participantType: 'INDIVIDUAL',
-        statSchema: {},
       },
     });
 

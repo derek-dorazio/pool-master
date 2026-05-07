@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   ContestStatus,
-  ContestType,
+  ContestFormat,
   GolfCategoryKey,
   GolfContestConfigMode,
   GolfCutRuleType,
@@ -12,7 +12,7 @@ import {
 } from '@poolmaster/shared/domain';
 
 const sportValues = Object.values(Sport) as [string, ...string[]];
-const contestTypeValues = Object.values(ContestType) as [string, ...string[]];
+const contestFormatValues = Object.values(ContestFormat) as [string, ...string[]];
 
 const nullablePositiveIntSchema = z
   .number()
@@ -100,7 +100,7 @@ export type ContestConfigurationRequest = z.infer<
 const CreateContestManagementBaseSchema = z.object({
   name: z.string().min(1).max(100).describe('Contest name shown to commissioners and members.'),
   sportEventId: z.string().uuid().describe('Sport-event identifier that anchors the contest.'),
-  contestType: z.enum(contestTypeValues),
+  contestFormat: z.enum(contestFormatValues),
 });
 
 export const LegacyCreateContestManagementRequestSchema =
@@ -152,7 +152,7 @@ export const ContestConfigTemplateDtoSchema = z.object({
   id: z.string().uuid().describe('Seeded contest template identifier.'),
   sport: z.enum(sportValues).describe('Sport this template applies to.'),
   eventType: z.string().nullable().optional().describe('Optional event-type scope for the template.'),
-  contestType: z.enum(contestTypeValues).describe('Contest type that may use the template.'),
+  contestFormat: z.enum(contestFormatValues).describe('Contest type that may use the template.'),
   configMode: z.enum([
     GolfContestConfigMode.GOLF_TIERED,
     GolfContestConfigMode.GOLF_CATEGORY_PICKS,
@@ -170,7 +170,7 @@ export type ContestConfigTemplateDto = z.infer<typeof ContestConfigTemplateDtoSc
 
 export const ListContestConfigTemplatesQuerySchema = z.object({
   sport: z.enum(sportValues).describe('Sport to filter templates by.'),
-  contestType: z.enum(contestTypeValues).describe('Contest type to filter templates by.'),
+  contestFormat: z.enum(contestFormatValues).describe('Contest type to filter templates by.'),
   eventType: z.string().optional().describe('Optional event type used to narrow template selection.'),
 }).describe('Query parameters for listing commissioner contest templates.');
 export type ListContestConfigTemplatesQuery = z.infer<
@@ -186,7 +186,7 @@ export type ContestConfigTemplateListResponse = z.infer<
 
 export const AdminListContestConfigTemplatesQuerySchema = z.object({
   sport: z.enum(sportValues).optional().describe('Optional sport filter for root-admin contest template management.'),
-  contestType: z.enum(contestTypeValues).optional().describe('Optional contest-type filter for root-admin contest template management.'),
+  contestFormat: z.enum(contestFormatValues).optional().describe('Optional contest-type filter for root-admin contest template management.'),
   active: z.boolean().optional().describe('Optional active-state filter for root-admin contest template management.'),
 }).describe('Query parameters for root-admin contest template management listing.');
 export type AdminListContestConfigTemplatesQuery = z.infer<

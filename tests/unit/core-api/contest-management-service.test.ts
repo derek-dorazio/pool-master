@@ -7,7 +7,6 @@ import type {
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
   SportEventParticipantRepository,
-  SportEventParticipantSourceDataRepository,
   SportEventParticipantValuationRepository,
 } from '@poolmaster/shared/db';
 import {
@@ -111,7 +110,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
   const template = {
     id: '11111111-1111-4111-8111-111111111111',
     sport: 'GOLF',
-    contestType: 'SINGLE_EVENT',
+    contestFormat: 'ROSTER',
     configMode: 'GOLF_TIERED',
     templateKey: 'golf-tiered-pick-6',
     name: 'Select one from each tier, 4 count',
@@ -149,7 +148,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
   return {
     findById: jest.fn().mockResolvedValue(template),
     list: jest.fn().mockResolvedValue([template]),
-    listBySportAndContestType: jest.fn().mockResolvedValue([]),
+    listBySportAndContestFormat: jest.fn().mockResolvedValue([]),
     update: jest.fn().mockImplementation(async (_id, updates) => ({
       ...template,
       ...updates,
@@ -244,27 +243,6 @@ function createSportEventParticipantRepo(): SportEventParticipantRepository {
   };
 }
 
-function createSportEventParticipantSourceDataRepo(): SportEventParticipantSourceDataRepository {
-  return {
-    findById: jest.fn(),
-    findBySportEventParticipant: jest.fn().mockResolvedValue([
-      {
-        id: 'source-1',
-        sportEventParticipantId: 'sep-1',
-        providerId: 'mock-contest-feed',
-        externalId: 'golfer-1',
-        rawPayload: { metadata: { odds: 8.5, ranking: 1 } },
-        normalizedData: { odds: 8.5, ranking: 1 },
-        receivedAt: new Date('2026-04-07T12:00:00.000Z'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ]),
-    create: jest.fn(),
-    update: jest.fn(),
-  };
-}
-
 function createSportEventParticipantValuationRepo(): SportEventParticipantValuationRepository {
   return {
     findById: jest.fn(),
@@ -316,7 +294,6 @@ describe('ContestManagementService', () => {
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
       undefined,
       createSportEventReader(),
@@ -327,7 +304,7 @@ describe('ContestManagementService', () => {
       {
         name: 'Masters Pick 6',
         sportEventId: '11111111-1111-1111-1111-111111111111',
-        contestType: 'SINGLE_EVENT',
+        contestFormat: 'ROSTER',
         configuration: {
           mode: 'GOLF_TIERED',
           locksAt: '2026-04-10T12:00:00.000Z',
@@ -415,7 +392,6 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
       undefined,
       createSportEventReader({
@@ -430,7 +406,7 @@ describe('ContestManagementService', () => {
         {
           name: 'Invalid tiers',
           sportEventId: '11111111-1111-1111-1111-111111111111',
-          contestType: 'SINGLE_EVENT',
+          contestFormat: 'ROSTER',
           configuration: {
             mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T12:00:00.000Z',
@@ -488,7 +464,6 @@ describe('ContestManagementService', () => {
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
       undefined,
       createSportEventReader(),
@@ -499,7 +474,7 @@ describe('ContestManagementService', () => {
       {
         name: 'Masters Categories',
         sportEventId: '11111111-1111-1111-1111-111111111111',
-        contestType: 'SINGLE_EVENT',
+        contestFormat: 'ROSTER',
         configuration: {
           mode: 'GOLF_CATEGORY_PICKS',
           locksAt: '2026-04-10T12:00:00.000Z',
@@ -553,7 +528,6 @@ describe('ContestManagementService', () => {
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
       undefined,
       createSportEventReader(),
@@ -661,7 +635,6 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
       undefined,
       createSportEventReader({
@@ -723,7 +696,6 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
       undefined,
       createSportEventReader(),
@@ -752,7 +724,6 @@ describe('ContestManagementService', () => {
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
       undefined,
       createSportEventReader(),
@@ -763,7 +734,7 @@ describe('ContestManagementService', () => {
       {
         name: 'Masters Template Contest',
         sportEventId: '11111111-1111-1111-1111-111111111111',
-        contestType: 'SINGLE_EVENT',
+        contestFormat: 'ROSTER',
         templateId: '11111111-1111-4111-8111-111111111111',
       },
     );
@@ -794,7 +765,6 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
       undefined,
       createSportEventReader(),
@@ -807,7 +777,7 @@ describe('ContestManagementService', () => {
         {
           name: 'Missing Template Contest',
           sportEventId: '11111111-1111-1111-1111-111111111111',
-          contestType: 'SINGLE_EVENT',
+          contestFormat: 'ROSTER',
           templateId: 'missing-template-id',
         },
       );
@@ -831,7 +801,6 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
       undefined,
       createSportEventReader(),
@@ -858,7 +827,6 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
       undefined,
       createSportEventReader({
@@ -872,7 +840,7 @@ describe('ContestManagementService', () => {
       {
         name: 'Missing Field Contest',
         sportEventId: '11111111-1111-1111-1111-111111111111',
-        contestType: 'SINGLE_EVENT',
+        contestFormat: 'ROSTER',
         configuration: {
           mode: 'GOLF_TIERED',
           locksAt: '2026-04-10T12:00:00.000Z',
@@ -920,7 +888,6 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantSourceDataRepo(),
       createSportEventParticipantValuationRepo(),
       undefined,
       createSportEventReader({
@@ -934,7 +901,7 @@ describe('ContestManagementService', () => {
       {
         name: 'Unreleased Event Contest',
         sportEventId: '11111111-1111-1111-1111-111111111111',
-        contestType: 'SINGLE_EVENT',
+        contestFormat: 'ROSTER',
         configuration: {
           mode: 'GOLF_TIERED',
           locksAt: '2026-04-10T12:00:00.000Z',

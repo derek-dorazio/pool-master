@@ -12,12 +12,11 @@ import type {
   DraftPickHistory,
   DraftSession,
   League,
+  ContestEntryPick,
   LeagueInvitation,
   LeagueMembership,
   Participant,
   ParticipantProviderMapping,
-  ParticipantSeasonRecord,
-  RosterPick,
   Season,
   SportConfig,
   Squad,
@@ -135,13 +134,6 @@ export interface ParticipantRepository {
   update(id: string, updates: Partial<Participant>): Promise<Participant>;
 }
 
-export interface ParticipantSeasonRecordRepository {
-  findByParticipantAndSeason(participantId: string, season: string): Promise<ParticipantSeasonRecord | null>;
-  findByParticipant(participantId: string): Promise<ParticipantSeasonRecord[]>;
-  findBySportAndSeason(sport: Sport, season: string): Promise<ParticipantSeasonRecord[]>;
-  upsert(record: Omit<ParticipantSeasonRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<ParticipantSeasonRecord>;
-}
-
 export interface ParticipantProviderMappingRepository {
   findByProvider(providerId: string, externalId: string): Promise<ParticipantProviderMapping | null>;
   findByParticipant(participantId: string): Promise<ParticipantProviderMapping[]>;
@@ -169,9 +161,9 @@ export interface ContestEntryRepository {
   delete(id: string): Promise<void>;
 }
 
-export interface RosterPickRepository {
-  findByEntry(entryId: string): Promise<RosterPick[]>;
-  create(pick: Omit<RosterPick, 'id' | 'createdAt' | 'updatedAt'>): Promise<RosterPick>;
+export interface ContestEntryPickRepository {
+  findByEntry(entryId: string): Promise<ContestEntryPick[]>;
+  create(pick: Omit<ContestEntryPick, 'id' | 'createdAt' | 'updatedAt'>): Promise<ContestEntryPick>;
 }
 
 // --- Draft Session (Snake Draft only) ---

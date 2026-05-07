@@ -10,7 +10,6 @@ import type {
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
   SportEventParticipantRepository,
-  SportEventParticipantSourceDataRepository,
   SportEventParticipantValuationRepository,
 } from '@poolmaster/shared/db';
 import type {
@@ -24,7 +23,6 @@ import type {
   ContestPrizeDefinition,
   ParticipantContestScoringRule,
   SportEventParticipant,
-  SportEventParticipantSourceData,
   SportEventParticipantValuation,
 } from '@poolmaster/shared/domain';
 
@@ -53,7 +51,7 @@ export class PrismaContestCoreRepository implements ContestCoreRepository {
         sportEventId: contest.sportEventId,
         name: contest.name,
         status: contest.status,
-        contestType: 'SINGLE_EVENT',
+        contestFormat: 'ROSTER',
         selectionType: contest.selectionType,
         scoringEngine: contest.scoringEngine,
       },
@@ -130,69 +128,6 @@ export class PrismaSportEventParticipantRepository
       },
     });
     return mapSportEventParticipant(row);
-  }
-}
-
-export class PrismaSportEventParticipantSourceDataRepository
-  implements SportEventParticipantSourceDataRepository
-{
-  constructor(private readonly prisma: PrismaClient) {}
-
-  async findById(id: string): Promise<SportEventParticipantSourceData | null> {
-    const row = await this.prisma.sportEventParticipantSourceData.findUnique({
-      where: { id },
-    });
-    return row ? mapSportEventParticipantSourceData(row) : null;
-  }
-
-  async findBySportEventParticipant(
-    sportEventParticipantId: string,
-  ): Promise<SportEventParticipantSourceData[]> {
-    const rows = await this.prisma.sportEventParticipantSourceData.findMany({
-      where: { sportEventParticipantId },
-      orderBy: { receivedAt: 'desc' },
-    });
-    return rows.map(mapSportEventParticipantSourceData);
-  }
-
-  async create(
-    sourceData: Omit<
-      SportEventParticipantSourceData,
-      'id' | 'createdAt' | 'updatedAt'
-    >,
-  ): Promise<SportEventParticipantSourceData> {
-    const row = await this.prisma.sportEventParticipantSourceData.create({
-      data: {
-        sportEventParticipantId: sourceData.sportEventParticipantId,
-        providerId: sourceData.providerId,
-        externalId: sourceData.externalId,
-        rawPayload: sourceData.rawPayload as object,
-        normalizedData: sourceData.normalizedData as object,
-        receivedAt: sourceData.receivedAt,
-      },
-    });
-    return mapSportEventParticipantSourceData(row);
-  }
-
-  async update(
-    id: string,
-    updates: Partial<SportEventParticipantSourceData>,
-  ): Promise<SportEventParticipantSourceData> {
-    const row = await this.prisma.sportEventParticipantSourceData.update({
-      where: { id },
-      data: {
-        ...(updates.providerId !== undefined && { providerId: updates.providerId }),
-        ...(updates.externalId !== undefined && { externalId: updates.externalId }),
-        ...(updates.rawPayload !== undefined && {
-          rawPayload: updates.rawPayload as object,
-        }),
-        ...(updates.normalizedData !== undefined && {
-          normalizedData: updates.normalizedData as object,
-        }),
-        ...(updates.receivedAt !== undefined && { receivedAt: updates.receivedAt }),
-      },
-    });
-    return mapSportEventParticipantSourceData(row);
   }
 }
 
@@ -386,20 +321,20 @@ export class PrismaContestConfigTemplateRepository
 
   async list(input: {
     sport?: ContestConfigTemplate['sport'];
-    contestType?: ContestConfigTemplate['contestType'];
+    contestFormat?: ContestConfigTemplate['contestFormat'];
     eventType?: string | null;
     active?: boolean;
   } = {}): Promise<ContestConfigTemplate[]> {
     const rows = await this.prisma.contestConfigTemplate.findMany({
       where: {
         ...(input.sport !== undefined && { sport: input.sport }),
-        ...(input.contestType !== undefined && { contestType: input.contestType }),
+        ...(input.contestFormat !== undefined && { contestFormat: input.contestFormat }),
         ...(input.eventType !== undefined && { eventType: input.eventType }),
         ...(input.active !== undefined && { active: input.active }),
       },
       orderBy: [
         { sport: 'asc' },
-        { contestType: 'asc' },
+        { contestFormat: 'asc' },
         { sortOrder: 'asc' },
         { name: 'asc' },
       ],
@@ -408,15 +343,15 @@ export class PrismaContestConfigTemplateRepository
     return rows.map(mapContestConfigTemplate);
   }
 
-  async listBySportAndContestType(input: {
+  async listBySportAndContestFormat(input: {
     sport: ContestConfigTemplate['sport'];
-    contestType: ContestConfigTemplate['contestType'];
+    contestFormat: ContestConfigTemplate['contestFormat'];
     eventType?: string | null;
   }): Promise<ContestConfigTemplate[]> {
     const rows = await this.prisma.contestConfigTemplate.findMany({
       where: {
         sport: input.sport,
-        contestType: input.contestType,
+        contestFormat: input.contestFormat,
         active: true,
         OR: [
           { eventType: input.eventType ?? null },
@@ -659,7 +594,7 @@ export class PrismaContestEntryParticipantScoreRepository
     const row = await this.prisma.contestEntryParticipantScore.create({
       data: {
         entryId: score.entryId,
-        rosterPickId: score.rosterPickId,
+        pickId: score.pickId,
         pointsEarned: score.pointsEarned,
       },
     });
@@ -849,30 +784,6 @@ function mapSportEventParticipant(row: {
   };
 }
 
-function mapSportEventParticipantSourceData(row: {
-  id: string;
-  sportEventParticipantId: string;
-  providerId: string;
-  externalId: string;
-  rawPayload: unknown;
-  normalizedData: unknown;
-  receivedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}): SportEventParticipantSourceData {
-  return {
-    id: row.id,
-    sportEventParticipantId: row.sportEventParticipantId,
-    providerId: row.providerId,
-    externalId: row.externalId,
-    rawPayload: (row.rawPayload ?? {}) as Record<string, unknown>,
-    normalizedData: (row.normalizedData ?? {}) as Record<string, unknown>,
-    receivedAt: row.receivedAt,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
 function mapSportEventParticipantValuation(row: {
   id: string;
   sportEventParticipantId: string;
@@ -955,7 +866,7 @@ function mapContestConfigTemplate(row: {
   id: string;
   sport: string;
   eventType: string | null;
-  contestType: string;
+  contestFormat: string;
   configMode: string;
   templateKey: string;
   name: string;
@@ -972,7 +883,7 @@ function mapContestConfigTemplate(row: {
     id: row.id,
     sport: row.sport as ContestConfigTemplate['sport'],
     eventType: row.eventType ?? undefined,
-    contestType: row.contestType as ContestConfigTemplate['contestType'],
+    contestFormat: row.contestFormat as ContestConfigTemplate['contestFormat'],
     configMode: row.configMode as ContestConfigTemplate['configMode'],
     templateKey: row.templateKey,
     name: row.name,
@@ -1064,7 +975,7 @@ function mapPrizeDefinition(row: {
 function mapParticipantScore(row: {
   id: string;
   entryId: string;
-  rosterPickId: string;
+  pickId: string;
   pointsEarned: number;
   createdAt: Date;
   updatedAt: Date;
@@ -1072,7 +983,7 @@ function mapParticipantScore(row: {
   return {
     id: row.id,
     entryId: row.entryId,
-    rosterPickId: row.rosterPickId,
+    pickId: row.pickId,
     pointsEarned: row.pointsEarned,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

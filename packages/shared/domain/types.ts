@@ -10,10 +10,9 @@
 import type {
   AuthProvider,
   ContestStatus,
-  ContestType,
+  ContestFormat,
   DateFormat,
   DraftStatus,
-  FormTrend,
   InjuryStatusCode,
   InvitationStatus,
   JoinPolicy,
@@ -134,7 +133,6 @@ export interface LeagueInvitation extends DomainEntity {
 export interface SportConfig extends DomainEntity {
   name: Sport;
   participantType: ParticipantType;
-  statSchema: Record<string, unknown>;
 }
 
 /** Season metadata for a given sport. */
@@ -152,7 +150,6 @@ export interface Participant extends DomainEntity {
   name: string;
   participantType: ParticipantType;
   externalId?: string;
-  metadata: Record<string, unknown>;
 
   // Enriched profile fields
   firstName?: string;
@@ -177,35 +174,6 @@ export interface InjuryStatus {
   source?: string;
 }
 
-/** Season-long derived stats and rankings for a participant. */
-export interface ParticipantSeasonRecord extends DomainEntity {
-  participantId: string;
-  sport: Sport;
-  season: string;
-  rankings: SeasonRanking[];
-  budgetPrice: number;
-  priceTier?: string;
-  priceUpdatedAt?: Date;
-  eventsEntered: number;
-  eventsCompleted: number;
-  wins: number;
-  top5Finishes: number;
-  top10Finishes: number;
-  top25Finishes: number;
-  seasonStats: Record<string, number>;
-  formRating: number;
-  formTrend: FormTrend;
-  lastUpdated: Date;
-}
-
-/** Ranking snapshot for a participant during a given season. */
-export interface SeasonRanking {
-  rankingType: string;
-  rank: number;
-  points?: number;
-  asOfDate: Date;
-}
-
 /** Mapping between a provider participant and an internal participant. */
 export interface ParticipantProviderMapping extends DomainEntity {
   participantId: string;
@@ -223,7 +191,7 @@ export interface Contest extends DomainEntity {
   sportEventId?: string;
   name: string;
   status: ContestStatus;
-  contestType: ContestType;
+  contestFormat: ContestFormat;
   selectionType: SelectionType;
   scoringEngine: ScoringEngine;
   sport?: Sport;
@@ -305,13 +273,18 @@ export interface ContestEntry extends DomainEntity {
  * A single pick within an entry's roster (for squad selection contests).
  * Created during a snake draft, tiered pick, or budget pick.
  */
-export interface RosterPick extends DomainEntity {
+export interface ContestEntryPick extends DomainEntity {
   entryId: string;
   sportEventParticipantId: string;
+  contestFormat: ContestFormat;
+  period?: number;
+  slot?: number;
+  tier?: string;
+  cost?: number;
+  isAutoPicked: boolean;
   draftRound?: number;
   draftPickNumber?: number;
   pickedAt: Date;
-  autoPicked: boolean;
 }
 
 // --- Draft Session (Snake Draft only) ---
@@ -328,7 +301,7 @@ export interface DraftSession extends DomainEntity {
 /** Historical record of a draft pick. */
 export interface DraftPickHistory extends DomainEntity {
   draftSessionId: string;
-  rosterPickId: string;
+  pickId: string;
   entryId: string;
   pickNumber: number;
   round: number;
@@ -349,7 +322,7 @@ export interface ContestHistoryResult extends DomainEntity {
   leagueId?: string;
   leagueMembershipId?: string;
   contestName?: string;
-  contestType?: string;
+  contestFormat?: string;
   sport?: string;
   numEntries?: number;
   startedAt?: Date;
@@ -408,7 +381,7 @@ export interface ContestHistorySummary {
   contestId: string;
   contestName: string;
   sport: string;
-  contestType: string;
+  contestFormat: string;
   season?: string;
   startedAt?: Date;
   endedAt?: Date;

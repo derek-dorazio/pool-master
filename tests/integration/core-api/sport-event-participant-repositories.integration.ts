@@ -5,7 +5,6 @@ import {
 } from '../helpers';
 import {
   PrismaSportEventParticipantRepository,
-  PrismaSportEventParticipantSourceDataRepository,
   PrismaSportEventParticipantValuationRepository,
 } from '../../../packages/core-api/src/adapters';
 import { Sport } from '@poolmaster/shared/domain';
@@ -13,9 +12,6 @@ import { Sport } from '@poolmaster/shared/domain';
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
   const prisma = getPrisma();
-  await prisma.sportEventParticipantSourceData.deleteMany({
-    where: { providerId: 'TEST_PROVIDER' },
-  });
   await prisma.sportEventParticipantValuation.deleteMany({
     where: { valuationSource: 'integration-test' },
   });
@@ -67,7 +63,6 @@ describe('Sport event participant repositories', () => {
     });
 
     const participantRepo = new PrismaSportEventParticipantRepository(prisma);
-    const sourceDataRepo = new PrismaSportEventParticipantSourceDataRepository(prisma);
     const valuationRepo = new PrismaSportEventParticipantValuationRepository(prisma);
 
     const sportEventParticipant = await participantRepo.create({
@@ -79,15 +74,6 @@ describe('Sport event participant repositories', () => {
 
     expect(sportEventParticipant.sportEventId).toBe(event.id);
     expect(sportEventParticipant.participantId).toBe(participant.id);
-
-    const sourceData = await sourceDataRepo.create({
-      sportEventParticipantId: sportEventParticipant.id,
-      providerId: 'TEST_PROVIDER',
-      externalId: 'integration-external-participant',
-      rawPayload: { raw: true },
-      normalizedData: { scoreToPar: -3, madeCut: true },
-      receivedAt: new Date('2026-04-12T13:00:00.000Z'),
-    });
 
     const valuation = await valuationRepo.create({
       sportEventParticipantId: sportEventParticipant.id,
@@ -104,29 +90,25 @@ describe('Sport event participant repositories', () => {
         metadata: { teeTime: '08:30', started: true },
       },
     );
-    const updatedSourceData = await sourceDataRepo.update(sourceData.id, {
-      normalizedData: { scoreToPar: -5, madeCut: true },
-    });
     const updatedValuation = await valuationRepo.update(valuation.id, {
       price: 9800,
       tier: 'S',
     });
 
     expect(updatedParticipant.status).toBe('IN_PROGRESS');
-    expect(updatedSourceData.normalizedData).toMatchObject({ scoreToPar: -5 });
     expect(updatedValuation.price).toBe(9800);
     expect(updatedValuation.tier).toBe('S');
 
     const participantsForEvent = await participantRepo.findBySportEvent(event.id);
-    const sourceDataRows = await sourceDataRepo.findBySportEventParticipant(
-      sportEventParticipant.id,
-    );
     const valuations = await valuationRepo.findBySportEventParticipant(
       sportEventParticipant.id,
     );
 
     expect(participantsForEvent).toHaveLength(1);
-    expect(sourceDataRows).toHaveLength(1);
     expect(valuations).toHaveLength(1);
+
+    // SportEventParticipantSourceData was dropped per plans/117 §13.2;
+    // rop.78.5 will move per-event ranking/odds onto SportEventParticipant
+    // and rop.78.7 will rebuild scoring on top of typed detail tables.
   });
 });

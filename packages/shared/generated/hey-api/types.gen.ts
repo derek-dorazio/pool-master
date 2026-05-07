@@ -5415,7 +5415,7 @@ export type ListContestsResponses = {
             id: string;
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-            contestType: 'SINGLE_EVENT';
+            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
@@ -5442,7 +5442,7 @@ export type CreateContestData = {
     body: {
         name: string;
         eventId?: string;
-        contestType: 'SINGLE_EVENT';
+        contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
         selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK';
         /**
          * Contest-configuration payload used by contest create and update endpoints.
@@ -5584,7 +5584,7 @@ export type CreateContestResponses = {
             id: string;
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-            contestType: 'SINGLE_EVENT';
+            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
@@ -5770,7 +5770,7 @@ export type ListManagedContestTemplatesData = {
         /**
          * Contest type to filter templates by.
          */
-        contestType: 'SINGLE_EVENT';
+        contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
         /**
          * Optional event type used to narrow template selection.
          */
@@ -5871,7 +5871,7 @@ export type ListManagedContestTemplatesResponses = {
             /**
              * Contest type that may use the template.
              */
-            contestType: 'SINGLE_EVENT';
+            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             /**
              * Configuration mode seeded by the template.
              */
@@ -6040,7 +6040,7 @@ export type CreateManagedContestData = {
          * Sport-event identifier that anchors the contest.
          */
         sportEventId: string;
-        contestType: 'SINGLE_EVENT';
+        contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
         /**
          * Approved commissioner-managed contest configuration payload for golf-first contest creation.
          */
@@ -6167,7 +6167,7 @@ export type CreateManagedContestData = {
          * Sport-event identifier that anchors the contest.
          */
         sportEventId: string;
-        contestType: 'SINGLE_EVENT';
+        contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
         /**
          * Seeded contest template selected for the create flow.
          */
@@ -7397,7 +7397,7 @@ export type GetContestResponses = {
             id: string;
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-            contestType: 'SINGLE_EVENT';
+            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
@@ -7652,7 +7652,7 @@ export type UpdateContestResponses = {
             id: string;
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-            contestType: 'SINGLE_EVENT';
+            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
@@ -7943,7 +7943,7 @@ export type ListContestEntriesResponses = {
              * Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad).
              */
             participants?: Array<{
-                rosterPickId: string;
+                pickId: string;
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
@@ -8074,7 +8074,7 @@ export type GetContestEntryResponses = {
              * Current picked participants for the contest entry. Omitted when picks are hidden from non-owners (contest still in DRAFT or OPEN status and viewer is not the owning squad).
              */
             participants?: Array<{
-                rosterPickId: string;
+                pickId: string;
                 sportEventParticipantId: string;
                 participantId: string;
                 participantName: string;
@@ -8742,7 +8742,7 @@ export type ReopenContestResponses = {
             id: string;
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-            contestType: 'SINGLE_EVENT';
+            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
@@ -8944,7 +8944,7 @@ export type CloseContestResponses = {
             id: string;
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-            contestType: 'SINGLE_EVENT';
+            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
@@ -9150,7 +9150,7 @@ export type ExtendContestDeadlineResponses = {
             id: string;
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-            contestType: 'SINGLE_EVENT';
+            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
@@ -9356,7 +9356,7 @@ export type UpdateContestLockTimeResponses = {
             id: string;
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
-            contestType: 'SINGLE_EVENT';
+            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
             scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
             leagueId: string;
@@ -9744,12 +9744,6 @@ export type ListParticipantsResponses = {
              */
             externalId?: string;
             /**
-             * Provider-normalized metadata retained for the participant.
-             */
-            metadata: {
-                [key: string]: unknown;
-            };
-            /**
              * First name when the participant is a person.
              */
             firstName?: string;
@@ -9846,9 +9840,6 @@ export type CreateParticipantData = {
         nationality?: string;
         position?: string;
         teamAffiliation?: string;
-        metadata?: {
-            [key: string]: unknown;
-        };
         externalIds?: {
             [key: string]: unknown;
         };
@@ -9887,12 +9878,6 @@ export type CreateParticipantResponses = {
              * Primary provider identifier when one exists.
              */
             externalId?: string;
-            /**
-             * Provider-normalized metadata retained for the participant.
-             */
-            metadata: {
-                [key: string]: unknown;
-            };
             /**
              * First name when the participant is a person.
              */
@@ -10040,12 +10025,6 @@ export type GetParticipantResponses = {
              */
             externalId?: string;
             /**
-             * Provider-normalized metadata retained for the participant.
-             */
-            metadata: {
-                [key: string]: unknown;
-            };
-            /**
              * First name when the participant is a person.
              */
             firstName?: string;
@@ -10140,9 +10119,6 @@ export type UpdateParticipantData = {
             [key: string]: unknown;
         };
         photoUrl?: string;
-        metadata?: {
-            [key: string]: unknown;
-        };
         externalIds?: {
             [key: string]: unknown;
         };
@@ -10210,12 +10186,6 @@ export type UpdateParticipantResponses = {
              * Primary provider identifier when one exists.
              */
             externalId?: string;
-            /**
-             * Provider-normalized metadata retained for the participant.
-             */
-            metadata: {
-                [key: string]: unknown;
-            };
             /**
              * First name when the participant is a person.
              */
@@ -10296,253 +10266,6 @@ export type UpdateParticipantResponses = {
 };
 
 export type UpdateParticipantResponse = UpdateParticipantResponses[keyof UpdateParticipantResponses];
-
-export type GetParticipantSeasonRecordsData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/v1/participants/{id}/seasons';
-};
-
-export type GetParticipantSeasonRecordsResponses = {
-    /**
-     * Participant season-record list response.
-     */
-    200: {
-        seasonRecords: Array<{
-            id: string;
-            participantId: string;
-            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            season: string;
-            /**
-             * Ranking snapshots associated with the season record.
-             */
-            rankings: Array<{
-                /**
-                 * Ranking system name, such as world ranking or tour points.
-                 */
-                rankingType: string;
-                /**
-                 * Participant rank under the specified ranking system.
-                 */
-                rank: number;
-                /**
-                 * Optional ranking points associated with the ranking.
-                 */
-                points?: number;
-                /**
-                 * Date when the ranking snapshot was valid.
-                 */
-                asOfDate: string;
-            }>;
-            /**
-             * Current budget-draft price for the participant.
-             */
-            budgetPrice: number;
-            /**
-             * Optional price tier label derived for the participant.
-             */
-            priceTier?: string;
-            /**
-             * When the participant price was last refreshed.
-             */
-            priceUpdatedAt?: string;
-            /**
-             * How many events the participant entered in the season.
-             */
-            eventsEntered: number;
-            /**
-             * How many events the participant completed in the season.
-             */
-            eventsCompleted: number;
-            /**
-             * Season win count.
-             */
-            wins: number;
-            /**
-             * Top-five finish count for the season.
-             */
-            top5Finishes: number;
-            /**
-             * Top-ten finish count for the season.
-             */
-            top10Finishes: number;
-            /**
-             * Top-twenty-five finish count for the season.
-             */
-            top25Finishes: number;
-            /**
-             * Provider-normalized season statistics keyed by stat name.
-             */
-            seasonStats: {
-                [key: string]: number;
-            };
-            /**
-             * Derived form score used for participant valuation and sorting.
-             */
-            formRating: number;
-            /**
-             * Trend direction for the participant recent form.
-             */
-            formTrend: 'RISING' | 'STABLE' | 'FALLING';
-            /**
-             * When the season record source data was last refreshed.
-             */
-            lastUpdated: string;
-            /**
-             * When the season record was created.
-             */
-            createdAt: string;
-            /**
-             * When the season record was last updated.
-             */
-            updatedAt: string;
-        }>;
-    };
-};
-
-export type GetParticipantSeasonRecordsResponse = GetParticipantSeasonRecordsResponses[keyof GetParticipantSeasonRecordsResponses];
-
-export type GetParticipantSeasonRecordData = {
-    body?: never;
-    path: {
-        id: string;
-        season: string;
-    };
-    query?: never;
-    url: '/api/v1/participants/{id}/seasons/{season}';
-};
-
-export type GetParticipantSeasonRecordErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    404: {
-        /**
-         * Error payload object.
-         */
-        error: {
-            /**
-             * Stable machine-readable error code.
-             */
-            code: string;
-            /**
-             * Human-readable error summary safe to show to clients.
-             */
-            message: string;
-            /**
-             * Optional structured details for client-specific handling or diagnostics.
-             */
-            details?: unknown;
-        };
-    };
-};
-
-export type GetParticipantSeasonRecordError = GetParticipantSeasonRecordErrors[keyof GetParticipantSeasonRecordErrors];
-
-export type GetParticipantSeasonRecordResponses = {
-    /**
-     * Single participant season-record response.
-     */
-    200: {
-        /**
-         * Participant season record used by draft-search and participant detail APIs.
-         */
-        seasonRecord: {
-            id: string;
-            participantId: string;
-            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-            season: string;
-            /**
-             * Ranking snapshots associated with the season record.
-             */
-            rankings: Array<{
-                /**
-                 * Ranking system name, such as world ranking or tour points.
-                 */
-                rankingType: string;
-                /**
-                 * Participant rank under the specified ranking system.
-                 */
-                rank: number;
-                /**
-                 * Optional ranking points associated with the ranking.
-                 */
-                points?: number;
-                /**
-                 * Date when the ranking snapshot was valid.
-                 */
-                asOfDate: string;
-            }>;
-            /**
-             * Current budget-draft price for the participant.
-             */
-            budgetPrice: number;
-            /**
-             * Optional price tier label derived for the participant.
-             */
-            priceTier?: string;
-            /**
-             * When the participant price was last refreshed.
-             */
-            priceUpdatedAt?: string;
-            /**
-             * How many events the participant entered in the season.
-             */
-            eventsEntered: number;
-            /**
-             * How many events the participant completed in the season.
-             */
-            eventsCompleted: number;
-            /**
-             * Season win count.
-             */
-            wins: number;
-            /**
-             * Top-five finish count for the season.
-             */
-            top5Finishes: number;
-            /**
-             * Top-ten finish count for the season.
-             */
-            top10Finishes: number;
-            /**
-             * Top-twenty-five finish count for the season.
-             */
-            top25Finishes: number;
-            /**
-             * Provider-normalized season statistics keyed by stat name.
-             */
-            seasonStats: {
-                [key: string]: number;
-            };
-            /**
-             * Derived form score used for participant valuation and sorting.
-             */
-            formRating: number;
-            /**
-             * Trend direction for the participant recent form.
-             */
-            formTrend: 'RISING' | 'STABLE' | 'FALLING';
-            /**
-             * When the season record source data was last refreshed.
-             */
-            lastUpdated: string;
-            /**
-             * When the season record was created.
-             */
-            createdAt: string;
-            /**
-             * When the season record was last updated.
-             */
-            updatedAt: string;
-        };
-    };
-};
-
-export type GetParticipantSeasonRecordResponse = GetParticipantSeasonRecordResponses[keyof GetParticipantSeasonRecordResponses];
 
 export type GetStandingsData = {
     body?: never;
@@ -14022,7 +13745,7 @@ export type AdminListContestConfigTemplatesData = {
         /**
          * Optional contest-type filter for root-admin contest template management.
          */
-        contestType?: 'SINGLE_EVENT';
+        contestFormat?: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
         /**
          * Optional active-state filter for root-admin contest template management.
          */
@@ -14079,7 +13802,7 @@ export type AdminListContestConfigTemplatesResponses = {
             /**
              * Contest type that may use the template.
              */
-            contestType: 'SINGLE_EVENT';
+            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             /**
              * Configuration mode seeded by the template.
              */
@@ -14480,7 +14203,7 @@ export type AdminUpdateContestConfigTemplateResponses = {
             /**
              * Contest type that may use the template.
              */
-            contestType: 'SINGLE_EVENT';
+            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
             /**
              * Configuration mode seeded by the template.
              */

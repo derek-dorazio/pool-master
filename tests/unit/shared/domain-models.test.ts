@@ -1,7 +1,7 @@
 import {
   Sport,
   ContestStatus,
-  ContestType,
+  ContestFormat,
   SelectionType,
   ScoringEngine,
   SurvivorStyle,
@@ -64,9 +64,9 @@ describe('SurvivorStyle enum', () => {
   });
 });
 
-describe('ContestType enum', () => {
+describe('ContestFormat enum', () => {
   it('has single-event', () => {
-    expect(ContestType.SINGLE_EVENT).toBe('SINGLE_EVENT');
+    expect(ContestFormat.ROSTER).toBe('ROSTER');
   });
 });
 

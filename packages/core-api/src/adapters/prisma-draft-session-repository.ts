@@ -60,7 +60,7 @@ export class PrismaDraftSessionRepository implements DraftSessionRepository {
     const row = await this.prisma.draftPickHistory.create({
       data: {
         draftSessionId: pickHistory.draftSessionId,
-        rosterPickId: pickHistory.rosterPickId,
+        pickId: pickHistory.pickId,
         entryId: pickHistory.entryId,
         pickNumber: pickHistory.pickNumber,
         round: pickHistory.round,
@@ -99,7 +99,7 @@ function mapToSession(row: {
 function mapToPickHistory(row: {
   id: string;
   draftSessionId: string;
-  rosterPickId: string;
+  pickId: string;
   entryId: string;
   pickNumber: number;
   round: number;
@@ -111,7 +111,7 @@ function mapToPickHistory(row: {
   return {
     id: row.id,
     draftSessionId: row.draftSessionId,
-    rosterPickId: row.rosterPickId,
+    pickId: row.pickId,
     entryId: row.entryId,
     pickNumber: row.pickNumber,
     round: row.round,

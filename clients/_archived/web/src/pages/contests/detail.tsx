@@ -161,7 +161,7 @@ function getSelectionTypeLabel(selectionType: string) {
 
 function getContestTypeLabel(contestType: string) {
   switch (contestType) {
-    case 'SINGLE_EVENT':
+    case 'ROSTER':
       return 'Single Event';
     default:
       return contestType;

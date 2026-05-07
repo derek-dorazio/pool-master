@@ -32,7 +32,7 @@ export function createContestManagementHandlers(
     logger.debug({
       leagueId: request.params.id,
       sportEventId: request.body.sportEventId,
-      contestType: request.body.contestType,
+      contestFormat: request.body.contestFormat,
     }, 'contest management create route start');
     try {
       const contest = await contestManagementService.createContest(

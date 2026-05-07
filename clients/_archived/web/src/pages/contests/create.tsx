@@ -839,7 +839,7 @@ export function Component() {
         client,
         query: {
           sport,
-          contestType: 'SINGLE_EVENT',
+          contestType: 'ROSTER',
         },
       });
       if (error) throw error;
@@ -910,7 +910,7 @@ export function Component() {
           name: values.name,
           sport: values.sport,
           eventId: values.eventId,
-          contestType: 'SINGLE_EVENT',
+          contestType: 'ROSTER',
           selectionType,
           selectionConfig,
           scoringEngine: getScoringEngine(values.sport, selectionType),

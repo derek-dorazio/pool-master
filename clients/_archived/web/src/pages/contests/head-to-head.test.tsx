@@ -59,7 +59,7 @@ vi.mock('@/features/contests/hooks/use-contest', () => ({
         id: 'contest-1',
         name: 'NFL Weekly Pickem',
         status: 'ACTIVE',
-        contestType: 'SINGLE_EVENT',
+        contestType: 'ROSTER',
         selectionType: 'PICK_EM',
         scoringEngine: 'CUMULATIVE',
         leagueId: 'league-1',

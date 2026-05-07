@@ -19,7 +19,7 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
-  ContestType,
+  ContestFormat,
   InvitationStatus,
   LeagueRole,
   ParticipantType,
@@ -86,7 +86,7 @@ describe('History Read Integration', () => {
       payload: {
         name: 'History Contest',
         sport: 'GOLF',
-        contestType: ContestType.SINGLE_EVENT,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
@@ -128,7 +128,6 @@ describe('History Read Integration', () => {
       data: {
         name: `History Read Golf ${contestId.slice(0, 8)}`,
         participantType: 'INDIVIDUAL',
-        statSchema: {},
       },
     });
 
@@ -137,7 +136,6 @@ describe('History Read Integration', () => {
         sportId: sport.id,
         name: 'History Golfer',
         participantType: ParticipantType.INDIVIDUAL,
-        metadata: {},
         externalIds: {},
       },
     });
@@ -182,23 +180,16 @@ describe('History Read Integration', () => {
       },
     });
 
-    await prisma.sportEventParticipantSourceData.create({
-      data: {
-        sportEventParticipantId: sportEventParticipant.id,
-        providerId: 'integration-test',
-        externalId: participant.id,
-        rawPayload: { finishPosition: 1 },
-        normalizedData: { scoreToPar: -8, finishPosition: 1 },
-        receivedAt: new Date('2026-04-03T13:00:00Z'),
-      },
-    });
+    // sportEventParticipantSourceData was dropped per plans/117 §13.2;
+    // rop.78.7 rebuilds via SportEventParticipantGolfRound + contribution table.
 
-    await prisma.rosterPick.create({
+    await prisma.contestEntryPick.create({
       data: {
         entryId: challengerEntryId,
         sportEventParticipantId: sportEventParticipant.id,
         pickedAt: new Date('2026-04-03T12:05:00Z'),
-        autoPicked: false,
+        contestFormat: 'ROSTER',
+      isAutoPicked: false,
       },
     });
 
@@ -313,13 +304,14 @@ describe('History Read Integration', () => {
       expect.objectContaining({
         contestId,
         entryId: challengerEntryId,
-        rosterPicks: [
+        picks: [
           expect.objectContaining({
             participantName: 'History Golfer',
-            latestPerformance: expect.objectContaining({
-              scoreToPar: -8,
-              finishPosition: 1,
-            }),
+            // latestPerformance — rop.78.4 dropped sportEventParticipantSourceData
+            // (the source); rop.78.7 rebuilds the snapshot via
+            // SportEventParticipantGolfRound + the per-(category × contestFormat)
+            // contribution table.
+            latestPerformance: {},
           }),
         ],
       }),

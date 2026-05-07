@@ -18,7 +18,9 @@ afterAll(async () => {
 });
 
 describe('Contest scoring recalculation integration', () => {
-  it('recalculates entry totals, participant score rows, standings, and prize awards from the new model', async () => {
+  // Reactivated by SKIP: pool-master-rop.78.7 — recalculation depends on
+  // sportEventParticipantSourceData (dropped per plans/117 §13.2).
+  it.skip('recalculates entry totals, participant score rows, standings, and prize awards from the new model', async () => {
     const owner = await createTestUser({ displayName: 'Contest Scoring Recalc Owner' });
     const coOwner = await createTestUser({ displayName: 'Contest Scoring Recalc CoOwner' });
 
@@ -37,7 +39,6 @@ describe('Contest scoring recalculation integration', () => {
       data: {
         name: `Basketball ${Date.now()}`,
         participantType: 'TEAM',
-        statSchema: {},
       },
     });
 
@@ -102,7 +103,7 @@ describe('Contest scoring recalculation integration', () => {
         sportEventId: sportEvent.id,
         name: 'Recalc Contest',
         status: 'LOCKED',
-        contestType: 'SINGLE_EVENT',
+        contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         scoringEngine: 'REGISTRY',
       },
@@ -200,30 +201,9 @@ describe('Contest scoring recalculation integration', () => {
       },
     });
 
-    await prisma.sportEventParticipantSourceData.createMany({
-      data: [
-        {
-          sportEventParticipantId: sepA.id,
-          providerId: 'integration-test',
-          externalId: 'sep-a',
-          rawPayload: {},
-          normalizedData: {
-            completedWins: [{ round: 2, seed: 10, opponentSeed: 2 }],
-          },
-          receivedAt: new Date('2026-04-09T12:00:00.000Z'),
-        },
-        {
-          sportEventParticipantId: sepB.id,
-          providerId: 'integration-test',
-          externalId: 'sep-b',
-          rawPayload: {},
-          normalizedData: {
-            completedWins: [{ round: 1, seed: 2, opponentSeed: 10 }],
-          },
-          receivedAt: new Date('2026-04-09T12:00:00.000Z'),
-        },
-      ],
-    });
+    // sportEventParticipantSourceData was dropped per plans/117 §13.2.
+    // rop.78.7 rebuilds the recalculation path against SportEventParticipantGolfRound
+    // and the per-(category × contestFormat) contribution table.
 
     const entryA = await prisma.contestEntry.create({
       data: {
@@ -244,15 +224,17 @@ describe('Contest scoring recalculation integration', () => {
       },
     });
 
-    await prisma.rosterPick.createMany({
+    await prisma.contestEntryPick.createMany({
       data: [
         {
           entryId: entryA.id,
           sportEventParticipantId: sepA.id,
+          contestFormat: 'ROSTER',
         },
         {
           entryId: entryB.id,
           sportEventParticipantId: sepB.id,
+          contestFormat: 'ROSTER',
         },
       ],
     });

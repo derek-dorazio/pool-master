@@ -45,13 +45,13 @@ export class ContestTemplateAdminService {
   ): Promise<ContestConfigTemplateDto[]> {
     this.logger.debug({
       sport: query.sport ?? null,
-      contestType: query.contestType ?? null,
+      contestFormat: query.contestFormat ?? null,
       active: query.active ?? null,
     }, 'contest template admin list start');
 
     const templates = await this.repository.list({
       sport: query.sport as ContestConfigTemplate['sport'] | undefined,
-      contestType: query.contestType as ContestConfigTemplate['contestType'] | undefined,
+      contestFormat: query.contestFormat as ContestConfigTemplate['contestFormat'] | undefined,
       active: query.active,
     });
 
@@ -99,7 +99,7 @@ export class ContestTemplateAdminService {
     if (nextIsDefault) {
       const scopeTemplates = await this.repository.list({
         sport: existing.sport,
-        contestType: existing.contestType,
+        contestFormat: existing.contestFormat,
         eventType: existing.eventType ?? null,
       });
 

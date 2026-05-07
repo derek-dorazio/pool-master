@@ -11,7 +11,7 @@ export function scoreContestEntry(
   logger?.debug({
     action: 'contestScoring.scoreEntry.start',
     data: {
-      rosterPickCount: context.rosterPicks.length,
+      pickCount: context.picks.length,
       scoringRuleCount: context.scoringRules.length,
       aggregationDefinitionId: context.aggregationRule.aggregationDefinitionId,
     },
@@ -22,7 +22,7 @@ export function scoreContestEntry(
     .flatMap((rule) => scoreParticipantRule(context, rule));
 
   const participantScores = rebuildContestEntryParticipantScores(
-    context.rosterPicks,
+    context.picks,
     scoreEvents,
   );
 

@@ -12,7 +12,7 @@ describe('useContest', () => {
     expect(contest).toHaveProperty('id', 'contest-1');
     expect(contest).toHaveProperty('name', 'Test Contest');
     expect(contest).toHaveProperty('status', 'DRAFT');
-    expect(contest).toHaveProperty('contestType', 'SINGLE_EVENT');
+    expect(contest).toHaveProperty('contestType', 'ROSTER');
     expect(contest).toHaveProperty('leagueId', 'league-1');
   });
 

@@ -1,6 +1,6 @@
 import type {
   ContestStatus,
-  ContestType,
+  ContestFormat,
   GolfCategoryKey,
   GolfContestConfigMode,
   GolfCutRuleType,
@@ -113,7 +113,7 @@ export interface SportEvent extends DomainEntity {
 export interface ContestTimingPolicy extends DomainEntity {
   sport: Sport;
   eventType?: string | null;
-  contestType?: ContestType | null;
+  contestFormat?: ContestFormat | null;
   releaseRule: string;
   fieldLockRule: string;
   isDefault: boolean;
@@ -179,7 +179,7 @@ export interface ContestConfiguration extends DomainEntity {
 export interface ContestConfigTemplate extends DomainEntity {
   sport: Sport;
   eventType?: string | null;
-  contestType: ContestType;
+  contestFormat: ContestFormat;
   configMode: GolfContestConfigMode;
   templateKey: string;
   name: string;
@@ -224,7 +224,7 @@ export interface ContestPrizeDefinition extends DomainEntity {
 /** Aggregate participant score record for a contest entry. */
 export interface ContestEntryParticipantScore extends DomainEntity {
   entryId: string;
-  rosterPickId: string;
+  pickId: string;
   pointsEarned: number;
 }
 

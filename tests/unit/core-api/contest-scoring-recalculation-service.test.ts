@@ -1,7 +1,12 @@
-import { ContestScoringRecalculationService } from '../../../packages/core-api/src/modules/contest-scoring';
+import {
+  ContestScoringRecalculationDisabledError,
+  ContestScoringRecalculationService,
+} from '../../../packages/core-api/src/modules/contest-scoring';
 
 describe('ContestScoringRecalculationService', () => {
-  it('scores entries, assigns ranks, and applies FINAL_PLACE awards', async () => {
+  // Reactivated by SKIP: pool-master-rop.78.7 — scoring relied on
+  // sportEventParticipant.sourceData (dropped per plans/117 §13.2).
+  it.skip('scores entries, assigns ranks, and applies FINAL_PLACE awards', async () => {
     const replaceEntryScoringResult = jest.fn().mockResolvedValue(undefined);
     const prisma = {
       contest: {
@@ -56,7 +61,7 @@ describe('ContestScoringRecalculationService', () => {
               id: 'entry-1',
               totalScore: 0,
               standingsPosition: 2,
-              rosterPicks: [
+              picks: [
                 {
                   id: 'pick-1',
                   sportEventParticipantId: 'sep-1',
@@ -77,7 +82,7 @@ describe('ContestScoringRecalculationService', () => {
               id: 'entry-2',
               totalScore: 0,
               standingsPosition: 1,
-              rosterPicks: [
+              picks: [
                 {
                   id: 'pick-2',
                   sportEventParticipantId: 'sep-2',
@@ -133,40 +138,24 @@ describe('ContestScoringRecalculationService', () => {
     );
   });
 
-  it('rejects missing contest and missing scoring configuration', async () => {
-    const missingContestPrisma = {
+  // pool-master-rop.78.4 — recalculateContest throws an early
+  // ContestScoringRecalculationDisabledError until pool-master-rop.78.7 rebuilds
+  // the scoring path on the typed substrate (plans/117 §13.2 dropped
+  // sportEventParticipantSourceData). The contest-existence and
+  // configuration-existence checks below run again once the rebuild lands.
+  it('rejects every recalculation request with a disabled-error until rop.78.7', async () => {
+    const prisma = {
       contest: {
         findUnique: jest.fn().mockResolvedValue(null),
       },
     } as any;
-    const missingConfigPrisma = {
-      contest: {
-        findUnique: jest.fn()
-          .mockResolvedValueOnce({
-            id: 'contest-1',
-            configuration: null,
-            entries: [],
-          })
-          .mockResolvedValueOnce({
-            id: 'contest-1',
-            configuration: {
-              participantScoringRules: [],
-              entryAggregationRule: null,
-              prizeDefinitions: [],
-            },
-            entries: [],
-          }),
-      },
-    } as any;
 
     await expect(
-      new ContestScoringRecalculationService(missingContestPrisma).recalculateContest('contest-1'),
-    ).rejects.toThrow('Contest contest-1 not found');
+      new ContestScoringRecalculationService(prisma).recalculateContest('contest-1'),
+    ).rejects.toThrow(ContestScoringRecalculationDisabledError);
     await expect(
-      new ContestScoringRecalculationService(missingConfigPrisma).recalculateContest('contest-1'),
-    ).rejects.toThrow('Contest contest-1 is missing ContestConfiguration');
-    await expect(
-      new ContestScoringRecalculationService(missingConfigPrisma).recalculateContest('contest-1'),
-    ).rejects.toThrow('Contest contest-1 is missing ContestEntryAggregationRule');
+      new ContestScoringRecalculationService(prisma).recalculateContest('contest-1'),
+    ).rejects.toThrow(/pool-master-rop\.78\.7/);
+    expect(prisma.contest.findUnique).not.toHaveBeenCalled();
   });
 });

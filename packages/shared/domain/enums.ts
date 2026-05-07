@@ -79,11 +79,46 @@ export type PoolType = (typeof PoolType)[keyof typeof PoolType];
 
 // --- Contest Structure ---
 
-export const ContestType = {
-  SINGLE_EVENT: 'SINGLE_EVENT',
-  // SEASON_LONG removed — deferred (see plans/deferred/contest-rules-deferred.md)
+/**
+ * Pool format applied to a contest. Replaces the legacy
+ * `ContestFormat.ROSTER` enum (a duration/scope concept that turned
+ * out not to be load-bearing — duration is now expressed by the
+ * ContestSportEvent M:N join). See plans/117-league-contest-substrate-redesign.md §4.2.
+ */
+export const ContestFormat = {
+  ROSTER: 'ROSTER',
+  BRACKET: 'BRACKET',
+  PICKEM_CONFIDENCE: 'PICKEM_CONFIDENCE',
+  SURVIVOR: 'SURVIVOR',
+  PREDICT_TOP_N: 'PREDICT_TOP_N',
 } as const;
-export type ContestType = (typeof ContestType)[keyof typeof ContestType];
+export type ContestFormat = (typeof ContestFormat)[keyof typeof ContestFormat];
+
+/** Sport category — drives per-category detail table dispatch. */
+export const SportCategory = {
+  GOLF: 'GOLF',
+  BASKETBALL: 'BASKETBALL',
+  FOOTBALL: 'FOOTBALL',
+  F1: 'F1',
+  NASCAR: 'NASCAR',
+  TENNIS: 'TENNIS',
+  SOCCER: 'SOCCER',
+} as const;
+export type SportCategory = (typeof SportCategory)[keyof typeof SportCategory];
+
+/** Tournament structural format — drives valid contest formats per sport. */
+export const TournamentFormat = {
+  STROKE_PLAY_TOURNAMENT: 'STROKE_PLAY_TOURNAMENT',
+  KNOCKOUT_BRACKET: 'KNOCKOUT_BRACKET',
+  SERIES_PLAYOFF: 'SERIES_PLAYOFF',
+  ROUND_ROBIN_SEASON: 'ROUND_ROBIN_SEASON',
+  WEEKLY_GAMES_SEASON: 'WEEKLY_GAMES_SEASON',
+  TIME_TRIAL_RACE: 'TIME_TRIAL_RACE',
+  SEASON_OF_RACES: 'SEASON_OF_RACES',
+  GROUP_STAGE_KNOCKOUT: 'GROUP_STAGE_KNOCKOUT',
+  MATCH_PLAY: 'MATCH_PLAY',
+} as const;
+export type TournamentFormat = (typeof TournamentFormat)[keyof typeof TournamentFormat];
 
 /**
  * How participants select their picks for a contest.

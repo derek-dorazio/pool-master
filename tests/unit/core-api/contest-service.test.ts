@@ -16,7 +16,7 @@ import {
   ContestStatus,
   SelectionType,
   ScoringEngine,
-  ContestType,
+  ContestFormat,
   SquadMembershipStatus,
   TeamIconKey,
 } from '@poolmaster/shared/domain';
@@ -203,7 +203,7 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
         squad: { id: 'squad-1', name: "Derek's Squad" },
       }),
     },
-    rosterPick: {
+    contestEntryPick: {
       count: jest.fn().mockResolvedValue(0),
       groupBy: jest.fn().mockResolvedValue([]),
       findMany: jest.fn().mockResolvedValue([]),
@@ -234,7 +234,7 @@ describe('ContestService', () => {
         createdBy: 'user-1',
         sportEventId: 'event-1',
         name: 'Masters Pool',
-        contestType: ContestType.SINGLE_EVENT,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.SNAKE_DRAFT,
         contestConfiguration: { rounds: 5, timePerPickSeconds: 60 },
         scoringEngine: ScoringEngine.STROKE_PLAY,
@@ -262,7 +262,7 @@ describe('ContestService', () => {
         leagueId: 'league-1',
         createdBy: 'user-1',
         name: 'Test',
-        contestType: ContestType.SINGLE_EVENT,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.SNAKE_DRAFT,
         contestConfiguration: {},
         scoringEngine: ScoringEngine.CUMULATIVE,
@@ -286,7 +286,7 @@ describe('ContestService', () => {
           leagueId: 'missing',
           createdBy: 'user-1',
           name: 'Test',
-          contestType: ContestType.SINGLE_EVENT,
+          contestFormat: ContestFormat.ROSTER,
           selectionType: SelectionType.SNAKE_DRAFT,
           contestConfiguration: {},
           scoringEngine: ScoringEngine.CUMULATIVE,
@@ -813,7 +813,7 @@ describe('ContestService', () => {
         ]),
       });
       const prisma = createMockPrisma({
-        rosterPick: { count: jest.fn().mockResolvedValue(1) },
+        contestEntryPick: { count: jest.fn().mockResolvedValue(1) },
       });
       const service = new ContestService(
         contestRepo,
@@ -1244,7 +1244,7 @@ describe('ContestService', () => {
               leagueCode: 'MATHWORKS',
             },
           },
-          rosterPicks: [
+          picks: [
             {
               pickedAt: new Date('2026-01-01T12:00:00.000Z'),
               sportEventParticipant: {
@@ -1268,7 +1268,7 @@ describe('ContestService', () => {
           findMany: jest.fn().mockResolvedValue([]),
           findUnique: contestEntryFindUnique,
         },
-        rosterPick: {
+        contestEntryPick: {
           count: jest.fn().mockResolvedValue(2),
           groupBy: jest.fn().mockResolvedValue([]),
           findMany: jest.fn().mockResolvedValue([]),
@@ -1381,7 +1381,7 @@ describe('ContestService', () => {
             },
             league: { name: 'Mathworks', leagueCode: 'MATHWORKS' },
           },
-          rosterPicks: [
+          picks: [
             {
               pickedAt: new Date('2026-01-01T12:00:00.000Z'),
               sportEventParticipant: {
@@ -1437,7 +1437,7 @@ describe('ContestService', () => {
             findMany: jest.fn().mockResolvedValue([]),
             findUnique: contestEntryFindUnique,
           },
-          rosterPick: {
+          contestEntryPick: {
             count: jest.fn().mockResolvedValue(1),
             groupBy: jest.fn().mockResolvedValue([]),
             findMany: jest.fn().mockResolvedValue([]),
@@ -1496,7 +1496,7 @@ describe('ContestService', () => {
             },
             league: { name: 'Mathworks', leagueCode: 'MATHWORKS' },
           },
-          rosterPicks: [
+          picks: [
             {
               pickedAt: new Date('2026-01-01T12:00:00.000Z'),
               sportEventParticipant: {
@@ -1553,7 +1553,7 @@ describe('ContestService', () => {
             findMany: jest.fn().mockResolvedValue([]),
             findUnique: contestEntryFindUnique,
           },
-          rosterPick: {
+          contestEntryPick: {
             count: jest.fn().mockResolvedValue(1),
             groupBy: jest.fn().mockResolvedValue([]),
             findMany: jest.fn().mockResolvedValue([]),

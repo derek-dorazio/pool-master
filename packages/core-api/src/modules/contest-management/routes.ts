@@ -17,7 +17,6 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaParticipantContestScoringRuleRepository,
   PrismaSportEventParticipantRepository,
-  PrismaSportEventParticipantSourceDataRepository,
   PrismaSportEventParticipantValuationRepository,
 } from '../../adapters';
 import { requireCommissioner } from '../leagues/permissions';
@@ -38,7 +37,6 @@ export async function contestManagementModule(
     new PrismaContestEntryAggregationRuleRepository(prisma),
     new PrismaContestPrizeDefinitionRepository(prisma),
     new PrismaSportEventParticipantRepository(prisma),
-    new PrismaSportEventParticipantSourceDataRepository(prisma),
     new PrismaSportEventParticipantValuationRepository(prisma),
     fastify.log,
     {

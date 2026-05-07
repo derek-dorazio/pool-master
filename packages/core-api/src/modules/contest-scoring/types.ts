@@ -18,7 +18,7 @@ export interface ContestEntryAggregationRule {
   active: boolean;
 }
 
-export interface ScoreableRosterPick {
+export interface ScoreableContestEntryPick {
   id: string;
   sportEventParticipantId: string;
 }
@@ -30,19 +30,19 @@ export interface ContestParticipantSourceDataRecord {
 }
 
 export interface ComputedContestEntryParticipantScoreEvent {
-  rosterPickId: string;
+  pickId: string;
   participantContestScoringRuleId: string;
   points: number;
   detailsJson: Record<string, unknown>;
 }
 
 export interface ComputedContestEntryParticipantScore {
-  rosterPickId: string;
+  pickId: string;
   pointsEarned: number;
 }
 
 export interface ScoreContestEntryContext {
-  rosterPicks: ScoreableRosterPick[];
+  picks: ScoreableContestEntryPick[];
   sourceData: ContestParticipantSourceDataRecord[];
   scoringRules: ParticipantContestScoringRule[];
   aggregationRule: ContestEntryAggregationRule;

@@ -36,7 +36,7 @@ function createBaseContext(
   overrides: Partial<ScoreContestEntryContext> = {},
 ): ScoreContestEntryContext {
   return {
-    rosterPicks: [],
+    picks: [],
     sourceData: [],
     scoringRules: [],
     aggregationRule: createAggregationRule('SUM_ALL_ENTRIES', {}),
@@ -47,7 +47,7 @@ function createBaseContext(
 describe('contest-scoring registries', () => {
   it('scores golf relative-to-par totals with an optional missed-cut penalty', () => {
     const context = createBaseContext({
-      rosterPicks: [
+      picks: [
         { id: 'pick-1', sportEventParticipantId: 'event-participant-1' },
         { id: 'pick-2', sportEventParticipantId: 'event-participant-2' },
       ],
@@ -73,12 +73,12 @@ describe('contest-scoring registries', () => {
     const result = scoreContestEntry(context);
 
     expect(result.participantScores).toEqual([
-      { rosterPickId: 'pick-1', pointsEarned: -8 },
-      { rosterPickId: 'pick-2', pointsEarned: 12 },
+      { pickId: 'pick-1', pointsEarned: -8 },
+      { pickId: 'pick-2', pointsEarned: 12 },
     ]);
     expect(result.totalScore).toBe(4);
     expect(result.scoreEvents[1]).toMatchObject({
-      rosterPickId: 'pick-2',
+      pickId: 'pick-2',
       points: 12,
       detailsJson: { scoreToPar: 2, penaltyApplied: 10, madeCut: false },
     });
@@ -86,7 +86,7 @@ describe('contest-scoring registries', () => {
 
   it('scores team wins, round multipliers, and seed bonuses as independent participant score events', () => {
     const context = createBaseContext({
-      rosterPicks: [{ id: 'pick-1', sportEventParticipantId: 'event-participant-1' }],
+      picks: [{ id: 'pick-1', sportEventParticipantId: 'event-participant-1' }],
       sourceData: [
         {
           sportEventParticipantId: 'event-participant-1',
@@ -117,7 +117,7 @@ describe('contest-scoring registries', () => {
     expect(result.scoreEvents).toHaveLength(6);
     expect(result.participantScores).toEqual([
       {
-        rosterPickId: 'pick-1',
+        pickId: 'pick-1',
         pointsEarned: 1 + 1 + 3 + 1 + 2 + 8,
       },
     ]);
@@ -126,7 +126,7 @@ describe('contest-scoring registries', () => {
 
   it('sums only the top N participant totals when configured', () => {
     const context = createBaseContext({
-      rosterPicks: [
+      picks: [
         { id: 'pick-1', sportEventParticipantId: 'event-participant-1' },
         { id: 'pick-2', sportEventParticipantId: 'event-participant-2' },
         { id: 'pick-3', sportEventParticipantId: 'event-participant-3' },
@@ -160,9 +160,9 @@ describe('contest-scoring registries', () => {
     const result = scoreContestEntry(context);
 
     expect(result.participantScores).toEqual([
-      { rosterPickId: 'pick-1', pointsEarned: -4 },
-      { rosterPickId: 'pick-2', pointsEarned: -1 },
-      { rosterPickId: 'pick-3', pointsEarned: 3 },
+      { pickId: 'pick-1', pointsEarned: -4 },
+      { pickId: 'pick-2', pointsEarned: -1 },
+      { pickId: 'pick-3', pointsEarned: 3 },
     ]);
     expect(result.totalScore).toBe(-5);
   });

@@ -10,7 +10,7 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
-  ContestType,
+  ContestFormat,
   InvitationStatus,
   LeagueRole,
   ScoringEngine,
@@ -103,7 +103,7 @@ describe('History Read Fallback Integration', () => {
       payload: {
         name: 'History Fallback Contest',
         sport: 'GOLF',
-        contestType: ContestType.SINGLE_EVENT,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {

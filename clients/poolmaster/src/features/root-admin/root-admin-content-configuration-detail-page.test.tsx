@@ -43,7 +43,7 @@ function buildTemplate() {
     id: '11111111-1111-4111-8111-111111111111',
     sport: 'GOLF',
     eventType: null,
-    contestType: 'SINGLE_EVENT',
+    contestType: 'ROSTER',
     configMode: 'GOLF_TIERED',
     templateKey: 'golf-tiered-pick-6',
     name: 'Select one from each tier, 4 count',

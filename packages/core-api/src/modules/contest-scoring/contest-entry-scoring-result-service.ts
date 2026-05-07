@@ -59,36 +59,36 @@ export class ContestEntryScoringResultService {
         where: { entryId: input.entryId },
       });
 
-      const scoreIdByRosterPickId = new Map<string, string>();
+      const scoreIdByContestEntryPickId = new Map<string, string>();
 
       for (const participantScore of input.scoreResult.participantScores) {
         const createdScore = await tx.contestEntryParticipantScore.create({
           data: {
             entryId: input.entryId,
-            rosterPickId: participantScore.rosterPickId,
+            pickId: participantScore.pickId,
             pointsEarned: participantScore.pointsEarned,
           },
         });
 
-        scoreIdByRosterPickId.set(participantScore.rosterPickId, createdScore.id);
+        scoreIdByContestEntryPickId.set(participantScore.pickId, createdScore.id);
       }
 
       if (input.scoreResult.scoreEvents.length > 0) {
         await tx.contestEntryParticipantScoreEvent.createMany({
           data: input.scoreResult.scoreEvents.map((event) => {
-            const contestEntryParticipantScoreId = scoreIdByRosterPickId.get(
-              event.rosterPickId,
+            const contestEntryParticipantScoreId = scoreIdByContestEntryPickId.get(
+              event.pickId,
             );
             if (!contestEntryParticipantScoreId) {
               this.logger?.error({
                 action: 'contestEntryScoringResult.replace.missingParticipantScore',
                 data: {
                   entryId: input.entryId,
-                  rosterPickId: event.rosterPickId,
+                  pickId: event.pickId,
                 },
               }, 'Missing participant score row for score event');
               throw new Error(
-                `Missing participant score row for roster pick ${event.rosterPickId}`,
+                `Missing participant score row for roster pick ${event.pickId}`,
               );
             }
 

@@ -3,13 +3,12 @@
  */
 import { z } from 'zod';
 import {
-  FormTrend,
   InjuryStatusCode,
   ParticipantStatus,
   ParticipantType,
   Sport,
 } from '../domain/enums';
-import { DateTimeSchema, JsonObjectSchema, StringRecordSchema } from './common.dto';
+import { DateTimeSchema, StringRecordSchema } from './common.dto';
 
 // --- Response Sub-schemas ---
 
@@ -21,7 +20,6 @@ export const ParticipantDtoSchema = z.object({
     .enum([ParticipantType.INDIVIDUAL, ParticipantType.TEAM])
     .describe('Whether the participant is an individual or team.'),
   externalId: z.string().optional().describe('Primary provider identifier when one exists.'),
-  metadata: JsonObjectSchema.describe('Provider-normalized metadata retained for the participant.'),
   firstName: z.string().optional().describe('First name when the participant is a person.'),
   lastName: z.string().optional().describe('Last name when the participant is a person.'),
   shortName: z.string().optional().describe('Short-form display name for compact UI surfaces.'),
@@ -60,53 +58,6 @@ export const ParticipantDtoSchema = z.object({
   updatedAt: DateTimeSchema.describe('When the participant record was last updated.'),
 }).describe('Participant summary returned by participant-search and detail APIs.');
 export type ParticipantDto = z.infer<typeof ParticipantDtoSchema>;
-
-export const ParticipantSeasonRankingDtoSchema = z.object({
-  rankingType: z.string().describe('Ranking system name, such as world ranking or tour points.'),
-  rank: z.number().describe('Participant rank under the specified ranking system.'),
-  points: z.number().optional().describe('Optional ranking points associated with the ranking.'),
-  asOfDate: DateTimeSchema.describe('Date when the ranking snapshot was valid.'),
-}).describe('Single ranking snapshot for a participant season record.');
-
-export const ParticipantSeasonRecordDtoSchema = z.object({
-  id: z.string(),
-  participantId: z.string(),
-  sport: z.enum([
-    Sport.GOLF,
-    Sport.NFL,
-    Sport.NBA,
-    Sport.F1,
-    Sport.NASCAR,
-    Sport.NCAA_BASKETBALL,
-    Sport.NCAA_HOCKEY,
-    Sport.NCAA_FOOTBALL,
-    Sport.TENNIS,
-    Sport.HORSE_RACING,
-    Sport.SOCCER,
-    Sport.NHL,
-    Sport.MLB,
-    Sport.UFC,
-  ]),
-  season: z.string(),
-  rankings: z.array(ParticipantSeasonRankingDtoSchema).describe('Ranking snapshots associated with the season record.'),
-  budgetPrice: z.number().describe('Current budget-draft price for the participant.'),
-  priceTier: z.string().optional().describe('Optional price tier label derived for the participant.'),
-  priceUpdatedAt: DateTimeSchema.optional().describe('When the participant price was last refreshed.'),
-  eventsEntered: z.number().describe('How many events the participant entered in the season.'),
-  eventsCompleted: z.number().describe('How many events the participant completed in the season.'),
-  wins: z.number().describe('Season win count.'),
-  top5Finishes: z.number().describe('Top-five finish count for the season.'),
-  top10Finishes: z.number().describe('Top-ten finish count for the season.'),
-  top25Finishes: z.number().describe('Top-twenty-five finish count for the season.'),
-  seasonStats: z.record(z.number()).describe('Provider-normalized season statistics keyed by stat name.'),
-  formRating: z.number().describe('Derived form score used for participant valuation and sorting.'),
-  formTrend: z
-    .enum([FormTrend.RISING, FormTrend.STABLE, FormTrend.FALLING])
-    .describe('Trend direction for the participant recent form.'),
-  lastUpdated: DateTimeSchema.describe('When the season record source data was last refreshed.'),
-  createdAt: DateTimeSchema.describe('When the season record was created.'),
-  updatedAt: DateTimeSchema.describe('When the season record was last updated.'),
-}).describe('Participant season record used by draft-search and participant detail APIs.');
 
 export const DraftSearchFacetBucketDtoSchema = z.object({
   value: z.string().describe('Facet value returned by the draft search.'),
@@ -182,11 +133,3 @@ export type ParticipantListResponse = z.infer<typeof ParticipantListResponseSche
 export const ParticipantResponseSchema = z.object({
   participant: ParticipantDtoSchema,
 }).describe('Single-participant detail response.');
-
-export const ParticipantSeasonRecordResponseSchema = z.object({
-  seasonRecord: ParticipantSeasonRecordDtoSchema,
-}).describe('Single participant season-record response.');
-
-export const ParticipantSeasonRecordListResponseSchema = z.object({
-  seasonRecords: z.array(ParticipantSeasonRecordDtoSchema),
-}).describe('Participant season-record list response.');

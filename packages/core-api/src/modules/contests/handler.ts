@@ -4,7 +4,7 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import {
-  ContestType,
+  ContestFormat,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -67,7 +67,7 @@ const ContestConfigurationBodySchema = zod.object({
 const CreateContestBodySchema = zod.object({
   name: zod.string().min(1).max(100),
   eventId: zod.string().optional(),
-  contestType: zod.enum([ContestType.SINGLE_EVENT]),
+  contestFormat: zod.enum(Object.values(ContestFormat) as [string, ...string[]]),
   selectionType: zod.enum([
     SelectionType.SNAKE_DRAFT,
     SelectionType.TIERED,
@@ -130,7 +130,7 @@ export function createContestHandlers(contestService: ContestService) {
     logger.debug({
       leagueId: request.params.id,
       userId,
-      contestType: body.contestType,
+      contestFormat: body.contestFormat,
       selectionType: body.selectionType,
     }, 'contest create route start');
     try {
@@ -140,7 +140,7 @@ export function createContestHandlers(contestService: ContestService) {
         createdBy: userId,
         sportEventId: body.eventId,
         name: body.name,
-        contestType: body.contestType,
+        contestFormat: body.contestFormat as ContestFormat,
         selectionType: body.selectionType,
         contestConfiguration: mapContestConfiguration(body.contestConfiguration),
         scoringEngine: body.scoringEngine,

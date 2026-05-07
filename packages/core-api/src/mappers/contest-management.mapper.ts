@@ -8,7 +8,7 @@ export function mapContestConfigTemplateDto(
     id: template.id,
     sport: template.sport,
     eventType: template.eventType ?? null,
-    contestType: template.contestType,
+    contestFormat: template.contestFormat,
     configMode: template.configMode,
     templateKey: template.templateKey,
     name: template.name,

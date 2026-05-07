@@ -40,13 +40,13 @@ describe('ContestEntryScoringResultService', () => {
         totalScore: 16,
         participantScores: [
           {
-            rosterPickId: 'pick-1',
+            pickId: 'pick-1',
             pointsEarned: 16,
           },
         ],
         scoreEvents: [
           {
-            rosterPickId: 'pick-1',
+            pickId: 'pick-1',
             participantContestScoringRuleId: 'rule-1',
             points: 16,
             detailsJson: { round: 2 },
@@ -80,7 +80,7 @@ describe('ContestEntryScoringResultService', () => {
     expect(tx.contestEntryParticipantScore.create).toHaveBeenCalledWith({
       data: {
         entryId: 'entry-1',
-        rosterPickId: 'pick-1',
+        pickId: 'pick-1',
         pointsEarned: 16,
       },
     });
@@ -155,13 +155,13 @@ describe('ContestEntryScoringResultService', () => {
           totalScore: 16,
           participantScores: [
             {
-              rosterPickId: 'pick-1',
+              pickId: 'pick-1',
               pointsEarned: 16,
             },
           ],
           scoreEvents: [
             {
-              rosterPickId: 'pick-missing',
+              pickId: 'pick-missing',
               participantContestScoringRuleId: 'rule-1',
               points: 16,
               detailsJson: { round: 2 },

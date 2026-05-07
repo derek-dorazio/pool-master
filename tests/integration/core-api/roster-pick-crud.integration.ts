@@ -56,7 +56,6 @@ describe('RosterPick CRUD integration', () => {
       data: {
         name: `Roster Pick CRUD Sport ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
-        statSchema: {},
       },
     });
 
@@ -66,7 +65,6 @@ describe('RosterPick CRUD integration', () => {
         name: `Tiger Roster Pick CRUD ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
-        metadata: {},
         position: 'GOLFER',
         teamAffiliation: null,
       },
@@ -101,7 +99,7 @@ describe('RosterPick CRUD integration', () => {
       payload: {
         name: 'Roster Pick CRUD Contest',
         sportEventId: sportEvent.id,
-        contestType: 'SINGLE_EVENT',
+        contestFormat: 'ROSTER',
         configuration: {
           mode: 'GOLF_TIERED',
           locksAt: entryLocksAt,
@@ -150,57 +148,59 @@ describe('RosterPick CRUD integration', () => {
   it('creates, reads, updates, rejects duplicates, and deletes a roster pick', async () => {
     const prisma = getPrisma();
 
-    const createdPick = await prisma.rosterPick.create({
+    const createdPick = await prisma.contestEntryPick.create({
       data: {
         entryId,
         sportEventParticipantId,
         draftRound: 1,
         draftPickNumber: 1,
         pickedAt: new Date('2026-04-10T12:05:00.000Z'),
-        autoPicked: false,
+        contestFormat: 'ROSTER',
+      isAutoPicked: false,
       },
     });
 
     expect(createdPick.entryId).toBe(entryId);
     expect(createdPick.sportEventParticipantId).toBe(sportEventParticipantId);
-    expect(createdPick.autoPicked).toBe(false);
+    expect(createdPick.isAutoPicked).toBe(false);
 
-    const readBack = await prisma.rosterPick.findUniqueOrThrow({
+    const readBack = await prisma.contestEntryPick.findUniqueOrThrow({
       where: { id: createdPick.id },
     });
     expect(readBack.id).toBe(createdPick.id);
-    expect(await prisma.rosterPick.findMany({ where: { entryId } })).toHaveLength(1);
+    expect(await prisma.contestEntryPick.findMany({ where: { entryId } })).toHaveLength(1);
 
-    const updatedPick = await prisma.rosterPick.update({
+    const updatedPick = await prisma.contestEntryPick.update({
       where: { id: createdPick.id },
       data: {
         draftRound: 2,
         draftPickNumber: 3,
-        autoPicked: true,
+        isAutoPicked: true,
       },
     });
 
     expect(updatedPick.draftRound).toBe(2);
     expect(updatedPick.draftPickNumber).toBe(3);
-    expect(updatedPick.autoPicked).toBe(true);
+    expect(updatedPick.isAutoPicked).toBe(true);
 
     await expect(
-      prisma.rosterPick.create({
+      prisma.contestEntryPick.create({
         data: {
           entryId,
           sportEventParticipantId,
           draftRound: 3,
           draftPickNumber: 4,
           pickedAt: new Date('2026-04-10T12:06:00.000Z'),
-          autoPicked: false,
+          contestFormat: 'ROSTER',
+      isAutoPicked: false,
         },
       }),
     ).rejects.toMatchObject({
       code: 'P2002',
     });
 
-    await prisma.rosterPick.delete({ where: { id: createdPick.id } });
-    expect(await prisma.rosterPick.findUnique({ where: { id: createdPick.id } })).toBeNull();
-    expect(await prisma.rosterPick.findMany({ where: { entryId } })).toHaveLength(0);
+    await prisma.contestEntryPick.delete({ where: { id: createdPick.id } });
+    expect(await prisma.contestEntryPick.findUnique({ where: { id: createdPick.id } })).toBeNull();
+    expect(await prisma.contestEntryPick.findMany({ where: { entryId } })).toHaveLength(0);
   });
 });

@@ -57,13 +57,13 @@ export function RootAdminContentConfigurationListPage() {
         ),
       }),
       columnHelper.accessor(
-        (template) => `${template.sport} ${template.contestType}`,
+        (template) => `${template.sport} ${template.contestFormat}`,
         {
           id: 'scope',
           header: 'Scope',
           cell: ({ row }) => (
             <span className="text-muted-foreground">
-              {row.original.sport} · {row.original.contestType}
+              {row.original.sport} · {row.original.contestFormat}
             </span>
           ),
         },

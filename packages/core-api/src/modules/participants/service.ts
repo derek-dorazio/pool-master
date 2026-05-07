@@ -1,17 +1,15 @@
 /**
- * ParticipantService — participant CRUD, search, and season record management.
+ * ParticipantService — participant CRUD and search.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ParticipantRepository,
-  ParticipantSeasonRecordRepository,
   ParticipantProviderMappingRepository,
   ParticipantSearchFilters,
 } from '@poolmaster/shared/db';
 import type {
   Participant,
-  ParticipantSeasonRecord,
   ParticipantProviderMapping,
   InjuryStatus,
 } from '@poolmaster/shared/domain';
@@ -31,7 +29,6 @@ export interface CreateParticipantInput {
   nationality?: string;
   position?: string;
   teamAffiliation?: string;
-  metadata?: Record<string, unknown>;
   externalIds?: Record<string, string>;
 }
 
@@ -46,7 +43,6 @@ export interface UpdateParticipantInput {
   status?: Participant['status'];
   injuryStatus?: InjuryStatus;
   photoUrl?: string;
-  metadata?: Record<string, unknown>;
   externalIds?: Record<string, string>;
 }
 
@@ -68,7 +64,6 @@ const MAX_SEARCH_LIMIT = 200;
 export class ParticipantService {
   constructor(
     private readonly participantRepo: ParticipantRepository,
-    private readonly seasonRecordRepo: ParticipantSeasonRecordRepository,
     private readonly providerMappingRepo: ParticipantProviderMappingRepository,
     private readonly logger?: FastifyBaseLogger,
   ) {}
@@ -160,7 +155,6 @@ export class ParticipantService {
         status: ParticipantStatus.ACTIVE,
         injuryStatus: DEFAULT_INJURY_STATUS,
         externalIds: input.externalIds ?? {},
-        metadata: input.metadata ?? {},
       });
 
       this.logger?.info(
@@ -244,96 +238,6 @@ export class ParticipantService {
       );
       throw error;
     }
-  }
-
-  // --- Season Records ---
-
-  async getSeasonRecord(
-    participantId: string,
-    season: string,
-  ): Promise<ParticipantSeasonRecord | null> {
-    this.logger?.debug(
-      {
-        action: 'participants.season_record.get.start',
-        data: {
-          participantId,
-          season,
-        },
-      },
-      'Fetching participant season record',
-    );
-    try {
-      const record = await this.seasonRecordRepo.findByParticipantAndSeason(participantId, season);
-      this.logger?.info(
-        {
-          action: 'participants.season_record.get.complete',
-          data: {
-            participantId,
-            season,
-            found: record !== null,
-          },
-        },
-        'Fetched participant season record',
-      );
-      return record;
-    } catch (error) {
-      this.logger?.error(
-        {
-          action: 'participants.season_record.get.failed',
-          err: error,
-          data: {
-            participantId,
-            season,
-          },
-        },
-        'Failed to fetch participant season record',
-      );
-      throw error;
-    }
-  }
-
-  async getSeasonRecords(participantId: string): Promise<ParticipantSeasonRecord[]> {
-    this.logger?.debug(
-      {
-        action: 'participants.season_records.list.start',
-        data: {
-          participantId,
-        },
-      },
-      'Listing participant season records',
-    );
-    try {
-      const records = await this.seasonRecordRepo.findByParticipant(participantId);
-      this.logger?.info(
-        {
-          action: 'participants.season_records.list.success',
-          data: {
-            participantId,
-            count: records.length,
-          },
-        },
-        'Listed participant season records',
-      );
-      return records;
-    } catch (error) {
-      this.logger?.error(
-        {
-          action: 'participants.season_records.list.failed',
-          err: error,
-          data: {
-            participantId,
-          },
-        },
-        'Failed to list participant season records',
-      );
-      throw error;
-    }
-  }
-
-  async upsertSeasonRecord(
-    record: Omit<ParticipantSeasonRecord, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<ParticipantSeasonRecord> {
-    return this.seasonRecordRepo.upsert(record);
   }
 
   // --- Provider Mappings ---

@@ -11199,10 +11199,14 @@
                               "CANCELLED"
                             ]
                           },
-                          "contestType": {
+                          "contestFormat": {
                             "type": "string",
                             "enum": [
-                              "SINGLE_EVENT"
+                              "ROSTER",
+                              "BRACKET",
+                              "PICKEM_CONFIDENCE",
+                              "SURVIVOR",
+                              "PREDICT_TOP_N"
                             ]
                           },
                           "selectionType": {
@@ -11266,7 +11270,7 @@
                           "id",
                           "name",
                           "status",
-                          "contestType",
+                          "contestFormat",
                           "selectionType",
                           "scoringEngine",
                           "leagueId"
@@ -11309,10 +11313,14 @@
                   "eventId": {
                     "type": "string"
                   },
-                  "contestType": {
+                  "contestFormat": {
                     "type": "string",
                     "enum": [
-                      "SINGLE_EVENT"
+                      "ROSTER",
+                      "BRACKET",
+                      "PICKEM_CONFIDENCE",
+                      "SURVIVOR",
+                      "PREDICT_TOP_N"
                     ]
                   },
                   "selectionType": {
@@ -11490,7 +11498,7 @@
                 },
                 "required": [
                   "name",
-                  "contestType",
+                  "contestFormat",
                   "selectionType",
                   "scoringEngine"
                 ],
@@ -11540,10 +11548,14 @@
                             "CANCELLED"
                           ]
                         },
-                        "contestType": {
+                        "contestFormat": {
                           "type": "string",
                           "enum": [
-                            "SINGLE_EVENT"
+                            "ROSTER",
+                            "BRACKET",
+                            "PICKEM_CONFIDENCE",
+                            "SURVIVOR",
+                            "PREDICT_TOP_N"
                           ]
                         },
                         "selectionType": {
@@ -11615,7 +11627,7 @@
                         "id",
                         "name",
                         "status",
-                        "contestType",
+                        "contestFormat",
                         "selectionType",
                         "scoringEngine",
                         "leagueId"
@@ -12050,11 +12062,15 @@
             "schema": {
               "type": "string",
               "enum": [
-                "SINGLE_EVENT"
+                "ROSTER",
+                "BRACKET",
+                "PICKEM_CONFIDENCE",
+                "SURVIVOR",
+                "PREDICT_TOP_N"
               ]
             },
             "in": "query",
-            "name": "contestType",
+            "name": "contestFormat",
             "required": true,
             "description": "Contest type to filter templates by."
           },
@@ -12119,10 +12135,14 @@
                             "nullable": true,
                             "description": "Optional event-type scope for the template."
                           },
-                          "contestType": {
+                          "contestFormat": {
                             "type": "string",
                             "enum": [
-                              "SINGLE_EVENT"
+                              "ROSTER",
+                              "BRACKET",
+                              "PICKEM_CONFIDENCE",
+                              "SURVIVOR",
+                              "PREDICT_TOP_N"
                             ],
                             "description": "Contest type that may use the template."
                           },
@@ -12455,7 +12475,7 @@
                         "required": [
                           "id",
                           "sport",
-                          "contestType",
+                          "contestFormat",
                           "configMode",
                           "templateKey",
                           "name",
@@ -12628,10 +12648,14 @@
                         "format": "uuid",
                         "description": "Sport-event identifier that anchors the contest."
                       },
-                      "contestType": {
+                      "contestFormat": {
                         "type": "string",
                         "enum": [
-                          "SINGLE_EVENT"
+                          "ROSTER",
+                          "BRACKET",
+                          "PICKEM_CONFIDENCE",
+                          "SURVIVOR",
+                          "PREDICT_TOP_N"
                         ]
                       },
                       "configuration": {
@@ -12927,7 +12951,7 @@
                     "required": [
                       "name",
                       "sportEventId",
-                      "contestType",
+                      "contestFormat",
                       "configuration"
                     ],
                     "additionalProperties": false,
@@ -12947,10 +12971,14 @@
                         "format": "uuid",
                         "description": "Sport-event identifier that anchors the contest."
                       },
-                      "contestType": {
+                      "contestFormat": {
                         "type": "string",
                         "enum": [
-                          "SINGLE_EVENT"
+                          "ROSTER",
+                          "BRACKET",
+                          "PICKEM_CONFIDENCE",
+                          "SURVIVOR",
+                          "PREDICT_TOP_N"
                         ]
                       },
                       "templateId": {
@@ -13251,7 +13279,7 @@
                     "required": [
                       "name",
                       "sportEventId",
-                      "contestType",
+                      "contestFormat",
                       "templateId"
                     ],
                     "additionalProperties": false,
@@ -15365,10 +15393,14 @@
                             "CANCELLED"
                           ]
                         },
-                        "contestType": {
+                        "contestFormat": {
                           "type": "string",
                           "enum": [
-                            "SINGLE_EVENT"
+                            "ROSTER",
+                            "BRACKET",
+                            "PICKEM_CONFIDENCE",
+                            "SURVIVOR",
+                            "PREDICT_TOP_N"
                           ]
                         },
                         "selectionType": {
@@ -15440,7 +15472,7 @@
                         "id",
                         "name",
                         "status",
-                        "contestType",
+                        "contestFormat",
                         "selectionType",
                         "scoringEngine",
                         "leagueId"
@@ -15879,10 +15911,14 @@
                             "CANCELLED"
                           ]
                         },
-                        "contestType": {
+                        "contestFormat": {
                           "type": "string",
                           "enum": [
-                            "SINGLE_EVENT"
+                            "ROSTER",
+                            "BRACKET",
+                            "PICKEM_CONFIDENCE",
+                            "SURVIVOR",
+                            "PREDICT_TOP_N"
                           ]
                         },
                         "selectionType": {
@@ -15954,7 +15990,7 @@
                         "id",
                         "name",
                         "status",
-                        "contestType",
+                        "contestFormat",
                         "selectionType",
                         "scoringEngine",
                         "leagueId"
@@ -16592,7 +16628,7 @@
                             "items": {
                               "type": "object",
                               "properties": {
-                                "rosterPickId": {
+                                "pickId": {
                                   "type": "string"
                                 },
                                 "sportEventParticipantId": {
@@ -16632,7 +16668,7 @@
                                 }
                               },
                               "required": [
-                                "rosterPickId",
+                                "pickId",
                                 "sportEventParticipantId",
                                 "participantId",
                                 "participantName",
@@ -16866,7 +16902,7 @@
                           "items": {
                             "type": "object",
                             "properties": {
-                              "rosterPickId": {
+                              "pickId": {
                                 "type": "string"
                               },
                               "sportEventParticipantId": {
@@ -16906,7 +16942,7 @@
                               }
                             },
                             "required": [
-                              "rosterPickId",
+                              "pickId",
                               "sportEventParticipantId",
                               "participantId",
                               "participantName",
@@ -18311,10 +18347,14 @@
                             "CANCELLED"
                           ]
                         },
-                        "contestType": {
+                        "contestFormat": {
                           "type": "string",
                           "enum": [
-                            "SINGLE_EVENT"
+                            "ROSTER",
+                            "BRACKET",
+                            "PICKEM_CONFIDENCE",
+                            "SURVIVOR",
+                            "PREDICT_TOP_N"
                           ]
                         },
                         "selectionType": {
@@ -18386,7 +18426,7 @@
                         "id",
                         "name",
                         "status",
-                        "contestType",
+                        "contestFormat",
                         "selectionType",
                         "scoringEngine",
                         "leagueId"
@@ -18774,10 +18814,14 @@
                             "CANCELLED"
                           ]
                         },
-                        "contestType": {
+                        "contestFormat": {
                           "type": "string",
                           "enum": [
-                            "SINGLE_EVENT"
+                            "ROSTER",
+                            "BRACKET",
+                            "PICKEM_CONFIDENCE",
+                            "SURVIVOR",
+                            "PREDICT_TOP_N"
                           ]
                         },
                         "selectionType": {
@@ -18849,7 +18893,7 @@
                         "id",
                         "name",
                         "status",
-                        "contestType",
+                        "contestFormat",
                         "selectionType",
                         "scoringEngine",
                         "leagueId"
@@ -19243,10 +19287,14 @@
                             "CANCELLED"
                           ]
                         },
-                        "contestType": {
+                        "contestFormat": {
                           "type": "string",
                           "enum": [
-                            "SINGLE_EVENT"
+                            "ROSTER",
+                            "BRACKET",
+                            "PICKEM_CONFIDENCE",
+                            "SURVIVOR",
+                            "PREDICT_TOP_N"
                           ]
                         },
                         "selectionType": {
@@ -19318,7 +19366,7 @@
                         "id",
                         "name",
                         "status",
-                        "contestType",
+                        "contestFormat",
                         "selectionType",
                         "scoringEngine",
                         "leagueId"
@@ -19712,10 +19760,14 @@
                             "CANCELLED"
                           ]
                         },
-                        "contestType": {
+                        "contestFormat": {
                           "type": "string",
                           "enum": [
-                            "SINGLE_EVENT"
+                            "ROSTER",
+                            "BRACKET",
+                            "PICKEM_CONFIDENCE",
+                            "SURVIVOR",
+                            "PREDICT_TOP_N"
                           ]
                         },
                         "selectionType": {
@@ -19787,7 +19839,7 @@
                         "id",
                         "name",
                         "status",
-                        "contestType",
+                        "contestFormat",
                         "selectionType",
                         "scoringEngine",
                         "leagueId"
@@ -20529,11 +20581,6 @@
                             "type": "string",
                             "description": "Primary provider identifier when one exists."
                           },
-                          "metadata": {
-                            "type": "object",
-                            "additionalProperties": {},
-                            "description": "Provider-normalized metadata retained for the participant."
-                          },
                           "firstName": {
                             "type": "string",
                             "description": "First name when the participant is a person."
@@ -20644,7 +20691,6 @@
                           "sportId",
                           "name",
                           "participantType",
-                          "metadata",
                           "status",
                           "injuryStatus",
                           "externalIds",
@@ -20735,9 +20781,6 @@
                     "type": "string",
                     "maxLength": 255
                   },
-                  "metadata": {
-                    "type": "object"
-                  },
                   "externalIds": {
                     "type": "object"
                   }
@@ -20780,11 +20823,6 @@
                         "externalId": {
                           "type": "string",
                           "description": "Primary provider identifier when one exists."
-                        },
-                        "metadata": {
-                          "type": "object",
-                          "additionalProperties": {},
-                          "description": "Provider-normalized metadata retained for the participant."
                         },
                         "firstName": {
                           "type": "string",
@@ -20896,7 +20934,6 @@
                         "sportId",
                         "name",
                         "participantType",
-                        "metadata",
                         "status",
                         "injuryStatus",
                         "externalIds",
@@ -20972,11 +21009,6 @@
                           "type": "string",
                           "description": "Primary provider identifier when one exists."
                         },
-                        "metadata": {
-                          "type": "object",
-                          "additionalProperties": {},
-                          "description": "Provider-normalized metadata retained for the participant."
-                        },
                         "firstName": {
                           "type": "string",
                           "description": "First name when the participant is a person."
@@ -21087,7 +21119,6 @@
                         "sportId",
                         "name",
                         "participantType",
-                        "metadata",
                         "status",
                         "injuryStatus",
                         "externalIds",
@@ -21206,9 +21237,6 @@
                   "photoUrl": {
                     "type": "string"
                   },
-                  "metadata": {
-                    "type": "object"
-                  },
                   "externalIds": {
                     "type": "object"
                   }
@@ -21261,11 +21289,6 @@
                         "externalId": {
                           "type": "string",
                           "description": "Primary provider identifier when one exists."
-                        },
-                        "metadata": {
-                          "type": "object",
-                          "additionalProperties": {},
-                          "description": "Provider-normalized metadata retained for the participant."
                         },
                         "firstName": {
                           "type": "string",
@@ -21377,7 +21400,6 @@
                         "sportId",
                         "name",
                         "participantType",
-                        "metadata",
                         "status",
                         "injuryStatus",
                         "externalIds",
@@ -21393,454 +21415,6 @@
                   ],
                   "additionalProperties": false,
                   "description": "Single-participant detail response."
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable machine-readable error code."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable error summary safe to show to clients."
-                        },
-                        "details": {
-                          "description": "Optional structured details for client-specific handling or diagnostics."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Error payload object."
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Standard API error envelope."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/participants/{id}/seasons": {
-      "get": {
-        "operationId": "getParticipantSeasonRecords",
-        "summary": "Get all season records for a participant",
-        "tags": [
-          "Participants"
-        ],
-        "description": "Returns every stored season record for the participant so history and scoring surfaces can inspect longitudinal performance.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Participant season-record list response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "seasonRecords": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "participantId": {
-                            "type": "string"
-                          },
-                          "sport": {
-                            "type": "string",
-                            "enum": [
-                              "GOLF",
-                              "NFL",
-                              "NBA",
-                              "F1",
-                              "NASCAR",
-                              "NCAA_BASKETBALL",
-                              "NCAA_HOCKEY",
-                              "NCAA_FOOTBALL",
-                              "TENNIS",
-                              "HORSE_RACING",
-                              "SOCCER",
-                              "NHL",
-                              "MLB",
-                              "UFC"
-                            ]
-                          },
-                          "season": {
-                            "type": "string"
-                          },
-                          "rankings": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "rankingType": {
-                                  "type": "string",
-                                  "description": "Ranking system name, such as world ranking or tour points."
-                                },
-                                "rank": {
-                                  "type": "number",
-                                  "description": "Participant rank under the specified ranking system."
-                                },
-                                "points": {
-                                  "type": "number",
-                                  "description": "Optional ranking points associated with the ranking."
-                                },
-                                "asOfDate": {
-                                  "type": "string",
-                                  "format": "date-time",
-                                  "description": "Date when the ranking snapshot was valid."
-                                }
-                              },
-                              "required": [
-                                "rankingType",
-                                "rank",
-                                "asOfDate"
-                              ],
-                              "additionalProperties": false,
-                              "description": "Single ranking snapshot for a participant season record."
-                            },
-                            "description": "Ranking snapshots associated with the season record."
-                          },
-                          "budgetPrice": {
-                            "type": "number",
-                            "description": "Current budget-draft price for the participant."
-                          },
-                          "priceTier": {
-                            "type": "string",
-                            "description": "Optional price tier label derived for the participant."
-                          },
-                          "priceUpdatedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the participant price was last refreshed."
-                          },
-                          "eventsEntered": {
-                            "type": "number",
-                            "description": "How many events the participant entered in the season."
-                          },
-                          "eventsCompleted": {
-                            "type": "number",
-                            "description": "How many events the participant completed in the season."
-                          },
-                          "wins": {
-                            "type": "number",
-                            "description": "Season win count."
-                          },
-                          "top5Finishes": {
-                            "type": "number",
-                            "description": "Top-five finish count for the season."
-                          },
-                          "top10Finishes": {
-                            "type": "number",
-                            "description": "Top-ten finish count for the season."
-                          },
-                          "top25Finishes": {
-                            "type": "number",
-                            "description": "Top-twenty-five finish count for the season."
-                          },
-                          "seasonStats": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "type": "number"
-                            },
-                            "description": "Provider-normalized season statistics keyed by stat name."
-                          },
-                          "formRating": {
-                            "type": "number",
-                            "description": "Derived form score used for participant valuation and sorting."
-                          },
-                          "formTrend": {
-                            "type": "string",
-                            "enum": [
-                              "RISING",
-                              "STABLE",
-                              "FALLING"
-                            ],
-                            "description": "Trend direction for the participant recent form."
-                          },
-                          "lastUpdated": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the season record source data was last refreshed."
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the season record was created."
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the season record was last updated."
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "participantId",
-                          "sport",
-                          "season",
-                          "rankings",
-                          "budgetPrice",
-                          "eventsEntered",
-                          "eventsCompleted",
-                          "wins",
-                          "top5Finishes",
-                          "top10Finishes",
-                          "top25Finishes",
-                          "seasonStats",
-                          "formRating",
-                          "formTrend",
-                          "lastUpdated",
-                          "createdAt",
-                          "updatedAt"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Participant season record used by draft-search and participant detail APIs."
-                      }
-                    }
-                  },
-                  "required": [
-                    "seasonRecords"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Participant season-record list response."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/participants/{id}/seasons/{season}": {
-      "get": {
-        "operationId": "getParticipantSeasonRecord",
-        "summary": "Get a specific season record for a participant",
-        "tags": [
-          "Participants"
-        ],
-        "description": "Returns the participant season record for a specific season value.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "season",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Single participant season-record response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "seasonRecord": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "participantId": {
-                          "type": "string"
-                        },
-                        "sport": {
-                          "type": "string",
-                          "enum": [
-                            "GOLF",
-                            "NFL",
-                            "NBA",
-                            "F1",
-                            "NASCAR",
-                            "NCAA_BASKETBALL",
-                            "NCAA_HOCKEY",
-                            "NCAA_FOOTBALL",
-                            "TENNIS",
-                            "HORSE_RACING",
-                            "SOCCER",
-                            "NHL",
-                            "MLB",
-                            "UFC"
-                          ]
-                        },
-                        "season": {
-                          "type": "string"
-                        },
-                        "rankings": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "rankingType": {
-                                "type": "string",
-                                "description": "Ranking system name, such as world ranking or tour points."
-                              },
-                              "rank": {
-                                "type": "number",
-                                "description": "Participant rank under the specified ranking system."
-                              },
-                              "points": {
-                                "type": "number",
-                                "description": "Optional ranking points associated with the ranking."
-                              },
-                              "asOfDate": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "Date when the ranking snapshot was valid."
-                              }
-                            },
-                            "required": [
-                              "rankingType",
-                              "rank",
-                              "asOfDate"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Single ranking snapshot for a participant season record."
-                          },
-                          "description": "Ranking snapshots associated with the season record."
-                        },
-                        "budgetPrice": {
-                          "type": "number",
-                          "description": "Current budget-draft price for the participant."
-                        },
-                        "priceTier": {
-                          "type": "string",
-                          "description": "Optional price tier label derived for the participant."
-                        },
-                        "priceUpdatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the participant price was last refreshed."
-                        },
-                        "eventsEntered": {
-                          "type": "number",
-                          "description": "How many events the participant entered in the season."
-                        },
-                        "eventsCompleted": {
-                          "type": "number",
-                          "description": "How many events the participant completed in the season."
-                        },
-                        "wins": {
-                          "type": "number",
-                          "description": "Season win count."
-                        },
-                        "top5Finishes": {
-                          "type": "number",
-                          "description": "Top-five finish count for the season."
-                        },
-                        "top10Finishes": {
-                          "type": "number",
-                          "description": "Top-ten finish count for the season."
-                        },
-                        "top25Finishes": {
-                          "type": "number",
-                          "description": "Top-twenty-five finish count for the season."
-                        },
-                        "seasonStats": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "type": "number"
-                          },
-                          "description": "Provider-normalized season statistics keyed by stat name."
-                        },
-                        "formRating": {
-                          "type": "number",
-                          "description": "Derived form score used for participant valuation and sorting."
-                        },
-                        "formTrend": {
-                          "type": "string",
-                          "enum": [
-                            "RISING",
-                            "STABLE",
-                            "FALLING"
-                          ],
-                          "description": "Trend direction for the participant recent form."
-                        },
-                        "lastUpdated": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the season record source data was last refreshed."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the season record was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the season record was last updated."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "participantId",
-                        "sport",
-                        "season",
-                        "rankings",
-                        "budgetPrice",
-                        "eventsEntered",
-                        "eventsCompleted",
-                        "wins",
-                        "top5Finishes",
-                        "top10Finishes",
-                        "top25Finishes",
-                        "seasonStats",
-                        "formRating",
-                        "formTrend",
-                        "lastUpdated",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Participant season record used by draft-search and participant detail APIs."
-                    }
-                  },
-                  "required": [
-                    "seasonRecord"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Single participant season-record response."
                 }
               }
             }
@@ -28350,11 +27924,15 @@
             "schema": {
               "type": "string",
               "enum": [
-                "SINGLE_EVENT"
+                "ROSTER",
+                "BRACKET",
+                "PICKEM_CONFIDENCE",
+                "SURVIVOR",
+                "PREDICT_TOP_N"
               ]
             },
             "in": "query",
-            "name": "contestType",
+            "name": "contestFormat",
             "required": false,
             "description": "Optional contest-type filter for root-admin contest template management."
           },
@@ -28411,10 +27989,14 @@
                             "nullable": true,
                             "description": "Optional event-type scope for the template."
                           },
-                          "contestType": {
+                          "contestFormat": {
                             "type": "string",
                             "enum": [
-                              "SINGLE_EVENT"
+                              "ROSTER",
+                              "BRACKET",
+                              "PICKEM_CONFIDENCE",
+                              "SURVIVOR",
+                              "PREDICT_TOP_N"
                             ],
                             "description": "Contest type that may use the template."
                           },
@@ -28747,7 +28329,7 @@
                         "required": [
                           "id",
                           "sport",
-                          "contestType",
+                          "contestFormat",
                           "configMode",
                           "templateKey",
                           "name",
@@ -29203,10 +28785,14 @@
                           "nullable": true,
                           "description": "Optional event-type scope for the template."
                         },
-                        "contestType": {
+                        "contestFormat": {
                           "type": "string",
                           "enum": [
-                            "SINGLE_EVENT"
+                            "ROSTER",
+                            "BRACKET",
+                            "PICKEM_CONFIDENCE",
+                            "SURVIVOR",
+                            "PREDICT_TOP_N"
                           ],
                           "description": "Contest type that may use the template."
                         },
@@ -29539,7 +29125,7 @@
                       "required": [
                         "id",
                         "sport",
-                        "contestType",
+                        "contestFormat",
                         "configMode",
                         "templateKey",
                         "name",

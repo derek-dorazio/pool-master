@@ -4,7 +4,7 @@
 import { z } from 'zod';
 import {
   ContestStatus,
-  ContestType,
+  ContestFormat,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -54,7 +54,7 @@ export const ContestCrudConfigurationRequestSchema = z.object({
 export const CreateContestRequestSchema = z.object({
   name: z.string().min(1).max(100),
   eventId: z.string().optional(),
-  contestType: z.enum([ContestType.SINGLE_EVENT]),
+  contestFormat: z.enum(Object.values(ContestFormat) as [string, ...string[]]),
   selectionType: z.enum([
     SelectionType.SNAKE_DRAFT,
     SelectionType.TIERED,
@@ -154,7 +154,7 @@ export const ContestSummaryDtoSchema = z.object({
     ContestStatus.COMPLETED,
     ContestStatus.CANCELLED,
   ]),
-  contestType: z.enum([ContestType.SINGLE_EVENT]),
+  contestFormat: z.enum(Object.values(ContestFormat) as [string, ...string[]]),
   selectionType: z.enum([
     SelectionType.SNAKE_DRAFT,
     SelectionType.TIERED,
@@ -209,7 +209,7 @@ export const ContestEntryDtoSchema = z.object({
 export type ContestEntryDto = z.infer<typeof ContestEntryDtoSchema>;
 
 export const ContestEntryParticipantDetailDtoSchema = z.object({
-  rosterPickId: z.string(),
+  pickId: z.string(),
   sportEventParticipantId: z.string(),
   participantId: z.string(),
   participantName: z.string(),

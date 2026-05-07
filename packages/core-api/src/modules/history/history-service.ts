@@ -56,7 +56,7 @@ export class HistoryService {
       contestId,
       contestName: first.contestName ?? '',
       sport: first.sport ?? '',
-      contestType: first.contestType ?? '',
+      contestFormat: first.contestFormat ?? '',
       startedAt: first.startedAt ?? undefined,
       endedAt: first.endedAt ?? undefined,
       numEntries: first.numEntries ?? results.length,
@@ -115,14 +115,11 @@ export class HistoryService {
     const entry = await this.prisma.contestEntry.findFirst({
       where: { id: entryId, contestId },
       include: {
-        rosterPicks: {
+        picks: {
           include: {
             sportEventParticipant: {
               include: {
                 participant: true,
-                sourceData: {
-                  orderBy: [{ receivedAt: 'desc' }, { createdAt: 'desc' }],
-                },
               },
             },
           },
@@ -139,8 +136,8 @@ export class HistoryService {
       contestId,
       entryId,
       entryName: entry.name,
-      rosterPicks: entry.rosterPicks.map((pick) => ({
-        rosterPickId: pick.id,
+      picks: entry.picks.map((pick) => ({
+        pickId: pick.id,
         sportEventParticipantId: pick.sportEventParticipantId,
         participantId: pick.sportEventParticipant.participantId,
         participantName: pick.sportEventParticipant.participant.name,
@@ -149,12 +146,13 @@ export class HistoryService {
         pickedAt: pick.pickedAt,
         draftRound: pick.draftRound ?? undefined,
         draftPickNumber: pick.draftPickNumber ?? undefined,
-        autoPicked: pick.autoPicked,
-        latestPerformance:
-          pick.sportEventParticipant.sourceData[0]?.normalizedData ?? {},
+        autoPicked: pick.isAutoPicked,
+        // latestPerformance — was sourced from dropped sportEventParticipantSourceData;
+        // rop.78.7 will rebuild via SportEventParticipantGolfRound + contribution table.
+        latestPerformance: {},
       })),
     };
-    this.logger.info({ contestId, entryId, rosterPickCount: rosterHistory.rosterPicks.length }, 'history get roster history completed');
+    this.logger.info({ contestId, entryId, pickCount: rosterHistory.picks.length }, 'history get roster history completed');
     return rosterHistory;
   }
 
@@ -336,7 +334,7 @@ export class HistoryService {
             leagueId: contest.leagueId,
             leagueMembershipId,
             contestName: contest.name,
-            contestType: contest.contestType,
+            contestFormat: contest.contestFormat,
             sport: contest.sportEvent?.sport ?? undefined,
             numEntries,
             startedAt: contest.startsAt ?? undefined,

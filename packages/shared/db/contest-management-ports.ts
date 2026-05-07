@@ -9,7 +9,6 @@ import type {
   ContestPrizeDefinition,
   ParticipantContestScoringRule,
   SportEventParticipant,
-  SportEventParticipantSourceData,
   SportEventParticipantValuation,
 } from '../domain';
 
@@ -36,23 +35,6 @@ export interface SportEventParticipantRepository {
     id: string,
     updates: Partial<SportEventParticipant>,
   ): Promise<SportEventParticipant>;
-}
-
-export interface SportEventParticipantSourceDataRepository {
-  findById(id: string): Promise<SportEventParticipantSourceData | null>;
-  findBySportEventParticipant(
-    sportEventParticipantId: string,
-  ): Promise<SportEventParticipantSourceData[]>;
-  create(
-    sourceData: Omit<
-      SportEventParticipantSourceData,
-      'id' | 'createdAt' | 'updatedAt'
-    >,
-  ): Promise<SportEventParticipantSourceData>;
-  update(
-    id: string,
-    updates: Partial<SportEventParticipantSourceData>,
-  ): Promise<SportEventParticipantSourceData>;
 }
 
 export interface SportEventParticipantValuationRepository {
@@ -88,13 +70,13 @@ export interface ContestConfigTemplateRepository {
   findById(id: string): Promise<ContestConfigTemplate | null>;
   list(input?: {
     sport?: ContestConfigTemplate['sport'];
-    contestType?: ContestConfigTemplate['contestType'];
+    contestFormat?: ContestConfigTemplate['contestFormat'];
     eventType?: string | null;
     active?: boolean;
   }): Promise<ContestConfigTemplate[]>;
-  listBySportAndContestType(input: {
+  listBySportAndContestFormat(input: {
     sport: ContestConfigTemplate['sport'];
-    contestType: ContestConfigTemplate['contestType'];
+    contestFormat: ContestConfigTemplate['contestFormat'];
     eventType?: string | null;
   }): Promise<ContestConfigTemplate[]>;
   update(

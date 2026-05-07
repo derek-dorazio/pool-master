@@ -32,14 +32,14 @@ describe('Contest scoring result persistence integration', () => {
 
     const score = await scoreRepo.create({
       entryId: fixture.entry.id,
-      rosterPickId: fixture.rosterPick.id,
+      pickId: fixture.rosterPick.id,
       pointsEarned: 4,
     });
 
     expect(await scoreRepo.findById(score.id)).toMatchObject({
       id: score.id,
       entryId: fixture.entry.id,
-      rosterPickId: fixture.rosterPick.id,
+      pickId: fixture.rosterPick.id,
       pointsEarned: 4,
     });
 
@@ -93,7 +93,7 @@ describe('Contest scoring result persistence integration', () => {
     const awardRepo = new PrismaContestEntryPrizeAwardRepository(prisma);
 
     const firstResult = scoreContestEntry({
-      rosterPicks: [
+      picks: [
         {
           id: fixture.rosterPick.id,
           sportEventParticipantId: fixture.sportEventParticipant.id,
@@ -142,7 +142,7 @@ describe('Contest scoring result persistence integration', () => {
     expect((await awardRepo.findByEntry(fixture.entry.id))[0]?.amount).toBe(150);
 
     const correctedResult = scoreContestEntry({
-      rosterPicks: [
+      picks: [
         {
           id: fixture.rosterPick.id,
           sportEventParticipantId: fixture.sportEventParticipant.id,
@@ -210,7 +210,6 @@ async function createScoringFixture() {
     data: {
       name: `Scoring Sport ${randomUUID().slice(0, 8)}`,
       participantType: 'TEAM',
-      statSchema: {},
     },
   });
 
@@ -268,7 +267,7 @@ async function createScoringFixture() {
       sportEventId: sportEvent.id,
       name: 'Scoring Integration Contest',
       status: 'DRAFT',
-      contestType: 'SINGLE_EVENT',
+      contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       scoringEngine: 'REGISTRY',
     },
@@ -356,11 +355,12 @@ async function createScoringFixture() {
     },
   });
 
-  const rosterPick = await prisma.rosterPick.create({
+  const rosterPick = await prisma.contestEntryPick.create({
     data: {
       entryId: entry.id,
       sportEventParticipantId: sportEventParticipant.id,
-      autoPicked: false,
+      contestFormat: 'ROSTER',
+      isAutoPicked: false,
     },
   });
 
