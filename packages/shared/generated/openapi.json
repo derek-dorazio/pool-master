@@ -20581,11 +20581,6 @@
                             "type": "string",
                             "description": "Primary provider identifier when one exists."
                           },
-                          "metadata": {
-                            "type": "object",
-                            "additionalProperties": {},
-                            "description": "Provider-normalized metadata retained for the participant."
-                          },
                           "firstName": {
                             "type": "string",
                             "description": "First name when the participant is a person."
@@ -20696,7 +20691,6 @@
                           "sportId",
                           "name",
                           "participantType",
-                          "metadata",
                           "status",
                           "injuryStatus",
                           "externalIds",
@@ -20830,11 +20824,6 @@
                           "type": "string",
                           "description": "Primary provider identifier when one exists."
                         },
-                        "metadata": {
-                          "type": "object",
-                          "additionalProperties": {},
-                          "description": "Provider-normalized metadata retained for the participant."
-                        },
                         "firstName": {
                           "type": "string",
                           "description": "First name when the participant is a person."
@@ -20945,7 +20934,6 @@
                         "sportId",
                         "name",
                         "participantType",
-                        "metadata",
                         "status",
                         "injuryStatus",
                         "externalIds",
@@ -21021,11 +21009,6 @@
                           "type": "string",
                           "description": "Primary provider identifier when one exists."
                         },
-                        "metadata": {
-                          "type": "object",
-                          "additionalProperties": {},
-                          "description": "Provider-normalized metadata retained for the participant."
-                        },
                         "firstName": {
                           "type": "string",
                           "description": "First name when the participant is a person."
@@ -21136,7 +21119,6 @@
                         "sportId",
                         "name",
                         "participantType",
-                        "metadata",
                         "status",
                         "injuryStatus",
                         "externalIds",
@@ -21308,11 +21290,6 @@
                           "type": "string",
                           "description": "Primary provider identifier when one exists."
                         },
-                        "metadata": {
-                          "type": "object",
-                          "additionalProperties": {},
-                          "description": "Provider-normalized metadata retained for the participant."
-                        },
                         "firstName": {
                           "type": "string",
                           "description": "First name when the participant is a person."
@@ -21423,7 +21400,6 @@
                         "sportId",
                         "name",
                         "participantType",
-                        "metadata",
                         "status",
                         "injuryStatus",
                         "externalIds",

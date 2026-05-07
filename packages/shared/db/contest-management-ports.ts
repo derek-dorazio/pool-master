@@ -74,7 +74,7 @@ export interface ContestConfigTemplateRepository {
     eventType?: string | null;
     active?: boolean;
   }): Promise<ContestConfigTemplate[]>;
-  listBySportAndContestType(input: {
+  listBySportAndContestFormat(input: {
     sport: ContestConfigTemplate['sport'];
     contestFormat: ContestConfigTemplate['contestFormat'];
     eventType?: string | null;

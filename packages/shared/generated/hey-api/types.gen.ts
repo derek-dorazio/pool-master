@@ -9744,12 +9744,6 @@ export type ListParticipantsResponses = {
              */
             externalId?: string;
             /**
-             * Provider-normalized metadata retained for the participant.
-             */
-            metadata: {
-                [key: string]: unknown;
-            };
-            /**
              * First name when the participant is a person.
              */
             firstName?: string;
@@ -9884,12 +9878,6 @@ export type CreateParticipantResponses = {
              * Primary provider identifier when one exists.
              */
             externalId?: string;
-            /**
-             * Provider-normalized metadata retained for the participant.
-             */
-            metadata: {
-                [key: string]: unknown;
-            };
             /**
              * First name when the participant is a person.
              */
@@ -10036,12 +10024,6 @@ export type GetParticipantResponses = {
              * Primary provider identifier when one exists.
              */
             externalId?: string;
-            /**
-             * Provider-normalized metadata retained for the participant.
-             */
-            metadata: {
-                [key: string]: unknown;
-            };
             /**
              * First name when the participant is a person.
              */
@@ -10204,12 +10186,6 @@ export type UpdateParticipantResponses = {
              * Primary provider identifier when one exists.
              */
             externalId?: string;
-            /**
-             * Provider-normalized metadata retained for the participant.
-             */
-            metadata: {
-                [key: string]: unknown;
-            };
             /**
              * First name when the participant is a person.
              */

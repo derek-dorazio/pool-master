@@ -148,7 +148,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
   return {
     findById: jest.fn().mockResolvedValue(template),
     list: jest.fn().mockResolvedValue([template]),
-    listBySportAndContestType: jest.fn().mockResolvedValue([]),
+    listBySportAndContestFormat: jest.fn().mockResolvedValue([]),
     update: jest.fn().mockImplementation(async (_id, updates) => ({
       ...template,
       ...updates,

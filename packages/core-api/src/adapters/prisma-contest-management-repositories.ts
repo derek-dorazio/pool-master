@@ -343,7 +343,7 @@ export class PrismaContestConfigTemplateRepository
     return rows.map(mapContestConfigTemplate);
   }
 
-  async listBySportAndContestType(input: {
+  async listBySportAndContestFormat(input: {
     sport: ContestConfigTemplate['sport'];
     contestFormat: ContestConfigTemplate['contestFormat'];
     eventType?: string | null;

@@ -70,6 +70,11 @@ ALTER COLUMN "updated_at" DROP DEFAULT;
 ALTER TABLE "contest_entry_participant_score_events" ALTER COLUMN "updated_at" DROP DEFAULT;
 
 -- AlterTable
+-- contest_entry_participant_scores.pick_id is added NOT NULL with no backfill.
+-- Per plans/117 §13.5 ("No-Data Clean Reworks") this slice assumes empty
+-- contest_entry_participant_scores; dev/test DBs reseed and CI runs the
+-- migration on a fresh DB. If a non-empty environment ever needs to apply
+-- this migration, follow the two-step ADD/UPDATE/SET-NOT-NULL pattern.
 ALTER TABLE "contest_entry_participant_scores" DROP COLUMN "roster_pick_id",
 ADD COLUMN     "pick_id" UUID NOT NULL,
 ALTER COLUMN "updated_at" DROP DEFAULT;
@@ -94,7 +99,10 @@ UPDATE "contest_timing_policies" SET "contest_type" = 'ROSTER' WHERE "contest_ty
 ALTER TABLE "contests" DROP COLUMN "contest_type",
 ADD COLUMN     "contest_format" "PrismaContestFormat" NOT NULL DEFAULT 'ROSTER';
 
--- AlterTable: RENAME CONSTRAINT cannot share a single ALTER statement with column ops in Postgres
+-- AlterTable: RENAME CONSTRAINT cannot share a single ALTER statement with column ops in Postgres.
+-- draft_pick_histories.pick_id is added NOT NULL with no backfill. Per plans/117 §13.5
+-- this slice assumes empty draft_pick_histories on application; dev/test DBs reseed
+-- and CI runs the migration on a fresh DB.
 ALTER TABLE "draft_pick_histories" RENAME CONSTRAINT "draft_picks_pkey" TO "draft_pick_histories_pkey";
 ALTER TABLE "draft_pick_histories" DROP COLUMN "roster_pick_id",
 ADD COLUMN     "pick_id" UUID NOT NULL;
