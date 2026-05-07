@@ -5230,7 +5230,44 @@ export interface operations {
                     "application/json": {
                         /** @description League summary payload driving the dashboard header. */
                         league: {
-                            [key: string]: unknown;
+                            /** @description Internal league identifier used for authenticated management APIs. */
+                            id: string;
+                            /** @description Stable short code used in bookmarkable league-home routes and invite context. */
+                            leagueCode: string;
+                            /** @description Primary display name for the league. */
+                            name: string;
+                            /** @description Optional short league description. */
+                            description?: string | null;
+                            /** @description Whether the league is currently active for normal write interactions. */
+                            isActive: boolean;
+                            /**
+                             * @description Selected built-in league icon key from the curated PoolMaster icon catalog.
+                             * @enum {string}
+                             */
+                            iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
+                            /** @description Current number of memberships in the league. */
+                            memberCount: number;
+                            /** @description Number of currently active contests associated with the league. */
+                            activeContestCount: number;
+                            /**
+                             * @description Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+                             * @enum {string|null}
+                             */
+                            memberType: "COMMISSIONER" | "MEMBER" | null;
+                            /** @description Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix. */
+                            leagueRelationship: {
+                                /** @description Whether the current requester is an active member of this league. */
+                                leagueMember: boolean;
+                                /** @description Whether the current requester is an active commissioner of this league. */
+                                commissioner: boolean;
+                            };
+                            /** @description Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data. */
+                            isRootAdmin: boolean;
+                            /**
+                             * Format: date-time
+                             * @description League creation timestamp in ISO 8601 format.
+                             */
+                            createdAt?: string;
                         };
                         /** @description Outstanding commissioner action items. */
                         actionItems: {
@@ -5254,7 +5291,29 @@ export interface operations {
                         }[];
                         /** @description Contest summaries included in the dashboard payload. */
                         contests: {
-                            [key: string]: unknown;
+                            id: string;
+                            name: string;
+                            /** @enum {string} */
+                            status: "DRAFT" | "OPEN" | "DRAFTING" | "LOCKED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+                            /** @enum {string} */
+                            contestFormat: "ROSTER" | "BRACKET" | "PICKEM_CONFIDENCE" | "SURVIVOR" | "PREDICT_TOP_N";
+                            /** @enum {string} */
+                            selectionType: "SNAKE_DRAFT" | "TIERED" | "BUDGET_PICK" | "OPEN_SELECTION" | "PICK_EM" | "BRACKET_PICK_EM";
+                            /** @enum {string} */
+                            scoringEngine: "ADVANCEMENT" | "STAT_ACCUMULATION" | "STROKE_PLAY" | "POSITION" | "BRACKET" | "FIGHT_RESULT" | "CUMULATIVE";
+                            leagueId: string;
+                            sportEventId?: string | null;
+                            sport?: string | null;
+                            /** @description Number of entries currently in the contest. */
+                            entryCount?: number;
+                            /** Format: date-time */
+                            startsAt?: string | null;
+                            /** Format: date-time */
+                            endsAt?: string | null;
+                            /** Format: date-time */
+                            createdAt?: string;
+                            /** Format: date-time */
+                            updatedAt?: string;
                         }[];
                         /** @description Current league member count. */
                         memberCount: number;
@@ -11245,42 +11304,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        entries: {
-                            /** @description Audit-log entry id. */
-                            id: string;
-                            /** @description League this entry belongs to. */
-                            leagueId: string;
-                            /** @description Contest this entry references when the action is contest-scoped. */
-                            contestId?: string;
-                            /** @description User id of the commissioner / actor that performed the action. */
-                            actorId: string;
-                            /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
-                            action: string;
-                            /**
-                             * @description Audit-log entry category — broad classification of the action that produced this entry.
-                             * @enum {string}
-                             */
-                            category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
-                            /** @description Human-readable description of what happened. */
-                            description: string;
-                            /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                            beforeState?: {
-                                [key: string]: unknown;
-                            };
-                            /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
-                            afterState?: {
-                                [key: string]: unknown;
-                            };
-                            /** @description Optional human-supplied reason / justification for the action. */
-                            reason?: string;
-                            /** @description IP address from which the action originated, when available. */
-                            ipAddress?: string;
-                            /**
-                             * Format: date-time
-                             * @description When the audit entry was recorded.
-                             */
-                            createdAt: string;
-                        }[];
+                        entries: unknown[];
                     };
                 };
             };

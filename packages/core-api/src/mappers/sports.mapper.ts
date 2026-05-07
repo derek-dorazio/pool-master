@@ -1,8 +1,12 @@
 /**
- * Sport mapper — Prisma row → canonical SportDto per plans/117 §12.1.
+ * Sport mapper — Prisma row → canonical SportDto per plans/117 §4.1 / §12.1.
+ *
+ * Pure projection: row shape mirrors the schema exactly, enum casts use
+ * the runtime const-object form (compile-time exhaustive at the DTO
+ * boundary thanks to z.nativeEnum on the consuming schema).
  */
 
-import type {
+import {
   ParticipantType,
   SportCategory,
   TournamentFormat,
