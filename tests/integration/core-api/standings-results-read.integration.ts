@@ -19,7 +19,7 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
-  ContestType,
+  ContestFormat,
   InvitationStatus,
   InviteType,
   LeagueRole,
@@ -100,7 +100,7 @@ describe('Standings and Results Read Integration', () => {
       payload: {
         name: 'Standings Read Contest',
         sport: 'GOLF',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {

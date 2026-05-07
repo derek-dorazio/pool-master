@@ -52,7 +52,7 @@ Pulled from PR #22's rules and the audit's findings. Every section below complie
 - Substrate redesign for **golf-roster** (the current product target — tiered golf tournaments with roster-style entry picks).
 - All schema-level work: Prisma migration, DTOs, mappers, generated SDK regeneration.
 - Provider adapter normalization for the **mock-feed** and **PGA Tour** adapters (the two that produce golf-roster data today).
-- Per-(category × contestType) contribution table for golf-roster.
+- Per-(category × contestFormat) contribution table for golf-roster.
 - Frontend consumption of the new shapes for the existing golf-roster surfaces.
 - FAPI scenario for the live-scoring pipeline (covers `pool-master-rop.15`).
 
@@ -100,8 +100,8 @@ The substrate has two halves connected by a single FK.
                        SportEventParticipant ◄──FK── ContestEntryPick    ContestEntry
                                 │                          │                  │
                                 ▼                          ▼                  ▼
-                  SportEventParticipant<Category>Detail   ContestEntryPick<Category><ContestType>Contribution
-                  (per-category, sport-polymorphic)       (per-(category × contestType))
+                  SportEventParticipant<Category>Detail   ContestEntryPick<Category><ContestFormat>Contribution
+                  (per-category, sport-polymorphic)       (per-(category × contestFormat))
 ```
 
 ### 4.1 Real-world side
@@ -120,11 +120,11 @@ The `worldRanking` / `oddsToWin` fields land on `SportEventParticipant`, not on 
 
 | Table | Purpose | Notable fields |
 |---|---|---|
-| `Contest` | A pool. Sport-scoped, contest-type-scoped, league-scoped. | `leagueId`, `sportId`, `contestType` (enum: `ROSTER` / `BRACKET` / `PICKEM_CONFIDENCE` / `SURVIVOR` / `PREDICT_TOP_N`), `selectionConfig` (per-contestType typed config), `scoringConfig` (per-contestType typed scoring rules), `status` (workflow), `lockedAt`, `closedAt` |
+| `Contest` | A pool. Sport-scoped, contest-type-scoped, league-scoped. | `leagueId`, `sportId`, `contestFormat` (enum: `ROSTER` / `BRACKET` / `PICKEM_CONFIDENCE` / `SURVIVOR` / `PREDICT_TOP_N`), `selectionConfig` (per-contestFormat typed config), `scoringConfig` (per-contestFormat typed scoring rules), `status` (workflow), `lockedAt`, `closedAt` |
 | `ContestSportEvent` | M:N join from `Contest` to `SportEvent`. Golf-tournament-roster contests have 1 row (one tournament); NFL weekly pick'em contests have 16 rows (one per week's games); F1 season-long contests have ~22 rows (one per race). | `contestId`, `sportEventId` |
 | `ContestEntry` | A user's submission to a contest. Owned by a squad (PoolMaster team). | `contestId`, `squadId`, `name` (entry display name), `totalScore: Decimal` (aggregate), `rank: Int?`, `tiebreakerValue: Int?` (entry-level tiebreaker; bracket pools use this) |
-| `ContestEntryPick` | A pick on an entry — references a `SportEventParticipant`. **Unified across contest types**; optional metadata fields disambiguate. | `contestEntryId`, `sportEventParticipantId`, `contestType` (denormalized from parent `Contest.contestType`; enables partial-index uniqueness — see §7.1), `period?` (week / draft round / bracket round), `slot?` (matchup index / draft pick order / predicted position), `tier?` (selection tier), `cost?` (budget cost), `isAutoPicked: Boolean` |
-| `ContestEntryPick<Category><ContestType>Contribution` | Per-(category × contestType) contribution detail. The bridge between a pick, a real-world result, and contest scoring rules. | See §8 for per-combo specs |
+| `ContestEntryPick` | A pick on an entry — references a `SportEventParticipant`. **Unified across contest types**; optional metadata fields disambiguate. | `contestEntryId`, `sportEventParticipantId`, `contestFormat` (denormalized from parent `Contest.contestFormat`; enables partial-index uniqueness — see §7.1), `period?` (week / draft round / bracket round), `slot?` (matchup index / draft pick order / predicted position), `tier?` (selection tier), `cost?` (budget cost), `isAutoPicked: Boolean` |
+| `ContestEntryPick<Category><ContestFormat>Contribution` | Per-(category × contestFormat) contribution detail. The bridge between a pick, a real-world result, and contest scoring rules. | See §8 for per-combo specs |
 
 ### 4.3 Why `ContestEntryPick` is unified
 
@@ -142,11 +142,11 @@ The unification claim in the redesign is forward-looking: once the substrate shi
 | SURVIVOR (NFL season) | filled (= week) | — | — | — | One pick per week per entry |
 | PREDICT_TOP_N (F1 podium) | — | filled (= predicted position) | — | — | 3 picks per entry |
 
-The columns `period`, `slot`, `tier`, `cost` are nullable at the schema level because each contest type uses a different subset. Their meaning is documented per `Contest.contestType` — but unlike the discriminated-union anti-pattern, every populated value is interpretable on its own (the picks aren't lying about the data shape; they're correctly representing optional metadata).
+The columns `period`, `slot`, `tier`, `cost` are nullable at the schema level because each contest type uses a different subset. Their meaning is documented per `Contest.contestFormat` — but unlike the discriminated-union anti-pattern, every populated value is interpretable on its own (the picks aren't lying about the data shape; they're correctly representing optional metadata).
 
-### 4.4 Why per-`<Category><ContestType>` contribution tables
+### 4.4 Why per-`<Category><ContestFormat>` contribution tables
 
-Decided in design conversation: option (b) — one contribution table per (category × contestType) combo. The data shapes for, e.g., `BasketballRoster` (per-game played, with upset bonus) and `BasketballBracket` (per-matchup predicted, with round weight) share only `id, pick_id, contribution` — splitting on both axes is the only way every column applies to every row.
+Decided in design conversation: option (b) — one contribution table per (category × contestFormat) combo. The data shapes for, e.g., `BasketballRoster` (per-game played, with upset bonus) and `BasketballBracket` (per-matchup predicted, with round weight) share only `id, pick_id, contribution` — splitting on both axes is the only way every column applies to every row.
 
 This is more tables (~14 once all sports/contests ship) but every column is meaningful. See §8 for per-combo specs.
 
@@ -165,7 +165,7 @@ Per `rules/domain-model-conventions-rules.md §10`: no bare noun used for two di
 
 Per-`<Category>` tables on the real-world side: `SportEventParticipantGolfRound`, `SportEventParticipantBasketballGame`, etc.
 
-Per-`<Category><ContestType>` tables on the pool-app side: `ContestEntryPickGolfRosterContribution`, `ContestEntryPickBasketballBracketContribution`, etc.
+Per-`<Category><ContestFormat>` tables on the pool-app side: `ContestEntryPickGolfRosterContribution`, `ContestEntryPickBasketballBracketContribution`, etc.
 
 The verbosity is the price of unambiguous schema-as-documentation. Bare names that have only one referent in the domain (`Participant` is the canonical per-sport entity; nothing else is named "participant") stay unprefixed.
 
@@ -315,13 +315,13 @@ SportEventParticipantSoccerMatch {
 
 ## 7. Pick model
 
-The `ContestEntryPick` table defined in §4.2 is the single pick shape across all contest types. Optional metadata (`period`, `slot`, `tier`, `cost`) is populated per the `Contest.contestType` mapping in §4.3.
+The `ContestEntryPick` table defined in §4.2 is the single pick shape across all contest types. Optional metadata (`period`, `slot`, `tier`, `cost`) is populated per the `Contest.contestFormat` mapping in §4.3.
 
 `isAutoPicked: Boolean` covers cases where a snake draft auto-picks a participant for an entry that missed its draft window; useful for entry-level UX ("you have 2 auto-picks; review and adjust before lock").
 
 ### 7.1 Constraints on `ContestEntryPick`
 
-`ContestEntryPick.contestType` is denormalized from `Contest.contestType` via the parent `ContestEntry`. This is safe because `Contest.contestType` is immutable post-creation (changing it would invalidate every pick anyway). The denormalization is what makes contest-type-specific partial unique indexes implementable — Postgres partial indexes can predicate on local columns but not on joined parent columns.
+`ContestEntryPick.contestFormat` is denormalized from `Contest.contestFormat` via the parent `ContestEntry`. This is safe because `Contest.contestFormat` is immutable post-creation (changing it would invalidate every pick anyway). The denormalization is what makes contest-type-specific partial unique indexes implementable — Postgres partial indexes can predicate on local columns but not on joined parent columns.
 
 Per-contest-type partial unique indexes (all predicate on local columns):
 
@@ -348,9 +348,9 @@ CREATE UNIQUE INDEX uq_pick_survivor_week
 ```
 
 **Consistency guarantee on the denormalized column:**
-- Service-layer enforcement at insert time: pick-creation always reads `Contest.contestType` from the parent contest and writes it to the pick row. No insert path bypasses this.
-- A check-constraint test asserts `ContestEntryPick.contestType` matches `Contest.contestType` for every pick (Phase 4 implementation slice's contract test).
-- A migration-time consistency check covers the rename of `roster_picks` → `contest_entry_picks` (every existing roster_picks row gets `contestType = 'ROSTER'`).
+- Service-layer enforcement at insert time: pick-creation always reads `Contest.contestFormat` from the parent contest and writes it to the pick row. No insert path bypasses this.
+- A check-constraint test asserts `ContestEntryPick.contestFormat` matches `Contest.contestFormat` for every pick (Phase 4 implementation slice's contract test).
+- A migration-time consistency check covers the rename of `roster_picks` → `contest_entry_picks` (every existing roster_picks row gets `contestFormat = 'ROSTER'`).
 
 This satisfies the "make impossible states unrepresentable at storage" principle: the database directly enforces no double-picks per (contest type, entry).
 
@@ -358,7 +358,7 @@ This satisfies the "make impossible states unrepresentable at storage" principle
 
 ## 8. Contribution model
 
-Per-(category × contestType) tables. Phase 4 ships the golf-roster one; the rest are designed-but-deferred.
+Per-(category × contestFormat) tables. Phase 4 ships the golf-roster one; the rest are designed-but-deferred.
 
 ### 8.1 `ContestEntryPickGolfRosterContribution` (in scope, Phase 4)
 
@@ -394,19 +394,19 @@ For golf-roster: `contribution = scoreToPar`. The contest's total = `SUM(contrib
 
 Each table follows the common shape:
 - `id, contestEntryPickId, contribution, contributedAt`
-- 3–6 columns specific to (category × contestType) scoring outcome
+- 3–6 columns specific to (category × contestFormat) scoring outcome
 
 The aggregate `ContestEntry.totalScore = SUM(contribution)` across all this entry's contribution rows (regardless of which contribution table they live in — the read pattern is `JOIN ContestEntryPick → SUM contribution by entry` per contest's contribution table).
 
 ---
 
-## 9. Validity matrix — `tournamentFormat × contestType`
+## 9. Validity matrix — `tournamentFormat × contestFormat`
 
 Per `rules/architecture-rules.md §2 / "Validity / Compatibility Matrices Source of Truth"`: code-side typed const map.
 
 ```ts
 // packages/shared/domain/contest-validity.ts
-export const VALID_CONTEST_TYPES_BY_FORMAT: Record<TournamentFormat, ContestType[]> = {
+export const VALID_CONTEST_TYPES_BY_FORMAT: Record<TournamentFormat, ContestFormat[]> = {
   STROKE_PLAY_TOURNAMENT: ['ROSTER'],
   KNOCKOUT_BRACKET:       ['ROSTER', 'BRACKET'],
   SERIES_PLAYOFF:         ['ROSTER'],
@@ -518,13 +518,13 @@ Phase 4 slice covers this; it folds `pool-master-rop.16` into the substrate rede
 
 ## 11. Scoring rule functions
 
-Per-(category × contestType) pure functions. Signature:
+Per-(category × contestFormat) pure functions. Signature:
 
 ```ts
 type ScoringRuleFunction<
   Detail extends SportEventParticipant<Category>Detail,
   Rules extends ContestScoringConfig,
-  Contribution extends ContestEntryPick<Category><ContestType>Contribution
+  Contribution extends ContestEntryPick<Category><ContestFormat>Contribution
 > = (input: {
   pick: ContestEntryPick;
   detail: Detail[];      // per-participant detail rows
@@ -567,7 +567,7 @@ function scoreGolfRoster(input: {
 | `scoreF1Roster(...)` | pick + race results + `F1RosterScoringConfig { positionPoints: number[], fastestLapBonus }` | `F1RosterContribution[]` |
 | `scoreF1PredictTopN(...)` | pick + final positions + `F1PredictTopNScoringConfig { exactMatchPoints, inTopNPoints, topN }` | `F1PredictTopNContribution[]` |
 
-Each function is pure: same inputs → same outputs; safe to retry; safe to recompute. The scoring-engine harness at `packages/core-api/src/modules/scoring/` invokes the right function based on `Contest.sport.category × Contest.contestType` and persists the returned contributions.
+Each function is pure: same inputs → same outputs; safe to retry; safe to recompute. The scoring-engine harness at `packages/core-api/src/modules/scoring/` invokes the right function based on `Contest.sport.category × Contest.contestFormat` and persists the returned contributions.
 
 ### 11.3 Recalc + rollup unification (resolves Q5)
 
@@ -579,7 +579,7 @@ The redesigned single write path:
 LiveScoreResult arrives
     → publishLiveScoreUpdate (validated, persisted to detail table)
     → live_score.persisted event
-    → for each affected entry: invoke per-(category × contestType) scoring rule function
+    → for each affected entry: invoke per-(category × contestFormat) scoring rule function
     → persist contributions
     → recompute Entry.totalScore = SUM(contributions)
     → rerank Entries in the affected Contest by totalScore + tiebreakerValue
@@ -626,7 +626,7 @@ Per `domain-model-conventions-rules.md §8`: one canonical DTO per entity; permi
 | `ContestEntry` | `ContestEntryDtoSchema` (full picks, scores, contributions) | Owner detail (pre-event-live), all members (post-event-live) |
 | `ContestEntryPick` | `ContestEntryPickDtoSchema` | Embedded in `ContestEntryDtoSchema` |
 
-Per-category detail and per-(category × contestType) contribution shapes are exposed via discriminated unions in their parent DTO:
+Per-category detail and per-(category × contestFormat) contribution shapes are exposed via discriminated unions in their parent DTO:
 
 ```ts
 export const ContestEntryPickDtoSchema = z.object({
@@ -641,7 +641,7 @@ export const ContestEntryPickDtoSchema = z.object({
     GolfRosterContributionDtoSchema,
     BasketballRosterContributionDtoSchema,
     BasketballBracketContributionDtoSchema,
-    // ... per-(category × contestType)
+    // ... per-(category × contestFormat)
   ]),
 });
 ```
@@ -694,7 +694,7 @@ packages/core-api/src/mappers/
     contests.mapper.ts                          ← reshape
     contest-entries.mapper.ts                   ← new
     contest-entry-picks.mapper.ts               ← new
-    contest-entry-pick-<category>-<contestType>-contribution.mapper.ts  ← per combo, new
+    contest-entry-pick-<category>-<contestFormat>-contribution.mapper.ts  ← per combo, new
 ```
 
 ---
@@ -741,7 +741,7 @@ Verified against `packages/core-api/prisma/schema.prisma` at the time of this pl
 
 Single migration file; statements ordered so every FK references an already-existing table:
 
-1. Create new enums (`SportCategory`, `TournamentFormat`, expanded `ContestType` if new variants are introduced).
+1. Create new enums (`SportCategory`, `TournamentFormat`, expanded `ContestFormat` if new variants are introduced).
 2. Add columns to existing tables (`sports.category`, `sports.tournament_format`; `sport_event_participants.world_ranking`, `.odds_to_win`, `.seed_number`).
 3. **Rename `roster_picks` → `contest_entry_picks`** + add new columns (`contest_type` NOT NULL with backfill default 'ROSTER', `period`, `slot`, `tier`, `cost`, `is_auto_picked`). This must precede any new table that FKs to it.
 4. Create per-contest-type partial unique indexes on `contest_entry_picks` (per §7.1).
@@ -813,7 +813,7 @@ The wrapper invalidates declared keys on success. Tests assert `invalidates` ret
 
 ### 14.4 Sport-polymorphic rendering pattern
 
-The frontend reads `Contest.sport.category` and `Contest.contestType` to choose the right contribution-row component.
+The frontend reads `Contest.sport.category` and `Contest.contestFormat` to choose the right contribution-row component.
 
 ```tsx
 function ContributionRow({ contribution }: { contribution: ContributionUnion }) {
@@ -822,14 +822,14 @@ function ContributionRow({ contribution }: { contribution: ContributionUnion }) 
       return <GolfRosterContributionRow contribution={contribution} />;
     case 'BASKETBALL_ROSTER':
       return <BasketballRosterContributionRow contribution={contribution} />;
-    // ... per (category × contestType)
+    // ... per (category × contestFormat)
     default:
       return assertNever(contribution);
   }
 }
 ```
 
-TypeScript exhaustiveness check at the `default` case forces every new (category × contestType) combo to be handled before the build passes.
+TypeScript exhaustiveness check at the `default` case forces every new (category × contestFormat) combo to be handled before the build passes.
 
 ### 14.5 Entry list ↔ Leaderboard transition
 
@@ -847,7 +847,7 @@ The component switches based on event state; the route is stable. Deep links to 
 
 Single FAPI scenario that exercises the full pipeline:
 
-1. Fixture: golf tournament `SportEvent` with 4 `SportEventParticipant`s; one `Contest` with `contestType: ROSTER`, 2 `ContestEntry`s each with 2 `ContestEntryPick`s.
+1. Fixture: golf tournament `SportEvent` with 4 `SportEventParticipant`s; one `Contest` with `contestFormat: ROSTER`, 2 `ContestEntry`s each with 2 `ContestEntryPick`s.
 2. Mock-feed adapter emits `LiveScoreResult` with `category: 'GOLF'`, 4 `GolfRoundUpdate`s for round 1.
 3. Assert: persisted `SportEventParticipantGolfRound` rows match the input.
 4. Assert: `live_score.persisted` event fired.
@@ -893,8 +893,8 @@ Slice ordering per audit §9 Q17 dependency analysis. Each slice is a Beads chil
 ### 16.1 Slice ordering
 
 ```
-rop.78.3  Provider adapter normalization + LiveScoreResult typing (foundation)
-rop.78.4  Substrate Prisma migration (drops + reshapes + adds; depends on .3 design)
+rop.78.4  Substrate Prisma migration (drops + reshapes + adds; foundation)
+rop.78.3  Provider adapter normalization + LiveScoreResult typing
 rop.78.5  Sport / SportEvent / SportEventParticipant DTOs + mappers
 rop.78.6  ContestEntryPick unification + mapper
 rop.78.7  Golf-roster contribution table + scoring rule function
@@ -908,7 +908,10 @@ rop.78.14 Validity matrix const map + contest-creation gating
 ```
 
 Dependencies:
-- `.4` depends on `.3` (typed adapter contracts inform schema)
+- `.3` depends on `.4` (the typed substrate is the persistence target the
+  normalized adapter writes into; per the design conversation correction the
+  schema lands first so adapter normalization can target real columns rather
+  than legacy JSON blobs)
 - `.5–.7` depend on `.4` (tables exist)
 - `.8` depends on `.7` (scoring rule must exist before locking)
 - `.9–.11` are frontend; can run in parallel with backend slices
@@ -948,12 +951,12 @@ The Phase 1 audit listed 17 open questions for Phase 2. Each is resolved-by-desi
 |---|---|---|
 | Q1 | Canonical "League summary" DTO | **Resolved** — §2 governing principle #2 (one canonical DTO per entity) + the rule landed in `domain-model-conventions-rules.md §8` (canonical full-shape DTO; permission-driven thin variants only). League DTO is league-scoped and stable; this redesign doesn't reshape it. |
 | Q2 | Canonical "Contest summary" DTO | **Resolved** by §12.1 — `ContestDtoSchema` is the single canonical DTO used for list, detail, and dashboard. |
-| Q3 | Canonical `ContestEntry` DTO including `latestPerformance` | **Resolved** by §12.1 — `ContestEntryDtoSchema` is canonical; the equivalent of `latestPerformance` is the typed `contributions` discriminated union (§12.1 example), backed by per-(category × contestType) contribution tables. |
+| Q3 | Canonical `ContestEntry` DTO including `latestPerformance` | **Resolved** by §12.1 — `ContestEntryDtoSchema` is canonical; the equivalent of `latestPerformance` is the typed `contributions` discriminated union (§12.1 example), backed by per-(category × contestFormat) contribution tables. |
 | Q4 | Locking strategy for concurrent stat events | **Resolved** by §11.4 — per-contest pessimistic advisory lock. |
 | Q5 | Recalc + rollup unification | **Resolved** by §11.3 — kill periodic rollup; stat-event-driven only. |
 | Q6 | Transaction boundary for per-stat-event scoring | **Resolved** by §11.5 — one transaction per (contest, stat event). |
 | Q7 | Debouncing / batching of stat events | **Resolved** by §11.6 — no batching; per-event latency is acceptable for office-pool sizes. |
-| Q8 | Canonical `LatestPerformanceSnapshotDto` shape (tagged union vs generic) | **Resolved by design** — §6 + §8 collapse the question. Per-category detail tables (§6) and per-(category × contestType) contribution tables (§8) replace the polymorphic single shape with physically separate typed tables. There is no `LatestPerformanceSnapshotDto`; performance data lives in typed per-sport tables. |
+| Q8 | Canonical `LatestPerformanceSnapshotDto` shape (tagged union vs generic) | **Resolved by design** — §6 + §8 collapse the question. Per-category detail tables (§6) and per-(category × contestFormat) contribution tables (§8) replace the polymorphic single shape with physically separate typed tables. There is no `LatestPerformanceSnapshotDto`; performance data lives in typed per-sport tables. |
 | Q9 | Mock-feed-provider SDK strategy | **Resolved** by §10.5 — delete the hand-rolled SDK, consume the generated SDK in `mock-contest-feed-adapter.ts`. Folded into Phase 4 slice `rop.78.13`. |
 | Q10 | `ProviderStatEvent` validation at the bus boundary | **Resolved** by §10.3 — Zod-validated `LiveScoreResult` at `publishLiveScoreUpdate`. |
 | Q11 | Zustand vs React Query split | **Resolved** by §14.3 — React Query owns server data; Zustand owns ephemeral UI state only. Folded into Phase 4 slice `rop.78.11`. |

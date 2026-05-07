@@ -9,7 +9,7 @@ import {
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
-  ContestType,
+  ContestFormat,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -46,7 +46,7 @@ describe('Contest Validation Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: 'Broken Tiered Contest',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
@@ -87,7 +87,7 @@ describe('Contest Validation Integration', () => {
       headers: ownerHeaders,
       payload: {
         name: `Deferred ${selectionType}`,
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType,
         scoringEngine: ScoringEngine.STROKE_PLAY,
       },

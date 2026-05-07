@@ -9,7 +9,6 @@
 import type {
   ParticipantRepository,
   ParticipantProviderMappingRepository,
-  ParticipantSeasonRecordRepository,
 } from '@poolmaster/shared/db';
 import type { Participant } from '@poolmaster/shared/domain';
 
@@ -17,14 +16,12 @@ export interface MergeResult {
   canonicalId: string;
   mergedId: string;
   mappingsTransferred: number;
-  seasonRecordsMerged: number;
 }
 
 export class ParticipantMergeService {
   constructor(
     private readonly participantRepo: ParticipantRepository,
     private readonly mappingRepo: ParticipantProviderMappingRepository,
-    private readonly seasonRecordRepo: ParticipantSeasonRecordRepository,
   ) {}
 
   /**
@@ -34,8 +31,7 @@ export class ParticipantMergeService {
    * 1. Transfer provider mappings from duplicate to canonical
    * 2. Merge external_ids maps
    * 3. Fill in any missing fields on canonical from duplicate
-   * 4. Transfer season records (skip if canonical already has one for that season)
-   * 5. Mark duplicate as INACTIVE
+   * 4. Mark duplicate as INACTIVE
    */
   async merge(canonicalId: string, duplicateId: string): Promise<MergeResult> {
     const canonical = await this.participantRepo.findById(canonicalId);
@@ -86,30 +82,13 @@ export class ParticipantMergeService {
 
     await this.participantRepo.update(canonicalId, updates);
 
-    // 4. Transfer season records
-    const dupSeasonRecords = await this.seasonRecordRepo.findByParticipant(duplicateId);
-    const canonSeasonRecords = await this.seasonRecordRepo.findByParticipant(canonicalId);
-    const canonSeasons = new Set(canonSeasonRecords.map((r) => r.season));
-
-    let seasonRecordsMerged = 0;
-    for (const record of dupSeasonRecords) {
-      if (!canonSeasons.has(record.season)) {
-        await this.seasonRecordRepo.upsert({
-          ...record,
-          participantId: canonicalId,
-        });
-        seasonRecordsMerged++;
-      }
-    }
-
-    // 5. Mark duplicate as inactive
+    // 4. Mark duplicate as inactive
     await this.participantRepo.update(duplicateId, { status: 'INACTIVE' as Participant['status'] });
 
     return {
       canonicalId,
       mergedId: duplicateId,
       mappingsTransferred,
-      seasonRecordsMerged,
     };
   }
 }

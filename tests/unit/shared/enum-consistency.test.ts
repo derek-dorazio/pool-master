@@ -7,7 +7,7 @@
  */
 
 import {
-  ContestType,
+  ContestFormat,
   SelectionType,
   ScoringEngine,
   LeagueRole,
@@ -47,17 +47,27 @@ const ROUTE_MEMBER_ROLES = ['COMMISSIONER', 'MEMBER'];
 // ========================================================================
 
 describe('Enum consistency — route schemas vs domain enums', () => {
-  // --- ContestType ---
+  // --- ContestFormat ---
 
-  it('every contestType in route schema is a valid ContestType', () => {
-    const valid = enumValues(ContestType);
+  // pool-master-rop.78.4 — substrate redesign opens ContestFormat to the full
+  // forward-looking set defined in plans/117 §4.2; only ROSTER is wired into
+  // the contest-create UI today, but the validity matrix (rop.78.14) decides
+  // which (sport × format) combos are creatable.
+  it('every contestFormat in route schema is a valid ContestFormat', () => {
+    const valid = enumValues(ContestFormat);
     for (const val of ROUTE_CONTEST_TYPES) {
       expect(valid).toContain(val);
     }
   });
 
-  it('ContestType enum only contains SINGLE_EVENT', () => {
-    expect(enumValues(ContestType)).toEqual(['ROSTER']);
+  it('ContestFormat enum spans the substrate-design-plan format set', () => {
+    expect(enumValues(ContestFormat).sort()).toEqual([
+      'BRACKET',
+      'PICKEM_CONFIDENCE',
+      'PREDICT_TOP_N',
+      'ROSTER',
+      'SURVIVOR',
+    ]);
   });
 
   // --- SelectionType ---

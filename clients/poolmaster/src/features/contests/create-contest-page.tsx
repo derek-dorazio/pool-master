@@ -372,7 +372,7 @@ export function CreateContestPage() {
         path: { id: leagueQuery.data!.id },
         query: {
           sport: 'GOLF',
-          contestType: 'ROSTER',
+          contestFormat: 'ROSTER',
         },
       });
 
@@ -834,7 +834,7 @@ export function CreateContestPage() {
         const body: CreateContestManagementRequest = {
           name: trimmedName,
           sportEventId,
-          contestType: 'ROSTER',
+          contestFormat: 'ROSTER',
           templateId: selectedTemplateId,
           configurationOverrides: configuration,
         };

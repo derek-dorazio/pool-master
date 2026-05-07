@@ -19,7 +19,7 @@ import {
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
 import {
-  ContestType,
+  ContestFormat,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -95,12 +95,12 @@ describe('League Dashboard Read Integration', () => {
       payload: {
         name: 'Dashboard Future Contest',
         sport: 'GOLF',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
-        startsAt: '2026-05-06T12:00:00.000Z',
-        lockAt: '2026-05-06T13:00:00.000Z',
-        endsAt: '2026-05-06T18:00:00.000Z',
+        startsAt: '2099-05-06T12:00:00.000Z',
+        lockAt: '2099-05-06T13:00:00.000Z',
+        endsAt: '2099-05-06T18:00:00.000Z',
         contestConfiguration: {
           rounds: 1,
           tierAssignmentMethod: 'AUTO_ODDS',

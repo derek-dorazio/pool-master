@@ -10,7 +10,7 @@ import {
   startDraft,
   submitContestSelection,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestType, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
+import { ContestFormat, ScoringEngine, SelectionType } from '@poolmaster/shared/domain';
 import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
 import {
   cleanupFunctionalData,
@@ -42,7 +42,7 @@ async function cleanupDraftArtifacts(): Promise<void> {
     const eventParticipantIds = eventParticipants.map((row) => row.id);
 
     if (eventParticipantIds.length > 0) {
-      await prisma.rosterPick.deleteMany({
+      await prisma.contestEntryPick.deleteMany({
         where: {
           sportEventParticipantId: {
             in: eventParticipantIds,
@@ -141,7 +141,7 @@ async function seedSnakeDraftFixture() {
     },
     body: {
       name: 'Draft Functional Contest',
-      contestType: ContestFormat.ROSTER,
+      contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.SNAKE_DRAFT,
       scoringEngine: ScoringEngine.STROKE_PLAY,
       contestConfiguration: {
@@ -182,7 +182,6 @@ async function seedSnakeDraftFixture() {
     data: {
       name: `DraftSnakeSport-${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
-      statSchema: {},
     },
   });
   createdSportIds.push(sport.id);
@@ -209,7 +208,6 @@ async function seedSnakeDraftFixture() {
           name: `Draft Snake Player ${index}-${randomUUID().slice(0, 8)}`,
           participantType: 'INDIVIDUAL',
           externalIds: {},
-          metadata: {},
           position: 'GOLFER',
           teamAffiliation: null,
         },
@@ -291,7 +289,7 @@ async function seedBudgetPickFixture() {
     },
     body: {
       name: 'Budget Functional Contest',
-      contestType: ContestFormat.ROSTER,
+      contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.BUDGET_PICK,
       scoringEngine: ScoringEngine.STROKE_PLAY,
       contestConfiguration: {
@@ -334,7 +332,6 @@ async function seedBudgetPickFixture() {
     data: {
       name: `DraftBudgetSport-${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
-      statSchema: {},
     },
   });
   createdSportIds.push(sport.id);
@@ -345,7 +342,6 @@ async function seedBudgetPickFixture() {
       name: `Draft Budget Player ${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
       externalIds: {},
-      metadata: {},
       position: 'GOLFER',
       teamAffiliation: null,
     },
@@ -358,7 +354,6 @@ async function seedBudgetPickFixture() {
       name: `Draft Budget Player ${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
       externalIds: {},
-      metadata: {},
       position: 'GOLFER',
       teamAffiliation: null,
     },
@@ -449,7 +444,7 @@ async function seedTieredDraftFixture(options: {
     },
     body: {
       name: 'Tiered Draft Functional Contest',
-      contestType: ContestFormat.ROSTER,
+      contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.TIERED,
       scoringEngine: ScoringEngine.STROKE_PLAY,
       contestConfiguration: {
@@ -490,7 +485,6 @@ async function seedTieredDraftFixture(options: {
     data: {
       name: `DraftTieredSport-${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
-      statSchema: {},
     },
   });
   createdSportIds.push(sport.id);
@@ -518,7 +512,6 @@ async function seedTieredDraftFixture(options: {
         name: `Draft Tiered Player ${index + 1} ${randomUUID().slice(0, 8)}`,
         participantType: 'INDIVIDUAL',
         externalIds: {},
-        metadata: {},
         position: 'GOLFER',
         teamAffiliation: null,
       },

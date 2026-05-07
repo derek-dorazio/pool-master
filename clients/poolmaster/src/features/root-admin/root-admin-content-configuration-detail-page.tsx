@@ -163,7 +163,7 @@ export function RootAdminContentConfigurationDetailPage() {
                   {draft.name}
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {draft.sport} · {draft.contestType} · {draft.configMode}
+                  {draft.sport} · {draft.contestFormat} · {draft.configMode}
                 </p>
               </div>
               <div className="flex gap-2">

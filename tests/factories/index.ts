@@ -16,7 +16,7 @@ import type {
 } from '@poolmaster/shared/domain/types';
 import {
   ContestStatus,
-  ContestType,
+  ContestFormat,
   InvitationStatus,
   JoinPolicy,
   LeagueIconKey,
@@ -103,7 +103,7 @@ export function buildContest(overrides: Partial<Contest> = {}): Contest {
     sportEventId: undefined,
     name: 'Masters Pool 2026',
     status: ContestStatus.DRAFT,
-    contestType: ContestFormat.ROSTER,
+    contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.SNAKE_DRAFT,
     scoringEngine: ScoringEngine.STROKE_PLAY,
     isExclusive: false,

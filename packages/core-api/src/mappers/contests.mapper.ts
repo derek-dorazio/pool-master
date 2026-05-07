@@ -20,7 +20,7 @@ import type {
   ContestConfiguration,
   ContestEntry,
   ContestStatus,
-  ContestType,
+  ContestFormat,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -31,7 +31,7 @@ interface ContestRow {
   sportEventId?: string | null;
   name: string;
   status: ContestStatus;
-  contestFormat: ContestType;
+  contestFormat: ContestFormat;
   selectionType: SelectionType;
   scoringEngine: ScoringEngine;
   sport?: Contest['sport'] | null;

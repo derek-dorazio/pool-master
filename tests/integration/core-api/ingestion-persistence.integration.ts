@@ -13,9 +13,6 @@ afterAll(async () => {
   await prisma.ingestionJob.deleteMany({
     where: { providerId: 'TEST_PROVIDER' },
   });
-  await prisma.sportEventParticipantSourceData.deleteMany({
-    where: { providerId: 'TEST_PROVIDER' },
-  });
   await prisma.sportEventParticipant.deleteMany({
     where: {
       sportEvent: { externalId: 'integration-ingestion-event' },
@@ -67,7 +64,6 @@ describe('IngestionPersistence', () => {
       eventsPersisted: 1,
       participantsPersisted: 1,
       sportEventParticipantsPersisted: 1,
-      sourceDataPersisted: 1,
     });
 
     const event = await prisma.sportEvent.findUniqueOrThrow({
@@ -90,20 +86,15 @@ describe('IngestionPersistence', () => {
           },
         },
       });
-    const sourceData =
-      await prisma.sportEventParticipantSourceData.findFirstOrThrow({
-        where: { sportEventParticipantId: sportEventParticipant.id },
-        orderBy: { receivedAt: 'desc' },
-      });
 
     expect(sportEventParticipant.status).toBe('ACTIVE');
     expect(event.releaseAt.toISOString()).toBe('2026-04-15T12:00:00.000Z');
     expect(event.fieldLocksAt.toISOString()).toBe('2026-04-15T12:00:00.000Z');
-    expect(sourceData.externalId).toBe('ingestion-player-1');
-    expect(sourceData.normalizedData).toMatchObject({
-      scoreToPar: -4,
-      madeCut: true,
-    });
+
+    // Per-participant source data (sportEventParticipantSourceData) was dropped
+    // per plans/117 §13.2. rop.78.7 will rebuild the live-scoring path on
+    // SportEventParticipantGolfRound and the per-(category × contestFormat)
+    // contribution table.
   });
 
   it('pool-master-8yh persists scheduler job completions for dashboard history', async () => {

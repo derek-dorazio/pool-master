@@ -703,7 +703,7 @@ model ContestConfigTemplate {
   id            String   @id @db.Uuid
   sport         String   @db.VarChar(50)
   eventType     String?  @map("event_type") @db.VarChar(100)
-  contestType   String   @map("contest_type") @db.VarChar(50)
+  contestFormat String   @map("contest_type") @db.VarChar(50)
   configMode    String   @map("config_mode") @db.VarChar(50)
   templateKey   String   @map("template_key") @db.VarChar(100)
   name          String   @db.VarChar(120)
@@ -718,8 +718,8 @@ model ContestConfigTemplate {
 
   configurations ContestConfiguration[]
 
-  @@unique([sport, eventType, contestType, configMode, templateKey])
-  @@index([sport, contestType, active, sortOrder])
+  @@unique([sport, eventType, contestFormat, configMode, templateKey])
+  @@index([sport, contestFormat, active, sortOrder])
   @@map("contest_config_templates")
 }
 
@@ -1002,7 +1002,7 @@ model ContestTimingPolicy {
   id             String   @id @default(uuid()) @db.Uuid
   sport          String   @db.VarChar(50)
   eventType      String?  @map("event_type") @db.VarChar(100)
-  contestType    String?  @map("contest_type") @db.VarChar(100)
+  contestFormat  String?  @map("contest_type") @db.VarChar(100)
   releaseRule    String   @map("release_rule") @db.VarChar(255)
   fieldLockRule  String   @map("field_lock_rule") @db.VarChar(255)
   isDefault      Boolean  @default(false) @map("is_default")
@@ -1011,7 +1011,7 @@ model ContestTimingPolicy {
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@index([sport, active])
-  @@unique([sport, eventType, contestType])
+  @@unique([sport, eventType, contestFormat])
   @@map("contest_timing_policies")
 }
 

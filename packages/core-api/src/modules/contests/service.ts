@@ -23,7 +23,7 @@ import type {
 } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
-  ContestType,
+  ContestFormat,
   ScoringEngine,
   SelectionType,
   SquadMembershipStatus,
@@ -44,7 +44,7 @@ export interface CreateContestInput {
   createdBy: string;
   sportEventId?: string;
   name: string;
-  contestFormat: ContestType;
+  contestFormat: ContestFormat;
   selectionType: SelectionType;
   contestConfiguration: Partial<Omit<ContestConfiguration, 'id' | 'contestId' | 'createdAt' | 'updatedAt'>>;
   scoringEngine: ScoringEngine;
@@ -347,10 +347,6 @@ export class ContestService {
             sportEventParticipant: {
               include: {
                 participant: true,
-                sourceData: {
-                  orderBy: [{ receivedAt: 'desc' }, { createdAt: 'desc' }],
-                  take: 1,
-                },
               },
             },
           },
@@ -389,9 +385,9 @@ export class ContestService {
           teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
           contestPoints: pick.participantScores.reduce((sum, score) => sum + score.pointsEarned, 0),
           pickedAt: pick.pickedAt,
-          latestPerformance: normalizeLatestPerformance(
-            pick.sportEventParticipant.sourceData[0]?.normalizedData,
-          ),
+          // latestPerformance — was sourced from dropped sportEventParticipantSourceData;
+          // rop.78.7 will rebuild via SportEventParticipantGolfRound + contribution table.
+          latestPerformance: {},
         }))
         : null,
     );
@@ -900,10 +896,6 @@ export class ContestService {
         sportEventParticipant: {
           include: {
             participant: true,
-            sourceData: {
-              orderBy: [{ receivedAt: 'desc' }, { createdAt: 'desc' }],
-              take: 1,
-            },
           },
         },
       },
@@ -923,9 +915,9 @@ export class ContestService {
         teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
         contestPoints: pick.participantScores.reduce((sum, score) => sum + score.pointsEarned, 0),
         pickedAt: pick.pickedAt,
-        latestPerformance: normalizeLatestPerformance(
-          pick.sportEventParticipant.sourceData[0]?.normalizedData,
-        ),
+        // latestPerformance — was sourced from dropped sportEventParticipantSourceData;
+        // rop.78.7 will rebuild via SportEventParticipantGolfRound + contribution table.
+        latestPerformance: {},
       });
       grouped.set(pick.entryId, list);
     }
@@ -948,7 +940,7 @@ export class ContestService {
       );
     }
 
-    const pickCount = await this.requirePrisma().pick.count({
+    const pickCount = await this.requirePrisma().contestEntryPick.count({
       where: { entryId: row.id },
     });
 
@@ -1214,14 +1206,6 @@ function buildEntryUrl(
   entryId: string,
 ): string {
   return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}/contests/${encodeURIComponent(contestId)}/entries/${encodeURIComponent(entryId)}`;
-}
-
-function normalizeLatestPerformance(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return {};
-  }
-
-  return value as Record<string, unknown>;
 }
 
 function isContestJoinable(status: ContestStatus): boolean {

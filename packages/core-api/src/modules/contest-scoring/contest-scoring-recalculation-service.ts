@@ -69,13 +69,7 @@ export class ContestScoringRecalculationService {
           include: {
             picks: {
               include: {
-                sportEventParticipant: {
-                  include: {
-                    sourceData: {
-                      orderBy: [{ receivedAt: 'desc' }, { createdAt: 'desc' }],
-                    },
-                  },
-                },
+                sportEventParticipant: true,
               },
               orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
             },
@@ -125,22 +119,13 @@ export class ContestScoringRecalculationService {
         sportEventParticipantId: pick.sportEventParticipantId,
       }));
 
+      // sportEventParticipantSourceData was dropped per plans/117 §13.2;
+      // rop.78.7 rebuilds this scoring path on top of SportEventParticipantGolfRound
+      // and the per-(category × contestType) contribution table. Until then we
+      // pass empty sourceData and the legacy aggregator returns a zero score.
       const result = scoreContestEntry({
         picks,
-        sourceData: entry.picks.flatMap((pick) => {
-          const latestSource = pick.sportEventParticipant.sourceData[0];
-          if (!latestSource) {
-            return [];
-          }
-
-          return [
-            {
-              sportEventParticipantId: pick.sportEventParticipantId,
-              rawPayload: (latestSource.rawPayload ?? {}) as Record<string, unknown>,
-              normalizedData: (latestSource.normalizedData ?? {}) as Record<string, unknown>,
-            },
-          ];
-        }),
+        sourceData: [],
         scoringRules,
         aggregationRule,
       }, this.logger);

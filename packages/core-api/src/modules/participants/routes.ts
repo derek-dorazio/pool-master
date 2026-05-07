@@ -1,5 +1,5 @@
 /**
- * Participants module — registers participant search, CRUD, and season record routes.
+ * Participants module — registers participant search and CRUD routes.
  */
 
 import type { FastifyInstance } from 'fastify';
@@ -99,7 +99,6 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
           nationality: { type: 'string', maxLength: 10 },
           position: { type: 'string', maxLength: 50 },
           teamAffiliation: { type: 'string', maxLength: 255 },
-          metadata: { type: 'object' },
           externalIds: { type: 'object' },
         },
       },
@@ -134,40 +133,10 @@ export async function participantsModule(fastify: FastifyInstance): Promise<void
           status: { type: 'string', enum: ['ACTIVE', 'INACTIVE', 'RETIRED', 'SUSPENDED'] },
           injuryStatus: { type: 'object' },
           photoUrl: { type: 'string' },
-          metadata: { type: 'object' },
           externalIds: { type: 'object' },
         },
       },
     },
     handler: handler.updateParticipant,
-  });
-
-  // --- Season Records ---
-
-  fastify.get('/:id/seasons', {
-    schema: {
-      tags: ['Participants'],
-      summary: 'Get all season records for a participant',
-      description:
-        'Returns every stored season record for the participant so history and scoring surfaces can inspect longitudinal performance.',
-      operationId: 'getParticipantSeasonRecords',
-      response: { 200: zodToJsonSchema(ParticipantSeasonRecordListResponseSchema) },
-    },
-    handler: handler.getSeasonRecords,
-  });
-
-  fastify.get('/:id/seasons/:season', {
-    schema: {
-      tags: ['Participants'],
-      summary: 'Get a specific season record for a participant',
-      description:
-        'Returns the participant season record for a specific season value.',
-      operationId: 'getParticipantSeasonRecord',
-      response: {
-        200: zodToJsonSchema(ParticipantSeasonRecordResponseSchema),
-        404: zodToJsonSchema(ErrorEnvelopeSchema),
-      },
-    },
-    handler: handler.getSeasonRecord,
   });
 }

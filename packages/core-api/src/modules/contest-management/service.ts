@@ -7,7 +7,6 @@ import type {
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
   SportEventParticipantRepository,
-  SportEventParticipantSourceDataRepository,
   SportEventParticipantValuationRepository,
 } from '@poolmaster/shared/db';
 import type {
@@ -74,7 +73,6 @@ export class ContestManagementService {
     private readonly contestEntryAggregationRuleRepo: ContestEntryAggregationRuleRepository,
     private readonly _contestPrizeDefinitionRepo: ContestPrizeDefinitionRepository,
     private readonly sportEventParticipantRepo: SportEventParticipantRepository,
-    private readonly sportEventParticipantSourceDataRepo: SportEventParticipantSourceDataRepository,
     private readonly sportEventParticipantValuationRepo: SportEventParticipantValuationRepository,
     private readonly logger: LifecycleLogger = createNoopLogger(),
     private readonly sportEventReader?: ContestCreateSportEventReader,
@@ -127,7 +125,6 @@ export class ContestManagementService {
         resolvedConfiguration.configuration,
         input.sportEventId,
         this.sportEventParticipantRepo,
-        this.sportEventParticipantSourceDataRepo,
         this.sportEventParticipantValuationRepo,
       ),
     });
@@ -233,7 +230,6 @@ export class ContestManagementService {
         input,
         contest.sportEventId,
         this.sportEventParticipantRepo,
-        this.sportEventParticipantSourceDataRepo,
         this.sportEventParticipantValuationRepo,
       ),
     });
@@ -396,7 +392,6 @@ async function deriveLegacyPersistenceFields(
   configuration: ContestConfigurationRequest,
   sportEventId: string,
   sportEventParticipantRepo: SportEventParticipantRepository,
-  sportEventParticipantSourceDataRepo: SportEventParticipantSourceDataRepository,
   sportEventParticipantValuationRepo: SportEventParticipantValuationRepository,
 ): Promise<Partial<ContestConfiguration>> {
   if (configuration.mode === GolfContestConfigMode.GOLF_TIERED) {
@@ -404,7 +399,6 @@ async function deriveLegacyPersistenceFields(
       configuration,
       sportEventId,
       sportEventParticipantRepo,
-      sportEventParticipantSourceDataRepo,
       sportEventParticipantValuationRepo,
     );
 
@@ -439,7 +433,6 @@ async function derivePersistedTierConfig(
   configuration: Extract<ContestConfigurationRequest, { mode: 'GOLF_TIERED' }>,
   sportEventId: string,
   sportEventParticipantRepo: SportEventParticipantRepository,
-  sportEventParticipantSourceDataRepo: SportEventParticipantSourceDataRepository,
   sportEventParticipantValuationRepo: SportEventParticipantValuationRepository,
 ): Promise<PersistedGolfContestTierDefinition[]> {
   const participants = await sportEventParticipantRepo.findBySportEvent(sportEventId);
@@ -451,23 +444,20 @@ async function derivePersistedTierConfig(
     }));
   }
 
+  // Pre-rop.78.7: tier sort relies on stored valuation orderIndex only.
+  // Per-event ranking/odds will move onto SportEventParticipant in rop.78.5
+  // and the new scoring path in rop.78.7 will rebuild this with typed fields.
   const tierCandidates = await Promise.all(
     participants.map(async (participant) => {
-      const [sourceDataRows, valuations] = await Promise.all([
-        sportEventParticipantSourceDataRepo.findBySportEventParticipant(participant.id),
-        sportEventParticipantValuationRepo.findBySportEventParticipant(participant.id),
-      ]);
-      const latestSourceData = sourceDataRows[0];
-      const metadata = extractSourceMetadata(latestSourceData);
+      const valuations =
+        await sportEventParticipantValuationRepo.findBySportEventParticipant(participant.id);
       const currentValuation = valuations[0];
 
       return {
         sportEventParticipantId: participant.id,
         participantId: participant.participantId,
-        odds: getNumberValue(metadata, 'odds'),
-        ranking:
-          getNumberValue(metadata, 'ranking')
-          ?? currentValuation?.orderIndex,
+        odds: undefined,
+        ranking: currentValuation?.orderIndex,
       } satisfies TierCandidate;
     }),
   );
@@ -567,34 +557,6 @@ function compareNullableNumbers(
     return -1;
   }
   return left - right;
-}
-
-function extractSourceMetadata(sourceData?: {
-  normalizedData?: Record<string, unknown>;
-  rawPayload?: Record<string, unknown>;
-} | null): Record<string, unknown> {
-  if (!sourceData) {
-    return {};
-  }
-
-  return {
-    ...asRecord(sourceData.rawPayload?.metadata),
-    ...asRecord(sourceData.rawPayload),
-    ...asRecord(sourceData.normalizedData),
-  };
-}
-
-function asRecord(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return {};
-  }
-
-  return value as Record<string, unknown>;
-}
-
-function getNumberValue(record: Record<string, unknown>, key: string): number | undefined {
-  const value = record[key];
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
 async function syncDerivedScoring(

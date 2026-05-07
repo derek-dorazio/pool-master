@@ -10,7 +10,6 @@ import type {
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
   SportEventParticipantRepository,
-  SportEventParticipantSourceDataRepository,
   SportEventParticipantValuationRepository,
 } from '@poolmaster/shared/db';
 import type {
@@ -24,7 +23,6 @@ import type {
   ContestPrizeDefinition,
   ParticipantContestScoringRule,
   SportEventParticipant,
-  SportEventParticipantSourceData,
   SportEventParticipantValuation,
 } from '@poolmaster/shared/domain';
 
@@ -130,69 +128,6 @@ export class PrismaSportEventParticipantRepository
       },
     });
     return mapSportEventParticipant(row);
-  }
-}
-
-export class PrismaSportEventParticipantSourceDataRepository
-  implements SportEventParticipantSourceDataRepository
-{
-  constructor(private readonly prisma: PrismaClient) {}
-
-  async findById(id: string): Promise<SportEventParticipantSourceData | null> {
-    const row = await this.prisma.sportEventParticipantSourceData.findUnique({
-      where: { id },
-    });
-    return row ? mapSportEventParticipantSourceData(row) : null;
-  }
-
-  async findBySportEventParticipant(
-    sportEventParticipantId: string,
-  ): Promise<SportEventParticipantSourceData[]> {
-    const rows = await this.prisma.sportEventParticipantSourceData.findMany({
-      where: { sportEventParticipantId },
-      orderBy: { receivedAt: 'desc' },
-    });
-    return rows.map(mapSportEventParticipantSourceData);
-  }
-
-  async create(
-    sourceData: Omit<
-      SportEventParticipantSourceData,
-      'id' | 'createdAt' | 'updatedAt'
-    >,
-  ): Promise<SportEventParticipantSourceData> {
-    const row = await this.prisma.sportEventParticipantSourceData.create({
-      data: {
-        sportEventParticipantId: sourceData.sportEventParticipantId,
-        providerId: sourceData.providerId,
-        externalId: sourceData.externalId,
-        rawPayload: sourceData.rawPayload as object,
-        normalizedData: sourceData.normalizedData as object,
-        receivedAt: sourceData.receivedAt,
-      },
-    });
-    return mapSportEventParticipantSourceData(row);
-  }
-
-  async update(
-    id: string,
-    updates: Partial<SportEventParticipantSourceData>,
-  ): Promise<SportEventParticipantSourceData> {
-    const row = await this.prisma.sportEventParticipantSourceData.update({
-      where: { id },
-      data: {
-        ...(updates.providerId !== undefined && { providerId: updates.providerId }),
-        ...(updates.externalId !== undefined && { externalId: updates.externalId }),
-        ...(updates.rawPayload !== undefined && {
-          rawPayload: updates.rawPayload as object,
-        }),
-        ...(updates.normalizedData !== undefined && {
-          normalizedData: updates.normalizedData as object,
-        }),
-        ...(updates.receivedAt !== undefined && { receivedAt: updates.receivedAt }),
-      },
-    });
-    return mapSportEventParticipantSourceData(row);
   }
 }
 
@@ -844,30 +779,6 @@ function mapSportEventParticipant(row: {
     participantId: row.participantId,
     status: row.status ?? undefined,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function mapSportEventParticipantSourceData(row: {
-  id: string;
-  sportEventParticipantId: string;
-  providerId: string;
-  externalId: string;
-  rawPayload: unknown;
-  normalizedData: unknown;
-  receivedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}): SportEventParticipantSourceData {
-  return {
-    id: row.id,
-    sportEventParticipantId: row.sportEventParticipantId,
-    providerId: row.providerId,
-    externalId: row.externalId,
-    rawPayload: (row.rawPayload ?? {}) as Record<string, unknown>,
-    normalizedData: (row.normalizedData ?? {}) as Record<string, unknown>,
-    receivedAt: row.receivedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

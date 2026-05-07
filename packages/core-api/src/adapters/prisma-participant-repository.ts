@@ -86,7 +86,6 @@ export class PrismaParticipantRepository implements ParticipantRepository {
         name: participant.name,
         participantType: participant.participantType,
         externalId: participant.externalId,
-        metadata: participant.metadata as object,
         firstName: participant.firstName,
         lastName: participant.lastName,
         shortName: participant.shortName,
@@ -110,7 +109,6 @@ export class PrismaParticipantRepository implements ParticipantRepository {
         name: p.name,
         participantType: p.participantType,
         externalId: p.externalId,
-        metadata: p.metadata as object,
         firstName: p.firstName,
         lastName: p.lastName,
         shortName: p.shortName,
@@ -143,7 +141,6 @@ export class PrismaParticipantRepository implements ParticipantRepository {
         ...(updates.injuryStatus !== undefined && { injuryStatus: updates.injuryStatus as object }),
         ...(updates.photoUrl !== undefined && { photoUrl: updates.photoUrl }),
         ...(updates.photoLastUpdated !== undefined && { photoLastUpdated: updates.photoLastUpdated }),
-        ...(updates.metadata !== undefined && { metadata: updates.metadata as object }),
         ...(updates.externalIds !== undefined && { externalIds: updates.externalIds as object }),
         ...(updates.externalId !== undefined && { externalId: updates.externalId }),
       },
@@ -158,7 +155,6 @@ function mapToParticipant(row: {
   name: string;
   participantType: string;
   externalId: string | null;
-  metadata: unknown;
   firstName: string | null;
   lastName: string | null;
   shortName: string | null;
@@ -179,7 +175,6 @@ function mapToParticipant(row: {
     name: row.name,
     participantType: row.participantType as Participant['participantType'],
     externalId: row.externalId ?? undefined,
-    metadata: (row.metadata ?? {}) as Record<string, unknown>,
     firstName: row.firstName ?? undefined,
     lastName: row.lastName ?? undefined,
     shortName: row.shortName ?? undefined,

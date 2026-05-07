@@ -17,7 +17,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import {
   ContestStatus,
-  ContestType,
+  ContestFormat,
   ParticipantType,
   ScoringEngine,
   SelectionType,
@@ -45,7 +45,7 @@ async function cleanupContestArtifacts(): Promise<void> {
     await prisma.contestEntryParticipantScoreEvent.deleteMany({
       where: {
         participantScore: {
-          rosterPick: {
+          pick: {
             sportEventParticipantId: {
               in: createdSportEventParticipantIds,
             },
@@ -55,14 +55,14 @@ async function cleanupContestArtifacts(): Promise<void> {
     });
     await prisma.contestEntryParticipantScore.deleteMany({
       where: {
-        rosterPick: {
+        pick: {
           sportEventParticipantId: {
             in: createdSportEventParticipantIds,
           },
         },
       },
     });
-    await prisma.rosterPick.deleteMany({
+    await prisma.contestEntryPick.deleteMany({
       where: {
         sportEventParticipantId: {
           in: createdSportEventParticipantIds,
@@ -134,7 +134,6 @@ async function seedImportedGolfEvent(options: {
     data: {
       name: `ManagedContestSport-${randomUUID().slice(0, 8)}`,
       participantType: ParticipantType.INDIVIDUAL,
-      statSchema: {},
     },
   });
   createdSportIds.push(sport.id);
@@ -166,7 +165,6 @@ async function seedImportedGolfEvent(options: {
         name: `Managed Contest Golfer ${index + 1}-${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
-        metadata: {},
         position: 'GOLFER',
         teamAffiliation: index % 2 === 0 ? 'USA' : 'EUR',
       },
@@ -182,28 +180,9 @@ async function seedImportedGolfEvent(options: {
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
 
-    await prisma.sportEventParticipantSourceData.create({
-      data: {
-        sportEventParticipantId: sportEventParticipant.id,
-        providerId: options.providerId ?? 'functional-test',
-        externalId: `managed-contest-golfer-${index + 1}`,
-        rawPayload: {
-          metadata: {
-            odds: 8 + index * 2,
-            ranking: index + 1,
-            scoreToPar: -(index + 1),
-          },
-        },
-        normalizedData: {
-          odds: 8 + index * 2,
-          ranking: index + 1,
-          scoreToPar: -(index + 1),
-          thru: 'F',
-          finishPosition: index + 1,
-        },
-        receivedAt: new Date(now.getTime() + index * 1000),
-      },
-    });
+    // sportEventParticipantSourceData was dropped per plans/117 §13.2;
+    // rop.78.5 will move per-event ranking/odds onto SportEventParticipant
+    // and rop.78.7 will rebuild scoring on top of typed detail tables.
 
     seededParticipants.push({
       participantId: participant.id,
@@ -245,7 +224,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       query: {
         sport: Sport.GOLF,
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
       },
     });
 
@@ -263,7 +242,7 @@ describe('SDK Functional: Contests and Entries', () => {
       body: {
         name: `${league.name} Managed Masters Functional Event`,
         sportEventId: importedEvent.sportEventId,
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         templateId: defaultTemplate?.id as string,
       },
     });
@@ -330,7 +309,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       query: {
         sport: Sport.GOLF,
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
       },
     });
     const defaultTemplate = templatesResponse.data?.templates.find(
@@ -346,7 +325,7 @@ describe('SDK Functional: Contests and Entries', () => {
       body: {
         name: `${league.name} Managed Selection Event`,
         sportEventId: importedEvent.sportEventId,
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         templateId: defaultTemplate?.id as string,
         configurationOverrides: {
           mode: 'GOLF_TIERED',
@@ -428,11 +407,11 @@ describe('SDK Functional: Contests and Entries', () => {
         participantId: selectedParticipant.participantId,
         participantName: selectedParticipant.participantName,
         participantStatus: 'ACTIVE',
-        latestPerformance: expect.objectContaining({
-          scoreToPar: -1,
-          thru: 'F',
-          finishPosition: 1,
-        }),
+        // latestPerformance — rop.78.4 dropped sportEventParticipantSourceData
+        // (the source); rop.78.7 rebuilds the snapshot via
+        // SportEventParticipantGolfRound + the per-(category × contestFormat)
+        // contribution table.
+        latestPerformance: {},
       }),
     ]);
 
@@ -469,7 +448,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       query: {
         sport: Sport.GOLF,
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
       },
     });
     const defaultTemplate = templatesResponse.data?.templates.find(
@@ -485,7 +464,7 @@ describe('SDK Functional: Contests and Entries', () => {
       body: {
         name: 'Missing Template Contest',
         sportEventId: importedEvent.sportEventId,
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         templateId: '00000000-0000-4000-8000-000000000000',
       },
     });
@@ -503,7 +482,7 @@ describe('SDK Functional: Contests and Entries', () => {
       body: {
         name: 'Mismatch Template Contest',
         sportEventId: importedEvent.sportEventId,
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         templateId: defaultTemplate?.id as string,
         configurationOverrides: {
           mode: 'GOLF_CATEGORY_PICKS',
@@ -547,7 +526,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Functional Contest',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.BUDGET_PICK,
         scoringEngine: ScoringEngine.POSITION,
       },
@@ -639,7 +618,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Entry Lifecycle Contest',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.BUDGET_PICK,
         scoringEngine: ScoringEngine.POSITION,
       },
@@ -779,7 +758,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Rename Contest',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.BUDGET_PICK,
         scoringEngine: ScoringEngine.POSITION,
       },
@@ -874,7 +853,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Tiebreaker Contest',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.BUDGET_PICK,
         scoringEngine: ScoringEngine.POSITION,
       },
@@ -940,7 +919,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Entry Detail Contest',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
@@ -976,7 +955,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         name: `EntryDetailSport-${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
-        statSchema: {},
       },
     });
     createdSportIds.push(sport.id);
@@ -987,7 +965,6 @@ describe('SDK Functional: Contests and Entries', () => {
         name: `Entry Detail Golfer ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
-        metadata: {},
         position: 'GOLFER',
         teamAffiliation: 'USA',
       },
@@ -1017,22 +994,8 @@ describe('SDK Functional: Contests and Entries', () => {
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
 
-    await prisma.sportEventParticipantSourceData.create({
-      data: {
-        sportEventParticipantId: sportEventParticipant.id,
-        providerId: 'functional-test',
-        externalId: participant.id,
-        rawPayload: { scoreToPar: -11, round1: 70, round2: 68 },
-        normalizedData: {
-          scoreToPar: -11,
-          thru: 'F',
-          round1: 70,
-          round2: 68,
-          finishPosition: 1,
-        },
-        receivedAt: new Date('2026-04-10T15:00:00.000Z'),
-      },
-    });
+    // sportEventParticipantSourceData was dropped per plans/117 §13.2;
+    // rop.78.7 will rebuild via SportEventParticipantGolfRound.
 
     await prisma.contest.update({
       where: {
@@ -1070,18 +1033,19 @@ describe('SDK Functional: Contests and Entries', () => {
     const entryId = entryResponse.data?.entry.id;
     expect(entryId).toBeTruthy();
 
-    const rosterPick = await prisma.rosterPick.create({
+    const pick = await prisma.contestEntryPick.create({
       data: {
         entryId: entryId as string,
         sportEventParticipantId: sportEventParticipant.id,
-        autoPicked: false,
+        contestFormat: 'ROSTER',
+        isAutoPicked: false,
       },
     });
 
     await prisma.contestEntryParticipantScore.create({
       data: {
         entryId: entryId as string,
-        rosterPickId: rosterPick.id,
+        pickId: pick.id,
         pointsEarned: -11,
       },
     });
@@ -1101,13 +1065,11 @@ describe('SDK Functional: Contests and Entries', () => {
         participantName: participant.name,
         participantStatus: 'ACTIVE',
         contestPoints: -11,
-        latestPerformance: expect.objectContaining({
-          scoreToPar: -11,
-          thru: 'F',
-          round1: 70,
-          round2: 68,
-          finishPosition: 1,
-        }),
+        // latestPerformance is intentionally empty in rop.78.4 — the
+        // dropped sportEventParticipantSourceData was its source; rop.78.7
+        // rebuilds the snapshot via SportEventParticipantGolfRound + the
+        // per-(category × contestFormat) contribution table.
+        latestPerformance: {},
       }),
     ]);
   });
@@ -1128,7 +1090,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Outsider Contest',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.BUDGET_PICK,
         scoringEngine: ScoringEngine.POSITION,
       },
@@ -1195,7 +1157,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Locked Contest',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
@@ -1221,7 +1183,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
       body: {
         name: 'Selection Contest',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
@@ -1259,7 +1221,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         name: `FunctionalContestSport-${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
-        statSchema: {},
       },
     });
     createdSportIds.push(sport.id);
@@ -1270,7 +1231,6 @@ describe('SDK Functional: Contests and Entries', () => {
         name: `Functional Contest Player ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
-        metadata: {},
         position: 'GOLFER',
         teamAffiliation: null,
       },
@@ -1416,7 +1376,7 @@ describe('SDK Functional: Contests and Entries', () => {
       path: { id: league.id },
       body: {
         name: 'Visibility Contest',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
@@ -1448,7 +1408,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         name: `VisibilitySport-${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
-        statSchema: {},
       },
     });
     createdSportIds.push(sport.id);
@@ -1459,7 +1418,6 @@ describe('SDK Functional: Contests and Entries', () => {
         name: `Visibility Golfer ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
-        metadata: {},
         position: 'GOLFER',
         teamAffiliation: 'USA',
       },
@@ -1517,11 +1475,12 @@ describe('SDK Functional: Contests and Entries', () => {
     const memberEntryId = memberEntryResponse.data?.entry.id;
     expect(memberEntryId).toBeTruthy();
 
-    await prisma.rosterPick.create({
+    await prisma.contestEntryPick.create({
       data: {
         entryId: memberEntryId as string,
         sportEventParticipantId: sportEventParticipant.id,
-        autoPicked: false,
+        contestFormat: 'ROSTER',
+        isAutoPicked: false,
       },
     });
 
@@ -1604,7 +1563,7 @@ describe('SDK Functional: Contests and Entries', () => {
       path: { id: league.id },
       body: {
         name: 'List Visibility Contest',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {
@@ -1635,7 +1594,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         name: `ListVisibilitySport-${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
-        statSchema: {},
       },
     });
     createdSportIds.push(sport.id);
@@ -1646,7 +1604,6 @@ describe('SDK Functional: Contests and Entries', () => {
         name: `List Visibility Golfer ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
         externalIds: {},
-        metadata: {},
         position: 'GOLFER',
         teamAffiliation: 'USA',
       },
@@ -1707,18 +1664,20 @@ describe('SDK Functional: Contests and Entries', () => {
     const commissionerEntryId = commissionerEntryResponse.data?.entry.id as string;
     const memberEntryId = memberEntryResponse.data?.entry.id as string;
 
-    await prisma.rosterPick.create({
+    await prisma.contestEntryPick.create({
       data: {
         entryId: commissionerEntryId,
         sportEventParticipantId: sportEventParticipant.id,
-        autoPicked: false,
+        contestFormat: 'ROSTER',
+        isAutoPicked: false,
       },
     });
-    await prisma.rosterPick.create({
+    await prisma.contestEntryPick.create({
       data: {
         entryId: memberEntryId,
         sportEventParticipantId: sportEventParticipant.id,
-        autoPicked: false,
+        contestFormat: 'ROSTER',
+        isAutoPicked: false,
       },
     });
 

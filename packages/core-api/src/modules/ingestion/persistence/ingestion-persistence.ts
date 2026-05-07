@@ -12,7 +12,6 @@ import type {
   SportEvent,
   SportEventDetail,
   ProviderParticipant,
-  ProviderRanking,
 } from '../core/provider-interface';
 import type { IngestionJobRecord } from '../core/ingestion-scheduler';
 import {
@@ -433,7 +432,6 @@ export class IngestionPersistence {
             teamAffiliation: p.teamAffiliation ?? null,
             photoUrl: p.photoUrl ?? null,
             status: p.active ? 'ACTIVE' : 'INACTIVE',
-            metadata: p.metadata as any,
           },
         });
       } else {
@@ -462,7 +460,6 @@ export class IngestionPersistence {
               teamAffiliation: p.teamAffiliation ?? null,
               photoUrl: p.photoUrl ?? null,
               status: p.active ? 'ACTIVE' : 'INACTIVE',
-              metadata: p.metadata as any,
             },
           });
 
@@ -494,7 +491,6 @@ export class IngestionPersistence {
     eventsPersisted: number;
     participantsPersisted: number;
     sportEventParticipantsPersisted: number;
-    sourceDataPersisted: number;
   }> {
     this.logger?.debug({
       providerId: detail.providerId,
@@ -521,7 +517,6 @@ export class IngestionPersistence {
     }
 
     let sportEventParticipantsPersisted = 0;
-    let sourceDataPersisted = 0;
 
     for (const participant of detail.participants) {
       const mapping = await this.prisma.participantProviderMapping.findUnique({
@@ -536,7 +531,7 @@ export class IngestionPersistence {
         continue;
       }
 
-      const sportEventParticipant = await this.prisma.sportEventParticipant.upsert({
+      await this.prisma.sportEventParticipant.upsert({
         where: {
           sportEventId_participantId: {
             sportEventId: persistedEvent.id,
@@ -556,31 +551,6 @@ export class IngestionPersistence {
       });
 
       sportEventParticipantsPersisted++;
-
-      await this.prisma.sportEventParticipantSourceData.create({
-        data: {
-          sportEventParticipantId: sportEventParticipant.id,
-          providerId: participant.providerId,
-          externalId: participant.externalId,
-          rawPayload: {
-            externalId: participant.externalId,
-            providerId: participant.providerId,
-            sport: participant.sport,
-            name: participant.name,
-            firstName: participant.firstName ?? null,
-            lastName: participant.lastName ?? null,
-            nationality: participant.nationality ?? null,
-            position: participant.position ?? null,
-            teamAffiliation: participant.teamAffiliation ?? null,
-            photoUrl: participant.photoUrl ?? null,
-            active: participant.active,
-            metadata: participant.metadata,
-          } as any,
-          normalizedData: participant.metadata as any,
-          receivedAt: new Date(),
-        },
-      });
-      sourceDataPersisted++;
     }
 
     this.logger?.info({
@@ -590,111 +560,18 @@ export class IngestionPersistence {
       eventsPersisted,
       participantsPersisted,
       sportEventParticipantsPersisted,
-      sourceDataPersisted,
     }, 'Persisted event detail from ingestion');
 
     return {
       eventsPersisted,
       participantsPersisted,
       sportEventParticipantsPersisted,
-      sourceDataPersisted,
     };
   }
 
-  /**
-   * Upsert rankings into ParticipantSeasonRecord.
-   *
-   * For each ranking:
-   * 1. Resolve participant via ParticipantProviderMapping
-   * 2. Determine the current season string from asOfDate
-   * 3. Upsert the season record with updated ranking data
-   *
-   * Returns the number of rankings persisted.
-   */
-  async persistRankings(rankings: ProviderRanking[]): Promise<number> {
-    let count = 0;
-    this.logger?.debug({
-      count: rankings.length,
-      rankings: rankings.slice(0, 10).map((ranking) => ({
-        participantExternalId: ranking.participantExternalId,
-        rankingType: ranking.rankingType,
-        rank: ranking.rank,
-        asOfDate: ranking.asOfDate.toISOString(),
-      })),
-    }, 'Persisting rankings from ingestion');
-
-    for (const r of rankings) {
-      // We need the providerId from context — rankings reference participantExternalId
-      // but don't carry providerId. Look up by externalId across all providers.
-      const mapping = await this.prisma.participantProviderMapping.findFirst({
-        where: { externalId: r.participantExternalId },
-        include: { participant: { include: { sport: true } } },
-      });
-
-      if (!mapping) {
-        // Skip rankings for unknown participants — they will be persisted
-        // once the participant sync runs.
-        continue;
-      }
-
-      const season = String(r.asOfDate.getFullYear());
-      const sportName = mapping.participant.sport.name as Sport;
-
-      // Build the ranking entry to merge into the rankings JSON array
-      const rankingEntry = {
-        type: r.rankingType,
-        rank: r.rank,
-        points: r.points ?? null,
-        asOfDate: r.asOfDate.toISOString(),
-      };
-
-      // Upsert the season record
-      const existing = await this.prisma.participantSeasonRecord.findUnique({
-        where: {
-          participantId_season: {
-            participantId: mapping.participantId,
-            season,
-          },
-        },
-      });
-
-      if (existing) {
-        // Merge ranking into existing rankings array
-        const currentRankings = (existing.rankings as any[]) ?? [];
-        const idx = currentRankings.findIndex(
-          (entry: any) => entry.type === r.rankingType,
-        );
-        if (idx >= 0) {
-          currentRankings[idx] = rankingEntry;
-        } else {
-          currentRankings.push(rankingEntry);
-        }
-
-        await this.prisma.participantSeasonRecord.update({
-          where: { id: existing.id },
-          data: {
-            rankings: currentRankings as any,
-            lastUpdated: new Date(),
-          },
-        });
-      } else {
-        await this.prisma.participantSeasonRecord.create({
-          data: {
-            participantId: mapping.participantId,
-            sport: sportName,
-            season,
-            rankings: [rankingEntry] as any,
-            lastUpdated: new Date(),
-          },
-        });
-      }
-
-      count++;
-    }
-
-    this.logger?.info({ count }, 'Persisted rankings from ingestion');
-    return count;
-  }
+  // persistRankings was dropped with ParticipantSeasonRecord per plans/117 §13.2.
+  // Per-event ranking/odds will move onto SportEventParticipant (rop.78.5)
+  // and the live-scoring pipeline (rop.78.7) replaces the season-record path.
 }
 
 function collectContestStartedRecipients(

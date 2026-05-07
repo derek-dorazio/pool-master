@@ -84,13 +84,19 @@ ALTER COLUMN "updated_at" DROP DEFAULT;
 -- AlterTable
 ALTER TABLE "contest_timing_policies" ALTER COLUMN "updated_at" DROP DEFAULT;
 
+-- Backfill: rename legacy enum value SINGLE_EVENT → ROSTER on tables whose
+-- contest_type column survives (config templates + timing policies). Per
+-- plans/117 §4.2 the ContestFormat enum collapses SINGLE_EVENT into ROSTER.
+UPDATE "contest_config_templates" SET "contest_type" = 'ROSTER' WHERE "contest_type" = 'SINGLE_EVENT';
+UPDATE "contest_timing_policies" SET "contest_type" = 'ROSTER' WHERE "contest_type" = 'SINGLE_EVENT';
+
 -- AlterTable
 ALTER TABLE "contests" DROP COLUMN "contest_type",
 ADD COLUMN     "contest_format" "PrismaContestFormat" NOT NULL DEFAULT 'ROSTER';
 
--- AlterTable
-ALTER TABLE "draft_pick_histories" RENAME CONSTRAINT "draft_picks_pkey" TO "draft_pick_histories_pkey",
-DROP COLUMN "roster_pick_id",
+-- AlterTable: RENAME CONSTRAINT cannot share a single ALTER statement with column ops in Postgres
+ALTER TABLE "draft_pick_histories" RENAME CONSTRAINT "draft_picks_pkey" TO "draft_pick_histories_pkey";
+ALTER TABLE "draft_pick_histories" DROP COLUMN "roster_pick_id",
 ADD COLUMN     "pick_id" UUID NOT NULL;
 
 -- AlterTable
@@ -232,6 +238,23 @@ CREATE UNIQUE INDEX "contest_sport_events_contest_id_sport_event_id_key" ON "con
 
 -- CreateIndex
 CREATE INDEX "contest_entry_picks_entry_id_idx" ON "contest_entry_picks"("entry_id");
+
+-- CreateIndex (partial uniques per plans/117 §7.1 — contest-format-scoped pick uniqueness)
+CREATE UNIQUE INDEX "uq_pick_roster_participant"
+  ON "contest_entry_picks" ("entry_id", "sport_event_participant_id")
+  WHERE "contest_format" = 'ROSTER';
+
+CREATE UNIQUE INDEX "uq_pick_period_slot"
+  ON "contest_entry_picks" ("entry_id", "period", "slot")
+  WHERE "contest_format" IN ('BRACKET', 'PICKEM_CONFIDENCE');
+
+CREATE UNIQUE INDEX "uq_pick_predicted_position"
+  ON "contest_entry_picks" ("entry_id", "slot")
+  WHERE "contest_format" = 'PREDICT_TOP_N';
+
+CREATE UNIQUE INDEX "uq_pick_survivor_week"
+  ON "contest_entry_picks" ("entry_id", "period")
+  WHERE "contest_format" = 'SURVIVOR';
 
 -- CreateIndex
 CREATE INDEX "contest_entry_pick_golf_roster_contributions_contest_entry__idx" ON "contest_entry_pick_golf_roster_contributions"("contest_entry_pick_id");

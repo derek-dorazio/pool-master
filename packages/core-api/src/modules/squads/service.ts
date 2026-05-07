@@ -378,7 +378,7 @@ export class SquadService {
             entryId: { in: entryIds },
           },
         });
-        await tx.pick.deleteMany({
+        await tx.contestEntryPick.deleteMany({
           where: {
             entryId: { in: entryIds },
           },

@@ -7,7 +7,7 @@ import {
 describe('ContestLookup', () => {
   it('finds active and locked contests through roster picks and deduplicates contest ids', async () => {
     const prisma = {
-      rosterPick: {
+      contestEntryPick: {
         findMany: jest.fn().mockResolvedValue([
           { entry: { contestId: 'contest-active' } },
           { entry: { contestId: 'contest-active' } },
@@ -19,7 +19,7 @@ describe('ContestLookup', () => {
     const lookup = new ContestLookup(prisma);
     const contests = await lookup.findActiveContestsForParticipant('participant-1');
 
-    expect(prisma.rosterPick.findMany).toHaveBeenCalledWith({
+    expect(prisma.contestEntryPick.findMany).toHaveBeenCalledWith({
       where: {
         sportEventParticipant: {
           participantId: 'participant-1',
@@ -48,7 +48,7 @@ describe('ContestLookup', () => {
 
   it('pool-master-dxd.27 finds active contests through provider participant mappings for external ids', async () => {
     const prisma = {
-      rosterPick: {
+      contestEntryPick: {
         findMany: jest.fn().mockResolvedValue([
           { entry: { contestId: 'contest-live' } },
         ]),
@@ -61,7 +61,7 @@ describe('ContestLookup', () => {
       'golfer-01',
     );
 
-    expect(prisma.rosterPick.findMany).toHaveBeenCalledWith({
+    expect(prisma.contestEntryPick.findMany).toHaveBeenCalledWith({
       where: {
         sportEventParticipant: {
           participant: {

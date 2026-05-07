@@ -60,7 +60,7 @@ describe('ScoringService', () => {
             },
             createdAt: new Date('2026-04-03T10:00:00Z'),
             participantScore: {
-              rosterPick: {
+              pick: {
                 sportEventParticipant: {
                   participant: {
                     id: 'participant-1',
@@ -111,7 +111,7 @@ describe('ScoringService', () => {
             },
             createdAt: new Date('2026-04-03T10:00:00Z'),
             participantScore: {
-              rosterPick: {
+              pick: {
                 sportEventParticipant: {
                   participant: {
                     id: 'participant-1',

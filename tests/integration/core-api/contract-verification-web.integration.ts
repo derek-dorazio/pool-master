@@ -34,7 +34,7 @@ import {
   TokenRefreshResponseSchema,
 } from '@poolmaster/shared/dto';
 import {
-  ContestType,
+  ContestFormat,
   ScoringEngine,
   SelectionType,
   Sport,
@@ -247,7 +247,6 @@ describe('Contract verification (web)', () => {
         id: sportId,
         name: Sport.UFC,
         participantType: 'INDIVIDUAL',
-        statSchema: {},
       },
     });
     await prisma.sportEvent.create({
@@ -458,7 +457,6 @@ describe('Contract verification (web)', () => {
       create: {
         name: Sport.GOLF,
         participantType: 'INDIVIDUAL',
-        statSchema: {},
       },
     });
 
@@ -519,7 +517,7 @@ describe('Contract verification (web)', () => {
 
     const templateRes = await getApp().inject({
       method: 'GET',
-      url: `${API_ROUTES.contestManagement.templates(leagueId)}?sport=GOLF&contestType=SINGLE_EVENT`,
+      url: `${API_ROUTES.contestManagement.templates(leagueId)}?sport=GOLF&contestFormat=ROSTER`,
       headers: owner.headers,
     });
 
@@ -540,7 +538,7 @@ describe('Contract verification (web)', () => {
       payload: {
         name: 'Contract Managed Contest',
         sportEventId: sportEvent.id,
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         templateId: defaultTemplate.id,
       },
     });
@@ -705,7 +703,7 @@ describe('Contract verification (web)', () => {
       payload: {
         name: 'Contract Draft Contest',
         sport: 'GOLF',
-        contestType: ContestFormat.ROSTER,
+        contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         scoringEngine: ScoringEngine.STROKE_PLAY,
         contestConfiguration: {

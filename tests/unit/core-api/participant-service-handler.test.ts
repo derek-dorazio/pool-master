@@ -12,7 +12,6 @@ function buildParticipant(overrides: Record<string, unknown> = {}) {
     name: 'Scottie Scheffler',
     participantType: 'INDIVIDUAL' as const,
     externalId: 'provider-1',
-    metadata: {},
     firstName: 'Scottie',
     lastName: 'Scheffler',
     shortName: 'Scheffler',
@@ -39,7 +38,6 @@ describe('participant service and handler', () => {
     const service = new ParticipantService(
       participantRepo as never,
       {} as never,
-      {} as never,
     );
 
     await service.search({
@@ -59,7 +57,6 @@ describe('participant service and handler', () => {
     const service = new ParticipantService(
       participantRepo as never,
       {} as never,
-      {} as never,
     );
 
     const participant = await service.create({
@@ -72,7 +69,6 @@ describe('participant service and handler', () => {
       expect.objectContaining({
         status: ParticipantStatus.ACTIVE,
         injuryStatus: { status: InjuryStatusCode.HEALTHY },
-        metadata: {},
         externalIds: {},
       }),
     );
@@ -86,7 +82,6 @@ describe('participant service and handler', () => {
 
     const service = new ParticipantService(
       participantRepo as never,
-      {} as never,
       {} as never,
     );
 
@@ -166,31 +161,6 @@ describe('participant service and handler', () => {
     });
   });
 
-  it('returns a normalized 404 envelope when a season record is missing', async () => {
-    const participantService = {
-      getSeasonRecord: jest.fn().mockResolvedValue(null),
-    } as unknown as ParticipantService;
-    const reply = {
-      status: jest.fn().mockReturnThis(),
-      send: jest.fn(),
-    };
-
-    const handler = createParticipantHandlers(participantService);
-    await handler.getSeasonRecord(
-      {
-        params: { id: 'participant-1', season: '2026' },
-        contextLogger: { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
-        log: { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
-      } as never,
-      reply as never,
-    );
-
-    expect(reply.status).toHaveBeenCalledWith(404);
-    expect(reply.send).toHaveBeenCalledWith({
-      error: {
-        code: 'PARTICIPANT_SEASON_RECORD_NOT_FOUND',
-        message: 'Season record not found',
-      },
-    });
-  });
+  // Season-record handler test removed — ParticipantSeasonRecord is dropped per
+  // plans/117 §13.2; per-event ranking moves onto SportEventParticipant in rop.78.5.
 });

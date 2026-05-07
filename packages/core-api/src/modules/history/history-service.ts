@@ -120,9 +120,6 @@ export class HistoryService {
             sportEventParticipant: {
               include: {
                 participant: true,
-                sourceData: {
-                  orderBy: [{ receivedAt: 'desc' }, { createdAt: 'desc' }],
-                },
               },
             },
           },
@@ -149,9 +146,10 @@ export class HistoryService {
         pickedAt: pick.pickedAt,
         draftRound: pick.draftRound ?? undefined,
         draftPickNumber: pick.draftPickNumber ?? undefined,
-        autoPicked: pick.autoPicked,
-        latestPerformance:
-          pick.sportEventParticipant.sourceData[0]?.normalizedData ?? {},
+        autoPicked: pick.isAutoPicked,
+        // latestPerformance — was sourced from dropped sportEventParticipantSourceData;
+        // rop.78.7 will rebuild via SportEventParticipantGolfRound + contribution table.
+        latestPerformance: {},
       })),
     };
     this.logger.info({ contestId, entryId, pickCount: rosterHistory.picks.length }, 'history get roster history completed');

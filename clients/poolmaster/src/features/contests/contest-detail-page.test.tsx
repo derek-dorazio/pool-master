@@ -106,7 +106,7 @@ function buildEntry(overrides: Partial<{
   standingsPosition: number | null;
   picksCount: number;
   participants: Array<{
-    rosterPickId: string;
+    pickId: string;
     sportEventParticipantId: string;
     participantId: string;
     participantName: string;
@@ -308,7 +308,7 @@ describe('ContestDetailPage (Contest Board)', () => {
           picksCount: 1,
           participants: [
             {
-              rosterPickId: 'pick-1',
+              pickId: 'pick-1',
               sportEventParticipantId: 'sep-1',
               participantId: 'participant-1',
               participantName: 'Tiger Woods',
@@ -345,7 +345,7 @@ describe('ContestDetailPage (Contest Board)', () => {
           picksCount: 1,
           participants: [
             {
-              rosterPickId: 'pick-3',
+              pickId: 'pick-3',
               sportEventParticipantId: 'sep-3',
               participantId: 'participant-3',
               participantName: 'Phil Mickelson',

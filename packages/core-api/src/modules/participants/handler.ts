@@ -7,10 +7,7 @@ import type { ParticipantService } from './service';
 import { ParticipantNotFoundError } from './service';
 import type { ParticipantSearchFilters } from '@poolmaster/shared/db';
 import type { ParticipantStatus } from '@poolmaster/shared/domain';
-import {
-  mapParticipantSeasonRecordToDto,
-  mapParticipantToDto,
-} from '../../mappers';
+import { mapParticipantToDto } from '../../mappers';
 import { sendError } from '../../core/error-handler';
 
 export function createParticipantHandlers(participantService: ParticipantService) {
@@ -19,8 +16,6 @@ export function createParticipantHandlers(participantService: ParticipantService
     getParticipant,
     createParticipant,
     updateParticipant,
-    getSeasonRecord,
-    getSeasonRecords,
   };
 
   async function searchParticipants(
@@ -171,7 +166,6 @@ export function createParticipantHandlers(participantService: ParticipantService
         nationality?: string;
         position?: string;
         teamAffiliation?: string;
-        metadata?: Record<string, unknown>;
         externalIds?: Record<string, string>;
       };
     }>,
@@ -203,7 +197,6 @@ export function createParticipantHandlers(participantService: ParticipantService
         nationality: body.nationality,
         position: body.position,
         teamAffiliation: body.teamAffiliation,
-        metadata: body.metadata,
         externalIds: body.externalIds,
       });
 
@@ -295,117 +288,4 @@ export function createParticipantHandlers(participantService: ParticipantService
     }
   }
 
-  async function getSeasonRecord(
-    request: FastifyRequest<{ Params: { id: string; season: string } }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const logger = request.contextLogger ?? request.log;
-
-    logger.debug(
-      {
-        action: 'participants.route.season_record.start',
-        data: {
-          participantId: request.params.id,
-          season: request.params.season,
-        },
-      },
-      'Handling participant season record request',
-    );
-
-    try {
-      const record = await participantService.getSeasonRecord(
-        request.params.id,
-        request.params.season,
-      );
-      if (!record) {
-        logger.warn(
-          {
-            action: 'participants.route.season_record.not_found',
-            data: {
-              participantId: request.params.id,
-              season: request.params.season,
-            },
-          },
-          'Participant season record not found',
-        );
-        return sendError(
-          reply,
-          404,
-          'PARTICIPANT_SEASON_RECORD_NOT_FOUND',
-          'Season record not found',
-        );
-      }
-
-      logger.info(
-        {
-          action: 'participants.route.season_record.success',
-          data: {
-            participantId: request.params.id,
-            season: request.params.season,
-          },
-        },
-        'Participant season record request succeeded',
-      );
-
-      return reply.send({ seasonRecord: mapParticipantSeasonRecordToDto(record) });
-    } catch (error) {
-      logger.error(
-        {
-          action: 'participants.route.season_record.failed',
-          err: error,
-          data: {
-            participantId: request.params.id,
-            season: request.params.season,
-          },
-        },
-        'Participant season record request failed',
-      );
-      throw error;
-    }
-  }
-
-  async function getSeasonRecords(
-    request: FastifyRequest<{ Params: { id: string } }>,
-    _reply: FastifyReply,
-  ): Promise<{ seasonRecords: ReturnType<typeof mapParticipantSeasonRecordToDto>[] }> {
-    const logger = request.contextLogger ?? request.log;
-
-    logger.debug(
-      {
-        action: 'participants.route.season_records.start',
-        data: {
-          participantId: request.params.id,
-        },
-      },
-      'Handling participant season-record list request',
-    );
-
-    try {
-      const records = await participantService.getSeasonRecords(request.params.id);
-      const response = { seasonRecords: records.map(mapParticipantSeasonRecordToDto) };
-      logger.info(
-        {
-          action: 'participants.route.season_records.success',
-          data: {
-            participantId: request.params.id,
-            count: response.seasonRecords.length,
-          },
-        },
-        'Participant season-record list request succeeded',
-      );
-      return response;
-    } catch (error) {
-      logger.error(
-        {
-          action: 'participants.route.season_records.failed',
-          err: error,
-          data: {
-            participantId: request.params.id,
-          },
-        },
-        'Participant season-record list request failed',
-      );
-      throw error;
-    }
-  }
 }

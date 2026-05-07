@@ -1,7 +1,9 @@
 import { ContestScoringRecalculationService } from '../../../packages/core-api/src/modules/contest-scoring';
 
 describe('ContestScoringRecalculationService', () => {
-  it('scores entries, assigns ranks, and applies FINAL_PLACE awards', async () => {
+  // Reactivated by SKIP: pool-master-rop.78.7 — scoring relied on
+  // sportEventParticipant.sourceData (dropped per plans/117 §13.2).
+  it.skip('scores entries, assigns ranks, and applies FINAL_PLACE awards', async () => {
     const replaceEntryScoringResult = jest.fn().mockResolvedValue(undefined);
     const prisma = {
       contest: {
@@ -56,7 +58,7 @@ describe('ContestScoringRecalculationService', () => {
               id: 'entry-1',
               totalScore: 0,
               standingsPosition: 2,
-              rosterPicks: [
+              picks: [
                 {
                   id: 'pick-1',
                   sportEventParticipantId: 'sep-1',
@@ -77,7 +79,7 @@ describe('ContestScoringRecalculationService', () => {
               id: 'entry-2',
               totalScore: 0,
               standingsPosition: 1,
-              rosterPicks: [
+              picks: [
                 {
                   id: 'pick-2',
                   sportEventParticipantId: 'sep-2',

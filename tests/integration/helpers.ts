@@ -373,7 +373,7 @@ async function cleanupContestArtifacts(
       },
     },
   });
-  await database.rosterPick.deleteMany({
+  await database.contestEntryPick.deleteMany({
     where: {
       entry: {
         contestId: {
@@ -450,7 +450,7 @@ async function cleanupSportEventParticipantArtifacts(
   await database.contestEntryParticipantScoreEvent.deleteMany({
     where: {
       participantScore: {
-        rosterPick: {
+        pick: {
           sportEventParticipantId: {
             in: sportEventParticipantIds,
           },
@@ -460,7 +460,7 @@ async function cleanupSportEventParticipantArtifacts(
   });
   await database.contestEntryParticipantScore.deleteMany({
     where: {
-      rosterPick: {
+      pick: {
         sportEventParticipantId: {
           in: sportEventParticipantIds,
         },
@@ -469,21 +469,14 @@ async function cleanupSportEventParticipantArtifacts(
   });
   await database.draftPickHistory.deleteMany({
     where: {
-      rosterPick: {
+      pick: {
         sportEventParticipantId: {
           in: sportEventParticipantIds,
         },
       },
     },
   });
-  await database.rosterPick.deleteMany({
-    where: {
-      sportEventParticipantId: {
-        in: sportEventParticipantIds,
-      },
-    },
-  });
-  await database.sportEventParticipantSourceData.deleteMany({
+  await database.contestEntryPick.deleteMany({
     where: {
       sportEventParticipantId: {
         in: sportEventParticipantIds,
@@ -597,10 +590,8 @@ export async function cleanupTestData(): Promise<void> {
   }
 
   await prisma.providerSyncRun.deleteMany();
-  await prisma.sportEventParticipantSourceData.deleteMany();
   await prisma.sportEventParticipantValuation.deleteMany();
   await prisma.sportEventParticipant.deleteMany();
-  await prisma.participantSeasonRecord.deleteMany();
   await prisma.participantProviderMapping.deleteMany();
   await prisma.participant.deleteMany();
   await prisma.sportEvent.deleteMany();

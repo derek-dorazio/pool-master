@@ -36,9 +36,6 @@ async function cleanupMockProviderImportData(): Promise<void> {
   });
   const participantIds = providerMappings.map((mapping) => mapping.participantId);
 
-  await prisma.sportEventParticipantSourceData.deleteMany({
-    where: { providerId },
-  });
   await prisma.sportEventParticipantValuation.deleteMany({
     where: {
       sportEventParticipant: {
@@ -55,13 +52,9 @@ async function cleanupMockProviderImportData(): Promise<void> {
       },
     },
   });
-  if (participantIds.length > 0) {
-    await prisma.participantSeasonRecord.deleteMany({
-      where: {
-        participantId: { in: participantIds },
-      },
-    });
-  }
+  void participantIds;
+  // ParticipantSeasonRecord was dropped per plans/117 §13.2;
+  // rop.78.5 moves per-event ranking onto SportEventParticipant.
   await prisma.ingestionJob.deleteMany({
     where: {
       providerId,
@@ -244,10 +237,9 @@ describe('mock contest feed provider event-first verification', () => {
     expect(persistDetailResult.participantsPersisted).toBe(detail?.participants.length);
     expect(persistDetailResult.sportEventParticipantsPersisted).toBe(detail?.participants.length);
 
-    const persistedRankings = await persistence.persistRankings(
-      rankings.filter((ranking) => importedParticipantExternalIds.includes(ranking.participantExternalId)),
-    );
-    expect(persistedRankings).toBeGreaterThan(0);
+    // persistRankings was dropped per plans/117 §13.2 (ParticipantSeasonRecord
+    // model dropped). rop.78.5 moves per-event ranking onto SportEventParticipant.
+    void rankings;
 
     const persistedEvent = await prisma.sportEvent.findUniqueOrThrow({
       where: {
@@ -278,22 +270,9 @@ describe('mock contest feed provider event-first verification', () => {
     });
     expect(participantMappings.length).toBe(detail?.participants.length);
 
-    const participantSeasonRecords = await prisma.participantSeasonRecord.findMany({
-      where: {
-        participantId: {
-          in: participantMappings.map((mapping) => mapping.participantId),
-        },
-      },
-    });
-    expect(participantSeasonRecords.length).toBeGreaterThan(0);
-    expect(participantSeasonRecords[0]?.rankings).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          type: 'OWGR',
-          rank: expect.any(Number),
-        }),
-      ]),
-    );
+    // ParticipantSeasonRecord rankings were dropped per plans/117 §13.2.
+    // rop.78.5 will move per-event ranking onto SportEventParticipant
+    // (worldRanking column), and this test will assert against that.
   });
 
   it('keeps startup-style schedule sync shallow until manual re-ingest loads contest-ready event detail', async () => {
@@ -320,9 +299,7 @@ describe('mock contest feed provider event-first verification', () => {
       onEventDetail: async (detail) => {
         await persistence.persistEventDetail(detail);
       },
-      onRankings: async (rankings) => {
-        await persistence.persistRankings(rankings);
-      },
+      onRankings: async () => undefined,
       onLiveScores: async () => undefined,
       onJobComplete: async () => undefined,
     });
@@ -333,7 +310,9 @@ describe('mock contest feed provider event-first verification', () => {
     const startupParticipants = await provider.getParticipants(Sport.GOLF);
     await persistence.persistParticipants(startupParticipants);
     const startupRankings = await provider.getRankings(Sport.GOLF, 'OWGR');
-    await persistence.persistRankings(startupRankings);
+    // persistRankings was dropped per plans/117 §13.2; rop.78.5 reintroduces
+    // per-event ranking on SportEventParticipant.
+    void startupRankings;
 
     const shallowEvent = await prisma.sportEvent.findUniqueOrThrow({
       where: {

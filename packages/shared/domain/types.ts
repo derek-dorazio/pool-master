@@ -322,7 +322,7 @@ export interface ContestHistoryResult extends DomainEntity {
   leagueId?: string;
   leagueMembershipId?: string;
   contestName?: string;
-  contestType?: string;
+  contestFormat?: string;
   sport?: string;
   numEntries?: number;
   startedAt?: Date;
@@ -381,7 +381,7 @@ export interface ContestHistorySummary {
   contestId: string;
   contestName: string;
   sport: string;
-  contestType: string;
+  contestFormat: string;
   season?: string;
   startedAt?: Date;
   endedAt?: Date;

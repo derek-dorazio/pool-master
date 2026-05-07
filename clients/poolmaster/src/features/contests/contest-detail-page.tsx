@@ -141,7 +141,7 @@ function ParticipantsTable({
             <div
               className="grid grid-cols-[minmax(0,1.5fr)_80px_70px_repeat(4,56px)] gap-2 px-4 py-3 text-sm"
               data-testid={`contest-leaderboard-participant-${entryId}-${participant.participantId}`}
-              key={participant.rosterPickId}
+              key={participant.pickId}
             >
               <div className="min-w-0">
                 <div className="truncate font-medium text-foreground">{participant.participantName}</div>
@@ -158,7 +158,7 @@ function ParticipantsTable({
                 {performance.thru ?? '—'}
               </span>
               {performance.roundScores.map((roundScore, index) => (
-                <span className="text-right text-muted-foreground" key={`${participant.rosterPickId}-round-${index + 1}`}>
+                <span className="text-right text-muted-foreground" key={`${participant.pickId}-round-${index + 1}`}>
                   {roundScore}
                 </span>
               ))}
@@ -646,7 +646,7 @@ export function ContestDetailPage() {
         <DefinitionList
           className="mt-5"
           items={[
-            { id: 'contest-type', label: 'Contest type', value: contest.contestType },
+            { id: 'contest-format', label: 'Contest format', value: contest.contestFormat },
             { id: 'selection-type', label: 'Selection type', value: contest.selectionType },
             { id: 'scoring-engine', label: 'Scoring engine', value: contest.scoringEngine },
             { id: 'status', label: 'Status', value: contest.status },

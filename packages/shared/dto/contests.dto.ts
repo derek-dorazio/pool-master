@@ -54,7 +54,7 @@ export const ContestCrudConfigurationRequestSchema = z.object({
 export const CreateContestRequestSchema = z.object({
   name: z.string().min(1).max(100),
   eventId: z.string().optional(),
-  contestFormat: z.enum([ContestFormat.ROSTER]),
+  contestFormat: z.enum(Object.values(ContestFormat) as [string, ...string[]]),
   selectionType: z.enum([
     SelectionType.SNAKE_DRAFT,
     SelectionType.TIERED,
@@ -154,7 +154,7 @@ export const ContestSummaryDtoSchema = z.object({
     ContestStatus.COMPLETED,
     ContestStatus.CANCELLED,
   ]),
-  contestFormat: z.enum([ContestFormat.ROSTER]),
+  contestFormat: z.enum(Object.values(ContestFormat) as [string, ...string[]]),
   selectionType: z.enum([
     SelectionType.SNAKE_DRAFT,
     SelectionType.TIERED,

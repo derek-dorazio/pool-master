@@ -77,7 +77,7 @@ interface SelectionParticipantRecord {
   isAvailable: boolean;
   unavailableReason?: string;
 }
-type ContestEntryPickRecord = Awaited<ReturnType<PrismaClient['pick']['findMany']>>[number];
+type ContestEntryPickRecord = Awaited<ReturnType<PrismaClient['contestEntryPick']['findMany']>>[number];
 
 interface SelectionGroupResponseRecord {
   groupId: string;
@@ -336,9 +336,6 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
           where: { sportEventId: contest.sportEventId },
           include: {
             participant: true,
-            sourceData: {
-              orderBy: [{ receivedAt: 'desc' }, { createdAt: 'desc' }],
-            },
             valuations: {
               orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
             },
@@ -359,28 +356,9 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
         orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
       });
 
-  const participantIds = Array.from(new Set(sportEventParticipants.map((record) => record.participantId)));
-  const seasonAnchor = contest.sportEvent?.startDate ?? new Date();
-  const season = String(seasonAnchor.getUTCFullYear());
-  const seasonRecords = participantIds.length === 0
-    ? []
-    : await prisma.participantSeasonRecord.findMany({
-        where: {
-          participantId: { in: participantIds },
-          season,
-        },
-      });
+  // Per-event world ranking will move onto SportEventParticipant.worldRanking
+  // in rop.78.5; for now, draft routes rely on stored valuation orderIndex only.
   const rankingByParticipantId = new Map<string, number>();
-  for (const seasonRecord of seasonRecords) {
-    const rankings = Array.isArray(seasonRecord.rankings) ? seasonRecord.rankings as Array<Record<string, unknown>> : [];
-    const preferredRanking = rankings.find((entry) =>
-      typeof entry?.rank === 'number'
-      && (entry.rankingType === 'OWGR' || entry.rankingType === 'default'),
-    ) ?? rankings.find((entry) => typeof entry?.rank === 'number');
-    if (preferredRanking && typeof preferredRanking.rank === 'number') {
-      rankingByParticipantId.set(seasonRecord.participantId, preferredRanking.rank);
-    }
-  }
 
   return {
     contest: {
@@ -399,11 +377,6 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
     squadMemberships,
     selectionParticipants: sportEventParticipants.map((record) => {
       const valuation = record.valuations[0];
-      const sourceData = record.sourceData[0];
-      const sourceRanking =
-        getNumericSourceField(sourceData?.normalizedData, 'ranking')
-        ?? getNumericSourceField(sourceData?.rawPayload, 'ranking')
-        ?? getNumericSourceField(asSourceRecord(sourceData?.rawPayload)?.metadata, 'ranking');
       const normalizedStatus = record.status?.toUpperCase?.();
       const isAvailable = !normalizedStatus || !['INACTIVE', 'REMOVED', 'WITHDRAWN'].includes(normalizedStatus);
 
@@ -415,7 +388,7 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
         teamAffiliation: record.participant.teamAffiliation,
         status: record.status,
         price: valuation?.price ?? undefined,
-        ranking: rankingByParticipantId.get(record.participantId) ?? sourceRanking ?? undefined,
+        ranking: rankingByParticipantId.get(record.participantId) ?? undefined,
         tier: valuation?.tier ?? null,
         orderIndex: valuation?.orderIndex ?? undefined,
         isAvailable,
@@ -429,23 +402,6 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
       return a.participantName.localeCompare(b.participantName, undefined, { sensitivity: 'base' });
     }),
   };
-}
-
-function asSourceRecord(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return {};
-  }
-
-  return value as Record<string, unknown>;
-}
-
-function getNumericSourceField(
-  record: unknown,
-  key: string,
-): number | undefined {
-  const source = asSourceRecord(record);
-  const value = source[key];
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
 function buildContestConfigurationResponse(
@@ -724,7 +680,7 @@ async function buildRosterSelectionResponse(
       price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
       tierId: tier?.tierId,
       tierName: tier?.tierName,
-      autoPicked: pick.autoPicked,
+      autoPicked: pick.isAutoPicked,
       pickedAt: pick.pickedAt.toISOString(),
     };
   });
@@ -1216,9 +1172,10 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         data: {
           entryId,
           sportEventParticipantId: participantId,
+          contestFormat: 'ROSTER',
           draftRound,
           draftPickNumber: globalPickCount + 1,
-          autoPicked: false,
+          isAutoPicked: false,
         },
       });
 
