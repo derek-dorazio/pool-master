@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type {
@@ -56,6 +56,7 @@ import {
 } from './contest-configuration-sections';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type SportEventSummary = ListEventsResponses[200]['events'][number];
@@ -284,7 +285,6 @@ export function CreateContestPage() {
   const { leagueCode = '', contestId } = useParams<{ leagueCode: string; contestId?: string }>();
   const auth = useAuth();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const isEditMode = Boolean(contestId);
 
   const [mode, setMode] = useState<ContestMode>('GOLF_TIERED');
@@ -713,7 +713,7 @@ export function CreateContestPage() {
     visibleTemplates.length,
   ]);
 
-  const saveContestMutation = useMutation({
+  const saveContestMutation = createMutationHook({
     mutationFn: async () => {
       if (!leagueQuery.data?.id) {
         throw new Error('League detail is still loading.');
@@ -931,19 +931,15 @@ export function CreateContestPage() {
         },
         isEditMode ? 'Saved contest successfully' : 'Created contest successfully',
       );
-      await queryClient.invalidateQueries({
-        queryKey: QueryKeys.contests.list({ leagueId: leagueQuery.data?.id }),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: QueryKeys.contests.detail(savedContestId),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: QueryKeys.managedContests.detail(savedContestId),
-      });
       navigate(buildLeagueContestPath(leagueCode, savedContestId), {
         state: { leagueCode },
       });
     },
+    invalidates: (savedContestId) => [
+      QueryKeys.contests.list({ leagueId: leagueQuery.data?.id }),
+      QueryKeys.contests.detail(savedContestId),
+      QueryKeys.managedContests.detail(savedContestId),
+    ],
     onError: (error) => {
       const payload = {
         action: isEditMode ? 'contest.save.failed' : 'contest.create.failed',
@@ -965,7 +961,7 @@ export function CreateContestPage() {
     },
   });
 
-  const deleteContestMutation = useMutation({
+  const deleteContestMutation = createMutationHook({
     mutationFn: async () => {
       if (!contestId) {
         throw new Error('Contest id is required to delete a contest.');
@@ -1002,11 +998,9 @@ export function CreateContestPage() {
         },
         'Deleted contest successfully',
       );
-      await queryClient.invalidateQueries({
-        queryKey: QueryKeys.contests.list({ leagueId: leagueQuery.data?.id }),
-      });
       navigate(buildLeaguePath(leagueCode));
     },
+    invalidates: [QueryKeys.contests.list({ leagueId: leagueQuery.data?.id })],
     onError: (error) => {
       const payload = {
         action: 'contest.delete.failed',

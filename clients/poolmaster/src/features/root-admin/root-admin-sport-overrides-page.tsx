@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   adminGetIngestionSchedule,
@@ -16,9 +16,9 @@ import {
   type IngestionScheduleConfig,
 } from './root-admin-sync-config-utils';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 export function RootAdminSportOverridesPage() {
-  const queryClient = useQueryClient();
   const [overrideSport, setOverrideSport] = useState<SyncSport>('GOLF');
   const [ingestionDraft, setIngestionDraft] =
     useState<IngestionScheduleConfig | null>(null);
@@ -48,7 +48,7 @@ export function RootAdminSportOverridesPage() {
     setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
   }, [ingestionConfigQuery.data, overrideSport]);
 
-  const sportOverrideMutation = useMutation({
+  const sportOverrideMutation = createMutationHook({
     mutationFn: async (input: {
       sport: SyncSport;
       draft: Record<IngestionPolicyKey, boolean>;
@@ -75,13 +75,11 @@ export function RootAdminSportOverridesPage() {
       const nextDraft = cloneIngestionConfig(data);
       setIngestionDraft(nextDraft);
       setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
-      await queryClient.invalidateQueries({
-        queryKey: QueryKeys.rootAdmin.ingestionConfig,
-      });
     },
+    invalidates: [QueryKeys.rootAdmin.ingestionConfig],
   });
 
-  const resetSportOverrideMutation = useMutation({
+  const resetSportOverrideMutation = createMutationHook({
     mutationFn: async (sport: SyncSport) => {
       const response = await adminResetSportIngestionOverride({
         path: { sport },
@@ -97,10 +95,8 @@ export function RootAdminSportOverridesPage() {
       const nextDraft = cloneIngestionConfig(data);
       setIngestionDraft(nextDraft);
       setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
-      await queryClient.invalidateQueries({
-        queryKey: QueryKeys.rootAdmin.ingestionConfig,
-      });
     },
+    invalidates: [QueryKeys.rootAdmin.ingestionConfig],
   });
 
   return (

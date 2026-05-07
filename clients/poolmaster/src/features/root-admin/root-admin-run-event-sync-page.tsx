@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   adminListProviders,
   adminSyncProviderEventData,
@@ -27,6 +27,7 @@ import {
 } from './root-admin-sync-utils';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 type EventSyncEvent = ListEventsResponses[200]['events'][number];
 
@@ -69,7 +70,6 @@ export function RootAdminRunEventSyncPage() {
   const logger = getLogger().child({
     feature: 'root-admin-run-event-sync-page',
   });
-  const queryClient = useQueryClient();
   const [eventSyncSport, setEventSyncSport] = useState<SyncSport>('GOLF');
   const [eventSyncPresetId, setEventSyncPresetId] = useState<EventSyncPresetId>(
     'EVENTPARTICIPANTS',
@@ -142,7 +142,7 @@ export function RootAdminRunEventSyncPage() {
     }
   }, [selectableEvents, selectedEventExternalId]);
 
-  const eventSyncMutation = useMutation({
+  const eventSyncMutation = createMutationHook({
     mutationFn: async (input: {
       sport: SyncSport;
       eventId: string;
@@ -192,10 +192,8 @@ export function RootAdminRunEventSyncPage() {
         },
         'Submitted manual provider event sync',
       );
-      await queryClient.invalidateQueries({
-        queryKey: QueryKeys.rootAdmin.providerSyncRuns,
-      });
     },
+    invalidates: [QueryKeys.rootAdmin.providerSyncRuns],
     onError: (error) => {
       if (error instanceof Error) {
         logger.error(

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Pencil } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -38,6 +38,7 @@ import {
 } from '@/features/shared/ui';
 import { shouldPollContestEntries } from './contest-status';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 type ContestDetail = GetContestResponses[200]['contest'];
 type ContestEntryDetail = ListContestEntriesResponses[200]['entries'][number];
@@ -173,7 +174,6 @@ function ParticipantsTable({
 
 export function ContestDetailPage() {
   const auth = useAuth();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const logger = getLogger().child({
     feature: 'contest-board',
@@ -251,7 +251,7 @@ export function ContestDetailPage() {
     );
   }, [auth.user?.id, teamsQuery.data]);
 
-  const enterContestMutation = useMutation({
+  const enterContestMutation = createMutationHook({
     mutationFn: async () => {
       const response = await enterContest({ path: { contestId } });
       if (!response.data?.entry) {
@@ -260,7 +260,6 @@ export function ContestDetailPage() {
       return response.data.entry;
     },
     onSuccess: async (entry) => {
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.contestEntries.byContest(contestId) });
       navigate(
         hintedLeagueCode
           ? buildLeagueContestEntryPath(hintedLeagueCode, contestId, entry.id)
@@ -270,9 +269,10 @@ export function ContestDetailPage() {
         },
       );
     },
+    invalidates: [QueryKeys.contestEntries.byContest(contestId)],
   });
 
-  const renameEntryMutation = useMutation({
+  const renameEntryMutation = createMutationHook({
     mutationFn: async ({ entryId, name }: { entryId: string; name: string }) => {
       const response = await updateContestEntry({
         path: { contestId, entryId },
@@ -286,8 +286,8 @@ export function ContestDetailPage() {
     onSuccess: async () => {
       setRenameEntryId(null);
       setRenameDraft('');
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.contestEntries.byContest(contestId) });
     },
+    invalidates: [QueryKeys.contestEntries.byContest(contestId)],
   });
 
   useEffect(() => {

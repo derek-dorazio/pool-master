@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   adminGetPollIntervals,
   adminResetPollIntervals,
@@ -20,6 +20,7 @@ import {
   type PollIntervalConfig,
 } from './root-admin-sync-config-utils';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 const POLL_INTERVAL_FIELDS = [
   ['standings', 'Standings'],
@@ -32,7 +33,6 @@ const POLL_INTERVAL_FIELDS = [
 >;
 
 export function RootAdminPollIntervalsPage() {
-  const queryClient = useQueryClient();
   const [draft, setDraft] = useState<PollIntervalConfig | null>(null);
 
   const pollConfigQuery = useQuery({
@@ -55,7 +55,7 @@ export function RootAdminPollIntervalsPage() {
     setDraft(clonePollConfig(pollConfigQuery.data));
   }, [pollConfigQuery.data]);
 
-  const pollConfigMutation = useMutation({
+  const pollConfigMutation = createMutationHook({
     mutationFn: async (nextDraft: PollIntervalConfig) => {
       const response = await adminUpdatePollIntervals({
         body: nextDraft,
@@ -69,13 +69,11 @@ export function RootAdminPollIntervalsPage() {
     },
     onSuccess: async (data) => {
       setDraft(clonePollConfig(data));
-      await queryClient.invalidateQueries({
-        queryKey: QueryKeys.rootAdmin.pollConfig,
-      });
     },
+    invalidates: [QueryKeys.rootAdmin.pollConfig],
   });
 
-  const resetPollConfigMutation = useMutation({
+  const resetPollConfigMutation = createMutationHook({
     mutationFn: async () => {
       const response = await adminResetPollIntervals();
       if (!response.data) {
@@ -85,10 +83,8 @@ export function RootAdminPollIntervalsPage() {
     },
     onSuccess: async (data) => {
       setDraft(clonePollConfig(data));
-      await queryClient.invalidateQueries({
-        queryKey: QueryKeys.rootAdmin.pollConfig,
-      });
     },
+    invalidates: [QueryKeys.rootAdmin.pollConfig],
   });
 
   function updateDraftValue(key: keyof PollIntervalConfig, value: string) {

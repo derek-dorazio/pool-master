@@ -6,7 +6,7 @@ import { QueryKeys } from '../../../clients/poolmaster/src/lib/query-keys';
 
 describe('pool-master-rop.78.9: PoolMaster query key factory', () => {
   it('pool-master-rop.78.9: preserves representative TanStack Query key shapes', () => {
-    expect(QueryKeys.sports.list).toEqual(['poolmaster', 'sports']);
+    expect(QueryKeys.sports.list).toEqual(['poolmaster', 'sports', 'list']);
     expect(QueryKeys.sports.detail('sport-1')).toEqual(['poolmaster', 'sports', 'sport-1']);
     expect(QueryKeys.sportEvents.list({ sport: 'GOLF' })).toEqual([
       'poolmaster',
@@ -73,6 +73,11 @@ describe('pool-master-rop.78.9: PoolMaster query key factory', () => {
       'admin',
       'user-detail',
       'user-1',
+    ]);
+    expect(QueryKeys.rootAdmin.manageUsers).toEqual([
+      'poolmaster',
+      'root-admin',
+      'manage-users',
     ]);
   });
 

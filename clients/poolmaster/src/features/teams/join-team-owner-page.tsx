@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { acceptTeamOwnerInvitation } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -23,6 +23,7 @@ import {
   getTeamOwnerInvitationPreviewQueryKey,
 } from './team-owner-invitation-preview';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -51,7 +52,6 @@ export function JoinTeamOwnerPage() {
   });
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
   const invitationQuery = useQuery({
     queryKey: getTeamOwnerInvitationPreviewQueryKey(inviteCode),
@@ -96,7 +96,7 @@ export function JoinTeamOwnerPage() {
     );
   }, [inviteCode, invitationQuery.data, isAuthenticated, logger]);
 
-  const acceptMutation = useMutation({
+  const acceptMutation = createMutationHook({
     mutationFn: async () => {
       const response = await acceptTeamOwnerInvitation({ body: { inviteCode } });
       if (!response.data?.invitation) {
@@ -130,12 +130,14 @@ export function JoinTeamOwnerPage() {
       );
       const leagueCode = invitationQuery.data?.league.leagueCode;
       if (leagueCode) {
-        void queryClient.invalidateQueries({ queryKey: QueryKeys.leagues.list });
-        void queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.all });
         setRecentLeagueCode(leagueCode);
         navigate(buildLeagueTeamPath(leagueCode));
       }
     },
+    invalidates: [
+      QueryKeys.leagues.list,
+      QueryKeys.leagueTeams.all,
+    ],
     onError: (error) => {
       const payload = {
         action: 'teamInvite.accept.failed',

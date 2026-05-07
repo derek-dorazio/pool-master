@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   adminGetIngestionSchedule,
   adminResetIngestionSchedule,
@@ -22,6 +22,7 @@ import {
   type IngestionScheduleConfig,
 } from './root-admin-sync-config-utils';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 type IngestionEditableField =
   | 'enabled'
@@ -31,7 +32,6 @@ type IngestionEditableField =
   | 'leadDaysBeforeStart';
 
 export function RootAdminIngestionSchedulePage() {
-  const queryClient = useQueryClient();
   const [draft, setDraft] = useState<IngestionScheduleConfig | null>(null);
 
   const ingestionConfigQuery = useQuery({
@@ -54,7 +54,7 @@ export function RootAdminIngestionSchedulePage() {
     setDraft(cloneIngestionConfig(ingestionConfigQuery.data));
   }, [ingestionConfigQuery.data]);
 
-  const ingestionConfigMutation = useMutation({
+  const ingestionConfigMutation = createMutationHook({
     mutationFn: async (nextDraft: IngestionScheduleConfig) => {
       const response = await adminUpdateIngestionSchedule({
         body: {
@@ -75,13 +75,11 @@ export function RootAdminIngestionSchedulePage() {
     },
     onSuccess: async (data) => {
       setDraft(cloneIngestionConfig(data));
-      await queryClient.invalidateQueries({
-        queryKey: QueryKeys.rootAdmin.ingestionConfig,
-      });
     },
+    invalidates: [QueryKeys.rootAdmin.ingestionConfig],
   });
 
-  const resetIngestionConfigMutation = useMutation({
+  const resetIngestionConfigMutation = createMutationHook({
     mutationFn: async () => {
       const response = await adminResetIngestionSchedule();
       if (!response.data) {
@@ -91,10 +89,8 @@ export function RootAdminIngestionSchedulePage() {
     },
     onSuccess: async (data) => {
       setDraft(cloneIngestionConfig(data));
-      await queryClient.invalidateQueries({
-        queryKey: QueryKeys.rootAdmin.ingestionConfig,
-      });
     },
+    invalidates: [QueryKeys.rootAdmin.ingestionConfig],
   });
 
   function updateDraftValue(

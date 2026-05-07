@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createLeague } from "@/lib/api";
 import { getLogger } from "@/lib/logger";
 import {
@@ -16,6 +16,7 @@ import {
 import { buildLeaguePath, setRecentLeagueCode } from "./league-routing";
 import { syncLeagueCaches } from "./league-cache";
 import { extractErrorMessage } from '@/lib/errors';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 const LEAGUE_CODE_PATTERN = /^[A-Z0-9]{3,16}$/;
 const WIZARD_STEP_DETAILS = "details";
@@ -104,7 +105,7 @@ export function CreateLeagueModal({
     }
   }
 
-  const createLeagueMutation = useMutation({
+  const createLeagueMutation = createMutationHook({
     mutationFn: async (values: CreateLeagueFormValues) => {
       const response = await createLeague({
         body: {
@@ -154,6 +155,7 @@ export function CreateLeagueModal({
       form.reset();
       onCreated(league.leagueCode);
     },
+    invalidates: [],
     onError: (error, values) => {
       const payload = {
         action: "league.create.failed",
