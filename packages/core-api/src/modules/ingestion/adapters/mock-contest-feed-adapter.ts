@@ -297,7 +297,18 @@ function isRelativeManualTestEventId(eventId: string): boolean {
   return /^golf-relative-manual-test-\d{8}t\d{6}z$/.test(eventId);
 }
 
-function toDomainSport(sport: SupportedMockSport): Sport {
+/**
+ * Maps a mock-feed sport literal to its domain `Sport`. Returns `null`
+ * for sports the adapter intentionally does not surface — currently
+ * the generic `'TEAM_TOURNAMENT'` showcase scenarios. Pre-rop.78.13 the
+ * adapter's local `SupportedMockSport` union didn't include
+ * `'TEAM_TOURNAMENT'` at all, so the runtime fallthrough silently
+ * filtered those scenarios out. The generated SDK now exposes
+ * `'TEAM_TOURNAMENT'`, so the filter has to be explicit — defaulting
+ * the value to a real `Sport` would cross-contaminate (e.g. routing
+ * the `correction-and-tie-2026` showcase event into NCAA basketball).
+ */
+function toDomainSport(sport: SupportedMockSport): Sport | null {
   switch (sport) {
     case 'GOLF':
       return Sport.GOLF;
@@ -306,13 +317,7 @@ function toDomainSport(sport: SupportedMockSport): Sport {
     case 'NCAA_BASKETBALL':
       return Sport.NCAA_BASKETBALL;
     case 'TEAM_TOURNAMENT':
-      // Generic team-tournament scenarios (NCAA bracket variants etc.)
-      // surface in the SDK enum but don't map to a single domain Sport.
-      // The mock-feed adapter only registers GOLF/TENNIS/NCAA_BASKETBALL
-      // as sportsCovered, so this branch is unreachable in practice.
-      // Default to NCAA_BASKETBALL since that's the existing tournament
-      // category the adapter serves.
-      return Sport.NCAA_BASKETBALL;
+      return null;
   }
 }
 
@@ -322,11 +327,19 @@ function toProviderParticipant(
   contestant: ContestantRecord,
 ): ProviderParticipant {
   const [firstName, ...lastParts] = contestant.name.split(/\s+/);
+  const domainSport = toDomainSport(sport);
+  if (!domainSport) {
+    // Unreachable in practice — listScenarioEvents filters unsupported
+    // sports out before any participant projection runs. Throw here so a
+    // future caller skipping the filter fails loudly instead of emitting
+    // a participant with the wrong sport.
+    throw new Error(`Unsupported mock-feed sport for participant projection: ${sport}`);
+  }
 
   return {
     externalId: contestant.contestantId,
     providerId,
-    sport: toDomainSport(sport),
+    sport: domainSport,
     name: contestant.name,
     firstName,
     lastName: lastParts.join(' ') || undefined,
@@ -352,10 +365,15 @@ function toSportEvent(
   detail: EventDetailResponse,
   participantCount: number,
 ): SportEvent {
+  const domainSport = toDomainSport(detail.sport);
+  if (!domainSport) {
+    // Unreachable in practice — see toProviderParticipant for rationale.
+    throw new Error(`Unsupported mock-feed sport for event projection: ${detail.sport}`);
+  }
   return {
     externalId: detail.event.metadata?.externalEventId ?? detail.event.eventId,
     providerId,
-    sport: toDomainSport(detail.sport),
+    sport: domainSport,
     name: detail.event.name,
     venue: detail.event.venue?.name,
     location: [detail.event.venue?.city, detail.event.venue?.region].filter(Boolean).join(', ')

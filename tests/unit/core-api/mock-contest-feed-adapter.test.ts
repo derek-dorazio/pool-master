@@ -240,6 +240,100 @@ describe('MockContestFeedAdapter', () => {
     expect(detail?.externalId).toBe(historicalEventId);
     expect(detail?.participants).toHaveLength(2);
   });
+
+  it('pool-master-rop.78.13: filters TEAM_TOURNAMENT scenarios out of NCAA_BASKETBALL ingestion', async () => {
+    // Regression for the SDK enum widening introduced by this slice.
+    // The mock provider ships `correction-and-tie-2026` with
+    // `sport: 'TEAM_TOURNAMENT'` (a generic showcase scenario), and the
+    // generated SDK now exposes that literal. Pre-fix, `toDomainSport`
+    // mapped TEAM_TOURNAMENT → NCAA_BASKETBALL as a default fallthrough,
+    // which would have routed the showcase event into NCAA basketball
+    // ingestion. The fix returns null for unsupported sports so the
+    // adapter's filter excludes them.
+    const scenariosWithLeak = {
+      scenarios: [
+        { scenarioId: 'correction-and-tie-2026', sport: 'TEAM_TOURNAMENT' },
+        { scenarioId: 'ncaa-2026', sport: 'NCAA_BASKETBALL' },
+      ],
+    };
+    const teamTournamentEventList = {
+      scenarioId: 'correction-and-tie-2026',
+      events: [
+        {
+          eventId: 'showcase-bracket-2026',
+          name: 'Generic Tournament Showcase',
+          status: 'in_progress',
+          startsAt: '2026-04-10T00:00:00.000Z',
+          fieldStatus: 'announced',
+          contestantCount: 4,
+        },
+      ],
+    };
+    const ncaaEventList = {
+      scenarioId: 'ncaa-2026',
+      events: [
+        {
+          eventId: 'ncaa-elite-eight-2026',
+          name: 'NCAA Elite Eight 2026',
+          status: 'field_announced',
+          startsAt: '2026-04-10T00:00:00.000Z',
+          fieldStatus: 'announced',
+          contestantCount: 8,
+        },
+      ],
+    };
+    const ncaaDetail = {
+      scenarioId: 'ncaa-2026',
+      sport: 'NCAA_BASKETBALL',
+      season: { seasonId: 'ncaa-2026', name: 'NCAA 2026', year: 2026 },
+      event: {
+        eventId: 'ncaa-elite-eight-2026',
+        name: 'NCAA Elite Eight 2026',
+        status: 'field_announced',
+        schedule: { startsAt: '2026-04-10T00:00:00.000Z' },
+        venue: { name: 'TBD' },
+        field: {
+          asOf: '2026-04-09T00:00:00.000Z',
+          status: 'announced',
+          contestants: [
+            { contestantId: 'team-a', name: 'Team A' },
+            { contestantId: 'team-b', name: 'Team B' },
+          ],
+        },
+        feeds: {
+          odds: { asOf: '2026-04-09T00:00:00.000Z', contestants: [] },
+          rankings: { asOf: '2026-04-09T00:00:00.000Z', contestants: [] },
+          results: { asOf: '2026-04-09T00:00:00.000Z', contestants: [] },
+        },
+      },
+    };
+
+    const fetchSpy = jest.fn(async (input: string | URL) => {
+      const url = String(input);
+      if (url.endsWith('/v1/scenarios')) return okJson(scenariosWithLeak);
+      if (url.endsWith('/v1/scenarios/correction-and-tie-2026/events')) return okJson(teamTournamentEventList);
+      if (url.endsWith('/v1/scenarios/ncaa-2026/events')) return okJson(ncaaEventList);
+      if (url.endsWith('/v1/scenarios/ncaa-2026/events/ncaa-elite-eight-2026/detail')) return okJson(ncaaDetail);
+      throw new Error(`Unhandled fetch URL (TEAM_TOURNAMENT must not be reached): ${url}`);
+    });
+    global.fetch = fetchSpy as unknown as typeof fetch;
+
+    const adapter = new MockContestFeedAdapter('http://mock-contest-feed-provider.qa.poolmaster.internal:3105');
+    const events = await adapter.getUpcomingEvents(Sport.NCAA_BASKETBALL, {
+      from: new Date('2026-04-01T00:00:00.000Z'),
+      to: new Date('2026-04-30T00:00:00.000Z'),
+    });
+
+    // Only the real NCAA scenario's event is returned. The TEAM_TOURNAMENT
+    // showcase scenario must NOT bleed through.
+    expect(events.map((e) => e.externalId)).toEqual(['ncaa-elite-eight-2026']);
+
+    // The adapter must never have requested the TEAM_TOURNAMENT scenario's
+    // event detail — which proves the filter rejected the scenario at
+    // listScenarioEvents rather than later in the projection pipeline.
+    const fetchUrls = fetchSpy.mock.calls.map((call: [unknown, ...unknown[]]) => String(call[0]));
+    expect(fetchUrls.some((u: string) => u.includes('correction-and-tie-2026/events/showcase-bracket-2026/detail'))).toBe(false);
+  });
 });
 
 function okJson(body: unknown): Response {
