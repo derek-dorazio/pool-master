@@ -15,10 +15,10 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
 import type {
   ProviderRanking,
-  ProviderStatEvent,
   SportEvent,
   SportEventDetail,
 } from './provider-interface';
+import type { LiveScoreResult } from '@poolmaster/shared/dto';
 
 export type IngestionFeedType =
   | 'EVENTSCHEDULE'
@@ -65,7 +65,7 @@ export interface IngestionCallbacks {
   onEvents(events: SportEvent[]): Promise<void>;
   onEventDetail(detail: SportEventDetail): Promise<void>;
   onRankings(rankings: ProviderRanking[]): Promise<void>;
-  onLiveScores(scores: ProviderStatEvent[]): Promise<void>;
+  onLiveScores(result: LiveScoreResult, providerId: string): Promise<void>;
   onJobComplete(job: IngestionJobRecord): Promise<void>;
 }
 
@@ -263,21 +263,24 @@ export class IngestionScheduler {
     }
 
     return this.runJob('EVENT_LIVE_SCORES_SYNC', provider.providerId, sport, async () => {
-      const scores = await provider.getLiveScores(eventId);
+      const result = await provider.getLiveScores(eventId);
+      const updateCount = countLiveScoreUpdates(result);
       this.logger?.debug({
         sport,
         eventId,
         providerId: provider.providerId,
-        scoresReturned: scores.length,
+        category: result.category,
+        updatesReturned: updateCount,
       }, 'Provider returned live scores');
-      await this.callbacks.onLiveScores(scores);
+      await this.callbacks.onLiveScores(result, provider.providerId);
       this.logger?.info({
         sport,
         eventId,
         providerId: provider.providerId,
-        scoresProcessed: scores.length,
+        category: result.category,
+        updatesProcessed: updateCount,
       }, 'Completed live score poll');
-      return scores.length;
+      return updateCount;
     }, eventId);
   }
 
@@ -297,29 +300,22 @@ export class IngestionScheduler {
         return 0;
       }
 
-      const statEvents: ProviderStatEvent[] = results.results.map((result) => ({
-        id: `${eventId}-${result.participantExternalId}-result`,
-        eventExternalId: eventId,
-        participantExternalId: result.participantExternalId,
-        statKey: 'FINISH_POSITION',
-        statValue: result.finishPosition,
-        timestamp: new Date(),
-        isCorrection: false,
-        providerId: provider.providerId,
-      }));
-      this.logger?.debug({
-        sport,
-        eventId,
-        providerId: provider.providerId,
-        resultsReturned: results.results.length,
-      }, 'Provider returned event results');
-      await this.callbacks.onLiveScores(statEvents);
+      // pool-master-rop.78.3 — the previous path synthesized a
+      // ProviderStatEvent[] from final-result rows by hardcoding
+      // statKey='FINISH_POSITION', then routed it through onLiveScores so
+      // scoring could pick it up. With the typed LiveScoreResult contract
+      // (plans/117 §10.2) final-result rows no longer fit the live-score
+      // shape — final position is not a per-round update. The synthetic
+      // bridge has been removed; rop.78.7 reconstitutes the final-result
+      // → contribution path against the typed substrate. This handler
+      // still records the job count so admin event-results triggers
+      // remain observable.
       this.logger?.info({
         sport,
         eventId,
         providerId: provider.providerId,
-        resultsProcessed: results.results.length,
-      }, 'Completed event results fetch');
+        resultsReturned: results.results.length,
+      }, 'Fetched event results (no live-score bridge — rop.78.7 rebuilds)');
       return results.results.length;
     }, eventId);
   }
@@ -853,6 +849,31 @@ export class IngestionScheduler {
       this.logger?.error({ error }, 'Falling back to config recheck delay because policy resolution failed');
       return CONFIG_RECHECK_MS;
     }
+  }
+}
+
+/**
+ * Count the number of per-category updates inside a `LiveScoreResult` so
+ * the scheduler can record `recordsProcessed` consistently regardless of
+ * the result's category. Per plans/117 §10.2 each category exposes its
+ * updates under a category-specific key (rounds, games, results, matches).
+ */
+function countLiveScoreUpdates(result: LiveScoreResult): number {
+  switch (result.category) {
+    case 'GOLF':
+      return result.rounds.length;
+    case 'BASKETBALL':
+      return result.games.length;
+    case 'F1':
+      return result.results.length;
+    case 'NFL':
+      return result.games.length;
+    case 'NASCAR':
+      return result.results.length;
+    case 'TENNIS':
+      return result.matches.length;
+    case 'SOCCER':
+      return result.matches.length;
   }
 }
 

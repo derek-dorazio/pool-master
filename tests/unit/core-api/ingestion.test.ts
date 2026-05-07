@@ -11,26 +11,9 @@ import type {
   SportDataProvider,
   ProviderHealthStatus,
   SportEvent,
-  ProviderStatEvent,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { Sport } from '@poolmaster/shared/domain';
-
-// ---------------------------------------------------------------------------
-// Mock event bus for publishStatEvents tests
-// ---------------------------------------------------------------------------
-const mockPublish = jest.fn().mockResolvedValue(undefined);
-
-jest.mock('@poolmaster/shared/events/event-bus', () => ({
-  eventBus: {
-    publish: (eventType: string, event: unknown) => mockPublish(eventType, event),
-    subscribe: jest.fn(),
-    unsubscribe: jest.fn(),
-    clear: jest.fn(),
-  },
-}));
-
-// Import after mocks are set up
-import { publishStatEvents } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
+import type { LiveScoreResult } from '@poolmaster/shared/dto';
 
 // ---------------------------------------------------------------------------
 // Helpers — mock provider
@@ -45,7 +28,7 @@ function createMockProvider(overrides: Partial<SportDataProvider> = {}): SportDa
     getEventDetails: jest.fn().mockResolvedValue(null),
     getParticipants: jest.fn().mockResolvedValue([]),
     getRankings: jest.fn().mockResolvedValue([]),
-    getLiveScores: jest.fn().mockResolvedValue([]),
+    getLiveScores: jest.fn().mockResolvedValue({ category: 'GOLF', rounds: [] } satisfies LiveScoreResult),
     getEventResults: jest.fn().mockResolvedValue(null),
     healthCheck: jest.fn().mockResolvedValue({
       providerId: 'mock-provider',
@@ -278,21 +261,21 @@ describe('IngestionScheduler', () => {
   });
 
   describe('pollLiveScores', () => {
-    it('polls live scores and calls onLiveScores callback', async () => {
-      const mockScores: ProviderStatEvent[] = [
-        {
-          id: 'score-1',
-          eventExternalId: 'evt-1',
-          participantExternalId: 'player-1',
-          statKey: 'STROKES',
-          statValue: 72,
-          timestamp: new Date(),
-          isCorrection: false,
-          providerId: 'mock-provider',
-        },
-      ];
+    it('pool-master-rop.78.3 — polls live scores and forwards typed LiveScoreResult', async () => {
+      const mockResult: LiveScoreResult = {
+        category: 'GOLF',
+        rounds: [
+          {
+            participantExternalId: 'player-1',
+            round: 1,
+            strokes: 72,
+            scoreToPar: 0,
+            status: 'IN_PROGRESS',
+          },
+        ],
+      };
       const provider = createMockProvider({
-        getLiveScores: jest.fn().mockResolvedValue(mockScores),
+        getLiveScores: jest.fn().mockResolvedValue(mockResult),
       });
       registry.register('GOLF' as Sport, provider, 'PRIMARY');
 
@@ -301,64 +284,12 @@ describe('IngestionScheduler', () => {
 
       expect(job.status).toBe('COMPLETED');
       expect(job.recordsProcessed).toBe(1);
-      expect(callbacks.onLiveScores).toHaveBeenCalledWith(mockScores);
+      expect(callbacks.onLiveScores).toHaveBeenCalledWith(mockResult, 'mock-provider');
     });
   });
 });
 
-// ---------------------------------------------------------------------------
-// publishStatEvents (score-publisher)
-// ---------------------------------------------------------------------------
-
-describe('publishStatEvents', () => {
-  beforeEach(() => {
-    mockPublish.mockClear();
-  });
-
-  it('publishes each score as a stat.received event to the event bus', async () => {
-    const scores: ProviderStatEvent[] = [
-      {
-        id: 'score-1',
-        eventExternalId: 'evt-1',
-        participantExternalId: 'player-1',
-        statKey: 'STROKES',
-        statValue: 68,
-        timestamp: new Date(),
-        isCorrection: false,
-        providerId: 'espn-golf',
-      },
-      {
-        id: 'score-2',
-        eventExternalId: 'evt-1',
-        participantExternalId: 'player-2',
-        statKey: 'STROKES',
-        statValue: 72,
-        timestamp: new Date(),
-        isCorrection: false,
-        providerId: 'espn-golf',
-      },
-    ];
-
-    await publishStatEvents(scores);
-
-    expect(mockPublish).toHaveBeenCalledTimes(2);
-    expect(mockPublish).toHaveBeenCalledWith(
-      'stat.received',
-      expect.objectContaining({
-        type: 'stat.received',
-        sourceService: 'ingestion-worker',
-        eventId: 'evt-1',
-        participantExternalId: 'player-1',
-        statKey: 'STROKES',
-        statValue: 68,
-        isCorrection: false,
-        providerId: 'espn-golf',
-      }),
-    );
-  });
-
-  it('handles empty scores array without publishing', async () => {
-    await publishStatEvents([]);
-    expect(mockPublish).not.toHaveBeenCalled();
-  });
-});
+// publishStatEvents and the legacy stat.received bus event were retired in
+// pool-master-rop.78.3 (plans/117 §10.3). The replacement
+// publishLiveScoreUpdate is exercised by
+// tests/unit/core-api/score-publisher.test.ts.

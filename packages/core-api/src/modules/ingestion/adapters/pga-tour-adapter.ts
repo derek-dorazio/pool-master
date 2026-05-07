@@ -14,6 +14,7 @@
  */
 
 import { Sport } from '@poolmaster/shared/domain';
+import type { GolfRoundUpdate, LiveScoreResult } from '@poolmaster/shared/dto';
 import type {
   SportDataProvider,
   DateRange,
@@ -21,7 +22,6 @@ import type {
   SportEventDetail,
   ProviderParticipant,
   ProviderRanking,
-  ProviderStatEvent,
   ProviderEventResult,
   ProviderHealthStatus,
   ProviderParticipantResult,
@@ -134,89 +134,43 @@ export class PgaTourAdapter implements SportDataProvider {
     return rankings;
   }
 
-  async getLiveScores(eventId: string): Promise<ProviderStatEvent[]> {
+  /**
+   * Emits a typed `LiveScoreResult` per plans/117 §10.2 by walking the
+   * ESPN leaderboard and converting each round into a `GolfRoundUpdate`.
+   *
+   * ESPN's per-round payload exposes `roundNumber` + scoreToPar `score`
+   * but not per-round strokes — `totalStrokes` is event-cumulative. The
+   * adapter approximates per-round strokes as (par + scoreToPar) using a
+   * notional par of 72; rop.78.7's contribution-table scoring path
+   * recomputes from real round data once the live-scoring pipeline reads
+   * SportEventParticipantGolfRound directly.
+   */
+  async getLiveScores(eventId: string): Promise<LiveScoreResult> {
     const data = await this.fetch<EspnGolfLeaderboard>(
       `${ESPN_GOLF_BASE}/leaderboard?event=${eventId}`,
     );
 
-    const stats: ProviderStatEvent[] = [];
-    const now = new Date();
+    const rounds: GolfRoundUpdate[] = [];
 
     for (const competitor of data.events?.[0]?.competitions?.[0]?.competitors ?? []) {
       const athlete = competitor.athlete;
       if (!athlete) continue;
 
-      // Total score (strokes relative to par)
-      stats.push({
-        id: `${eventId}-${athlete.id}-total`,
-        eventExternalId: eventId,
-        participantExternalId: athlete.id,
-        statKey: 'TOTAL_SCORE',
-        statValue: parseScore(competitor.score?.displayValue ?? '0'),
-        timestamp: now,
-        isCorrection: false,
-        providerId: this.providerId,
-      });
-
-      // Total strokes
-      if (competitor.totalStrokes !== undefined) {
-        stats.push({
-          id: `${eventId}-${athlete.id}-strokes`,
-          eventExternalId: eventId,
-          participantExternalId: athlete.id,
-          statKey: 'TOTAL_STROKES',
-          statValue: competitor.totalStrokes,
-          timestamp: now,
-          isCorrection: false,
-          providerId: this.providerId,
-        });
-      }
-
-      // Current position
-      if (competitor.sortOrder !== undefined) {
-        stats.push({
-          id: `${eventId}-${athlete.id}-pos`,
-          eventExternalId: eventId,
-          participantExternalId: athlete.id,
-          statKey: 'FINISH_POSITION',
-          statValue: competitor.sortOrder,
-          timestamp: now,
-          isCorrection: false,
-          providerId: this.providerId,
-        });
-      }
-
-      // Thru (holes completed in current round)
-      if (competitor.thru !== undefined) {
-        stats.push({
-          id: `${eventId}-${athlete.id}-thru`,
-          eventExternalId: eventId,
-          participantExternalId: athlete.id,
-          statKey: 'HOLES_COMPLETED',
-          statValue: competitor.thru,
-          timestamp: now,
-          isCorrection: false,
-          providerId: this.providerId,
-        });
-      }
-
-      // Round scores
       for (const round of competitor.rounds ?? []) {
-        stats.push({
-          id: `${eventId}-${athlete.id}-r${round.roundNumber}`,
-          eventExternalId: eventId,
+        rounds.push({
           participantExternalId: athlete.id,
-          statKey: `ROUND_${round.roundNumber}_SCORE`,
-          statValue: round.score,
           round: round.roundNumber,
-          timestamp: now,
-          isCorrection: false,
-          providerId: this.providerId,
+          scoreToPar: round.score,
+          // Per-round strokes aren't exposed by the ESPN leaderboard;
+          // approximate from par + scoreToPar using a notional par of 72
+          // until rop.78.7 sources real per-round strokes.
+          strokes: 72 + round.score,
+          status: 'COMPLETED',
         });
       }
     }
 
-    return stats;
+    return { category: 'GOLF', rounds };
   }
 
   async getEventResults(eventId: string): Promise<ProviderEventResult | null> {

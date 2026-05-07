@@ -41,12 +41,12 @@ import type {
   ProviderHealthStatus,
   ProviderParticipant,
   ProviderRanking,
-  ProviderStatEvent,
   SportDataProvider,
   SportEvent,
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { Sport } from '@poolmaster/shared/domain';
+import type { LiveScoreResult } from '@poolmaster/shared/dto';
 
 class ContractProvider implements SportDataProvider {
   providerId = 'contract-provider';
@@ -57,7 +57,7 @@ class ContractProvider implements SportDataProvider {
   async getEventDetails(): Promise<SportEventDetail | null> { return null; }
   async getParticipants(): Promise<ProviderParticipant[]> { return []; }
   async getRankings(): Promise<ProviderRanking[]> { return []; }
-  async getLiveScores(): Promise<ProviderStatEvent[]> { return []; }
+  async getLiveScores(): Promise<LiveScoreResult> { return { category: 'GOLF', rounds: [] }; }
   async getEventResults(): Promise<ProviderEventResult | null> { return null; }
 
   async healthCheck(): Promise<ProviderHealthStatus> {
@@ -168,8 +168,8 @@ class OperationalContractProvider implements SportDataProvider {
     ];
   }
 
-  async getLiveScores(): Promise<ProviderStatEvent[]> {
-    return [];
+  async getLiveScores(): Promise<LiveScoreResult> {
+    return { category: 'GOLF', rounds: [] };
   }
 
   async getEventResults(): Promise<ProviderEventResult | null> {

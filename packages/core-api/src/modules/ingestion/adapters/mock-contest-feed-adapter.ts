@@ -1,4 +1,5 @@
 import { Sport } from '@poolmaster/shared/domain';
+import type { LiveScoreResult, GolfRoundUpdate } from '@poolmaster/shared/dto';
 import type {
   DateRange,
   ProviderEventResult,
@@ -6,7 +7,6 @@ import type {
   ProviderParticipant,
   ProviderParticipantResult,
   ProviderRanking,
-  ProviderStatEvent,
   SportDataProvider,
   SportEvent,
   SportEventDetail,
@@ -202,29 +202,41 @@ export class MockContestFeedAdapter implements SportDataProvider {
     return Array.from(rankings.values()).sort((left, right) => left.rank - right.rank);
   }
 
-  async getLiveScores(eventId: string): Promise<ProviderStatEvent[]> {
+  /**
+   * Emits a typed `LiveScoreResult` per plans/117 §10.2 for the mock-feed
+   * scenario. The mock provider only carries cumulative scoreToPar at the
+   * snapshot level (no per-round breakdown), so the adapter emits a single
+   * round-1 update per contestant — the test scenarios exercise the typed
+   * pipeline shape, not multi-round detail. rop.78.7 will replace the
+   * round-1-as-cumulative degeneracy with proper per-round emission once
+   * the contribution-table scoring path lands.
+   */
+  async getLiveScores(eventId: string): Promise<LiveScoreResult> {
+    const empty: LiveScoreResult = { category: 'GOLF', rounds: [] };
     const match = await this.findEventById(eventId);
     if (!match) {
-      return [];
+      return empty;
     }
 
     const liveScores = await this.fetchJson<FeedSnapshotResponse>(
       `/v1/live/scenarios/${match.scenarioId}/events/${eventId}/scores`,
     );
-    const timestamp = liveScores.asOf ? new Date(liveScores.asOf) : new Date();
 
-    return liveScores.contestants
+    const rounds: GolfRoundUpdate[] = liveScores.contestants
       .filter((contestant) => typeof contestant.score === 'number')
       .map((contestant) => ({
-        id: `${eventId}-${contestant.contestantId}-total-score`,
-        eventExternalId: eventId,
         participantExternalId: contestant.contestantId,
-        statKey: 'TOTAL_SCORE',
-        statValue: contestant.score as number,
-        timestamp,
-        isCorrection: false,
-        providerId: this.providerId,
+        round: 1,
+        // Mock provider emits scoreToPar; strokes is approximated to
+        // (par + scoreToPar) using a notional par of 72 so the typed
+        // schema is satisfied. rop.78.7 reads the per-round table that
+        // PGA Tour's adapter populates with real strokes data.
+        strokes: 72 + (contestant.score as number),
+        scoreToPar: contestant.score as number,
+        status: 'IN_PROGRESS',
       }));
+
+    return { category: 'GOLF', rounds };
   }
 
   async getEventResults(eventId: string): Promise<ProviderEventResult | null> {

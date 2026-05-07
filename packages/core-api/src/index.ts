@@ -41,7 +41,6 @@ import { draftsModule } from './modules/drafts/routes';
 
 // Scoring module
 import { eventBus } from '@poolmaster/shared/events/event-bus';
-import { subscribeStatEventConsumer, ContestLookup } from './modules/scoring/consumer/stat-event-consumer';
 import { StandingsRollup } from './modules/scoring/rollup/standings-rollup';
 import { ScoringService } from './modules/scoring/service';
 import { scoringRoutes } from './modules/scoring/routes';
@@ -51,9 +50,10 @@ import { ContestScoringRecalculationService } from './modules/contest-scoring';
 import { notificationsModule } from './modules/notifications/routes';
 
 // Ingestion module
-import { ProviderRegistry, IngestionScheduler, publishStatEvents } from './modules/ingestion/core';
+import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './modules/ingestion/core';
 import type { IngestionCallbacks, IngestionJobRecord } from './modules/ingestion/core';
-import type { ProviderRanking, ProviderStatEvent, SportEvent, SportEventDetail } from './modules/ingestion/core';
+import type { ProviderRanking, SportEvent, SportEventDetail } from './modules/ingestion/core';
+import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { OddsApiAdapter } from './modules/ingestion/adapters';
 import { ingestionModule } from './modules/ingestion/routes';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
@@ -91,10 +91,14 @@ export function buildApp() {
   const ingestionConfigService = new IngestionConfigService(runtimeConfigRepository, app.log);
 
   // --- Scoring subsystem (Prisma-backed) ---
-  const contestLookup = new ContestLookup(prisma);
+  // pool-master-rop.78.3 — the legacy ContestLookup + stat-event consumer
+  // path was retired with the ProviderStatEvent contract. The new
+  // live_score.persisted consumer lands in rop.78.7 atop the typed
+  // SportEventParticipantGolfRound substrate.
   const standingsRollup = new StandingsRollup({ eventBus, prisma, logger: app.log });
   const scoringService = new ScoringService({ standingsRollup, prisma, logger: app.log });
   const contestScoringRecalculationService = new ContestScoringRecalculationService(prisma, app.log);
+  void contestScoringRecalculationService;
 
   // =========================================================================
   // Core plugins
@@ -150,18 +154,16 @@ export function buildApp() {
         count: rankings.length,
       }, 'Received rankings (persistence deferred to rop.78.5)');
     },
-    async onLiveScores(scores: ProviderStatEvent[]) {
+    async onLiveScores(result: LiveScoreResult, providerId: string) {
       app.log.info({
-        count: scores.length,
-        scores: scores.slice(0, 10).map((score) => ({
-          providerId: score.providerId,
-          eventExternalId: score.eventExternalId,
-          participantExternalId: score.participantExternalId,
-          statKey: score.statKey,
-          timestamp: score.timestamp.toISOString(),
-        })),
-      }, 'Ingested live scores');
-      await publishStatEvents(scores);
+        category: result.category,
+        providerId,
+      }, 'Ingested live scores (typed LiveScoreResult)');
+      await publishLiveScoreUpdate(result, {
+        prisma,
+        providerId,
+        logger: app.log,
+      });
     },
     async onJobComplete(job: IngestionJobRecord) {
       app.log.info({
@@ -241,13 +243,10 @@ export function buildApp() {
   // =========================================================================
   app.register(scoringRoutes, { prefix: '/api/v1', scoringService });
 
-  // Subscribe stat event consumer + start periodic standings rollup
+  // pool-master-rop.78.3 — stat-event consumer subscription removed; the
+  // live_score.persisted consumer lands in rop.78.7. Periodic standings
+  // rollup continues to run.
   if (!isOpenApiExport) {
-    subscribeStatEventConsumer({
-      eventBus,
-      contestLookup,
-      contestScoringRecalculationService,
-    });
     standingsRollup.startPeriodicRollup();
   }
 

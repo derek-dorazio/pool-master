@@ -8,17 +8,12 @@
 
 import type { ScoringConfig } from '@poolmaster/shared/domain/scoring-config';
 import { ScoringConfigSchema } from '@poolmaster/shared/domain/scoring-config';
-import type { StatEvent } from '@poolmaster/shared/events/scoring';
 import { EventBus } from '@poolmaster/shared/events/event-bus';
 import {
   scoreParticipant,
   scoreEntry,
 } from '../../../packages/core-api/src/modules/scoring/engine/scoring-engine';
 import type { ParticipantScoringData } from '../../../packages/core-api/src/modules/scoring/engine/scoring-engine';
-import {
-  handleStatEvent,
-} from '../../../packages/core-api/src/modules/scoring/consumer/stat-event-consumer';
-import type { StatEventConsumerDeps } from '../../../packages/core-api/src/modules/scoring/consumer/stat-event-consumer';
 import { assignRanks, StandingsRollup } from '../../../packages/core-api/src/modules/scoring/rollup/standings-rollup';
 
 // --- Helpers ---
@@ -40,61 +35,13 @@ function buildParticipant(overrides: Partial<ParticipantScoringData> = {}): Part
   };
 }
 
-function buildStatEvent(overrides: Partial<StatEvent> = {}): StatEvent {
-  return {
-    id: 'evt-1',
-    type: 'stat.received',
-    sourceService: 'ingestion-worker',
-    timestamp: '2026-01-01T00:00:00Z',
-    eventId: 'evt-1',
-    participantExternalId: 'ext-p1',
-    statKey: 'passing_yards',
-    statValue: 300,
-    isCorrection: false,
-    providerId: 'provider-1',
-    ingestedAt: '2026-01-01T00:00:00Z',
-    ...overrides,
-  };
-}
-
-function createMockContestLookup(
-  contests: { contestId: string }[] = [],
-) {
-  return {
-    findActiveContestsForParticipant: jest.fn().mockResolvedValue(contests),
-    findActiveContestsForProviderParticipant: jest.fn().mockResolvedValue(contests),
-  };
-}
+// pool-master-rop.78.3 — handleStatEvent and the StatEvent contract
+// were retired with the typed LiveScoreResult bus boundary (plans/117 §10.3).
+// rop.78.7 reconstitutes the consumer against live_score.persisted; the
+// equivalent error-path coverage moves to that slice.
 
 // ========================================================================
-// 1. handleStatEvent — participant not in any contest
-// ========================================================================
-
-describe('handleStatEvent error paths', () => {
-  it('pool-master-dxd.27 does nothing when a provider participant is not in any contest', async () => {
-    const eventBus = new EventBus();
-    const contestLookup = createMockContestLookup([]);
-    const contestScoringRecalculationService = {
-      recalculateContest: jest.fn(),
-    };
-
-    const deps: StatEventConsumerDeps = {
-      eventBus,
-      contestLookup: contestLookup as any,
-      contestScoringRecalculationService: contestScoringRecalculationService as any,
-    };
-
-    const event = buildStatEvent();
-
-    // Should not throw
-    await handleStatEvent(event, deps);
-
-    expect(contestScoringRecalculationService.recalculateContest).not.toHaveBeenCalled();
-  });
-});
-
-// ========================================================================
-// 2-4. scoreParticipant — unexpected stat inputs
+// scoreParticipant — unexpected stat inputs
 // ========================================================================
 
 describe('scoreParticipant error paths', () => {

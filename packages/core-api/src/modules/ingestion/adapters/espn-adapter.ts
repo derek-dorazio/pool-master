@@ -8,17 +8,17 @@
  */
 
 import { Sport } from '@poolmaster/shared/domain';
-import type {
-  SportDataProvider,
-  DateRange,
-  SportEvent,
-  SportEventDetail,
-  ProviderParticipant,
-  ProviderRanking,
-  ProviderStatEvent,
-  ProviderEventResult,
-  ProviderHealthStatus,
-  ProviderParticipantResult,
+import type { LiveScoreResult } from '@poolmaster/shared/dto';
+import {
+  LiveScoreUnsupportedError,
+  type SportDataProvider,
+  type DateRange,
+  type SportEvent,
+  type SportEventDetail,
+  type ProviderParticipant,
+  type ProviderRanking,
+  type ProviderEventResult,
+  type ProviderHealthStatus,
 } from '../core/provider-interface';
 
 const BASE_URL = 'https://site.api.espn.com/apis/site/v2/sports';
@@ -148,51 +148,21 @@ export class EspnAdapter implements SportDataProvider {
     return rankings;
   }
 
-  async getLiveScores(eventId: string): Promise<ProviderStatEvent[]> {
-    // Use scoreboard to get live scores for a specific event
-    const data = await this.fetch<EspnScoreboardResponse>(
-      `/football/nfl/scoreboard?event=${eventId}`,
-    );
-
-    const stats: ProviderStatEvent[] = [];
-    for (const event of data.events ?? []) {
-      for (const comp of event.competitions ?? []) {
-        for (const competitor of comp.competitors ?? []) {
-          stats.push({
-            id: `${eventId}-${competitor.id}-score`,
-            eventExternalId: eventId,
-            participantExternalId: competitor.id,
-            statKey: 'TEAM_SCORE',
-            statValue: parseFloat(competitor.score ?? '0'),
-            timestamp: new Date(),
-            isCorrection: false,
-            providerId: this.providerId,
-          });
-        }
-      }
-    }
-    return stats;
+  async getLiveScores(_eventId: string): Promise<LiveScoreResult> {
+    // pool-master-rop.78.3 — Phase 4 only ships golf-roster providers per
+    // plans/117 §3.1. The ESPN multi-sport adapter covers NFL/NBA/MLB/NHL
+    // whose LiveScoreResult variants are shape-locked but not yet wired.
+    // Throw rather than silently emit an empty result.
+    throw new LiveScoreUnsupportedError(this.providerId, 'multi-sport');
   }
 
-  async getEventResults(eventId: string): Promise<ProviderEventResult | null> {
-    const scores = await this.getLiveScores(eventId);
-    if (scores.length === 0) return null;
-
-    const sorted = [...scores].sort((a, b) => b.statValue - a.statValue);
-    const results: ProviderParticipantResult[] = sorted.map((s, i) => ({
-      participantExternalId: s.participantExternalId,
-      finishPosition: i + 1,
-      totalScore: s.statValue,
-      dnf: false,
-      stats: { score: s.statValue },
-    }));
-
-    return {
-      eventExternalId: eventId,
-      providerId: this.providerId,
-      status: 'COMPLETED',
-      results,
-    };
+  async getEventResults(_eventId: string): Promise<ProviderEventResult | null> {
+    // ESPN's per-sport result shape varied; the legacy path synthesized
+    // results from getLiveScores by sorting on statValue. With the typed
+    // LiveScoreResult contract (plans/117 §10.2) the synthesis no longer
+    // fits. Return null until a future per-sport ESPN slice rebuilds this
+    // against the typed substrate.
+    return null;
   }
 
   async healthCheck(): Promise<ProviderHealthStatus> {

@@ -5,11 +5,11 @@ export type {
   SportEventDetail,
   ProviderParticipant,
   ProviderRanking,
-  ProviderStatEvent,
   ProviderEventResult,
   ProviderParticipantResult,
   ProviderHealthStatus,
 } from './provider-interface';
+export { LiveScoreUnsupportedError } from './provider-interface';
 
 export { ProviderRegistry } from './provider-registry';
 export { IngestionScheduler } from './ingestion-scheduler';
@@ -21,4 +21,9 @@ export type {
   JobType,
   SportSyncRequest,
 } from './ingestion-scheduler';
-export { publishStatEvents } from './score-publisher';
+export {
+  publishLiveScoreUpdate,
+  LiveScoreValidationError,
+  LiveScorePersistenceUnsupportedError,
+} from './score-publisher';
+export type { LiveScorePublisherDeps } from './score-publisher';

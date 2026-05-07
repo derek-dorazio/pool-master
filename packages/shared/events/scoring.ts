@@ -1,17 +1,22 @@
 import type { DomainEvent } from './base';
 
-export interface StatEvent extends DomainEvent {
-  type: 'stat.received';
+/**
+ * Live-score persistence event. Emitted by the bus boundary
+ * `publishLiveScoreUpdate` after a typed `LiveScoreResult` is validated and
+ * its category-specific detail rows are persisted (per plans/117 §10.3).
+ *
+ * This replaces the legacy `stat.received` event whose untyped
+ * `ProviderStatEvent` payload bypassed validation. Subscribers read the
+ * persisted detail rows by `(sportEventId, category)` rather than the
+ * payload itself.
+ */
+export interface LiveScorePersistedEvent extends DomainEvent {
+  type: 'live_score.persisted';
   sourceService: 'ingestion-worker';
-  eventId: string;
-  participantExternalId: string;
-  participantId?: string;
-  statKey: string;
-  statValue: number;
-  round?: number;
-  isCorrection: boolean;
-  correctsEventId?: string;
+  category: 'GOLF' | 'BASKETBALL' | 'F1' | 'NFL' | 'NASCAR' | 'TENNIS' | 'SOCCER';
   providerId: string;
+  /** Number of detail rows persisted in this batch. */
+  updatesPersisted: number;
   ingestedAt: string;
 }
 

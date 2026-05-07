@@ -7,16 +7,17 @@
  */
 
 import { Sport } from '@poolmaster/shared/domain';
-import type {
-  SportDataProvider,
-  DateRange,
-  SportEvent,
-  SportEventDetail,
-  ProviderParticipant,
-  ProviderRanking,
-  ProviderStatEvent,
-  ProviderEventResult,
-  ProviderHealthStatus,
+import type { LiveScoreResult } from '@poolmaster/shared/dto';
+import {
+  LiveScoreUnsupportedError,
+  type SportDataProvider,
+  type DateRange,
+  type SportEvent,
+  type SportEventDetail,
+  type ProviderParticipant,
+  type ProviderRanking,
+  type ProviderEventResult,
+  type ProviderHealthStatus,
 } from '../core/provider-interface';
 
 const BASE_URL = 'https://api.the-odds-api.com/v4';
@@ -116,9 +117,11 @@ export class OddsApiAdapter implements SportDataProvider {
     return [];
   }
 
-  async getLiveScores(_eventId: string): Promise<ProviderStatEvent[]> {
-    // Odds API provides odds, not scores
-    return [];
+  async getLiveScores(_eventId: string): Promise<LiveScoreResult> {
+    // The Odds API provides odds, not scores. Throw to make the unwired
+    // path fail loudly per plans/117 §3.1 — providers whose category typing
+    // isn't ready yet must not silently emit empty results.
+    throw new LiveScoreUnsupportedError(this.providerId, 'odds-only');
   }
 
   async getEventResults(_eventId: string): Promise<ProviderEventResult | null> {
