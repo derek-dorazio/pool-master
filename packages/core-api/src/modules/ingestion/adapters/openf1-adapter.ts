@@ -7,16 +7,17 @@
  */
 
 import { Sport } from '@poolmaster/shared/domain';
-import type {
-  SportDataProvider,
-  DateRange,
-  SportEvent,
-  SportEventDetail,
-  ProviderParticipant,
-  ProviderRanking,
-  ProviderStatEvent,
-  ProviderEventResult,
-  ProviderHealthStatus,
+import type { LiveScoreResult } from '@poolmaster/shared/dto';
+import {
+  LiveScoreUnsupportedError,
+  type SportDataProvider,
+  type DateRange,
+  type SportEvent,
+  type SportEventDetail,
+  type ProviderParticipant,
+  type ProviderRanking,
+  type ProviderEventResult,
+  type ProviderHealthStatus,
 } from '../core/provider-interface';
 
 const BASE_URL = 'https://api.openf1.org/v1';
@@ -113,31 +114,13 @@ export class OpenF1Adapter implements SportDataProvider {
     return [];
   }
 
-  async getLiveScores(eventId: string): Promise<ProviderStatEvent[]> {
-    const positions = await this.fetch<OpenF1Position[]>(
-      `/position?session_key=${eventId}`,
-    );
-
-    // Group by driver, take latest position for each
-    const latestByDriver = new Map<number, OpenF1Position>();
-    for (const pos of positions) {
-      const existing = latestByDriver.get(pos.driver_number);
-      if (!existing || new Date(pos.date) > new Date(existing.date)) {
-        latestByDriver.set(pos.driver_number, pos);
-      }
-    }
-
-    return Array.from(latestByDriver.values()).map((pos) => ({
-      id: `${eventId}-${pos.driver_number}-pos-${pos.date}`,
-      eventExternalId: eventId,
-      participantExternalId: String(pos.driver_number),
-      statKey: 'FINISH_POSITION',
-      statValue: pos.position,
-      timestamp: new Date(pos.date),
-      isCorrection: false,
-      providerId: this.providerId,
-      rawData: pos,
-    }));
+  async getLiveScores(_eventId: string): Promise<LiveScoreResult> {
+    // pool-master-rop.78.3 — Phase 4 only ships golf-roster providers per
+    // plans/117 §3.1. The F1 LiveScoreResult variant is shape-locked in
+    // the design plan but its scoring path doesn't ship until a future
+    // rop.78.<N> slice. Throwing here makes the unwired path fail loudly
+    // rather than silently emitting an empty result.
+    throw new LiveScoreUnsupportedError(this.providerId, Sport.F1);
   }
 
   async getEventResults(eventId: string): Promise<ProviderEventResult | null> {

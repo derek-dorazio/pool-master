@@ -214,16 +214,19 @@ describe('mock contest feed provider event-first verification', () => {
     const rankings = await adapter.getRankings(Sport.GOLF, 'OWGR');
     expect(rankings.length).toBeGreaterThan(0);
 
+    // pool-master-rop.78.3 — typed LiveScoreResult contract per plans/117 §10.2.
     const liveScores = await adapter.getLiveScores(eventExternalId);
-    expect(liveScores).toEqual(
-      expect.arrayContaining([
+    expect(liveScores.category).toBe('GOLF');
+    if (liveScores.category === 'GOLF') {
+      expect(liveScores.rounds.length).toBeGreaterThan(0);
+      expect(liveScores.rounds[0]).toEqual(
         expect.objectContaining({
-          eventExternalId,
-          providerId,
-          statKey: 'TOTAL_SCORE',
+          participantExternalId: expect.any(String),
+          round: expect.any(Number),
+          status: expect.stringMatching(/IN_PROGRESS|COMPLETED|DNF|DSQ/),
         }),
-      ]),
-    );
+      );
+    }
 
     const results = await adapter.getEventResults(eventExternalId);
     expect(results).toMatchObject({
@@ -401,7 +404,10 @@ describe('mock contest feed provider event-first verification', () => {
       expect(detail?.participants).toHaveLength(80);
 
       const openScores = await adapter.getLiveScores(manualEventId);
-      expect(openScores).toHaveLength(0);
+      expect(openScores.category).toBe('GOLF');
+      if (openScores.category === 'GOLF') {
+        expect(openScores.rounds).toHaveLength(0);
+      }
 
       currentNow = new Date(anchor.getTime() + 45 * 60 * 1000);
       const liveEvents = await adapter.getUpcomingEvents(Sport.GOLF, { from, to });
@@ -409,15 +415,16 @@ describe('mock contest feed provider event-first verification', () => {
       expect(liveManualEvent?.status).toBe('IN_PROGRESS');
 
       const liveScores = await adapter.getLiveScores(manualEventId);
-      expect(liveScores).toEqual(
-        expect.arrayContaining([
+      expect(liveScores.category).toBe('GOLF');
+      if (liveScores.category === 'GOLF') {
+        expect(liveScores.rounds.length).toBeGreaterThan(0);
+        expect(liveScores.rounds[0]).toEqual(
           expect.objectContaining({
-            eventExternalId: manualEventId,
-            providerId,
-            statKey: 'TOTAL_SCORE',
+            participantExternalId: expect.any(String),
+            round: expect.any(Number),
           }),
-        ]),
-      );
+        );
+      }
 
       currentNow = new Date(anchor.getTime() + 65 * 60 * 1000);
       const completedEvents = await adapter.getUpcomingEvents(Sport.GOLF, { from, to });

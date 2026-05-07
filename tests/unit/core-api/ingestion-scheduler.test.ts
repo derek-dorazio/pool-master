@@ -11,10 +11,10 @@ import type {
   SportDataProvider,
   SportEvent,
   SportEventDetail,
-  ProviderStatEvent,
   ProviderEventResult,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { Sport } from '@poolmaster/shared/domain';
+import type { LiveScoreResult } from '@poolmaster/shared/dto';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -29,7 +29,7 @@ function createMockProvider(overrides: Partial<SportDataProvider> = {}): SportDa
     getEventDetails: jest.fn().mockResolvedValue(null),
     getParticipants: jest.fn().mockResolvedValue([]),
     getRankings: jest.fn().mockResolvedValue([]),
-    getLiveScores: jest.fn().mockResolvedValue([]),
+    getLiveScores: jest.fn().mockResolvedValue({ category: 'GOLF', externalEventId: 'evt-ext', rounds: [] } satisfies LiveScoreResult),
     getEventResults: jest.fn().mockResolvedValue(null),
     healthCheck: jest.fn().mockResolvedValue({
       providerId: 'mock-provider',
@@ -275,21 +275,22 @@ describe('IngestionScheduler', () => {
   });
 
   describe('pollLiveScores', () => {
-    it('calls getLiveScores and invokes onLiveScores callback', async () => {
-      const mockScores: ProviderStatEvent[] = [
-        {
-          id: 'score-1',
-          eventExternalId: 'evt-1',
-          participantExternalId: 'player-1',
-          statKey: 'STROKES',
-          statValue: 72,
-          timestamp: new Date(),
-          isCorrection: false,
-          providerId: 'mock-provider',
-        },
-      ];
+    it('pool-master-rop.78.3 — calls getLiveScores and forwards typed LiveScoreResult to onLiveScores', async () => {
+      const mockResult: LiveScoreResult = {
+        category: 'GOLF',
+        externalEventId: 'evt-1',
+        rounds: [
+          {
+            participantExternalId: 'player-1',
+            round: 1,
+            strokes: 72,
+            scoreToPar: 0,
+            status: 'IN_PROGRESS',
+          },
+        ],
+      };
       const provider = createMockProvider({
-        getLiveScores: jest.fn().mockResolvedValue(mockScores),
+        getLiveScores: jest.fn().mockResolvedValue(mockResult),
       });
       const registry = createMockRegistry(provider);
       const scheduler = new IngestionScheduler(registry, mockCallbacks);
@@ -297,14 +298,15 @@ describe('IngestionScheduler', () => {
       const job = await scheduler.pollLiveScores('GOLF' as Sport, 'evt-1');
 
       expect(provider.getLiveScores).toHaveBeenCalledWith('evt-1');
-      expect(mockCallbacks.onLiveScores).toHaveBeenCalledWith(mockScores);
+      expect(mockCallbacks.onLiveScores).toHaveBeenCalledWith(mockResult, 'mock-provider');
       expect(job.status).toBe('COMPLETED');
       expect(job.recordsProcessed).toBe(1);
     });
 
     it('succeeds with empty results', async () => {
+      const empty: LiveScoreResult = { category: 'GOLF', externalEventId: 'evt-1', rounds: [] };
       const provider = createMockProvider({
-        getLiveScores: jest.fn().mockResolvedValue([]),
+        getLiveScores: jest.fn().mockResolvedValue(empty),
       });
       const registry = createMockRegistry(provider);
       const scheduler = new IngestionScheduler(registry, mockCallbacks);
@@ -313,7 +315,7 @@ describe('IngestionScheduler', () => {
 
       expect(job.status).toBe('COMPLETED');
       expect(job.recordsProcessed).toBe(0);
-      expect(mockCallbacks.onLiveScores).toHaveBeenCalledWith([]);
+      expect(mockCallbacks.onLiveScores).toHaveBeenCalledWith(empty, 'mock-provider');
     });
 
     it('returns FAILED job when no provider is registered', async () => {
@@ -351,18 +353,19 @@ describe('IngestionScheduler', () => {
       };
       const provider = createMockProvider({
         getEventDetails: jest.fn().mockResolvedValue(detail),
-        getLiveScores: jest.fn().mockResolvedValue([
-          {
-            id: 'score-1',
-            eventExternalId: 'evt-1',
-            participantExternalId: 'player-1',
-            statKey: 'TOTAL_SCORE',
-            statValue: -3,
-            timestamp: new Date(),
-            isCorrection: false,
-            providerId: 'mock-provider',
-          },
-        ]),
+        getLiveScores: jest.fn().mockResolvedValue({
+          category: 'GOLF',
+          externalEventId: 'evt-1',
+          rounds: [
+            {
+              participantExternalId: 'player-1',
+              round: 1,
+              strokes: 69,
+              scoreToPar: -3,
+              status: 'IN_PROGRESS',
+            },
+          ],
+        } satisfies LiveScoreResult),
       });
       const registry = createMockRegistry(provider);
       const scheduler = new IngestionScheduler(registry, mockCallbacks);
@@ -503,7 +506,7 @@ describe('IngestionScheduler', () => {
   });
 
   describe('fetchEventResults', () => {
-    it('calls getEventResults and converts results to stat events', async () => {
+    it('pool-master-rop.78.3 — records the result count without bridging to onLiveScores', async () => {
       const mockResults: ProviderEventResult = {
         eventExternalId: 'evt-1',
         providerId: 'mock-provider',
@@ -536,22 +539,11 @@ describe('IngestionScheduler', () => {
       expect(provider.getEventResults).toHaveBeenCalledWith('evt-1');
       expect(job.status).toBe('COMPLETED');
       expect(job.recordsProcessed).toBe(2);
-      expect(mockCallbacks.onLiveScores).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({
-            eventExternalId: 'evt-1',
-            participantExternalId: 'player-1',
-            statKey: 'FINISH_POSITION',
-            statValue: 1,
-          }),
-          expect.objectContaining({
-            eventExternalId: 'evt-1',
-            participantExternalId: 'player-2',
-            statKey: 'FINISH_POSITION',
-            statValue: 2,
-          }),
-        ]),
-      );
+      // The legacy bridge that synthesized FINISH_POSITION ProviderStatEvents
+      // and routed them through onLiveScores was retired with the
+      // typed LiveScoreResult contract; rop.78.7 reconstitutes the
+      // final-result → contribution path on the typed substrate.
+      expect(mockCallbacks.onLiveScores).not.toHaveBeenCalled();
     });
 
     it('returns 0 records when getEventResults returns null', async () => {

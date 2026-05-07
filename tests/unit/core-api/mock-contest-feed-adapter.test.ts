@@ -157,16 +157,22 @@ describe('MockContestFeedAdapter', () => {
     const rankings = await adapter.getRankings(Sport.GOLF, 'OWGR');
     expect(rankings.map((ranking) => ranking.rank)).toEqual([1, 2]);
 
+    // pool-master-rop.78.3 — the typed LiveScoreResult contract replaced
+    // the legacy ProviderStatEvent[] shape. plans/117 §10.2.
     const liveScores = await adapter.getLiveScores('golf-masters-2026');
-    expect(liveScores).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          participantExternalId: 'rory-mcilroy',
-          statKey: 'TOTAL_SCORE',
-          statValue: -5,
-        }),
-      ]),
-    );
+    expect(liveScores.category).toBe('GOLF');
+    if (liveScores.category === 'GOLF') {
+      expect(liveScores.rounds).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            participantExternalId: 'rory-mcilroy',
+            scoreToPar: -5,
+            round: 1,
+            status: 'IN_PROGRESS',
+          }),
+        ]),
+      );
+    }
 
     const results = await adapter.getEventResults('golf-masters-2026');
     expect(results?.results[0]?.participantExternalId).toBe('rory-mcilroy');
