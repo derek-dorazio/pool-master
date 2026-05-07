@@ -9,11 +9,31 @@ import type { EventBus } from '@poolmaster/shared/events/event-bus';
 
 // --- Types ---
 
+/**
+ * Direction in which `ContestEntry.totalScore` is ranked. Higher-is-better
+ * is the default for the bulk of pool formats (BRACKET, PICKEM_CONFIDENCE,
+ * SURVIVOR, basketball-roster, F1-position, etc.). Lower-is-better is used
+ * by golf-roster, where `totalScore` is the sum of `scoreToPar`
+ * contributions and the lowest total wins.
+ */
+export type RankDirection = 'HIGHER_IS_BETTER' | 'LOWER_IS_BETTER';
+
 export interface RollupResult {
   contestId: string;
   entriesUpdated: number;
   rankChanges: number;
   rolledUpAt: Date;
+}
+
+export interface RollupContestOptions {
+  /**
+   * Override the per-contest rank direction. Defaults to
+   * `'HIGHER_IS_BETTER'` to match the existing rollup contract for
+   * non-golf contest types. Golf-roster callers (the live-score consumer
+   * for golf, plus any future golf-roster recompute path) must pass
+   * `'LOWER_IS_BETTER'` so an entry at -5 ranks ahead of an entry at +2.
+   */
+  rankDirection?: RankDirection;
 }
 
 export interface StandingEntry {
@@ -60,10 +80,12 @@ export class StandingsRollup {
   }
 
   /** Run rollup for a specific contest. */
-  async rollupContest(contestId: string): Promise<RollupResult> {
+  async rollupContest(contestId: string, options?: RollupContestOptions): Promise<RollupResult> {
+    const direction: RankDirection = options?.rankDirection ?? 'HIGHER_IS_BETTER';
+    const totalScoreOrder = direction === 'LOWER_IS_BETTER' ? 'asc' : 'desc';
     const entries = await this.prisma.contestEntry.findMany({
       where: { contestId },
-      orderBy: [{ totalScore: 'desc' }, { id: 'asc' }],
+      orderBy: [{ totalScore: totalScoreOrder }, { id: 'asc' }],
       select: { id: true, totalScore: true },
     });
     const leaderboard = entries.map((entry) => ({

@@ -1,5 +1,6 @@
 export * from './enums';
 export * from './contest-validity';
+export * from './golf-scoring-config';
 export {
   AggregationDefinitionIdSchema,
   ParticipantScoringDefinitionIdSchema,
