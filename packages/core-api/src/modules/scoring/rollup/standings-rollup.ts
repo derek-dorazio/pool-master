@@ -1,6 +1,19 @@
 /**
- * StandingsRollup — periodic job that reads contest totals and persists
- * standings positions back onto ContestEntry.
+ * StandingsRollup — pure rerank-and-publish helper for a single contest.
+ *
+ * pool-master-rop.78.8 — the periodic interval scheduler was retired
+ * here. Per plans/117 §11.3 the substrate's single write path is
+ * event-driven: `LiveScorePersistedEvent → LiveScoreConsumer →
+ * scoring → contributions → totalScore → standingsRollup.rollupContest →
+ * standings.updated`. The full-recalculation path
+ * (ContestScoringRecalculationService) stays for explicit triggers
+ * (admin override, contest reopen) but is no longer a parallel update
+ * mechanism that races with stat-event scoring.
+ *
+ * The remaining surface is `rollupContest(contestId, options?)` —
+ * called by the live-score consumer (golf-roster) and the explicit
+ * recalculation path. `previousRanks` is kept so the per-contest
+ * rerank can report `rankChanges` accurately across successive events.
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -51,12 +64,8 @@ export interface StandingsRollupDeps {
 
 // --- Rollup Class ---
 
-const DEFAULT_INTERVAL_MS = 30_000;
-
 /** Reads current totals, assigns ranks, and persists standings to ContestEntry. */
 export class StandingsRollup {
-  private intervalHandle: ReturnType<typeof setInterval> | null = null;
-  private activeContestIds: Set<string> = new Set();
   private previousRanks: Map<string, Map<string, number>> = new Map();
   private readonly eventBus: EventBus;
   private readonly prisma: PrismaClient;
@@ -66,17 +75,6 @@ export class StandingsRollup {
     this.eventBus = deps.eventBus;
     this.prisma = deps.prisma;
     this.logger = deps.logger;
-  }
-
-  /** Register a contest for periodic rollup. */
-  registerContest(contestId: string): void {
-    this.activeContestIds.add(contestId);
-  }
-
-  /** Unregister a contest from periodic rollup. */
-  unregisterContest(contestId: string): void {
-    this.activeContestIds.delete(contestId);
-    this.previousRanks.delete(contestId);
   }
 
   /** Run rollup for a specific contest. */
@@ -100,55 +98,16 @@ export class StandingsRollup {
     await this.persistStandings(contestId, standings, rolledUpAt);
 
     await this.publishStandingsUpdated(contestId, standings, rolledUpAt);
+    this.logger?.debug?.(
+      { action: 'scoring.standings_rollup.rollup', data: { contestId, entriesUpdated: standings.length, rankChanges } },
+      'Reranked contest standings',
+    );
     return {
       contestId,
       entriesUpdated: standings.length,
       rankChanges,
       rolledUpAt,
     };
-  }
-
-  /** Run rollup for all registered active contests. */
-  async rollupAll(): Promise<RollupResult[]> {
-    const results: RollupResult[] = [];
-    for (const contestId of this.activeContestIds) {
-      const result = await this.rollupContest(contestId);
-      results.push(result);
-    }
-    return results;
-  }
-
-  /** Start periodic rollup at the given interval. */
-  startPeriodicRollup(intervalMs: number = DEFAULT_INTERVAL_MS): void {
-    if (this.intervalHandle) return;
-    this.intervalHandle = setInterval(() => {
-      this.rollupAll().catch((err) => {
-        this.logger?.error({
-          action: 'scoring.standings_rollup.periodic_failed',
-          err,
-          data: {
-            activeContestCount: this.activeContestIds.size,
-          },
-        }, 'Periodic standings rollup failed');
-      });
-    }, intervalMs);
-  }
-
-  /** Stop periodic rollup. */
-  stopPeriodicRollup(): void {
-    if (!this.intervalHandle) return;
-    clearInterval(this.intervalHandle);
-    this.intervalHandle = null;
-  }
-
-  /** Check if periodic rollup is running. */
-  isRunning(): boolean {
-    return this.intervalHandle !== null;
-  }
-
-  /** Get the set of active contest IDs. */
-  getActiveContestIds(): ReadonlySet<string> {
-    return this.activeContestIds;
   }
 
   /** Persist standings positions onto ContestEntry. */

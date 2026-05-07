@@ -256,12 +256,13 @@ export function buildApp() {
   // here. It dispatches per (event.category × pick.contestFormat) and runs
   // the scoring → contributions → totalScore → rerank pipeline under a
   // per-contest advisory lock (plans/117 §11.3, §11.4, §11.5).
-  // Periodic standings rollup continues to run as a defensive backstop;
-  // rop.78.8 will retire it once the event-driven path is the canonical
-  // single write path.
+  // pool-master-rop.78.8 — periodic StandingsRollup interval retired; the
+  // event-driven path is now the canonical single write path.
+  // ContestScoringRecalculationService remains for explicit triggers
+  // (admin override, contest reopen) but is no longer a parallel update
+  // mechanism that races with stat-event scoring (plans/117 §11.3).
   if (!isOpenApiExport) {
     liveScoreConsumer.subscribe();
-    standingsRollup.startPeriodicRollup();
   }
 
   // =========================================================================
@@ -302,7 +303,7 @@ export function buildApp() {
   });
 
   app.addHook('onClose', async () => {
-    standingsRollup.stopPeriodicRollup();
+    liveScoreConsumer.unsubscribe();
     ingestionScheduler.stop();
     eventBus.clear();
     await prisma.$disconnect();

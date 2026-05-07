@@ -68,8 +68,15 @@ export interface ParticipantScoreHistory {
 export interface HealthDetail {
   status: 'ok';
   service: string;
-  rollupRunning: boolean;
-  activeContests: number;
+  /**
+   * Indicates the live-score-driven scoring path is the canonical
+   * single write path (plans/117 §11.3). Always true in this build —
+   * pool-master-rop.78.8 retired the periodic rollup interval so there
+   * is no longer a separate "rollup running" lifecycle to surface. The
+   * field is kept on the response so existing health consumers can
+   * continue to call the endpoint without a contract change.
+   */
+  eventDriven: true;
   timestamp: string;
 }
 
@@ -269,14 +276,10 @@ export class ScoringService {
     const detail: HealthDetail = {
       status: 'ok',
       service: 'scoring-service',
-      rollupRunning: this.standingsRollup.isRunning(),
-      activeContests: this.standingsRollup.getActiveContestIds().size,
+      eventDriven: true,
       timestamp: new Date().toISOString(),
     };
-    this.logger?.debug({
-      rollupRunning: detail.rollupRunning,
-      activeContests: detail.activeContests,
-    }, 'Read scoring service health');
+    this.logger?.debug({ eventDriven: detail.eventDriven }, 'Read scoring service health');
     return detail;
   }
 }

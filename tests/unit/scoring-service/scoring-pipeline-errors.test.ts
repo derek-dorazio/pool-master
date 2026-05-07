@@ -231,27 +231,27 @@ describe('scoreParticipant with missing stat keys', () => {
 });
 
 // ========================================================================
-// 12. StandingsRollup.rollupContest — no registered contests
+// 12. StandingsRollup — periodic-mode surface retired (pool-master-rop.78.8)
 // ========================================================================
 
-describe('StandingsRollup error paths', () => {
-  it('rollupAll returns empty results when no contests are registered', async () => {
-    const eventBus = new EventBus();
-    const mockPrisma = {
-      contestEntry: {
-        findMany: jest.fn(),
-      },
-    } as any;
-
+describe('StandingsRollup periodic-mode surface (retired in rop.78.8)', () => {
+  it('does not expose `rollupAll` / periodic scheduler methods', () => {
+    // Pre-rop.78.8 the rollup ran on a 30s setInterval and had a
+    // `rollupAll` / `startPeriodicRollup` / `stopPeriodicRollup` /
+    // `isRunning` / `getActiveContestIds` / `registerContest` /
+    // `unregisterContest` surface. Plans/117 §11.3 retired the periodic
+    // path so the substrate has a single event-driven write path.
     const rollup = new StandingsRollup({
-      eventBus,
-      prisma: mockPrisma,
+      eventBus: new EventBus(),
+      prisma: { contestEntry: { findMany: jest.fn() } } as any,
     });
 
-    // No contests registered — rollupAll should complete gracefully
-    const results = await rollup.rollupAll();
-
-    expect(results).toEqual([]);
-    expect(mockPrisma.contestEntry.findMany).not.toHaveBeenCalled();
+    expect(rollup).not.toHaveProperty('rollupAll');
+    expect(rollup).not.toHaveProperty('startPeriodicRollup');
+    expect(rollup).not.toHaveProperty('stopPeriodicRollup');
+    expect(rollup).not.toHaveProperty('isRunning');
+    expect(rollup).not.toHaveProperty('getActiveContestIds');
+    expect(rollup).not.toHaveProperty('registerContest');
+    expect(rollup).not.toHaveProperty('unregisterContest');
   });
 });

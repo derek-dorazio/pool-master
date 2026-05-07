@@ -43783,11 +43783,12 @@
                     "service": {
                       "type": "string"
                     },
-                    "rollupRunning": {
-                      "type": "boolean"
-                    },
-                    "activeContests": {
-                      "type": "number"
+                    "eventDriven": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ],
+                      "description": "Always true: the scoring path is event-driven via live_score.persisted (plans/117 §11.3). The legacy `rollupRunning` / `activeContests` fields were removed in pool-master-rop.78.8 along with the periodic rollup interval."
                     },
                     "timestamp": {
                       "type": "string",
@@ -43798,8 +43799,7 @@
                   "required": [
                     "status",
                     "service",
-                    "rollupRunning",
-                    "activeContests",
+                    "eventDriven",
                     "timestamp"
                   ],
                   "additionalProperties": false,

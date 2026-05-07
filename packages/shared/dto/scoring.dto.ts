@@ -87,8 +87,11 @@ export type RollupResultResponse = z.infer<typeof RollupResultResponseSchema>;
 export const ScoringHealthResponseSchema = z.object({
   status: z.literal('ok'),
   service: z.string(),
-  rollupRunning: z.boolean(),
-  activeContests: z.number(),
+  eventDriven: z.literal(true).describe(
+    'Always true: the scoring path is event-driven via live_score.persisted '
+    + '(plans/117 §11.3). The legacy `rollupRunning` / `activeContests` fields '
+    + 'were removed in pool-master-rop.78.8 along with the periodic rollup interval.',
+  ),
   timestamp: z.string().datetime().describe('When the scoring-health snapshot was recorded.'),
 }).describe('Scoring-service health response.');
 export type ScoringHealthResponse = z.infer<typeof ScoringHealthResponseSchema>;

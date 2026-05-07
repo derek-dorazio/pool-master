@@ -5,8 +5,6 @@ describe('ScoringService', () => {
   it('pool-master-rop.6: throws when the entry is missing or belongs to another contest', async () => {
     const standingsRollup = {
       rollupContest: jest.fn(),
-      isRunning: jest.fn().mockReturnValue(false),
-      getActiveContestIds: jest.fn().mockReturnValue(new Set()),
     };
     const prisma = {
       contestEntry: {
@@ -37,8 +35,6 @@ describe('ScoringService', () => {
   it('reads persisted entry scoring events from the participant score ledger', async () => {
     const standingsRollup = {
       rollupContest: jest.fn(),
-      isRunning: jest.fn().mockReturnValue(false),
-      getActiveContestIds: jest.fn().mockReturnValue(new Set()),
     };
     const prisma = {
       contestEntry: {
@@ -128,8 +124,6 @@ describe('ScoringService', () => {
     const service = new ScoringService({
       standingsRollup: {
         rollupContest: jest.fn(),
-        isRunning: jest.fn().mockReturnValue(false),
-        getActiveContestIds: jest.fn().mockReturnValue(new Set()),
       } as any,
       prisma,
     });
@@ -162,8 +156,6 @@ describe('ScoringService', () => {
     const service = new ScoringService({
       standingsRollup: {
         rollupContest: jest.fn(),
-        isRunning: jest.fn().mockReturnValue(false),
-        getActiveContestIds: jest.fn().mockReturnValue(new Set()),
       } as any,
       prisma: {
         contestEntryParticipantScoreEvent: {
@@ -187,8 +179,6 @@ describe('ScoringService', () => {
         entriesUpdated: 3,
         leaderboardChanged: true,
       }),
-      isRunning: jest.fn().mockReturnValue(true),
-      getActiveContestIds: jest.fn().mockReturnValue(new Set(['contest-1', 'contest-2'])),
     };
     const service = new ScoringService({
       standingsRollup: standingsRollup as any,
@@ -201,13 +191,18 @@ describe('ScoringService', () => {
       leaderboardChanged: true,
     });
     expect(standingsRollup.rollupContest).toHaveBeenCalledWith('contest-1');
-    expect(service.getHealth()).toEqual(
+    // pool-master-rop.78.8 — periodic rollup retired. The health response
+    // surfaces eventDriven: true (always) and no longer carries
+    // rollupRunning / activeContests.
+    const health = service.getHealth();
+    expect(health).toEqual(
       expect.objectContaining({
         status: 'ok',
         service: 'scoring-service',
-        rollupRunning: true,
-        activeContests: 2,
+        eventDriven: true,
       }),
     );
+    expect(health).not.toHaveProperty('rollupRunning');
+    expect(health).not.toHaveProperty('activeContests');
   });
 });
