@@ -16,7 +16,7 @@ import {
 import { buildLeaguePath, setRecentLeagueCode } from "./league-routing";
 import { syncLeagueCaches } from "./league-cache";
 import { extractErrorMessage } from '@/lib/errors';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 const LEAGUE_CODE_PATTERN = /^[A-Z0-9]{3,16}$/;
 const WIZARD_STEP_DETAILS = "details";
@@ -105,7 +105,7 @@ export function CreateLeagueModal({
     }
   }
 
-  const createLeagueMutation = createMutationHook({
+  const createLeagueMutation = useInvalidatingMutation({
     mutationFn: async (values: CreateLeagueFormValues) => {
       const response = await createLeague({
         body: {

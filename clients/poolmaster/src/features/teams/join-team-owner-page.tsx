@@ -23,7 +23,7 @@ import {
   getTeamOwnerInvitationPreviewQueryKey,
 } from './team-owner-invitation-preview';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -96,7 +96,7 @@ export function JoinTeamOwnerPage() {
     );
   }, [inviteCode, invitationQuery.data, isAuthenticated, logger]);
 
-  const acceptMutation = createMutationHook({
+  const acceptMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await acceptTeamOwnerInvitation({ body: { inviteCode } });
       if (!response.data?.invitation) {

@@ -1,5 +1,5 @@
 import {
-  useMutation,
+  useMutation as useTanStackMutation,
   useQueryClient,
   type QueryKey,
   type UseMutationOptions,
@@ -14,7 +14,7 @@ type MutationInvalidates<TData, TVariables, TContext> =
     context: TContext | undefined,
   ) => readonly QueryKey[] | Promise<readonly QueryKey[]>);
 
-type CreateMutationHookOptions<TData, TError, TVariables, TContext> =
+type UseInvalidatingMutationOptions<TData, TError, TVariables, TContext> =
   UseMutationOptions<TData, TError, TVariables, TContext> & {
     invalidates: MutationInvalidates<TData, TVariables, TContext>;
   };
@@ -25,14 +25,14 @@ async function resolveInvalidates<TData, TVariables, TContext>(
   variables: TVariables,
   context: TContext | undefined,
 ): Promise<readonly QueryKey[]> {
-  if (typeof invalidates === "function") {
+  if (typeof invalidates === 'function') {
     return invalidates(data, variables, context);
   }
 
   return invalidates;
 }
 
-export function createMutationHook<
+export function useInvalidatingMutation<
   TData = unknown,
   TError = Error,
   TVariables = void,
@@ -41,7 +41,7 @@ export function createMutationHook<
   invalidates,
   onSuccess,
   ...options
-}: CreateMutationHookOptions<TData, TError, TVariables, TContext>): UseMutationResult<
+}: UseInvalidatingMutationOptions<TData, TError, TVariables, TContext>): UseMutationResult<
   TData,
   TError,
   TVariables,
@@ -49,7 +49,7 @@ export function createMutationHook<
 > {
   const queryClient = useQueryClient();
 
-  return useMutation<TData, TError, TVariables, TContext>({
+  return useTanStackMutation<TData, TError, TVariables, TContext>({
     ...options,
     onSuccess: async (data, variables, context, mutation) => {
       await onSuccess?.(data, variables, context, mutation);

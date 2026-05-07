@@ -26,7 +26,7 @@ import { buildDefaultTeamName } from '@/features/teams/team-defaults';
 import { getTeamIconOption, TEAM_ICON_OPTIONS } from '@/features/teams/team-icon-catalog';
 import { TeamIcon } from '@/features/teams/team-icon';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -106,7 +106,7 @@ export function JoinLeaguePage() {
     setSelectedIconKey(TeamIconKey.CAPTAIN_SMILE_FIELD);
   }, [user?.firstName, user?.lastName, inviteCode]);
 
-  const acceptMutation = createMutationHook({
+  const acceptMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await acceptInvitation({ body: { inviteCode } });
 

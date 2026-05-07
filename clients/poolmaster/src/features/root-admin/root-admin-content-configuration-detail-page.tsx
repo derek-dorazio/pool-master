@@ -28,7 +28,7 @@ import {
 } from './content-configuration-utils';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type ContestConfigTemplateUpdateResult =
   AdminUpdateContestConfigTemplateResponses[200]['template'];
@@ -65,7 +65,7 @@ export function RootAdminContentConfigurationDetailPage() {
     }
   }, [template]);
 
-  const contestTemplateMutation = createMutationHook({
+  const contestTemplateMutation = useInvalidatingMutation({
     mutationFn: async (input: {
       templateId: string;
       nextDraft: ContestConfigTemplate;

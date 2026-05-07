@@ -16,7 +16,7 @@ import {
   type IngestionScheduleConfig,
 } from './root-admin-sync-config-utils';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 export function RootAdminSportOverridesPage() {
   const [overrideSport, setOverrideSport] = useState<SyncSport>('GOLF');
@@ -48,7 +48,7 @@ export function RootAdminSportOverridesPage() {
     setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
   }, [ingestionConfigQuery.data, overrideSport]);
 
-  const sportOverrideMutation = createMutationHook({
+  const sportOverrideMutation = useInvalidatingMutation({
     mutationFn: async (input: {
       sport: SyncSport;
       draft: Record<IngestionPolicyKey, boolean>;
@@ -79,7 +79,7 @@ export function RootAdminSportOverridesPage() {
     invalidates: [QueryKeys.rootAdmin.ingestionConfig],
   });
 
-  const resetSportOverrideMutation = createMutationHook({
+  const resetSportOverrideMutation = useInvalidatingMutation({
     mutationFn: async (sport: SyncSport) => {
       const response = await adminResetSportIngestionOverride({
         path: { sport },

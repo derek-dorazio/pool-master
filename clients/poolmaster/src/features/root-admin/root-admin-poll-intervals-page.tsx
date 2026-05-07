@@ -20,7 +20,7 @@ import {
   type PollIntervalConfig,
 } from './root-admin-sync-config-utils';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 const POLL_INTERVAL_FIELDS = [
   ['standings', 'Standings'],
@@ -55,7 +55,7 @@ export function RootAdminPollIntervalsPage() {
     setDraft(clonePollConfig(pollConfigQuery.data));
   }, [pollConfigQuery.data]);
 
-  const pollConfigMutation = createMutationHook({
+  const pollConfigMutation = useInvalidatingMutation({
     mutationFn: async (nextDraft: PollIntervalConfig) => {
       const response = await adminUpdatePollIntervals({
         body: nextDraft,
@@ -73,7 +73,7 @@ export function RootAdminPollIntervalsPage() {
     invalidates: [QueryKeys.rootAdmin.pollConfig],
   });
 
-  const resetPollConfigMutation = createMutationHook({
+  const resetPollConfigMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await adminResetPollIntervals();
       if (!response.data) {

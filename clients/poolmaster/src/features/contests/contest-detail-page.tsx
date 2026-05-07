@@ -38,7 +38,7 @@ import {
 } from '@/features/shared/ui';
 import { shouldPollContestEntries } from './contest-status';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type ContestDetail = GetContestResponses[200]['contest'];
 type ContestEntryDetail = ListContestEntriesResponses[200]['entries'][number];
@@ -251,7 +251,7 @@ export function ContestDetailPage() {
     );
   }, [auth.user?.id, teamsQuery.data]);
 
-  const enterContestMutation = createMutationHook({
+  const enterContestMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await enterContest({ path: { contestId } });
       if (!response.data?.entry) {
@@ -272,7 +272,7 @@ export function ContestDetailPage() {
     invalidates: [QueryKeys.contestEntries.byContest(contestId)],
   });
 
-  const renameEntryMutation = createMutationHook({
+  const renameEntryMutation = useInvalidatingMutation({
     mutationFn: async ({ entryId, name }: { entryId: string; name: string }) => {
       const response = await updateContestEntry({
         path: { contestId, entryId },

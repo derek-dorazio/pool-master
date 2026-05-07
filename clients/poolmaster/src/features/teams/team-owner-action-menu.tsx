@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
 import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type OwnerRole = 'COMMISSIONER' | 'MEMBER' | undefined;
 type ActiveAction = 'promote' | 'demote' | 'remove' | null;
@@ -122,7 +122,7 @@ export function TeamOwnerActionMenu({
     QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
   ] as const;
 
-  const changeRoleMutation = createMutationHook({
+  const changeRoleMutation = useInvalidatingMutation({
     mutationFn: async (nextRole: 'COMMISSIONER' | 'MEMBER') => {
       const response = await changeMemberRole({
         path: { id: leagueId, uid: ownerUserId },
@@ -142,7 +142,7 @@ export function TeamOwnerActionMenu({
     invalidates: ownerViewKeys,
   });
 
-  const removeOwnerMutation = createMutationHook({
+  const removeOwnerMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const response = await removeSquadOwner({
         path: { id: leagueId, squadId: teamId, userId: ownerUserId },

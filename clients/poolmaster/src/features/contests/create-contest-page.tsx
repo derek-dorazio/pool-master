@@ -56,7 +56,7 @@ import {
 } from './contest-configuration-sections';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type SportEventSummary = ListEventsResponses[200]['events'][number];
@@ -713,7 +713,7 @@ export function CreateContestPage() {
     visibleTemplates.length,
   ]);
 
-  const saveContestMutation = createMutationHook({
+  const saveContestMutation = useInvalidatingMutation({
     mutationFn: async () => {
       if (!leagueQuery.data?.id) {
         throw new Error('League detail is still loading.');
@@ -961,7 +961,7 @@ export function CreateContestPage() {
     },
   });
 
-  const deleteContestMutation = createMutationHook({
+  const deleteContestMutation = useInvalidatingMutation({
     mutationFn: async () => {
       if (!contestId) {
         throw new Error('Contest id is required to delete a contest.');

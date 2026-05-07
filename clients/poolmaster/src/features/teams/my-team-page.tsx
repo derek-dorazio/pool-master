@@ -49,7 +49,7 @@ import { getTeamIconOption, TEAM_ICON_OPTIONS } from './team-icon-catalog';
 import { buildDefaultTeamName } from './team-defaults';
 import { TeamIcon } from './team-icon';
 import { QueryKeys } from '@/lib/query-keys';
-import { createMutationHook } from '@/lib/mutation-hooks';
+import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
@@ -226,7 +226,7 @@ export function MyTeamPage() {
     }
   }, [activeDialog, selectedTeam, teamNameDraftTeamId]);
 
-  const createTeamMutation = createMutationHook({
+  const createTeamMutation = useInvalidatingMutation({
     mutationFn: async ({ nextTeamName, nextIconKey }: { nextTeamName: string; nextIconKey: TeamIconKey }) => {
       const response = await createLeagueSquad({
         path: { id: leagueId },
@@ -248,7 +248,7 @@ export function MyTeamPage() {
     invalidates: [],
   });
 
-  const updateTeamMutation = createMutationHook({
+  const updateTeamMutation = useInvalidatingMutation({
     mutationFn: async ({ teamId, nextTeamName, nextIconKey }: { teamId: string; nextTeamName: string; nextIconKey: TeamIconKey }) => {
       const response = await updateLeagueSquad({
         path: { id: leagueId, squadId: teamId },
@@ -270,7 +270,7 @@ export function MyTeamPage() {
     invalidates: [],
   });
 
-  const updateTeamIconMutation = createMutationHook({
+  const updateTeamIconMutation = useInvalidatingMutation({
     mutationFn: async ({ teamId, nextIconKey }: { teamId: string; nextIconKey: TeamIconKey }) => {
       const response = await updateLeagueSquad({
         path: { id: leagueId, squadId: teamId },
@@ -293,7 +293,7 @@ export function MyTeamPage() {
     invalidates: [],
   });
 
-  const createOwnerInvitationMutation = createMutationHook({
+  const createOwnerInvitationMutation = useInvalidatingMutation({
     mutationFn: async (email: string) => {
       const squadId = selectedTeam?.id;
       if (!squadId) {
@@ -320,7 +320,7 @@ export function MyTeamPage() {
     ],
   });
 
-  const replaceOwnerMutation = createMutationHook({
+  const replaceOwnerMutation = useInvalidatingMutation({
     mutationFn: async ({ userId, email }: { userId: string; email: string }) => {
       const squadId = selectedTeam?.id;
       if (!squadId) {
@@ -348,7 +348,7 @@ export function MyTeamPage() {
     ],
   });
 
-  const revokeOwnerInvitationMutation = createMutationHook({
+  const revokeOwnerInvitationMutation = useInvalidatingMutation({
     mutationFn: async (invitationId: string) => {
       const response = await revokeSquadOwnerInvitation({
         path: { id: leagueId, invitationId },
@@ -362,7 +362,7 @@ export function MyTeamPage() {
     invalidates: [QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId)],
   });
 
-  const inactivateTeamMutation = createMutationHook({
+  const inactivateTeamMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const squadId = selectedTeam?.id;
       if (!squadId) {
@@ -394,7 +394,7 @@ export function MyTeamPage() {
     ],
   });
 
-  const deleteTeamMutation = createMutationHook({
+  const deleteTeamMutation = useInvalidatingMutation({
     mutationFn: async () => {
       const squadId = selectedTeam?.id;
       if (!squadId) {
