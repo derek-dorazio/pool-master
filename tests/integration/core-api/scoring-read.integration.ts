@@ -59,14 +59,20 @@ describe('Scoring Read Integration', () => {
     expect(healthRes.statusCode).toBe(200);
     // pool-master-rop.78.8 — periodic StandingsRollup retired; the
     // health response no longer carries `rollupRunning` / `activeContests`
-    // and surfaces `eventDriven: true` instead.
-    expect(healthRes.json()).toEqual(
+    // and surfaces `eventDriven: true` instead. The route-level contract
+    // assertion has to lock both halves of that change: the new field is
+    // present AND the retired fields are gone (objectContaining-only would
+    // still pass if the real HTTP response kept returning the legacy keys).
+    const body = healthRes.json();
+    expect(body).toEqual(
       expect.objectContaining({
         status: 'ok',
         service: 'scoring-service',
         eventDriven: true,
       }),
     );
+    expect(body).not.toHaveProperty('rollupRunning');
+    expect(body).not.toHaveProperty('activeContests');
   });
 
   it('pool-master-rop.6: serves scoring reads and returns 404 for missing entry breakdowns', async () => {
