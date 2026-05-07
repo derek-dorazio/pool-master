@@ -88,19 +88,10 @@ export async function publishLiveScoreUpdate(
       },
       'Skipping live-score persistence — no internal SportEvent matches (providerId, externalEventId)',
     );
-    // Still emit the typed event so downstream observers can react to a
-    // payload arrival even if persistence was skipped.
-    const skippedEvent: LiveScorePersistedEvent = {
-      id: randomUUID(),
-      type: 'live_score.persisted',
-      sourceService: 'ingestion-worker',
-      timestamp: new Date().toISOString(),
-      category: validated.category,
-      providerId: deps.providerId,
-      updatesPersisted: 0,
-      ingestedAt: new Date().toISOString(),
-    };
-    await (deps.bus ?? eventBus).publish('live_score.persisted', skippedEvent);
+    // Skip the bus emission too. live_score.persisted requires sportEventId
+    // because consumers read the persisted rows by (sportEventId, category);
+    // a phantom zero-update event with no usable sportEventId is just noise.
+    // The WARN above is the diagnostic record.
     return 0;
   }
 
@@ -122,7 +113,9 @@ export async function publishLiveScoreUpdate(
       throw new LiveScorePersistenceUnsupportedError(validated.category);
   }
 
-  // 4. Emit typed bus event.
+  // 4. Emit typed bus event. sportEventId carries the resolved internal id
+  // so consumers can read the persisted detail rows by (sportEventId, category)
+  // without re-resolving from externalEventId + providerId.
   const persistedEvent: LiveScorePersistedEvent = {
     id: randomUUID(),
     type: 'live_score.persisted',
@@ -130,6 +123,7 @@ export async function publishLiveScoreUpdate(
     timestamp: new Date().toISOString(),
     category: validated.category,
     providerId: deps.providerId,
+    sportEventId: sportEvent.id,
     updatesPersisted,
     ingestedAt: new Date().toISOString(),
   };

@@ -8,9 +8,11 @@
  *   - GOLF persistence resolves `participantExternalId` to internal
  *     `SportEventParticipant.id` via ParticipantProviderMapping +
  *     SportEventParticipant lookup *scoped to externalEventId*, upserts
- *     golf-round rows, and emits a typed `live_score.persisted` event.
+ *     golf-round rows, and emits a typed `live_score.persisted` event
+ *     carrying the resolved internal `sportEventId`.
  *   - Unmapped external ids and rounds with null strokes are skipped.
- *   - Unknown externalEventId emits a warn + zero-update bus event.
+ *   - Unknown externalEventId logs a warn and skips both persistence and
+ *     bus emission (no phantom event without a usable sportEventId).
  *   - Non-GOLF categories throw `LiveScorePersistenceUnsupportedError`
  *     until their per-category persistence slice ships.
  */
@@ -123,6 +125,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           type: 'live_score.persisted',
           category: 'GOLF',
           providerId: 'mock-contest-feed',
+          sportEventId: 'evt-internal-1',
           updatesPersisted: 2,
         }),
       );
@@ -210,7 +213,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       expect(prisma.sportEventParticipantGolfRound.upsert).not.toHaveBeenCalled();
     });
 
-    it('warns and emits a zero-update event when externalEventId resolves to no SportEvent', async () => {
+    it('warns and skips both persistence AND bus emission when externalEventId resolves to no SportEvent', async () => {
       const prisma = {
         sportEvent: { findUnique: jest.fn().mockResolvedValue(null) },
         participantProviderMapping: { findMany: jest.fn() },
@@ -241,10 +244,9 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         expect.objectContaining({ action: 'liveScore.publish.unknownSportEvent' }),
         expect.any(String),
       );
-      expect(bus.publish).toHaveBeenCalledWith(
-        'live_score.persisted',
-        expect.objectContaining({ updatesPersisted: 0 }),
-      );
+      // No phantom event — live_score.persisted requires sportEventId, and
+      // there is no internal SportEvent to populate it from.
+      expect(bus.publish).not.toHaveBeenCalled();
     });
   });
 
