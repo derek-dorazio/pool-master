@@ -156,7 +156,7 @@ describe('RosterPick CRUD integration', () => {
         draftPickNumber: 1,
         pickedAt: new Date('2026-04-10T12:05:00.000Z'),
         contestFormat: 'ROSTER',
-      isAutoPicked: false,
+        isAutoPicked: false,
       },
     });
 
@@ -192,7 +192,7 @@ describe('RosterPick CRUD integration', () => {
           draftPickNumber: 4,
           pickedAt: new Date('2026-04-10T12:06:00.000Z'),
           contestFormat: 'ROSTER',
-      isAutoPicked: false,
+        isAutoPicked: false,
         },
       }),
     ).rejects.toMatchObject({

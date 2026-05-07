@@ -210,6 +210,44 @@ export const ContestEntryDtoSchema = z.object({
 }).describe('Contest entry summary.');
 export type ContestEntryDto = z.infer<typeof ContestEntryDtoSchema>;
 
+/**
+ * Canonical raw-row DTO for ContestEntryPick. The persistence shape of a single
+ * pick on a contest entry, unified across contest formats per plans/117 §4.3.
+ * Optional metadata (period, slot, tier, cost) is populated based on the
+ * parent Contest.contestFormat — see plans/117 §7.1 for the per-format mapping.
+ *
+ * `ContestEntryParticipantDetailDtoSchema` is the richer read shape used by
+ * entry-detail and leaderboard surfaces (joins SportEventParticipant +
+ * Participant for display names); this schema is the underlying pick row.
+ */
+export const ContestEntryPickDtoSchema = z.object({
+  id: z.string().describe('Pick identifier.'),
+  entryId: z.string().describe('Owning contest entry identifier.'),
+  sportEventParticipantId: z.string().describe(
+    'Per-event participant the pick refers to (Sport-event-participant row, not the canonical Participant).',
+  ),
+  contestFormat: z.enum(Object.values(ContestFormat) as [string, ...string[]]).describe(
+    'Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.',
+  ),
+  period: z.number().int().nullable().describe(
+    'Per-format period: week (SURVIVOR), draft round (BRACKET), or omitted (ROSTER). Plans/117 §7.1.',
+  ),
+  slot: z.number().int().nullable().describe(
+    'Per-format slot: matchup index (BRACKET), confidence rank (PICKEM_CONFIDENCE), predicted position (PREDICT_TOP_N), or omitted (ROSTER, SURVIVOR). Plans/117 §7.1.',
+  ),
+  tier: z.string().nullable().describe('Selection tier (tiered ROSTER); null otherwise.'),
+  cost: z.number().nullable().describe('Budget cost (budget ROSTER); null otherwise.'),
+  isAutoPicked: z.boolean().describe(
+    'Whether this pick was auto-assigned (snake-draft auto-pick, Survivor missed-week auto-loss, etc.).',
+  ),
+  draftRound: z.number().int().nullable().describe('Snake-draft round; null outside snake-draft mechanism.'),
+  draftPickNumber: z.number().int().nullable().describe('Snake-draft pick order; null outside snake-draft mechanism.'),
+  pickedAt: z.string().datetime().describe('When the pick was made (or auto-picked).'),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+}).describe('Raw ContestEntryPick row used by persistence-aware surfaces.');
+export type ContestEntryPickDto = z.infer<typeof ContestEntryPickDtoSchema>;
+
 export const ContestEntryParticipantDetailDtoSchema = z.object({
   pickId: z.string(),
   sportEventParticipantId: z.string(),

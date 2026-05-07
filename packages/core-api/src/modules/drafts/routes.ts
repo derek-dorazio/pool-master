@@ -26,6 +26,7 @@ import {
 import {
   PrismaContestEntryRepository,
 } from '../../adapters';
+import { ContestEntryPickService } from '../contest-entry-picks';
 import { createErrorEnvelope } from '../../core/error-handler';
 import { getAppPrisma } from '../../core/prisma-context';
 import crypto from 'node:crypto';
@@ -1168,15 +1169,16 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         },
       });
 
-      await prisma.contestEntryPick.create({
-        data: {
-          entryId,
-          sportEventParticipantId: participantId,
-          contestFormat: 'ROSTER',
-          draftRound,
-          draftPickNumber: globalPickCount + 1,
-          isAutoPicked: false,
-        },
+      // pool-master-rop.78.6 — go through ContestEntryPickService so the
+      // denormalized contestFormat is read from the parent contest in the same
+      // transaction (plans/117 §7.1 — "no insert path bypasses this").
+      const pickService = new ContestEntryPickService(prisma, fastify.log);
+      await pickService.createPick({
+        entryId,
+        sportEventParticipantId: participantId,
+        draftRound,
+        draftPickNumber: globalPickCount + 1,
+        isAutoPicked: false,
       });
 
       return buildRosterSelectionResponse(prisma, context, entryId, requestUserId);
