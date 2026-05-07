@@ -9,7 +9,7 @@
  * `SportEventParticipantGolfRound` rows. These assertions fail against
  * origin/main and pass on this branch, where:
  *   - the schema accepts `strokes: number | null`;
- *   - both mock + ESPN-leaderboard adapters emit `strokes: null`;
+ *   - adapters emit `strokes: null` when a provider feed lacks real strokes;
  *   - the persistence path skips rounds with null strokes.
  */
 

@@ -218,6 +218,7 @@ function parseContestantRecord(record: unknown, field: string): ContestantRecord
       : undefined,
     odds: toOptionalNumber(record.odds, `${field}.odds`),
     ranking: toOptionalNumber(record.ranking, `${field}.ranking`),
+    strokes: toOptionalNumber(record.strokes, `${field}.strokes`),
     score: toOptionalNumber(record.score, `${field}.score`),
     result: resultValue
       ? ensureEnumValue(resultValue, ['win', 'loss', 'tie', 'cut', 'withdrawn', 'pending'] as const, `${field}.result`)
@@ -246,6 +247,7 @@ function parseContestantDeltaRecord(record: unknown, field: string): ContestantD
       : undefined,
     odds: toOptionalNumber(record.odds, `${field}.odds`),
     ranking: toOptionalNumber(record.ranking, `${field}.ranking`),
+    strokes: toOptionalNumber(record.strokes, `${field}.strokes`),
     score: toOptionalNumber(record.score, `${field}.score`),
     result: resultValue
       ? ensureEnumValue(resultValue, ['win', 'loss', 'tie', 'cut', 'withdrawn', 'pending'] as const, `${field}.result`)
@@ -501,6 +503,9 @@ function normalizeGolfEvent(event: ContestFeedEventRecord): ContestFeedEventReco
   const fieldContestants = buildMockGolfFieldContestants();
   const oddsContestants = buildMockGolfOddsContestants(event.eventId);
   const rankingContestants = buildMockGolfRankingContestants();
+  const usesExplicitRoundScores = event.feeds.results.contestants.some(
+    (contestant) => typeof contestant.strokes === 'number',
+  );
   const fieldAsOf = event.schedule.releaseAt
     ?? new Date(Date.parse(event.schedule.startsAt) - (7 * 24 * 60 * 60 * 1000)).toISOString();
   const rankingAsOf = new Date(Date.parse(fieldAsOf) + (2 * 60 * 60 * 1000)).toISOString();
@@ -531,7 +536,9 @@ function normalizeGolfEvent(event: ContestFeedEventRecord): ContestFeedEventReco
       results: {
         ...event.feeds.results,
         asOf: resultsAsOf,
-        contestants: buildGolfResultFeed(event, fieldContestants, oddsContestants),
+        contestants: usesExplicitRoundScores
+          ? event.feeds.results.contestants
+          : buildGolfResultFeed(event, fieldContestants, oddsContestants),
       },
     },
   };
@@ -1430,11 +1437,19 @@ export class ScenarioStore {
       this.liveScoreTicks.set(tickKey, tick);
     }
 
+    const explicitGolfRoundScores =
+      scenario.sport === 'GOLF'
+      && event.feeds.results.contestants.some((contestant) => typeof contestant.strokes === 'number');
     const contestants =
       isManualTestLifecycleEvent(event) && event.status !== 'in_progress'
         ? []
         : scenario.sport === 'GOLF'
-          ? buildLiveGolfScores(scenario, event, tick)
+          ? explicitGolfRoundScores
+            ? mergeContestants(
+              resolveContestantsForFeed(scenario.sport, event),
+              event.feeds.results.contestants,
+            )
+            : buildLiveGolfScores(scenario, event, tick)
           : mergeContestants(
             resolveContestantsForFeed(scenario.sport, event),
             event.feeds.results.contestants,

@@ -216,6 +216,17 @@ async function cleanupContestArtifacts(
       },
     },
   });
+  await database.contestEntryPickGolfRosterContribution.deleteMany({
+    where: {
+      pick: {
+        entry: {
+          contestId: {
+            in: contestIds,
+          },
+        },
+      },
+    },
+  });
   await database.contestEntryPrizeAward.deleteMany({
     where: {
       entry: {
@@ -328,7 +339,23 @@ async function cleanupSportEventParticipantArtifacts(
       },
     },
   });
+  await database.contestEntryPickGolfRosterContribution.deleteMany({
+    where: {
+      pick: {
+        sportEventParticipantId: {
+          in: sportEventParticipantIds,
+        },
+      },
+    },
+  });
   await database.contestEntryPick.deleteMany({
+    where: {
+      sportEventParticipantId: {
+        in: sportEventParticipantIds,
+      },
+    },
+  });
+  await database.sportEventParticipantGolfRound.deleteMany({
     where: {
       sportEventParticipantId: {
         in: sportEventParticipantIds,
