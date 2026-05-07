@@ -373,6 +373,19 @@ async function cleanupContestArtifacts(
       },
     },
   });
+  // pool-master-rop.78.7 — golf-roster contribution rows reference picks
+  // via FK; they have to drop before the picks they belong to.
+  await database.contestEntryPickGolfRosterContribution.deleteMany({
+    where: {
+      pick: {
+        entry: {
+          contestId: {
+            in: contestIds,
+          },
+        },
+      },
+    },
+  });
   await database.contestEntryPick.deleteMany({
     where: {
       entry: {
@@ -476,6 +489,17 @@ async function cleanupSportEventParticipantArtifacts(
       },
     },
   });
+  // pool-master-rop.78.7 — contribution rows reach SEP through pick.
+  // They have to drop before the picks.
+  await database.contestEntryPickGolfRosterContribution.deleteMany({
+    where: {
+      pick: {
+        sportEventParticipantId: {
+          in: sportEventParticipantIds,
+        },
+      },
+    },
+  });
   await database.contestEntryPick.deleteMany({
     where: {
       sportEventParticipantId: {
@@ -484,6 +508,14 @@ async function cleanupSportEventParticipantArtifacts(
     },
   });
   await database.sportEventParticipantValuation.deleteMany({
+    where: {
+      sportEventParticipantId: {
+        in: sportEventParticipantIds,
+      },
+    },
+  });
+  // pool-master-rop.78.12 — per-round detail reaches SEP via FK.
+  await database.sportEventParticipantGolfRound.deleteMany({
     where: {
       sportEventParticipantId: {
         in: sportEventParticipantIds,
