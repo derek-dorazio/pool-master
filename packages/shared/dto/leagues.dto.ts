@@ -11,6 +11,7 @@ import {
   LeagueRole,
 } from '../domain/enums';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
+import { ContestSummaryDtoSchema } from './contests.dto';
 
 // --- Requests ---
 
@@ -400,10 +401,16 @@ export const LeagueAuditEntriesResponseSchema = z.object({
   entries: z.array(LeagueAuditEntryDtoSchema),
 }).describe('League audit-log response.');
 
+/**
+ * Commissioner dashboard response. Per pool-master-rop.78.5 (folds in
+ * pool-master-rop.14.2 and rop.14.3) the `league` and `contests` fields
+ * are now typed against the canonical `LeagueSummaryDtoSchema` and
+ * `ContestSummaryDtoSchema` rather than `JsonObjectSchema` placeholders.
+ */
 export const LeagueDashboardResponseSchema = z.object({
-  league: JsonObjectSchema.describe('League summary payload driving the dashboard header.'),
+  league: LeagueSummaryDtoSchema.describe('League summary payload driving the dashboard header.'),
   actionItems: z.array(LeagueActionItemDtoSchema).describe('Outstanding commissioner action items.'),
-  contests: z.array(JsonObjectSchema).describe('Contest summaries included in the dashboard payload.'),
+  contests: z.array(ContestSummaryDtoSchema).describe('Contest summaries included in the dashboard payload.'),
   memberCount: z.number().int().describe('Current league member count.'),
   pendingInvites: z.number().int().describe('Current number of pending invitations.'),
   recentMemberActivity: z.array(MemberActivityEventDtoSchema).describe('Recent member activity for the league.'),

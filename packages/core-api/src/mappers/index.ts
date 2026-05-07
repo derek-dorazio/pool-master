@@ -9,5 +9,8 @@ export * from './account.mapper';
 export * from './notifications.mapper';
 export * from './leagues-extra.mapper';
 export * from './events.mapper';
+export * from './sports.mapper';
+export * from './sport-events.mapper';
+export * from './sport-event-participants.mapper';
 export * from './contest-management.mapper';
 export * from './version.mapper';

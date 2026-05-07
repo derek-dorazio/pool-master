@@ -2635,7 +2635,63 @@ export type GetLeagueDashboardResponses = {
          * League summary payload driving the dashboard header.
          */
         league: {
-            [key: string]: unknown;
+            /**
+             * Internal league identifier used for authenticated management APIs.
+             */
+            id: string;
+            /**
+             * Stable short code used in bookmarkable league-home routes and invite context.
+             */
+            leagueCode: string;
+            /**
+             * Primary display name for the league.
+             */
+            name: string;
+            /**
+             * Optional short league description.
+             */
+            description?: string;
+            /**
+             * Whether the league is currently active for normal write interactions.
+             */
+            isActive: boolean;
+            /**
+             * Selected built-in league icon key from the curated PoolMaster icon catalog.
+             */
+            iconKey: 'GOLF_FLAG' | 'GOLF_BALL' | 'FOOTBALL' | 'FOOTBALL_HELMET' | 'BASKETBALL' | 'BASKETBALL_HOOP' | 'CHECKERED_FLAG' | 'RACING_WHEEL' | 'TENNIS_BALL' | 'TENNIS_RACKET' | 'HORSESHOE' | 'SOCCER_BALL' | 'HOCKEY_STICK' | 'HOCKEY_PUCK' | 'BASEBALL' | 'BASEBALL_BAT' | 'FIGHT_GLOVE' | 'TROPHY' | 'WHISTLE' | 'STOPWATCH';
+            /**
+             * Current number of memberships in the league.
+             */
+            memberCount: number;
+            /**
+             * Number of currently active contests associated with the league.
+             */
+            activeContestCount: number;
+            /**
+             * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
+             */
+            memberType: 'COMMISSIONER' | 'MEMBER';
+            /**
+             * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
+             */
+            leagueRelationship: {
+                /**
+                 * Whether the current requester is an active member of this league.
+                 */
+                leagueMember: boolean;
+                /**
+                 * Whether the current requester is an active commissioner of this league.
+                 */
+                commissioner: boolean;
+            };
+            /**
+             * Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data.
+             */
+            isRootAdmin: boolean;
+            /**
+             * League creation timestamp in ISO 8601 format.
+             */
+            createdAt?: string;
         };
         /**
          * Outstanding commissioner action items.
@@ -2661,7 +2717,23 @@ export type GetLeagueDashboardResponses = {
          * Contest summaries included in the dashboard payload.
          */
         contests: Array<{
-            [key: string]: unknown;
+            id: string;
+            name: string;
+            status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+            contestFormat: 'ROSTER' | 'BRACKET' | 'PICKEM_CONFIDENCE' | 'SURVIVOR' | 'PREDICT_TOP_N';
+            selectionType: 'SNAKE_DRAFT' | 'TIERED' | 'BUDGET_PICK' | 'OPEN_SELECTION' | 'PICK_EM' | 'BRACKET_PICK_EM';
+            scoringEngine: 'ADVANCEMENT' | 'STAT_ACCUMULATION' | 'STROKE_PLAY' | 'POSITION' | 'BRACKET' | 'FIGHT_RESULT' | 'CUMULATIVE';
+            leagueId: string;
+            sportEventId?: string;
+            sport?: string;
+            /**
+             * Number of entries currently in the contest.
+             */
+            entryCount?: number;
+            startsAt?: string;
+            endsAt?: string;
+            createdAt?: string;
+            updatedAt?: string;
         }>;
         /**
          * Current league member count.
@@ -9552,60 +9624,7 @@ export type GetContestAuditLogResponses = {
      * Contest audit-log response.
      */
     200: {
-        entries: Array<{
-            /**
-             * Audit-log entry id.
-             */
-            id: string;
-            /**
-             * League this entry belongs to.
-             */
-            leagueId: string;
-            /**
-             * Contest this entry references when the action is contest-scoped.
-             */
-            contestId?: string;
-            /**
-             * User id of the commissioner / actor that performed the action.
-             */
-            actorId: string;
-            /**
-             * Action verb in dotted form (e.g., "league.member.role.changed").
-             */
-            action: string;
-            /**
-             * Audit-log entry category — broad classification of the action that produced this entry.
-             */
-            category: 'LEAGUE' | 'CONTEST' | 'DRAFT' | 'SCORING' | 'PAYOUT' | 'MEMBER' | 'COMMUNICATION';
-            /**
-             * Human-readable description of what happened.
-             */
-            description: string;
-            /**
-             * Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract.
-             */
-            beforeState?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract.
-             */
-            afterState?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Optional human-supplied reason / justification for the action.
-             */
-            reason?: string;
-            /**
-             * IP address from which the action originated, when available.
-             */
-            ipAddress?: string;
-            /**
-             * When the audit entry was recorded.
-             */
-            createdAt: string;
-        }>;
+        entries: Array<unknown>;
     };
 };
 

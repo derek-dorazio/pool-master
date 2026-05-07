@@ -26,10 +26,12 @@ import type {
   ScoringEngine,
   SelectionType,
   Sport,
+  SportCategory,
   SquadMembershipStatus,
   SquadOwnerInvitationStatus,
   TeamIconKey,
   TimeFormat,
+  TournamentFormat,
 } from './enums';
 
 // --- Base ---
@@ -129,10 +131,23 @@ export interface LeagueInvitation extends DomainEntity {
 
 // --- Sport & Participant ---
 
-/** Configured sport definition known to the platform. */
+/**
+ * Configured sport definition known to the platform.
+ *
+ * Per plans/117 §4.1, the Sport entity now carries `category` and
+ * `tournamentFormat` from pool-master-rop.78.4. `category` drives
+ * per-category detail-table dispatch in scoring; `tournamentFormat`
+ * drives the validity matrix in plans/117 §9.
+ *
+ * The `name` field continues to hold the legacy enum-style string
+ * (`Sport.GOLF` etc.) until a future slice broadens to granular
+ * tournament-level names ("PGA Masters", "NCAA Tournament 2026").
+ */
 export interface SportConfig extends DomainEntity {
   name: Sport;
   participantType: ParticipantType;
+  category: SportCategory;
+  tournamentFormat: TournamentFormat;
 }
 
 /** Season metadata for a given sport. */

@@ -120,11 +120,23 @@ export interface ContestTimingPolicy extends DomainEntity {
   active: boolean;
 }
 
-/** Join record linking a provider event to a normalized participant. */
+/**
+ * Join record linking a provider event to a normalized participant. The
+ * per-event ranking / odds / seed columns landed in pool-master-rop.78.4
+ * and replace the dropped ParticipantSeasonRecord path — per plans/117
+ * §4.1, world ranking and odds are per-event snapshots from the provider
+ * feed, not per-season aggregates.
+ */
 export interface SportEventParticipant extends DomainEntity {
   sportEventId: string;
   participantId: string;
   status?: string;
+  /** Per-event world ranking snapshot from the provider feed at field-load time. */
+  worldRanking?: number;
+  /** Per-event implied odds-to-win snapshot (decimal). */
+  oddsToWin?: number;
+  /** Event-relative seed number (e.g., NCAA tournament seed). */
+  seedNumber?: number;
   metadata: Record<string, unknown>;
 }
 

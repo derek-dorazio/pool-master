@@ -4488,7 +4488,113 @@
                   "properties": {
                     "league": {
                       "type": "object",
-                      "additionalProperties": {},
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Internal league identifier used for authenticated management APIs."
+                        },
+                        "leagueCode": {
+                          "type": "string",
+                          "description": "Stable short code used in bookmarkable league-home routes and invite context."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Primary display name for the league."
+                        },
+                        "description": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Optional short league description."
+                        },
+                        "isActive": {
+                          "type": "boolean",
+                          "description": "Whether the league is currently active for normal write interactions."
+                        },
+                        "iconKey": {
+                          "type": "string",
+                          "enum": [
+                            "GOLF_FLAG",
+                            "GOLF_BALL",
+                            "FOOTBALL",
+                            "FOOTBALL_HELMET",
+                            "BASKETBALL",
+                            "BASKETBALL_HOOP",
+                            "CHECKERED_FLAG",
+                            "RACING_WHEEL",
+                            "TENNIS_BALL",
+                            "TENNIS_RACKET",
+                            "HORSESHOE",
+                            "SOCCER_BALL",
+                            "HOCKEY_STICK",
+                            "HOCKEY_PUCK",
+                            "BASEBALL",
+                            "BASEBALL_BAT",
+                            "FIGHT_GLOVE",
+                            "TROPHY",
+                            "WHISTLE",
+                            "STOPWATCH"
+                          ],
+                          "description": "Selected built-in league icon key from the curated PoolMaster icon catalog."
+                        },
+                        "memberCount": {
+                          "type": "number",
+                          "description": "Current number of memberships in the league."
+                        },
+                        "activeContestCount": {
+                          "type": "number",
+                          "description": "Number of currently active contests associated with the league."
+                        },
+                        "memberType": {
+                          "type": "string",
+                          "enum": [
+                            "COMMISSIONER",
+                            "MEMBER"
+                          ],
+                          "nullable": true,
+                          "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
+                        },
+                        "leagueRelationship": {
+                          "type": "object",
+                          "properties": {
+                            "leagueMember": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active member of this league."
+                            },
+                            "commissioner": {
+                              "type": "boolean",
+                              "description": "Whether the current requester is an active commissioner of this league."
+                            }
+                          },
+                          "required": [
+                            "leagueMember",
+                            "commissioner"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix."
+                        },
+                        "isRootAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the current requester has platform-level root-admin authority. This is global platform state, not league relationship data."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "League creation timestamp in ISO 8601 format."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "leagueCode",
+                        "name",
+                        "isActive",
+                        "iconKey",
+                        "memberCount",
+                        "activeContestCount",
+                        "memberType",
+                        "leagueRelationship",
+                        "isRootAdmin"
+                      ],
+                      "additionalProperties": false,
                       "description": "League summary payload driving the dashboard header."
                     },
                     "actionItems": {
@@ -4548,8 +4654,103 @@
                       "type": "array",
                       "items": {
                         "type": "object",
-                        "additionalProperties": {},
-                        "description": "Arbitrary JSON object payload."
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "DRAFT",
+                              "OPEN",
+                              "DRAFTING",
+                              "LOCKED",
+                              "ACTIVE",
+                              "COMPLETED",
+                              "CANCELLED"
+                            ]
+                          },
+                          "contestFormat": {
+                            "type": "string",
+                            "enum": [
+                              "ROSTER",
+                              "BRACKET",
+                              "PICKEM_CONFIDENCE",
+                              "SURVIVOR",
+                              "PREDICT_TOP_N"
+                            ]
+                          },
+                          "selectionType": {
+                            "type": "string",
+                            "enum": [
+                              "SNAKE_DRAFT",
+                              "TIERED",
+                              "BUDGET_PICK",
+                              "OPEN_SELECTION",
+                              "PICK_EM",
+                              "BRACKET_PICK_EM"
+                            ]
+                          },
+                          "scoringEngine": {
+                            "type": "string",
+                            "enum": [
+                              "ADVANCEMENT",
+                              "STAT_ACCUMULATION",
+                              "STROKE_PLAY",
+                              "POSITION",
+                              "BRACKET",
+                              "FIGHT_RESULT",
+                              "CUMULATIVE"
+                            ]
+                          },
+                          "leagueId": {
+                            "type": "string"
+                          },
+                          "sportEventId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "sport": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "entryCount": {
+                            "type": "number",
+                            "description": "Number of entries currently in the contest."
+                          },
+                          "startsAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "endsAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "status",
+                          "contestFormat",
+                          "selectionType",
+                          "scoringEngine",
+                          "leagueId"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Contest list item used in contest indexes and league home summaries."
                       },
                       "description": "Contest summaries included in the dashboard payload."
                     },
@@ -20176,83 +20377,7 @@
                   "type": "object",
                   "properties": {
                     "entries": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "description": "Audit-log entry id."
-                          },
-                          "leagueId": {
-                            "type": "string",
-                            "description": "League this entry belongs to."
-                          },
-                          "contestId": {
-                            "type": "string",
-                            "description": "Contest this entry references when the action is contest-scoped."
-                          },
-                          "actorId": {
-                            "type": "string",
-                            "description": "User id of the commissioner / actor that performed the action."
-                          },
-                          "action": {
-                            "type": "string",
-                            "description": "Action verb in dotted form (e.g., \"league.member.role.changed\")."
-                          },
-                          "category": {
-                            "type": "string",
-                            "enum": [
-                              "LEAGUE",
-                              "CONTEST",
-                              "DRAFT",
-                              "SCORING",
-                              "PAYOUT",
-                              "MEMBER",
-                              "COMMUNICATION"
-                            ],
-                            "description": "Audit-log entry category — broad classification of the action that produced this entry."
-                          },
-                          "description": {
-                            "type": "string",
-                            "description": "Human-readable description of what happened."
-                          },
-                          "beforeState": {
-                            "type": "object",
-                            "additionalProperties": {},
-                            "description": "Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract."
-                          },
-                          "afterState": {
-                            "type": "object",
-                            "additionalProperties": {},
-                            "description": "Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract."
-                          },
-                          "reason": {
-                            "type": "string",
-                            "description": "Optional human-supplied reason / justification for the action."
-                          },
-                          "ipAddress": {
-                            "type": "string",
-                            "description": "IP address from which the action originated, when available."
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the audit entry was recorded."
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "leagueId",
-                          "actorId",
-                          "action",
-                          "category",
-                          "description",
-                          "createdAt"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Commissioner audit-log entry."
-                      }
+                      "type": "array"
                     }
                   },
                   "required": [
