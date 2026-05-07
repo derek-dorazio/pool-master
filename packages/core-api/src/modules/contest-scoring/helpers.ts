@@ -3,27 +3,27 @@ import type {
   ComputedContestEntryParticipantScore,
   ComputedContestEntryParticipantScoreEvent,
   ScoreContestEntryContext,
-  ScoreableRosterPick,
+  ScoreableContestEntryPick,
 } from './types';
 
-export function findRosterPick(
+export function findContestEntryPick(
   context: ScoreContestEntryContext,
-  rosterPickId: string,
-): ScoreableRosterPick | undefined {
-  return context.rosterPicks.find((pick) => pick.id === rosterPickId);
+  pickId: string,
+): ScoreableContestEntryPick | undefined {
+  return context.picks.find((pick) => pick.id === pickId);
 }
 
 export function findParticipantSourceData(
   context: ScoreContestEntryContext,
-  rosterPickId: string,
+  pickId: string,
 ): ContestParticipantSourceDataRecord | undefined {
-  const rosterPick = findRosterPick(context, rosterPickId);
-  if (!rosterPick) {
+  const pick = findContestEntryPick(context, pickId);
+  if (!pick) {
     return undefined;
   }
 
   return context.sourceData.find(
-    (item) => item.sportEventParticipantId === rosterPick.sportEventParticipantId,
+    (item) => item.sportEventParticipantId === pick.sportEventParticipantId,
   );
 }
 
@@ -34,13 +34,13 @@ export function getNormalizedData<T>(
 }
 
 export function rebuildContestEntryParticipantScores(
-  rosterPicks: ScoreableRosterPick[],
+  picks: ScoreableContestEntryPick[],
   scoreEvents: ComputedContestEntryParticipantScoreEvent[],
 ): ComputedContestEntryParticipantScore[] {
-  return rosterPicks.map((pick) => ({
-    rosterPickId: pick.id,
+  return picks.map((pick) => ({
+    pickId: pick.id,
     pointsEarned: scoreEvents
-      .filter((event) => event.rosterPickId === pick.id)
+      .filter((event) => event.pickId === pick.id)
       .reduce((sum, event) => sum + event.points, 0),
   }));
 }

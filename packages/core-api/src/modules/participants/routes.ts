@@ -10,12 +10,9 @@ import {
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import {
   ParticipantResponseSchema,
-  ParticipantSeasonRecordListResponseSchema,
-  ParticipantSeasonRecordResponseSchema,
 } from '@poolmaster/shared/dto/participants.dto';
 import {
   PrismaParticipantRepository,
-  PrismaParticipantSeasonRecordRepository,
   PrismaParticipantProviderMappingRepository,
 } from '../../adapters';
 import { ParticipantService } from './service';
@@ -25,12 +22,10 @@ import { getAppPrisma } from '../../core/prisma-context';
 export async function participantsModule(fastify: FastifyInstance): Promise<void> {
   const prisma = getAppPrisma(fastify);
   const participantRepo = new PrismaParticipantRepository(prisma);
-  const seasonRecordRepo = new PrismaParticipantSeasonRecordRepository(prisma);
   const providerMappingRepo = new PrismaParticipantProviderMappingRepository(prisma);
 
   const participantService = new ParticipantService(
     participantRepo,
-    seasonRecordRepo,
     providerMappingRepo,
     fastify.log.child({ module: 'participants.service' }),
   );

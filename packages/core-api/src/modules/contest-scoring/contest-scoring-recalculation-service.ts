@@ -15,7 +15,7 @@ import { scoreContestEntry } from './score-contest-entry';
 import type {
   ContestEntryAggregationRule,
   ParticipantContestScoringRule,
-  ScoreableRosterPick,
+  ScoreableContestEntryPick,
 } from './types';
 
 export interface ContestScoringRecalculationChange {
@@ -67,7 +67,7 @@ export class ContestScoringRecalculationService {
         },
         entries: {
           include: {
-            rosterPicks: {
+            picks: {
               include: {
                 sportEventParticipant: {
                   include: {
@@ -120,14 +120,14 @@ export class ContestScoringRecalculationService {
     );
 
     const scoredEntries = contest.entries.map((entry) => {
-      const rosterPicks: ScoreableRosterPick[] = entry.rosterPicks.map((pick) => ({
+      const picks: ScoreableContestEntryPick[] = entry.picks.map((pick) => ({
         id: pick.id,
         sportEventParticipantId: pick.sportEventParticipantId,
       }));
 
       const result = scoreContestEntry({
-        rosterPicks,
-        sourceData: entry.rosterPicks.flatMap((pick) => {
+        picks,
+        sourceData: entry.picks.flatMap((pick) => {
           const latestSource = pick.sportEventParticipant.sourceData[0];
           if (!latestSource) {
             return [];

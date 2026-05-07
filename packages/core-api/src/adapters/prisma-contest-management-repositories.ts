@@ -53,7 +53,7 @@ export class PrismaContestCoreRepository implements ContestCoreRepository {
         sportEventId: contest.sportEventId,
         name: contest.name,
         status: contest.status,
-        contestType: 'ROSTER',
+        contestFormat: 'ROSTER',
         selectionType: contest.selectionType,
         scoringEngine: contest.scoringEngine,
       },
@@ -386,20 +386,20 @@ export class PrismaContestConfigTemplateRepository
 
   async list(input: {
     sport?: ContestConfigTemplate['sport'];
-    contestType?: ContestConfigTemplate['contestType'];
+    contestFormat?: ContestConfigTemplate['contestFormat'];
     eventType?: string | null;
     active?: boolean;
   } = {}): Promise<ContestConfigTemplate[]> {
     const rows = await this.prisma.contestConfigTemplate.findMany({
       where: {
         ...(input.sport !== undefined && { sport: input.sport }),
-        ...(input.contestType !== undefined && { contestType: input.contestType }),
+        ...(input.contestFormat !== undefined && { contestFormat: input.contestFormat }),
         ...(input.eventType !== undefined && { eventType: input.eventType }),
         ...(input.active !== undefined && { active: input.active }),
       },
       orderBy: [
         { sport: 'asc' },
-        { contestType: 'asc' },
+        { contestFormat: 'asc' },
         { sortOrder: 'asc' },
         { name: 'asc' },
       ],
@@ -410,13 +410,13 @@ export class PrismaContestConfigTemplateRepository
 
   async listBySportAndContestType(input: {
     sport: ContestConfigTemplate['sport'];
-    contestType: ContestConfigTemplate['contestType'];
+    contestFormat: ContestConfigTemplate['contestFormat'];
     eventType?: string | null;
   }): Promise<ContestConfigTemplate[]> {
     const rows = await this.prisma.contestConfigTemplate.findMany({
       where: {
         sport: input.sport,
-        contestType: input.contestType,
+        contestFormat: input.contestFormat,
         active: true,
         OR: [
           { eventType: input.eventType ?? null },
@@ -659,7 +659,7 @@ export class PrismaContestEntryParticipantScoreRepository
     const row = await this.prisma.contestEntryParticipantScore.create({
       data: {
         entryId: score.entryId,
-        rosterPickId: score.rosterPickId,
+        pickId: score.pickId,
         pointsEarned: score.pointsEarned,
       },
     });
@@ -955,7 +955,7 @@ function mapContestConfigTemplate(row: {
   id: string;
   sport: string;
   eventType: string | null;
-  contestType: string;
+  contestFormat: string;
   configMode: string;
   templateKey: string;
   name: string;
@@ -972,7 +972,7 @@ function mapContestConfigTemplate(row: {
     id: row.id,
     sport: row.sport as ContestConfigTemplate['sport'],
     eventType: row.eventType ?? undefined,
-    contestType: row.contestType as ContestConfigTemplate['contestType'],
+    contestFormat: row.contestFormat as ContestConfigTemplate['contestFormat'],
     configMode: row.configMode as ContestConfigTemplate['configMode'],
     templateKey: row.templateKey,
     name: row.name,
@@ -1064,7 +1064,7 @@ function mapPrizeDefinition(row: {
 function mapParticipantScore(row: {
   id: string;
   entryId: string;
-  rosterPickId: string;
+  pickId: string;
   pointsEarned: number;
   createdAt: Date;
   updatedAt: Date;
@@ -1072,7 +1072,7 @@ function mapParticipantScore(row: {
   return {
     id: row.id,
     entryId: row.entryId,
-    rosterPickId: row.rosterPickId,
+    pickId: row.pickId,
     pointsEarned: row.pointsEarned,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

@@ -65,7 +65,7 @@ export class BulkService {
           sportEventId: source.sportEventId,
           name: `${source.name} (Copy)`,
           status: ContestStatus.DRAFT,
-          contestType: source.contestType,
+          contestFormat: source.contestFormat,
           selectionType: source.selectionType,
           scoringEngine: source.scoringEngine,
           isExclusive: source.isExclusive,

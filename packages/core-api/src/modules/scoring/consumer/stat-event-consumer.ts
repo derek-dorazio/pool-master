@@ -47,9 +47,9 @@ export class ContestLookup {
   }
 
   private async findActiveContests(
-    sportEventParticipantWhere: Prisma.RosterPickWhereInput,
+    sportEventParticipantWhere: Prisma.ContestEntryPickWhereInput,
   ): Promise<ContestInfo[]> {
-    const picks = await this.prisma.rosterPick.findMany({
+    const picks = await this.prisma.contestEntryPick.findMany({
       where: {
         ...sportEventParticipantWhere,
         entry: {

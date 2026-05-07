@@ -6,7 +6,6 @@ export { PrismaSquadMembershipRepository } from './prisma-squad-membership-repos
 export { PrismaSquadOwnerInvitationRepository } from './prisma-squad-owner-invitation-repository';
 export { PrismaContestRepository } from './prisma-contest-repository';
 export { PrismaParticipantRepository } from './prisma-participant-repository';
-export { PrismaParticipantSeasonRecordRepository } from './prisma-participant-season-record-repository';
 export { PrismaParticipantProviderMappingRepository } from './prisma-participant-provider-mapping-repository';
 export { PrismaActionItemRepository } from './prisma-action-item-repository';
 export { PrismaContestEntryRepository } from './prisma-contest-entry-repository';

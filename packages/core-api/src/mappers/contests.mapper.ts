@@ -31,7 +31,7 @@ interface ContestRow {
   sportEventId?: string | null;
   name: string;
   status: ContestStatus;
-  contestType: ContestType;
+  contestFormat: ContestType;
   selectionType: SelectionType;
   scoringEngine: ScoringEngine;
   sport?: Contest['sport'] | null;
@@ -60,7 +60,7 @@ interface ContestEntryRow {
 }
 
 export interface ContestEntryParticipantRow {
-  rosterPickId: string;
+  pickId: string;
   sportEventParticipantId: string;
   participantId: string;
   participantName: string;
@@ -80,7 +80,7 @@ export function toContestSummaryDto(
     id: contest.id,
     name: contest.name,
     status: contest.status,
-    contestType: contest.contestType,
+    contestFormat: contest.contestFormat,
     selectionType: contest.selectionType,
     scoringEngine: contest.scoringEngine,
     leagueId: contest.leagueId,
@@ -204,7 +204,7 @@ export function toContestEntryParticipantDetailDto(
   participant: ContestEntryParticipantRow,
 ): ContestEntryParticipantDetailDto {
   return {
-    rosterPickId: participant.rosterPickId,
+    pickId: participant.pickId,
     sportEventParticipantId: participant.sportEventParticipantId,
     participantId: participant.participantId,
     participantName: participant.participantName,

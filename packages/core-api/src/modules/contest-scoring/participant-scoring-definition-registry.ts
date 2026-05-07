@@ -31,7 +31,7 @@ function scoreGolfRelativeToParTotal(
 ): ComputedContestEntryParticipantScoreEvent[] {
   const config = scoringRule.config as unknown as GolfRelativeToParRuleConfig;
 
-  return context.rosterPicks.flatMap((pick) => {
+  return context.picks.flatMap((pick) => {
     const source = findParticipantSourceData(context, pick.id);
     const data = getNormalizedData<GolfParticipantNormalizedData>(source);
     if (!data) {
@@ -43,7 +43,7 @@ function scoreGolfRelativeToParTotal(
 
     return [
       {
-        rosterPickId: pick.id,
+        pickId: pick.id,
         participantContestScoringRuleId: scoringRule.id,
         points: scoreToPar + penalty,
         detailsJson: {
@@ -62,7 +62,7 @@ function scoreTeamWinPoints(
 ): ComputedContestEntryParticipantScoreEvent[] {
   const config = scoringRule.config as unknown as TeamWinPointsRuleConfig;
 
-  return context.rosterPicks.flatMap((pick) => {
+  return context.picks.flatMap((pick) => {
     const source = findParticipantSourceData(context, pick.id);
     const data = getNormalizedData<TeamParticipantNormalizedData>(source);
     if (!data?.completedWins?.length) {
@@ -70,7 +70,7 @@ function scoreTeamWinPoints(
     }
 
     return data.completedWins.map((win, index) => ({
-      rosterPickId: pick.id,
+      pickId: pick.id,
       participantContestScoringRuleId: scoringRule.id,
       points: config.pointsPerWin,
       detailsJson: {
@@ -89,7 +89,7 @@ function scoreRoundMultiplier(
 ): ComputedContestEntryParticipantScoreEvent[] {
   const config = scoringRule.config as unknown as RoundMultiplierRuleConfig;
 
-  return context.rosterPicks.flatMap((pick) => {
+  return context.picks.flatMap((pick) => {
     const source = findParticipantSourceData(context, pick.id);
     const data = getNormalizedData<TeamParticipantNormalizedData>(source);
     if (!data?.completedWins?.length) {
@@ -104,7 +104,7 @@ function scoreRoundMultiplier(
 
       return [
         {
-          rosterPickId: pick.id,
+          pickId: pick.id,
           participantContestScoringRuleId: scoringRule.id,
           points,
           detailsJson: {
@@ -126,7 +126,7 @@ function scoreSeedDifferentialBonus(
   const config = scoringRule.config as unknown as SeedDifferentialBonusRuleConfig;
   const bonusMultiplier = config.bonusMultiplier ?? 1;
 
-  return context.rosterPicks.flatMap((pick) => {
+  return context.picks.flatMap((pick) => {
     const source = findParticipantSourceData(context, pick.id);
     const data = getNormalizedData<TeamParticipantNormalizedData>(source);
     if (!data?.completedWins?.length) {
@@ -150,7 +150,7 @@ function scoreSeedDifferentialBonus(
 
       return [
         {
-          rosterPickId: pick.id,
+          pickId: pick.id,
           participantContestScoringRuleId: scoringRule.id,
           points: bonus,
           detailsJson: {

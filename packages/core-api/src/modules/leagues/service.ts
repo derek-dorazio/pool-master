@@ -361,7 +361,7 @@ export class LeagueService {
       await tx.contestEntryPrizeAward.deleteMany({
         where: { entry: { contest: { leagueId } } },
       });
-      await tx.rosterPick.deleteMany({
+      await tx.pick.deleteMany({
         where: { entry: { contest: { leagueId } } },
       });
       await tx.contestEntry.deleteMany({

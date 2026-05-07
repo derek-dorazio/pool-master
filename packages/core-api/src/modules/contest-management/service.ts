@@ -87,7 +87,7 @@ export class ContestManagementService {
     this.logger.debug({
       leagueId: context.leagueId,
       sportEventId: input.sportEventId,
-      contestType: input.contestType,
+      contestFormat: input.contestFormat,
       hasTemplate: 'templateId' in input,
     }, 'contest management create contest start');
     const resolvedConfiguration = await resolveCreateConfiguration(
@@ -154,19 +154,19 @@ export class ContestManagementService {
   ): Promise<ContestConfigTemplateDto[]> {
     this.logger.debug({
       sport: input.sport,
-      contestType: input.contestType,
+      contestFormat: input.contestFormat,
       eventType: input.eventType ?? null,
     }, 'contest management list templates start');
     const templates =
       await this.contestConfigTemplateRepo.listBySportAndContestType({
         sport: input.sport as ContestConfigTemplate['sport'],
-        contestType: input.contestType as ContestConfigTemplate['contestType'],
+        contestFormat: input.contestFormat as ContestConfigTemplate['contestFormat'],
         eventType: input.eventType,
       });
 
     this.logger.info({
       sport: input.sport,
-      contestType: input.contestType,
+      contestFormat: input.contestFormat,
       templateCount: templates.length,
     }, 'contest management list templates completed');
 
@@ -802,7 +802,7 @@ async function resolveCreateConfiguration(
     throw new ContestManagementError('Contest configuration template not found');
   }
 
-  if (template.contestType !== input.contestType) {
+  if (template.contestFormat !== input.contestFormat) {
     throw new ContestManagementError(
       'Contest configuration template does not match the requested contest type',
     );

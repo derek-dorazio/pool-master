@@ -9,7 +9,6 @@ export type {
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
   SportEventParticipantRepository,
-  SportEventParticipantSourceDataRepository,
   SportEventParticipantValuationRepository,
 } from './contest-management-ports';
 export type {
@@ -23,8 +22,7 @@ export type {
   ParticipantProviderMappingRepository,
   ParticipantRepository,
   ParticipantSearchFilters,
-  ParticipantSeasonRecordRepository,
-  RosterPickRepository,
+  ContestEntryPickRepository,
   SeasonRepository,
   SportRepository,
   SquadMembershipRepository,

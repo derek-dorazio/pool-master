@@ -37,7 +37,7 @@ export class PrismaContestRepository implements ContestRepository {
         sportEventId: contest.sportEventId || undefined,
         name: contest.name,
         status: contest.status,
-        contestType: contest.contestType,
+        contestFormat: contest.contestFormat,
         selectionType: contest.selectionType,
         scoringEngine: contest.scoringEngine,
         isExclusive: contest.isExclusive,
@@ -69,7 +69,7 @@ export class PrismaContestRepository implements ContestRepository {
   async delete(id: string): Promise<void> {
     // Delete child records in dependency order before removing the contest
     await this.prisma.$transaction([
-      this.prisma.rosterPick.deleteMany({ where: { entry: { contestId: id } } }),
+      this.prisma.contestEntryPick.deleteMany({ where: { entry: { contestId: id } } }),
       this.prisma.draftPickHistory.deleteMany({ where: { session: { contestId: id } } }),
       this.prisma.draftSession.deleteMany({ where: { contestId: id } }),
       this.prisma.contestEntry.deleteMany({ where: { contestId: id } }),
@@ -85,7 +85,7 @@ function mapToContest(row: {
   sportEventId: string | null;
   name: string;
   status: string;
-  contestType: string;
+  contestFormat: string;
   selectionType: string;
   scoringEngine: string;
   sportEvent?: { sport: string } | null;
@@ -103,7 +103,7 @@ function mapToContest(row: {
     sportEventId: row.sportEventId ?? undefined,
     name: row.name,
     status: row.status as Contest['status'],
-    contestType: row.contestType as Contest['contestType'],
+    contestFormat: row.contestFormat as Contest['contestFormat'],
     selectionType: row.selectionType as Contest['selectionType'],
     scoringEngine: row.scoringEngine as Contest['scoringEngine'],
     sport: row.sportEvent?.sport as Contest['sport'],
