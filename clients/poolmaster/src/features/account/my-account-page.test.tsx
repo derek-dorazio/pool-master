@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { useSessionStore } from '@/features/auth/session-store';
 import { MyAccountPage } from './my-account-page';
 
 const {
@@ -50,7 +49,6 @@ describe('MyAccountPage', () => {
     getCurrentUserMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
-    useSessionStore.getState().clearSession();
   });
 
   it('redirects the legacy /my-account route to the canonical self user page', async () => {

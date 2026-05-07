@@ -3,7 +3,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { useSessionStore } from '@/features/auth/session-store';
 import { JoinTeamOwnerPage } from './join-team-owner-page';
 
 const {
@@ -82,7 +81,6 @@ describe('JoinTeamOwnerPage', () => {
     mockLogger.info.mockReset();
     mockLogger.warn.mockReset();
     mockLogger.error.mockReset();
-    useSessionStore.getState().clearSession();
   });
 
   it('sends unauthenticated users back through sign-in and registration', async () => {

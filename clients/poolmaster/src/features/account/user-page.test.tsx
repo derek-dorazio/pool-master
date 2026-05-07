@@ -2,8 +2,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  AUTH_ME_QUERY_KEY,
+  type AuthSessionUser,
+} from '@/features/auth/auth-session-cache';
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { useSessionStore } from '@/features/auth/session-store';
 import { UserPage } from './user-page';
 
 const {
@@ -89,7 +92,7 @@ function renderUserPage(initialEntry = '/users/user-1') {
     },
   });
 
-  return render(
+  const utils = render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <MemoryRouter initialEntries={[initialEntry]}>
@@ -101,35 +104,55 @@ function renderUserPage(initialEntry = '/users/user-1') {
       </AuthProvider>
     </QueryClientProvider>,
   );
+
+  return { ...utils, queryClient };
 }
 
-function primeCurrentUser({
+function buildCurrentUser({
   id = 'user-1',
   isActive = true,
   isRootAdmin = false,
-}: {
-  id?: string;
-  isActive?: boolean;
-  isRootAdmin?: boolean;
-} = {}) {
+  ...overrides
+}: Partial<AuthSessionUser> = {}): AuthSessionUser {
+  return {
+    id,
+    email: 'derek@example.com',
+    username: 'ddorazio',
+    firstName: 'Derek',
+    lastName: 'Dorazio',
+    isActive,
+    isRootAdmin,
+    timezone: 'America/New_York',
+    locale: 'en-US',
+    timeFormat: '12H',
+    dateFormat: 'MDY',
+    createdAt: '2026-04-13T00:00:00.000Z',
+    sessionId: 'session-1',
+    ...overrides,
+  };
+}
+
+function primeCurrentUser(overrides: Partial<AuthSessionUser> = {}) {
   getCurrentUserMock.mockResolvedValue({
     data: {
-      user: {
-        id,
-        email: 'derek@example.com',
-        username: 'ddorazio',
-        firstName: 'Derek',
-        lastName: 'Dorazio',
-        isActive,
-        isRootAdmin,
-        timezone: 'America/New_York',
-        locale: 'en-US',
-        timeFormat: '12H',
-        dateFormat: 'MDY',
-        createdAt: '2026-04-13T00:00:00.000Z',
-      },
+      user: buildCurrentUser(overrides),
     },
   });
+  refreshTokenMock.mockResolvedValue({ data: null });
+}
+
+function primeCurrentUserThenRefetches(updatedUser: AuthSessionUser) {
+  getCurrentUserMock
+    .mockResolvedValueOnce({
+      data: {
+        user: buildCurrentUser(),
+      },
+    })
+    .mockResolvedValue({
+      data: {
+        user: updatedUser,
+      },
+    });
   refreshTokenMock.mockResolvedValue({ data: null });
 }
 
@@ -190,7 +213,6 @@ describe('UserPage', () => {
     mockLogger.error.mockReset();
     mockLogger.fatal.mockReset();
     mockLogger.child.mockClear();
-    useSessionStore.getState().clearSession();
   });
 
   it('pool-master-mj2 shows user-focused My Profile copy without the implementation eyebrow', async () => {
@@ -227,7 +249,12 @@ describe('UserPage', () => {
   });
 
   it('pool-master-l40 updates the self profile email from the canonical user page dialog', async () => {
-    primeCurrentUser();
+    const updatedUser = buildCurrentUser({
+      email: 'updated@example.com',
+      firstName: 'Updated',
+      lastName: 'Person',
+    });
+    primeCurrentUserThenRefetches(updatedUser);
     updateAccountProfileMock.mockResolvedValue({
       data: {
         user: {
@@ -243,7 +270,7 @@ describe('UserPage', () => {
       },
     });
 
-    renderUserPage();
+    const { queryClient } = renderUserPage();
 
     await screen.findByTestId('user-page');
     fireEvent.click(screen.getByTestId('user-page-open-profile'));
@@ -270,10 +297,18 @@ describe('UserPage', () => {
       }),
     );
     await waitFor(() => expect(screen.getByText('Your profile was updated.')).toBeVisible());
+    await waitFor(() =>
+      expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
+        email: 'updated@example.com',
+        firstName: 'Updated',
+        lastName: 'Person',
+        sessionId: 'session-1',
+      }),
+    );
   });
 
-  it('pool-master-l40 changes the self username when the value is available', async () => {
-    primeCurrentUser();
+  it('pool-master-rop.78.11 changes the self username in the auth query cache', async () => {
+    primeCurrentUserThenRefetches(buildCurrentUser({ username: 'derekd' }));
     updateAccountUsernameMock.mockResolvedValue({
       data: {
         user: {
@@ -289,7 +324,7 @@ describe('UserPage', () => {
       },
     });
 
-    renderUserPage();
+    const { queryClient } = renderUserPage();
 
     await screen.findByTestId('user-page');
     fireEvent.click(screen.getByTestId('user-page-open-username'));
@@ -307,6 +342,74 @@ describe('UserPage', () => {
       }),
     );
     expect(await screen.findByText('Your username was updated.')).toBeVisible();
+    await waitFor(() =>
+      expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
+        username: 'derekd',
+        sessionId: 'session-1',
+      }),
+    );
+  });
+
+  it('pool-master-rop.78.11 updates preferences in the auth query cache', async () => {
+    primeCurrentUserThenRefetches(buildCurrentUser({
+      timezone: 'America/Chicago',
+      timeFormat: '24H',
+      dateFormat: 'YMD',
+    }));
+    updateAccountPreferencesMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          username: 'ddorazio',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: true,
+          isRootAdmin: false,
+          timezone: 'America/Chicago',
+          locale: 'en-US',
+          timeFormat: '24H',
+          dateFormat: 'YMD',
+          createdAt: '2026-04-13T00:00:00.000Z',
+        },
+      },
+    });
+
+    const { queryClient } = renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-preferences'));
+    await screen.findByTestId('user-page-preferences-dialog');
+    fireEvent.change(screen.getByTestId('user-page-timezone'), {
+      target: { value: 'America/Chicago' },
+    });
+    fireEvent.change(screen.getByTestId('user-page-time-format'), {
+      target: { value: '24H' },
+    });
+    fireEvent.change(screen.getByTestId('user-page-date-format'), {
+      target: { value: 'YMD' },
+    });
+    fireEvent.click(screen.getByTestId('user-page-save-preferences'));
+
+    await waitFor(() =>
+      expect(updateAccountPreferencesMock).toHaveBeenCalledWith({
+        body: {
+          timezone: 'America/Chicago',
+          locale: 'en-US',
+          timeFormat: '24H',
+          dateFormat: 'YMD',
+        },
+      }),
+    );
+    expect(await screen.findByText('Your preferences were updated.')).toBeVisible();
+    await waitFor(() =>
+      expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
+        timezone: 'America/Chicago',
+        timeFormat: '24H',
+        dateFormat: 'YMD',
+        sessionId: 'session-1',
+      }),
+    );
   });
 
   it('pool-master-l40 tells the user when a requested username is already taken', async () => {
@@ -345,8 +448,52 @@ describe('UserPage', () => {
     expect(screen.getByTestId('user-page-open-delete')).toBeDisabled();
   });
 
-  it('reactivates an inactive account from the lifecycle dialog', async () => {
-    primeCurrentUser({ isActive: false });
+  it('pool-master-rop.78.11 inactivates the account in the auth query cache', async () => {
+    primeCurrentUserThenRefetches(buildCurrentUser({ isActive: false }));
+    inactivateAccountMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'derek@example.com',
+          username: 'ddorazio',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          isActive: false,
+          isRootAdmin: false,
+          createdAt: '2026-04-13T00:00:00.000Z',
+        },
+      },
+    });
+
+    const { queryClient } = renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-lifecycle'));
+    await screen.findByTestId('user-page-lifecycle-dialog');
+    fireEvent.click(screen.getByTestId('user-page-inactivate'));
+
+    await waitFor(() => expect(inactivateAccountMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
+        isActive: false,
+        sessionId: 'session-1',
+      }),
+    );
+  });
+
+  it('pool-master-rop.78.11 reactivates an inactive account in the auth query cache', async () => {
+    getCurrentUserMock
+      .mockResolvedValueOnce({
+        data: {
+          user: buildCurrentUser({ isActive: false }),
+        },
+      })
+      .mockResolvedValue({
+        data: {
+          user: buildCurrentUser({ isActive: true }),
+        },
+      });
+    refreshTokenMock.mockResolvedValue({ data: null });
     reactivateAccountMock.mockResolvedValue({
       data: {
         user: {
@@ -362,7 +509,7 @@ describe('UserPage', () => {
       },
     });
 
-    renderUserPage();
+    const { queryClient } = renderUserPage();
 
     await screen.findByTestId('user-page-inactive-banner');
     fireEvent.click(screen.getByTestId('user-page-open-lifecycle'));
@@ -370,6 +517,12 @@ describe('UserPage', () => {
     fireEvent.click(screen.getByTestId('user-page-reactivate'));
 
     await waitFor(() => expect(reactivateAccountMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
+        isActive: true,
+        sessionId: 'session-1',
+      }),
+    );
   });
 
   it('shows a truthful placeholder for non-self user routes', async () => {

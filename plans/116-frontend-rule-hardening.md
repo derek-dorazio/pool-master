@@ -66,8 +66,8 @@ one rule edit, independently reviewable:
   states in every data-rendering page per `ux-rules.md`. No
   spinners-by-default; no hidden empty states.
 - **A8. Frontend logging discipline** — use the shared `logger`,
-  never `console.log`. (Pattern already used in `session-store.ts`;
-  codify it.)
+  never `console.log`. Logger context reads current-user state from the
+  React Query auth cache.
 - **A9. Environment + date/time** — `import.meta.env` accessed only
   through a `config` module; date/time arithmetic only through a
   shared timezone-aware utility.

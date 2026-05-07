@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -33,7 +33,8 @@ import {
 import { parseRouteState } from "@/routes/route-state";
 import { extractErrorMessage } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
-import { useSessionStore } from "./session-store";
+import { setAuthSessionUser } from "./auth-session-cache";
+import { useAuth } from "./auth-provider";
 
 const loginFormSchema = LoginRequestSchema.extend({
   password: z.string().min(1, "Password is required"),
@@ -105,6 +106,8 @@ export function AuthHomePage() {
   const logger = getLogger().child({
     feature: "auth-home-page",
   });
+  const queryClient = useQueryClient();
+  const auth = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const routeState = useMemo(
@@ -115,8 +118,7 @@ export function AuthHomePage() {
     routeState.authMode === "register" ? "register" : "login";
   const [mode, setMode] = useState<"login" | "register">(authPreference);
   const [serverError, setServerError] = useState<string | null>(null);
-  const user = useSessionStore((state) => state.user);
-  const setSession = useSessionStore((state) => state.setSession);
+  const user = auth.user;
   const destination = routeState.from ?? "/welcome";
   const inviteCode = useMemo(() => parseInviteCode(destination), [destination]);
   const teamInviteCode = useMemo(
@@ -243,7 +245,7 @@ export function AuthHomePage() {
         throw response.error ?? new Error("Login response is missing data.");
       }
 
-      setSession(response.data.user);
+      setAuthSessionUser(queryClient, response.data.user);
       const loginDestination = resolvePostAuthDestination(
         response.data.user,
         routeState,
@@ -310,7 +312,7 @@ export function AuthHomePage() {
         );
       }
 
-      setSession(response.data.user);
+      setAuthSessionUser(queryClient, response.data.user);
       const registerDestination = resolvePostAuthDestination(
         response.data.user,
         routeState,

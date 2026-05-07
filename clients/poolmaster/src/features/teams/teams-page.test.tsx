@@ -4,7 +4,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { useSessionStore } from '@/features/auth/session-store';
 import { TeamsPage } from './teams-page';
 
 const {
@@ -154,7 +153,6 @@ describe('TeamsPage', () => {
     mockLogger.info.mockReset();
     mockLogger.warn.mockReset();
     mockLogger.error.mockReset();
-    useSessionStore.getState().clearSession();
   });
 
   it('renders the read-only teams and owners directory with team-home and owner links', async () => {

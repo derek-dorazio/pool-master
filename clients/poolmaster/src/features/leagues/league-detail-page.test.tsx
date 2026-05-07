@@ -3,7 +3,6 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { useSessionStore } from '@/features/auth/session-store';
 import { LeagueDetailPage } from './league-detail-page';
 import {
   activateLeagueData,
@@ -165,7 +164,6 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
     sendLeagueInvitationsMock.mockReset();
     updateLeagueDetailsMock.mockReset();
     updateLeagueIconMock.mockReset();
-    useSessionStore.getState().clearSession();
   });
 
   it('pool-master-rop.23: updates league details by syncing the cached league detail instead of refetching it', async () => {

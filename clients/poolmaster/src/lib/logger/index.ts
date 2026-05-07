@@ -1,17 +1,29 @@
-import { useSessionStore } from '@/features/auth/session-store';
+import {
+  AUTH_ME_QUERY_KEY,
+  type AuthSessionData,
+} from '@/features/auth/auth-session-cache';
+import { queryClient } from '@/lib/query-client';
 import { getEmbeddedVersionInfo } from '@/lib/version-info';
 import { consoleSink } from './console-sink';
 import { createNetworkSink } from './network-sink';
 import { createLogger, resolveConfiguredLogLevel } from './logger';
 
+function getEmbeddedWebappVersion() {
+  try {
+    return getEmbeddedVersionInfo().webapp.version;
+  } catch {
+    return 'unknown';
+  }
+}
+
 function getLoggerContext() {
-  const { sessionId, user } = useSessionStore.getState();
+  const user = queryClient.getQueryData<AuthSessionData>(AUTH_ME_QUERY_KEY);
 
   return {
     route: typeof window !== 'undefined' ? window.location.pathname : undefined,
-    sessionId,
+    sessionId: user?.sessionId ?? null,
     userId: user?.id ?? null,
-    webappVersion: getEmbeddedVersionInfo().webapp.version,
+    webappVersion: getEmbeddedWebappVersion(),
   };
 }
 

@@ -4,7 +4,6 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { useSessionStore } from '@/features/auth/session-store';
 import { MyTeamPage } from './my-team-page';
 
 const changeMemberRoleMock = vi.fn();
@@ -200,7 +199,6 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     revokeSquadOwnerInvitationMock.mockReset();
     updateContestEntryMock.mockReset();
     updateLeagueSquadMock.mockReset();
-    useSessionStore.getState().clearSession();
   });
 
   it('pool-master-rop.22: renders a loading state while team page league context is pending', async () => {

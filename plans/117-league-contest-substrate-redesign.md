@@ -808,7 +808,7 @@ The wrapper invalidates declared keys on success. Tests assert `invalidates` ret
 
 **Decision (already audit-recommended):** React Query owns server data; Zustand owns ephemeral UI state only.
 
-- `session-store` Zustand state currently mirrors the `getCurrentUser` React Query cache. Phase 4 slice removes the duplicate; consumers read from the React Query cache directly.
+- `session-store` Zustand state mirrored the `getCurrentUser` React Query cache. Phase 4 slice `rop.78.11` removes the duplicate; consumers read from the React Query cache directly.
 - Filter state, modal-open state, draft form values can live in Zustand; nothing that originates from the server does.
 
 ### 14.4 Sport-polymorphic rendering pattern

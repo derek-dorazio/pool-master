@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
-import { useSessionStore } from '@/features/auth/session-store';
 import { ManageContestsPage } from './manage-contests-page';
 
 const getCurrentUserMock = vi.fn();
@@ -107,7 +106,6 @@ describe('ManageContestsPage', () => {
     listContestsMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
-    useSessionStore.getState().clearSession();
   });
 
   it('shows active and historical contests with manage links for commissioners', async () => {

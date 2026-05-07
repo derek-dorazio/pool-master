@@ -2,7 +2,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider, useAuth } from './auth-provider';
-import { useSessionStore } from './session-store';
+import {
+  AUTH_ME_QUERY_KEY,
+  setAuthSessionUser,
+  type AuthSessionUser,
+} from './auth-session-cache';
 
 const {
   getCurrentUserMock,
@@ -40,14 +44,14 @@ vi.mock('@/lib/api', () => ({
   refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
 }));
 
-function buildUser(overrides?: Partial<ReturnType<typeof createUserBase>>) {
+function buildUser(overrides?: Partial<AuthSessionUser>): AuthSessionUser {
   return {
     ...createUserBase(),
     ...overrides,
   };
 }
 
-function createUserBase() {
+function createUserBase(): AuthSessionUser {
   return {
     id: 'user-1',
     username: 'derek',
@@ -81,7 +85,7 @@ function AuthProbe() {
   );
 }
 
-function renderAuthProvider() {
+function renderAuthProvider(options?: { user?: AuthSessionUser }) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -89,6 +93,9 @@ function renderAuthProvider() {
       },
     },
   });
+  if (options?.user) {
+    setAuthSessionUser(queryClient, options.user);
+  }
 
   const utils = render(
     <QueryClientProvider client={queryClient}>
@@ -112,21 +119,20 @@ describe('AuthProvider', () => {
     mockLogger.error.mockReset();
     mockLogger.fatal.mockReset();
     mockLogger.child.mockClear();
-    useSessionStore.getState().clearSession();
   });
 
-  it('hydrates the session when the current-user query succeeds', async () => {
+  it('pool-master-rop.78.11 hydrates auth from the current-user query cache', async () => {
     getCurrentUserMock.mockResolvedValue({
       data: {
         user: buildUser(),
       },
     });
 
-    renderAuthProvider();
+    const { queryClient } = renderAuthProvider();
 
     await screen.findByText('user-1');
 
-    expect(useSessionStore.getState().user?.id).toBe('user-1');
+    expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)?.id).toBe('user-1');
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.me.succeeded',
@@ -138,7 +144,7 @@ describe('AuthProvider', () => {
     );
   });
 
-  it('recovers the session through refresh when the current-user query initially fails', async () => {
+  it('pool-master-rop.78.11 recovers the query-cached session through refresh', async () => {
     getCurrentUserMock
       .mockRejectedValueOnce(new Error('Unauthorized'))
       .mockResolvedValueOnce({
@@ -155,12 +161,11 @@ describe('AuthProvider', () => {
       },
     });
 
-    renderAuthProvider();
+    const { queryClient } = renderAuthProvider();
 
     await screen.findByText('user-2');
 
-    expect(useSessionStore.getState().sessionId).toBe('session-2');
-    expect(useSessionStore.getState().user?.sessionId).toBe('session-2');
+    expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)?.sessionId).toBe('session-2');
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.refresh.succeeded',
@@ -173,18 +178,17 @@ describe('AuthProvider', () => {
     );
   });
 
-  it('clears the session when refresh does not return replacement session data', async () => {
-    useSessionStore.getState().setSession(buildUser());
+  it('pool-master-rop.78.11 clears query-cached auth when refresh returns no session data', async () => {
     getCurrentUserMock.mockRejectedValue(new Error('Unauthorized'));
     refreshTokenMock.mockResolvedValue({
       data: null,
     });
 
-    renderAuthProvider();
+    const { queryClient } = renderAuthProvider({ user: buildUser() });
 
     await waitFor(() => expect(screen.getByTestId('auth-state')).toHaveTextContent('guest'));
 
-    expect(useSessionStore.getState().user).toBeNull();
+    expect(queryClient.getQueryData(AUTH_ME_QUERY_KEY)).toBeNull();
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.refresh.missingSession',
@@ -220,14 +224,14 @@ describe('AuthProvider', () => {
       expect(refreshTokenMock).toHaveBeenCalledTimes(1);
     });
     await waitFor(() => {
-      expect(useSessionStore.getState().user).toBeNull();
+      expect(queryClient.getQueryData(AUTH_ME_QUERY_KEY)).toBeNull();
     });
 
     // Step 2: external invalidation that succeeds. This is the "recovery
     // without refresh" the bug used to re-arm on. The guard must absorb it.
     await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'auth', 'me'] });
     await waitFor(() => {
-      expect(useSessionStore.getState().user?.id).toBe('user-1');
+      expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)?.id).toBe('user-1');
     });
 
     // Step 3: external invalidation that fails. With the broken guard this
@@ -248,14 +252,14 @@ describe('AuthProvider', () => {
     });
     logoutUserMock.mockRejectedValue(new Error('Network failure'));
 
-    renderAuthProvider();
+    const { queryClient } = renderAuthProvider();
 
     await screen.findByText('user-1');
     fireEvent.click(screen.getByTestId('auth-clear-session'));
 
     await waitFor(() => expect(screen.getByTestId('auth-state')).toHaveTextContent('guest'));
 
-    expect(useSessionStore.getState().user).toBeNull();
+    expect(queryClient.getQueryData(AUTH_ME_QUERY_KEY)).toBeNull();
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.logout.failed',
