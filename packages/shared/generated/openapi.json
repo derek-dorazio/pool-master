@@ -11316,12 +11316,9 @@
                   "contestFormat": {
                     "type": "string",
                     "enum": [
-                      "ROSTER",
-                      "BRACKET",
-                      "PICKEM_CONFIDENCE",
-                      "SURVIVOR",
-                      "PREDICT_TOP_N"
-                    ]
+                      "ROSTER"
+                    ],
+                    "description": "First-pass contest creation supports roster contests only. Future contest formats remain cataloged in the domain validity matrix."
                   },
                   "selectionType": {
                     "type": "string",
@@ -12651,12 +12648,9 @@
                       "contestFormat": {
                         "type": "string",
                         "enum": [
-                          "ROSTER",
-                          "BRACKET",
-                          "PICKEM_CONFIDENCE",
-                          "SURVIVOR",
-                          "PREDICT_TOP_N"
-                        ]
+                          "ROSTER"
+                        ],
+                        "description": "First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility."
                       },
                       "configuration": {
                         "anyOf": [
@@ -12974,12 +12968,9 @@
                       "contestFormat": {
                         "type": "string",
                         "enum": [
-                          "ROSTER",
-                          "BRACKET",
-                          "PICKEM_CONFIDENCE",
-                          "SURVIVOR",
-                          "PREDICT_TOP_N"
-                        ]
+                          "ROSTER"
+                        ],
+                        "description": "First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility."
                       },
                       "templateId": {
                         "type": "string",

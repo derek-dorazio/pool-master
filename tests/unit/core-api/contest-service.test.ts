@@ -17,8 +17,10 @@ import {
   SelectionType,
   ScoringEngine,
   ContestFormat,
+  Sport,
   SquadMembershipStatus,
   TeamIconKey,
+  TournamentFormat,
 } from '@poolmaster/shared/domain';
 import { buildContest, buildLeague, buildMembership, buildUser } from '../../factories';
 
@@ -214,6 +216,16 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
     sportEventParticipant: { count: jest.fn().mockResolvedValue(1) },
     user: { findUnique: jest.fn().mockResolvedValue(user) },
     contestConfiguration: { findUnique: jest.fn().mockResolvedValue({ maxEntriesPerSquad: 1 }) },
+    sportEvent: {
+      findUnique: jest.fn().mockResolvedValue({
+        sport: Sport.GOLF,
+      }),
+    },
+    sport: {
+      findUnique: jest.fn().mockResolvedValue({
+        tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
+      }),
+    },
     ...overrides,
   };
 }
@@ -292,6 +304,92 @@ describe('ContestService', () => {
           scoringEngine: ScoringEngine.CUMULATIVE,
         }),
       ).rejects.toThrow(ContestOperationError);
+    });
+
+    it('pool-master-rop.78.14 rejects invalid contest format for the selected sport event', async () => {
+      const contestRepo = createMockContestRepo();
+      const prisma = createMockPrisma({
+        sportEvent: {
+          findUnique: jest.fn().mockResolvedValue({
+            sport: Sport.GOLF,
+          }),
+        },
+        sport: {
+          findUnique: jest.fn().mockResolvedValue({
+            tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
+          }),
+        },
+      });
+      const service = new ContestService(
+        contestRepo,
+        createMockContestConfigurationRepo(),
+        createMockMembershipRepo(),
+        createMockLeagueRepo(),
+        undefined,
+        undefined,
+        undefined,
+        prisma as any,
+      );
+
+      await expect(
+        service.createContest({
+          leagueId: 'league-1',
+          createdBy: 'user-1',
+          sportEventId: 'event-1',
+          name: 'Invalid Bracket',
+          contestFormat: ContestFormat.BRACKET,
+          selectionType: SelectionType.TIERED,
+          contestConfiguration: {},
+          scoringEngine: ScoringEngine.STROKE_PLAY,
+        }),
+      ).rejects.toMatchObject({
+        code: 'CONTEST_FORMAT_NOT_ALLOWED',
+        message: 'Selected sporting event does not support that contest format.',
+      });
+      expect(contestRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('pool-master-rop.78.14 rejects valid future formats until creation support exists', async () => {
+      const contestRepo = createMockContestRepo();
+      const prisma = createMockPrisma({
+        sportEvent: {
+          findUnique: jest.fn().mockResolvedValue({
+            sport: Sport.NCAA_BASKETBALL,
+          }),
+        },
+        sport: {
+          findUnique: jest.fn().mockResolvedValue({
+            tournamentFormat: TournamentFormat.KNOCKOUT_BRACKET,
+          }),
+        },
+      });
+      const service = new ContestService(
+        contestRepo,
+        createMockContestConfigurationRepo(),
+        createMockMembershipRepo(),
+        createMockLeagueRepo(),
+        undefined,
+        undefined,
+        undefined,
+        prisma as any,
+      );
+
+      await expect(
+        service.createContest({
+          leagueId: 'league-1',
+          createdBy: 'user-1',
+          sportEventId: 'event-1',
+          name: 'Bracket Pool',
+          contestFormat: ContestFormat.BRACKET,
+          selectionType: SelectionType.TIERED,
+          contestConfiguration: {},
+          scoringEngine: ScoringEngine.BRACKET,
+        }),
+      ).rejects.toMatchObject({
+        code: 'CONTEST_FORMAT_NOT_SUPPORTED',
+        message: 'This contest format is not available for contest creation yet.',
+      });
+      expect(contestRepo.create).not.toHaveBeenCalled();
     });
 
   });

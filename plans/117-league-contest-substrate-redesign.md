@@ -406,7 +406,7 @@ Per `rules/architecture-rules.md §2 / "Validity / Compatibility Matrices Source
 
 ```ts
 // packages/shared/domain/contest-validity.ts
-export const VALID_CONTEST_TYPES_BY_FORMAT: Record<TournamentFormat, ContestFormat[]> = {
+export const VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT: Record<TournamentFormat, ContestFormat[]> = {
   STROKE_PLAY_TOURNAMENT: ['ROSTER'],
   KNOCKOUT_BRACKET:       ['ROSTER', 'BRACKET'],
   SERIES_PLAYOFF:         ['ROSTER'],
@@ -420,11 +420,11 @@ export const VALID_CONTEST_TYPES_BY_FORMAT: Record<TournamentFormat, ContestForm
 ```
 
 TypeScript exhaustiveness check: adding a new `TournamentFormat` enum value without updating the map fails the build. Used by:
-- Contest-creation API validation (rejects invalid combinations at insert time)
-- Contest-creation UI (only shows valid pool formats given the chosen sport)
+- Contest-creation API validation (rejects invalid combinations at insert time using persisted `Sport.tournamentFormat` when available, then separately rejects catalog-valid combinations whose configuration/scoring contracts are not implemented yet)
+- Contest-creation UI (only shows valid pool formats given the chosen sport; legacy sport-only event payloads use `DEFAULT_TOURNAMENT_FORMAT_BY_SPORT` until event contracts expose `tournamentFormat`)
 - Tests
 
-For Phase 4 (golf-roster only), the only relevant cell is `STROKE_PLAY_TOURNAMENT × ROSTER = valid`. The full matrix lands in code as future-work-ready scaffolding; cells for unbuilt combos are valid in the sense that "if a Phase 4 future epic ships them, the validation already accepts it" but no implementation exists yet.
+For Phase 4 (golf-roster only), the only creation-supported cell is `STROKE_PLAY_TOURNAMENT × ROSTER`. The full matrix lands in code as future-work-ready scaffolding; cells for unbuilt combos are valid in the domain catalog but remain rejected by create/update paths until the matching configuration, scoring, and UI contracts ship.
 
 ---
 

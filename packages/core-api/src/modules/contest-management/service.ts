@@ -22,12 +22,16 @@ import type {
   ContestConfiguration,
   GolfContestConfig,
   PersistedGolfContestTierDefinition,
+  TournamentFormat,
 } from '@poolmaster/shared/domain';
 import {
+  ContestFormat,
   ContestStatus,
   GolfContestConfigMode,
   ScoringEngine,
   SelectionType,
+  Sport,
+  isContestFormatValidForTournamentFormat,
 } from '@poolmaster/shared/domain';
 import { mapContestConfigTemplateDto } from '../../mappers/contest-management.mapper';
 import { evaluateEventOperationalState } from '../events/operational-timing';
@@ -43,6 +47,8 @@ interface ContestCreateSportEventState {
   releaseAt: Date;
   fieldLocksAt: Date;
   fieldLocked: boolean;
+  sport: Sport;
+  tournamentFormat: TournamentFormat;
   participantCount: number | null;
   loadedParticipantCount: number;
 }
@@ -93,6 +99,25 @@ export class ContestManagementService {
       this.contestConfigTemplateRepo,
     );
     const sportEvent = await this.assertSportEventContestEligible(input.sportEventId);
+    if (
+      sportEvent
+      && !isContestFormatValidForTournamentFormat(
+        sportEvent.tournamentFormat,
+        input.contestFormat,
+      )
+    ) {
+      this.logger.warn({
+        sportEventId: input.sportEventId,
+        sport: sportEvent.sport,
+        tournamentFormat: sportEvent.tournamentFormat,
+        contestFormat: input.contestFormat,
+      }, 'contest management create contest rejected for invalid sport contest format');
+      throw new ContestManagementError(
+        'Selected sporting event does not support that contest format.',
+        'CONTEST_FORMAT_NOT_ALLOWED',
+      );
+    }
+    this.assertContestCreationSupported(sportEvent, input.contestFormat);
     assertTierConfigurationFitsParticipantCount(
       resolvedConfiguration.configuration,
       sportEvent?.loadedParticipantCount,
@@ -103,6 +128,7 @@ export class ContestManagementService {
       sportEventId: input.sportEventId,
       name: input.name,
       status: ContestStatus.OPEN,
+      contestFormat: input.contestFormat,
       selectionType,
       scoringEngine: ScoringEngine.STROKE_PLAY,
     });
@@ -168,6 +194,25 @@ export class ContestManagementService {
     }, 'contest management list templates completed');
 
     return templates.map(mapContestConfigTemplateDto);
+  }
+
+  private assertContestCreationSupported(
+    sportEvent: ContestCreateSportEventState | null,
+    contestFormat: ContestFormat,
+  ): void {
+    if (contestFormat !== ContestFormat.ROSTER) {
+      throw new ContestManagementError(
+        'This contest format is not available for managed contest creation yet.',
+        'CONTEST_FORMAT_NOT_SUPPORTED',
+      );
+    }
+
+    if (sportEvent && sportEvent.sport !== Sport.GOLF) {
+      throw new ContestManagementError(
+        'Managed contest creation currently supports golf events only.',
+        'CONTEST_SPORT_NOT_SUPPORTED',
+      );
+    }
   }
 
   async getContest(contestId: string): Promise<ContestManagementDetailDto> {

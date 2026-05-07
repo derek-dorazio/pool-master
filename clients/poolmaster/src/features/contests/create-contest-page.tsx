@@ -9,6 +9,12 @@ import type {
 } from '@/lib/api';
 import type { CreateContestManagementRequest, UpdateContestRequest } from '@poolmaster/shared/dto';
 import {
+  ContestFormat,
+  Sport,
+  getDefaultTournamentFormatForSport,
+  getValidContestFormatsForTournamentFormat,
+} from '@poolmaster/shared/domain';
+import {
   createManagedContest,
   deleteContest,
   getLeagueByCode,
@@ -78,6 +84,7 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
 ];
 
 const SUPPORTED_CREATE_MODES: ContestMode[] = ['GOLF_TIERED'];
+const DEFAULT_CREATE_SPORT = Sport.GOLF;
 
 const LOCK_PRESET_OPTIONS: Array<{
   value: LockPreset;
@@ -329,11 +336,11 @@ export function CreateContestPage() {
   });
 
   const eventsQuery = useQuery({
-    queryKey: ['poolmaster', 'sport-events', 'GOLF'],
+    queryKey: ['poolmaster', 'sport-events', DEFAULT_CREATE_SPORT],
     queryFn: async (): Promise<SportEventSummary[]> => {
       const response = await listEvents({
         query: {
-          sport: 'GOLF',
+          sport: DEFAULT_CREATE_SPORT,
           limit: 100,
         },
       });
@@ -347,6 +354,23 @@ export function CreateContestPage() {
     enabled: Boolean(auth.isAuthenticated),
     retry: false,
   });
+
+  const selectedEventSport = useMemo(() => {
+    const eventSport = eventsQuery.data?.find((event) => event.id === sportEventId)
+      ?.sport as Sport | undefined;
+    return eventSport ?? DEFAULT_CREATE_SPORT;
+  }, [eventsQuery.data, sportEventId]);
+  const selectedContestFormats = useMemo(
+    () =>
+      getValidContestFormatsForTournamentFormat(
+        getDefaultTournamentFormatForSport(selectedEventSport),
+      ),
+    [selectedEventSport],
+  );
+  const selectedContestFormat =
+    selectedContestFormats.includes(ContestFormat.ROSTER)
+      ? ContestFormat.ROSTER
+      : selectedContestFormats[0] ?? ContestFormat.ROSTER;
 
   const managedContestQuery = useQuery({
     queryKey: ['poolmaster', 'managed-contest', leagueQuery.data?.id, contestId],
@@ -366,13 +390,19 @@ export function CreateContestPage() {
   });
 
   const templatesQuery = useQuery({
-    queryKey: ['poolmaster', 'managed-contest-templates', leagueQuery.data?.id, 'GOLF'],
+    queryKey: [
+      'poolmaster',
+      'managed-contest-templates',
+      leagueQuery.data?.id,
+      selectedEventSport,
+      selectedContestFormat,
+    ],
     queryFn: async (): Promise<ManagedContestTemplate[]> => {
       const response = await listManagedContestTemplates({
         path: { id: leagueQuery.data!.id },
         query: {
-          sport: 'GOLF',
-          contestFormat: 'ROSTER',
+          sport: selectedEventSport,
+          contestFormat: selectedContestFormat,
         },
       });
 
@@ -382,7 +412,7 @@ export function CreateContestPage() {
 
       return response.data.templates;
     },
-    enabled: Boolean(leagueQuery.data?.id),
+    enabled: Boolean(leagueQuery.data?.id && selectedContestFormat),
     retry: false,
   });
 
@@ -699,11 +729,11 @@ export function CreateContestPage() {
       }
 
       if (!sportEventId || !selectedEvent) {
-        throw new Error('Select a golf event before creating the contest.');
+        throw new Error('Select an event before creating the contest.');
       }
 
       if (!selectedEvent.contestEligible) {
-        throw new Error('Select a contest-ready golf event before creating the contest.');
+        throw new Error('Select a contest-ready event before creating the contest.');
       }
 
       if (!parsedLockAt) {
@@ -834,7 +864,7 @@ export function CreateContestPage() {
         const body: CreateContestManagementRequest = {
           name: trimmedName,
           sportEventId,
-          contestFormat: 'ROSTER',
+          contestFormat: ContestFormat.ROSTER,
           templateId: selectedTemplateId,
           configurationOverrides: configuration,
         };

@@ -2,12 +2,17 @@ import {
   Sport,
   ContestStatus,
   ContestFormat,
+  TournamentFormat,
   SelectionType,
   ScoringEngine,
   SurvivorStyle,
   DraftMode,
   PricingMethod,
   TierAssignmentMethod,
+  VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT,
+  getDefaultTournamentFormatForSport,
+  getValidContestFormatsForTournamentFormat,
+  isContestFormatValidForSport,
 } from '@poolmaster/shared/domain';
 
 describe('Sport enum', () => {
@@ -67,6 +72,44 @@ describe('SurvivorStyle enum', () => {
 describe('ContestFormat enum', () => {
   it('has single-event', () => {
     expect(ContestFormat.ROSTER).toBe('ROSTER');
+  });
+});
+
+describe('Contest validity matrix', () => {
+  it('pool-master-rop.78.14 covers every tournament format with a typed contest-format list', () => {
+    expect(
+      Object.keys(VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT).sort(),
+    ).toEqual(Object.values(TournamentFormat).sort());
+  });
+
+  it('pool-master-rop.78.14 maps tournament structures to their valid contest formats', () => {
+    expect(
+      getValidContestFormatsForTournamentFormat(
+        TournamentFormat.STROKE_PLAY_TOURNAMENT,
+      ),
+    ).toEqual([ContestFormat.ROSTER]);
+    expect(
+      getValidContestFormatsForTournamentFormat(
+        TournamentFormat.KNOCKOUT_BRACKET,
+      ),
+    ).toEqual([ContestFormat.ROSTER, ContestFormat.BRACKET]);
+    expect(
+      getValidContestFormatsForTournamentFormat(
+        TournamentFormat.WEEKLY_GAMES_SEASON,
+      ),
+    ).toEqual([ContestFormat.PICKEM_CONFIDENCE, ContestFormat.SURVIVOR]);
+  });
+
+  it('pool-master-rop.78.14 derives sport defaults before validating contest format choices', () => {
+    expect(getDefaultTournamentFormatForSport(Sport.GOLF)).toBe(
+      TournamentFormat.STROKE_PLAY_TOURNAMENT,
+    );
+    expect(isContestFormatValidForSport(Sport.GOLF, ContestFormat.ROSTER)).toBe(
+      true,
+    );
+    expect(isContestFormatValidForSport(Sport.GOLF, ContestFormat.BRACKET)).toBe(
+      false,
+    );
   });
 });
 

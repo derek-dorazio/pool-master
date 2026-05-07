@@ -11,8 +11,11 @@ import {
   Sport,
 } from '@poolmaster/shared/domain';
 
-const sportValues = Object.values(Sport) as [string, ...string[]];
-const contestFormatValues = Object.values(ContestFormat) as [string, ...string[]];
+const sportValues = Object.values(Sport) as [Sport, ...Sport[]];
+const contestFormatValues = Object.values(ContestFormat) as [
+  ContestFormat,
+  ...ContestFormat[],
+];
 
 const nullablePositiveIntSchema = z
   .number()
@@ -100,7 +103,9 @@ export type ContestConfigurationRequest = z.infer<
 const CreateContestManagementBaseSchema = z.object({
   name: z.string().min(1).max(100).describe('Contest name shown to commissioners and members.'),
   sportEventId: z.string().uuid().describe('Sport-event identifier that anchors the contest.'),
-  contestFormat: z.enum(contestFormatValues),
+  contestFormat: z.literal(ContestFormat.ROSTER).describe(
+    'First-pass managed contest creation supports roster contests only. The domain validity matrix catalogs future format compatibility.',
+  ),
 });
 
 export const LegacyCreateContestManagementRequestSchema =
