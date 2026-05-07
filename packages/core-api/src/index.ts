@@ -45,6 +45,7 @@ import { StandingsRollup } from './modules/scoring/rollup/standings-rollup';
 import { ScoringService } from './modules/scoring/service';
 import { scoringRoutes } from './modules/scoring/routes';
 import { ContestScoringRecalculationService } from './modules/contest-scoring';
+import { LiveScoreConsumer } from './modules/scoring/consumer/live-score-consumer';
 
 // Notification module
 import { notificationsModule } from './modules/notifications/routes';
@@ -92,13 +93,21 @@ export function buildApp() {
 
   // --- Scoring subsystem (Prisma-backed) ---
   // pool-master-rop.78.3 — the legacy ContestLookup + stat-event consumer
-  // path was retired with the ProviderStatEvent contract. The new
-  // live_score.persisted consumer lands in rop.78.7 atop the typed
-  // SportEventParticipantGolfRound substrate.
+  // path was retired with the ProviderStatEvent contract.
+  // pool-master-rop.78.7 — the typed live_score.persisted consumer is
+  // wired below; it dispatches to per-(category × contestFormat) scoring
+  // functions (Phase 4 ships golf-roster only) and reranks via the
+  // existing standingsRollup.
   const standingsRollup = new StandingsRollup({ eventBus, prisma, logger: app.log });
   const scoringService = new ScoringService({ standingsRollup, prisma, logger: app.log });
   const contestScoringRecalculationService = new ContestScoringRecalculationService(prisma, app.log);
   void contestScoringRecalculationService;
+  const liveScoreConsumer = new LiveScoreConsumer({
+    prisma,
+    eventBus,
+    standingsRollup,
+    logger: app.log,
+  });
 
   // =========================================================================
   // Core plugins
@@ -243,10 +252,15 @@ export function buildApp() {
   // =========================================================================
   app.register(scoringRoutes, { prefix: '/api/v1', scoringService });
 
-  // pool-master-rop.78.3 — stat-event consumer subscription removed; the
-  // live_score.persisted consumer lands in rop.78.7. Periodic standings
-  // rollup continues to run.
+  // pool-master-rop.78.7 — typed live_score.persisted consumer subscribed
+  // here. It dispatches per (event.category × pick.contestFormat) and runs
+  // the scoring → contributions → totalScore → rerank pipeline under a
+  // per-contest advisory lock (plans/117 §11.3, §11.4, §11.5).
+  // Periodic standings rollup continues to run as a defensive backstop;
+  // rop.78.8 will retire it once the event-driven path is the canonical
+  // single write path.
   if (!isOpenApiExport) {
+    liveScoreConsumer.subscribe();
     standingsRollup.startPeriodicRollup();
   }
 
