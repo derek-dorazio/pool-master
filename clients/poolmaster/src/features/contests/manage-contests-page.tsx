@@ -31,6 +31,7 @@ import {
   Tile,
 } from '@/features/shared/ui';
 import { isHistoricalContest } from './contest-status';
+import { QueryKeys } from '@/lib/query-keys';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type ContestSummary = ListContestsResponses[200]['contests'][number];
@@ -42,7 +43,7 @@ export function ManageContestsPage() {
   });
 
   const leagueQuery = useQuery({
-    queryKey: ['poolmaster', 'league', leagueCode],
+    queryKey: QueryKeys.leagues.detail(leagueCode),
     queryFn: async (): Promise<LeagueDetail> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
@@ -81,7 +82,7 @@ export function ManageContestsPage() {
 
   const leagueId = leagueQuery.data?.id ?? '';
   const contestsQuery = useQuery({
-    queryKey: ['poolmaster', 'league-contests', leagueId],
+    queryKey: QueryKeys.contests.list({ leagueId }),
     queryFn: async (): Promise<ContestSummary[]> => {
       const response = await listContests({ path: { id: leagueId } });
 

@@ -15,6 +15,7 @@ import {
   type IngestionPolicyKey,
   type IngestionScheduleConfig,
 } from './root-admin-sync-config-utils';
+import { QueryKeys } from '@/lib/query-keys';
 
 export function RootAdminSportOverridesPage() {
   const queryClient = useQueryClient();
@@ -26,7 +27,7 @@ export function RootAdminSportOverridesPage() {
   >(null);
 
   const ingestionConfigQuery = useQuery({
-    queryKey: ['poolmaster', 'root-admin', 'ingestion-config'],
+    queryKey: QueryKeys.rootAdmin.ingestionConfig,
     queryFn: async (): Promise<IngestionScheduleConfig> => {
       const response = await adminGetIngestionSchedule();
       if (!response.data) {
@@ -75,7 +76,7 @@ export function RootAdminSportOverridesPage() {
       setIngestionDraft(nextDraft);
       setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
       await queryClient.invalidateQueries({
-        queryKey: ['poolmaster', 'root-admin', 'ingestion-config'],
+        queryKey: QueryKeys.rootAdmin.ingestionConfig,
       });
     },
   });
@@ -97,7 +98,7 @@ export function RootAdminSportOverridesPage() {
       setIngestionDraft(nextDraft);
       setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
       await queryClient.invalidateQueries({
-        queryKey: ['poolmaster', 'root-admin', 'ingestion-config'],
+        queryKey: QueryKeys.rootAdmin.ingestionConfig,
       });
     },
   });

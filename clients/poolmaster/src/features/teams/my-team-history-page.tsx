@@ -21,6 +21,7 @@ import {
 } from '@/features/leagues/league-routing';
 import { getLogger } from '@/lib/logger';
 import { isHistoricalContest } from '@/features/contests/contest-status';
+import { QueryKeys } from '@/lib/query-keys';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
@@ -35,7 +36,7 @@ export function MyTeamHistoryPage() {
   });
 
   const leagueQuery = useQuery({
-    queryKey: ['poolmaster', 'league', leagueCode],
+    queryKey: QueryKeys.leagues.detail(leagueCode),
     queryFn: async (): Promise<LeagueDetail> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
@@ -75,7 +76,7 @@ export function MyTeamHistoryPage() {
   const leagueId = leagueQuery.data?.id ?? '';
 
   const teamsQuery = useQuery({
-    queryKey: ['poolmaster', 'league-teams', leagueId],
+    queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
     queryFn: async (): Promise<TeamSummary[]> => {
       const response = await listLeagueSquads({ path: { id: leagueId } });
 
@@ -90,7 +91,7 @@ export function MyTeamHistoryPage() {
   });
 
   const contestsQuery = useQuery({
-    queryKey: ['poolmaster', 'league-contests', leagueId],
+    queryKey: QueryKeys.contests.list({ leagueId }),
     queryFn: async (): Promise<ContestSummary[]> => {
       const response = await listContests({ path: { id: leagueId } });
 
@@ -117,12 +118,10 @@ export function MyTeamHistoryPage() {
   }, [auth.user?.id, teamsQuery.data]);
 
   const contestEntriesByContestQuery = useQuery({
-    queryKey: [
-      'poolmaster',
-      'my-team-history',
+    queryKey: QueryKeys.myTeamHistory.byTeamAndContests(
       myTeam?.id,
       contestsQuery.data?.map((contest) => contest.id).join(','),
-    ],
+    ),
     queryFn: async (): Promise<Record<string, ListContestEntriesResponses[200]>> => {
       if (!myTeam || !contestsQuery.data) {
         return {};

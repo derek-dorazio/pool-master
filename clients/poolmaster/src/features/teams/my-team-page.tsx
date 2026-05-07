@@ -48,6 +48,7 @@ import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption, TEAM_ICON_OPTIONS } from './team-icon-catalog';
 import { buildDefaultTeamName } from './team-defaults';
 import { TeamIcon } from './team-icon';
+import { QueryKeys } from '@/lib/query-keys';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
@@ -79,7 +80,7 @@ export function MyTeamPage() {
   const [activeDialog, setActiveDialog] = useState<ActiveTeamDialog>(null);
 
   const leagueQuery = useQuery({
-    queryKey: ['poolmaster', 'league', leagueCode],
+    queryKey: QueryKeys.leagues.detail(leagueCode),
     queryFn: async (): Promise<LeagueDetail> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
@@ -119,7 +120,7 @@ export function MyTeamPage() {
   const leagueId = leagueQuery.data?.id ?? '';
 
   const teamsQuery = useQuery({
-    queryKey: ['poolmaster', 'league-teams', leagueId],
+    queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
     queryFn: async (): Promise<TeamSummary[]> => {
       const response = await listLeagueSquads({ path: { id: leagueId } });
 
@@ -134,7 +135,7 @@ export function MyTeamPage() {
   });
 
   const ownerInvitationsQuery = useQuery({
-    queryKey: ['poolmaster', 'league-team-owner-invitations', leagueId],
+    queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
     queryFn: async (): Promise<OwnerInvitation[]> => {
       const response = await listSquadOwnerInvitations({ path: { id: leagueId } });
       if (!response.data?.invitations) {
@@ -148,7 +149,7 @@ export function MyTeamPage() {
   });
 
   const leagueMembersQuery = useQuery({
-    queryKey: ['poolmaster', 'league-members', leagueId],
+    queryKey: QueryKeys.leagues.members(leagueId),
     queryFn: async (): Promise<LeagueMember[]> => {
       const response = await listLeagueMembers({ path: { id: leagueId } });
       if (!response.data?.members) {
@@ -239,7 +240,7 @@ export function MyTeamPage() {
     },
     onSuccess: async (team) => {
       setTeamName(team.name);
-      queryClient.setQueryData<TeamSummary[]>(['poolmaster', 'league-teams', leagueId], (current) =>
+      queryClient.setQueryData<TeamSummary[]>(QueryKeys.leagueTeams.byLeague(leagueId), (current) =>
         current ? [...current.filter((candidate) => candidate.id !== team.id), team] : [team],
       );
     },
@@ -260,7 +261,7 @@ export function MyTeamPage() {
     },
     onSuccess: async (team) => {
       setTeamName(team.name);
-      queryClient.setQueryData<TeamSummary[]>(['poolmaster', 'league-teams', leagueId], (current) =>
+      queryClient.setQueryData<TeamSummary[]>(QueryKeys.leagueTeams.byLeague(leagueId), (current) =>
         current?.map((candidate) => (candidate.id === team.id ? team : candidate)) ?? [team],
       );
     },
@@ -282,7 +283,7 @@ export function MyTeamPage() {
     onSuccess: async (team) => {
       setIconDraftKey(team.iconKey);
       setIconModalOpen(false);
-      queryClient.setQueryData<TeamSummary[]>(['poolmaster', 'league-teams', leagueId], (current) =>
+      queryClient.setQueryData<TeamSummary[]>(QueryKeys.leagueTeams.byLeague(leagueId), (current) =>
         current?.map((candidate) => (candidate.id === team.id ? team : candidate)) ?? [team],
       );
     },
@@ -308,8 +309,8 @@ export function MyTeamPage() {
     },
     onSuccess: async () => {
       setCoOwnerEmail('');
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-team-owner-invitations', leagueId] });
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId) });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.byLeague(leagueId) });
     },
   });
 
@@ -334,8 +335,8 @@ export function MyTeamPage() {
     onSuccess: async () => {
       setReplaceTargetUserId(null);
       setReplaceEmail('');
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-team-owner-invitations', leagueId] });
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId) });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.byLeague(leagueId) });
     },
   });
 
@@ -352,7 +353,7 @@ export function MyTeamPage() {
       return response.data.invitation;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-team-owner-invitations', leagueId] });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId) });
     },
   });
 
@@ -381,8 +382,8 @@ export function MyTeamPage() {
       setReplaceTargetUserId(null);
       setReplaceEmail('');
       setCoOwnerEmail('');
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-team-owner-invitations', leagueId] });
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId) });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.byLeague(leagueId) });
     },
   });
 
@@ -410,8 +411,8 @@ export function MyTeamPage() {
       setReplaceTargetUserId(null);
       setReplaceEmail('');
       setCoOwnerEmail('');
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-team-owner-invitations', leagueId] });
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId) });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.byLeague(leagueId) });
       navigate('/manage/teams');
     },
   });

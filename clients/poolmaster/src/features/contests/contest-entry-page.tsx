@@ -38,6 +38,7 @@ import {
   type SelectionGroup,
 } from './contest-entry-selection';
 import { extractErrorMessage } from '@/lib/errors';
+import { QueryKeys } from '@/lib/query-keys';
 
 type ContestDetail = GetContestResponses[200]['contest'];
 type DraftState = GetDraftStateResponses[200];
@@ -170,7 +171,7 @@ export function ContestEntryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
-  const draftStateQueryKey = ['poolmaster', 'draft-state', contestId, entryId] as const;
+  const draftStateQueryKey = QueryKeys.draftStates.detail(contestId, entryId);
   const groupToggleRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const [entryNameDraft, setEntryNameDraft] = useState('');
@@ -179,7 +180,7 @@ export function ContestEntryPage() {
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
 
   const contestQuery = useQuery({
-    queryKey: ['poolmaster', 'contest', contestId],
+    queryKey: QueryKeys.contests.detail(contestId),
     queryFn: async (): Promise<ContestDetail> => {
       const response = await getContest({ path: { contestId } });
       if (!response.data?.contest) {
@@ -192,7 +193,7 @@ export function ContestEntryPage() {
   });
 
   const contestEntriesQuery = useQuery({
-    queryKey: ['poolmaster', 'contest-entries', contestId],
+    queryKey: QueryKeys.contestEntries.byContest(contestId),
     queryFn: async (): Promise<ListContestEntriesResponses[200]> => {
       const response = await listContestEntries({ path: { contestId } });
       if (!response.data) {
@@ -221,7 +222,7 @@ export function ContestEntryPage() {
   });
 
   const leagueCodeQuery = useQuery({
-    queryKey: ['poolmaster', 'contest-league-code', contestQuery.data?.leagueId],
+    queryKey: QueryKeys.contestLeagueCodes.byLeagueId(contestQuery.data?.leagueId),
     queryFn: async () => {
       const response = await getLeague({ path: { id: contestQuery.data!.leagueId } });
 
@@ -410,8 +411,8 @@ export function ContestEntryPage() {
         'Saved contest entry details',
       );
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest', contestId] }),
-        queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] }),
+        queryClient.invalidateQueries({ queryKey: QueryKeys.contests.detail(contestId) }),
+        queryClient.invalidateQueries({ queryKey: QueryKeys.contestEntries.byContest(contestId) }),
         queryClient.invalidateQueries({ queryKey: draftStateQueryKey }),
       ]);
     },
@@ -485,8 +486,8 @@ export function ContestEntryPage() {
         'Submitted contest selection successfully',
       );
       queryClient.setQueryData<DraftState>(draftStateQueryKey, draftState);
-      void queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest', contestId] });
-      void queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] });
+      void queryClient.invalidateQueries({ queryKey: QueryKeys.contests.detail(contestId) });
+      void queryClient.invalidateQueries({ queryKey: QueryKeys.contestEntries.byContest(contestId) });
     },
     onError: (error, participantId, context) => {
       if (context?.previousDraftState) {

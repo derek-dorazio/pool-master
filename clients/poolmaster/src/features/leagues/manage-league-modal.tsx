@@ -15,6 +15,7 @@ import { LeagueIcon } from './league-icon';
 import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { removeLeagueSummary, syncLeagueCaches } from './league-cache';
 import { extractErrorMessage } from '@/lib/errors';
+import { QueryKeys } from '@/lib/query-keys';
 
 type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
@@ -87,7 +88,7 @@ export function ManageLeagueModal({
   }, [league]);
 
   const leagueDetailQuery = useQuery({
-    queryKey: ['poolmaster', 'league', league?.id, 'manage'],
+    queryKey: QueryKeys.leagues.manage(league?.id),
     enabled: isOpen && Boolean(league?.id),
     queryFn: async () => {
       const response = await getLeague({
@@ -183,11 +184,11 @@ export function ManageLeagueModal({
       return response.data;
     },
     onSuccess: async () => {
-      queryClient.setQueryData(['poolmaster', 'leagues'], (current: LeagueSummary[] | undefined) =>
+      queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummary[] | undefined) =>
         removeLeagueSummary(current, league?.id ?? ''),
       );
-      queryClient.removeQueries({ queryKey: ['poolmaster', 'league', league?.leagueCode], exact: true });
-      queryClient.removeQueries({ queryKey: ['poolmaster', 'league', league?.id, 'manage'], exact: true });
+      queryClient.removeQueries({ queryKey: QueryKeys.leagues.detail(league?.leagueCode), exact: true });
+      queryClient.removeQueries({ queryKey: QueryKeys.leagues.manage(league?.id), exact: true });
       setDeleteSuccess(true);
     },
   });

@@ -20,6 +20,7 @@ import {
   updateLeagueDetailsData,
   updateLeagueIconData,
 } from './test/fixtures';
+import { QueryKeys } from '@/lib/query-keys';
 
 const deleteLeagueMock = vi.fn();
 const enterContestMock = vi.fn();
@@ -196,11 +197,11 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
     );
     expect(getLeagueByCodeMock).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('league-home')).toBeVisible();
-    expect(queryClient.getQueryData(['poolmaster', 'league', 'BIGDAWGS'])).toMatchObject({
+    expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toMatchObject({
       name: 'Bigger Dawgs',
       description: 'Updated description',
     });
-    expect(queryClient.getQueryData(['poolmaster', 'leagues'])).toEqual([
+    expect(queryClient.getQueryData(QueryKeys.leagues.list)).toEqual([
       expect.objectContaining({
         id: 'league-1',
         name: 'Bigger Dawgs',
@@ -228,11 +229,11 @@ describe('pool-master-rop.23: LeagueDetailPage generated DTO fixtures', () => {
     }))));
 
     await act(async () => {
-      await queryClient.refetchQueries({ queryKey: ['poolmaster', 'league', 'BIGDAWGS'] });
+      await queryClient.refetchQueries({ queryKey: QueryKeys.leagues.detail('BIGDAWGS') });
     });
 
     await waitFor(() =>
-      expect(queryClient.getQueryData(['poolmaster', 'league', 'BIGDAWGS'])).toMatchObject({
+      expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toMatchObject({
         name: 'Server Snapshot League',
         description: 'Server snapshot description',
       }),

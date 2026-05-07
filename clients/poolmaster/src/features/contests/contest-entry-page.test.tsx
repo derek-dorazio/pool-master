@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ContestEntryPage } from './contest-entry-page';
+import { QueryKeys } from '@/lib/query-keys';
 
 type DraftSelectionGroup = {
   groupId: string;
@@ -482,11 +483,11 @@ describe('ContestEntryPage', () => {
     });
 
     await act(async () => {
-      await queryClient.refetchQueries({ queryKey: ['poolmaster', 'draft-state', 'contest-1', 'entry-1'] });
+      await queryClient.refetchQueries({ queryKey: QueryKeys.draftStates.detail('contest-1', 'entry-1') });
     });
 
     await waitFor(() =>
-      expect(queryClient.getQueryData(['poolmaster', 'draft-state', 'contest-1', 'entry-1'])).toMatchObject({
+      expect(queryClient.getQueryData(QueryKeys.draftStates.detail('contest-1', 'entry-1'))).toMatchObject({
         selectedEntryName: 'Server Snapshot Entry',
         tiebreakerValue: -3,
       }),

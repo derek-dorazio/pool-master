@@ -37,6 +37,7 @@ import {
   Tile,
 } from '@/features/shared/ui';
 import { shouldPollContestEntries } from './contest-status';
+import { QueryKeys } from '@/lib/query-keys';
 
 type ContestDetail = GetContestResponses[200]['contest'];
 type ContestEntryDetail = ListContestEntriesResponses[200]['entries'][number];
@@ -189,7 +190,7 @@ export function ContestDetailPage() {
   const [renameDraft, setRenameDraft] = useState('');
 
   const contestQuery = useQuery({
-    queryKey: ['poolmaster', 'contest', contestId],
+    queryKey: QueryKeys.contests.detail(contestId),
     queryFn: async (): Promise<ContestDetail> => {
       const response = await getContest({ path: { contestId } });
 
@@ -204,7 +205,7 @@ export function ContestDetailPage() {
   });
 
   const contestEntriesQuery = useQuery({
-    queryKey: ['poolmaster', 'contest-entries', contestId],
+    queryKey: QueryKeys.contestEntries.byContest(contestId),
     queryFn: async (): Promise<ListContestEntriesResponses[200]> => {
       const response = await listContestEntries({ path: { contestId } });
 
@@ -222,7 +223,7 @@ export function ContestDetailPage() {
   const leagueId = contestQuery.data?.leagueId ?? '';
 
   const teamsQuery = useQuery({
-    queryKey: ['poolmaster', 'league-teams', leagueId],
+    queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
     queryFn: async (): Promise<TeamSummary[]> => {
       const response = await listLeagueSquads({ path: { id: leagueId } });
 
@@ -259,7 +260,7 @@ export function ContestDetailPage() {
       return response.data.entry;
     },
     onSuccess: async (entry) => {
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.contestEntries.byContest(contestId) });
       navigate(
         hintedLeagueCode
           ? buildLeagueContestEntryPath(hintedLeagueCode, contestId, entry.id)
@@ -285,7 +286,7 @@ export function ContestDetailPage() {
     onSuccess: async () => {
       setRenameEntryId(null);
       setRenameDraft('');
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'contest-entries', contestId] });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.contestEntries.byContest(contestId) });
     },
   });
 

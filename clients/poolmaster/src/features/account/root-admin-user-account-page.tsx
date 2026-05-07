@@ -15,6 +15,7 @@ import { Alert, ConfirmDialog } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildLeaguePath, buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { formatUserName } from './user-name';
+import { QueryKeys } from '@/lib/query-keys';
 
 type RootAdminViewedUser = AdminGetUserDetailResponses[200];
 type ActiveDialog = 'role' | 'reset-password' | 'lifecycle' | 'delete' | null;
@@ -230,7 +231,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
   const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
 
   const userDetailQuery = useQuery({
-    queryKey: ['poolmaster', 'admin', 'user-detail', userId],
+    queryKey: QueryKeys.users.detail(userId),
     queryFn: async () => {
       const response = await adminGetUserDetail({
         path: { userId },
@@ -265,8 +266,8 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
   }, [logger, viewedUser]);
 
   const invalidateTargetUser = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'admin', 'user-detail', userId] });
-    await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'root-admin', 'users'] });
+    await queryClient.invalidateQueries({ queryKey: QueryKeys.users.detail(userId) });
+    await queryClient.invalidateQueries({ queryKey: QueryKeys.rootAdmin.users });
   };
 
   const roleMutation = useMutation({
@@ -351,7 +352,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
       setActiveDialog(null);
       setReason('');
       setDeleteEmailConfirmation('');
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'root-admin', 'users'] });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.rootAdmin.users });
       navigate('/manage/users', { replace: true });
     },
   });

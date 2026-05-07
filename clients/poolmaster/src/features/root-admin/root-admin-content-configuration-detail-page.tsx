@@ -27,6 +27,7 @@ import {
   updateTieredTemplateConfiguration,
 } from './content-configuration-utils';
 import { extractErrorMessage } from '@/lib/errors';
+import { QueryKeys } from '@/lib/query-keys';
 
 type ContestConfigTemplateUpdateResult =
   AdminUpdateContestConfigTemplateResponses[200]['template'];
@@ -40,7 +41,7 @@ export function RootAdminContentConfigurationDetailPage() {
   const [draft, setDraft] = useState<ContestConfigTemplate | null>(null);
 
   const templatesQuery = useQuery({
-    queryKey: ['poolmaster', 'root-admin', 'contest-config-templates'],
+    queryKey: QueryKeys.rootAdmin.contestConfigTemplates,
     queryFn: async (): Promise<ContestConfigTemplate[]> => {
       const response = await adminListContestConfigTemplates();
 
@@ -100,7 +101,7 @@ export function RootAdminContentConfigurationDetailPage() {
         'Saved root-admin content configuration template',
       );
       await queryClient.invalidateQueries({
-        queryKey: ['poolmaster', 'root-admin', 'contest-config-templates'],
+        queryKey: QueryKeys.rootAdmin.contestConfigTemplates,
       });
     },
   });

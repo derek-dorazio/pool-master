@@ -43,6 +43,7 @@ import { LeagueIcon } from './league-icon';
 import { getLeagueLoadErrorCopy } from './league-load-error';
 import { LeagueSummaryCard } from './league-summary-card';
 import { buildInvitePath, setRecentLeagueCode } from './league-routing';
+import { QueryKeys } from '@/lib/query-keys';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
 type LeaveLeagueResponse = LeaveLeagueResponses[200];
@@ -87,7 +88,7 @@ export function LeagueDetailPage() {
   const [leaveCompleted, setLeaveCompleted] = useState(false);
 
   const leagueQuery = useQuery({
-    queryKey: ['poolmaster', 'league', leagueCode],
+    queryKey: QueryKeys.leagues.detail(leagueCode),
     queryFn: async (): Promise<LeagueDetail> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
@@ -294,10 +295,10 @@ export function LeagueDetailPage() {
     },
     onSuccess: async () => {
       setDeleteModalOpen(false);
-      queryClient.setQueryData(['poolmaster', 'leagues'], (current: LeagueSummary[] | undefined) =>
+      queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummary[] | undefined) =>
         removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
       );
-      await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'root-admin', 'manage-leagues'] });
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.rootAdmin.manageLeagues });
       void navigate(auth.isRootAdmin ? '/manage/leagues' : '/welcome');
     },
   });
@@ -317,7 +318,7 @@ export function LeagueDetailPage() {
     onSuccess: async () => {
       setLeaveActionError(null);
       setLeaveCompleted(true);
-      queryClient.setQueryData(['poolmaster', 'leagues'], (current: LeagueSummary[] | undefined) =>
+      queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummary[] | undefined) =>
         removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
       );
     },
@@ -371,7 +372,7 @@ export function LeagueDetailPage() {
   }
 
   async function handleLeaveCompletionAcknowledge() {
-    const remainingLeagues = queryClient.getQueryData<LeagueSummary[]>(['poolmaster', 'leagues']) ?? [];
+    const remainingLeagues = queryClient.getQueryData<LeagueSummary[]>(QueryKeys.leagues.list) ?? [];
     const nextLeague = remainingLeagues.find((league) => league.isActive) ?? remainingLeagues[0];
 
     setActiveDialog(null);

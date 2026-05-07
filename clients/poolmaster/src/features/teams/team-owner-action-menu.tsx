@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
 import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
+import { QueryKeys } from '@/lib/query-keys';
 
 type OwnerRole = 'COMMISSIONER' | 'MEMBER' | undefined;
 type ActiveAction = 'promote' | 'demote' | 'remove' | null;
@@ -117,10 +118,10 @@ export function TeamOwnerActionMenu({
   const testPrefix = `${surface}-owner-actions`;
 
   const invalidateOwnerViews = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-members', leagueId] });
-    await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams', leagueId] });
+    await queryClient.invalidateQueries({ queryKey: QueryKeys.leagues.members(leagueId) });
+    await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.byLeague(leagueId) });
     await queryClient.invalidateQueries({
-      queryKey: ['poolmaster', 'league-team-owner-invitations', leagueId],
+      queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
     });
   };
 

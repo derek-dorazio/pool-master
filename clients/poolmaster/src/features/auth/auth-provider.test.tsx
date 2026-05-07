@@ -7,6 +7,7 @@ import {
   setAuthSessionUser,
   type AuthSessionUser,
 } from './auth-session-cache';
+import { QueryKeys } from '@/lib/query-keys';
 
 const {
   getCurrentUserMock,
@@ -229,14 +230,14 @@ describe('AuthProvider', () => {
 
     // Step 2: external invalidation that succeeds. This is the "recovery
     // without refresh" the bug used to re-arm on. The guard must absorb it.
-    await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'auth', 'me'] });
+    await queryClient.invalidateQueries({ queryKey: QueryKeys.auth.me });
     await waitFor(() => {
       expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)?.id).toBe('user-1');
     });
 
     // Step 3: external invalidation that fails. With the broken guard this
     // triggers a second refresh attempt. With the fix the guard stays armed.
-    await queryClient.invalidateQueries({ queryKey: ['poolmaster', 'auth', 'me'] });
+    await queryClient.invalidateQueries({ queryKey: QueryKeys.auth.me });
 
     // Allow any pending effects to flush before asserting the count.
     await new Promise((resolve) => setTimeout(resolve, 50));

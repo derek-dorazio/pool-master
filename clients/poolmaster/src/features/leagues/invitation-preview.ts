@@ -2,11 +2,12 @@ import {
   getInvitationPreview,
   type GetInvitationPreviewResponses,
 } from '@/lib/api';
+import { QueryKeys } from '@/lib/query-keys';
 
 export type InvitationPreview = GetInvitationPreviewResponses[200]['invitation'];
 
 export function getInvitationPreviewQueryKey(inviteCode: string) {
-  return ['poolmaster', 'invitation-preview', inviteCode] as const;
+  return QueryKeys.invitations.leaguePreview(inviteCode);
 }
 
 export async function fetchInvitationPreview(inviteCode: string): Promise<InvitationPreview> {

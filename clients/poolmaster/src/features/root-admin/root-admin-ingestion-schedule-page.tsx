@@ -21,6 +21,7 @@ import {
   type IngestionPolicyKey,
   type IngestionScheduleConfig,
 } from './root-admin-sync-config-utils';
+import { QueryKeys } from '@/lib/query-keys';
 
 type IngestionEditableField =
   | 'enabled'
@@ -34,7 +35,7 @@ export function RootAdminIngestionSchedulePage() {
   const [draft, setDraft] = useState<IngestionScheduleConfig | null>(null);
 
   const ingestionConfigQuery = useQuery({
-    queryKey: ['poolmaster', 'root-admin', 'ingestion-config'],
+    queryKey: QueryKeys.rootAdmin.ingestionConfig,
     queryFn: async (): Promise<IngestionScheduleConfig> => {
       const response = await adminGetIngestionSchedule();
       if (!response.data) {
@@ -75,7 +76,7 @@ export function RootAdminIngestionSchedulePage() {
     onSuccess: async (data) => {
       setDraft(cloneIngestionConfig(data));
       await queryClient.invalidateQueries({
-        queryKey: ['poolmaster', 'root-admin', 'ingestion-config'],
+        queryKey: QueryKeys.rootAdmin.ingestionConfig,
       });
     },
   });
@@ -91,7 +92,7 @@ export function RootAdminIngestionSchedulePage() {
     onSuccess: async (data) => {
       setDraft(cloneIngestionConfig(data));
       await queryClient.invalidateQueries({
-        queryKey: ['poolmaster', 'root-admin', 'ingestion-config'],
+        queryKey: QueryKeys.rootAdmin.ingestionConfig,
       });
     },
   });

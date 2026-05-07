@@ -10,6 +10,7 @@ import {
   createLeagueData,
   type LeagueSummary,
 } from './test/fixtures';
+import { QueryKeys } from '@/lib/query-keys';
 
 const { createLeagueMock, mockLogger } = vi.hoisted(() => {
   const logger = {
@@ -40,7 +41,7 @@ vi.mock('@/lib/logger', () => ({
 
 function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummary[]> }) {
   const leaguesQuery = useQuery({
-    queryKey: ['poolmaster', 'leagues'],
+    queryKey: QueryKeys.leagues.list,
     queryFn,
     retry: false,
   });
@@ -142,7 +143,7 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith('BIGDAWGS'));
     await waitFor(() => expect(screen.getByTestId('league-list-state')).toHaveTextContent('BIGDAWGS'));
     expect(leaguesQueryFn).toHaveBeenCalledTimes(1);
-    expect(queryClient.getQueryData<ListLeaguesResponses[200]['leagues']>(['poolmaster', 'leagues'])).toEqual([
+    expect(queryClient.getQueryData<ListLeaguesResponses[200]['leagues']>(QueryKeys.leagues.list)).toEqual([
       buildLeagueSummary({
         id: 'league-1',
         leagueCode: 'BIGDAWGS',
@@ -161,7 +162,7 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
         createdAt: '2026-04-15T00:00:00.000Z',
       }),
     ]);
-    expect(queryClient.getQueryData(['poolmaster', 'league', 'BIGDAWGS'])).toEqual(createdLeague);
+    expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toEqual(createdLeague);
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'league.create.succeeded',
