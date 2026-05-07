@@ -672,6 +672,47 @@ export type GetMockContestFeedResultsSnapshotResponses = {
 
 export type GetMockContestFeedResultsSnapshotResponse = GetMockContestFeedResultsSnapshotResponses[keyof GetMockContestFeedResultsSnapshotResponses];
 
+export type GetMockContestFeedScoresSnapshotData = {
+    body?: never;
+    path: {
+        scenarioId: string;
+        eventId: string;
+    };
+    query?: {
+        tick?: number;
+    };
+    url: '/v1/scenarios/{scenarioId}/events/{eventId}/scores';
+};
+
+export type GetMockContestFeedScoresSnapshotResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        scenarioId: string;
+        eventId: string;
+        eventName: string;
+        feedKind: 'field' | 'odds' | 'rankings' | 'results';
+        asOf: string;
+        note?: string;
+        contestants: Array<{
+            contestantId: string;
+            name: string;
+            teamName?: string;
+            countryCode?: string;
+            seed?: number;
+            participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
+            odds?: number;
+            ranking?: number;
+            score?: number;
+            result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
+            note?: string;
+        }>;
+    };
+};
+
+export type GetMockContestFeedScoresSnapshotResponse = GetMockContestFeedScoresSnapshotResponses[keyof GetMockContestFeedScoresSnapshotResponses];
+
 export type GetMockContestFeedEventUpdatesData = {
     body?: never;
     path: {

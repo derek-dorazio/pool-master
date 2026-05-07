@@ -6,8 +6,12 @@
     "module": "CommonJS",
     "moduleResolution": "Node",
     "esModuleInterop": true,
+    "baseUrl": "..",
     "paths": {
-      "@poolmaster/shared/*": ["./packages/shared/*"]
+      "@poolmaster/shared/*": ["packages/shared/*"],
+      "@poolmaster/mock-contest-feed-provider/generated/hey-api/types": [
+        "packages/mock-contest-feed-provider/generated/hey-api/types.gen.ts"
+      ]
     }
   },
   "include": [

@@ -344,46 +344,10 @@ export async function mockContestFeedRoutes(
     },
   );
 
-  fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
-    '/v1/pre-event/scenarios/:scenarioId/events/:eventId/detail',
-    {
-      schema: {
-        tags: ['Pre-Event'],
-        summary: 'Get pre-event event detail with season context and baseline feeds',
-        operationId: 'getMockContestFeedPreEventDetail',
-        params: {
-          type: 'object',
-          required: ['scenarioId', 'eventId'],
-          properties: {
-            scenarioId: { type: 'string' },
-            eventId: { type: 'string' },
-          },
-        },
-        response: {
-          200: eventResponseSchema,
-        },
-      },
-    },
-    async (request) => {
-      fastify.log.debug(
-        { action: 'mockFeedRoute.getPreEventDetail.start', data: request.params },
-        'Serving mock contest-feed pre-event detail',
-      );
-      const payload = store.getEventResponse(request.params.scenarioId, request.params.eventId);
-      logRoutePayload(
-        fastify,
-        'mockFeedRoute.getPreEventDetail',
-        {
-          scenarioId: request.params.scenarioId,
-          eventId: request.params.eventId,
-          contestantCount: payload.event.field.contestants.length,
-        },
-        payload,
-        'Served mock contest-feed pre-event detail',
-      );
-      return payload;
-    },
-  );
+  // pool-master-rop.78.13 — the legacy `/v1/pre-event/...` and `/v1/live/...`
+  // routes were OpenAPI-undocumented duplicates of the canonical
+  // `/v1/scenarios/.../events/.../...` surface. They were dropped in this
+  // slice so the generated SDK is the single source of truth for callers.
 
   for (const feedKind of ['field', 'odds', 'rankings', 'results'] as const) {
     const operationId =
@@ -438,64 +402,17 @@ export async function mockContestFeedRoutes(
     );
   }
 
-  for (const feedKind of ['field', 'odds', 'rankings'] as const) {
-    const operationId =
-      feedKind === 'field'
-        ? 'getMockContestFeedPreEventFieldSnapshot'
-        : feedKind === 'odds'
-          ? 'getMockContestFeedPreEventOddsSnapshot'
-          : 'getMockContestFeedPreEventRankingsSnapshot';
-
-    fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
-      `/v1/pre-event/scenarios/:scenarioId/events/:eventId/${feedKind}`,
-      {
-        schema: {
-          tags: ['Pre-Event'],
-          summary: `Get pre-event ${feedKind} snapshot for an event`,
-          operationId,
-          params: {
-            type: 'object',
-            required: ['scenarioId', 'eventId'],
-            properties: {
-              scenarioId: { type: 'string' },
-              eventId: { type: 'string' },
-            },
-          },
-          response: {
-            200: snapshotResponseSchema,
-          },
-        },
-      },
-      async (request) => {
-        fastify.log.debug(
-          { action: 'mockFeedRoute.getPreEventSnapshot.start', data: { ...request.params, feedKind } },
-          'Serving mock contest-feed pre-event snapshot',
-        );
-        const payload = store.getSnapshot(request.params.scenarioId, request.params.eventId, feedKind);
-        logRoutePayload(
-          fastify,
-          'mockFeedRoute.getPreEventSnapshot',
-          {
-            scenarioId: request.params.scenarioId,
-            eventId: request.params.eventId,
-            feedKind,
-            contestantCount: payload.contestants.length,
-          },
-          payload,
-          'Served mock contest-feed pre-event snapshot',
-        );
-        return payload;
-      },
-    );
-  }
-
+  // pool-master-rop.78.13 — `scores` joins the canonical feed-snapshot
+  // surface. It accepts an optional `tick` query parameter that
+  // advances the in-memory store's live-scoring state machine; the
+  // legacy `/v1/live/.../scores` alias was dropped.
   fastify.get<{ Params: { scenarioId: string; eventId: string }; Querystring: { tick?: number } }>(
-    '/v1/live/scenarios/:scenarioId/events/:eventId/scores',
+    '/v1/scenarios/:scenarioId/events/:eventId/scores',
     {
       schema: {
-        tags: ['Live'],
+        tags: ['Feeds'],
         summary: 'Get live scoring snapshot for an event',
-        operationId: 'getMockContestFeedLiveScores',
+        operationId: 'getMockContestFeedScoresSnapshot',
         params: {
           type: 'object',
           required: ['scenarioId', 'eventId'],
@@ -518,8 +435,8 @@ export async function mockContestFeedRoutes(
     },
     async (request) => {
       fastify.log.debug(
-        { action: 'mockFeedRoute.getLiveScores.start', data: { ...request.params, tick: request.query.tick ?? null } },
-        'Serving mock contest-feed live scores',
+        { action: 'mockFeedRoute.getScoresSnapshot.start', data: { ...request.params, tick: request.query.tick ?? null } },
+        'Serving mock contest-feed scores snapshot',
       );
       const payload = store.getLiveScores(
         request.params.scenarioId,
@@ -528,7 +445,7 @@ export async function mockContestFeedRoutes(
       );
       logRoutePayload(
         fastify,
-        'mockFeedRoute.getLiveScores',
+        'mockFeedRoute.getScoresSnapshot',
         {
           scenarioId: request.params.scenarioId,
           eventId: request.params.eventId,
@@ -536,48 +453,7 @@ export async function mockContestFeedRoutes(
           contestantCount: payload.contestants.length,
         },
         payload,
-        'Served mock contest-feed live scores',
-      );
-      return payload;
-    },
-  );
-
-  fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
-    '/v1/live/scenarios/:scenarioId/events/:eventId/results',
-    {
-      schema: {
-        tags: ['Live'],
-        summary: 'Get final results snapshot for an event',
-        operationId: 'getMockContestFeedLiveResults',
-        params: {
-          type: 'object',
-          required: ['scenarioId', 'eventId'],
-          properties: {
-            scenarioId: { type: 'string' },
-            eventId: { type: 'string' },
-          },
-        },
-        response: {
-          200: snapshotResponseSchema,
-        },
-      },
-    },
-    async (request) => {
-      fastify.log.debug(
-        { action: 'mockFeedRoute.getLiveResults.start', data: request.params },
-        'Serving mock contest-feed live results',
-      );
-      const payload = store.getSnapshot(request.params.scenarioId, request.params.eventId, 'results');
-      logRoutePayload(
-        fastify,
-        'mockFeedRoute.getLiveResults',
-        {
-          scenarioId: request.params.scenarioId,
-          eventId: request.params.eventId,
-          contestantCount: payload.contestants.length,
-        },
-        payload,
-        'Served mock contest-feed live results',
+        'Served mock contest-feed scores snapshot',
       );
       return payload;
     },

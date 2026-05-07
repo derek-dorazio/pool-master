@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { GetMockContestFeedEventUpdatesData, GetMockContestFeedEventUpdatesResponses, GetMockContestFeedFieldSnapshotData, GetMockContestFeedFieldSnapshotResponses, GetMockContestFeedOddsSnapshotData, GetMockContestFeedOddsSnapshotResponses, GetMockContestFeedRankingsSnapshotData, GetMockContestFeedRankingsSnapshotResponses, GetMockContestFeedResultsSnapshotData, GetMockContestFeedResultsSnapshotResponses, GetMockContestFeedScenarioData, GetMockContestFeedScenarioEventData, GetMockContestFeedScenarioEventDetailData, GetMockContestFeedScenarioEventDetailResponses, GetMockContestFeedScenarioEventResponses, GetMockContestFeedScenarioResponses, ListMockContestFeedScenarioEventsData, ListMockContestFeedScenarioEventsResponses, ListMockContestFeedScenariosData, ListMockContestFeedScenariosResponses, MockContestFeedHealthData, MockContestFeedHealthResponses } from './types.gen.js';
+import type { GetMockContestFeedEventUpdatesData, GetMockContestFeedEventUpdatesResponses, GetMockContestFeedFieldSnapshotData, GetMockContestFeedFieldSnapshotResponses, GetMockContestFeedOddsSnapshotData, GetMockContestFeedOddsSnapshotResponses, GetMockContestFeedRankingsSnapshotData, GetMockContestFeedRankingsSnapshotResponses, GetMockContestFeedResultsSnapshotData, GetMockContestFeedResultsSnapshotResponses, GetMockContestFeedScenarioData, GetMockContestFeedScenarioEventData, GetMockContestFeedScenarioEventDetailData, GetMockContestFeedScenarioEventDetailResponses, GetMockContestFeedScenarioEventResponses, GetMockContestFeedScenarioResponses, GetMockContestFeedScoresSnapshotData, GetMockContestFeedScoresSnapshotResponses, ListMockContestFeedScenarioEventsData, ListMockContestFeedScenarioEventsResponses, ListMockContestFeedScenariosData, ListMockContestFeedScenariosResponses, MockContestFeedHealthData, MockContestFeedHealthResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -67,6 +67,11 @@ export const getMockContestFeedRankingsSnapshot = <ThrowOnError extends boolean 
  * Get results feed snapshot for an event
  */
 export const getMockContestFeedResultsSnapshot = <ThrowOnError extends boolean = false>(options: Options<GetMockContestFeedResultsSnapshotData, ThrowOnError>) => (options.client ?? client).get<GetMockContestFeedResultsSnapshotResponses, unknown, ThrowOnError>({ url: '/v1/scenarios/{scenarioId}/events/{eventId}/results', ...options });
+
+/**
+ * Get live scoring snapshot for an event
+ */
+export const getMockContestFeedScoresSnapshot = <ThrowOnError extends boolean = false>(options: Options<GetMockContestFeedScoresSnapshotData, ThrowOnError>) => (options.client ?? client).get<GetMockContestFeedScoresSnapshotResponses, unknown, ThrowOnError>({ url: '/v1/scenarios/{scenarioId}/events/{eventId}/scores', ...options });
 
 /**
  * Get live or correction updates for an event
