@@ -20971,8 +20971,10 @@ export type GetScoringHealthResponses = {
     200: {
         status: 'ok';
         service: string;
-        rollupRunning: boolean;
-        activeContests: number;
+        /**
+         * Always true: the scoring path is event-driven via live_score.persisted (plans/117 §11.3). The legacy `rollupRunning` / `activeContests` fields were removed in pool-master-rop.78.8 along with the periodic rollup interval.
+         */
+        eventDriven: true;
         /**
          * When the scoring-health snapshot was recorded.
          */

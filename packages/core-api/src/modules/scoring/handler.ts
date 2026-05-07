@@ -91,7 +91,7 @@ export function createGetHealthHandler(deps: ScoringHandlerDeps) {
     const logger = request.contextLogger ?? request.log;
     logger.debug('Handling scoring health read');
     const detail = deps.scoringService.getHealth();
-    logger.info({ rollupRunning: detail.rollupRunning, activeContests: detail.activeContests }, 'Handled scoring health read');
+    logger.info({ eventDriven: detail.eventDriven }, 'Handled scoring health read');
     return detail;
   };
 }
