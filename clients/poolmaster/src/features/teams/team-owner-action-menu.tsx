@@ -1,10 +1,10 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
 import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 type OwnerRole = 'COMMISSIONER' | 'MEMBER' | undefined;
 type ActiveAction = 'promote' | 'demote' | 'remove' | null;
@@ -107,7 +107,6 @@ export function TeamOwnerActionMenu({
   surface: 'teams' | 'team-home';
   teamId: string;
 }) {
-  const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeAction, setActiveAction] = useState<ActiveAction>(null);
 
@@ -117,15 +116,13 @@ export function TeamOwnerActionMenu({
   const removeRequiresInactivation = activeOwnerCount <= 1;
   const testPrefix = `${surface}-owner-actions`;
 
-  const invalidateOwnerViews = async () => {
-    await queryClient.invalidateQueries({ queryKey: QueryKeys.leagues.members(leagueId) });
-    await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.byLeague(leagueId) });
-    await queryClient.invalidateQueries({
-      queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
-    });
-  };
+  const ownerViewKeys = [
+    QueryKeys.leagues.members(leagueId),
+    QueryKeys.leagueTeams.byLeague(leagueId),
+    QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
+  ] as const;
 
-  const changeRoleMutation = useMutation({
+  const changeRoleMutation = createMutationHook({
     mutationFn: async (nextRole: 'COMMISSIONER' | 'MEMBER') => {
       const response = await changeMemberRole({
         path: { id: leagueId, uid: ownerUserId },
@@ -141,11 +138,11 @@ export function TeamOwnerActionMenu({
     onSuccess: async () => {
       setActiveAction(null);
       setMenuOpen(false);
-      await invalidateOwnerViews();
     },
+    invalidates: ownerViewKeys,
   });
 
-  const removeOwnerMutation = useMutation({
+  const removeOwnerMutation = createMutationHook({
     mutationFn: async () => {
       const response = await removeSquadOwner({
         path: { id: leagueId, squadId: teamId, userId: ownerUserId },
@@ -160,8 +157,8 @@ export function TeamOwnerActionMenu({
     onSuccess: async () => {
       setActiveAction(null);
       setMenuOpen(false);
-      await invalidateOwnerViews();
     },
+    invalidates: ownerViewKeys,
   });
 
   if (!canOpenMenu) {

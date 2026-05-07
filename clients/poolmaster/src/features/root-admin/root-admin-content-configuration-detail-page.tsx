@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import {
   adminListContestConfigTemplates,
@@ -28,6 +28,7 @@ import {
 } from './content-configuration-utils';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 type ContestConfigTemplateUpdateResult =
   AdminUpdateContestConfigTemplateResponses[200]['template'];
@@ -37,7 +38,6 @@ export function RootAdminContentConfigurationDetailPage() {
   const logger = getLogger().child({
     feature: 'root-admin-content-configuration-detail-page',
   });
-  const queryClient = useQueryClient();
   const [draft, setDraft] = useState<ContestConfigTemplate | null>(null);
 
   const templatesQuery = useQuery({
@@ -65,7 +65,7 @@ export function RootAdminContentConfigurationDetailPage() {
     }
   }, [template]);
 
-  const contestTemplateMutation = useMutation({
+  const contestTemplateMutation = createMutationHook({
     mutationFn: async (input: {
       templateId: string;
       nextDraft: ContestConfigTemplate;
@@ -100,10 +100,8 @@ export function RootAdminContentConfigurationDetailPage() {
         },
         'Saved root-admin content configuration template',
       );
-      await queryClient.invalidateQueries({
-        queryKey: QueryKeys.rootAdmin.contestConfigTemplates,
-      });
     },
+    invalidates: [QueryKeys.rootAdmin.contestConfigTemplates],
   });
 
   function updateDraft(updater: (current: ContestConfigTemplate) => ContestConfigTemplate) {

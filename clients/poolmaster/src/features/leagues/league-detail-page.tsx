@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Copy } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -44,6 +44,7 @@ import { getLeagueLoadErrorCopy } from './league-load-error';
 import { LeagueSummaryCard } from './league-summary-card';
 import { buildInvitePath, setRecentLeagueCode } from './league-routing';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
 type LeaveLeagueResponse = LeaveLeagueResponses[200];
@@ -153,7 +154,7 @@ export function LeagueDetailPage() {
   const currentLeagueIconKey = leagueQuery.data?.iconKey ?? iconDraftKey;
   const selectedLeagueIcon = getLeagueIconOption(currentLeagueIconKey);
 
-  const inviteLinkMutation = useMutation({
+  const inviteLinkMutation = createMutationHook({
     mutationFn: async (): Promise<string> => {
       const response = await generateInviteLink({
         path: { id: leagueId },
@@ -167,9 +168,10 @@ export function LeagueDetailPage() {
 
       return `${window.location.origin}${buildInvitePath(inviteCode)}`;
     },
+    invalidates: [],
   });
 
-  const sendInviteMutation = useMutation({
+  const sendInviteMutation = createMutationHook({
     mutationFn: async (email: string) => {
       const response = await sendLeagueInvitations({
         path: { id: leagueId },
@@ -184,9 +186,10 @@ export function LeagueDetailPage() {
 
       return response.data;
     },
+    invalidates: [],
   });
 
-  const updateDetailsMutation = useMutation({
+  const updateDetailsMutation = createMutationHook({
     mutationFn: async () => {
       if (!detailsDraftLeagueId || detailsDraftLeagueId !== leagueId) {
         throw new Error('League selection changed before details could be saved.');
@@ -211,9 +214,10 @@ export function LeagueDetailPage() {
       setDetailsDescription(league.description ?? '');
       syncLeagueCaches(queryClient, league);
     },
+    invalidates: [],
   });
 
-  const updateIconMutation = useMutation({
+  const updateIconMutation = createMutationHook({
     mutationFn: async (iconKey: LeagueDetail['iconKey']) => {
       const response = await updateLeagueIcon({
         path: { id: leagueId },
@@ -231,9 +235,10 @@ export function LeagueDetailPage() {
       setIconModalOpen(false);
       syncLeagueCaches(queryClient, league);
     },
+    invalidates: [],
   });
 
-  const inactivateLeagueMutation = useMutation({
+  const inactivateLeagueMutation = createMutationHook({
     mutationFn: async () => {
       const response = await inactivateLeague({
         path: { id: leagueId },
@@ -257,9 +262,10 @@ export function LeagueDetailPage() {
       }
       setActiveDialog((current) => current === 'inactivate' ? null : current);
     },
+    invalidates: [],
   });
 
-  const activateLeagueMutation = useMutation({
+  const activateLeagueMutation = createMutationHook({
     mutationFn: async () => {
       const response = await activateLeague({
         path: { id: leagueId },
@@ -274,9 +280,10 @@ export function LeagueDetailPage() {
     onSuccess: async (league) => {
       syncLeagueCaches(queryClient, league);
     },
+    invalidates: [],
   });
 
-  const deleteLeagueMutation = useMutation({
+  const deleteLeagueMutation = createMutationHook({
     mutationFn: async () => {
       if (!leagueQuery.data) {
         throw new Error('League detail response is missing data.');
@@ -298,12 +305,12 @@ export function LeagueDetailPage() {
       queryClient.setQueryData(QueryKeys.leagues.list, (current: LeagueSummary[] | undefined) =>
         removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
       );
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.rootAdmin.manageLeagues });
       void navigate(auth.isRootAdmin ? '/manage/leagues' : '/welcome');
     },
+    invalidates: [QueryKeys.rootAdmin.manageLeagues],
   });
 
-  const leaveLeagueMutation = useMutation({
+  const leaveLeagueMutation = createMutationHook({
     mutationFn: async (): Promise<LeaveLeagueResponse> => {
       const response = await leaveLeague({
         path: { id: leagueId },
@@ -322,6 +329,7 @@ export function LeagueDetailPage() {
         removeLeagueSummary(current, leagueQuery.data?.id ?? ''),
       );
     },
+    invalidates: [],
     onError: (error) => {
       setLeaveActionError(
         extractErrorMessage(error, { fallback: 'We could not complete that leave request right now.', codeMessages: LEAGUE_DETAIL_ERROR_CODE_MESSAGES }),

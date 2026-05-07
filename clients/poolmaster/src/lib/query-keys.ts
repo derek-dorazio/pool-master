@@ -12,7 +12,7 @@ type ContestListFilters = {
 export const QueryKeys = {
   sports: {
     all: ['poolmaster', 'sports'] as const,
-    list: ['poolmaster', 'sports'] as const,
+    list: ['poolmaster', 'sports', 'list'] as const,
     detail: (sportId: QueryKeyId) => ['poolmaster', 'sports', sportId] as const,
   },
   sportEvents: {
@@ -82,7 +82,7 @@ export const QueryKeys = {
   },
   leagues: {
     all: ['poolmaster', 'leagues'] as const,
-    list: ['poolmaster', 'leagues'] as const,
+    list: ['poolmaster', 'leagues', 'list'] as const,
     detail: (leagueId: QueryKeyId) => ['poolmaster', 'league', leagueId] as const,
     dashboard: (leagueId: QueryKeyId) => ['poolmaster', 'league', leagueId, 'dashboard'] as const,
     manage: (leagueId: QueryKeyId) => ['poolmaster', 'league', leagueId, 'manage'] as const,
@@ -126,7 +126,7 @@ export const QueryKeys = {
     ingestionConfig: ['poolmaster', 'root-admin', 'ingestion-config'] as const,
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
     manageTeams: ['poolmaster', 'root-admin', 'manage-teams'] as const,
-    manageUsers: ['poolmaster', 'manage', 'users'] as const,
+    manageUsers: ['poolmaster', 'root-admin', 'manage-users'] as const,
     pollConfig: ['poolmaster', 'root-admin', 'poll-config'] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,
     providerSyncRuns: ['poolmaster', 'root-admin', 'provider-sync-runs'] as const,

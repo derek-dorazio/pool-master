@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { TeamIconKey } from '@poolmaster/shared/domain';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
@@ -49,6 +49,7 @@ import { getTeamIconOption, TEAM_ICON_OPTIONS } from './team-icon-catalog';
 import { buildDefaultTeamName } from './team-defaults';
 import { TeamIcon } from './team-icon';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
@@ -225,7 +226,7 @@ export function MyTeamPage() {
     }
   }, [activeDialog, selectedTeam, teamNameDraftTeamId]);
 
-  const createTeamMutation = useMutation({
+  const createTeamMutation = createMutationHook({
     mutationFn: async ({ nextTeamName, nextIconKey }: { nextTeamName: string; nextIconKey: TeamIconKey }) => {
       const response = await createLeagueSquad({
         path: { id: leagueId },
@@ -244,9 +245,10 @@ export function MyTeamPage() {
         current ? [...current.filter((candidate) => candidate.id !== team.id), team] : [team],
       );
     },
+    invalidates: [],
   });
 
-  const updateTeamMutation = useMutation({
+  const updateTeamMutation = createMutationHook({
     mutationFn: async ({ teamId, nextTeamName, nextIconKey }: { teamId: string; nextTeamName: string; nextIconKey: TeamIconKey }) => {
       const response = await updateLeagueSquad({
         path: { id: leagueId, squadId: teamId },
@@ -265,9 +267,10 @@ export function MyTeamPage() {
         current?.map((candidate) => (candidate.id === team.id ? team : candidate)) ?? [team],
       );
     },
+    invalidates: [],
   });
 
-  const updateTeamIconMutation = useMutation({
+  const updateTeamIconMutation = createMutationHook({
     mutationFn: async ({ teamId, nextIconKey }: { teamId: string; nextIconKey: TeamIconKey }) => {
       const response = await updateLeagueSquad({
         path: { id: leagueId, squadId: teamId },
@@ -287,9 +290,10 @@ export function MyTeamPage() {
         current?.map((candidate) => (candidate.id === team.id ? team : candidate)) ?? [team],
       );
     },
+    invalidates: [],
   });
 
-  const createOwnerInvitationMutation = useMutation({
+  const createOwnerInvitationMutation = createMutationHook({
     mutationFn: async (email: string) => {
       const squadId = selectedTeam?.id;
       if (!squadId) {
@@ -309,12 +313,14 @@ export function MyTeamPage() {
     },
     onSuccess: async () => {
       setCoOwnerEmail('');
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId) });
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.byLeague(leagueId) });
     },
+    invalidates: [
+      QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
+      QueryKeys.leagueTeams.byLeague(leagueId),
+    ],
   });
 
-  const replaceOwnerMutation = useMutation({
+  const replaceOwnerMutation = createMutationHook({
     mutationFn: async ({ userId, email }: { userId: string; email: string }) => {
       const squadId = selectedTeam?.id;
       if (!squadId) {
@@ -335,12 +341,14 @@ export function MyTeamPage() {
     onSuccess: async () => {
       setReplaceTargetUserId(null);
       setReplaceEmail('');
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId) });
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.byLeague(leagueId) });
     },
+    invalidates: [
+      QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
+      QueryKeys.leagueTeams.byLeague(leagueId),
+    ],
   });
 
-  const revokeOwnerInvitationMutation = useMutation({
+  const revokeOwnerInvitationMutation = createMutationHook({
     mutationFn: async (invitationId: string) => {
       const response = await revokeSquadOwnerInvitation({
         path: { id: leagueId, invitationId },
@@ -349,15 +357,12 @@ export function MyTeamPage() {
       if (!response.data?.invitation) {
         throw response.error ?? new Error('Revoke owner invitation response is missing data.');
       }
-
       return response.data.invitation;
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId) });
-    },
+    invalidates: [QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId)],
   });
 
-  const inactivateTeamMutation = useMutation({
+  const inactivateTeamMutation = createMutationHook({
     mutationFn: async () => {
       const squadId = selectedTeam?.id;
       if (!squadId) {
@@ -382,12 +387,14 @@ export function MyTeamPage() {
       setReplaceTargetUserId(null);
       setReplaceEmail('');
       setCoOwnerEmail('');
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId) });
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.byLeague(leagueId) });
     },
+    invalidates: [
+      QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
+      QueryKeys.leagueTeams.byLeague(leagueId),
+    ],
   });
 
-  const deleteTeamMutation = useMutation({
+  const deleteTeamMutation = createMutationHook({
     mutationFn: async () => {
       const squadId = selectedTeam?.id;
       if (!squadId) {
@@ -411,10 +418,12 @@ export function MyTeamPage() {
       setReplaceTargetUserId(null);
       setReplaceEmail('');
       setCoOwnerEmail('');
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId) });
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.byLeague(leagueId) });
       navigate('/manage/teams');
     },
+    invalidates: [
+      QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
+      QueryKeys.leagueTeams.byLeague(leagueId),
+    ],
   });
 
   async function handleSaveTeam() {

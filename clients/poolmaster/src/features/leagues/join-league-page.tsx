@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { TeamIconKey } from '@poolmaster/shared/domain';
 import { acceptInvitation, listLeagueSquads, updateLeagueSquad } from '@/lib/api';
@@ -26,6 +26,7 @@ import { buildDefaultTeamName } from '@/features/teams/team-defaults';
 import { getTeamIconOption, TEAM_ICON_OPTIONS } from '@/features/teams/team-icon-catalog';
 import { TeamIcon } from '@/features/teams/team-icon';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -54,7 +55,6 @@ export function JoinLeaguePage() {
   });
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { isAuthenticated, user } = useAuth();
   const [teamName, setTeamName] = useState('');
   const [selectedIconKey, setSelectedIconKey] = useState<TeamIconKey>(TeamIconKey.CAPTAIN_SMILE_FIELD);
@@ -106,7 +106,7 @@ export function JoinLeaguePage() {
     setSelectedIconKey(TeamIconKey.CAPTAIN_SMILE_FIELD);
   }, [user?.firstName, user?.lastName, inviteCode]);
 
-  const acceptMutation = useMutation({
+  const acceptMutation = createMutationHook({
     mutationFn: async () => {
       const response = await acceptInvitation({ body: { inviteCode } });
 
@@ -172,12 +172,14 @@ export function JoinLeaguePage() {
         'Accepted league invitation',
       );
       if (leagueCode) {
-        void queryClient.invalidateQueries({ queryKey: QueryKeys.leagues.list });
-        void queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.all });
         setRecentLeagueCode(leagueCode);
         navigate(buildLeaguePath(leagueCode));
       }
     },
+    invalidates: [
+      QueryKeys.leagues.list,
+      QueryKeys.leagueTeams.all,
+    ],
     onError: (error) => {
       const payload = {
         action: 'leagueInvite.accept.failed',

@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -16,6 +16,7 @@ import { getLogger } from '@/lib/logger';
 import { buildLeaguePath, buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { formatUserName } from './user-name';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 type RootAdminViewedUser = AdminGetUserDetailResponses[200];
 type ActiveDialog = 'role' | 'reset-password' | 'lifecycle' | 'delete' | null;
@@ -224,7 +225,6 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     feature: 'root-admin-user-account-page',
   });
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const [reason, setReason] = useState('');
   const [deleteEmailConfirmation, setDeleteEmailConfirmation] = useState('');
@@ -265,12 +265,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     );
   }, [logger, viewedUser]);
 
-  const invalidateTargetUser = async () => {
-    await queryClient.invalidateQueries({ queryKey: QueryKeys.users.detail(userId) });
-    await queryClient.invalidateQueries({ queryKey: QueryKeys.rootAdmin.users });
-  };
-
-  const roleMutation = useMutation({
+  const roleMutation = createMutationHook({
     mutationFn: async (targetUser: RootAdminViewedUser) => {
       const response = await adminSetUserRootAdmin({
         path: { userId: targetUser.id },
@@ -287,11 +282,14 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     onSuccess: async () => {
       setActiveDialog(null);
       setReason('');
-      await invalidateTargetUser();
     },
+    invalidates: [
+      QueryKeys.users.detail(userId),
+      QueryKeys.rootAdmin.users,
+    ],
   });
 
-  const resetPasswordMutation = useMutation({
+  const resetPasswordMutation = createMutationHook({
     mutationFn: async () => {
       const response = await adminResetUserPassword({
         path: { userId },
@@ -309,9 +307,10 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     onSuccess: (nextTemporaryPassword) => {
       setTemporaryPassword(nextTemporaryPassword);
     },
+    invalidates: [],
   });
 
-  const lifecycleMutation = useMutation({
+  const lifecycleMutation = createMutationHook({
     mutationFn: async (targetUser: RootAdminViewedUser) => {
       if (targetUser.isActive) {
         await adminDisableUser({
@@ -330,11 +329,14 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
     onSuccess: async () => {
       setActiveDialog(null);
       setReason('');
-      await invalidateTargetUser();
     },
+    invalidates: [
+      QueryKeys.users.detail(userId),
+      QueryKeys.rootAdmin.users,
+    ],
   });
 
-  const deleteMutation = useMutation({
+  const deleteMutation = createMutationHook({
     mutationFn: async (targetUser: RootAdminViewedUser) => {
       const response = await adminDeleteUser({
         path: { userId: targetUser.id },
@@ -352,9 +354,9 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
       setActiveDialog(null);
       setReason('');
       setDeleteEmailConfirmation('');
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.rootAdmin.users });
       navigate('/manage/users', { replace: true });
     },
+    invalidates: [QueryKeys.rootAdmin.users],
   });
 
   function openDialog(dialog: ActiveDialog) {

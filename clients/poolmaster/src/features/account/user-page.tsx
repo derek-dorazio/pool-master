@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -39,6 +39,7 @@ import { UserAccountSummary } from './user-account-summary';
 import { formatUserName } from './user-name';
 import { buildUserPath } from './user-routing';
 import { extractErrorMessage } from '@/lib/errors';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 type AccountPreferencesFormState = {
   timezone: string;
@@ -173,12 +174,11 @@ export function UserPage() {
     );
   }, [isSelf, logger, user, userId]);
 
-  const applyUserToSession = async (updatedUser: AuthSessionUserUpdate) => {
+  const applyUserToSession = (updatedUser: AuthSessionUserUpdate) => {
     setAuthSessionUser(queryClient, updatedUser);
-    await queryClient.invalidateQueries({ queryKey: AUTH_ME_QUERY_KEY });
   };
 
-  const profileMutation = useMutation({
+  const profileMutation = createMutationHook({
     mutationFn: async () => {
       const response = await updateAccountProfile({
         body: {
@@ -193,11 +193,12 @@ export function UserPage() {
       return response.data.user;
     },
     onSuccess: async (updatedUser) => {
-      await applyUserToSession(updatedUser);
+      applyUserToSession(updatedUser);
     },
+    invalidates: [AUTH_ME_QUERY_KEY],
   });
 
-  const usernameMutation = useMutation({
+  const usernameMutation = createMutationHook({
     mutationFn: async () => {
       const response = await updateAccountUsername({
         body: {
@@ -210,11 +211,12 @@ export function UserPage() {
       return response.data.user;
     },
     onSuccess: async (updatedUser) => {
-      await applyUserToSession(updatedUser);
+      applyUserToSession(updatedUser);
     },
+    invalidates: [AUTH_ME_QUERY_KEY],
   });
 
-  const preferencesMutation = useMutation({
+  const preferencesMutation = createMutationHook({
     mutationFn: async () => {
       const response = await updateAccountPreferences({
         body: {
@@ -230,11 +232,12 @@ export function UserPage() {
       return response.data.user;
     },
     onSuccess: async (updatedUser) => {
-      await applyUserToSession(updatedUser);
+      applyUserToSession(updatedUser);
     },
+    invalidates: [AUTH_ME_QUERY_KEY],
   });
 
-  const passwordMutation = useMutation({
+  const passwordMutation = createMutationHook({
     mutationFn: async () => {
       const response = await changeAccountPassword({
         body: {
@@ -255,6 +258,7 @@ export function UserPage() {
         confirmNewPassword: '',
       });
     },
+    invalidates: [],
   });
 
   const inactivateAccountAction = useMutationActionWorkflow({
@@ -266,8 +270,9 @@ export function UserPage() {
       return response.data.user;
     },
     onSuccess: async (updatedUser) => {
-      await applyUserToSession(updatedUser);
+      applyUserToSession(updatedUser);
     },
+    invalidateQueries: [AUTH_ME_QUERY_KEY],
     onClose: () => setActiveDialog(null),
     successToast: {
       title: 'Account inactive',
@@ -285,8 +290,9 @@ export function UserPage() {
       return response.data.user;
     },
     onSuccess: async (updatedUser) => {
-      await applyUserToSession(updatedUser);
+      applyUserToSession(updatedUser);
     },
+    invalidateQueries: [AUTH_ME_QUERY_KEY],
     onClose: () => setActiveDialog(null),
     successToast: {
       title: 'Account active',

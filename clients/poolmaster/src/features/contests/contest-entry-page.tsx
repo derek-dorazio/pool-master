@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -39,6 +39,7 @@ import {
 } from './contest-entry-selection';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 type ContestDetail = GetContestResponses[200]['contest'];
 type DraftState = GetDraftStateResponses[200];
@@ -346,7 +347,7 @@ export function ContestEntryPage() {
     );
   }, [contestEntriesQuery.data, contestId, contestQuery.data, draftStateQuery.data, entryId, logger]);
 
-  const saveEntryDetailsMutation = useMutation({
+  const saveEntryDetailsMutation = createMutationHook({
     mutationFn: async () => {
       const trimmedName = entryNameDraft.trim();
       const normalizedTiebreaker = tiebreakerDraft.trim();
@@ -410,12 +411,12 @@ export function ContestEntryPage() {
         },
         'Saved contest entry details',
       );
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: QueryKeys.contests.detail(contestId) }),
-        queryClient.invalidateQueries({ queryKey: QueryKeys.contestEntries.byContest(contestId) }),
-        queryClient.invalidateQueries({ queryKey: draftStateQueryKey }),
-      ]);
     },
+    invalidates: [
+      QueryKeys.contests.detail(contestId),
+      QueryKeys.contestEntries.byContest(contestId),
+      draftStateQueryKey,
+    ],
     onError: (error) => {
       const payload = {
         action: 'contestEntry.saveDetails.failed',
@@ -434,7 +435,7 @@ export function ContestEntryPage() {
     },
   });
 
-  const submitSelectionMutation = useMutation({
+  const submitSelectionMutation = createMutationHook({
     mutationFn: async (participantId: string) => {
       const response = await submitContestSelection({
         path: { contestId },
@@ -486,9 +487,11 @@ export function ContestEntryPage() {
         'Submitted contest selection successfully',
       );
       queryClient.setQueryData<DraftState>(draftStateQueryKey, draftState);
-      void queryClient.invalidateQueries({ queryKey: QueryKeys.contests.detail(contestId) });
-      void queryClient.invalidateQueries({ queryKey: QueryKeys.contestEntries.byContest(contestId) });
     },
+    invalidates: [
+      QueryKeys.contests.detail(contestId),
+      QueryKeys.contestEntries.byContest(contestId),
+    ],
     onError: (error, participantId, context) => {
       if (context?.previousDraftState) {
         queryClient.setQueryData<DraftState>(draftStateQueryKey, context.previousDraftState);

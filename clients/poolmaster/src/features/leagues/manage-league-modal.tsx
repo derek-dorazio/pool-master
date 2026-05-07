@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import type { LeagueIconKey } from '@poolmaster/shared/domain';
 import {
@@ -16,6 +16,7 @@ import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { removeLeagueSummary, syncLeagueCaches } from './league-cache';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import { createMutationHook } from '@/lib/mutation-hooks';
 
 type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 
@@ -103,7 +104,7 @@ export function ManageLeagueModal({
     },
   });
 
-  const inactivateMutation = useMutation({
+  const inactivateMutation = createMutationHook({
     mutationFn: async (leagueId: string) => {
       const response = await inactivateLeague({
         path: { id: leagueId },
@@ -118,9 +119,10 @@ export function ManageLeagueModal({
     onSuccess: async (updatedLeague) => {
       syncLeagueCaches(queryClient, updatedLeague, { manageLeagueId: league?.id ?? null });
     },
+    invalidates: [],
   });
 
-  const detailsMutation = useMutation({
+  const detailsMutation = createMutationHook({
     mutationFn: async ({
       leagueId,
       name,
@@ -149,9 +151,10 @@ export function ManageLeagueModal({
       setDetailsDescription(updatedLeague.description ?? '');
       syncLeagueCaches(queryClient, updatedLeague, { manageLeagueId: league?.id ?? null });
     },
+    invalidates: [],
   });
 
-  const iconMutation = useMutation({
+  const iconMutation = createMutationHook({
     mutationFn: async ({ leagueId, iconKey }: { leagueId: string; iconKey: LeagueIconKey }) => {
       const response = await updateLeagueIcon({
         path: { id: leagueId },
@@ -168,9 +171,10 @@ export function ManageLeagueModal({
       setSelectedIconKey(updatedLeague.iconKey);
       syncLeagueCaches(queryClient, updatedLeague, { manageLeagueId: league?.id ?? null });
     },
+    invalidates: [],
   });
 
-  const deleteMutation = useMutation({
+  const deleteMutation = createMutationHook({
     mutationFn: async ({ leagueId, leagueCode }: { leagueId: string; leagueCode: string }) => {
       const response = await deleteLeague({
         path: { id: leagueId },
@@ -191,6 +195,7 @@ export function ManageLeagueModal({
       queryClient.removeQueries({ queryKey: QueryKeys.leagues.manage(league?.id), exact: true });
       setDeleteSuccess(true);
     },
+    invalidates: [],
   });
 
   function handleClose() {
