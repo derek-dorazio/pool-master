@@ -30,6 +30,7 @@ import {
 } from "@/features/shared/ui";
 import { isHistoricalContest } from "./contest-status";
 import { ContestListCard } from "./contest-list-card";
+import { QueryKeys } from '@/lib/query-keys';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]["league"];
 type ContestSummary = ListContestsResponses[200]["contests"][number];
@@ -43,7 +44,7 @@ export function LeagueContestsPage() {
   const isMyEntriesFilter = searchParams.get("filter") === "my-entries";
 
   const leagueQuery = useQuery({
-    queryKey: ["poolmaster", "league", leagueCode],
+    queryKey: QueryKeys.leagues.detail(leagueCode),
     queryFn: async (): Promise<LeagueDetail> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
@@ -84,7 +85,7 @@ export function LeagueContestsPage() {
 
   const leagueId = leagueQuery.data?.id ?? "";
   const contestsQuery = useQuery({
-    queryKey: ["poolmaster", "league-contests", leagueId],
+    queryKey: QueryKeys.contests.list({ leagueId }),
     queryFn: async (): Promise<ContestSummary[]> => {
       const response = await listContests({ path: { id: leagueId } });
 
@@ -110,13 +111,7 @@ export function LeagueContestsPage() {
     [activeContests],
   );
   const myContestIdsQuery = useQuery({
-    queryKey: [
-      "poolmaster",
-      "league-contests",
-      leagueId,
-      "my-entries",
-      activeContestIds,
-    ],
+    queryKey: QueryKeys.contests.myEntries(leagueId, activeContestIds),
     queryFn: async (): Promise<Set<string>> => {
       const contestIds = await Promise.all(
         activeContestIds.map(async (contestId) => {

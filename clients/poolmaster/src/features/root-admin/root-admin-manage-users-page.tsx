@@ -6,6 +6,7 @@ import {
   DataGridPage,
   StatusBadge,
 } from "@/features/shared/ui";
+import { QueryKeys } from '@/lib/query-keys';
 
 type RootAdminUser = AdminListUsersResponses[200]["items"][number];
 const columnHelper = createColumnHelper<RootAdminUser>();
@@ -17,7 +18,7 @@ function buildUserDisplayName(user: RootAdminUser) {
 
 export function RootAdminManageUsersPage() {
   const usersQuery = useQuery({
-    queryKey: ["poolmaster", "manage", "users"],
+    queryKey: QueryKeys.rootAdmin.manageUsers,
     queryFn: async () => {
       const response = await adminListUsers({
         query: {

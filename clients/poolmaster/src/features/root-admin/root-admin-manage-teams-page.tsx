@@ -7,6 +7,7 @@ import { ManagementListPage, StatusBadge } from '@/features/shared/ui';
 import { TeamIcon } from '@/features/teams/team-icon';
 import { getTeamIconOption } from '@/features/teams/team-icon-catalog';
 import { extractErrorMessage } from '@/lib/errors';
+import { QueryKeys } from '@/lib/query-keys';
 
 type ManagedTeam = AdminListTeamsResponses[200]['teams'][number];
 
@@ -28,7 +29,7 @@ function buildOwnerLabel(team: ManagedTeam) {
 
 export function RootAdminManageTeamsPage() {
   const teamsQuery = useQuery({
-    queryKey: ['poolmaster', 'root-admin', 'manage-teams'],
+    queryKey: QueryKeys.rootAdmin.manageTeams,
     queryFn: async (): Promise<ManagedTeam[]> => {
       const response = await adminListTeams({
         query: {},

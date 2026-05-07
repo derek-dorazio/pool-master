@@ -25,6 +25,7 @@ import {
 import { buildDefaultTeamName } from '@/features/teams/team-defaults';
 import { getTeamIconOption, TEAM_ICON_OPTIONS } from '@/features/teams/team-icon-catalog';
 import { TeamIcon } from '@/features/teams/team-icon';
+import { QueryKeys } from '@/lib/query-keys';
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -171,8 +172,8 @@ export function JoinLeaguePage() {
         'Accepted league invitation',
       );
       if (leagueCode) {
-        void queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
-        void queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams'] });
+        void queryClient.invalidateQueries({ queryKey: QueryKeys.leagues.list });
+        void queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.all });
         setRecentLeagueCode(leagueCode);
         navigate(buildLeaguePath(leagueCode));
       }

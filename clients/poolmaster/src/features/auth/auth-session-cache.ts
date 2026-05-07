@@ -6,9 +6,10 @@ import type {
   UpdateAccountPreferencesResponses,
   UpdateAccountProfileResponses,
 } from '@/lib/api';
+import { QueryKeys } from '@/lib/query-keys';
 
-export const AUTH_ME_QUERY_KEY = ['poolmaster', 'auth', 'me'] as const;
-export const AUTH_REFRESH_QUERY_KEY = ['poolmaster', 'auth', 'refresh'] as const;
+export const AUTH_ME_QUERY_KEY = QueryKeys.auth.me;
+export const AUTH_REFRESH_QUERY_KEY = QueryKeys.auth.refresh;
 
 export type AuthSessionUser = GetCurrentUserResponses[200]['user'];
 export type AuthSessionData = AuthSessionUser | null;

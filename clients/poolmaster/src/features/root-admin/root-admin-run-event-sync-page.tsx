@@ -26,6 +26,7 @@ import {
   type SyncSport,
 } from './root-admin-sync-utils';
 import { extractErrorMessage } from '@/lib/errors';
+import { QueryKeys } from '@/lib/query-keys';
 
 type EventSyncEvent = ListEventsResponses[200]['events'][number];
 
@@ -76,7 +77,7 @@ export function RootAdminRunEventSyncPage() {
   const [selectedEventExternalId, setSelectedEventExternalId] = useState('');
 
   const providersQuery = useQuery({
-    queryKey: ['poolmaster', 'root-admin', 'providers'],
+    queryKey: QueryKeys.rootAdmin.providers,
     queryFn: async (): Promise<ProviderSummary[]> => {
       const response = await adminListProviders();
       if (!response.data?.items) {
@@ -102,7 +103,7 @@ export function RootAdminRunEventSyncPage() {
   }, [eventSyncSport, supportedSyncSports]);
 
   const eventsQuery = useQuery({
-    queryKey: ['poolmaster', 'root-admin', 'event-sync-events', eventSyncSport],
+    queryKey: QueryKeys.rootAdmin.eventSyncEvents(eventSyncSport),
     queryFn: async (): Promise<EventSyncEvent[]> => {
       const response = await listEvents({
         query: {
@@ -192,7 +193,7 @@ export function RootAdminRunEventSyncPage() {
         'Submitted manual provider event sync',
       );
       await queryClient.invalidateQueries({
-        queryKey: ['poolmaster', 'root-admin', 'provider-sync-runs'],
+        queryKey: QueryKeys.rootAdmin.providerSyncRuns,
       });
     },
     onError: (error) => {

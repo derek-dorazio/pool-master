@@ -2,11 +2,12 @@ import {
   getTeamOwnerInvitationPreview,
   type GetTeamOwnerInvitationPreviewResponses,
 } from '@/lib/api';
+import { QueryKeys } from '@/lib/query-keys';
 
 export type TeamOwnerInvitationPreview = GetTeamOwnerInvitationPreviewResponses[200]['invitation'];
 
 export function getTeamOwnerInvitationPreviewQueryKey(inviteCode: string) {
-  return ['poolmaster', 'team-owner-invitation-preview', inviteCode] as const;
+  return QueryKeys.invitations.teamOwnerPreview(inviteCode);
 }
 
 export async function fetchTeamOwnerInvitationPreview(

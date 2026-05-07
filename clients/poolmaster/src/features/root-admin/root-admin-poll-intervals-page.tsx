@@ -19,6 +19,7 @@ import {
   toPositiveNumber,
   type PollIntervalConfig,
 } from './root-admin-sync-config-utils';
+import { QueryKeys } from '@/lib/query-keys';
 
 const POLL_INTERVAL_FIELDS = [
   ['standings', 'Standings'],
@@ -35,7 +36,7 @@ export function RootAdminPollIntervalsPage() {
   const [draft, setDraft] = useState<PollIntervalConfig | null>(null);
 
   const pollConfigQuery = useQuery({
-    queryKey: ['poolmaster', 'root-admin', 'poll-config'],
+    queryKey: QueryKeys.rootAdmin.pollConfig,
     queryFn: async (): Promise<PollIntervalConfig> => {
       const response = await adminGetPollIntervals();
       if (!response.data) {
@@ -69,7 +70,7 @@ export function RootAdminPollIntervalsPage() {
     onSuccess: async (data) => {
       setDraft(clonePollConfig(data));
       await queryClient.invalidateQueries({
-        queryKey: ['poolmaster', 'root-admin', 'poll-config'],
+        queryKey: QueryKeys.rootAdmin.pollConfig,
       });
     },
   });
@@ -85,7 +86,7 @@ export function RootAdminPollIntervalsPage() {
     onSuccess: async (data) => {
       setDraft(clonePollConfig(data));
       await queryClient.invalidateQueries({
-        queryKey: ['poolmaster', 'root-admin', 'poll-config'],
+        queryKey: QueryKeys.rootAdmin.pollConfig,
       });
     },
   });

@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { MyTeamPage } from './my-team-page';
+import { QueryKeys } from '@/lib/query-keys';
 
 const changeMemberRoleMock = vi.fn();
 const createLeagueSquadMock = vi.fn();
@@ -587,11 +588,11 @@ describe('pool-master-rop.22: MyTeamPage', () => {
     });
 
     await act(async () => {
-      await queryClient.refetchQueries({ queryKey: ['poolmaster', 'league-teams', 'league-1'] });
+      await queryClient.refetchQueries({ queryKey: QueryKeys.leagueTeams.byLeague('league-1') });
     });
 
     await waitFor(() =>
-      expect(queryClient.getQueryData(['poolmaster', 'league-teams', 'league-1'])).toEqual([
+      expect(queryClient.getQueryData(QueryKeys.leagueTeams.byLeague('league-1'))).toEqual([
         expect.objectContaining({
           name: 'Server Snapshot Team',
         }),

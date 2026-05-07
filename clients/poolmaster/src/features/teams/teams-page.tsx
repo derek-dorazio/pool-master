@@ -23,6 +23,7 @@ import { Alert } from '@/features/shared/ui';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
+import { QueryKeys } from '@/lib/query-keys';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type LeagueMember = ListLeagueMembersResponses[200]['members'][number];
@@ -45,7 +46,7 @@ export function TeamsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
 
   const leagueQuery = useQuery({
-    queryKey: ['poolmaster', 'league', leagueCode],
+    queryKey: QueryKeys.leagues.detail(leagueCode),
     queryFn: async (): Promise<LeagueDetail> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
       if (!response.data?.league) {
@@ -84,7 +85,7 @@ export function TeamsPage() {
   const leagueId = leagueQuery.data?.id ?? '';
 
   const teamsQuery = useQuery({
-    queryKey: ['poolmaster', 'league-teams', leagueId],
+    queryKey: QueryKeys.leagueTeams.byLeague(leagueId),
     queryFn: async (): Promise<TeamSummary[]> => {
       const response = await listLeagueSquads({ path: { id: leagueId } });
       if (!response.data?.squads) {
@@ -98,7 +99,7 @@ export function TeamsPage() {
   });
 
   const ownerInvitationsQuery = useQuery({
-    queryKey: ['poolmaster', 'league-team-owner-invitations', leagueId],
+    queryKey: QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),
     queryFn: async (): Promise<OwnerInvitation[]> => {
       const response = await listSquadOwnerInvitations({ path: { id: leagueId } });
       if (!response.data?.invitations) {
@@ -112,7 +113,7 @@ export function TeamsPage() {
   });
 
   const leagueMembersQuery = useQuery({
-    queryKey: ['poolmaster', 'league-members', leagueId],
+    queryKey: QueryKeys.leagues.members(leagueId),
     queryFn: async (): Promise<LeagueMember[]> => {
       const response = await listLeagueMembers({ path: { id: leagueId } });
       if (!response.data?.members) {

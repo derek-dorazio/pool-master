@@ -8,6 +8,7 @@ import {
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import type { ContestConfigTemplate } from './content-configuration-utils';
+import { QueryKeys } from '@/lib/query-keys';
 
 const columnHelper = createColumnHelper<ContestConfigTemplate>();
 
@@ -17,7 +18,7 @@ export function RootAdminContentConfigurationListPage() {
   });
 
   const templatesQuery = useQuery({
-    queryKey: ['poolmaster', 'root-admin', 'contest-config-templates'],
+    queryKey: QueryKeys.rootAdmin.contestConfigTemplates,
     queryFn: async (): Promise<ContestConfigTemplate[]> => {
       const response = await adminListContestConfigTemplates();
 

@@ -6,6 +6,7 @@ import {
   useMutationActionWorkflow,
   type MutationActionWorkflowOptions,
 } from "./mutation-action-workflow";
+import { QueryKeys } from '@/lib/query-keys';
 
 function renderWorkflow<TData, TVariables = void>(
   options: MutationActionWorkflowOptions<TData, TVariables>,
@@ -61,7 +62,7 @@ describe("pool-master-pjr.4: shared mutation action workflow", () => {
     const onSuccess = vi.fn();
     const { invalidateSpy } = renderWorkflow({
       action,
-      invalidateQueries: [["poolmaster", "entity"]],
+      invalidateQueries: [QueryKeys.leagues.list],
       navigate,
       onClose,
       onSuccess,
@@ -75,7 +76,7 @@ describe("pool-master-pjr.4: shared mutation action workflow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Run" }));
 
     await waitFor(() => expect(action).toHaveBeenCalledWith("payload"));
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ["poolmaster", "entity"] }));
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QueryKeys.leagues.list }));
     await waitFor(() => expect(onSuccess).toHaveBeenCalledWith({ id: "updated" }, "payload"));
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith({ id: "updated" }, "payload");

@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 import type { GetLeagueResponses, ListLeaguesResponses } from '@/lib/api';
+import { QueryKeys } from '@/lib/query-keys';
 
 export type LeagueSummary = ListLeaguesResponses[200]['leagues'][number];
 export type LeagueDetail = GetLeagueResponses[200]['league'];
@@ -52,12 +53,12 @@ export function syncLeagueCaches(
 ) {
   const summary = toLeagueSummary(league);
 
-  queryClient.setQueryData<LeagueSummary[]>(['poolmaster', 'leagues'], (current) =>
+  queryClient.setQueryData<LeagueSummary[]>(QueryKeys.leagues.list, (current) =>
     upsertLeagueSummary(current, summary),
   );
-  queryClient.setQueryData(['poolmaster', 'league', league.leagueCode], league);
+  queryClient.setQueryData(QueryKeys.leagues.detail(league.leagueCode), league);
 
   if (options.manageLeagueId) {
-    queryClient.setQueryData(['poolmaster', 'league', options.manageLeagueId, 'manage'], league);
+    queryClient.setQueryData(QueryKeys.leagues.manage(options.manageLeagueId), league);
   }
 }

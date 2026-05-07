@@ -24,6 +24,7 @@ import {
   type SyncSport,
 } from './root-admin-sync-utils';
 import { extractErrorMessage } from '@/lib/errors';
+import { QueryKeys } from '@/lib/query-keys';
 
 export function RootAdminRunSportSyncPage() {
   const logger = getLogger().child({
@@ -36,7 +37,7 @@ export function RootAdminRunSportSyncPage() {
   );
 
   const providersQuery = useQuery({
-    queryKey: ['poolmaster', 'root-admin', 'providers'],
+    queryKey: QueryKeys.rootAdmin.providers,
     queryFn: async (): Promise<ProviderSummary[]> => {
       const response = await adminListProviders();
       if (!response.data?.items) {
@@ -107,10 +108,10 @@ export function RootAdminRunSportSyncPage() {
       );
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: ['poolmaster', 'root-admin', 'providers'],
+          queryKey: QueryKeys.rootAdmin.providers,
         }),
         queryClient.invalidateQueries({
-          queryKey: ['poolmaster', 'root-admin', 'provider-sync-runs'],
+          queryKey: QueryKeys.rootAdmin.providerSyncRuns,
         }),
       ]);
     },

@@ -13,6 +13,7 @@ import {
   updateLeagueIconData,
   type LeagueSummary,
 } from './test/fixtures';
+import { QueryKeys } from '@/lib/query-keys';
 
 const inactivateLeagueMock = vi.fn();
 const deleteLeagueMock = vi.fn();
@@ -30,7 +31,7 @@ vi.mock('@/lib/api', () => ({
 
 function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummary[]> }) {
   const leaguesQuery = useQuery({
-    queryKey: ['poolmaster', 'leagues'],
+    queryKey: QueryKeys.leagues.list,
     queryFn,
     retry: false,
   });
@@ -227,11 +228,11 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
         },
       }),
     );
-    expect(queryClient.getQueryData(['poolmaster', 'league', 'BIGDAWGS'])).toMatchObject({
+    expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toMatchObject({
       name: 'Edited Dawgs',
       description: 'Updated description',
     });
-    expect(queryClient.getQueryData(['poolmaster', 'leagues'])).toEqual([
+    expect(queryClient.getQueryData(QueryKeys.leagues.list)).toEqual([
       expect.objectContaining({
         id: 'league-1',
         name: 'Edited Dawgs',
@@ -285,10 +286,10 @@ describe('pool-master-rop.23: ManageLeagueModal generated DTO fixtures', () => {
     );
     await waitFor(() => expect(screen.getByTestId('league-list-state')).toHaveTextContent('BIGDAWGS:GOLF_BALL'));
     expect(leaguesQueryFn).toHaveBeenCalledTimes(1);
-    expect(queryClient.getQueryData(['poolmaster', 'league', 'BIGDAWGS'])).toMatchObject({
+    expect(queryClient.getQueryData(QueryKeys.leagues.detail('BIGDAWGS'))).toMatchObject({
       iconKey: 'GOLF_BALL',
     });
-    expect(queryClient.getQueryData(['poolmaster', 'leagues'])).toEqual([
+    expect(queryClient.getQueryData(QueryKeys.leagues.list)).toEqual([
       expect.objectContaining({
         id: 'league-1',
         iconKey: 'GOLF_BALL',

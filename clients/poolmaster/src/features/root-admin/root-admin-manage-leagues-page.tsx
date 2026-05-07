@@ -8,13 +8,14 @@ import {
   StatusBadge,
 } from "@/features/shared/ui";
 import { extractErrorMessage } from '@/lib/errors';
+import { QueryKeys } from '@/lib/query-keys';
 
 type ManagedLeague = AdminListLeaguesResponses[200]["leagues"][number];
 const columnHelper = createColumnHelper<ManagedLeague>();
 
 export function RootAdminManageLeaguesPage() {
   const leaguesQuery = useQuery({
-    queryKey: ["poolmaster", "root-admin", "manage-leagues"],
+    queryKey: QueryKeys.rootAdmin.manageLeagues,
     queryFn: async (): Promise<ManagedLeague[]> => {
       const response = await adminListLeagues({
         query: {},

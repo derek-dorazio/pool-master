@@ -22,6 +22,7 @@ import {
   fetchTeamOwnerInvitationPreview,
   getTeamOwnerInvitationPreviewQueryKey,
 } from './team-owner-invitation-preview';
+import { QueryKeys } from '@/lib/query-keys';
 
 function getErrorMessage(error: unknown) {
   if (!error || typeof error !== 'object') {
@@ -129,8 +130,8 @@ export function JoinTeamOwnerPage() {
       );
       const leagueCode = invitationQuery.data?.league.leagueCode;
       if (leagueCode) {
-        void queryClient.invalidateQueries({ queryKey: ['poolmaster', 'leagues'] });
-        void queryClient.invalidateQueries({ queryKey: ['poolmaster', 'league-teams'] });
+        void queryClient.invalidateQueries({ queryKey: QueryKeys.leagues.list });
+        void queryClient.invalidateQueries({ queryKey: QueryKeys.leagueTeams.all });
         setRecentLeagueCode(leagueCode);
         navigate(buildLeagueTeamPath(leagueCode));
       }

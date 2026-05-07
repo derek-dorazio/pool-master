@@ -55,6 +55,7 @@ import {
   type TierDefinitionUpdate,
 } from './contest-configuration-sections';
 import { extractErrorMessage } from '@/lib/errors';
+import { QueryKeys } from '@/lib/query-keys';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type SportEventSummary = ListEventsResponses[200]['events'][number];
@@ -321,7 +322,7 @@ export function CreateContestPage() {
   const [isHydratedFromManagedContest, setIsHydratedFromManagedContest] = useState(false);
 
   const leagueQuery = useQuery({
-    queryKey: ['poolmaster', 'league', leagueCode],
+    queryKey: QueryKeys.leagues.detail(leagueCode),
     queryFn: async (): Promise<LeagueDetail> => {
       const response = await getLeagueByCode({ path: { leagueCode } });
 
@@ -336,7 +337,7 @@ export function CreateContestPage() {
   });
 
   const eventsQuery = useQuery({
-    queryKey: ['poolmaster', 'sport-events', DEFAULT_CREATE_SPORT],
+    queryKey: QueryKeys.sportEvents.list({ sport: DEFAULT_CREATE_SPORT }),
     queryFn: async (): Promise<SportEventSummary[]> => {
       const response = await listEvents({
         query: {
@@ -373,7 +374,7 @@ export function CreateContestPage() {
       : selectedContestFormats[0] ?? ContestFormat.ROSTER;
 
   const managedContestQuery = useQuery({
-    queryKey: ['poolmaster', 'managed-contest', leagueQuery.data?.id, contestId],
+    queryKey: QueryKeys.managedContests.byLeagueAndContest(leagueQuery.data?.id, contestId),
     queryFn: async (): Promise<ManagedContest> => {
       const response = await getManagedContest({
         path: { id: leagueQuery.data!.id, contestId: contestId! },
@@ -390,13 +391,11 @@ export function CreateContestPage() {
   });
 
   const templatesQuery = useQuery({
-    queryKey: [
-      'poolmaster',
-      'managed-contest-templates',
+    queryKey: QueryKeys.managedContests.templates(
       leagueQuery.data?.id,
       selectedEventSport,
       selectedContestFormat,
-    ],
+    ),
     queryFn: async (): Promise<ManagedContestTemplate[]> => {
       const response = await listManagedContestTemplates({
         path: { id: leagueQuery.data!.id },
@@ -933,13 +932,13 @@ export function CreateContestPage() {
         isEditMode ? 'Saved contest successfully' : 'Created contest successfully',
       );
       await queryClient.invalidateQueries({
-        queryKey: ['poolmaster', 'league-contests', leagueQuery.data?.id],
+        queryKey: QueryKeys.contests.list({ leagueId: leagueQuery.data?.id }),
       });
       await queryClient.invalidateQueries({
-        queryKey: ['poolmaster', 'contest', savedContestId],
+        queryKey: QueryKeys.contests.detail(savedContestId),
       });
       await queryClient.invalidateQueries({
-        queryKey: ['poolmaster', 'managed-contest', savedContestId],
+        queryKey: QueryKeys.managedContests.detail(savedContestId),
       });
       navigate(buildLeagueContestPath(leagueCode, savedContestId), {
         state: { leagueCode },
@@ -1004,7 +1003,7 @@ export function CreateContestPage() {
         'Deleted contest successfully',
       );
       await queryClient.invalidateQueries({
-        queryKey: ['poolmaster', 'league-contests', leagueQuery.data?.id],
+        queryKey: QueryKeys.contests.list({ leagueId: leagueQuery.data?.id }),
       });
       navigate(buildLeaguePath(leagueCode));
     },
