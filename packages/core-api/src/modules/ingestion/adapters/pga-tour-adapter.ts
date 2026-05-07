@@ -139,11 +139,10 @@ export class PgaTourAdapter implements SportDataProvider {
    * ESPN leaderboard and converting each round into a `GolfRoundUpdate`.
    *
    * ESPN's per-round payload exposes `roundNumber` + scoreToPar `score`
-   * but not per-round strokes — `totalStrokes` is event-cumulative. The
-   * adapter approximates per-round strokes as (par + scoreToPar) using a
-   * notional par of 72; rop.78.7's contribution-table scoring path
-   * recomputes from real round data once the live-scoring pipeline reads
-   * SportEventParticipantGolfRound directly.
+   * but not per-round strokes — `totalStrokes` is event-cumulative. Emit
+   * null strokes; downstream persistence skips these rows until rop.78.7
+   * sources real per-round strokes (e.g. from PGA Tour's tournament feed).
+   * No synthesis from par + scoreToPar.
    */
   async getLiveScores(eventId: string): Promise<LiveScoreResult> {
     const data = await this.fetch<EspnGolfLeaderboard>(
@@ -161,16 +160,13 @@ export class PgaTourAdapter implements SportDataProvider {
           participantExternalId: athlete.id,
           round: round.roundNumber,
           scoreToPar: round.score,
-          // Per-round strokes aren't exposed by the ESPN leaderboard;
-          // approximate from par + scoreToPar using a notional par of 72
-          // until rop.78.7 sources real per-round strokes.
-          strokes: 72 + round.score,
+          strokes: null,
           status: 'COMPLETED',
         });
       }
     }
 
-    return { category: 'GOLF', rounds };
+    return { category: 'GOLF', externalEventId: eventId, rounds };
   }
 
   async getEventResults(eventId: string): Promise<ProviderEventResult | null> {

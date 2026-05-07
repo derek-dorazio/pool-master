@@ -29,7 +29,7 @@ function createMockProvider(overrides: Partial<SportDataProvider> = {}): SportDa
     getEventDetails: jest.fn().mockResolvedValue(null),
     getParticipants: jest.fn().mockResolvedValue([]),
     getRankings: jest.fn().mockResolvedValue([]),
-    getLiveScores: jest.fn().mockResolvedValue({ category: 'GOLF', rounds: [] } satisfies LiveScoreResult),
+    getLiveScores: jest.fn().mockResolvedValue({ category: 'GOLF', externalEventId: 'evt-ext', rounds: [] } satisfies LiveScoreResult),
     getEventResults: jest.fn().mockResolvedValue(null),
     healthCheck: jest.fn().mockResolvedValue({
       providerId: 'mock-provider',
@@ -278,6 +278,7 @@ describe('IngestionScheduler', () => {
     it('pool-master-rop.78.3 — calls getLiveScores and forwards typed LiveScoreResult to onLiveScores', async () => {
       const mockResult: LiveScoreResult = {
         category: 'GOLF',
+        externalEventId: 'evt-1',
         rounds: [
           {
             participantExternalId: 'player-1',
@@ -303,7 +304,7 @@ describe('IngestionScheduler', () => {
     });
 
     it('succeeds with empty results', async () => {
-      const empty: LiveScoreResult = { category: 'GOLF', rounds: [] };
+      const empty: LiveScoreResult = { category: 'GOLF', externalEventId: 'evt-1', rounds: [] };
       const provider = createMockProvider({
         getLiveScores: jest.fn().mockResolvedValue(empty),
       });
@@ -354,6 +355,7 @@ describe('IngestionScheduler', () => {
         getEventDetails: jest.fn().mockResolvedValue(detail),
         getLiveScores: jest.fn().mockResolvedValue({
           category: 'GOLF',
+          externalEventId: 'evt-1',
           rounds: [
             {
               participantExternalId: 'player-1',

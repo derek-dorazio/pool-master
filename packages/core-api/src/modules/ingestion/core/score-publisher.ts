@@ -74,11 +74,41 @@ export async function publishLiveScoreUpdate(
   }
   const validated = parsed.data;
 
-  // 2/3. Persist per category.
+  // 2/3. Resolve external → internal SportEvent so persistence is scoped
+  // to one event, then dispatch to the per-category persistence path.
+  const sportEvent = await deps.prisma.sportEvent.findUnique({
+    where: { providerId_externalId: { providerId: deps.providerId, externalId: validated.externalEventId } },
+    select: { id: true },
+  });
+  if (!sportEvent) {
+    deps.logger?.warn(
+      {
+        action: 'liveScore.publish.unknownSportEvent',
+        data: { providerId: deps.providerId, externalEventId: validated.externalEventId, category: validated.category },
+      },
+      'Skipping live-score persistence — no internal SportEvent matches (providerId, externalEventId)',
+    );
+    // Still emit the typed event so downstream observers can react to a
+    // payload arrival even if persistence was skipped.
+    const skippedEvent: LiveScorePersistedEvent = {
+      id: randomUUID(),
+      type: 'live_score.persisted',
+      sourceService: 'ingestion-worker',
+      timestamp: new Date().toISOString(),
+      category: validated.category,
+      providerId: deps.providerId,
+      updatesPersisted: 0,
+      ingestedAt: new Date().toISOString(),
+    };
+    await (deps.bus ?? eventBus).publish('live_score.persisted', skippedEvent);
+    return 0;
+  }
+
   let updatesPersisted = 0;
   switch (validated.category) {
     case 'GOLF':
       updatesPersisted = await persistGolfRounds(
+        sportEvent.id,
         validated.rounds,
         deps,
       );
@@ -109,13 +139,14 @@ export async function publishLiveScoreUpdate(
 }
 
 async function persistGolfRounds(
+  sportEventId: string,
   rounds: readonly GolfRoundUpdate[],
   deps: LiveScorePublisherDeps,
 ): Promise<number> {
   if (rounds.length === 0) return 0;
 
   // Resolve participantExternalId → SportEventParticipant.id via
-  // ParticipantProviderMapping → SportEventParticipant.
+  // ParticipantProviderMapping → SportEventParticipant scoped to this event.
   const externalIds = Array.from(new Set(rounds.map((r) => r.participantExternalId)));
   const mappings = await deps.prisma.participantProviderMapping.findMany({
     where: {
@@ -128,26 +159,34 @@ async function persistGolfRounds(
     mappings.map((m) => [m.externalId, m.participantId]),
   );
 
-  // For each (participantId), find the SportEventParticipant row(s). The
-  // event scope is implicit via the contest's sport-event; we resolve the
-  // SEP by participantId, picking the most recent row when ambiguous.
   const participantIds = Array.from(new Set(participantIdByExternalId.values()));
   const seps = participantIds.length === 0
     ? []
     : await deps.prisma.sportEventParticipant.findMany({
-        where: { participantId: { in: participantIds } },
-        select: { id: true, participantId: true, sportEventId: true, createdAt: true },
-        orderBy: { createdAt: 'desc' },
+        where: { participantId: { in: participantIds }, sportEventId },
+        select: { id: true, participantId: true },
       });
   const sepByParticipantId = new Map<string, string>();
   for (const sep of seps) {
-    if (!sepByParticipantId.has(sep.participantId)) {
-      sepByParticipantId.set(sep.participantId, sep.id);
-    }
+    sepByParticipantId.set(sep.participantId, sep.id);
   }
 
   let persisted = 0;
   for (const round of rounds) {
+    if (round.strokes === null) {
+      // Provider doesn't expose per-round strokes (mock-feed, ESPN
+      // leaderboard) — persistence stays a no-op until rop.78.7 supplies
+      // real strokes from PGA Tour. The DB column is NOT NULL so we
+      // cannot persist scoreToPar without strokes today.
+      deps.logger?.debug?.(
+        {
+          action: 'liveScore.golf.nullStrokesSkipped',
+          data: { providerId: deps.providerId, externalId: round.participantExternalId, round: round.round },
+        },
+        'Skipping golf round update — provider does not expose per-round strokes',
+      );
+      continue;
+    }
     const participantId = participantIdByExternalId.get(round.participantExternalId);
     if (!participantId) {
       deps.logger?.warn(
@@ -164,9 +203,9 @@ async function persistGolfRounds(
       deps.logger?.warn(
         {
           action: 'liveScore.golf.noSportEventParticipant',
-          data: { participantId, externalId: round.participantExternalId },
+          data: { participantId, externalId: round.participantExternalId, sportEventId },
         },
-        'Skipping golf round update — no SportEventParticipant row for participant',
+        'Skipping golf round update — no SportEventParticipant row for participant in this event',
       );
       continue;
     }

@@ -7,9 +7,10 @@
  *     boundary (no DB writes, no bus emission).
  *   - GOLF persistence resolves `participantExternalId` to internal
  *     `SportEventParticipant.id` via ParticipantProviderMapping +
- *     SportEventParticipant lookup, upserts golf-round rows, and emits
- *     a typed `live_score.persisted` event.
- *   - Unmapped external ids are skipped (warned, not thrown).
+ *     SportEventParticipant lookup *scoped to externalEventId*, upserts
+ *     golf-round rows, and emits a typed `live_score.persisted` event.
+ *   - Unmapped external ids and rounds with null strokes are skipped.
+ *   - Unknown externalEventId emits a warn + zero-update bus event.
  *   - Non-GOLF categories throw `LiveScorePersistenceUnsupportedError`
  *     until their per-category persistence slice ships.
  */
@@ -30,10 +31,17 @@ function buildBus() {
   } as any;
 }
 
+function buildSportEventStub(internalId = 'evt-1') {
+  return {
+    findUnique: jest.fn().mockResolvedValue({ id: internalId }),
+  };
+}
+
 describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', () => {
   describe('Zod validation at the bus boundary', () => {
     it('rejects a malformed LiveScoreResult before any persistence', async () => {
       const prisma = {
+        sportEvent: buildSportEventStub(),
         participantProviderMapping: { findMany: jest.fn() },
         sportEventParticipant: { findMany: jest.fn() },
         sportEventParticipantGolfRound: { upsert: jest.fn() },
@@ -42,6 +50,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const malformed = {
         category: 'GOLF',
+        externalEventId: 'evt-ext-1',
         rounds: [{ participantExternalId: '', round: 0, strokes: -1, scoreToPar: 0, status: 'BOGUS' }],
       };
 
@@ -54,8 +63,9 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
   });
 
   describe('GOLF category', () => {
-    it('upserts SportEventParticipantGolfRound rows and emits live_score.persisted', async () => {
+    it('upserts SportEventParticipantGolfRound rows scoped to the resolved sportEventId and emits live_score.persisted', async () => {
       const prisma = {
+        sportEvent: buildSportEventStub('evt-internal-1'),
         participantProviderMapping: {
           findMany: jest.fn().mockResolvedValue([
             { externalId: 'rory', participantId: 'pp-rory' },
@@ -64,8 +74,8 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         },
         sportEventParticipant: {
           findMany: jest.fn().mockResolvedValue([
-            { id: 'sep-rory', participantId: 'pp-rory', sportEventId: 'evt-1', createdAt: new Date('2026-04-01') },
-            { id: 'sep-tiger', participantId: 'pp-tiger', sportEventId: 'evt-1', createdAt: new Date('2026-04-01') },
+            { id: 'sep-rory', participantId: 'pp-rory' },
+            { id: 'sep-tiger', participantId: 'pp-tiger' },
           ]),
         },
         sportEventParticipantGolfRound: {
@@ -76,6 +86,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const result: LiveScoreResult = {
         category: 'GOLF',
+        externalEventId: 'evt-ext-1',
         rounds: [
           { participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
           { participantExternalId: 'tiger', round: 1, strokes: 73, scoreToPar: 1, status: 'IN_PROGRESS' },
@@ -89,6 +100,16 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       });
 
       expect(persisted).toBe(2);
+      expect(prisma.sportEvent.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { providerId_externalId: { providerId: 'mock-contest-feed', externalId: 'evt-ext-1' } },
+        }),
+      );
+      expect(prisma.sportEventParticipant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ sportEventId: 'evt-internal-1' }),
+        }),
+      );
       expect(prisma.sportEventParticipantGolfRound.upsert).toHaveBeenCalledTimes(2);
       expect(prisma.sportEventParticipantGolfRound.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -109,6 +130,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
     it('skips unmapped external ids without throwing and persists only the mapped rows', async () => {
       const prisma = {
+        sportEvent: buildSportEventStub(),
         participantProviderMapping: {
           findMany: jest.fn().mockResolvedValue([
             { externalId: 'rory', participantId: 'pp-rory' },
@@ -117,7 +139,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         },
         sportEventParticipant: {
           findMany: jest.fn().mockResolvedValue([
-            { id: 'sep-rory', participantId: 'pp-rory', sportEventId: 'evt-1', createdAt: new Date() },
+            { id: 'sep-rory', participantId: 'pp-rory' },
           ]),
         },
         sportEventParticipantGolfRound: {
@@ -129,6 +151,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const result: LiveScoreResult = {
         category: 'GOLF',
+        externalEventId: 'evt-ext-1',
         rounds: [
           { participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
           { participantExternalId: 'unknown-golfer', round: 1, strokes: 80, scoreToPar: 8, status: 'COMPLETED' },
@@ -149,11 +172,86 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         expect.any(String),
       );
     });
+
+    it('skips rounds with null strokes (mock + ESPN providers) so synthetic data is never persisted', async () => {
+      const prisma = {
+        sportEvent: buildSportEventStub(),
+        participantProviderMapping: {
+          findMany: jest.fn().mockResolvedValue([
+            { externalId: 'rory', participantId: 'pp-rory' },
+          ]),
+        },
+        sportEventParticipant: {
+          findMany: jest.fn().mockResolvedValue([
+            { id: 'sep-rory', participantId: 'pp-rory' },
+          ]),
+        },
+        sportEventParticipantGolfRound: {
+          upsert: jest.fn().mockResolvedValue({}),
+        },
+      } as any;
+      const bus = buildBus();
+
+      const result: LiveScoreResult = {
+        category: 'GOLF',
+        externalEventId: 'evt-ext-1',
+        rounds: [
+          { participantExternalId: 'rory', round: 1, strokes: null, scoreToPar: -2, status: 'IN_PROGRESS' },
+        ],
+      };
+
+      const persisted = await publishLiveScoreUpdate(result, {
+        prisma,
+        providerId: 'mock-contest-feed',
+        bus,
+      });
+
+      expect(persisted).toBe(0);
+      expect(prisma.sportEventParticipantGolfRound.upsert).not.toHaveBeenCalled();
+    });
+
+    it('warns and emits a zero-update event when externalEventId resolves to no SportEvent', async () => {
+      const prisma = {
+        sportEvent: { findUnique: jest.fn().mockResolvedValue(null) },
+        participantProviderMapping: { findMany: jest.fn() },
+        sportEventParticipant: { findMany: jest.fn() },
+        sportEventParticipantGolfRound: { upsert: jest.fn() },
+      } as any;
+      const logger = { warn: jest.fn(), info: jest.fn(), error: jest.fn() } as any;
+      const bus = buildBus();
+
+      const result: LiveScoreResult = {
+        category: 'GOLF',
+        externalEventId: 'evt-ext-unknown',
+        rounds: [
+          { participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
+        ],
+      };
+
+      const persisted = await publishLiveScoreUpdate(result, {
+        prisma,
+        providerId: 'mock-contest-feed',
+        bus,
+        logger,
+      });
+
+      expect(persisted).toBe(0);
+      expect(prisma.sportEventParticipantGolfRound.upsert).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'liveScore.publish.unknownSportEvent' }),
+        expect.any(String),
+      );
+      expect(bus.publish).toHaveBeenCalledWith(
+        'live_score.persisted',
+        expect.objectContaining({ updatesPersisted: 0 }),
+      );
+    });
   });
 
   describe('non-GOLF categories', () => {
     it('throws LiveScorePersistenceUnsupportedError for BASKETBALL until the slice ships', async () => {
       const prisma = {
+        sportEvent: buildSportEventStub(),
         participantProviderMapping: { findMany: jest.fn() },
         sportEventParticipant: { findMany: jest.fn() },
         sportEventParticipantGolfRound: { upsert: jest.fn() },
@@ -162,6 +260,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const result: LiveScoreResult = {
         category: 'BASKETBALL',
+        externalEventId: 'evt-ext-1',
         games: [],
       };
 

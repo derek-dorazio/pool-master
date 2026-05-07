@@ -212,7 +212,7 @@ export class MockContestFeedAdapter implements SportDataProvider {
    * the contribution-table scoring path lands.
    */
   async getLiveScores(eventId: string): Promise<LiveScoreResult> {
-    const empty: LiveScoreResult = { category: 'GOLF', rounds: [] };
+    const empty: LiveScoreResult = { category: 'GOLF', externalEventId: eventId, rounds: [] };
     const match = await this.findEventById(eventId);
     if (!match) {
       return empty;
@@ -227,16 +227,16 @@ export class MockContestFeedAdapter implements SportDataProvider {
       .map((contestant) => ({
         participantExternalId: contestant.contestantId,
         round: 1,
-        // Mock provider emits scoreToPar; strokes is approximated to
-        // (par + scoreToPar) using a notional par of 72 so the typed
-        // schema is satisfied. rop.78.7 reads the per-round table that
-        // PGA Tour's adapter populates with real strokes data.
-        strokes: 72 + (contestant.score as number),
+        // Mock provider exposes only cumulative scoreToPar; per-round
+        // strokes are not in the snapshot. Emit null so downstream
+        // persistence skips this row until rop.78.7 supplies real
+        // strokes from PGA Tour. No synthesis.
+        strokes: null,
         scoreToPar: contestant.score as number,
         status: 'IN_PROGRESS',
       }));
 
-    return { category: 'GOLF', rounds };
+    return { category: 'GOLF', externalEventId: eventId, rounds };
   }
 
   async getEventResults(eventId: string): Promise<ProviderEventResult | null> {

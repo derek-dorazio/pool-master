@@ -36,7 +36,9 @@ export const GolfRoundUpdateSchema = z.object({
     'Provider-side participant identifier; resolved to SportEventParticipant.id at the bus boundary.',
   ),
   round: z.number().int().min(1).max(8),
-  strokes: z.number().int().min(0),
+  strokes: z.number().int().min(0).nullable().describe(
+    'Per-round strokes. Null when the provider only exposes cumulative scoreToPar without per-round detail (mock + ESPN leaderboard); rop.78.7 supplies real strokes from PGA Tour. Persistence skips rounds with null strokes until then.',
+  ),
   scoreToPar: z.number().int(),
   status: z.enum(['IN_PROGRESS', 'COMPLETED', 'DNF', 'DSQ']),
   completedAt: z.string().datetime().optional(),
@@ -127,33 +129,55 @@ export type SoccerMatchUpdate = z.infer<typeof SoccerMatchUpdateSchema>;
 // LiveScoreResult discriminated union
 // ============================================================================
 
+/**
+ * Every LiveScoreResult arm carries `externalEventId` so the bus boundary
+ * can scope persistence to the originating SportEvent. Without this scope,
+ * resolving `participantId` to a `SportEventParticipant` row would pick the
+ * most recent row across *all* events the participant has played in,
+ * silently cross-contaminating scores between concurrent events. The bus
+ * boundary resolves external → internal via SportEvent.[providerId,
+ * externalId] before filtering SEP rows.
+ */
+const sportEventScope = {
+  externalEventId: z.string().min(1).describe(
+    'Provider-side SportEvent identifier; resolved to internal SportEvent.id at the bus boundary so persistence is filtered by event.',
+  ),
+};
+
 export const LiveScoreResultSchema = z.discriminatedUnion('category', [
   z.object({
     category: z.literal('GOLF'),
+    ...sportEventScope,
     rounds: z.array(GolfRoundUpdateSchema),
   }),
   z.object({
     category: z.literal('BASKETBALL'),
+    ...sportEventScope,
     games: z.array(BasketballGameUpdateSchema),
   }),
   z.object({
     category: z.literal('F1'),
+    ...sportEventScope,
     results: z.array(F1ResultUpdateSchema),
   }),
   z.object({
     category: z.literal('NFL'),
+    ...sportEventScope,
     games: z.array(NflGameUpdateSchema),
   }),
   z.object({
     category: z.literal('NASCAR'),
+    ...sportEventScope,
     results: z.array(NascarResultUpdateSchema),
   }),
   z.object({
     category: z.literal('TENNIS'),
+    ...sportEventScope,
     matches: z.array(TennisMatchUpdateSchema),
   }),
   z.object({
     category: z.literal('SOCCER'),
+    ...sportEventScope,
     matches: z.array(SoccerMatchUpdateSchema),
   }),
 ]);

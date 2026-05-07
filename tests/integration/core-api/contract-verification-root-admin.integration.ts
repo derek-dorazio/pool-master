@@ -57,7 +57,7 @@ class ContractProvider implements SportDataProvider {
   async getEventDetails(): Promise<SportEventDetail | null> { return null; }
   async getParticipants(): Promise<ProviderParticipant[]> { return []; }
   async getRankings(): Promise<ProviderRanking[]> { return []; }
-  async getLiveScores(): Promise<LiveScoreResult> { return { category: 'GOLF', rounds: [] }; }
+  async getLiveScores(): Promise<LiveScoreResult> { return { category: 'GOLF', externalEventId: 'unused', rounds: [] }; }
   async getEventResults(): Promise<ProviderEventResult | null> { return null; }
 
   async healthCheck(): Promise<ProviderHealthStatus> {
@@ -169,7 +169,7 @@ class OperationalContractProvider implements SportDataProvider {
   }
 
   async getLiveScores(): Promise<LiveScoreResult> {
-    return { category: 'GOLF', rounds: [] };
+    return { category: 'GOLF', externalEventId: 'unused', rounds: [] };
   }
 
   async getEventResults(): Promise<ProviderEventResult | null> {
