@@ -7,7 +7,10 @@ region      = "us-east-2"
 db_instance_class    = "db.t3.micro"
 db_allocated_storage = 20
 db_password          = "CHANGE_ME_staging_password"
-jwt_secret           = "CHANGE_ME_staging_jwt_secret"
+# jwt_secret: do NOT set here. Set via TF_VAR_jwt_secret in your shell so
+# the value never lands in a committed file. Generate with:
+#   openssl rand -base64 48 | tr -d '\n'
+jwt_secret           = ""
 
 # ECS
 ecs_cpu    = 256
