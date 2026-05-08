@@ -132,6 +132,14 @@ async function buildTestApp(): Promise<FastifyInstance> {
 
 /** Set up the Fastify app and Prisma client. Called once before all tests. */
 export async function setupIntegrationTests(): Promise<void> {
+  // pool-master-rop.76.1 — bootstrap throws if JWT_SECRET is unset at the
+  // moment a plugin/service reads it. Set before buildTestApp() so plugin
+  // registration sees a value. Tests sign their own tokens with the same
+  // literal (see JWT_SECRET const above) so verification at runtime stays
+  // consistent.
+  if (!process.env.JWT_SECRET) {
+    process.env.JWT_SECRET = JWT_SECRET;
+  }
   prisma = new PrismaClient();
   await prisma.$connect();
   await cleanupTestData();

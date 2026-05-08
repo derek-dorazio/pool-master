@@ -12,6 +12,7 @@ import { UserAuthProvider as PrismaUserAuthProvider, UserDateFormat as PrismaUse
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
+import { readJwtSecret } from '../../core/config';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -85,7 +86,8 @@ export class AuthService {
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
   ) {
-    this.jwtSecret = process.env.JWT_SECRET ?? 'poolmaster-dev-secret-change-in-production';
+    // pool-master-rop.76.1 — single bootstrap source, throws if unset.
+    this.jwtSecret = readJwtSecret();
   }
 
   /**

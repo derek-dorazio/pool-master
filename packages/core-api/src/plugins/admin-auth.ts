@@ -13,10 +13,9 @@ import fp from 'fastify-plugin';
 import jwt from 'jsonwebtoken';
 import type { PrismaClient } from '@prisma/client';
 import { sendError } from '../core/error-handler';
+import { readJwtSecret } from '../core/config';
 import { readAccessCookie } from '../core/session-cookies';
 import { formatUserFullName } from '../core/user-name';
-
-const JWT_SECRET = process.env.JWT_SECRET ?? 'poolmaster-dev-secret-change-in-production';
 
 // ---------------------------------------------------------------------------
 // Admin context interface
@@ -46,6 +45,11 @@ declare module 'fastify' {
 // ---------------------------------------------------------------------------
 
 async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
+  // pool-master-rop.76.1 — read JWT_SECRET at plugin registration time
+  // (not at module import). Bootstrap throws if unset; tests inject the
+  // env var before registering the plugin.
+  const jwtSecret = readJwtSecret();
+
   // Decorate request with rootAdminContext (undefined by default)
   fastify.decorateRequest('rootAdminContext', undefined);
 
@@ -65,7 +69,7 @@ async function adminAuthPlugin(fastify: FastifyInstance): Promise<void> {
 
     let userId: string;
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { sub?: string };
+      const decoded = jwt.verify(token, jwtSecret) as { sub?: string };
       userId = decoded.sub ?? '';
       if (!userId) {
         throw new Error('Missing user ID in token payload');

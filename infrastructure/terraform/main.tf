@@ -458,6 +458,43 @@ resource "aws_iam_role_policy_attachment" "ecs_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# pool-master-rop.76.1 — JWT signing key in AWS Secrets Manager.
+# The previous deterministic dev fallback in source code was removed;
+# the core-api throws at startup if JWT_SECRET is unset. The ECS
+# task definition's `secrets` block (below) maps this secret's
+# value into the container's environment as JWT_SECRET.
+resource "aws_secretsmanager_secret" "jwt_secret" {
+  name        = "${local.name_prefix}-jwt-secret"
+  description = "JWT signing key for ${local.name_prefix} core-api (pool-master-rop.76.1)."
+
+  tags = {
+    Service = "core-api"
+    Purpose = "jwt-signing-key"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "jwt_secret" {
+  secret_id     = aws_secretsmanager_secret.jwt_secret.id
+  secret_string = var.jwt_secret
+}
+
+# Allow the ECS execution role to read this specific secret at task
+# startup. Scoped to a single ARN; AmazonECSTaskExecutionRolePolicy
+# (attached above) does not grant secretsmanager:GetSecretValue.
+resource "aws_iam_role_policy" "ecs_execution_jwt_secret" {
+  name = "${local.name_prefix}-ecs-execution-jwt-secret"
+  role = aws_iam_role.ecs_execution.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["secretsmanager:GetSecretValue"]
+      Resource = [aws_secretsmanager_secret.jwt_secret.arn]
+    }]
+  })
+}
+
 resource "aws_iam_role" "ecs_task" {
   name = "${local.name_prefix}-ecs-task"
 
@@ -576,6 +613,12 @@ resource "aws_ecs_task_definition" "core_api" {
       { name = "ENVIRONMENT", value = var.environment },
       { name = "AUTO_START_SCHEDULER", value = "true" },
     ])
+    # pool-master-rop.76.1 — JWT_SECRET injected from Secrets Manager.
+    # ECS resolves the ARN at task start and exposes the value in the
+    # container's process.env. The core-api bootstrap throws if unset.
+    secrets = [
+      { name = "JWT_SECRET", valueFrom = aws_secretsmanager_secret.jwt_secret.arn },
+    ]
     logConfiguration = {
       logDriver = "awslogs"
       options = {

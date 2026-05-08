@@ -9,6 +9,7 @@
 import fp from 'fastify-plugin';
 import jwt from 'jsonwebtoken';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { readJwtSecret } from '../core/config';
 import { sendError } from '../core/error-handler';
 import {
   isStateChangingMethod,
@@ -71,7 +72,8 @@ function isPublicRoute(method: string, url: string): boolean {
 // ---------------------------------------------------------------------------
 
 async function authGuardPlugin(fastify: FastifyInstance): Promise<void> {
-  const jwtSecret = process.env.JWT_SECRET ?? 'poolmaster-dev-secret-change-in-production';
+  // pool-master-rop.76.1 — single bootstrap source, throws if unset.
+  const jwtSecret = readJwtSecret();
 
   fastify.decorateRequest('authUser', undefined);
 
