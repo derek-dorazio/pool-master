@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import appShellSource from './app-shell.tsx?raw';
 import { AppShell } from './app-shell';
 
@@ -41,15 +42,16 @@ const {
   };
 });
 
-vi.mock('@/lib/api', () => ({
-  listLeagues: (...args: unknown[]) => listLeaguesMock(...args),
-}));
+bindApiMocks({
+  listLeagues: listLeaguesMock,
+});
 
 vi.mock('@/features/auth/auth-provider', () => ({
   useAuth: () => authState,
 }));
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));

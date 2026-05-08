@@ -24,7 +24,7 @@
     "db:studio": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma studio",
     "lint": "eslint 'packages/*/src/**/*.ts' 'clients/poolmaster/src/**/*.{ts,tsx}' --max-warnings 0 && npm run lint:theme-tokens",
     "lint:theme-tokens": "node scripts/check-feature-theme-tokens.mjs",
-    "rules:check:no-mocked-api": "node scripts/check-no-mocked-api.mjs --warn-only",
+    "rules:check:no-mocked-api": "node scripts/check-no-mocked-api.mjs",
     "rules:check:route-discipline": "node scripts/check-route-discipline.mjs --warn-only",
     "rules:check:test-traceability": "node scripts/check-test-traceability.mjs --warn-only",
     "rules:check:test-disable": "node scripts/check-test-disable-discipline.mjs",

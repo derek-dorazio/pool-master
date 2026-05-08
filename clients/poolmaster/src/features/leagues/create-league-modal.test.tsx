@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import type { ListLeaguesResponses } from '@/lib/api';
 import { CreateLeagueModal, suggestLeagueCode } from './create-league-modal';
 import {
@@ -30,11 +31,12 @@ const { createLeagueMock, mockLogger } = vi.hoisted(() => {
   };
 });
 
-vi.mock('@/lib/api', () => ({
-  createLeague: (...args: unknown[]) => createLeagueMock(...args),
-}));
+bindApiMocks({
+  createLeague: createLeagueMock,
+});
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));

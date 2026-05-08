@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider, useAuth } from './auth-provider';
 import {
   AUTH_ME_QUERY_KEY,
@@ -35,15 +36,16 @@ const {
 });
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
 
-vi.mock('@/lib/api', () => ({
-  getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
-  logoutUser: (...args: unknown[]) => logoutUserMock(...args),
-  refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
-}));
+bindApiMocks({
+  getCurrentUser: getCurrentUserMock,
+  logoutUser: logoutUserMock,
+  refreshToken: refreshTokenMock,
+});
 
 function buildUser(overrides?: Partial<AuthSessionUser>): AuthSessionUser {
   return {

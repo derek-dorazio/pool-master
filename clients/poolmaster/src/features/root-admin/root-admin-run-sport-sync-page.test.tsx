@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminRunSportSyncPage } from './root-admin-run-sport-sync-page';
 
 const {
@@ -26,12 +27,13 @@ const {
   };
 });
 
-vi.mock('@/lib/api', () => ({
-  adminListProviders: (...args: unknown[]) => adminListProvidersMock(...args),
-  adminPrepareSportSync: (...args: unknown[]) => adminPrepareSportSyncMock(...args),
-}));
+bindApiMocks({
+  adminListProviders: adminListProvidersMock,
+  adminPrepareSportSync: adminPrepareSportSyncMock,
+});
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));

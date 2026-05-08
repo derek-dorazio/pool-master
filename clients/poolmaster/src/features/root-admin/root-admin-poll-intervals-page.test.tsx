@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminPollIntervalsPage } from './root-admin-poll-intervals-page';
 
 const {
@@ -14,13 +15,11 @@ const {
   adminUpdatePollIntervalsMock: vi.fn(),
 }));
 
-vi.mock('@/lib/api', () => ({
-  adminGetPollIntervals: (...args: unknown[]) => adminGetPollIntervalsMock(...args),
-  adminResetPollIntervals: (...args: unknown[]) =>
-    adminResetPollIntervalsMock(...args),
-  adminUpdatePollIntervals: (...args: unknown[]) =>
-    adminUpdatePollIntervalsMock(...args),
-}));
+bindApiMocks({
+  adminGetPollIntervals: adminGetPollIntervalsMock,
+  adminResetPollIntervals: adminResetPollIntervalsMock,
+  adminUpdatePollIntervals: adminUpdatePollIntervalsMock,
+});
 
 function renderPage() {
   const queryClient = new QueryClient({

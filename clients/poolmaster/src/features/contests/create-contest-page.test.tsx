@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { CreateContestPage } from './create-contest-page';
 
 const {
@@ -39,17 +40,16 @@ const {
   };
 });
 
-vi.mock('@/lib/api', () => ({
-  createManagedContest: (...args: unknown[]) => createManagedContestMock(...args),
-  deleteContest: (...args: unknown[]) => deleteContestMock(...args),
-  getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
-  getManagedContest: (...args: unknown[]) => getManagedContestMock(...args),
-  listManagedContestTemplates: (...args: unknown[]) => listManagedContestTemplatesMock(...args),
-  listEvents: (...args: unknown[]) => listEventsMock(...args),
-  updateContest: (...args: unknown[]) => updateContestMock(...args),
-  updateManagedContestConfiguration: (...args: unknown[]) =>
-    updateManagedContestConfigurationMock(...args),
-}));
+bindApiMocks({
+  createManagedContest: createManagedContestMock,
+  deleteContest: deleteContestMock,
+  getLeagueByCode: getLeagueByCodeMock,
+  getManagedContest: getManagedContestMock,
+  listManagedContestTemplates: listManagedContestTemplatesMock,
+  listEvents: listEventsMock,
+  updateContest: updateContestMock,
+  updateManagedContestConfiguration: updateManagedContestConfigurationMock,
+});
 
 vi.mock('@/features/auth/auth-provider', () => ({
   useAuth: () => ({
@@ -71,6 +71,7 @@ vi.mock('@/features/auth/auth-provider', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import {
   AUTH_ME_QUERY_KEY,
   type AuthSessionUser,
@@ -59,26 +60,27 @@ const {
   };
 });
 
-vi.mock('@/lib/api', () => ({
-  adminDeleteUser: (...args: unknown[]) => adminDeleteUserMock(...args),
-  adminDisableUser: (...args: unknown[]) => adminDisableUserMock(...args),
-  adminEnableUser: (...args: unknown[]) => adminEnableUserMock(...args),
-  adminGetUserDetail: (...args: unknown[]) => adminGetUserDetailMock(...args),
-  adminResetUserPassword: (...args: unknown[]) => adminResetUserPasswordMock(...args),
-  adminSetUserRootAdmin: (...args: unknown[]) => adminSetUserRootAdminMock(...args),
-  changeAccountPassword: (...args: unknown[]) => changeAccountPasswordMock(...args),
-  inactivateAccount: (...args: unknown[]) => inactivateAccountMock(...args),
-  deleteAccount: (...args: unknown[]) => deleteAccountMock(...args),
-  getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
-  logoutUser: (...args: unknown[]) => logoutUserMock(...args),
-  reactivateAccount: (...args: unknown[]) => reactivateAccountMock(...args),
-  refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
-  updateAccountPreferences: (...args: unknown[]) => updateAccountPreferencesMock(...args),
-  updateAccountProfile: (...args: unknown[]) => updateAccountProfileMock(...args),
-  updateAccountUsername: (...args: unknown[]) => updateAccountUsernameMock(...args),
-}));
+bindApiMocks({
+  adminDeleteUser: adminDeleteUserMock,
+  adminDisableUser: adminDisableUserMock,
+  adminEnableUser: adminEnableUserMock,
+  adminGetUserDetail: adminGetUserDetailMock,
+  adminResetUserPassword: adminResetUserPasswordMock,
+  adminSetUserRootAdmin: adminSetUserRootAdminMock,
+  changeAccountPassword: changeAccountPasswordMock,
+  inactivateAccount: inactivateAccountMock,
+  deleteAccount: deleteAccountMock,
+  getCurrentUser: getCurrentUserMock,
+  logoutUser: logoutUserMock,
+  reactivateAccount: reactivateAccountMock,
+  refreshToken: refreshTokenMock,
+  updateAccountPreferences: updateAccountPreferencesMock,
+  updateAccountProfile: updateAccountProfileMock,
+  updateAccountUsername: updateAccountUsernameMock,
+});
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
