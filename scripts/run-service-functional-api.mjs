@@ -35,6 +35,22 @@ const env = {
   FUNCTIONAL_RUN_ID: runId,
   FUNCTIONAL_STATE_DIR: stateDir,
   FUNCTIONAL_SERVER_STATE_FILE: stateFilePath,
+  // pool-master-rop.76.1 — the FAPI server-under-test is spawned by
+  // tests/functional/global-setup.cjs as a separate child process with
+  // its own env. The Jest worker processes themselves should NOT
+  // auto-start a server when they happen to transitively import
+  // packages/core-api/src/index.ts (which a couple of test files do
+  // for direct buildApp() access). Without this gate the auto-start
+  // branch in index.ts fires inside every jest worker and races/fails
+  // against the canonical FAPI server.
+  POOLMASTER_DISABLE_AUTO_START: 'true',
+  // pool-master-rop.76.1 — the bootstrap throws when JWT_SECRET is
+  // unset. Some FAPI tests (live-scoring-golf-roster) call buildApp()
+  // directly inside the jest worker to spin up an in-process scoring
+  // app, which triggers plugin registration → readJwtSecret(). The
+  // global-setup.cjs sets JWT_SECRET only in the spawned-server child;
+  // jest workers need it too. Same literal as the dev placeholder.
+  JWT_SECRET: process.env.JWT_SECRET ?? 'poolmaster-dev-secret-change-in-production',
 };
 
 const buildResult = run('npm', ['run', 'build', '--workspace', '@poolmaster/shared'], env);
