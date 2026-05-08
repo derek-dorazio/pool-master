@@ -3,6 +3,7 @@ WORKDIR /app
 
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY packages/shared/ ./packages/shared/
+COPY packages/mock-contest-feed-provider/ ./packages/mock-contest-feed-provider/
 COPY packages/core-api/ ./packages/core-api/
 
 RUN npm ci --ignore-scripts 2>/dev/null || npm install --ignore-scripts
@@ -10,8 +11,13 @@ RUN npm ci --ignore-scripts 2>/dev/null || npm install --ignore-scripts
 # Build shared package
 RUN cd packages/shared && npx tsc
 
-# Symlink shared into node_modules for runtime resolution
-RUN mkdir -p node_modules/@poolmaster && ln -sf /app/packages/shared node_modules/@poolmaster/shared
+# Symlink workspace packages into node_modules for resolution.
+# core-api imports type-only from @poolmaster/mock-contest-feed-provider/generated/hey-api/types
+# (see packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter.ts), so the
+# package must be resolvable at tsc time even though no runtime require is emitted.
+RUN mkdir -p node_modules/@poolmaster \
+    && ln -sf /app/packages/shared node_modules/@poolmaster/shared \
+    && ln -sf /app/packages/mock-contest-feed-provider node_modules/@poolmaster/mock-contest-feed-provider
 
 # Generate Prisma client
 RUN npx prisma generate --schema=packages/core-api/prisma/schema.prisma
@@ -28,7 +34,10 @@ COPY --from=base /app/packages/core-api/package.json ./
 COPY --from=base /app/packages/core-api/scripts ./scripts
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/packages/shared ./packages/shared
-RUN mkdir -p node_modules/@poolmaster && ln -sf /app/packages/shared node_modules/@poolmaster/shared
+COPY --from=base /app/packages/mock-contest-feed-provider ./packages/mock-contest-feed-provider
+RUN mkdir -p node_modules/@poolmaster \
+    && ln -sf /app/packages/shared node_modules/@poolmaster/shared \
+    && ln -sf /app/packages/mock-contest-feed-provider node_modules/@poolmaster/mock-contest-feed-provider
 COPY --from=base /app/packages/core-api/prisma ./prisma
 
 EXPOSE 3000
