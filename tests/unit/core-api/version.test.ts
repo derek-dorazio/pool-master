@@ -16,6 +16,9 @@ describe('pool-master-htw service version metadata', () => {
       POOLMASTER_BUILD_NUMBER: '2468',
       POOLMASTER_BUILD_TIME_UTC: '2026-04-27T14:05:30.000Z',
       POOLMASTER_GIT_REF: 'main',
+      // pool-master-rop.76.1 — auth-guard registers in the second test
+      // case below; the bootstrap throws if JWT_SECRET is unset.
+      JWT_SECRET: 'poolmaster-dev-secret-change-in-production',
     };
   });
 

@@ -78,6 +78,12 @@ variable "db_password" {
   sensitive   = true
 }
 
+variable "jwt_secret" {
+  description = "JWT signing key for the core-api. Required — set via TF_VAR_jwt_secret or tfvars. The previous deterministic dev fallback in source code was removed in pool-master-rop.76.1; the core-api throws at startup if the env var is unset, so this value MUST be supplied for any environment where the API actually runs."
+  type        = string
+  sensitive   = true
+}
+
 variable "db_publicly_accessible" {
   description = "Whether the RDS instance should expose a public endpoint. Keep false by default; only enable intentionally for environments that require direct operator access."
   type        = bool

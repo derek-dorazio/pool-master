@@ -9,6 +9,9 @@ import type { IngestionScheduler } from '../../../packages/core-api/src/modules/
 import type { OddsApiAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/odds-api-adapter';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
+// pool-master-rop.76.1 — set BEFORE the auth-guard plugin registers in
+// buildRouteApp(); the bootstrap throws if JWT_SECRET is unset.
+process.env.JWT_SECRET = JWT_SECRET;
 
 function authHeaders(userId: string, email: string): Record<string, string> {
   const token = jwt.sign({ sub: userId, email }, JWT_SECRET, { expiresIn: '15m' });

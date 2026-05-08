@@ -12,6 +12,11 @@
 process.env.DATABASE_URL = 'postgresql://dummy:dummy@localhost:5432/dummy';
 process.env.NODE_ENV = 'development';
 process.env.OPENAPI_EXPORT = 'true';
+// pool-master-rop.76.1 — the auth-guard / admin-auth bootstrap throws
+// at registration time if JWT_SECRET is unset. The export script never
+// signs or verifies tokens; it only walks the route schemas to emit
+// OpenAPI. A placeholder is sufficient and never reaches a request path.
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'openapi-export-placeholder-not-a-real-secret';
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

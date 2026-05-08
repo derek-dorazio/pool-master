@@ -8,6 +8,10 @@ import {
   ClientLogService,
 } from '../../../packages/core-api/src/modules/client-logs/service';
 
+// pool-master-rop.76.1 — auth-guard registers in one of the test cases
+// below; the bootstrap throws if JWT_SECRET is unset.
+process.env.JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
+
 function createLogger() {
   return {
     debug: jest.fn(),
