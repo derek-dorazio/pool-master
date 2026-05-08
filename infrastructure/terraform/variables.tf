@@ -79,9 +79,14 @@ variable "db_password" {
 }
 
 variable "jwt_secret" {
-  description = "JWT signing key for the core-api. Required — set via TF_VAR_jwt_secret or tfvars. The previous deterministic dev fallback in source code was removed in pool-master-rop.76.1; the core-api throws at startup if the env var is unset, so this value MUST be supplied for any environment where the API actually runs."
+  description = "JWT signing key for the core-api. Required — set via TF_VAR_jwt_secret or an untracked tfvars file. The previous deterministic dev fallback in source code was removed in pool-master-rop.76.1; the core-api throws at startup if the env var is unset. Generate with: openssl rand -base64 48 | tr -d '\\n'."
   type        = string
   sensitive   = true
+
+  validation {
+    condition     = length(trimspace(var.jwt_secret)) > 0
+    error_message = "jwt_secret is required and must be non-empty. Generate with: openssl rand -base64 48 | tr -d '\\n'. Recommended minimum 32 characters for production. Do NOT commit the value — set it via TF_VAR_jwt_secret or an untracked tfvars file."
+  }
 }
 
 variable "db_publicly_accessible" {

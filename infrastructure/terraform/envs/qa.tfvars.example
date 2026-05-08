@@ -7,7 +7,11 @@ region      = "us-east-2"
 db_instance_class    = "db.t3.micro"
 db_allocated_storage = 20
 db_password          = "CHANGE_ME_qa_password"
-jwt_secret           = "CHANGE_ME_qa_jwt_secret"
+# jwt_secret: deliberately not assigned in this file. Set via TF_VAR_jwt_secret
+# in your shell so the value never lands in a committed file. Do NOT add a
+# `jwt_secret = "..."` line here — tfvars-file precedence is higher than
+# TF_VAR_*, so an assignment here would silently override the env var.
+# Generate with: openssl rand -base64 48 | tr -d '\n'
 db_publicly_accessible = true
 db_allowed_cidr_blocks = ["YOUR_PUBLIC_IP/32"]
 
