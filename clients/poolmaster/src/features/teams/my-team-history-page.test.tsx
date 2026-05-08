@@ -3,6 +3,7 @@ import { TeamIconKey } from '@poolmaster/shared/domain';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { MyTeamHistoryPage } from './my-team-history-page';
 
@@ -14,15 +15,15 @@ const listLeagueSquadsMock = vi.fn();
 const logoutUserMock = vi.fn();
 const refreshTokenMock = vi.fn();
 
-vi.mock('@/lib/api', () => ({
-  getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
-  getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
-  listContestEntries: (...args: unknown[]) => listContestEntriesMock(...args),
-  listContests: (...args: unknown[]) => listContestsMock(...args),
-  listLeagueSquads: (...args: unknown[]) => listLeagueSquadsMock(...args),
-  logoutUser: (...args: unknown[]) => logoutUserMock(...args),
-  refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
-}));
+bindApiMocks({
+  getCurrentUser: getCurrentUserMock,
+  getLeagueByCode: getLeagueByCodeMock,
+  listContestEntries: listContestEntriesMock,
+  listContests: listContestsMock,
+  listLeagueSquads: listLeagueSquadsMock,
+  logoutUser: logoutUserMock,
+  refreshToken: refreshTokenMock,
+});
 
 function renderMyTeamHistoryPage() {
   const queryClient = new QueryClient({

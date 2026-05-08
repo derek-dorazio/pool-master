@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { LeagueDetailPage } from './league-detail-page';
 import {
@@ -40,25 +41,25 @@ const sendLeagueInvitationsMock = vi.fn();
 const updateLeagueDetailsMock = vi.fn();
 const updateLeagueIconMock = vi.fn();
 
-vi.mock('@/lib/api', () => ({
-  activateLeague: (...args: unknown[]) => activateLeagueMock(...args),
-  deleteLeague: (...args: unknown[]) => deleteLeagueMock(...args),
-  enterContest: (...args: unknown[]) => enterContestMock(...args),
-  generateInviteLink: (...args: unknown[]) => generateInviteLinkMock(...args),
-  getContest: (...args: unknown[]) => getContestMock(...args),
-  getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
-  getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
-  inactivateLeague: (...args: unknown[]) => inactivateLeagueMock(...args),
-  leaveLeague: (...args: unknown[]) => leaveLeagueMock(...args),
-  listContestEntries: (...args: unknown[]) => listContestEntriesMock(...args),
-  listContests: (...args: unknown[]) => listContestsMock(...args),
-  listLeagueSquads: (...args: unknown[]) => listLeagueSquadsMock(...args),
-  logoutUser: (...args: unknown[]) => logoutUserMock(...args),
-  refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
-  sendLeagueInvitations: (...args: unknown[]) => sendLeagueInvitationsMock(...args),
-  updateLeagueDetails: (...args: unknown[]) => updateLeagueDetailsMock(...args),
-  updateLeagueIcon: (...args: unknown[]) => updateLeagueIconMock(...args),
-}));
+bindApiMocks({
+  activateLeague: activateLeagueMock,
+  deleteLeague: deleteLeagueMock,
+  enterContest: enterContestMock,
+  generateInviteLink: generateInviteLinkMock,
+  getContest: getContestMock,
+  getCurrentUser: getCurrentUserMock,
+  getLeagueByCode: getLeagueByCodeMock,
+  inactivateLeague: inactivateLeagueMock,
+  leaveLeague: leaveLeagueMock,
+  listContestEntries: listContestEntriesMock,
+  listContests: listContestsMock,
+  listLeagueSquads: listLeagueSquadsMock,
+  logoutUser: logoutUserMock,
+  refreshToken: refreshTokenMock,
+  sendLeagueInvitations: sendLeagueInvitationsMock,
+  updateLeagueDetails: updateLeagueDetailsMock,
+  updateLeagueIcon: updateLeagueIconMock,
+});
 
 function LeagueRouteControls() {
   const navigate = useNavigate();

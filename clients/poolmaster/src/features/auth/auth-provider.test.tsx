@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider, useAuth } from './auth-provider';
 import {
   AUTH_ME_QUERY_KEY,
@@ -35,15 +36,16 @@ const {
 });
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
 
-vi.mock('@/lib/api', () => ({
-  getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
-  logoutUser: (...args: unknown[]) => logoutUserMock(...args),
-  refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
-}));
+bindApiMocks({
+  getCurrentUser: getCurrentUserMock,
+  logoutUser: logoutUserMock,
+  refreshToken: refreshTokenMock,
+});
 
 function buildUser(overrides?: Partial<AuthSessionUser>): AuthSessionUser {
   return {
@@ -264,6 +266,45 @@ describe('AuthProvider', () => {
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'auth.logout.failed',
+      }),
+      expect.any(String),
+    );
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'auth.logout.completed',
+      }),
+      expect.any(String),
+    );
+  });
+
+  it('pool-master-rop.4 clears local state when generated logout returns an error envelope', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: buildUser(),
+      },
+    });
+    logoutUserMock.mockResolvedValue({
+      error: {
+        code: 'AUTH_LOGOUT_FAILED',
+        message: 'Logout failed',
+      },
+    });
+
+    const { queryClient } = renderAuthProvider();
+
+    await screen.findByText('user-1');
+    fireEvent.click(screen.getByTestId('auth-clear-session'));
+
+    await waitFor(() => expect(screen.getByTestId('auth-state')).toHaveTextContent('guest'));
+
+    expect(queryClient.getQueryData(AUTH_ME_QUERY_KEY)).toBeNull();
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'auth.logout.failed',
+        err: expect.objectContaining({
+          code: 'AUTH_LOGOUT_FAILED',
+          message: 'Logout failed',
+        }),
       }),
       expect.any(String),
     );

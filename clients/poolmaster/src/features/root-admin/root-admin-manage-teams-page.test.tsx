@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminManageTeamsPage } from './root-admin-manage-teams-page';
 
 const { adminListTeamsMock, mockLogger } = vi.hoisted(() => {
@@ -21,11 +22,12 @@ const { adminListTeamsMock, mockLogger } = vi.hoisted(() => {
   };
 });
 
-vi.mock('@/lib/api', () => ({
-  adminListTeams: (...args: unknown[]) => adminListTeamsMock(...args),
-}));
+bindApiMocks({
+  adminListTeams: adminListTeamsMock,
+});
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
@@ -103,9 +105,7 @@ describe('RootAdminManageTeamsPage', () => {
     renderPage();
 
     await waitFor(() =>
-      expect(adminListTeamsMock).toHaveBeenLastCalledWith({
-        query: {},
-      }),
+      expect(adminListTeamsMock).toHaveBeenLastCalledWith({}),
     );
 
     expect(screen.queryByTestId('root-admin-manage-teams-search')).not.toBeInTheDocument();

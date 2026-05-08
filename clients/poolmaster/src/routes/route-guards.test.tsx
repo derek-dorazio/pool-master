@@ -27,6 +27,7 @@ vi.mock('@/features/auth/auth-provider', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
