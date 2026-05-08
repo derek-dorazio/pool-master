@@ -276,4 +276,43 @@ describe('AuthProvider', () => {
       expect.any(String),
     );
   });
+
+  it('pool-master-rop.4 clears local state when generated logout returns an error envelope', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      data: {
+        user: buildUser(),
+      },
+    });
+    logoutUserMock.mockResolvedValue({
+      error: {
+        code: 'AUTH_LOGOUT_FAILED',
+        message: 'Logout failed',
+      },
+    });
+
+    const { queryClient } = renderAuthProvider();
+
+    await screen.findByText('user-1');
+    fireEvent.click(screen.getByTestId('auth-clear-session'));
+
+    await waitFor(() => expect(screen.getByTestId('auth-state')).toHaveTextContent('guest'));
+
+    expect(queryClient.getQueryData(AUTH_ME_QUERY_KEY)).toBeNull();
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'auth.logout.failed',
+        err: expect.objectContaining({
+          code: 'AUTH_LOGOUT_FAILED',
+          message: 'Logout failed',
+        }),
+      }),
+      expect.any(String),
+    );
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'auth.logout.completed',
+      }),
+      expect.any(String),
+    );
+  });
 });
