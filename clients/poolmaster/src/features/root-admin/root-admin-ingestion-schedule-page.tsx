@@ -187,7 +187,7 @@ export function RootAdminIngestionSchedulePage() {
                       >
                         <label className="flex h-5 items-center justify-between gap-3 text-sm text-foreground">
                           <span>Enabled</span>
-                          <input
+                          <Input
                             checked={draft[field.key].enabled}
                             data-testid={`root-admin-ingestion-page-${field.key}-enabled`}
                             onChange={(event) =>

@@ -52,6 +52,29 @@ export function toDateTimeLocalValue(value: Date | string | null | undefined) {
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }
 
+export function formatDateDisplay(
+  value: Date | string | null | undefined,
+  emptyLabel = "Unavailable",
+) {
+  const date = normalizeDate(value);
+  return date
+    ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(date)
+    : emptyLabel;
+}
+
+export function formatDateTimeDisplay(
+  value: Date | string | null | undefined,
+  emptyLabel = "Unavailable",
+) {
+  const date = normalizeDate(value);
+  return date
+    ? new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(date)
+    : emptyLabel;
+}
+
 function normalizeDate(value: Date | string | null | undefined) {
   if (!value) {
     return null;

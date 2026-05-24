@@ -36,6 +36,7 @@ import {
   Alert,
   Button,
   ErrorState,
+  formatDateDisplay,
   FormField,
   Input,
   LinkButton,
@@ -1223,7 +1224,7 @@ export function CreateContestPage() {
                   <option key={event.id} value={event.id}>
                     {event.name}
                     {' · '}
-                    {new Date(event.startDate).toLocaleDateString()}
+                    {formatDateDisplay(event.startDate)}
                     {' · '}
                     {event.participantCount ?? 0}
                     {' golfers'}
@@ -1294,7 +1295,7 @@ export function CreateContestPage() {
             <div className="space-y-3">
               <div className="text-sm font-medium">Entries per team</div>
               <label className="flex items-center gap-3 text-sm text-foreground">
-                <input
+                <Input
                   checked={unlimitedEntries}
                   data-testid="contest-max-entries-unlimited"
                   onChange={(event) => setUnlimitedEntries(event.target.checked)}
@@ -1387,7 +1388,7 @@ export function CreateContestPage() {
                       return (
                         <Tile key={category.key} padding="sm" radius="lg" variant="default">
                           <label className="flex items-center gap-3 text-sm">
-                            <input
+                            <Input
                               checked={isSelected}
                               data-testid={`contest-category-toggle-${category.key}`}
                               onChange={() => toggleCategory(category.key)}

@@ -11,7 +11,7 @@ import {
   adminSetUserRootAdmin,
   type AdminGetUserDetailResponses,
 } from '@/lib/api';
-import { Alert, ConfirmDialog } from '@/features/shared/ui';
+import { Alert, Button, ConfirmDialog, Input, Textarea } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildLeaguePath, buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { formatUserName } from './user-name';
@@ -203,13 +203,13 @@ function UserActionDialog({
               </Dialog.Description>
             </div>
             <Dialog.Close asChild>
-              <button
+              <Button
                 aria-label={`Close ${title}`}
                 className="rounded-full border border-border p-2 text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
                 type="button"
               >
                 ×
-              </button>
+              </Button>
             </Dialog.Close>
           </div>
 
@@ -484,7 +484,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
             Root-admin controls
           </div>
           <div className="mt-4 grid gap-4">
-            <button
+            <Button
               className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-5 py-4 text-left transition hover:border-primary/40 hover:bg-card"
               data-testid="root-admin-user-open-role"
               onClick={() => openDialog('role')}
@@ -499,9 +499,9 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
                 </span>
               </span>
               <span className="text-sm font-medium text-muted-foreground">Open</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-5 py-4 text-left transition hover:border-primary/40 hover:bg-card"
               data-testid="root-admin-user-open-reset-password"
               onClick={() => openDialog('reset-password')}
@@ -514,9 +514,9 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
                 </span>
               </span>
               <span className="text-sm font-medium text-muted-foreground">Open</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-5 py-4 text-left transition hover:border-primary/40 hover:bg-card"
               data-testid="root-admin-user-open-lifecycle"
               onClick={() => openDialog('lifecycle')}
@@ -531,9 +531,9 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
                 </span>
               </span>
               <span className="text-sm font-medium text-muted-foreground">Open</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               className="flex items-center justify-between rounded-[1.5rem] border border-destructive/30 bg-destructive/5 px-5 py-4 text-left transition hover:border-destructive/40"
               data-testid="root-admin-user-open-delete"
               disabled={!isInactive || deleteMutation.isPending}
@@ -549,7 +549,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
               <span className="text-sm font-medium text-muted-foreground">
                 {isInactive ? 'Open' : 'Locked'}
               </span>
-            </button>
+            </Button>
           </div>
         </section>
       </div>
@@ -569,7 +569,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
           </p>
           <label className="space-y-2">
             <span className="text-sm font-medium text-foreground">Reason (optional)</span>
-            <textarea
+            <Textarea
               className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40"
               data-testid="root-admin-user-role-reason"
               onChange={(event) => setReason(event.target.value)}
@@ -584,14 +584,14 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         </div>
 
         <div className="mt-5 flex justify-end gap-3">
-          <button
+          <Button
             className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-muted/50"
             onClick={closeDialog}
             type="button"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             className="rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             data-testid="root-admin-user-submit-role"
             disabled={roleMutation.isPending}
@@ -603,7 +603,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
               : viewedUser.isRootAdmin
                 ? 'Demote root admin'
                 : 'Promote to root admin'}
-          </button>
+          </Button>
         </div>
       </UserActionDialog>
 
@@ -617,7 +617,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         <div className="space-y-4">
           <label className="space-y-2">
             <span className="text-sm font-medium text-foreground">Reason (optional)</span>
-            <textarea
+            <Textarea
               className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40"
               data-testid="root-admin-user-reset-password-reason"
               onChange={(event) => setReason(event.target.value)}
@@ -643,14 +643,14 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         </div>
 
         <div className="mt-5 flex justify-end gap-3">
-          <button
+          <Button
             className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-muted/50"
             onClick={closeDialog}
             type="button"
           >
             Close
-          </button>
-          <button
+          </Button>
+          <Button
             className="rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             data-testid="root-admin-user-submit-reset-password"
             disabled={resetPasswordMutation.isPending}
@@ -658,7 +658,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
             type="button"
           >
             {resetPasswordMutation.isPending ? 'Resetting...' : 'Generate temporary password'}
-          </button>
+          </Button>
         </div>
       </UserActionDialog>
 
@@ -673,7 +673,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
           {!isInactive ? (
             <label className="space-y-2">
               <span className="text-sm font-medium text-foreground">Reason</span>
-              <textarea
+              <Textarea
                 className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40"
                 data-testid="root-admin-user-lifecycle-reason"
                 onChange={(event) => setReason(event.target.value)}
@@ -689,14 +689,14 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         </div>
 
         <div className="mt-5 flex justify-end gap-3">
-          <button
+          <Button
             className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-muted/50"
             onClick={closeDialog}
             type="button"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             className="rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             data-testid="root-admin-user-submit-lifecycle"
             disabled={lifecycleMutation.isPending || (!isInactive && reason.trim().length === 0)}
@@ -706,7 +706,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
             {lifecycleMutation.isPending
               ? isInactive ? 'Reactivating...' : 'Inactivating...'
               : isInactive ? 'Reactivate account' : 'Inactivate account'}
-          </button>
+          </Button>
         </div>
       </UserActionDialog>
 
@@ -730,7 +730,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
             Enter <span className="font-medium text-foreground">{viewedUser.email}</span> to
             confirm permanent deletion.
           </p>
-          <input
+          <Input
             autoComplete="email"
             className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-destructive/40"
             data-testid="root-admin-user-delete-confirmation"
@@ -741,7 +741,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
           />
           <label className="space-y-2">
             <span className="text-sm font-medium text-foreground">Reason (optional)</span>
-            <textarea
+            <Textarea
               className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40"
               data-testid="root-admin-user-delete-reason"
               onChange={(event) => setReason(event.target.value)}

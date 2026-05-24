@@ -25,6 +25,7 @@ import {
   ConfirmDialog,
   DefinitionList,
   DetailWithActionsPage,
+  formatDateDisplay,
   FormField,
   IconAvatar,
   IconPickerModal,
@@ -47,7 +48,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type LeagueDetail = GetLeagueResponses[200]['league'];
-type LeaveLeagueResponse = LeaveLeagueResponses[200];
+type LeaveLeagueResult = LeaveLeagueResponses[200];
 type ActiveLeagueDialog = 'details' | 'inactivate' | 'invite' | 'leave' | null;
 
 function formatRole(role: string | null | undefined) {
@@ -311,7 +312,7 @@ export function LeagueDetailPage() {
   });
 
   const leaveLeagueMutation = useInvalidatingMutation({
-    mutationFn: async (): Promise<LeaveLeagueResponse> => {
+    mutationFn: async (): Promise<LeaveLeagueResult> => {
       const response = await leaveLeague({
         path: { id: leagueId },
       });
@@ -627,9 +628,7 @@ export function LeagueDetailPage() {
                 {
                   id: 'created',
                   label: 'Created',
-                  value: leagueQuery.data.createdAt
-                    ? new Date(leagueQuery.data.createdAt).toLocaleDateString()
-                    : 'Unknown',
+                  value: formatDateDisplay(leagueQuery.data.createdAt, 'Unknown'),
                 },
                 {
                   id: 'league-icon',

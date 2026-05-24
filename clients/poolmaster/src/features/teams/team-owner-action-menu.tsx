@@ -2,6 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
+import { Button } from '@/features/shared/ui';
 import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -67,13 +68,13 @@ function OwnerActionDialog({
               </Dialog.Description>
             </div>
             <Dialog.Close asChild>
-              <button
+              <Button
                 aria-label={`Close ${title}`}
                 className="rounded-full border border-border p-2 text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
                 type="button"
               >
                 ×
-              </button>
+              </Button>
             </Dialog.Close>
           </div>
 
@@ -177,21 +178,21 @@ export function TeamOwnerActionMenu({
   return (
     <>
       <div className="relative">
-        <button
+        <Button
           className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted/40"
           data-testid={`${testPrefix}-trigger-${teamId}-${ownerUserId}`}
           onClick={() => setMenuOpen((current) => !current)}
           type="button"
         >
           Owner actions
-        </button>
+        </Button>
         {menuOpen ? (
           <div
             className="absolute right-0 top-full z-20 mt-2 min-w-[14rem] rounded-[1.25rem] border border-border bg-card p-2 shadow-xl"
             data-testid={`${testPrefix}-menu-${teamId}-${ownerUserId}`}
           >
             {canPromote ? (
-              <button
+              <Button
                 className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
                 data-testid={`${testPrefix}-promote-${teamId}-${ownerUserId}`}
                 onClick={() => {
@@ -201,10 +202,10 @@ export function TeamOwnerActionMenu({
                 type="button"
               >
                 Promote to commissioner
-              </button>
+              </Button>
             ) : null}
             {canDemote ? (
-              <button
+              <Button
                 className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
                 data-testid={`${testPrefix}-demote-${teamId}-${ownerUserId}`}
                 onClick={() => {
@@ -214,10 +215,10 @@ export function TeamOwnerActionMenu({
                 type="button"
               >
                 Demote to member
-              </button>
+              </Button>
             ) : null}
             {canRemoveOwner ? (
-              <button
+              <Button
                 className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
                 data-testid={`${testPrefix}-remove-${teamId}-${ownerUserId}`}
                 onClick={() => {
@@ -227,7 +228,7 @@ export function TeamOwnerActionMenu({
                 type="button"
               >
                 Remove owner
-              </button>
+              </Button>
             ) : null}
           </div>
         ) : null}
@@ -264,7 +265,7 @@ export function TeamOwnerActionMenu({
               This change is league-scoped and does not alter the user&apos;s account-level permissions.
             </p>
             {roleError ? <p className="text-sm text-destructive">{roleError}</p> : null}
-            <button
+            <Button
               className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
               data-testid={`${testPrefix}-confirm-promote-${teamId}-${ownerUserId}`}
               disabled={actionIsPending}
@@ -272,7 +273,7 @@ export function TeamOwnerActionMenu({
               type="button"
             >
               {changeRoleMutation.isPending ? 'Promoting...' : 'Promote'}
-            </button>
+            </Button>
           </div>
         ) : null}
 
@@ -282,7 +283,7 @@ export function TeamOwnerActionMenu({
               The backend still enforces the last-commissioner rule if this is the only active commissioner.
             </p>
             {roleError ? <p className="text-sm text-destructive">{roleError}</p> : null}
-            <button
+            <Button
               className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
               data-testid={`${testPrefix}-confirm-demote-${teamId}-${ownerUserId}`}
               disabled={actionIsPending}
@@ -290,7 +291,7 @@ export function TeamOwnerActionMenu({
               type="button"
             >
               {changeRoleMutation.isPending ? 'Demoting...' : 'Demote'}
-            </button>
+            </Button>
           </div>
         ) : null}
 
@@ -314,7 +315,7 @@ export function TeamOwnerActionMenu({
                   This removes the owner relationship only. Team history stays intact.
                 </p>
                 {removeError ? <p className="text-sm text-destructive">{removeError}</p> : null}
-                <button
+                <Button
                   className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
                   data-testid={`${testPrefix}-confirm-remove-${teamId}-${ownerUserId}`}
                   disabled={actionIsPending}
@@ -322,7 +323,7 @@ export function TeamOwnerActionMenu({
                   type="button"
                 >
                   {removeOwnerMutation.isPending ? 'Removing...' : 'Remove owner'}
-                </button>
+                </Button>
               </>
             )}
           </div>

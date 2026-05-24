@@ -4,6 +4,7 @@ import {
   Button,
   Chip,
   FormField,
+  Input,
   ListStack,
   Select,
   StatusBadge,
@@ -102,7 +103,7 @@ export function SelectionParticipantCard({
       onClick={() => onSelect(participant)}
       variant="secondary"
     >
-      <input
+      <Input
         aria-label={actionLabel}
         checked={isSelected}
         className="mt-1 h-4 w-4 accent-primary"

@@ -15,6 +15,7 @@ import { LeagueIcon } from './league-icon';
 import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { removeLeagueSummary, syncLeagueCaches } from './league-cache';
 import { extractErrorMessage } from '@/lib/errors';
+import { Button, formatDateDisplay, Input, Textarea } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -267,7 +268,7 @@ export function ManageLeagueModal({
             </div>
 
             <Dialog.Close asChild>
-              <button
+              <Button
                 aria-label="Close manage league modal"
                 className="rounded-2xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-70"
                 disabled={inactivateMutation.isPending || detailsMutation.isPending || deleteMutation.isPending}
@@ -275,7 +276,7 @@ export function ManageLeagueModal({
                 type="button"
               >
                 Close
-              </button>
+              </Button>
             </Dialog.Close>
           </div>
 
@@ -304,7 +305,7 @@ export function ManageLeagueModal({
                 {MANAGE_TABS.map((tab) => {
                   const isActiveTab = activeTab === tab.key;
                   return (
-                    <button
+                    <Button
                       className={`block w-full rounded-[1.25rem] border px-4 py-3 text-left transition ${
                         isActiveTab
                           ? 'border-primary bg-primary/10 text-foreground'
@@ -316,7 +317,7 @@ export function ManageLeagueModal({
                     >
                       <div className="text-sm font-medium">{tab.label}</div>
                       <div className="mt-1 text-xs">{tab.hint}</div>
-                    </button>
+                    </Button>
                   );
                 })}
               </nav>
@@ -337,7 +338,7 @@ export function ManageLeagueModal({
                       <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                         League name
                       </span>
-                      <input
+                      <Input
                         className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
                         data-testid="manage-league-name"
                         disabled={!canEditDetails}
@@ -370,7 +371,7 @@ export function ManageLeagueModal({
                       <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                         Description
                       </span>
-                      <textarea
+                      <Textarea
                         className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
                         data-testid="manage-league-description"
                         disabled={!canEditDetails}
@@ -405,7 +406,7 @@ export function ManageLeagueModal({
                         Created
                       </div>
                       <div className="mt-1 text-base font-medium">
-                        {league.createdAt ? new Date(league.createdAt).toLocaleDateString() : 'Unknown'}
+                        {formatDateDisplay(league.createdAt, 'Unknown')}
                       </div>
                     </div>
                   </div>
@@ -426,7 +427,7 @@ export function ManageLeagueModal({
                   ) : null}
 
                   <div className="flex justify-end">
-                    <button
+                    <Button
                       className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                       data-testid="manage-league-save-details"
                       disabled={!canEditDetails || detailsName.trim().length === 0}
@@ -440,7 +441,7 @@ export function ManageLeagueModal({
                       type="button"
                     >
                       {detailsMutation.isPending ? 'Saving...' : 'Save details'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : null}
@@ -473,7 +474,7 @@ export function ManageLeagueModal({
                         const isSelected = selectedIconKey === icon.key;
 
                         return (
-                          <button
+                          <Button
                             className={`rounded-[1.25rem] border px-3 py-4 text-center transition ${
                               isSelected
                                 ? 'border-primary bg-primary/10 text-foreground'
@@ -489,7 +490,7 @@ export function ManageLeagueModal({
                               <LeagueIcon iconKey={icon.key} size="md" />
                             </div>
                             <div className="mt-3 text-xs font-medium">{icon.label}</div>
-                          </button>
+                          </Button>
                         );
                       })}
                     </div>
@@ -510,7 +511,7 @@ export function ManageLeagueModal({
                     ) : null}
 
                     <div className="mt-5 flex justify-end">
-                      <button
+                      <Button
                         className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                         data-testid="manage-league-save-icon"
                         disabled={!canEditIcon}
@@ -523,7 +524,7 @@ export function ManageLeagueModal({
                         type="button"
                       >
                         {iconMutation.isPending ? 'Saving...' : 'Save icon'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -570,7 +571,7 @@ export function ManageLeagueModal({
                           afterward.
                         </p>
                       </div>
-                      <button
+                      <Button
                         className="rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
                         data-testid="manage-league-inactivate"
                         disabled={isInactive || inactivateMutation.isPending || deleteMutation.isPending}
@@ -587,7 +588,7 @@ export function ManageLeagueModal({
                           : inactivateMutation.isPending
                             ? 'Inactivating...'
                             : 'Inactivate league'}
-                      </button>
+                      </Button>
                     </div>
 
                     {inactivateMutation.isError ? (
@@ -615,13 +616,13 @@ export function ManageLeagueModal({
                           The league and its related data were removed. You can now return to your
                           home context.
                         </p>
-                        <button
+                        <Button
                           className="rounded-2xl bg-destructive px-4 py-3 text-sm font-medium text-destructive-foreground"
                           onClick={onDeleted}
                           type="button"
                         >
                           Exit
-                        </button>
+                        </Button>
                       </div>
                     ) : (
                       <div className="space-y-5">
@@ -641,7 +642,7 @@ export function ManageLeagueModal({
                           </p>
                           <label className="mt-4 block space-y-2">
                             <span className="text-sm font-medium [color:var(--status-danger-text)]">Confirmation code</span>
-                            <input
+                            <Input
                               className="w-full rounded-2xl border border-[color:var(--status-danger-border)] bg-card px-4 py-3 font-mono text-sm uppercase outline-none transition focus:border-[color:var(--status-danger-text)]"
                               data-testid="manage-league-delete-confirmation"
                               disabled={!isInactive || deleteMutation.isPending}
@@ -654,7 +655,7 @@ export function ManageLeagueModal({
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3">
-                          <button
+                          <Button
                             className="rounded-2xl bg-destructive px-4 py-3 text-sm font-medium text-destructive-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                             data-testid="manage-league-delete-submit"
                             disabled={!canDelete || deleteMutation.isPending}
@@ -672,7 +673,7 @@ export function ManageLeagueModal({
                             type="button"
                           >
                             {deleteMutation.isPending ? 'Deleting...' : 'DELETE'}
-                          </button>
+                          </Button>
                           {!isInactive ? (
                             <span className="text-sm [color:var(--status-danger-text)]">
                               Delete is unavailable until the league is inactive.

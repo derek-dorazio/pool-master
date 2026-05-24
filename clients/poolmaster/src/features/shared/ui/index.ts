@@ -9,7 +9,13 @@ export { cn } from "./class-names";
 export { ConfirmDialog } from "./confirm-dialog";
 export { CopyField } from "./copy-field";
 export { DataGrid } from "./data-grid";
-export { DateDisplay, DateTimeField, toDateTimeLocalValue } from "./date-time";
+export {
+  DateDisplay,
+  DateTimeField,
+  formatDateDisplay,
+  formatDateTimeDisplay,
+  toDateTimeLocalValue,
+} from "./date-time";
 export { DetailsActionsLayout } from "./details-actions-layout";
 export { Accordion, Disclosure } from "./disclosure";
 export {

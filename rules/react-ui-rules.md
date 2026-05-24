@@ -89,6 +89,16 @@ Examples:
 - `as any`, `as unknown as`, or manual shape rewriting to bypass generated types
 - Continuing to use legacy manual-client helpers when generated SDK operations now exist
 
+### Low-Level Transport Exceptions
+
+- Observability or browser-lifecycle transports may use `sendBeacon` or
+  `fetch(..., { keepalive: true })` only when the generated client cannot
+  express the required browser transport behavior.
+- These exceptions must still use shared request DTO types and route constants;
+  they must not invent a parallel API contract.
+- Feature pages, hooks, and domain data flows do not qualify for this
+  exception.
+
 ### Route Constants Clarification
 
 - Use `API_ROUTES` in tests, smoke suites, and MSW handlers.
@@ -100,7 +110,8 @@ Examples:
 
 - Use TanStack Query for server state.
 - Query functions should call real generated SDK functions.
-- Query keys should be stable arrays.
+- Query keys should come from the shared query-key factory, not inline array
+  literals in pages/hooks.
 - Handle invalidation intentionally after mutations.
 - Components must handle:
   - loading
@@ -109,6 +120,24 @@ Examples:
   - success
 
 Do not hide broken requests with local fallbacks.
+
+### Query-Key Factory Discipline
+
+- Define feature query keys in `clients/poolmaster/src/lib/query-keys.ts` or a
+  feature-owned factory exported through that module.
+- Query keys must encode the domain identity they depend on (`leagueId`,
+  `contestId`, `entryId`, etc.) and should not rely on display labels or route
+  copy.
+- New `useQuery`, `useInfiniteQuery`, and mutation invalidation call sites must
+  consume the query-key factory.
+- Do not add inline `queryKey: ['literal', ...]` arrays in feature code.
+  `npm run rules:check:no-inline-query-keys` enforces this.
+- When a mutation succeeds, list the affected query keys explicitly in
+  `invalidateQueries`, update the cache from the authoritative mutation
+  response, or navigate away from stale state.
+- Prefer narrow invalidation keyed by entity identity. Broad invalidation is
+  acceptable only when the mutation truthfully affects the whole feature
+  collection.
 
 ### Query Defaults Must Be Intentional
 
@@ -133,6 +162,21 @@ Do not leave post-mutation cache behavior implicit.
 ---
 
 ## 5. State, Effect, Form, And Component Rules
+
+### State Ownership
+
+- TanStack Query owns server state from generated SDK calls.
+- React local state owns transient component state such as open/closed controls,
+  selected tabs, local drafts, optimistic UI affordances, and wizard step
+  position.
+- React Hook Form owns non-trivial form drafts and validation state.
+- Zustand, if used, owns only cross-route client UI state that cannot reasonably
+  live in local component state, URL params, cookies, or React Query.
+- Redux must not be introduced into `clients/poolmaster`.
+- Do not fetch server data with `useState` + `useEffect` loops when TanStack
+  Query can own the request lifecycle.
+- Do not mirror current-user, league, team, contest, entry, provider, or other
+  API response data into Zustand or another client store.
 
 ### Use Effect Only For External Synchronization
 
@@ -244,6 +288,70 @@ state, stale actions, and unthemeable markup accumulate.
   flight.
 - Pending UI can be subtle, but it must be intentional and visible enough to
   avoid double submits and dead-end uncertainty.
+
+### Form State Discipline
+
+- Use React Hook Form for any form with more than two fields, multi-step forms,
+  forms with conditional validation, or forms with server-returned field errors.
+- Reuse shared Zod schemas or generated request types where they match the
+  actual frontend form shape. If the shared contract is missing or ambiguous,
+  route that through the backend/shared contract workflow instead of copying a
+  local DTO.
+- Keep local form-only schemas near the form when they model browser-only input
+  state, but convert to generated request types at the submit boundary.
+- Submit handlers should call React Query mutations, not raw SDK calls buried in
+  component event handlers without cache behavior.
+- Successful submits must either invalidate affected query keys, update the
+  cache from the authoritative response, or navigate away.
+
+### Component Reuse Threshold
+
+- Apply the rule of two: the second time the same layout, action row, form
+  field cluster, error panel, tile, status treatment, or table shell appears,
+  extract a reusable component or shared helper.
+- Prefer shared primitives from `clients/poolmaster/src/features/shared/ui/`
+  for buttons, inputs, textareas, modals, page templates, tiles, badges, and
+  alerts.
+- Do not copy a page-local helper into another page. Move it to a shared helper
+  or feature-level component and import it.
+- If a shared primitive is almost right, extend the primitive. Do not create a
+  near-duplicate just to get one extra class string.
+
+### Theme And Styling Discipline
+
+- The active theme is expressed through CSS variables and semantic Tailwind
+  tokens. Feature code should use those semantic tokens, not raw color-scale
+  classes or literal color values.
+- Do not use inline `style={{ ... }}` for theme values such as color, spacing,
+  font, border radius, or shadow.
+- Inline styles are reserved for genuinely dynamic values that cannot be
+  represented by class names or CSS variables, such as measured positions,
+  animation transforms, and third-party widget geometry.
+- New reusable theme tokens belong in the theme/shared UI layer before feature
+  code consumes them.
+- `npm run lint:theme-tokens` guards raw theme-token drift in feature code.
+
+### Frontend Logging Discipline
+
+- Use the shared frontend logger for diagnostics. Do not add `console.log` in
+  application code.
+- `console.warn` and `console.error` are reserved for boundary-level fallback
+  reporting, error boundaries, and test utilities where the message is
+  intentional and user/action context is not sensitive.
+- Logger context should be derived from already-loaded app/auth state or query
+  cache data. Do not trigger extra API reads only to decorate logs.
+- Never log tokens, passwords, raw request bodies, or generated authorization
+  headers.
+
+### Environment And Time Discipline
+
+- Runtime environment reads belong in a small config module. Feature components
+  should not read `import.meta.env` directly.
+- Date/time formatting and arithmetic should use shared utilities that preserve
+  timezone intent. Do not sprinkle raw `new Date(...).toLocaleDateString()` or
+  UTC arithmetic through feature pages.
+- When product behavior depends on an event, league, or user timezone, keep the
+  timezone explicit in variable names and tests.
 
 ---
 

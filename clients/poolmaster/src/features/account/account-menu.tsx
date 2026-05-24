@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ActionList, ActionTile, Tile } from "@/features/shared/ui";
+import { ActionList, ActionTile, Button, Tile } from "@/features/shared/ui";
 
 type AccountMenuProps = {
   profilePath: string;
@@ -18,7 +18,7 @@ export function AccountMenu({
 
   return (
     <div className="relative">
-      <button
+      <Button
         aria-expanded={isOpen}
         aria-haspopup="menu"
         className="rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
@@ -27,7 +27,7 @@ export function AccountMenu({
         type="button"
       >
         {userName}
-      </button>
+      </Button>
 
       {isOpen ? (
         <Tile

@@ -9,6 +9,7 @@ import {
   Alert,
   Button,
   DataGrid,
+  formatDateTimeDisplay,
   LinkButton,
   MetricGrid,
   MetricTile,
@@ -27,19 +28,6 @@ import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
-
-function formatDateTimeDisplay(isoString: string | null | undefined) {
-  if (!isoString) {
-    return 'Unavailable';
-  }
-
-  const parsed = Date.parse(isoString);
-  if (Number.isNaN(parsed)) {
-    return 'Unavailable';
-  }
-
-  return new Date(parsed).toLocaleString();
-}
 
 function toSortableTimestamp(isoString: string | null | undefined) {
   if (!isoString) {

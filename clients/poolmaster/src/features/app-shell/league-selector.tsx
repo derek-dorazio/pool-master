@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ListLeaguesResponses } from "@/lib/api";
 import { getLogger } from "@/lib/logger";
-import { Tile } from "@/features/shared/ui";
+import { Button, Tile } from "@/features/shared/ui";
 import {
   buildLeaguePath,
   getLeagueSelectorOptions,
@@ -60,7 +60,7 @@ export function LeagueSelector({
 
   return (
     <div className="relative" ref={containerRef}>
-      <button
+      <Button
         aria-expanded={isOpen}
         aria-haspopup="menu"
         className="flex cursor-pointer items-center gap-3 rounded-[1.5rem] border border-inverse-border bg-on-inverse-subtle px-4 py-3 text-left shadow-sm"
@@ -79,7 +79,7 @@ export function LeagueSelector({
             {activeLeague?.name ?? "Select league"}
           </div>
         </div>
-      </button>
+      </Button>
 
       {isOpen ? (
         <Tile
@@ -89,7 +89,7 @@ export function LeagueSelector({
         >
           <div className="space-y-2">
             {selectorLeagues.map((league) => (
-              <button
+              <Button
                 className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
                   league.leagueCode === activeLeagueCode
                     ? league.isActive
@@ -130,10 +130,10 @@ export function LeagueSelector({
                       : "Not currently active"}
                   </div>
                 </div>
-              </button>
+              </Button>
             ))}
 
-            <button
+            <Button
               className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-muted/50"
               data-testid="league-selector-create"
               onClick={() => {
@@ -152,7 +152,7 @@ export function LeagueSelector({
                 +
               </div>
               <div className="font-medium text-foreground">Create league</div>
-            </button>
+            </Button>
           </div>
         </Tile>
       ) : null}

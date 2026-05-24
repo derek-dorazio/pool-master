@@ -316,7 +316,7 @@ export function JoinLeaguePage() {
                 {TEAM_ICON_OPTIONS.map((icon) => {
                   const isSelected = selectedIconKey === icon.key;
                   return (
-                    <button
+                    <Button
                       className={`rounded-[1.1rem] border px-3 py-4 text-center transition ${
                         isSelected
                           ? 'border-primary bg-primary/10 text-foreground'
@@ -331,7 +331,7 @@ export function JoinLeaguePage() {
                         <TeamIcon iconKey={icon.key} size="md" />
                       </div>
                       <div className="mt-3 text-xs font-medium">{icon.label}</div>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>

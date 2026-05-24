@@ -631,6 +631,10 @@ Current persona nickname map:
 | QA/Test Engineer | Quinn | Verification strategy, regression detection, and test-lane ownership |
 | Architect | Archie | Design plans, execution planning, and platform work |
 | Code Reviewer | Riley | Findings-first review and risk detection |
+| Security Reviewer | Sage | Security focus for auth, validation, secrets, and data exposure |
+| Frontend Discipline Reviewer | Felix | Frontend-specific review for React, SDK/types, state, forms, theme, and a11y |
+| Performance Reviewer | Perry | Performance review for data access, hot paths, payloads, bundle, and rendering |
+
 - Cross-cutting workflow requirements remain mandatory for all personas,
   including:
   - checking for active plans
@@ -866,14 +870,32 @@ Every PR lands via a multi-pass review process. Each pass produces a findings re
 - Invoked when the slice touches shared contracts, cross-module boundaries, infrastructure, or active plans/ADRs (see `personas/archie.md` *PR Architecture Review* section for the trigger list).
 - Same shape as Pass 2/3.
 
+**Pass 5 — Felix frontend discipline review (conditional).**
+- Invoked when the slice touches `clients/poolmaster`, frontend tests, shared
+  UI primitives, frontend rule scanners, or `rules/react-ui-rules.md` (see
+  `personas/felix.md` for the trigger list).
+- Same shape as Pass 2/3/4.
+- Felix's findings are independent of Riley's; the gate is zero CRITICAL/HIGH
+  per persona.
+
+**Pass 6 — Perry performance review (conditional).**
+- Invoked when the slice touches Prisma queries, route/list payloads, ingestion
+  or scoring hot paths, polling/refetch behavior, frontend list rendering, new
+  runtime dependencies, or other performance-sensitive code (see
+  `personas/perry.md` for the trigger list).
+- Same shape as Pass 2/3/4/5.
+- Perry's findings are independent of Riley's; the gate is zero CRITICAL/HIGH
+  per persona.
+
 A PR is merge-ready when:
 - The body has the Riley implementer-self-check marker filled in (Pass 1, CI-enforced).
 - At least one cross-model `gh pr review --approve` is recorded (Pass 2, branch-protection-enforced).
-- Any conditional passes (Sage, Archie) requested by the implementer or a reviewer have completed with zero CRITICAL/HIGH findings.
+- Any conditional passes (Sage, Archie, Felix, Perry) requested by the
+  implementer or a reviewer have completed with zero CRITICAL/HIGH findings.
 
 ### Review header convention
 
-Every PR review posted by an agent via `gh pr review` (Passes 2, 3, 4) must begin with a one-line header naming the persona, the pass type, and the model identity:
+Every PR review posted by an agent via `gh pr review` (Passes 2 through 6) must begin with a one-line header naming the persona, the pass type, and the model identity:
 
 ```
 > _<Persona> review · <pass type> · <model identity>_
@@ -887,6 +909,10 @@ Examples:
 > _Sage review · security focus · Claude Sonnet 4.6_
 
 > _Archie review · architecture pattern check · Codex_
+
+> _Felix review · frontend discipline check · Codex_
+
+> _Perry review · performance check · Codex_
 ```
 
 The header is the canonical signal of which persona ran which pass. GitHub gives you the bot identity (`@<app-name>[bot]`) and the timestamp; the header gives you the persona+pass context that the bot identity alone doesn't carry, since the same App may post multiple persona reviews on a single PR.
@@ -956,12 +982,12 @@ When an implementing persona (Brad, Fran, Archie, Dom, etc.) finishes a slice, t
    - **Workflow-infrastructure slice with no parent epic** (rule changes, scripts, persona work, CI changes, doc additions) — no bracket prefix; just a short imperative summary naming the framework or process change. Example: `Add multi-pass review flow with GitHub Apps per agent runtime`.
 6. **Spawn Riley as the implementer self-check (Pass 1)** in your own runtime, using the canonical spawn prompt below — Riley's review quality depends on what you pass.
 7. **Record Riley's findings in the PR body.** Replace the placeholder under the literal HTML comment `<!-- riley:findings -->` with Riley's findings table (or "No findings." if Riley reported zero). CI greps the PR body for the marker on every PR via `npm run rules:check:pr-riley-marker`, and a PR without it cannot merge.
-8. **Request the cross-model secondary review (Pass 2).** A different agent runtime, operating under a different GitHub App, runs the Riley playbook against the diff and posts via `gh pr review`. If the slice touches security-sensitive code, also request Sage (Pass 3). If it touches shared contracts, infrastructure, or active plans, also request Archie (Pass 4). Each conditional pass is its own `gh pr review` from the appropriate App identity.
-9. **Read all review entries** — implementer marker (Pass 1) + each `gh pr review` (Passes 2/3/4). Then:
+8. **Request the cross-model secondary review (Pass 2).** A different agent runtime, operating under a different GitHub App, runs the Riley playbook against the diff and posts via `gh pr review`. If the slice touches security-sensitive code, also request Sage (Pass 3). If it touches shared contracts, infrastructure, or active plans, also request Archie (Pass 4). If it touches `clients/poolmaster` or frontend rules, also request Felix (Pass 5). If it touches performance-sensitive surfaces such as Prisma queries, route/list payloads, ingestion/scoring hot paths, list rendering, or new runtime dependencies, also request Perry (Pass 6). Each conditional pass is its own `gh pr review` from the appropriate App identity.
+9. **Read all review entries** — implementer marker (Pass 1) + each `gh pr review` (Passes 2/3/4/5/6). Then:
    - **Zero blocker-severity findings across all passes** → `gh pr merge --squash --delete-branch`. Close the Beads story with a closing note per §1 *Beads conventions: story notes*. Return to the user with a summary.
    - **Any blocker-severity findings on any pass** → **do not merge**. Surface the findings to the user, await direction (fix-and-re-review, merge-anyway-with-justification, or park).
 
-The implementing agent — not the reviewers — owns the merge decision. Reviewer agents (Pass 2/3/4) stay in the "findings + vote" lane; they recommend `--approve` / `--request-changes` but the implementer (or human merger) clicks merge.
+The implementing agent — not the reviewers — owns the merge decision. Reviewer agents (Passes 2 through 6) stay in the "findings + vote" lane; they recommend `--approve` / `--request-changes` but the implementer (or human merger) clicks merge.
 
 ### Riley spawn prompt
 

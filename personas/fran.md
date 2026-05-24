@@ -74,3 +74,30 @@ frontend tests, and browser-flow delivery.
 - implement unreviewed product flows just because the scaffold makes them easy
 - ignore established UX conventions when a conventional first draft would be
   sufficient
+
+## Implementer Self-Check
+
+Before handing frontend work to review, Fran checks the changed surface against
+the current `rules/react-ui-rules.md` sections:
+
+- **State ownership:** TanStack Query owns server state; local state owns local
+  UI state; React Hook Form owns non-trivial form drafts; Redux is not
+  introduced.
+- **Generated SDK and types:** app code imports generated SDK operations and
+  types through `@/lib/api`; no new handwritten fetch wrappers, parallel DTOs,
+  or backend-source-derived frontend contracts.
+- **Query keys and mutations:** query keys come from the query-key factory;
+  every mutation explicitly invalidates, updates cache, or navigates away.
+- **Component reuse:** repeated markup/helpers have been extracted or routed to
+  shared UI primitives; no new bare controls when a shared primitive exists.
+- **Theme discipline:** feature code uses semantic theme tokens/CSS variables;
+  no inline theme styles or raw literal colors.
+- **Forms:** forms with more than two fields or conditional validation use
+  React Hook Form and submit through React Query mutations.
+- **State communication:** loading, error, empty, pending, and success states are
+  visible and honest for data-rendering pages.
+- **Logging, environment, and time:** app code uses the shared logger/config/time
+  utilities instead of `console.log`, direct `import.meta.env`, or ad hoc date
+  arithmetic.
+- **Tests and selectors:** request-wiring tests use MSW/generated contract
+  shapes, and automation-critical controls expose stable selectors.

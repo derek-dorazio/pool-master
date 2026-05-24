@@ -236,7 +236,7 @@ export function RootAdminContentConfigurationDetailPage() {
 
               <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <label className="flex items-center gap-2">
-                  <input
+                  <Input
                     checked={draft.active}
                     data-testid="root-admin-content-config-active"
                     onChange={(event) => updateDraft((current) => ({
@@ -248,7 +248,7 @@ export function RootAdminContentConfigurationDetailPage() {
                   Active
                 </label>
                 <label className="flex items-center gap-2">
-                  <input
+                  <Input
                     checked={draft.isDefault}
                     data-testid="root-admin-content-config-default"
                     onChange={(event) => updateDraft((current) => ({

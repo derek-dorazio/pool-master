@@ -22,6 +22,7 @@ import {
   Alert,
   DefinitionList,
   ErrorState,
+  formatDateTimeDisplay,
   FormField,
   Input,
   LinkButton,
@@ -45,19 +46,6 @@ type ContestDetail = GetContestResponses[200]['contest'];
 type DraftState = GetDraftStateResponses[200];
 
 const TIEBREAKER_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
-
-function formatDateTimeDisplay(isoString: string | null | undefined) {
-  if (!isoString) {
-    return 'Unavailable';
-  }
-
-  const parsed = Date.parse(isoString);
-  if (Number.isNaN(parsed)) {
-    return 'Unavailable';
-  }
-
-  return new Date(parsed).toLocaleString();
-}
 
 function formatRelativeToPar(value: number | null | undefined) {
   if (value === null || value === undefined || Number.isNaN(value)) {
