@@ -55,6 +55,108 @@ function renderMyTeamHistoryPage() {
   );
 }
 
+function primeCurrentUser() {
+  getCurrentUserMock.mockResolvedValue({
+    data: {
+      user: {
+        id: 'user-1',
+        email: 'derek@example.com',
+        firstName: 'Derek',
+        lastName: 'Dorazio',
+        isActive: true,
+        isRootAdmin: false,
+        createdAt: '2026-04-15T00:00:00.000Z',
+      },
+    },
+  });
+  refreshTokenMock.mockResolvedValue({ data: null });
+}
+
+function primeLeague() {
+  getLeagueByCodeMock.mockResolvedValue({
+    data: {
+      league: {
+        id: 'league-1',
+        leagueCode: 'BIGDAWGS',
+        name: 'Big Dawgs',
+        isActive: true,
+        iconKey: 'TROPHY',
+        memberCount: 2,
+        activeContestCount: 2,
+        memberType: 'MEMBER',
+        leagueRelationship: {
+          leagueMember: true,
+          commissioner: false,
+        },
+        isRootAdmin: false,
+        joinPolicy: 'COMMISSIONER_ONLY',
+        createdAt: '2026-04-15T00:00:00.000Z',
+      },
+    },
+  });
+}
+
+function buildMyTeam() {
+  return {
+    id: 'team-1',
+    leagueId: 'league-1',
+    createdBy: 'user-1',
+    name: 'Original Team',
+    iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+    status: 'ACTIVE',
+    memberCount: 1,
+    createdAt: '2026-04-15T00:00:00.000Z',
+    updatedAt: '2026-04-15T00:00:00.000Z',
+    teamRelationship: {
+      leagueMember: true,
+      owner: true,
+      commissioner: false,
+    },
+    isRootAdmin: false,
+    members: [
+      {
+        id: 'membership-1',
+        squadId: 'team-1',
+        leagueId: 'league-1',
+        userId: 'user-1',
+        firstName: 'Derek',
+        lastName: 'Dorazio',
+        status: 'ACTIVE',
+        joinedAt: '2026-04-15T00:00:00.000Z',
+        createdAt: '2026-04-15T00:00:00.000Z',
+        updatedAt: '2026-04-15T00:00:00.000Z',
+      },
+    ],
+  };
+}
+
+function buildCompletedContest() {
+  return {
+    id: 'contest-complete',
+    name: 'Genesis Recap',
+    status: 'COMPLETED',
+    contestType: 'ROSTER',
+    selectionType: 'TIERED',
+    scoringEngine: 'STROKE_PLAY',
+    leagueId: 'league-1',
+    sport: 'GOLF',
+    entryCount: 3,
+  };
+}
+
+function primeHistoryShell({
+  contests = [buildCompletedContest()],
+  squads = [buildMyTeam()],
+}: {
+  contests?: Array<Record<string, unknown>>;
+  squads?: Array<Record<string, unknown>>;
+} = {}) {
+  primeCurrentUser();
+  primeLeague();
+  listLeagueSquadsMock.mockResolvedValue({ data: { squads } });
+  listContestsMock.mockResolvedValue({ data: { contests } });
+}
+
 describe('MyTeamHistoryPage', () => {
   afterEach(() => {
     getCurrentUserMock.mockReset();
@@ -64,6 +166,77 @@ describe('MyTeamHistoryPage', () => {
     listLeagueSquadsMock.mockReset();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
+  });
+
+  it('pool-master-7wj.7 shows the page loading state while league context loads', async () => {
+    primeCurrentUser();
+    getLeagueByCodeMock.mockReturnValue(new Promise(() => undefined));
+
+    renderMyTeamHistoryPage();
+
+    const loading = await screen.findByTestId('my-team-history-loading');
+    expect(loading).toHaveAttribute('role', 'status');
+  });
+
+  it('pool-master-7wj.7 shows the league error state when league context fails', async () => {
+    primeCurrentUser();
+    getLeagueByCodeMock.mockRejectedValue(new Error('League unavailable'));
+
+    renderMyTeamHistoryPage();
+
+    const error = await screen.findByTestId('my-team-history-league-error');
+    expect(error).toHaveAttribute('role', 'alert');
+    expect(error).toHaveTextContent("We couldn't load this league.");
+  });
+
+  it('pool-master-7wj.7 shows the entries loading state while history entries load', async () => {
+    primeHistoryShell();
+    listContestEntriesMock.mockReturnValue(new Promise(() => undefined));
+
+    renderMyTeamHistoryPage();
+
+    const loading = await screen.findByTestId('my-team-history-entries-loading');
+    expect(loading).toHaveAttribute('role', 'status');
+  });
+
+  it('pool-master-7wj.7 shows the entries error state when history entries fail', async () => {
+    primeHistoryShell();
+    listContestEntriesMock.mockRejectedValue(new Error('Entries unavailable'));
+
+    renderMyTeamHistoryPage();
+
+    const error = await screen.findByTestId('my-team-history-entries-error');
+    expect(error).toHaveAttribute('role', 'alert');
+    expect(error).toHaveTextContent("We couldn't load historical contests right now.");
+  });
+
+  it('pool-master-7wj.7 shows the no-team state when the viewer has no active team', async () => {
+    primeHistoryShell({ squads: [] });
+
+    renderMyTeamHistoryPage();
+
+    expect(await screen.findByTestId('my-team-history-no-team')).toHaveTextContent('No team yet');
+    expect(listContestEntriesMock).not.toHaveBeenCalled();
+  });
+
+  it('pool-master-7wj.7 shows the empty state when the team has no historical entries', async () => {
+    primeHistoryShell();
+    listContestEntriesMock.mockResolvedValue({
+      data: {
+        contestId: 'contest-complete',
+        total: 0,
+        isJoined: false,
+        myEntryId: null,
+        myEntryIds: [],
+        entries: [],
+      },
+    });
+
+    renderMyTeamHistoryPage();
+
+    expect(await screen.findByTestId('my-team-history-empty')).toHaveTextContent(
+      'No contest history yet',
+    );
   });
 
   it('renders historical contest entries on the dedicated history route', async () => {

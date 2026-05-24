@@ -80,6 +80,17 @@ describe('RootAdminRunSportSyncPage', () => {
     });
   });
 
+  it('pool-master-7wj.7 replaces the sport sync form while provider sports load', async () => {
+    adminListProvidersMock.mockReturnValue(new Promise(() => undefined));
+
+    renderPage();
+
+    const loading = await screen.findByTestId('root-admin-sport-sync-providers-loading');
+    expect(loading).toHaveAttribute('role', 'status');
+    expect(screen.queryByTestId('root-admin-sport-sync-sport')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-sport-sync-now')).not.toBeInTheDocument();
+  });
+
   it('submits a sport sync and shows the returned payload', async () => {
     renderPage();
 
@@ -87,7 +98,7 @@ describe('RootAdminRunSportSyncPage', () => {
       await screen.findByTestId('root-admin-run-sport-sync-page'),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('root-admin-sport-sync-now'));
+    fireEvent.click(await screen.findByTestId('root-admin-sport-sync-now'));
 
     await waitFor(() => {
       expect(adminPrepareSportSyncMock).toHaveBeenCalledWith({

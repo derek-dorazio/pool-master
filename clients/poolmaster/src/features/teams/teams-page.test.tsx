@@ -138,6 +138,44 @@ function buildTeamSummary(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function primeAuthenticatedLeague(role: 'COMMISSIONER' | 'MEMBER' = 'COMMISSIONER') {
+  getCurrentUserMock.mockResolvedValue({
+    data: {
+      user: {
+        id: 'user-1',
+        email: 'derek@example.com',
+        firstName: 'Derek',
+        lastName: 'Dorazio',
+        isActive: true,
+        isRootAdmin: false,
+        createdAt: '2026-04-16T00:00:00.000Z',
+      },
+    },
+  });
+  refreshTokenMock.mockResolvedValue({ data: null });
+  getLeagueByCodeMock.mockResolvedValue({
+    data: {
+      league: buildLeagueDetail(role),
+    },
+  });
+  listLeagueMembersMock.mockResolvedValue({
+    data: {
+      members: [
+        {
+          id: 'league-member-1',
+          userId: 'user-1',
+          email: 'derek@example.com',
+          firstName: 'Derek',
+          lastName: 'Dorazio',
+          role,
+          joinedAt: '2026-04-16T00:00:00.000Z',
+        },
+      ],
+    },
+  });
+  listSquadOwnerInvitationsMock.mockResolvedValue({ data: { invitations: [] } });
+}
+
 describe('TeamsPage', () => {
   afterEach(() => {
     getCurrentUserMock.mockReset();
@@ -153,6 +191,36 @@ describe('TeamsPage', () => {
     mockLogger.info.mockReset();
     mockLogger.warn.mockReset();
     mockLogger.error.mockReset();
+  });
+
+  it('pool-master-7wj.7 shows the teams loading state while the directory loads', async () => {
+    primeAuthenticatedLeague();
+    listLeagueSquadsMock.mockReturnValue(new Promise(() => undefined));
+
+    renderTeamsPage();
+
+    const loading = await screen.findByTestId('teams-page-teams-loading');
+    expect(loading).toHaveAttribute('role', 'status');
+  });
+
+  it('pool-master-7wj.7 shows the teams error state when the directory fails', async () => {
+    primeAuthenticatedLeague();
+    listLeagueSquadsMock.mockRejectedValue(new Error('Teams unavailable'));
+
+    renderTeamsPage();
+
+    const error = await screen.findByTestId('teams-page-teams-error');
+    expect(error).toHaveAttribute('role', 'alert');
+    expect(error).toHaveTextContent("We couldn't load teams for this league.");
+  });
+
+  it('pool-master-7wj.7 shows the teams empty state when no teams exist', async () => {
+    primeAuthenticatedLeague();
+    listLeagueSquadsMock.mockResolvedValue({ data: { squads: [] } });
+
+    renderTeamsPage();
+
+    expect(await screen.findByTestId('teams-page-teams-empty')).toHaveTextContent('No teams yet');
   });
 
   it('renders the read-only teams and owners directory with team-home and owner links', async () => {

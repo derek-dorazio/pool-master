@@ -68,6 +68,26 @@ describe('RootAdminSportOverridesPage', () => {
     adminSetSportIngestionOverrideMock.mockResolvedValue(response);
   });
 
+  it('pool-master-7wj.7 shows loading state while sport override configuration loads', async () => {
+    adminGetIngestionScheduleMock.mockReturnValue(new Promise(() => undefined));
+
+    renderPage();
+
+    const loading = await screen.findByTestId('root-admin-sport-overrides-loading');
+    expect(loading).toHaveAttribute('role', 'status');
+    expect(screen.queryByTestId('root-admin-sport-overrides-save')).not.toBeInTheDocument();
+  });
+
+  it('pool-master-7wj.7 shows error state when sport override configuration fails', async () => {
+    adminGetIngestionScheduleMock.mockRejectedValue(new Error('Schedule unavailable'));
+
+    renderPage();
+
+    const error = await screen.findByTestId('root-admin-sport-overrides-error');
+    expect(error).toHaveAttribute('role', 'alert');
+    expect(error).toHaveTextContent('Schedule unavailable');
+  });
+
   it('renders and saves a sport-specific override', async () => {
     renderPage();
 

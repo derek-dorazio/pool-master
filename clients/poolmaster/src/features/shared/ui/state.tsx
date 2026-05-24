@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { AriaRole, ReactNode } from "react";
 import { Tile } from "./tile";
 
 type StateProps = {
@@ -8,9 +8,14 @@ type StateProps = {
   title?: ReactNode;
 };
 
-function StateTile({ action, body, testId, title }: StateProps) {
+type StateTileProps = StateProps & {
+  ariaLive?: "polite" | "assertive";
+  role?: AriaRole;
+};
+
+function StateTile({ action, ariaLive, body, role, testId, title }: StateTileProps) {
   return (
-    <Tile data-testid={testId} padding="lg">
+    <Tile aria-live={ariaLive} data-testid={testId} padding="lg" role={role}>
       {title ? (
         <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
       ) : null}
@@ -35,9 +40,9 @@ export function EmptyState(props: StateProps) {
 }
 
 export function LoadingState({ body = "Loading...", ...props }: StateProps) {
-  return <StateTile body={body} {...props} />;
+  return <StateTile ariaLive="polite" body={body} role="status" {...props} />;
 }
 
 export function ErrorState(props: StateProps) {
-  return <StateTile {...props} />;
+  return <StateTile ariaLive="assertive" role="alert" {...props} />;
 }
