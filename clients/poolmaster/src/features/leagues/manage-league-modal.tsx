@@ -295,7 +295,7 @@ function ManageLeagueModalContent({
           <div className="mt-6 grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
             <div className="space-y-4">
               <div className="rounded-[1.5rem] border border-border bg-background p-4">
-                <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+                <div className="text-xs uppercase text-muted-foreground">
                   Overview
                 </div>
                 <div className="mt-3 space-y-2">
@@ -348,7 +348,7 @@ function ManageLeagueModalContent({
                   </div>
                   <div className="grid gap-4 rounded-[1.5rem] border border-border bg-card p-5 sm:grid-cols-2">
                     <label className="block space-y-2 sm:col-span-2">
-                      <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      <span className="text-xs uppercase text-muted-foreground">
                         League name
                       </span>
                       <Input
@@ -361,14 +361,14 @@ function ManageLeagueModalContent({
                     </label>
 
                     <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      <div className="text-xs uppercase text-muted-foreground">
                         League code
                       </div>
                       <div className="mt-1 font-mono text-base font-medium">{league.leagueCode}</div>
                     </div>
 
                     <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      <div className="text-xs uppercase text-muted-foreground">
                         Homepage
                       </div>
                       <a
@@ -380,7 +380,7 @@ function ManageLeagueModalContent({
                     </div>
 
                     <label className="block space-y-2 sm:col-span-2">
-                      <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      <span className="text-xs uppercase text-muted-foreground">
                         Description
                       </span>
                       <Textarea
@@ -393,28 +393,28 @@ function ManageLeagueModalContent({
                     </label>
 
                     <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      <div className="text-xs uppercase text-muted-foreground">
                         Member count
                       </div>
                       <div className="mt-1 text-base font-medium">{league.memberCount}</div>
                     </div>
 
                     <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      <div className="text-xs uppercase text-muted-foreground">
                         Active contests
                       </div>
                       <div className="mt-1 text-base font-medium">{league.activeContestCount}</div>
                     </div>
 
                     <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      <div className="text-xs uppercase text-muted-foreground">
                         Status
                       </div>
                       <div className="mt-1 text-base font-medium">{isInactive ? 'Inactive' : 'Active'}</div>
                     </div>
 
                     <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      <div className="text-xs uppercase text-muted-foreground">
                         Created
                       </div>
                       <div className="mt-1 text-base font-medium">
@@ -471,7 +471,7 @@ function ManageLeagueModalContent({
                         <LeagueIcon iconKey={selectedIconKey as never} size="lg" />
                       </div>
                       <div>
-                        <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        <div className="text-xs uppercase text-muted-foreground">
                           Selected icon
                         </div>
                         <div className="mt-1 text-base font-medium">
@@ -550,7 +550,7 @@ function ManageLeagueModalContent({
                     </p>
                   </div>
                   <div className="rounded-[1.5rem] border border-border bg-card p-5">
-                    <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    <div className="text-xs uppercase text-muted-foreground">
                       Join policy
                     </div>
                     <div className="mt-2 text-base font-medium">

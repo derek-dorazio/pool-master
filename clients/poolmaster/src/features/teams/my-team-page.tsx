@@ -651,13 +651,13 @@ export function MyTeamPage() {
                   >
                     {formatUserName(member.firstName, member.lastName)}
                   </Link>
-                  <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                  <Chip>
                     Active owner
-                  </span>
+                  </Chip>
                   {leagueMembersByUserId.get(member.userId) ? (
-                    <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                    <Chip>
                       {leagueMembersByUserId.get(member.userId)?.role === 'COMMISSIONER' ? 'Commissioner' : 'Member'}
-                    </span>
+                    </Chip>
                   ) : null}
                 </div>
                 <div className="text-sm text-muted-foreground">{member.userId}</div>
@@ -927,7 +927,7 @@ export function MyTeamPage() {
                     <TeamIcon iconKey={currentIconKey} size="lg" />
                   </IconAvatar>
                   <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    <div className="text-xs uppercase text-muted-foreground">
                       Team name
                     </div>
                     <div className="mt-1 text-base font-medium">{selectedTeam.name}</div>
@@ -954,7 +954,7 @@ export function MyTeamPage() {
                 />
 
                 <Tile radius="lg">
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  <div className="text-xs uppercase text-muted-foreground">
                     Team owners
                   </div>
                   <div className="mt-3 space-y-2">

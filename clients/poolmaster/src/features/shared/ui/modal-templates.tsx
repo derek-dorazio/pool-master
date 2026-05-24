@@ -431,7 +431,7 @@ export function ReadOnlyDetailModal({
         <dl className="grid gap-3 rounded-2xl border border-border bg-background p-4 sm:grid-cols-2">
           {details.map((detail) => (
             <div key={detail.id}>
-              <dt className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              <dt className="text-xs uppercase text-muted-foreground">
                 {detail.label}
               </dt>
               <dd className="mt-1 text-sm font-medium text-foreground">

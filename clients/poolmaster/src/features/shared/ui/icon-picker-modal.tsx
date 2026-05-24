@@ -80,7 +80,7 @@ export function IconPickerModal<
         <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card px-4 py-4">
           {renderSelectedIcon()}
           <div>
-            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <div className="text-xs uppercase text-muted-foreground">
               Selected icon
             </div>
             <div className="mt-1 text-base font-medium">{selectedLabel}</div>

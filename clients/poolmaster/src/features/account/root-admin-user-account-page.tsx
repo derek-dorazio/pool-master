@@ -438,7 +438,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         <Tile data-testid="root-admin-user-summary" radius="lg">
-          <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+          <div className="text-xs uppercase text-muted-foreground">
             Account summary
           </div>
           <DefinitionList
@@ -460,7 +460,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         </Tile>
 
         <Tile radius="lg">
-          <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+          <div className="text-xs uppercase text-muted-foreground">
             Root-admin controls
           </div>
           <ActionList className="mt-4">

@@ -252,7 +252,7 @@ export function CreateLeagueModal({
         <Chip>
           Commissioner setup
         </Chip>
-        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
           <span
             className={`rounded-full border px-3 py-1 ${
               step === WIZARD_STEP_DETAILS
@@ -346,18 +346,18 @@ export function CreateLeagueModal({
         ) : (
           <section className="space-y-4">
             <Tile padding="sm" radius="lg" variant="subtle">
-              <div className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+              <div className="text-xs font-medium uppercase text-muted-foreground">
                 Review
               </div>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  <div className="text-xs uppercase text-muted-foreground">
                     League name
                   </div>
                   <div className="mt-1 text-base font-medium">{name}</div>
                 </div>
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  <div className="text-xs uppercase text-muted-foreground">
                     League code
                   </div>
                   <div className="mt-1 font-mono text-base font-medium uppercase">
@@ -367,7 +367,7 @@ export function CreateLeagueModal({
               </div>
               {description?.trim() ? (
                 <div className="mt-4">
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  <div className="text-xs uppercase text-muted-foreground">
                     Description
                   </div>
                   <div className="mt-1 text-sm text-foreground">

@@ -73,7 +73,7 @@ export function LeagueSelector({
           <LeagueIcon iconKey={activeLeague?.iconKey} size="md" />
         </div>
         <div className="min-w-0">
-          <div className="font-display text-xs font-bold uppercase tracking-[0.22em] text-on-inverse-muted">
+          <div className="font-display text-xs font-bold uppercase text-on-inverse-muted">
             League
           </div>
           <div className="truncate text-sm font-semibold text-on-inverse">
@@ -126,7 +126,7 @@ export function LeagueSelector({
                   <div className="truncate font-medium text-foreground">
                     {league.name}
                   </div>
-                  <div className="truncate text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                  <div className="truncate text-xs uppercase text-muted-foreground">
                     {league.isActive
                       ? league.leagueCode
                       : "Not currently active"}

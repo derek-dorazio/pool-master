@@ -22,7 +22,7 @@ export function UserAccountSummary({
   return (
     <>
       <Tile data-testid="user-page-identity-summary" radius="lg">
-        <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+        <div className="text-xs uppercase text-muted-foreground">
           Account summary
         </div>
         <DefinitionList
@@ -36,7 +36,7 @@ export function UserAccountSummary({
       </Tile>
 
       <Tile data-testid="user-page-account-details" radius="lg">
-        <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+        <div className="text-xs uppercase text-muted-foreground">
           Account details
         </div>
         <DefinitionList

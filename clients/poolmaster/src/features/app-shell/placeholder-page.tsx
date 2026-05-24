@@ -7,7 +7,7 @@ type PlaceholderPageProps = {
 export function PlaceholderPage({ eyebrow, title, description }: PlaceholderPageProps) {
   return (
     <section className="rounded-[2rem] border border-border bg-card p-8 shadow-sm">
-      <span className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+      <span className="text-xs font-medium uppercase text-muted-foreground">
         {eyebrow}
       </span>
       <div className="mt-4 space-y-3">

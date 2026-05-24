@@ -156,7 +156,7 @@ export function RootAdminContentConfigurationDetailPage() {
           <Tile>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                <p className="text-xs font-medium uppercase text-muted-foreground">
                   {draft.templateKey}
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold text-foreground">
