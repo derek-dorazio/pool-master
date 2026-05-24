@@ -8,6 +8,7 @@ import {
 import {
   AdminConfigPage,
   Button,
+  Checkbox,
   FormField,
   FormEditorSection,
   Input,
@@ -187,7 +188,7 @@ export function RootAdminIngestionSchedulePage() {
                       >
                         <label className="flex h-5 items-center justify-between gap-3 text-sm text-foreground">
                           <span>Enabled</span>
-                          <input
+                          <Checkbox
                             checked={draft[field.key].enabled}
                             data-testid={`root-admin-ingestion-page-${field.key}-enabled`}
                             onChange={(event) =>
@@ -196,7 +197,6 @@ export function RootAdminIngestionSchedulePage() {
                                 'enabled',
                                 event.target.checked,
                               )}
-                            type="checkbox"
                           />
                         </label>
                       </Tile>

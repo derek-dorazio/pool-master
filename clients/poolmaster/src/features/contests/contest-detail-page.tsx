@@ -25,6 +25,7 @@ import { parseRouteState } from '@/routes/route-state';
 import {
   Alert,
   Button,
+  Checkbox,
   Chip,
   DefinitionList,
   EmptyState,
@@ -447,11 +448,10 @@ export function ContestDetailPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <input
+              <Checkbox
                 checked={myOnly}
                 data-testid="contest-board-my-only-toggle"
                 onChange={(event) => setMyOnly(event.target.checked)}
-                type="checkbox"
               />
               My entries only
             </label>

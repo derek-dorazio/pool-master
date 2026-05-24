@@ -72,13 +72,15 @@ Persona content lives once in `personas/<name>.md`. Tool-specific thin-pointer w
 - `personas/quinn.md` — QA/Test Engineer *(invoked as subagent)*
 - `personas/riley.md` — Code Reviewer *(invoked as subagent; runs both implementer self-check and cross-model secondary passes)*
 - `personas/sage.md` — Security Reviewer *(invoked when slice touches auth, validation, secrets, or data exposure; see `personas/sage.md` for trigger list)*
+- `personas/felix.md` — Frontend Discipline Reviewer *(invoked when slice touches `clients/poolmaster`, frontend tests, frontend rule scanners, shared UI primitives, or React UI rules)*
+- `personas/perry.md` — Performance Reviewer *(invoked when slice touches data access, route/list payloads, hot paths, list rendering, new dependencies, or similar performance surfaces)*
 
 **Tool-specific wrappers (thin pointers; do not duplicate persona content):**
 
 - **Claude Code skills:** `.claude/skills/<name>/SKILL.md` — 8 personas (`fran, brad, pam, dom, tess, archie` active; `piper, tom` dormant via `disable-model-invocation: true`).
-- **Claude Code subagents:** `.claude/agents/<name>.md` — `quinn` and `riley` (isolated-context verification/review passes).
+- **Claude Code subagents:** `.claude/agents/<name>.md` — `quinn`, `riley`, `felix`, and `perry` (isolated-context verification/review passes).
 - **Codex skills:** `.agents/skills/<name>/SKILL.md` — same 8 personas; `piper` and `tom` are dormant via `.agents/skills/<name>/agents/openai.yaml` with `allow_implicit_invocation: false`.
-- **Codex subagents:** `.codex/agents/<name>.toml` — `quinn.toml` and `riley.toml`.
+- **Codex subagents:** `.codex/agents/<name>.toml` — `quinn.toml`, `riley.toml`, `felix.toml`, and `perry.toml`.
 
 Default responsibility split for common lanes:
 
@@ -94,8 +96,10 @@ Default responsibility split for common lanes:
 - `Riley` / generalist code reviewer *(subagent)*: findings-first review, risk detection. Runs as both implementer self-check (Pass 1, posted in PR body marker) and cross-model secondary (Pass 2, posted via `gh pr review` from a different App identity).
 - `Sage` / security reviewer *(subagent, conditional)*: invoked when the slice touches auth, validation, secrets, or data exposure. Runs as Pass 3 in the multi-pass review flow.
 - `Archie` / architect *(also runs as reviewer subagent, conditional)*: in addition to design-time work, invoked at PR-time as Pass 4 when the slice touches shared contracts, cross-module boundaries, infrastructure, or active plans/ADRs.
+- `Felix` / frontend discipline reviewer *(subagent, conditional)*: invoked when the slice touches the PoolMaster web app, frontend tests, frontend rule scanners, shared UI primitives, or React UI rules. Runs as Pass 5 in the multi-pass review flow.
+- `Perry` / performance reviewer *(subagent, conditional)*: invoked when the slice touches Prisma queries, route/list payloads, sync/scoring hot paths, frontend list rendering, new dependencies, or similar performance-sensitive surfaces. Runs as Pass 6 in the multi-pass review flow.
 
-The full multi-pass review flow (Pass 1/2/3/4, persona+pass+model header convention, GitHub Apps identity model, branch protection alignment) is documented in `rules/workflow-rules.md §6 Branching, Review, and Merge Cadence`. Operators setting up the GitHub App identities for a new repo should follow `docs/CI-AND-QUALITY-GATES.md` *GitHub App setup runbook* section.
+The full multi-pass review flow (Pass 1/2/3/4/5/6, persona+pass+model header convention, GitHub Apps identity model, branch protection alignment) is documented in `rules/workflow-rules.md §6 Branching, Review, and Merge Cadence`. Operators setting up the GitHub App identities for a new repo should follow `docs/CI-AND-QUALITY-GATES.md` *GitHub App setup runbook* section.
 
 If a role is misassigned during discussion or execution, agents should correct
 it proactively and update the relevant persona/rules if the boundary was not

@@ -1,3 +1,5 @@
+import { poolMasterConfig } from './config';
+
 export interface PoolMasterVersionInfo {
   schemaVersion: number;
   environment: string;
@@ -34,7 +36,7 @@ function buildVersionInfoUrl(): string {
     return 'version-info.json';
   }
 
-  return new URL('version-info.json', `${window.location.origin}${import.meta.env.BASE_URL}`).toString();
+  return new URL('version-info.json', `${window.location.origin}${poolMasterConfig.assetBaseUrl}`).toString();
 }
 
 export async function getVersionInfo(

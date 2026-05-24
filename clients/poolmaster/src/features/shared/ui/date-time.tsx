@@ -52,6 +52,24 @@ export function toDateTimeLocalValue(value: Date | string | null | undefined) {
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }
 
+export function formatDateDisplay(
+  value: Date | string | null | undefined,
+  emptyLabel = "Unavailable",
+  options?: Pick<Intl.DateTimeFormatOptions, "timeZone">,
+) {
+  const date = normalizeDate(value);
+  return date ? date.toLocaleDateString(undefined, options) : emptyLabel;
+}
+
+export function formatDateTimeDisplay(
+  value: Date | string | null | undefined,
+  emptyLabel = "Unavailable",
+  options?: Pick<Intl.DateTimeFormatOptions, "timeZone">,
+) {
+  const date = normalizeDate(value);
+  return date ? date.toLocaleString(undefined, options) : emptyLabel;
+}
+
 function normalizeDate(value: Date | string | null | undefined) {
   if (!value) {
     return null;

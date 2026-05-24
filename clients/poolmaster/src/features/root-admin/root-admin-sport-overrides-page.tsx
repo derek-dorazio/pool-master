@@ -6,6 +6,7 @@ import {
   adminResetSportIngestionOverride,
   adminSetSportIngestionOverride,
 } from '@/lib/api';
+import { Button, Checkbox } from '@/features/shared/ui';
 import { ALL_SYNC_SPORT_OPTIONS, type SyncSport } from './root-admin-sync-utils';
 import {
   buildSportOverrideDraft,
@@ -121,7 +122,7 @@ export function RootAdminSportOverridesPage() {
               without changing the global cadence for every other sport.
             </p>
           </div>
-          <button
+          <Button
             className="inline-flex items-center justify-center rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
             disabled={resetSportOverrideMutation.isPending}
             onClick={() => resetSportOverrideMutation.mutate(overrideSport)}
@@ -130,7 +131,7 @@ export function RootAdminSportOverridesPage() {
             {resetSportOverrideMutation.isPending
               ? 'Resetting...'
               : 'Reset selected sport'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -175,7 +176,7 @@ export function RootAdminSportOverridesPage() {
                     <span className="text-xs text-muted-foreground">
                       Global: {ingestionDraft[field.key].enabled ? 'On' : 'Off'}
                     </span>
-                    <input
+                    <Checkbox
                       checked={overrideDraft[field.key]}
                       data-testid={`root-admin-sport-overrides-${field.key}`}
                       onChange={(event) =>
@@ -187,7 +188,6 @@ export function RootAdminSportOverridesPage() {
                               }
                             : current,
                         )}
-                      type="checkbox"
                     />
                   </div>
                 </label>
@@ -195,7 +195,7 @@ export function RootAdminSportOverridesPage() {
             </div>
 
             <div className="mt-5 flex justify-end">
-              <button
+              <Button
                 className="rounded-2xl bg-foreground px-5 py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 data-testid="root-admin-sport-overrides-save"
                 disabled={sportOverrideMutation.isPending || !overrideDraft}
@@ -210,7 +210,7 @@ export function RootAdminSportOverridesPage() {
                 {sportOverrideMutation.isPending
                   ? 'Saving...'
                   : 'Save sport override'}
-              </button>
+              </Button>
             </div>
           </>
         )}

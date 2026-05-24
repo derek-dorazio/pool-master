@@ -35,7 +35,9 @@ import {
 import {
   Alert,
   Button,
+  Checkbox,
   ErrorState,
+  formatDateDisplay,
   FormField,
   Input,
   LinkButton,
@@ -1223,7 +1225,7 @@ export function CreateContestPage() {
                   <option key={event.id} value={event.id}>
                     {event.name}
                     {' · '}
-                    {new Date(event.startDate).toLocaleDateString()}
+                    {formatDateDisplay(event.startDate)}
                     {' · '}
                     {event.participantCount ?? 0}
                     {' golfers'}
@@ -1294,11 +1296,10 @@ export function CreateContestPage() {
             <div className="space-y-3">
               <div className="text-sm font-medium">Entries per team</div>
               <label className="flex items-center gap-3 text-sm text-foreground">
-                <input
+                <Checkbox
                   checked={unlimitedEntries}
                   data-testid="contest-max-entries-unlimited"
                   onChange={(event) => setUnlimitedEntries(event.target.checked)}
-                  type="checkbox"
                 />
                 Unlimited
               </label>
@@ -1387,11 +1388,10 @@ export function CreateContestPage() {
                       return (
                         <Tile key={category.key} padding="sm" radius="lg" variant="default">
                           <label className="flex items-center gap-3 text-sm">
-                            <input
+                            <Checkbox
                               checked={isSelected}
                               data-testid={`contest-category-toggle-${category.key}`}
                               onChange={() => toggleCategory(category.key)}
-                              type="checkbox"
                             />
                             <span>{category.label}</span>
                           </label>

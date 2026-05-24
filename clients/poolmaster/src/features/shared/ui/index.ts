@@ -9,7 +9,13 @@ export { cn } from "./class-names";
 export { ConfirmDialog } from "./confirm-dialog";
 export { CopyField } from "./copy-field";
 export { DataGrid } from "./data-grid";
-export { DateDisplay, DateTimeField, toDateTimeLocalValue } from "./date-time";
+export {
+  DateDisplay,
+  DateTimeField,
+  formatDateDisplay,
+  formatDateTimeDisplay,
+  toDateTimeLocalValue,
+} from "./date-time";
 export { DetailsActionsLayout } from "./details-actions-layout";
 export { Accordion, Disclosure } from "./disclosure";
 export {
@@ -20,8 +26,13 @@ export {
   Selector,
 } from "./dropdown-menu";
 export { Chip, StatusBadge } from "./status-badge";
-export { FormField, Input, Select, Textarea } from "./form-field";
-export type { InputProps, SelectProps, TextareaProps } from "./form-field";
+export { Checkbox, FormField, Input, Select, Textarea } from "./form-field";
+export type {
+  CheckboxProps,
+  InputProps,
+  SelectProps,
+  TextareaProps,
+} from "./form-field";
 export { IconAvatar, IconBadge } from "./icon-avatar";
 export { IconPickerModal } from "./icon-picker-modal";
 export type { IconPickerOption } from "./icon-picker-modal";

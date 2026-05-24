@@ -20,6 +20,7 @@ const buttonVariants = cva(
         icon: "border border-border bg-background text-muted-foreground hover:bg-muted/40",
       },
       size: {
+        auto: "min-h-12 px-4 py-3",
         sm: "h-9 px-3",
         md: "h-12 px-4",
         lg: "h-14 px-5",

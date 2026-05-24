@@ -2,6 +2,7 @@ import {
   AUTH_ME_QUERY_KEY,
   type AuthSessionData,
 } from '@/features/auth/auth-session-cache';
+import { isLocalRuntimeMode, poolMasterConfig } from '@/lib/config';
 import { queryClient } from '@/lib/query-client';
 import { getEmbeddedVersionInfo } from '@/lib/version-info';
 import { consoleSink } from './console-sink';
@@ -28,10 +29,10 @@ function getLoggerContext() {
 }
 
 export const logger = createLogger({
-  sinks: import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test'
+  sinks: isLocalRuntimeMode(poolMasterConfig.mode)
     ? [consoleSink]
     : [consoleSink, createNetworkSink()],
-  minLevel: resolveConfiguredLogLevel(import.meta.env.VITE_LOG_LEVEL, import.meta.env.MODE),
+  minLevel: resolveConfiguredLogLevel(poolMasterConfig.logLevel, poolMasterConfig.mode),
   getContext: getLoggerContext,
 });
 

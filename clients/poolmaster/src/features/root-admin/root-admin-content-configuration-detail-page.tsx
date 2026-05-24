@@ -10,6 +10,7 @@ import { getLogger } from '@/lib/logger';
 import {
   AdminConfigPage,
   Button,
+  Checkbox,
   FormEditorSection,
   FormField,
   Input,
@@ -236,26 +237,24 @@ export function RootAdminContentConfigurationDetailPage() {
 
               <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <label className="flex items-center gap-2">
-                  <input
+                  <Checkbox
                     checked={draft.active}
                     data-testid="root-admin-content-config-active"
                     onChange={(event) => updateDraft((current) => ({
                       ...current,
                       active: event.target.checked,
                     }))}
-                    type="checkbox"
                   />
                   Active
                 </label>
                 <label className="flex items-center gap-2">
-                  <input
+                  <Checkbox
                     checked={draft.isDefault}
                     data-testid="root-admin-content-config-default"
                     onChange={(event) => updateDraft((current) => ({
                       ...current,
                       isDefault: event.target.checked,
                     }))}
-                    type="checkbox"
                   />
                   Default
                 </label>

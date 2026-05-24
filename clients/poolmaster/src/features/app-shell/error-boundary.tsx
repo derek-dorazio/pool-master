@@ -1,5 +1,6 @@
 import type { ErrorInfo, ReactNode } from 'react';
 import { Component } from 'react';
+import { Button } from '@/features/shared/ui';
 import { logger } from '@/lib/logger';
 
 type ErrorBoundaryProps = {
@@ -55,13 +56,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 logs now have the failure details for investigation.
               </p>
             </div>
-            <button
+            <Button
               className="inline-flex rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
               onClick={this.handleReload}
               type="button"
             >
               Reload page
-            </button>
+            </Button>
           </div>
         </section>
       );

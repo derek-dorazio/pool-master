@@ -1,6 +1,7 @@
 import { createConfig } from '@poolmaster/shared/generated/hey-api/client';
 import type { ClientOptions } from '@poolmaster/shared/generated/hey-api';
 import { client } from '@poolmaster/shared/generated/hey-api/client.gen';
+import { poolMasterConfig } from './config';
 import { readCookie } from './cookies';
 import { getOrCreateClientTraceId } from './logger';
 
@@ -12,9 +13,8 @@ const AUTH_REFRESHABLE_ERROR_CODES = new Set([
 ]);
 
 export function resolveBaseUrl() {
-  const envBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-  if (envBaseUrl) {
-    return envBaseUrl.replace(/\/+$/, '');
+  if (poolMasterConfig.apiBaseUrl) {
+    return poolMasterConfig.apiBaseUrl.replace(/\/+$/, '');
   }
 
   if (typeof window !== 'undefined' && window.location?.origin !== 'null') {
