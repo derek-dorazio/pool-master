@@ -102,7 +102,7 @@ export function DataGrid<TData>({
                             header.getContext(),
                           )}
                         </span>
-                        <span aria-hidden="true" className="text-xs">
+                        <span aria-hidden="true" className="text-[10px]">
                           {getSortIndicator(header.column.getIsSorted())}
                         </span>
                       </button>
