@@ -241,6 +241,7 @@ describe('Contract verification (web)', () => {
     const participantId = randomUUID();
     const sportId = randomUUID();
     const viewer = await createTestUser({ displayName: 'Contract Events Viewer' });
+    const eventTiming = buildContestEligibleEventTiming();
 
     await prisma.sport.create({
       data: {
@@ -256,10 +257,10 @@ describe('Contract verification (web)', () => {
         externalId: `contract-event-${eventId}`,
         sport: Sport.UFC,
         name: 'Contract Events Major',
-        startDate: new Date('2026-05-20T15:00:00.000Z'),
-        endDate: new Date('2026-05-23T23:00:00.000Z'),
-        releaseAt: new Date('2026-04-17T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-05-19T12:00:00.000Z'),
+        startDate: eventTiming.startDate,
+        endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
+        releaseAt: eventTiming.releaseAt,
+        fieldLocksAt: eventTiming.fieldLocksAt,
         status: 'SCHEDULED',
         participantCount: 144,
         fieldLocked: false,
@@ -316,6 +317,7 @@ describe('Contract verification (web)', () => {
     const prisma = getPrisma();
     const eventId = randomUUID();
     const viewer = await createTestUser({ displayName: 'Contract Shallow Events Viewer' });
+    const eventTiming = buildContestEligibleEventTiming();
 
     await prisma.sportEvent.create({
       data: {
@@ -324,10 +326,10 @@ describe('Contract verification (web)', () => {
         externalId: `contract-shallow-event-${eventId}`,
         sport: Sport.UFC,
         name: 'Contract Shallow Event',
-        startDate: new Date('2026-05-20T15:00:00.000Z'),
-        endDate: new Date('2026-05-23T23:00:00.000Z'),
-        releaseAt: new Date('2026-04-17T12:00:00.000Z'),
-        fieldLocksAt: new Date('2026-05-19T12:00:00.000Z'),
+        startDate: eventTiming.startDate,
+        endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
+        releaseAt: eventTiming.releaseAt,
+        fieldLocksAt: eventTiming.fieldLocksAt,
         status: 'SCHEDULED',
         participantCount: 144,
         fieldLocked: false,
