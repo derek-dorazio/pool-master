@@ -182,7 +182,7 @@ export function RootAdminSyncDashboardPage() {
           <div className="text-muted-foreground">
             <div>{buildPayloadSummary(row.original.payload)}</div>
             <Button
-              className="mt-2 h-auto rounded-none p-0 text-xs uppercase tracking-[0.18em]"
+              className="mt-2 h-auto rounded-none p-0 text-xs uppercase"
               onClick={() => setPayloadRun(row.original)}
               type="button"
               variant="ghost"

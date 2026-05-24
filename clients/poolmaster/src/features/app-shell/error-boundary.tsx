@@ -43,7 +43,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return (
         <section className="rounded-[2rem] border border-destructive/30 bg-card p-8 shadow-sm">
-          <span className="text-xs font-medium uppercase tracking-[0.24em] text-destructive">
+          <span className="text-xs font-medium uppercase text-destructive">
             Application Error
           </span>
           <div className="mt-4 space-y-4">

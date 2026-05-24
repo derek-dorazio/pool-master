@@ -82,7 +82,7 @@ export function DataGrid<TData>({
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr
-              className="border-b border-border bg-[var(--table-header-surface)] text-xs uppercase tracking-[0.18em] text-muted-foreground"
+              className="border-b border-border bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground"
               key={headerGroup.id}
             >
               {headerGroup.headers.map((header) => {
@@ -102,7 +102,7 @@ export function DataGrid<TData>({
                             header.getContext(),
                           )}
                         </span>
-                        <span aria-hidden="true" className="text-[10px]">
+                        <span aria-hidden="true" className="text-xs">
                           {getSortIndicator(header.column.getIsSorted())}
                         </span>
                       </button>

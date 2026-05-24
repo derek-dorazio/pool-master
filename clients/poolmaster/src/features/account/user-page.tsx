@@ -319,7 +319,7 @@ export function UserPage() {
     return (
       <section className="space-y-6" data-testid="user-page-non-self-placeholder">
         <Tile padding="lg">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="text-xs font-medium uppercase text-muted-foreground">
             User
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">

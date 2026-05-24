@@ -48,7 +48,7 @@ export function RootAdminContentConfigurationListPage() {
             <div className="text-sm font-semibold text-primary">
               {row.original.name}
             </div>
-            <div className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+            <div className="mt-1 text-xs uppercase text-muted-foreground">
               {row.original.templateKey}
             </div>
             <div className="mt-2 max-w-xl text-sm text-muted-foreground">

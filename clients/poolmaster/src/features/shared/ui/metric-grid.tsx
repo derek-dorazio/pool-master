@@ -21,7 +21,7 @@ type MetricTileProps = {
 export function MetricTile({ helperText, label, value }: MetricTileProps) {
   return (
     <div className="rounded-2xl bg-background px-4 py-4">
-      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+      <div className="text-xs uppercase text-muted-foreground">
         {label}
       </div>
       <div className="mt-1 text-lg font-semibold text-foreground">{value}</div>
@@ -56,7 +56,7 @@ export function DefinitionList({ className, items }: DefinitionListProps) {
           className="rounded-2xl bg-background px-4 py-4"
           key={item.id}
         >
-          <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          <dt className="text-xs uppercase text-muted-foreground">
             {item.label}
           </dt>
           <dd className="mt-1 font-medium text-foreground">{item.value}</dd>

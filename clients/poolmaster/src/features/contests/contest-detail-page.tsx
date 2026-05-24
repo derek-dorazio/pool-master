@@ -127,7 +127,7 @@ function ParticipantsTable({
 
   return (
     <Tile className="mt-4 overflow-x-auto" padding="none" radius="lg">
-      <div className="grid grid-cols-[minmax(0,1.5fr)_80px_70px_repeat(4,56px)] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+      <div className="grid grid-cols-[minmax(0,1.5fr)_80px_70px_repeat(4,56px)] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
         <span>Participant</span>
         <span className="text-right">Total</span>
         <span className="text-right">Thru</span>

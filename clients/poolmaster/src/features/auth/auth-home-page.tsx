@@ -359,7 +359,7 @@ export function AuthHomePage() {
     <Tile className="shadow-lg" padding="lg" radius="xl">
       <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-5">
-          <span className="inline-flex rounded-pill border border-border px-3 py-1 font-display text-xs font-bold uppercase tracking-[0.24em] text-muted-foreground">
+          <span className="inline-flex rounded-pill border border-border px-3 py-1 font-display text-xs font-bold uppercase text-muted-foreground">
             Ultimate Office Pool Manager
           </span>
           <div className="space-y-3">

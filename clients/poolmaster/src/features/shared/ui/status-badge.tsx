@@ -3,7 +3,7 @@ import { type HTMLAttributes } from "react";
 import { cn } from "./class-names";
 
 const statusBadgeVariants = cva(
-  "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em]",
+  "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium uppercase",
   {
     variants: {
       tone: {

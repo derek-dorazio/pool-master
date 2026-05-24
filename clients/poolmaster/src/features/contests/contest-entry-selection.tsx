@@ -206,7 +206,7 @@ export function EditableSelectionGroup({
           <span className="text-sm text-muted-foreground">
             {group.selectedParticipantIds.length}/{group.picksFromGroup} saved
           </span>
-          <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="text-xs uppercase text-muted-foreground">
             {isExpanded ? "Hide tier" : isComplete ? "Review tier" : "Open tier"}
           </span>
         </div>
@@ -257,7 +257,7 @@ export function LockedSelectionGroup({
       </div>
 
       <Tile className="mt-4 overflow-x-auto" padding="none" radius="lg">
-        <div className="grid grid-cols-[minmax(0,1.6fr)_100px_110px_90px] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="grid grid-cols-[minmax(0,1.6fr)_100px_110px_90px] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
           <span>Golfer</span>
           <span className="text-right">Contest rank</span>
           <span className="text-right">World rank</span>
