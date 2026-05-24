@@ -651,13 +651,13 @@ export function MyTeamPage() {
                   >
                     {formatUserName(member.firstName, member.lastName)}
                   </Link>
-                  <Chip>
+                  <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
                     Active owner
-                  </Chip>
+                  </span>
                   {leagueMembersByUserId.get(member.userId) ? (
-                    <Chip>
+                    <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
                       {leagueMembersByUserId.get(member.userId)?.role === 'COMMISSIONER' ? 'Commissioner' : 'Member'}
-                    </Chip>
+                    </span>
                   ) : null}
                 </div>
                 <div className="text-sm text-muted-foreground">{member.userId}</div>
