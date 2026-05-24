@@ -20,6 +20,8 @@ import {
   ContestManagementService,
 } from '../../../packages/core-api/src/modules/contest-management/service';
 
+const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
+
 function createContestCoreRepo(): ContestCoreRepository {
   return {
     findById: jest.fn().mockResolvedValue({
@@ -291,6 +293,15 @@ function createSportEventReader(overrides?: Partial<{
 }
 
 describe('ContestManagementService', () => {
+  beforeAll(() => {
+    // Defect pool-master-mmj: keep event readiness dates stable after the 2026 field lock date passes.
+    jest.useFakeTimers().setSystemTime(CONTEST_MANAGEMENT_TEST_NOW);
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
   it('creates a golf tiered contest and derives internal scoring rules automatically', async () => {
     const contestCoreRepo = createContestCoreRepo();
     const contestConfigTemplateRepo = createContestConfigTemplateRepo();
