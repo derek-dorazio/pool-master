@@ -11,7 +11,21 @@ import {
   adminSetUserRootAdmin,
   type AdminGetUserDetailResponses,
 } from '@/lib/api';
-import { Alert, Button, ConfirmDialog, Input, Textarea } from '@/features/shared/ui';
+import {
+  ActionList,
+  ActionTile,
+  Alert,
+  Button,
+  ConfirmDialog,
+  DefinitionList,
+  ErrorState,
+  FormField,
+  Input,
+  LoadingState,
+  PageHeader,
+  Textarea,
+  Tile,
+} from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildLeaguePath, buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { formatUserName } from './user-name';
@@ -384,9 +398,7 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
   if (userDetailQuery.isLoading) {
     return (
       <section className="space-y-6" data-testid="root-admin-user-page-loading">
-        <div className="rounded-[2rem] border border-border bg-card p-6 text-sm text-muted-foreground">
-          Loading user account...
-        </div>
+        <LoadingState body="Loading user account..." />
       </section>
     );
   }
@@ -394,9 +406,10 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
   if (userDetailQuery.isError || !viewedUser) {
     return (
       <section className="space-y-6" data-testid="root-admin-user-page-error">
-        <div className="rounded-[2rem] border border-destructive/30 bg-destructive/5 p-6 text-sm text-destructive">
-          {extractAdminError(userDetailQuery.error, 'We could not load this user account right now.')}
-        </div>
+        <ErrorState
+          body={extractAdminError(userDetailQuery.error, 'We could not load this user account right now.')}
+          title="User account unavailable"
+        />
       </section>
     );
   }
@@ -407,151 +420,85 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
 
   return (
     <section className="space-y-6" data-testid="root-admin-user-page">
-      <div className="rounded-[2rem] border border-border bg-card p-8">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          User
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
-          User account
-        </h1>
-        <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          You are viewing this account as a root admin. Account-scope actions live here; league-role
-          actions stay on Teams and Owners and Team Home.
-        </p>
-        {isInactive ? (
-          <Alert
-            className="mt-5"
-            data-testid="root-admin-user-inactive-banner"
-            tone="warning"
-          >
-            This account is inactive. Root-admin lifecycle controls can reactivate or permanently
-            delete it here.
-          </Alert>
-        ) : null}
-      </div>
+      <PageHeader
+        description="You are viewing this account as a root admin. Account-scope actions live here; league-role actions stay on Teams and Owners and Team Home."
+        eyebrow="User"
+        title="User account"
+      />
+
+      {isInactive ? (
+        <Alert
+          data-testid="root-admin-user-inactive-banner"
+          tone="warning"
+        >
+          This account is inactive. Root-admin lifecycle controls can reactivate or permanently
+          delete it here.
+        </Alert>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-        <section className="rounded-[1.75rem] border border-border bg-card p-6" data-testid="root-admin-user-summary">
+        <Tile data-testid="root-admin-user-summary" radius="lg">
           <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
             Account summary
           </div>
-          <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Name</dt>
-              <dd className="mt-1 text-base font-medium text-foreground">
-                {formatUserName(viewedUser.firstName, viewedUser.lastName)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Email</dt>
-              <dd className="mt-1 text-base font-medium text-foreground">{viewedUser.email}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Username</dt>
-              <dd className="mt-1 text-base font-medium text-foreground">@{viewedUser.username}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Status</dt>
-              <dd className="mt-1 text-base font-medium text-foreground">
-                {isInactive ? 'Inactive' : 'Active'}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Role</dt>
-              <dd className="mt-1 text-base font-medium text-foreground">
-                {viewedUser.isRootAdmin ? 'Root admin' : 'Member'}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Member since
-              </dt>
-              <dd className="mt-1 text-base font-medium text-foreground">{memberSince}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Auth provider
-              </dt>
-              <dd className="mt-1 text-base font-medium text-foreground">
-                {viewedUser.authProvider ?? 'EMAIL'}
-              </dd>
-            </div>
-          </dl>
-        </section>
+          <DefinitionList
+            className="mt-4"
+            items={[
+              {
+                id: 'name',
+                label: 'Name',
+                value: formatUserName(viewedUser.firstName, viewedUser.lastName),
+              },
+              { id: 'email', label: 'Email', value: viewedUser.email },
+              { id: 'username', label: 'Username', value: `@${viewedUser.username}` },
+              { id: 'status', label: 'Status', value: isInactive ? 'Inactive' : 'Active' },
+              { id: 'role', label: 'Role', value: viewedUser.isRootAdmin ? 'Root admin' : 'Member' },
+              { id: 'member-since', label: 'Member since', value: memberSince },
+              { id: 'auth-provider', label: 'Auth provider', value: viewedUser.authProvider ?? 'EMAIL' },
+            ]}
+          />
+        </Tile>
 
-        <section className="rounded-[1.75rem] border border-border bg-card p-6">
+        <Tile radius="lg">
           <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
             Root-admin controls
           </div>
-          <div className="mt-4 grid gap-4">
-            <Button
-              className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-5 py-4 text-left transition hover:border-primary/40 hover:bg-card"
+          <ActionList className="mt-4">
+            <ActionTile
               data-testid="root-admin-user-open-role"
+              description="Root admin stays platform-scoped and backend-enforced."
+              label={viewedUser.isRootAdmin ? 'Demote root admin' : 'Promote to root admin'}
               onClick={() => openDialog('role')}
-              type="button"
-            >
-              <span>
-                <span className="block text-base font-semibold text-foreground">
-                  {viewedUser.isRootAdmin ? 'Demote root admin' : 'Promote to root admin'}
-                </span>
-                <span className="mt-1 block text-sm text-muted-foreground">
-                  Root admin stays platform-scoped and backend-enforced.
-                </span>
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">Open</span>
-            </Button>
+              trailing="Open"
+            />
 
-            <Button
-              className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-5 py-4 text-left transition hover:border-primary/40 hover:bg-card"
+            <ActionTile
               data-testid="root-admin-user-open-reset-password"
+              description="Generates a temporary password and revokes the user's active refresh sessions."
+              label="Reset password"
               onClick={() => openDialog('reset-password')}
-              type="button"
-            >
-              <span>
-                <span className="block text-base font-semibold text-foreground">Reset password</span>
-                <span className="mt-1 block text-sm text-muted-foreground">
-                  Generates a temporary password and revokes the user&apos;s active refresh sessions.
-                </span>
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">Open</span>
-            </Button>
+              trailing="Open"
+            />
 
-            <Button
-              className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-5 py-4 text-left transition hover:border-primary/40 hover:bg-card"
+            <ActionTile
               data-testid="root-admin-user-open-lifecycle"
+              description="Manage whether this account can sign in."
+              label={isInactive ? 'Reactivate account' : 'Inactivate account'}
               onClick={() => openDialog('lifecycle')}
-              type="button"
-            >
-              <span>
-                <span className="block text-base font-semibold text-foreground">
-                  {isInactive ? 'Reactivate account' : 'Inactivate account'}
-                </span>
-                <span className="mt-1 block text-sm text-muted-foreground">
-                  Manage whether this account can sign in.
-                </span>
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">Open</span>
-            </Button>
+              trailing="Open"
+            />
 
-            <Button
-              className="flex items-center justify-between rounded-[1.5rem] border border-destructive/30 bg-destructive/5 px-5 py-4 text-left transition hover:border-destructive/40"
+            <ActionTile
               data-testid="root-admin-user-open-delete"
+              description="Permanent delete stays locked until the account is inactive."
               disabled={!isInactive || deleteMutation.isPending}
+              label="Delete account"
               onClick={() => openDialog('delete')}
-              type="button"
-            >
-              <span>
-                <span className="block text-base font-semibold text-foreground">Delete account</span>
-                <span className="mt-1 block text-sm text-muted-foreground">
-                  Permanent delete stays locked until the account is inactive.
-                </span>
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">
-                {isInactive ? 'Open' : 'Locked'}
-              </span>
-            </Button>
-          </div>
-        </section>
+              tone="danger"
+              trailing={isInactive ? 'Open' : 'Locked'}
+            />
+          </ActionList>
+        </Tile>
       </div>
 
       <UserActionDialog
@@ -567,19 +514,18 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
               ? 'Removing root-admin access revokes the user’s active refresh sessions.'
               : 'Granting root-admin access allows this user to manage platform-wide administrative workflows.'}
           </p>
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Reason (optional)</span>
+          <FormField label="Reason (optional)">
             <Textarea
-              className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40"
+              className="min-h-28"
               data-testid="root-admin-user-role-reason"
               onChange={(event) => setReason(event.target.value)}
               value={reason}
             />
-          </label>
+          </FormField>
           {roleMutation.isError ? (
-            <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <Alert tone="danger">
               {extractAdminError(roleMutation.error, 'We could not update the root-admin role.')}
-            </div>
+            </Alert>
           ) : null}
         </div>
 
@@ -614,15 +560,14 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
         title="Reset password"
       >
         <div className="space-y-4">
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Reason (optional)</span>
+          <FormField label="Reason (optional)">
             <Textarea
-              className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40"
+              className="min-h-28"
               data-testid="root-admin-user-reset-password-reason"
               onChange={(event) => setReason(event.target.value)}
               value={reason}
             />
-          </label>
+          </FormField>
           {temporaryPassword ? (
             <Alert tone="success">
               <div className="font-semibold">Temporary password</div>
@@ -635,9 +580,9 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
             </Alert>
           ) : null}
           {resetPasswordMutation.isError ? (
-            <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <Alert tone="danger">
               {extractAdminError(resetPasswordMutation.error, 'We could not reset this password.')}
-            </div>
+            </Alert>
           ) : null}
         </div>
 
@@ -670,20 +615,19 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
       >
         <div className="space-y-4">
           {!isInactive ? (
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">Reason</span>
+            <FormField label="Reason">
               <Textarea
-                className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40"
+                className="min-h-28"
                 data-testid="root-admin-user-lifecycle-reason"
                 onChange={(event) => setReason(event.target.value)}
                 value={reason}
               />
-            </label>
+            </FormField>
           ) : null}
           {lifecycleMutation.isError ? (
-            <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <Alert tone="danger">
               {extractAdminError(lifecycleMutation.error, 'We could not update account lifecycle.')}
-            </div>
+            </Alert>
           ) : null}
         </div>
 
@@ -731,26 +675,24 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
           </p>
           <Input
             autoComplete="email"
-            className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-destructive/40"
             data-testid="root-admin-user-delete-confirmation"
             onChange={(event) => setDeleteEmailConfirmation(event.target.value)}
             placeholder="Enter the user email exactly"
             type="email"
             value={deleteEmailConfirmation}
           />
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Reason (optional)</span>
+          <FormField label="Reason (optional)">
             <Textarea
-              className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/40"
+              className="min-h-28"
               data-testid="root-admin-user-delete-reason"
               onChange={(event) => setReason(event.target.value)}
               value={reason}
             />
-          </label>
+          </FormField>
           {deleteMutation.isError ? (
-            <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <Alert tone="danger">
               <AccountDeleteDependencyMessage error={deleteMutation.error} />
-            </div>
+            </Alert>
           ) : null}
         </div>
       </ConfirmDialog>

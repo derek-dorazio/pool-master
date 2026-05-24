@@ -6,6 +6,7 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
 import {
   Button,
+  Chip,
   LinkButton,
   PublicInviteJoinPage,
 } from '@/features/shared/ui';
@@ -230,9 +231,9 @@ export function JoinTeamOwnerPage() {
   return (
     <PublicInviteJoinPage
       context={(
-        <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+        <Chip>
           Team invitation
-        </span>
+        </Chip>
       )}
       testId="team-owner-invite-page"
       title={invitationQuery.data ? `Join ${invitationQuery.data.team.name}` : 'Accept your team invite'}

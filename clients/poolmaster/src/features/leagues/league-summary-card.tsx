@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import {
+  Chip,
   IconAvatar,
   MetricGrid,
   MetricTile,
@@ -35,9 +36,9 @@ export function LeagueSummaryCard({
         )}
       >
         <div className="space-y-3">
-          <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+          <Chip>
             {roleLabel}
-          </span>
+          </Chip>
           <div className="flex items-start gap-4">
             <IconAvatar label={`${name} icon`} size="lg">
               {icon}

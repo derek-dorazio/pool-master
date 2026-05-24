@@ -26,6 +26,7 @@ import {
   ActionTile,
   Alert,
   Button,
+  Chip,
   ConfirmDialog,
   DefinitionList,
   DetailWithActionsPage,
@@ -805,9 +806,9 @@ export function MyTeamPage() {
               <TeamIcon iconKey={currentIconKey} size="lg" />
             </IconAvatar>
             <div>
-              <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+              <Chip>
                 {isManagingAnotherTeam ? 'Commissioner team view' : 'Team'}
-              </span>
+              </Chip>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight">
                 {selectedTeam ? selectedTeam.name : 'Create your team'}
               </h2>
