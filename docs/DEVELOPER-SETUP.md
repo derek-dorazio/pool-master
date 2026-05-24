@@ -353,6 +353,45 @@ After `terraform apply`, run migrations:
 DATABASE_URL=$(terraform output -raw database_url) npx prisma migrate deploy --schema=packages/core-api/prisma/schema.prisma
 ```
 
+### QA substrate migration repair
+
+The checked-in repair path for the QA-only
+`20260506211309_substrate_redesign_phase4_foundation` failure is:
+
+```bash
+DATABASE_URL=$(terraform output -raw database_url) npm run db:repair:substrate-migration
+DATABASE_URL=$(terraform output -raw database_url) npm run db:repair:substrate-migration:apply
+```
+
+QA RDS normally lives in private subnets, so local execution may fail to reach
+the database. In that case, publish a core-api image that contains the repair
+script and run the same command from a one-off ECS migration task override:
+
+```bash
+node scripts/repair-substrate-foundation-migration.mjs
+node scripts/repair-substrate-foundation-migration.mjs --apply --confirm-qa-substrate-repair
+```
+
+The normal ECS migration command (`node scripts/run-migrations.mjs`) also
+attempts this repair automatically after `prisma migrate deploy` fails with the
+matching unresolved substrate migration. The standalone commands above are kept
+as the explicit operator path for dry-run inspection and manual retry.
+
+The script is dry-run by default. Apply mode refuses to run unless all of these
+are true:
+- `DATABASE_URL` points at the QA RDS endpoint, unless an operator explicitly
+  sets `ALLOW_NON_QA_SUBSTRATE_REPAIR=true`.
+- Prisma has exactly one unresolved failed row for
+  `20260506211309_substrate_redesign_phase4_foundation`.
+- The failed migration log is the known `plan_tiers` already-exists failure.
+- The substrate migration has not partially applied beyond `plan_tiers`.
+- Legacy score/history rows that would need a real data backfill are empty.
+
+When the gate passes, apply mode drops only the failed `public.plan_tiers`
+artifact, resolves the failed migration as rolled back, reruns
+`prisma migrate deploy`, verifies the expected substrate objects, and restores
+any prior `plan_tiers` rows if the recreated table is empty.
+
 See [Terraform Workflow](../infrastructure/terraform/README.md) for the current remote-state-only workflow.
 
 ---

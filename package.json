@@ -21,6 +21,8 @@
     "db:test:migrate": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npx prisma migrate deploy --schema prisma/schema.prisma",
     "db:test:reset": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster_test npx prisma migrate reset --force --skip-seed --schema prisma/schema.prisma",
     "db:test:recreate": "npm run db:test:reset",
+    "db:repair:substrate-migration": "cd packages/core-api && node scripts/repair-substrate-foundation-migration.mjs",
+    "db:repair:substrate-migration:apply": "cd packages/core-api && node scripts/repair-substrate-foundation-migration.mjs --apply --confirm-qa-substrate-repair",
     "db:studio": "cd packages/core-api && DATABASE_URL=postgresql://postgres:postgres@localhost:5432/poolmaster npx prisma studio",
     "lint": "eslint 'packages/*/src/**/*.ts' 'clients/poolmaster/src/**/*.{ts,tsx}' --max-warnings 0 && npm run lint:theme-tokens",
     "lint:theme-tokens": "node scripts/check-feature-theme-tokens.mjs",

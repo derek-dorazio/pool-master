@@ -7,7 +7,9 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "db:repair:substrate-migration": "node scripts/repair-substrate-foundation-migration.mjs",
+    "db:repair:substrate-migration:apply": "node scripts/repair-substrate-foundation-migration.mjs --apply --confirm-qa-substrate-repair"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.600.0",

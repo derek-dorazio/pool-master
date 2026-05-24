@@ -2,9 +2,27 @@ import { spawnSync } from 'node:child_process';
 import { PrismaClient } from '@prisma/client';
 
 const LEAGUE_CODE_MIGRATION = '20260411173000_add_league_code';
+const SUBSTRATE_FOUNDATION_MIGRATION = '20260506211309_substrate_redesign_phase4_foundation';
 
 function runPrisma(args) {
   const result = spawnSync('npx', ['prisma', ...args], {
+    stdio: 'pipe',
+    encoding: 'utf8',
+    env: process.env,
+  });
+
+  if (result.stdout) {
+    process.stdout.write(result.stdout);
+  }
+  if (result.stderr) {
+    process.stderr.write(result.stderr);
+  }
+
+  return result;
+}
+
+function runNodeScript(args) {
+  const result = spawnSync('node', args, {
     stdio: 'pipe',
     encoding: 'utf8',
     env: process.env,
@@ -208,6 +226,25 @@ async function main() {
   const combinedOutput = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
 
   try {
+    if (await hasUnresolvedFailedMigration(prisma, SUBSTRATE_FOUNDATION_MIGRATION)) {
+      console.log(`Attempting one-time repair for migration ${SUBSTRATE_FOUNDATION_MIGRATION}...`);
+      result = runNodeScript([
+        'scripts/repair-substrate-foundation-migration.mjs',
+        '--apply',
+        '--confirm-qa-substrate-repair',
+      ]);
+
+      if (result.status !== 0) {
+        throw new Error(
+          `Failed to repair ${SUBSTRATE_FOUNDATION_MIGRATION}. The repair script refused or failed.`,
+        );
+      }
+
+      await assertNoUnresolvedFailedMigrations(prisma);
+      console.log('Prisma migrations completed successfully after substrate repair.');
+      return;
+    }
+
     const shouldRepair = await shouldRepairLeagueCodeMigration(prisma);
 
     if (!shouldRepair) {
