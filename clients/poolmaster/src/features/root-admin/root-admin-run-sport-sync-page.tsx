@@ -10,6 +10,7 @@ import {
   Button,
   FormField,
   LinkButton,
+  LoadingState,
   PageHeader,
   Select,
   Tile,
@@ -200,12 +201,17 @@ export function RootAdminRunSportSyncPage() {
           </Tile>
 
           {providersQuery.isError ? (
-            <Alert>
+            <Alert title="Provider context unavailable">
               {extractErrorMessage(
                 providersQuery.error,
                 { fallback: 'Provider health context is unavailable, so the sport list is using fallback options.' },
               )}
             </Alert>
+          ) : providersQuery.isLoading ? (
+            <LoadingState
+              body="Loading provider sport options..."
+              testId="root-admin-sport-sync-providers-loading"
+            />
           ) : null}
 
           <Button

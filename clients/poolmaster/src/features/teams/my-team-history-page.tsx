@@ -22,6 +22,13 @@ import {
 import { getLogger } from '@/lib/logger';
 import { isHistoricalContest } from '@/features/contests/contest-status';
 import { QueryKeys } from '@/lib/query-keys';
+import {
+  EmptyState,
+  ErrorState,
+  LinkButton,
+  LoadingState,
+  Tile,
+} from '@/features/shared/ui';
 
 type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
@@ -166,9 +173,10 @@ export function MyTeamHistoryPage() {
 
   if (leagueQuery.isLoading) {
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <p className="text-sm text-muted-foreground">Loading your contest history...</p>
-      </section>
+      <LoadingState
+        body="Loading your contest history..."
+        testId="my-team-history-loading"
+      />
     );
   }
 
@@ -176,16 +184,12 @@ export function MyTeamHistoryPage() {
     const copy = getLeagueLoadErrorCopy(leagueQuery.error);
 
     return (
-      <section className="rounded-[2rem] border border-border bg-card p-8">
-        <h2 className="text-2xl font-semibold">{copy.title}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{copy.body}</p>
-        <Link
-          className="mt-4 inline-flex text-sm font-medium text-primary hover:underline"
-          to="/welcome"
-        >
-          Back to welcome
-        </Link>
-      </section>
+      <ErrorState
+        action={<LinkButton to="/welcome" variant="secondary">Back to welcome</LinkButton>}
+        body={copy.body}
+        testId="my-team-history-league-error"
+        title={copy.title}
+      />
     );
   }
 
@@ -208,7 +212,7 @@ export function MyTeamHistoryPage() {
         </p>
       </div>
 
-      <section className="rounded-[2rem] border border-border bg-card p-6">
+      <Tile>
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-foreground">Historical entries</h2>
@@ -226,27 +230,29 @@ export function MyTeamHistoryPage() {
 
         <div className="mt-5 space-y-3">
           {teamsQuery.isLoading || contestsQuery.isLoading || (myTeam && contestEntriesByContestQuery.isLoading) ? (
-            <p className="text-sm text-muted-foreground">Loading contest history...</p>
+            <LoadingState
+              body="Loading contest history..."
+              testId="my-team-history-entries-loading"
+            />
           ) : teamsQuery.isError || contestsQuery.isError || contestEntriesByContestQuery.isError ? (
-            <p className="text-sm text-muted-foreground">
-              We couldn&apos;t load historical contests right now.
-            </p>
+            <ErrorState
+              body="We couldn't load historical contests right now."
+              testId="my-team-history-entries-error"
+              title="History unavailable"
+            />
           ) : !myTeam ? (
-            <div className="rounded-[1.5rem] border border-border bg-background p-5">
-              <p className="text-sm text-muted-foreground">
-                Create your team first and contest history will appear here.
-              </p>
-              <Link
-                className="mt-4 inline-flex rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/40"
-                to={teamPath}
-              >
-                Open My Team
-              </Link>
-            </div>
+            <EmptyState
+              action={<LinkButton to={teamPath} variant="secondary">Open My Team</LinkButton>}
+              body="Create your team first and contest history will appear here."
+              testId="my-team-history-no-team"
+              title="No team yet"
+            />
           ) : historicalContestCards.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              This team does not have any historical contest entries yet.
-            </p>
+            <EmptyState
+              body="This team does not have any historical contest entries yet."
+              testId="my-team-history-empty"
+              title="No contest history yet"
+            />
           ) : (
             historicalContestCards.map(({ contest, teamEntries }) => (
               <div
@@ -306,7 +312,7 @@ export function MyTeamHistoryPage() {
             ))
           )}
         </div>
-      </section>
+      </Tile>
     </section>
   );
 }
