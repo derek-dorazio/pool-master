@@ -2,9 +2,9 @@ import type { GetDraftStateResponses } from "@/lib/api";
 import {
   Alert,
   Button,
+  Checkbox,
   Chip,
   FormField,
-  Input,
   ListStack,
   Select,
   StatusBadge,
@@ -103,13 +103,12 @@ export function SelectionParticipantCard({
       onClick={() => onSelect(participant)}
       variant="secondary"
     >
-      <Input
+      <Checkbox
         aria-label={actionLabel}
         checked={isSelected}
         className="mt-1 h-4 w-4 accent-primary"
         readOnly
         tabIndex={-1}
-        type="checkbox"
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-4">

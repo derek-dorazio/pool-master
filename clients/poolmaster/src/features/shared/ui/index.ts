@@ -26,8 +26,13 @@ export {
   Selector,
 } from "./dropdown-menu";
 export { Chip, StatusBadge } from "./status-badge";
-export { FormField, Input, Select, Textarea } from "./form-field";
-export type { InputProps, SelectProps, TextareaProps } from "./form-field";
+export { Checkbox, FormField, Input, Select, Textarea } from "./form-field";
+export type {
+  CheckboxProps,
+  InputProps,
+  SelectProps,
+  TextareaProps,
+} from "./form-field";
 export { IconAvatar, IconBadge } from "./icon-avatar";
 export { IconPickerModal } from "./icon-picker-modal";
 export type { IconPickerOption } from "./icon-picker-modal";

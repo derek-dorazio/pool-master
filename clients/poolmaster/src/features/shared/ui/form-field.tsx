@@ -90,6 +90,27 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   );
 });
 
+export type CheckboxProps = Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "type"
+>;
+
+export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
+  function Checkbox({ className, ...props }, ref) {
+    return (
+      <input
+        className={cn(
+          "h-4 w-4 shrink-0 rounded border border-border bg-background accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-70",
+          className,
+        )}
+        ref={ref}
+        type="checkbox"
+        {...props}
+      />
+    );
+  },
+);
+
 export type SelectProps = SelectHTMLAttributes<HTMLSelectElement>;
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(

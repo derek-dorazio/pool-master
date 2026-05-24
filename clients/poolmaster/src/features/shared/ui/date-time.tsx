@@ -55,24 +55,19 @@ export function toDateTimeLocalValue(value: Date | string | null | undefined) {
 export function formatDateDisplay(
   value: Date | string | null | undefined,
   emptyLabel = "Unavailable",
+  options?: Pick<Intl.DateTimeFormatOptions, "timeZone">,
 ) {
   const date = normalizeDate(value);
-  return date
-    ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(date)
-    : emptyLabel;
+  return date ? date.toLocaleDateString(undefined, options) : emptyLabel;
 }
 
 export function formatDateTimeDisplay(
   value: Date | string | null | undefined,
   emptyLabel = "Unavailable",
+  options?: Pick<Intl.DateTimeFormatOptions, "timeZone">,
 ) {
   const date = normalizeDate(value);
-  return date
-    ? new Intl.DateTimeFormat(undefined, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(date)
-    : emptyLabel;
+  return date ? date.toLocaleString(undefined, options) : emptyLabel;
 }
 
 function normalizeDate(value: Date | string | null | undefined) {

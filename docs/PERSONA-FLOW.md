@@ -8,7 +8,8 @@ This document summarizes the default PoolMaster persona lifecycle.
 - `requirements/product-overview/` holds Piper's discovery artifacts
 - `requirements/product-requirements/` holds Pam's refined requirement artifacts
 - `tech-specs/` holds technical specification artifacts
-- `plans/` remains the execution ledger and source of truth for active status
+- `plans/` holds narrative execution context for active epics; Beads is the
+  live execution ledger and source of truth for active status
 
 ## Default Flow
 

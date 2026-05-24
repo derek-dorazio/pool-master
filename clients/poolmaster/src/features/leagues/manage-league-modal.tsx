@@ -313,6 +313,7 @@ export function ManageLeagueModal({
                       }`}
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key)}
+                      size="auto"
                       type="button"
                     >
                       <div className="text-sm font-medium">{tab.label}</div>
@@ -339,7 +340,6 @@ export function ManageLeagueModal({
                         League name
                       </span>
                       <Input
-                        className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
                         data-testid="manage-league-name"
                         disabled={!canEditDetails}
                         onChange={(event) => setDetailsName(event.target.value)}
@@ -372,7 +372,7 @@ export function ManageLeagueModal({
                         Description
                       </span>
                       <Textarea
-                        className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-70"
+                        className="min-h-28"
                         data-testid="manage-league-description"
                         disabled={!canEditDetails}
                         onChange={(event) => setDetailsDescription(event.target.value)}
@@ -428,7 +428,6 @@ export function ManageLeagueModal({
 
                   <div className="flex justify-end">
                     <Button
-                      className="rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                       data-testid="manage-league-save-details"
                       disabled={!canEditDetails || detailsName.trim().length === 0}
                       onClick={() =>

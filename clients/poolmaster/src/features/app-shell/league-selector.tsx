@@ -66,6 +66,7 @@ export function LeagueSelector({
         className="flex cursor-pointer items-center gap-3 rounded-[1.5rem] border border-inverse-border bg-on-inverse-subtle px-4 py-3 text-left shadow-sm"
         data-testid="league-selector-toggle"
         onClick={() => setIsOpen((current) => !current)}
+        size="auto"
         type="button"
       >
         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
@@ -115,6 +116,7 @@ export function LeagueSelector({
                   );
                   onNavigate(buildLeaguePath(league.leagueCode));
                 }}
+                size="auto"
                 type="button"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">

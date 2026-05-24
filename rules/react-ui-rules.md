@@ -132,6 +132,9 @@ Do not hide broken requests with local fallbacks.
   consume the query-key factory.
 - Do not add inline `queryKey: ['literal', ...]` arrays in feature code.
   `npm run rules:check:no-inline-query-keys` enforces this.
+- Do not define page-local API-shaped type aliases or interfaces with the same
+  names as generated `hey-api` types. `npm run
+  rules:check:no-parallel-api-types` enforces this.
 - When a mutation succeeds, list the affected query keys explicitly in
   `invalidateQueries`, update the cache from the authoritative mutation
   response, or navigate away from stale state.
@@ -322,14 +325,16 @@ state, stale actions, and unthemeable markup accumulate.
 - The active theme is expressed through CSS variables and semantic Tailwind
   tokens. Feature code should use those semantic tokens, not raw color-scale
   classes or literal color values.
-- Do not use inline `style={{ ... }}` for theme values such as color, spacing,
-  font, border radius, or shadow.
+- Do not use inline `style={{ ... }}` for theme values such as color,
+  typography, border, radius, or shadow.
 - Inline styles are reserved for genuinely dynamic values that cannot be
   represented by class names or CSS variables, such as measured positions,
   animation transforms, and third-party widget geometry.
 - New reusable theme tokens belong in the theme/shared UI layer before feature
   code consumes them.
 - `npm run lint:theme-tokens` guards raw theme-token drift in feature code.
+- `npm run rules:check:no-inline-theme-styles` guards literal inline theme
+  styles for color, border, shadow, and typography properties.
 
 ### Frontend Logging Discipline
 
@@ -352,6 +357,10 @@ state, stale actions, and unthemeable markup accumulate.
   UTC arithmetic through feature pages.
 - When product behavior depends on an event, league, or user timezone, keep the
   timezone explicit in variable names and tests.
+- Frontend HTTP calls must use generated SDK operations from `@/lib/api`.
+  Low-level transport exceptions are limited to app infrastructure such as
+  generated-client setup, logger transport, and static asset loading. `npm run
+  rules:check:no-non-sdk-fetch` enforces this.
 
 ---
 

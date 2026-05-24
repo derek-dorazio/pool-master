@@ -585,14 +585,13 @@ export function RootAdminUserAccountPage({ userId }: { userId: string }) {
 
         <div className="mt-5 flex justify-end gap-3">
           <Button
-            className="rounded-2xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-muted/50"
             onClick={closeDialog}
             type="button"
+            variant="secondary"
           >
             Cancel
           </Button>
           <Button
-            className="rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition hover:opacity-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             data-testid="root-admin-user-submit-role"
             disabled={roleMutation.isPending}
             onClick={() => void roleMutation.mutateAsync(viewedUser).catch(() => undefined)}

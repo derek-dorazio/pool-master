@@ -1,4 +1,8 @@
-export type PoolMasterRuntimeMode = ImportMetaEnv['MODE'];
+export type PoolMasterRuntimeMode =
+  | 'development'
+  | 'production'
+  | 'test'
+  | (string & {});
 
 export const poolMasterConfig = {
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL?.trim() ?? '',

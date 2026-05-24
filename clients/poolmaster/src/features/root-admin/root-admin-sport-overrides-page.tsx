@@ -6,7 +6,7 @@ import {
   adminResetSportIngestionOverride,
   adminSetSportIngestionOverride,
 } from '@/lib/api';
-import { Button, Input } from '@/features/shared/ui';
+import { Button, Checkbox } from '@/features/shared/ui';
 import { ALL_SYNC_SPORT_OPTIONS, type SyncSport } from './root-admin-sync-utils';
 import {
   buildSportOverrideDraft,
@@ -176,7 +176,7 @@ export function RootAdminSportOverridesPage() {
                     <span className="text-xs text-muted-foreground">
                       Global: {ingestionDraft[field.key].enabled ? 'On' : 'Off'}
                     </span>
-                    <Input
+                    <Checkbox
                       checked={overrideDraft[field.key]}
                       data-testid={`root-admin-sport-overrides-${field.key}`}
                       onChange={(event) =>
@@ -188,7 +188,6 @@ export function RootAdminSportOverridesPage() {
                               }
                             : current,
                         )}
-                      type="checkbox"
                     />
                   </div>
                 </label>

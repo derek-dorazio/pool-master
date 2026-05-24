@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { FormField, Input, Select, Textarea } from "./form-field";
+import { Checkbox, FormField, Input, Select, Textarea } from "./form-field";
 
 describe("pool-master-3lo.4: shared form field primitives", () => {
   it("rule: associates labels, helper text, and errors with form controls", () => {
@@ -41,5 +41,15 @@ describe("pool-master-3lo.4: shared form field primitives", () => {
     expect(screen.getByLabelText("Name")).toHaveClass("rounded-2xl");
     expect(screen.getByLabelText("Lifecycle")).toHaveClass("rounded-2xl");
     expect(screen.getByLabelText("Description")).toHaveClass("rounded-2xl");
+  });
+
+  it("pool-master-q8h: renders checkbox controls without text-input styling", () => {
+    render(<Checkbox aria-label="Enabled" />);
+
+    const checkbox = screen.getByLabelText("Enabled");
+    expect(checkbox).toHaveAttribute("type", "checkbox");
+    expect(checkbox).toHaveClass("h-4");
+    expect(checkbox).not.toHaveClass("w-full");
+    expect(checkbox).not.toHaveClass("px-4");
   });
 });

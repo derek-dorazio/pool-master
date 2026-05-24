@@ -1,6 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { DateDisplay, DateTimeField, toDateTimeLocalValue } from "./date-time";
+import {
+  DateDisplay,
+  DateTimeField,
+  formatDateDisplay,
+  formatDateTimeDisplay,
+  toDateTimeLocalValue,
+} from "./date-time";
 
 describe("pool-master-3lo.18: shared DateTimeField and DateDisplay primitives", () => {
   it("rule: formats valid dates and uses a fallback for missing dates", () => {
@@ -31,5 +37,26 @@ describe("pool-master-3lo.18: shared DateTimeField and DateDisplay primitives", 
       "datetime-local",
     );
     expect(screen.getByLabelText("Starts at")).toHaveValue(value);
+  });
+
+  it("pool-master-q8h: formats date utility values with parity fallbacks", () => {
+    const isoValue = "2026-04-30T12:30:00.000Z";
+    const date = new Date(isoValue);
+
+    expect(formatDateDisplay(isoValue)).toBe(date.toLocaleDateString());
+    expect(formatDateTimeDisplay(isoValue)).toBe(date.toLocaleString());
+    expect(formatDateDisplay(null, "Unknown")).toBe("Unknown");
+    expect(formatDateTimeDisplay("not-a-date", "Unknown")).toBe("Unknown");
+  });
+
+  it("pool-master-q8h: lets callers make timezone intent explicit", () => {
+    const value = "2024-01-15";
+    const expected = new Date(value).toLocaleDateString(undefined, {
+      timeZone: "UTC",
+    });
+
+    expect(formatDateDisplay(value, "Unknown", { timeZone: "UTC" })).toBe(
+      expected,
+    );
   });
 });
