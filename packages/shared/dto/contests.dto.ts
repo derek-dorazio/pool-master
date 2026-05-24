@@ -9,7 +9,7 @@ import {
   SelectionType,
 } from '@poolmaster/shared/domain';
 import { JsonObjectSchema } from './common.dto';
-import { LeagueAuditEntryDtoSchema, type LeagueAuditEntryDto } from './leagues.dto';
+import { LeagueAuditEntryDtoSchema, type LeagueAuditEntryDto } from './audit.dto';
 import {
   GolfCategoryDefinitionSchema,
   GolfContestTierSchema,
@@ -370,7 +370,7 @@ export const ContestStandingsRecalculationResponseSchema =
 // table via `AuditService` and emit the same `AuditLogEntry` interface. The
 // previous duplication (this schema diverged from `LeagueAuditEntryDtoSchema`
 // with `category: z.string()` and slightly different optionality) was a
-// contract-drift hazard. Aliased to the canonical schema in `leagues.dto.ts`
+// contract-drift hazard. Aliased to the canonical schema in `audit.dto.ts`
 // so both endpoints stay type-aligned and the same `mapLeagueAuditEntryToDto`
 // mapper serves both route handlers.
 export const ContestAuditLogEntryDtoSchema = LeagueAuditEntryDtoSchema;

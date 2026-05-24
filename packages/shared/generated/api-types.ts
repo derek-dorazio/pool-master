@@ -11304,7 +11304,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        entries: unknown[];
+                        entries: {
+                            /** @description Audit-log entry id. */
+                            id: string;
+                            /** @description League this entry belongs to. */
+                            leagueId: string;
+                            /** @description Contest this entry references when the action is contest-scoped. */
+                            contestId?: string;
+                            /** @description User id of the commissioner / actor that performed the action. */
+                            actorId: string;
+                            /** @description Action verb in dotted form (e.g., "league.member.role.changed"). */
+                            action: string;
+                            /**
+                             * @description Audit-log entry category — broad classification of the action that produced this entry.
+                             * @enum {string}
+                             */
+                            category: "LEAGUE" | "CONTEST" | "DRAFT" | "SCORING" | "PAYOUT" | "MEMBER" | "COMMUNICATION";
+                            /** @description Human-readable description of what happened. */
+                            description: string;
+                            /** @description Opaque snapshot of relevant entity state BEFORE the action. Shape varies by category; treat as audit data, not as a typed contract. */
+                            beforeState?: {
+                                [key: string]: unknown;
+                            };
+                            /** @description Opaque snapshot of relevant entity state AFTER the action. Shape varies by category; treat as audit data, not as a typed contract. */
+                            afterState?: {
+                                [key: string]: unknown;
+                            };
+                            /** @description Optional human-supplied reason / justification for the action. */
+                            reason?: string;
+                            /** @description IP address from which the action originated, when available. */
+                            ipAddress?: string;
+                            /**
+                             * Format: date-time
+                             * @description When the audit entry was recorded.
+                             */
+                            createdAt: string;
+                        }[];
                     };
                 };
             };
