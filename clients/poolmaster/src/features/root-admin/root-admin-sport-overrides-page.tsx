@@ -6,10 +6,11 @@ import {
   adminSetSportIngestionOverride,
 } from '@/lib/api';
 import {
-  Alert,
   Button,
   Checkbox,
+  ErrorState,
   FormField,
+  LoadingState,
   PageHeader,
   Select,
   Tile,
@@ -152,16 +153,23 @@ export function RootAdminSportOverridesPage() {
         </FormField>
 
         {ingestionConfigQuery.isLoading || !overrideDraft || !ingestionDraft ? (
-          <p className="mt-4 text-sm text-muted-foreground">
-            Loading sport override configuration...
-          </p>
+          <div className="mt-4">
+            <LoadingState
+              body="Loading sport override configuration..."
+              testId="root-admin-sport-overrides-loading"
+            />
+          </div>
         ) : ingestionConfigQuery.isError ? (
-          <Alert className="mt-4" tone="danger">
-            {extractAdminErrorMessage(
-              ingestionConfigQuery.error,
-              'We could not load ingestion schedule configuration right now.',
-            )}
-          </Alert>
+          <div className="mt-4">
+            <ErrorState
+              body={extractAdminErrorMessage(
+                ingestionConfigQuery.error,
+                'We could not load ingestion schedule configuration right now.',
+              )}
+              testId="root-admin-sport-overrides-error"
+              title="Sport overrides unavailable"
+            />
+          </div>
         ) : (
           <>
             <div className="mt-4 space-y-3">
