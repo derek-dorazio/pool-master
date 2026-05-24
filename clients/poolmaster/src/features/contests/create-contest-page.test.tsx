@@ -333,6 +333,20 @@ describe('CreateContestPage', () => {
     );
   });
 
+  it('pool-master-7wj.6 shows setup validation before submitting an unnamed contest', async () => {
+    primeCommonMocks();
+
+    renderCreateContestPage();
+
+    await screen.findByTestId('contest-name');
+    fireEvent.click(screen.getByTestId('create-contest-submit'));
+
+    expect(await screen.findByTestId('create-contest-error')).toHaveTextContent(
+      'Contest name is required.',
+    );
+    expect(createManagedContestMock).not.toHaveBeenCalled();
+  });
+
   // pool-master-dxd.39 — pick-12 templates preserve six two-pick tiers.
   it('keeps the configured tier shape when selecting a two-picks-per-tier template', async () => {
     primeCommonMocks();
