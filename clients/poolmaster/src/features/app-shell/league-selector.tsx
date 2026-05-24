@@ -5,7 +5,7 @@ import { Button, Tile } from "@/features/shared/ui";
 import {
   buildLeaguePath,
   getLeagueSelectorOptions,
-  setRecentLeagueCode,
+  rememberRecentLeagueCode,
 } from "@/features/leagues/league-routing";
 import { LeagueIcon } from "@/features/leagues/league-icon";
 
@@ -103,7 +103,7 @@ export function LeagueSelector({
                 data-testid={`league-selector-option-${league.leagueCode}`}
                 key={league.id}
                 onClick={() => {
-                  setRecentLeagueCode(league.leagueCode);
+                  rememberRecentLeagueCode(league.leagueCode);
                   setIsOpen(false);
                   logger.info(
                     {

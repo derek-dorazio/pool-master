@@ -16,7 +16,7 @@ import { InvitationContextCard } from './invitation-context-card';
 import {
   buildInvitePath,
   buildLeaguePath,
-  setRecentLeagueCode,
+  rememberRecentLeagueCode,
 } from './league-routing';
 import {
   fetchInvitationPreview,
@@ -172,7 +172,7 @@ export function JoinLeaguePage() {
         'Accepted league invitation',
       );
       if (leagueCode) {
-        setRecentLeagueCode(leagueCode);
+        rememberRecentLeagueCode(leagueCode);
         navigate(buildLeaguePath(leagueCode));
       }
     },

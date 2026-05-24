@@ -13,7 +13,7 @@ import {
   Textarea,
   Tile,
 } from "@/features/shared/ui";
-import { buildLeaguePath, setRecentLeagueCode } from "./league-routing";
+import { buildLeaguePath, rememberRecentLeagueCode } from "./league-routing";
 import { syncLeagueCaches } from "./league-cache";
 import { extractErrorMessage } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -149,7 +149,7 @@ export function CreateLeagueModal({
         "Created league successfully",
       );
       syncLeagueCaches(queryClient, league);
-      setRecentLeagueCode(league.leagueCode);
+      rememberRecentLeagueCode(league.leagueCode);
       hasEditedLeagueCodeRef.current = false;
       setStep(WIZARD_STEP_DETAILS);
       form.reset();

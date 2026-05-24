@@ -43,7 +43,7 @@ import { getLeagueIconOption, LEAGUE_ICON_OPTIONS } from './league-icon-catalog'
 import { LeagueIcon } from './league-icon';
 import { getLeagueLoadErrorCopy } from './league-load-error';
 import { LeagueSummaryCard } from './league-summary-card';
-import { buildInvitePath, setRecentLeagueCode } from './league-routing';
+import { buildInvitePath, rememberRecentLeagueCode } from './league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -106,7 +106,7 @@ export function LeagueDetailPage() {
 
   useEffect(() => {
     if (leagueQuery.data?.leagueCode) {
-      setRecentLeagueCode(leagueQuery.data.leagueCode);
+      rememberRecentLeagueCode(leagueQuery.data.leagueCode);
     }
   }, [leagueQuery.data?.leagueCode]);
 

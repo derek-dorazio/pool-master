@@ -42,7 +42,7 @@ import { extractErrorMessage } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
-import { buildLeaguePath, setRecentLeagueCode } from '@/features/leagues/league-routing';
+import { buildLeaguePath, rememberRecentLeagueCode } from '@/features/leagues/league-routing';
 import { getLogger } from '@/lib/logger';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption, TEAM_ICON_OPTIONS } from './team-icon-catalog';
@@ -97,7 +97,7 @@ export function MyTeamPage() {
 
   useEffect(() => {
     if (leagueQuery.data?.leagueCode) {
-      setRecentLeagueCode(leagueQuery.data.leagueCode);
+      rememberRecentLeagueCode(leagueQuery.data.leagueCode);
     }
   }, [leagueQuery.data?.leagueCode]);
 

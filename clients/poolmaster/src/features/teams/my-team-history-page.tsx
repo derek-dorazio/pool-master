@@ -17,7 +17,7 @@ import {
   buildLeagueContestEntryPath,
   buildLeagueContestPath,
   buildLeagueTeamPath,
-  setRecentLeagueCode,
+  rememberRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { getLogger } from '@/lib/logger';
 import { isHistoricalContest } from '@/features/contests/contest-status';
@@ -52,7 +52,7 @@ export function MyTeamHistoryPage() {
 
   useEffect(() => {
     if (leagueQuery.data?.leagueCode) {
-      setRecentLeagueCode(leagueQuery.data.leagueCode);
+      rememberRecentLeagueCode(leagueQuery.data.leagueCode);
     }
   }, [leagueQuery.data?.leagueCode]);
 
