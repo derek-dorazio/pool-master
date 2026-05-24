@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Copy } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   activateLeague,
   deleteLeague,
@@ -111,14 +111,6 @@ export function LeagueDetailPage() {
   }, [leagueQuery.data?.leagueCode]);
 
   useEffect(() => {
-    if (!leagueQuery.data || iconModalOpen) {
-      return;
-    }
-
-    setIconDraftKey(leagueQuery.data.iconKey);
-  }, [iconModalOpen, leagueQuery.data]);
-
-  useEffect(() => {
     if (!leagueQuery.isError) {
       return;
     }
@@ -136,18 +128,29 @@ export function LeagueDetailPage() {
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
   const leagueId = leagueQuery.data?.id ?? '';
+  const detailsDraftSource = useMemo(() => {
+    if (!leagueQuery.data) {
+      return null;
+    }
+
+    return {
+      description: leagueQuery.data.description ?? '',
+      id: leagueQuery.data.id,
+      name: leagueQuery.data.name,
+    };
+  }, [leagueQuery.data?.description, leagueQuery.data?.id, leagueQuery.data?.name]);
 
   useEffect(() => {
-    if (activeDialog !== 'details' || !leagueQuery.data) {
+    if (activeDialog !== 'details' || !detailsDraftSource) {
       return;
     }
 
-    if (detailsDraftLeagueId && detailsDraftLeagueId !== leagueQuery.data.id) {
-      setDetailsName(leagueQuery.data.name);
-      setDetailsDescription(leagueQuery.data.description ?? '');
-      setDetailsDraftLeagueId(leagueQuery.data.id);
+    if (detailsDraftLeagueId && detailsDraftLeagueId !== detailsDraftSource.id) {
+      setDetailsName(detailsDraftSource.name);
+      setDetailsDescription(detailsDraftSource.description);
+      setDetailsDraftLeagueId(detailsDraftSource.id);
     }
-  }, [activeDialog, detailsDraftLeagueId, leagueQuery.data]);
+  }, [activeDialog, detailsDraftLeagueId, detailsDraftSource]);
 
   const canManageLeague =
     leagueQuery.data?.leagueRelationship.commissioner === true || leagueQuery.data?.isRootAdmin === true;

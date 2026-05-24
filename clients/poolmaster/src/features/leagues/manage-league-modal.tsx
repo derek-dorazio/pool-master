@@ -1,6 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { LeagueIconKey } from '@poolmaster/shared/domain';
 import {
   deleteLeague,
@@ -67,27 +67,43 @@ export function ManageLeagueModal({
   onClose,
   onDeleted,
 }: ManageLeagueModalProps) {
+  if (!isOpen || !league) {
+    return null;
+  }
+
+  return (
+    <ManageLeagueModalContent
+      isOpen={isOpen}
+      key={league.id}
+      league={league}
+      onClose={onClose}
+      onDeleted={onDeleted}
+    />
+  );
+}
+
+function ManageLeagueModalContent({
+  isOpen,
+  league,
+  onClose,
+  onDeleted,
+}: {
+  isOpen: boolean;
+  league: LeagueSummary;
+  onClose: () => void;
+  onDeleted: () => void;
+}) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<ManageTab>(MANAGE_TAB_LIFECYCLE);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deleteSuccess, setDeleteSuccess] = useState(false);
-  const [detailsName, setDetailsName] = useState('');
-  const [detailsDescription, setDetailsDescription] = useState('');
+  const [detailsName, setDetailsName] = useState(league.name);
+  const [detailsDescription, setDetailsDescription] = useState(league.description ?? '');
   const [selectedIconKey, setSelectedIconKey] = useState(league?.iconKey ?? 'TROPHY');
   const normalizedConfirmation = useMemo(
     () => deleteConfirmation.trim().toUpperCase(),
     [deleteConfirmation],
   );
-
-  useEffect(() => {
-    if (!league) {
-      return;
-    }
-
-    setDetailsName(league.name);
-    setDetailsDescription(league.description ?? '');
-    setSelectedIconKey(league.iconKey);
-  }, [league]);
 
   const leagueDetailQuery = useQuery({
     queryKey: QueryKeys.leagues.manage(league?.id),
@@ -220,10 +236,6 @@ export function ManageLeagueModal({
     iconMutation.reset();
     deleteMutation.reset();
     onClose();
-  }
-
-  if (!isOpen || !league) {
-    return null;
   }
 
   const isInactive = inactivateMutation.data?.isActive === false || league.isActive === false;

@@ -70,6 +70,7 @@ export function MyTeamPage() {
     feature: 'my-team-page',
   });
   const [teamName, setTeamName] = useState('');
+  const [teamNameSeedKey, setTeamNameSeedKey] = useState<string | null>(null);
   const [teamNameDraftTeamId, setTeamNameDraftTeamId] = useState<string | null>(null);
   const [iconModalOpen, setIconModalOpen] = useState(false);
   const [iconDraftKey, setIconDraftKey] = useState<TeamIconKey>(TeamIconKey.CAPTAIN_SMILE_FIELD);
@@ -182,6 +183,20 @@ export function MyTeamPage() {
 
     return myTeam;
   }, [myTeam, requestedTeam]);
+  const defaultTeamNameSeed = useMemo(
+    () => buildDefaultTeamName(auth.user?.firstName, auth.user?.lastName),
+    [auth.user?.firstName, auth.user?.lastName],
+  );
+  const teamNameDraftSource = useMemo(() => {
+    if (!selectedTeam) {
+      return null;
+    }
+
+    return {
+      id: selectedTeam.id,
+      name: selectedTeam.name,
+    };
+  }, [selectedTeam?.id, selectedTeam?.name]);
 
   const leagueMembersByUserId = useMemo(
     () => new Map((leagueMembersQuery.data ?? []).map((member) => [member.userId, member])),
@@ -201,8 +216,14 @@ export function MyTeamPage() {
       return;
     }
 
-    setTeamName(buildDefaultTeamName(auth.user?.firstName, auth.user?.lastName));
-  }, [auth.user?.firstName, auth.user?.lastName, selectedTeam]);
+    const nextSeedKey = leagueId || leagueCode;
+    if (teamNameSeedKey === nextSeedKey) {
+      return;
+    }
+
+    setTeamName(defaultTeamNameSeed);
+    setTeamNameSeedKey(nextSeedKey);
+  }, [defaultTeamNameSeed, leagueCode, leagueId, selectedTeam, teamNameSeedKey]);
 
   useEffect(() => {
     setTeamInactivationNotice(null);
@@ -214,17 +235,17 @@ export function MyTeamPage() {
       return;
     }
 
-    if (!selectedTeam) {
+    if (!teamNameDraftSource) {
       setActiveDialog(null);
       setTeamNameDraftTeamId(null);
       return;
     }
 
-    if (teamNameDraftTeamId && teamNameDraftTeamId !== selectedTeam.id) {
-      setTeamName(selectedTeam.name);
-      setTeamNameDraftTeamId(selectedTeam.id);
+    if (teamNameDraftTeamId && teamNameDraftTeamId !== teamNameDraftSource.id) {
+      setTeamName(teamNameDraftSource.name);
+      setTeamNameDraftTeamId(teamNameDraftSource.id);
     }
-  }, [activeDialog, selectedTeam, teamNameDraftTeamId]);
+  }, [activeDialog, teamNameDraftSource, teamNameDraftTeamId]);
 
   const createTeamMutation = useInvalidatingMutation({
     mutationFn: async ({ nextTeamName, nextIconKey }: { nextTeamName: string; nextIconKey: TeamIconKey }) => {

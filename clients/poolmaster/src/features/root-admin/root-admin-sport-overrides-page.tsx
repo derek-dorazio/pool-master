@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
@@ -38,16 +38,19 @@ export function RootAdminSportOverridesPage() {
     },
     retry: false,
   });
+  const configSource = useMemo(
+    () => ingestionConfigQuery.data ? cloneIngestionConfig(ingestionConfigQuery.data) : null,
+    [ingestionConfigQuery.data],
+  );
 
   useEffect(() => {
-    if (!ingestionConfigQuery.data) {
+    if (!configSource) {
       return;
     }
 
-    const nextDraft = cloneIngestionConfig(ingestionConfigQuery.data);
-    setIngestionDraft(nextDraft);
-    setOverrideDraft(buildSportOverrideDraft(nextDraft, overrideSport));
-  }, [ingestionConfigQuery.data, overrideSport]);
+    setIngestionDraft(configSource);
+    setOverrideDraft(buildSportOverrideDraft(configSource, overrideSport));
+  }, [configSource, overrideSport]);
 
   const sportOverrideMutation = useInvalidatingMutation({
     mutationFn: async (input: {

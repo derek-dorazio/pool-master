@@ -58,6 +58,11 @@ export function JoinLeaguePage() {
   const { isAuthenticated, user } = useAuth();
   const [teamName, setTeamName] = useState('');
   const [selectedIconKey, setSelectedIconKey] = useState<TeamIconKey>(TeamIconKey.CAPTAIN_SMILE_FIELD);
+  const [teamSetupSeedInviteCode, setTeamSetupSeedInviteCode] = useState<string | null>(null);
+  const defaultTeamNameSeed = useMemo(
+    () => buildDefaultTeamName(user?.firstName, user?.lastName),
+    [user?.firstName, user?.lastName],
+  );
   const invitationQuery = useQuery({
     queryKey: getInvitationPreviewQueryKey(inviteCode),
     queryFn: () => fetchInvitationPreview(inviteCode),
@@ -102,9 +107,14 @@ export function JoinLeaguePage() {
   }, [inviteCode, invitationQuery.data, isAuthenticated, logger]);
 
   useEffect(() => {
-    setTeamName(buildDefaultTeamName(user?.firstName, user?.lastName));
+    if (teamSetupSeedInviteCode === inviteCode) {
+      return;
+    }
+
+    setTeamName(defaultTeamNameSeed);
     setSelectedIconKey(TeamIconKey.CAPTAIN_SMILE_FIELD);
-  }, [user?.firstName, user?.lastName, inviteCode]);
+    setTeamSetupSeedInviteCode(inviteCode);
+  }, [defaultTeamNameSeed, inviteCode, teamSetupSeedInviteCode]);
 
   const acceptMutation = useInvalidatingMutation({
     mutationFn: async () => {

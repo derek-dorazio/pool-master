@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   adminGetIngestionSchedule,
@@ -46,14 +46,18 @@ export function RootAdminIngestionSchedulePage() {
     },
     retry: false,
   });
+  const configSource = useMemo(
+    () => ingestionConfigQuery.data ? cloneIngestionConfig(ingestionConfigQuery.data) : null,
+    [ingestionConfigQuery.data],
+  );
 
   useEffect(() => {
-    if (!ingestionConfigQuery.data) {
+    if (!configSource || draft) {
       return;
     }
 
-    setDraft(cloneIngestionConfig(ingestionConfigQuery.data));
-  }, [ingestionConfigQuery.data]);
+    setDraft(configSource);
+  }, [configSource, draft]);
 
   const ingestionConfigMutation = useInvalidatingMutation({
     mutationFn: async (nextDraft: IngestionScheduleConfig) => {

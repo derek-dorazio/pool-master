@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   getContest,
@@ -224,9 +224,23 @@ export function ContestEntryPage() {
     enabled: Boolean(contestQuery.data?.leagueId),
     retry: false,
   });
+  const detailsSeedSource = useMemo(() => {
+    if (!draftStateQuery.data) {
+      return null;
+    }
+
+    return {
+      name: draftStateQuery.data.selectedEntryName ?? '',
+      tiebreakerValue: draftStateQuery.data.tiebreakerValue,
+    };
+  }, [draftStateQuery.data?.selectedEntryName, draftStateQuery.data?.tiebreakerValue]);
+  const selectableGroups = useMemo(
+    () => draftStateQuery.data?.selectionGroups ?? [],
+    [draftStateQuery.data?.selectionGroups],
+  );
 
   useEffect(() => {
-    if (!draftStateQuery.data) {
+    if (!detailsSeedSource) {
       return;
     }
 
@@ -235,31 +249,30 @@ export function ContestEntryPage() {
       return;
     }
 
-    setEntryNameDraft(draftStateQuery.data.selectedEntryName ?? '');
+    setEntryNameDraft(detailsSeedSource.name);
     setTiebreakerDraft(
-      draftStateQuery.data.tiebreakerValue === null || draftStateQuery.data.tiebreakerValue === undefined
+      detailsSeedSource.tiebreakerValue === null || detailsSeedSource.tiebreakerValue === undefined
         ? ''
-        : String(draftStateQuery.data.tiebreakerValue),
+        : String(detailsSeedSource.tiebreakerValue),
     );
     setDraftDetailsSeedKey(nextSeedKey);
-  }, [contestId, draftDetailsSeedKey, draftStateQuery.data, entryId]);
+  }, [contestId, detailsSeedSource, draftDetailsSeedKey, entryId]);
 
   useEffect(() => {
-    const selectionGroups = draftStateQuery.data?.selectionGroups ?? [];
-    if (!selectionGroups.length) {
+    if (!selectableGroups.length) {
       setExpandedGroupId(null);
       return;
     }
 
-    const nextIncomplete = getNextIncompleteGroupId(selectionGroups);
+    const nextIncomplete = getNextIncompleteGroupId(selectableGroups);
     setExpandedGroupId((current) => {
-      if (current && selectionGroups.some((group) => group.groupId === current)) {
+      if (current && selectableGroups.some((group) => group.groupId === current)) {
         return current;
       }
 
       return nextIncomplete;
     });
-  }, [draftStateQuery.data?.selectionGroups]);
+  }, [selectableGroups]);
 
   useEffect(() => {
     if (!expandedGroupId) {
