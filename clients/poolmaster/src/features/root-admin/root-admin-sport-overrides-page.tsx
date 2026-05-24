@@ -50,6 +50,10 @@ export function RootAdminSportOverridesPage() {
     () => ingestionConfigQuery.data ? cloneIngestionConfig(ingestionConfigQuery.data) : null,
     [ingestionConfigQuery.data],
   );
+  // Keep the loading state visible during the brief query-to-local-draft seeding window.
+  const isDraftLoading =
+    ingestionConfigQuery.isLoading
+    || (!ingestionConfigQuery.isError && (!overrideDraft || !ingestionDraft));
 
   useEffect(() => {
     if (!configSource) {
@@ -152,7 +156,7 @@ export function RootAdminSportOverridesPage() {
           </Select>
         </FormField>
 
-        {ingestionConfigQuery.isLoading || !overrideDraft || !ingestionDraft ? (
+        {isDraftLoading ? (
           <div className="mt-4">
             <LoadingState
               body="Loading sport override configuration..."
@@ -170,7 +174,7 @@ export function RootAdminSportOverridesPage() {
               title="Sport overrides unavailable"
             />
           </div>
-        ) : (
+        ) : !overrideDraft || !ingestionDraft ? null : (
           <>
             <div className="mt-4 space-y-3">
               {INGESTION_POLICY_FIELDS.map((field) => (

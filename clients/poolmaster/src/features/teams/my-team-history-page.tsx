@@ -197,7 +197,7 @@ export function MyTeamHistoryPage() {
 
   return (
     <section className="space-y-6" data-testid="my-team-history-page">
-      <div className="rounded-[2rem] border border-border bg-card p-8">
+      <Tile padding="lg">
         <Link
           className="text-sm font-medium text-primary transition hover:opacity-80"
           to={teamPath}
@@ -210,7 +210,7 @@ export function MyTeamHistoryPage() {
         <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
           View completed contests and previous results for your team.
         </p>
-      </div>
+      </Tile>
 
       <Tile>
         <div className="flex items-center justify-between gap-4">
