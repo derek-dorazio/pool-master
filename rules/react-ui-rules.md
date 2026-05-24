@@ -352,9 +352,12 @@ state, stale actions, and unthemeable markup accumulate.
 
 - Runtime environment reads belong in a small config module. Feature components
   should not read `import.meta.env` directly.
-- Date/time formatting and arithmetic should use shared utilities that preserve
-  timezone intent. Do not sprinkle raw `new Date(...).toLocaleDateString()` or
-  UTC arithmetic through feature pages.
+- Date/time formatting should use the shared `formatDateDisplay` and
+  `formatDateTimeDisplay` utilities. They preserve existing browser-locale
+  behavior via `toLocaleDateString(undefined, options)` /
+  `toLocaleString(undefined, options)` while allowing explicit timezone
+  options when product behavior depends on them. Do not sprinkle raw
+  `new Date(...).toLocaleDateString()` or UTC arithmetic through feature pages.
 - When product behavior depends on an event, league, or user timezone, keep the
   timezone explicit in variable names and tests.
 - Frontend HTTP calls must use generated SDK operations from `@/lib/api`.

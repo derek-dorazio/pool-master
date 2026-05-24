@@ -106,7 +106,7 @@ export function SelectionParticipantCard({
       <Checkbox
         aria-label={actionLabel}
         checked={isSelected}
-        className="mt-1 h-4 w-4 accent-primary"
+        className="mt-1"
         readOnly
         tabIndex={-1}
       />
