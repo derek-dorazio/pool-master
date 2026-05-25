@@ -263,6 +263,61 @@ export type ProviderIngestionJobDto = z.infer<typeof ProviderIngestionJobDtoSche
 export const ProviderSyncRunStatusSchema = z.enum(['SUBMITTED', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CANCELLED']);
 export type ProviderSyncRunStatus = z.infer<typeof ProviderSyncRunStatusSchema>;
 
+export const ProviderSyncOutcomeSeveritySchema = z.enum(['SUCCESS', 'WARNING', 'ERROR']);
+export type ProviderSyncOutcomeSeverity = z.infer<typeof ProviderSyncOutcomeSeveritySchema>;
+
+export const ProviderSyncWarningDtoSchema = z.object({
+  code: z.string().describe('Stable warning code emitted by the ingestion/sync layer.'),
+  message: z.string().describe('Human-readable warning detail for root-admin investigation.'),
+}).describe('Warning emitted for a provider sync run that completed but needs operator attention.');
+export type ProviderSyncWarningDto = z.infer<typeof ProviderSyncWarningDtoSchema>;
+
+export const ProviderSyncOutcomeDtoSchema = z.object({
+  severity: ProviderSyncOutcomeSeveritySchema.describe('Admin-facing severity derived from run status, errors, and warnings.'),
+  summary: z.string().describe('Human-readable root-admin summary of the sync outcome.'),
+  warnings: z.array(ProviderSyncWarningDtoSchema).describe('Warnings that did not fail the run but should be visible to an operator.'),
+  errors: z.number().int().min(0).describe('Count of errors captured for the run.'),
+}).describe('Admin-facing outcome summary for a provider sync run.');
+export type ProviderSyncOutcomeDto = z.infer<typeof ProviderSyncOutcomeDtoSchema>;
+
+export const ProviderSyncProviderPayloadDtoSchema = z.object({
+  operation: IngestionFeedTypeSchema.describe('Provider feed operation represented by this payload.'),
+  rawCaptured: z.boolean().describe('Whether raw provider response JSON was captured for this run.'),
+  rawTruncated: z.boolean().describe('Whether the captured raw provider payload was truncated before storage.'),
+  raw: z.unknown().nullable().describe('Raw provider response JSON retained for debugging when capture is available.'),
+}).passthrough().describe('Raw/debug provider payload captured for a provider sync run.');
+export type ProviderSyncProviderPayloadDto = z.infer<typeof ProviderSyncProviderPayloadDtoSchema>;
+
+export const ProviderSyncJobPayloadDtoSchema = z.object({
+  jobType: z.string().describe('Internal ingestion job type that executed this sync feed.'),
+  providerId: z.string().describe('Provider that executed the ingestion job.'),
+  sport: SportSchema,
+  eventExternalId: z.string().nullable().describe('External event id for event-scoped jobs, when applicable.'),
+  status: z.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']).describe('Internal ingestion job status.'),
+  startedAt: z.string().datetime().nullable().describe('When the ingestion job started.'),
+  completedAt: z.string().datetime().nullable().describe('When the ingestion job completed.'),
+  recordsProcessed: z.number().int().min(0).describe('Canonical records processed by the ingestion job.'),
+  errors: z.number().int().min(0).describe('Error count captured by the ingestion job.'),
+  errorLog: z.array(z.unknown()).describe('Raw ingestion error-log entries for root-admin investigation.'),
+}).describe('Serialized ingestion job details for a provider sync run.');
+export type ProviderSyncJobPayloadDto = z.infer<typeof ProviderSyncJobPayloadDtoSchema>;
+
+export const ProviderSyncRunPayloadDtoSchema = z.object({
+  runType: z.string().optional().describe('Sync run source, such as manual sport sync or manual event sync.'),
+  requestedFeeds: z.array(IngestionFeedTypeSchema).optional().describe('Feeds requested by the root-admin action.'),
+  requestedFeed: IngestionFeedTypeSchema.optional().describe('Single feed represented by this sync run row.'),
+  requestPayload: JsonObjectSchema.optional().describe('Root-admin request context that submitted the sync run.'),
+  providerPayload: ProviderSyncProviderPayloadDtoSchema.optional().describe('Raw/debug provider payload captured for this run.'),
+  jobPayload: ProviderSyncJobPayloadDtoSchema.nullable().optional().describe('Serialized ingestion job details. Null while the run has not started or finished.'),
+  outcome: ProviderSyncOutcomeDtoSchema.optional().describe('Admin-facing outcome and warning summary for the sync run.'),
+  stats: z.record(z.number()).optional().describe('Canonical numeric sync stats used by admin diagnostics.'),
+  warnings: z.array(ProviderSyncWarningDtoSchema).optional().describe('Convenience warning list duplicated from outcome for summary UI.'),
+  recordsProcessed: z.number().optional().describe('Legacy top-level processed-record count retained for summary compatibility.'),
+  errors: z.number().optional().describe('Legacy top-level error count retained for summary compatibility.'),
+  detail: z.string().optional().describe('Legacy human-readable detail retained for summary compatibility.'),
+}).passthrough().describe('Provider sync run diagnostic payload.');
+export type ProviderSyncRunPayloadDto = z.infer<typeof ProviderSyncRunPayloadDtoSchema>;
+
 export const ProviderSyncRunDtoSchema = z.object({
   id: z.string(),
   providerId: z.string(),
@@ -272,8 +327,8 @@ export const ProviderSyncRunDtoSchema = z.object({
   startedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
-  payload: JsonObjectSchema.describe('Opaque provider sync payload retained for thin admin operational detail surfaces.'),
-}).describe('Recent provider sync run with payload-backed operational details.');
+  payload: ProviderSyncRunPayloadDtoSchema.describe('Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs.'),
+}).describe('Recent provider sync run with diagnostic operational details.');
 export type ProviderSyncRunDto = z.infer<typeof ProviderSyncRunDtoSchema>;
 
 export const ProviderSyncRunListResponseSchema = z.object({

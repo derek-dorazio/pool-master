@@ -51,6 +51,29 @@ export interface SportDataProvider {
   healthCheck(): Promise<ProviderHealthStatus>;
 }
 
+export interface ProviderPayloadCapture {
+  operation: string;
+  path?: string;
+  capturedAt: string;
+  raw: unknown;
+}
+
+export interface ProviderPayloadDiagnostics {
+  clearProviderPayloads(): void;
+  consumeProviderPayloads(): ProviderPayloadCapture[];
+}
+
+export function supportsProviderPayloadDiagnostics(
+  provider: SportDataProvider,
+): provider is SportDataProvider & ProviderPayloadDiagnostics {
+  return (
+    'clearProviderPayloads' in provider
+    && typeof provider.clearProviderPayloads === 'function'
+    && 'consumeProviderPayloads' in provider
+    && typeof provider.consumeProviderPayloads === 'function'
+  );
+}
+
 /**
  * Raised by adapters whose live-score category typing hasn't landed yet
  * (e.g., openf1, espn, odds-api). Per plans/117 §3.1, Phase 4 ships only

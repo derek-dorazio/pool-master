@@ -125,6 +125,13 @@ export interface UnmappedParticipant {
   sport: Sport;
 }
 
+interface SyncOutcomePayload {
+  severity: 'SUCCESS' | 'WARNING' | 'ERROR';
+  summary: string;
+  warnings: Array<{ code: string; message: string }>;
+  errors: number;
+}
+
 export interface ProviderDetail extends ProviderSummary {
   recentHealthChecks: ProviderHealthCheck[];
   ingestionStats: ProviderIngestionStat[];
@@ -272,6 +279,28 @@ function toSerializableJob(job: IngestionJobRecord): Record<string, unknown> {
     recordsProcessed: job.recordsProcessed,
     errors: job.errors,
     errorLog: job.errorLog,
+  };
+}
+
+function buildSyncOutcome(input: {
+  status: ProviderSyncRun['status'];
+  summary: string;
+  warnings?: IngestionJobRecord['warnings'];
+  errors?: number;
+}): SyncOutcomePayload {
+  const warnings = input.warnings ?? [];
+  const errorCount = input.errors ?? 0;
+  const severity = input.status === 'FAILED' || errorCount > 0
+    ? 'ERROR'
+    : warnings.length > 0
+      ? 'WARNING'
+      : 'SUCCESS';
+
+  return {
+    severity,
+    summary: input.summary,
+    warnings,
+    errors: errorCount,
   };
 }
 
@@ -912,7 +941,18 @@ export class ProviderService {
             eventId: input.eventId,
             ...input.requestContext,
           },
-          responsePayload: null,
+          jobPayload: null,
+          providerPayload: {
+            operation: feed,
+            rawCaptured: false,
+            rawTruncated: false,
+            raw: null,
+          },
+          stats: {},
+          outcome: buildSyncOutcome({
+            status: 'SUBMITTED',
+            summary: buildSubmittedSyncRunDetail(feed, input.sport, input.eventId),
+          }),
           detail: buildSubmittedSyncRunDetail(feed, input.sport, input.eventId),
           ...input.requestContext,
         };
@@ -924,7 +964,7 @@ export class ProviderService {
             status: 'SUBMITTED',
             startedAt: null,
             completedAt: null,
-            payloadJson,
+            payloadJson: payloadJson as unknown as Prisma.InputJsonValue,
             createdAt: input.submittedAt,
           },
         });
@@ -1032,7 +1072,17 @@ export class ProviderService {
     const startedPayload = {
       ...syncRun.payload,
       detail: `Started ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
-      responsePayload: null,
+      jobPayload: null,
+      providerPayload: {
+        operation: requestedFeed,
+        rawCaptured: false,
+        rawTruncated: false,
+        raw: null,
+      },
+      outcome: buildSyncOutcome({
+        status: 'IN_PROGRESS',
+        summary: `Started ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
+      }),
     };
 
     await this.updateSyncRun(syncRun.id, {
@@ -1054,10 +1104,20 @@ export class ProviderService {
       const [job] = await run();
       const completedAt = new Date();
       const status: ProviderSyncRun['status'] = job.status === 'FAILED' ? 'FAILED' : 'COMPLETED';
+      const detail = buildManualSyncRunDetail(job, syncRun.eventId);
       const payload = {
         ...startedPayload,
-        detail: buildManualSyncRunDetail(job, syncRun.eventId),
-        responsePayload: toSerializableJob(job),
+        detail,
+        jobPayload: toSerializableJob(job),
+        providerPayload: job.providerPayload ?? startedPayload.providerPayload,
+        outcome: buildSyncOutcome({
+          status,
+          summary: detail,
+          warnings: job.warnings,
+          errors: job.errors,
+        }),
+        stats: job.stats ?? {},
+        warnings: job.warnings ?? [],
         recordsProcessed: job.recordsProcessed,
         errors: job.errors,
       };
@@ -1108,10 +1168,22 @@ export class ProviderService {
     const updatedPayload = {
       ...payload,
       detail: `Failed ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
-      responsePayload: {
+      jobPayload: null,
+      providerPayload: payload.providerPayload ?? {
+        operation: requestedFeed,
+        rawCaptured: false,
+        rawTruncated: false,
+        raw: null,
+      },
+      outcome: buildSyncOutcome({
+        status: 'FAILED',
+        summary: `Failed ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
+        errors: 1,
+      }),
+      errors: 1,
+      failurePayload: {
         error: toJsonSafeErrorPayload(error),
       },
-      errors: 1,
     };
 
     await this.updateSyncRun(syncRun.id, {
