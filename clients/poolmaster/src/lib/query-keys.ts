@@ -121,8 +121,11 @@ export const QueryKeys = {
   rootAdmin: {
     all: ['poolmaster', 'root-admin'] as const,
     contestConfigTemplates: ['poolmaster', 'root-admin', 'contest-config-templates'] as const,
+    eventParticipants: (eventId: QueryKeyId) =>
+      ['poolmaster', 'root-admin', 'events', eventId, 'participants'] as const,
     eventSyncEvents: (sport: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'event-sync-events', sport] as const,
+    events: ['poolmaster', 'root-admin', 'events'] as const,
     ingestionConfig: ['poolmaster', 'root-admin', 'ingestion-config'] as const,
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
     manageTeams: ['poolmaster', 'root-admin', 'manage-teams'] as const,

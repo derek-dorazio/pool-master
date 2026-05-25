@@ -1,5 +1,6 @@
 export type ManageSectionKey =
   | 'content-configuration'
+  | 'events'
   | 'leagues'
   | 'sync'
   | 'sync-config'
@@ -41,6 +42,13 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     description:
       'Manage the persisted contest templates available to commissioner contest setup.',
     to: '/manage/content-configuration',
+  },
+  {
+    key: 'events',
+    title: 'Events',
+    description:
+      'Browse current persisted event state and open read-only participant fields for sync QA.',
+    to: '/manage/events',
   },
   {
     key: 'sync',

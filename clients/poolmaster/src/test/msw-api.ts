@@ -32,6 +32,8 @@ const operationDefinitions = {
   adminGetPollIntervals: { method: 'get', path: '/api/v1/admin/config/poll-intervals' },
   adminGetUserDetail: { method: 'get', path: '/api/v1/admin/users/{userId}' },
   adminListContestConfigTemplates: { method: 'get', path: '/api/v1/admin/contest-config-templates' },
+  adminListEventParticipants: { method: 'get', path: '/api/v1/admin/events/{eventId}/participants' },
+  adminListEvents: { method: 'get', path: '/api/v1/admin/events' },
   adminListLeagues: { method: 'get', path: '/api/v1/admin/leagues' },
   adminListProviderSyncRuns: { method: 'get', path: '/api/v1/admin/providers/sync-runs' },
   adminListProviders: { method: 'get', path: '/api/v1/admin/providers/health' },

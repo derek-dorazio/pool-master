@@ -5,6 +5,11 @@ import { z } from 'zod';
 import { Sport, TeamIconKey as TeamIconKeyEnum, type TeamIconKey } from '@poolmaster/shared/domain';
 import { JsonObjectSchema, PaginatedSchema } from './common.dto';
 import { UserProfileDtoSchema } from './auth.dto';
+import {
+  EventReadinessReasonDtoSchema,
+  EventReadinessStatusDtoSchema,
+  EventStatusDtoSchema,
+} from './events.dto';
 import { IngestionFeedTypeSchema, MockEventStateSchema } from './ingestion.dto';
 
 const SportSchema = z.enum([
@@ -132,6 +137,84 @@ export const AdminTeamListResponseSchema = z.object({
   teams: z.array(AdminTeamSummaryDtoSchema),
 }).describe('Cross-league team list response for root-admin management surfaces.');
 export type AdminTeamListResponse = z.infer<typeof AdminTeamListResponseSchema>;
+
+export const AdminEventListQuerySchema = z.object({
+  sport: SportSchema.optional().describe('Optional sport filter for root-admin event browsing.'),
+  status: EventStatusDtoSchema.optional().describe('Optional current event-status filter.'),
+  limit: z.number().int().min(1).max(250).optional().describe('Maximum number of current event rows to return.'),
+}).describe('Root-admin current-state event browser query.');
+export type AdminEventListQuery = z.infer<typeof AdminEventListQuerySchema>;
+
+export const AdminEventSummaryDtoSchema = z.object({
+  id: z.string().uuid().describe('Internal SportEvent identifier.'),
+  externalId: z.string().describe('Provider-side event identifier used by sync operations.'),
+  providerId: z.string().describe('Provider/source that emitted the current event row.'),
+  sport: SportSchema.describe('Sport associated with the event.'),
+  name: z.string().describe('Current event display name.'),
+  venue: z.string().optional().describe('Venue name when known.'),
+  location: z.string().optional().describe('Human-readable event location when known.'),
+  status: EventStatusDtoSchema.describe('Current provider-normalized event status.'),
+  startDate: z.string().datetime().describe('Current scheduled or actual event start time.'),
+  endDate: z.string().datetime().optional().describe('Current scheduled or actual event end time when known.'),
+  releaseAt: z.string().datetime().describe('PoolMaster datetime when commissioner contest setup opens.'),
+  fieldLocksAt: z.string().datetime().describe('PoolMaster datetime after which field changes are locked for contest setup.'),
+  fieldLocked: z.boolean().describe('Whether the current event field is locked for contest setup behavior.'),
+  participantCount: z.number().int().optional().describe('Provider-reported participant count when known.'),
+  loadedParticipantCount: z.number().int().describe('Number of SportEventParticipant rows currently persisted for this event.'),
+  readinessStatus: EventReadinessStatusDtoSchema.describe('Current PoolMaster contest-readiness interpretation.'),
+  readinessReasons: z.array(EventReadinessReasonDtoSchema).describe('Structured reasons explaining current contest readiness.'),
+  contestEligible: z.boolean().describe('Whether the event is currently eligible for contest creation/configuration flows.'),
+  createdAt: z.string().datetime().describe('When PoolMaster first persisted the event row.'),
+  updatedAt: z.string().datetime().describe('When PoolMaster last updated the event row.'),
+}).describe('Root-admin current-state event row. This is not sync-run history; it reflects the latest persisted SportEvent state.');
+export type AdminEventSummaryDto = z.infer<typeof AdminEventSummaryDtoSchema>;
+
+export const AdminEventListResponseSchema = z.object({
+  events: z.array(AdminEventSummaryDtoSchema).describe('Current persisted event rows matching the root-admin browser query.'),
+}).describe('Root-admin current-state event browser response.');
+export type AdminEventListResponse = z.infer<typeof AdminEventListResponseSchema>;
+
+export const AdminEventParticipantGolfRoundDtoSchema = z.object({
+  round: z.number().int().describe('Golf round number.'),
+  strokes: z.number().int().describe('Persisted stroke count for this round.'),
+  scoreToPar: z.number().int().describe('Persisted score-to-par for this round.'),
+  status: z.string().describe('Provider-normalized round status.'),
+  completedAt: z.string().datetime().optional().describe('When this round completed, if known.'),
+}).describe('Current persisted golf-round row for an event participant.');
+export type AdminEventParticipantGolfRoundDto = z.infer<typeof AdminEventParticipantGolfRoundDtoSchema>;
+
+export const AdminEventParticipantsParamsSchema = z.object({
+  eventId: z.string().uuid().describe('Internal SportEvent identifier to inspect.'),
+}).describe('Route parameters for root-admin current-state event participant browsing.');
+export type AdminEventParticipantsParams = z.infer<typeof AdminEventParticipantsParamsSchema>;
+
+export const AdminEventParticipantDtoSchema = z.object({
+  id: z.string().uuid().describe('Internal SportEventParticipant identifier.'),
+  sportEventId: z.string().uuid().describe('Owning SportEvent identifier.'),
+  participantId: z.string().uuid().describe('Canonical Participant identifier.'),
+  participantName: z.string().describe('Current participant display name.'),
+  shortName: z.string().optional().describe('Short display name when known.'),
+  nationality: z.string().optional().describe('Participant nationality or country code when known.'),
+  status: z.string().optional().describe('Provider-emitted per-event participant status.'),
+  worldRanking: z.number().int().optional().describe('Current per-event world-ranking snapshot when provided.'),
+  oddsToWin: z.number().optional().describe('Current per-event odds-to-win snapshot when provided.'),
+  seedNumber: z.number().int().optional().describe('Event-relative seed number when provided.'),
+  valuationPrice: z.number().optional().describe('Current PoolMaster participant valuation price when computed.'),
+  valuationTier: z.string().optional().describe('Current PoolMaster participant valuation tier when computed.'),
+  valuationOrderIndex: z.number().int().optional().describe('Current PoolMaster participant valuation order when computed.'),
+  roundCount: z.number().int().describe('Number of persisted golf-round rows for this event participant.'),
+  totalStrokes: z.number().int().optional().describe('Total persisted golf strokes across completed/known rounds.'),
+  scoreToPar: z.number().int().optional().describe('Aggregate persisted score-to-par across completed/known rounds.'),
+  golfRounds: z.array(AdminEventParticipantGolfRoundDtoSchema).describe('Current persisted golf-round detail rows.'),
+  updatedAt: z.string().datetime().describe('When this event-participant row was last updated.'),
+}).describe('Root-admin current-state event participant row with ranking, odds, valuation, and golf-score details.');
+export type AdminEventParticipantDto = z.infer<typeof AdminEventParticipantDtoSchema>;
+
+export const AdminEventParticipantListResponseSchema = z.object({
+  event: AdminEventSummaryDtoSchema.describe('Current persisted event state for the requested event.'),
+  participants: z.array(AdminEventParticipantDtoSchema).describe('Current persisted participant rows for the requested event.'),
+}).describe('Root-admin current-state event participant browser response.');
+export type AdminEventParticipantListResponse = z.infer<typeof AdminEventParticipantListResponseSchema>;
 
 export const AdminServiceDependencyDtoSchema = z.object({
   name: z.string(),

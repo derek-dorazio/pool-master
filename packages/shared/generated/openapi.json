@@ -26136,6 +26136,683 @@
         }
       }
     },
+    "/api/v1/admin/events": {
+      "get": {
+        "operationId": "adminListEvents",
+        "summary": "List current persisted events",
+        "tags": [
+          "Admin"
+        ],
+        "description": "Returns current persisted SportEvent rows for the root-admin event browser. This is the latest PoolMaster database state, not a provider sync-run history payload.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GOLF",
+                "NFL",
+                "NBA",
+                "F1",
+                "NASCAR",
+                "NCAA_BASKETBALL",
+                "NCAA_HOCKEY",
+                "NCAA_FOOTBALL",
+                "TENNIS",
+                "HORSE_RACING",
+                "SOCCER",
+                "NHL",
+                "MLB",
+                "UFC"
+              ]
+            },
+            "in": "query",
+            "name": "sport",
+            "required": false,
+            "description": "Optional sport filter for root-admin event browsing."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SCHEDULED",
+                "IN_PROGRESS",
+                "COMPLETED",
+                "OFFICIAL",
+                "CANCELLED",
+                "POSTPONED"
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "description": "Optional current event-status filter."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 250
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Maximum number of current event rows to return."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Root-admin current-state event browser response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Internal SportEvent identifier."
+                          },
+                          "externalId": {
+                            "type": "string",
+                            "description": "Provider-side event identifier used by sync operations."
+                          },
+                          "providerId": {
+                            "type": "string",
+                            "description": "Provider/source that emitted the current event row."
+                          },
+                          "sport": {
+                            "type": "string",
+                            "enum": [
+                              "GOLF",
+                              "NFL",
+                              "NBA",
+                              "F1",
+                              "NASCAR",
+                              "NCAA_BASKETBALL",
+                              "NCAA_HOCKEY",
+                              "NCAA_FOOTBALL",
+                              "TENNIS",
+                              "HORSE_RACING",
+                              "SOCCER",
+                              "NHL",
+                              "MLB",
+                              "UFC"
+                            ],
+                            "description": "Sport associated with the event."
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Current event display name."
+                          },
+                          "venue": {
+                            "type": "string",
+                            "description": "Venue name when known."
+                          },
+                          "location": {
+                            "type": "string",
+                            "description": "Human-readable event location when known."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "SCHEDULED",
+                              "IN_PROGRESS",
+                              "COMPLETED",
+                              "OFFICIAL",
+                              "CANCELLED",
+                              "POSTPONED"
+                            ],
+                            "description": "Current provider-normalized event status."
+                          },
+                          "startDate": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Current scheduled or actual event start time."
+                          },
+                          "endDate": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Current scheduled or actual event end time when known."
+                          },
+                          "releaseAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "PoolMaster datetime when commissioner contest setup opens."
+                          },
+                          "fieldLocksAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "PoolMaster datetime after which field changes are locked for contest setup."
+                          },
+                          "fieldLocked": {
+                            "type": "boolean",
+                            "description": "Whether the current event field is locked for contest setup behavior."
+                          },
+                          "participantCount": {
+                            "type": "integer",
+                            "description": "Provider-reported participant count when known."
+                          },
+                          "loadedParticipantCount": {
+                            "type": "integer",
+                            "description": "Number of SportEventParticipant rows currently persisted for this event."
+                          },
+                          "readinessStatus": {
+                            "type": "string",
+                            "enum": [
+                              "NOT_RELEASED",
+                              "PENDING_FIELD",
+                              "CONTEST_ELIGIBLE",
+                              "FIELD_LOCKED"
+                            ],
+                            "description": "Current PoolMaster contest-readiness interpretation."
+                          },
+                          "readinessReasons": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "EVENT_NOT_RELEASED",
+                                "FIELD_NOT_LOADED",
+                                "FIELD_LOCKED"
+                              ]
+                            },
+                            "description": "Structured reasons explaining current contest readiness."
+                          },
+                          "contestEligible": {
+                            "type": "boolean",
+                            "description": "Whether the event is currently eligible for contest creation/configuration flows."
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When PoolMaster first persisted the event row."
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When PoolMaster last updated the event row."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "externalId",
+                          "providerId",
+                          "sport",
+                          "name",
+                          "status",
+                          "startDate",
+                          "releaseAt",
+                          "fieldLocksAt",
+                          "fieldLocked",
+                          "loadedParticipantCount",
+                          "readinessStatus",
+                          "readinessReasons",
+                          "contestEligible",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Root-admin current-state event row. This is not sync-run history; it reflects the latest persisted SportEvent state."
+                      },
+                      "description": "Current persisted event rows matching the root-admin browser query."
+                    }
+                  },
+                  "required": [
+                    "events"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Root-admin current-state event browser response."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/events/{eventId}/participants": {
+      "get": {
+        "operationId": "adminListEventParticipants",
+        "summary": "List current persisted participants for an event",
+        "tags": [
+          "Admin"
+        ],
+        "description": "Returns the latest persisted SportEventParticipant rows for a root-admin event detail modal, including participant display data, rankings, odds, valuations, and golf rounds. This endpoint reflects current database state, not a specific sync-run payload.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "description": "Internal SportEvent identifier to inspect."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Root-admin current-state event participant browser response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "event": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "Internal SportEvent identifier."
+                        },
+                        "externalId": {
+                          "type": "string",
+                          "description": "Provider-side event identifier used by sync operations."
+                        },
+                        "providerId": {
+                          "type": "string",
+                          "description": "Provider/source that emitted the current event row."
+                        },
+                        "sport": {
+                          "type": "string",
+                          "enum": [
+                            "GOLF",
+                            "NFL",
+                            "NBA",
+                            "F1",
+                            "NASCAR",
+                            "NCAA_BASKETBALL",
+                            "NCAA_HOCKEY",
+                            "NCAA_FOOTBALL",
+                            "TENNIS",
+                            "HORSE_RACING",
+                            "SOCCER",
+                            "NHL",
+                            "MLB",
+                            "UFC"
+                          ],
+                          "description": "Sport associated with the event."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Current event display name."
+                        },
+                        "venue": {
+                          "type": "string",
+                          "description": "Venue name when known."
+                        },
+                        "location": {
+                          "type": "string",
+                          "description": "Human-readable event location when known."
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "SCHEDULED",
+                            "IN_PROGRESS",
+                            "COMPLETED",
+                            "OFFICIAL",
+                            "CANCELLED",
+                            "POSTPONED"
+                          ],
+                          "description": "Current provider-normalized event status."
+                        },
+                        "startDate": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Current scheduled or actual event start time."
+                        },
+                        "endDate": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Current scheduled or actual event end time when known."
+                        },
+                        "releaseAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "PoolMaster datetime when commissioner contest setup opens."
+                        },
+                        "fieldLocksAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "PoolMaster datetime after which field changes are locked for contest setup."
+                        },
+                        "fieldLocked": {
+                          "type": "boolean",
+                          "description": "Whether the current event field is locked for contest setup behavior."
+                        },
+                        "participantCount": {
+                          "type": "integer",
+                          "description": "Provider-reported participant count when known."
+                        },
+                        "loadedParticipantCount": {
+                          "type": "integer",
+                          "description": "Number of SportEventParticipant rows currently persisted for this event."
+                        },
+                        "readinessStatus": {
+                          "type": "string",
+                          "enum": [
+                            "NOT_RELEASED",
+                            "PENDING_FIELD",
+                            "CONTEST_ELIGIBLE",
+                            "FIELD_LOCKED"
+                          ],
+                          "description": "Current PoolMaster contest-readiness interpretation."
+                        },
+                        "readinessReasons": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "EVENT_NOT_RELEASED",
+                              "FIELD_NOT_LOADED",
+                              "FIELD_LOCKED"
+                            ]
+                          },
+                          "description": "Structured reasons explaining current contest readiness."
+                        },
+                        "contestEligible": {
+                          "type": "boolean",
+                          "description": "Whether the event is currently eligible for contest creation/configuration flows."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When PoolMaster first persisted the event row."
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When PoolMaster last updated the event row."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "externalId",
+                        "providerId",
+                        "sport",
+                        "name",
+                        "status",
+                        "startDate",
+                        "releaseAt",
+                        "fieldLocksAt",
+                        "fieldLocked",
+                        "loadedParticipantCount",
+                        "readinessStatus",
+                        "readinessReasons",
+                        "contestEligible",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Current persisted event state for the requested event."
+                    },
+                    "participants": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Internal SportEventParticipant identifier."
+                          },
+                          "sportEventId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Owning SportEvent identifier."
+                          },
+                          "participantId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Canonical Participant identifier."
+                          },
+                          "participantName": {
+                            "type": "string",
+                            "description": "Current participant display name."
+                          },
+                          "shortName": {
+                            "type": "string",
+                            "description": "Short display name when known."
+                          },
+                          "nationality": {
+                            "type": "string",
+                            "description": "Participant nationality or country code when known."
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Provider-emitted per-event participant status."
+                          },
+                          "worldRanking": {
+                            "type": "integer",
+                            "description": "Current per-event world-ranking snapshot when provided."
+                          },
+                          "oddsToWin": {
+                            "type": "number",
+                            "description": "Current per-event odds-to-win snapshot when provided."
+                          },
+                          "seedNumber": {
+                            "type": "integer",
+                            "description": "Event-relative seed number when provided."
+                          },
+                          "valuationPrice": {
+                            "type": "number",
+                            "description": "Current PoolMaster participant valuation price when computed."
+                          },
+                          "valuationTier": {
+                            "type": "string",
+                            "description": "Current PoolMaster participant valuation tier when computed."
+                          },
+                          "valuationOrderIndex": {
+                            "type": "integer",
+                            "description": "Current PoolMaster participant valuation order when computed."
+                          },
+                          "roundCount": {
+                            "type": "integer",
+                            "description": "Number of persisted golf-round rows for this event participant."
+                          },
+                          "totalStrokes": {
+                            "type": "integer",
+                            "description": "Total persisted golf strokes across completed/known rounds."
+                          },
+                          "scoreToPar": {
+                            "type": "integer",
+                            "description": "Aggregate persisted score-to-par across completed/known rounds."
+                          },
+                          "golfRounds": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "round": {
+                                  "type": "integer",
+                                  "description": "Golf round number."
+                                },
+                                "strokes": {
+                                  "type": "integer",
+                                  "description": "Persisted stroke count for this round."
+                                },
+                                "scoreToPar": {
+                                  "type": "integer",
+                                  "description": "Persisted score-to-par for this round."
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "description": "Provider-normalized round status."
+                                },
+                                "completedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "description": "When this round completed, if known."
+                                }
+                              },
+                              "required": [
+                                "round",
+                                "strokes",
+                                "scoreToPar",
+                                "status"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Current persisted golf-round row for an event participant."
+                            },
+                            "description": "Current persisted golf-round detail rows."
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When this event-participant row was last updated."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "sportEventId",
+                          "participantId",
+                          "participantName",
+                          "roundCount",
+                          "golfRounds",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Root-admin current-state event participant row with ranking, odds, valuation, and golf-score details."
+                      },
+                      "description": "Current persisted participant rows for the requested event."
+                    }
+                  },
+                  "required": [
+                    "event",
+                    "participants"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Root-admin current-state event participant browser response."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/leagues": {
       "get": {
         "operationId": "adminListLeagues",
