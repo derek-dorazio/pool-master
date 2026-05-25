@@ -15,12 +15,19 @@ import {
   MetricTile,
   ReadOnlyDetailModal,
   StatusBadge,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   Tile,
 } from '@/features/shared/ui';
 import {
+  buildCompactStatsSummary,
   buildPayloadSummary,
   buildStatsSummary,
-  getPayloadOutcome,
+  formatRequestedFeed,
+  getPayloadSection,
+  getPayloadWarnings,
   getProviderName,
   type ProviderSummary,
   type ProviderSyncRun,
@@ -30,6 +37,26 @@ import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
+type SyncRunEvidenceRow = {
+  id: string;
+  source: string;
+  path: string;
+  recordType: string;
+  identifier: string;
+  name: string;
+  status: string;
+  metrics: string;
+};
+
+const evidenceColumnHelper = createColumnHelper<SyncRunEvidenceRow>();
+
+const WORKFLOW_STEPS = [
+  'Schedule',
+  'Participants',
+  'Rankings / odds',
+  'Mock state',
+  'Live scores',
+] as const;
 
 function toSortableTimestamp(isoString: string | null | undefined) {
   if (!isoString) {
@@ -65,11 +92,12 @@ function getStatusTone(status: string) {
 }
 
 function getRunStatusTone(run: ProviderSyncRun) {
-  const outcome = getPayloadOutcome(run.payload);
-  if (outcome?.severity === 'WARNING') {
+  const warnings = getPayloadWarnings(run.payload);
+  const severity = getPayloadSeverity(run.payload);
+  if (severity === 'WARNING' || warnings.length > 0) {
     return 'warning';
   }
-  if (outcome?.severity === 'ERROR') {
+  if (severity === 'ERROR') {
     return 'danger';
   }
 
@@ -77,20 +105,189 @@ function getRunStatusTone(run: ProviderSyncRun) {
 }
 
 function getRunStatusLabel(run: ProviderSyncRun) {
-  const outcome = getPayloadOutcome(run.payload);
-  if (run.status === 'COMPLETED' && outcome?.severity === 'WARNING') {
+  const warnings = getPayloadWarnings(run.payload);
+  if (run.status === 'COMPLETED' && (getPayloadSeverity(run.payload) === 'WARNING' || warnings.length > 0)) {
     return 'COMPLETED WITH WARNINGS';
   }
 
   return run.status;
 }
 
-function getPayloadSection(run: ProviderSyncRun | null, key: 'providerPayload' | 'jobPayload') {
-  if (!run) {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function getPayloadSeverity(payload: Record<string, unknown>) {
+  const outcome = payload.outcome;
+  if (!isRecord(outcome)) {
     return null;
   }
 
-  return run.payload[key] ?? null;
+  const severity = outcome.severity;
+  return severity === 'SUCCESS' || severity === 'WARNING' || severity === 'ERROR'
+    ? severity
+    : null;
+}
+
+function toDisplayValue(value: unknown) {
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return '';
+}
+
+function buildRecordMetrics(record: Record<string, unknown>) {
+  const metricKeys = [
+    'ranking',
+    'rank',
+    'odds',
+    'score',
+    'scoreToPar',
+    'strokes',
+    'currentRound',
+    'finishPosition',
+    'totalScore',
+    'totalStrokes',
+  ];
+
+  return metricKeys.flatMap((key) => {
+    const value = record[key];
+    return value === undefined || value === null ? [] : [`${key}: ${String(value)}`];
+  }).join(' · ');
+}
+
+function buildEvidenceRow(input: {
+  index: number;
+  path: string;
+  record: Record<string, unknown>;
+  recordType: string;
+  source: string;
+}): SyncRunEvidenceRow {
+  const identifier =
+    toDisplayValue(input.record.eventId)
+    || toDisplayValue(input.record.externalId)
+    || toDisplayValue(input.record.contestantId)
+    || toDisplayValue(input.record.participantExternalId)
+    || toDisplayValue(input.record.id)
+    || `row-${input.index + 1}`;
+
+  return {
+    id: `${input.path}-${input.recordType}-${identifier}-${input.index}`,
+    source: input.source,
+    path: input.path,
+    recordType: input.recordType,
+    identifier,
+    name: toDisplayValue(input.record.name) || toDisplayValue(input.record.displayName) || 'No name',
+    status: toDisplayValue(input.record.status) || toDisplayValue(input.record.result) || 'No status',
+    metrics: buildRecordMetrics(input.record) || 'No metrics',
+  };
+}
+
+function extractContestants(
+  raw: Record<string, unknown>,
+): Array<{ record: Record<string, unknown>; recordType: string }> {
+  const directContestants = raw.contestants;
+  if (Array.isArray(directContestants)) {
+    return directContestants
+      .filter(isRecord)
+      .map((record) => ({ record, recordType: 'Participant' }));
+  }
+
+  const event = raw.event;
+  if (!isRecord(event)) {
+    return [];
+  }
+
+  const field = event.field;
+  const feeds = event.feeds;
+  const fieldContestants = isRecord(field) && Array.isArray(field.contestants)
+    ? field.contestants.filter(isRecord).map((record) => ({ record, recordType: 'Field participant' }))
+    : [];
+  const odds = isRecord(feeds) && isRecord(feeds.odds) && Array.isArray(feeds.odds.contestants)
+    ? feeds.odds.contestants.filter(isRecord).map((record) => ({ record, recordType: 'Odds participant' }))
+    : [];
+  const rankings = isRecord(feeds) && isRecord(feeds.rankings) && Array.isArray(feeds.rankings.contestants)
+    ? feeds.rankings.contestants.filter(isRecord).map((record) => ({ record, recordType: 'Ranking participant' }))
+    : [];
+  const results = isRecord(feeds) && isRecord(feeds.results) && Array.isArray(feeds.results.contestants)
+    ? feeds.results.contestants.filter(isRecord).map((record) => ({ record, recordType: 'Result participant' }))
+    : [];
+
+  return [...fieldContestants, ...odds, ...rankings, ...results];
+}
+
+function buildRunEvidenceRows(run: ProviderSyncRun | null): SyncRunEvidenceRow[] {
+  const providerPayload = run ? getPayloadSection(run.payload, 'providerPayload') : null;
+  const rawCaptures = providerPayload?.raw;
+  if (!Array.isArray(rawCaptures)) {
+    return [];
+  }
+
+  return rawCaptures.flatMap((capture, captureIndex) => {
+    if (!isRecord(capture)) {
+      return [];
+    }
+
+    const raw = capture.raw;
+    if (!isRecord(raw)) {
+      return [];
+    }
+
+    const path = toDisplayValue(capture.path) || `capture-${captureIndex + 1}`;
+    const source = toDisplayValue(capture.operation) || 'provider payload';
+    const rows: SyncRunEvidenceRow[] = [];
+    const events = raw.events;
+
+    if (Array.isArray(events)) {
+      rows.push(...events.filter(isRecord).map((record, index) =>
+        buildEvidenceRow({
+          index,
+          path,
+          record,
+          recordType: 'Event',
+          source,
+        }),
+      ));
+    }
+
+    if (isRecord(raw.event)) {
+      rows.push(buildEvidenceRow({
+        index: 0,
+        path,
+        record: raw.event,
+        recordType: 'Event detail',
+        source,
+      }));
+    }
+
+    rows.push(...extractContestants(raw).map(({ record, recordType }, index) =>
+      buildEvidenceRow({
+        index,
+        path,
+        record,
+        recordType,
+        source,
+      }),
+    ));
+
+    const rounds = raw.rounds;
+    if (Array.isArray(rounds)) {
+      rows.push(...rounds.filter(isRecord).map((record, index) =>
+        buildEvidenceRow({
+          index,
+          path,
+          record,
+          recordType: 'Live score',
+          source,
+        }),
+      ));
+    }
+
+    return rows;
+  });
 }
 
 export function RootAdminSyncDashboardPage() {
@@ -143,10 +340,42 @@ export function RootAdminSyncDashboardPage() {
       lastStartedAt: recentRuns[0]?.startedAt ?? recentRuns[0]?.createdAt ?? null,
     };
   }, [recentRuns]);
-  const payloadOutcome = payloadRun ? getPayloadOutcome(payloadRun.payload) : null;
   const payloadStats = payloadRun ? buildStatsSummary(payloadRun.payload) : [];
-  const providerPayload = getPayloadSection(payloadRun, 'providerPayload');
-  const jobPayload = getPayloadSection(payloadRun, 'jobPayload');
+  const payloadWarnings = payloadRun ? getPayloadWarnings(payloadRun.payload) : [];
+  const evidenceRows = useMemo(() => buildRunEvidenceRows(payloadRun), [payloadRun]);
+  const requestPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'requestPayload') : null;
+  const providerPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'providerPayload') : null;
+  const jobPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'jobPayload') : null;
+
+  const evidenceColumns = useMemo(
+    () => [
+      evidenceColumnHelper.accessor('recordType', {
+        header: 'Type',
+        cell: ({ getValue }) => <span className="text-foreground">{getValue()}</span>,
+      }),
+      evidenceColumnHelper.accessor('name', {
+        header: 'Name',
+        cell: ({ getValue }) => <span className="text-foreground">{getValue()}</span>,
+      }),
+      evidenceColumnHelper.accessor('identifier', {
+        header: 'Identifier',
+        cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
+      }),
+      evidenceColumnHelper.accessor('status', {
+        header: 'Status',
+        cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
+      }),
+      evidenceColumnHelper.accessor('metrics', {
+        header: 'Metrics',
+        cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
+      }),
+      evidenceColumnHelper.accessor('path', {
+        header: 'Source path',
+        cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
+      }),
+    ],
+    [],
+  );
 
   const syncHistoryColumns = useMemo(
     () => [
@@ -199,6 +428,13 @@ export function RootAdminSyncDashboardPage() {
           <span className="text-foreground">{getValue()}</span>
         ),
       }),
+      syncRunColumnHelper.accessor((run) => formatRequestedFeed(run.payload), {
+        id: 'feed',
+        header: 'Feed',
+        cell: ({ getValue }) => (
+          <span className="text-foreground">{getValue()}</span>
+        ),
+      }),
       syncRunColumnHelper.accessor((run) => formatEventValue(run.eventId), {
         id: 'event',
         header: 'Event',
@@ -220,6 +456,15 @@ export function RootAdminSyncDashboardPage() {
         cell: ({ row }) => (
           <div className="text-muted-foreground">
             <div>{buildPayloadSummary(row.original.payload)}</div>
+            <div className="mt-1 text-xs">
+              {buildCompactStatsSummary(row.original.payload)}
+            </div>
+            {getPayloadWarnings(row.original.payload).length > 0 ? (
+              <div className="mt-1 text-xs text-[color:var(--status-warning-text)]">
+                {getPayloadWarnings(row.original.payload).length} warning
+                {getPayloadWarnings(row.original.payload).length === 1 ? '' : 's'}
+              </div>
+            ) : null}
             <Button
               className="mt-2 h-auto rounded-none p-0 text-xs uppercase"
               onClick={() => setPayloadRun(row.original)}
@@ -241,28 +486,37 @@ export function RootAdminSyncDashboardPage() {
       data-testid="root-admin-sync-dashboard-page"
     >
       <Tile padding="lg">
-        <div className="flex flex-wrap gap-3">
-          <LinkButton
-            data-testid="root-admin-open-contest-qa-workflow-page"
-            to="/manage/sync/contest-qa-workflow"
-            variant="primary"
-          >
-            Guided contest QA workflow
-          </LinkButton>
-          <LinkButton
-            data-testid="root-admin-open-run-sport-sync-page"
-            to="/manage/sync/run-sport-sync"
-            variant="subtle"
-          >
-            Open sport sync page
-          </LinkButton>
-          <LinkButton
-            data-testid="root-admin-open-run-event-sync-page"
-            to="/manage/sync/run-event-sync"
-            variant="subtle"
-          >
-            Open event sync page
-          </LinkButton>
+        <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
+          <div className="flex flex-wrap gap-2" data-testid="root-admin-sync-workflow-sequence">
+            {WORKFLOW_STEPS.map((step) => (
+              <StatusBadge key={step} tone="neutral">
+                {step}
+              </StatusBadge>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <LinkButton
+              data-testid="root-admin-open-contest-qa-workflow-page"
+              to="/manage/sync/contest-qa-workflow"
+              variant="primary"
+            >
+              Run QA workflow
+            </LinkButton>
+            <LinkButton
+              data-testid="root-admin-open-run-sport-sync-page"
+              to="/manage/sync/run-sport-sync"
+              variant="subtle"
+            >
+              Run sport sync
+            </LinkButton>
+            <LinkButton
+              data-testid="root-admin-open-run-event-sync-page"
+              to="/manage/sync/run-event-sync"
+              variant="subtle"
+            >
+              Run event sync
+            </LinkButton>
+          </div>
         </div>
         <MetricGrid className="mt-6 md:grid-cols-5">
           <MetricTile label="Recent runs" value={recentRuns.length} />
@@ -320,71 +574,108 @@ export function RootAdminSyncDashboardPage() {
         description="Provider sync run outcome, stats, warnings, and payload drill-downs."
         detailContent={
           payloadRun ? (
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {buildPayloadSummary(payloadRun.payload)}
-                </p>
-                {payloadOutcome?.warnings.length ? (
-                  <div className="mt-3 space-y-2">
-                    {payloadOutcome.warnings.map((warning, index) => (
-                      <Alert key={`${String((warning as { code?: unknown }).code)}-${index}`} tone="warning">
-                        {String((warning as { message?: unknown }).message ?? 'Sync completed with a warning.')}
-                      </Alert>
+            <Tabs defaultValue="summary">
+              <TabsList>
+                <TabsTrigger value="summary">Summary</TabsTrigger>
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="payloads">Payloads</TabsTrigger>
+              </TabsList>
+              <TabsContent className="mt-4 space-y-4" value="summary">
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {buildPayloadSummary(payloadRun.payload)}
+                  </p>
+                  {payloadWarnings.length > 0 ? (
+                    <div className="mt-3 space-y-2">
+                      {payloadWarnings.map((warning, index) => (
+                        <Alert key={`${warning.code}-${index}`} tone="warning">
+                          {warning.message}
+                        </Alert>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+
+                {payloadStats.length > 0 ? (
+                  <MetricGrid className="md:grid-cols-3">
+                    {payloadStats.map((stat) => (
+                      <MetricTile
+                        key={stat.key}
+                        label={stat.label}
+                        value={stat.value}
+                      />
                     ))}
-                  </div>
+                  </MetricGrid>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No canonical sync stats were captured for this run.
+                  </p>
+                )}
+              </TabsContent>
+              <TabsContent className="mt-4" value="details">
+                <DataGrid
+                  columns={evidenceColumns}
+                  data={evidenceRows}
+                  emptyMessage="No run-specific detail rows were captured for this sync."
+                  filterTestIdPrefix="root-admin-sync-detail-filter"
+                  getRowId={(row) => row.id}
+                  rowTestId={(row) => `root-admin-sync-detail-row-${row.id}`}
+                  tableTestId="root-admin-sync-detail-grid"
+                />
+              </TabsContent>
+              <TabsContent className="mt-4 space-y-3" value="payloads">
+                <div className="flex flex-wrap gap-3">
+                  {requestPayload ? (
+                    <Button
+                      onClick={() => setJsonPayload({
+                        title: 'Request payload',
+                        payload: requestPayload,
+                      })}
+                      type="button"
+                      variant="secondary"
+                    >
+                      Show request payload
+                    </Button>
+                  ) : null}
+                  {jobPayload ? (
+                    <Button
+                      onClick={() => setJsonPayload({
+                        title: 'Job payload',
+                        payload: jobPayload,
+                      })}
+                      type="button"
+                      variant="secondary"
+                    >
+                      Show job payload
+                    </Button>
+                  ) : null}
+                  {providerPayload ? (
+                    <Button
+                      onClick={() => setJsonPayload({
+                        title: 'Provider payload',
+                        payload: providerPayload,
+                      })}
+                      type="button"
+                      variant="secondary"
+                    >
+                      Show provider payload
+                    </Button>
+                  ) : null}
+                </div>
+                {!requestPayload && !jobPayload && !providerPayload ? (
+                  <p className="text-sm text-muted-foreground">
+                    No request, job, or provider payload was captured for this run.
+                  </p>
                 ) : null}
-              </div>
-
-              {payloadStats.length > 0 ? (
-                <MetricGrid className="md:grid-cols-3">
-                  {payloadStats.map((stat) => (
-                    <MetricTile
-                      key={stat.key}
-                      label={stat.label}
-                      value={stat.value}
-                    />
-                  ))}
-                </MetricGrid>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No canonical sync stats were captured for this run.
-                </p>
-              )}
-
-              <div className="flex flex-wrap gap-3">
-                {providerPayload ? (
-                  <Button
-                    onClick={() => setJsonPayload({
-                      title: 'Provider payload',
-                      payload: providerPayload,
-                    })}
-                    type="button"
-                    variant="secondary"
-                  >
-                    Show provider payload
-                  </Button>
-                ) : null}
-                {jobPayload ? (
-                  <Button
-                    onClick={() => setJsonPayload({
-                      title: 'Job payload',
-                      payload: jobPayload,
-                    })}
-                    type="button"
-                    variant="secondary"
-                  >
-                    Show job payload
-                  </Button>
-                ) : null}
-              </div>
-            </div>
+              </TabsContent>
+            </Tabs>
           ) : null
         }
         details={
           payloadRun
             ? [
                 { id: 'status', label: 'Status', value: getRunStatusLabel(payloadRun) },
+                { id: 'feed', label: 'Feed', value: formatRequestedFeed(payloadRun.payload) },
                 { id: 'sport', label: 'Sport', value: payloadRun.sport },
                 { id: 'event', label: 'Event', value: formatEventValue(payloadRun.eventId) },
                 {

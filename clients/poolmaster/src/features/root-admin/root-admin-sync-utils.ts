@@ -82,6 +82,14 @@ export const EVENT_SYNC_PRESETS = [
 ] as const;
 export type EventSyncPresetId = (typeof EVENT_SYNC_PRESETS)[number]['id'];
 
+export const FEED_LABELS = {
+  EVENTSCHEDULE: 'Schedule',
+  EVENTPARTICIPANTS: 'Participants',
+  PARTICIPANTRANKINGS: 'Rankings / odds',
+  EVENTLIVESCORES: 'Live scores',
+  EVENTRESULTS: 'Final results',
+} as const;
+
 export function getProviderName(
   providerId: string,
   providers: ProviderSummary[] | undefined,
@@ -110,6 +118,33 @@ export function getPayloadOutcome(payload: Record<string, unknown>) {
     summary: typeof summary === 'string' ? summary : null,
     warnings: Array.isArray(warnings) ? warnings : [],
   };
+}
+
+export function getRequestedFeed(payload: Record<string, unknown>) {
+  const requestedFeed = payload.requestedFeed;
+  return typeof requestedFeed === 'string' && requestedFeed in FEED_LABELS
+    ? requestedFeed as keyof typeof FEED_LABELS
+    : null;
+}
+
+export function formatRequestedFeed(payload: Record<string, unknown>) {
+  const requestedFeed = getRequestedFeed(payload);
+  return requestedFeed ? FEED_LABELS[requestedFeed] : 'Unknown feed';
+}
+
+export function getPayloadWarnings(payload: Record<string, unknown>) {
+  return getPayloadOutcome(payload)?.warnings.flatMap((warning) => {
+    if (!isRecord(warning)) {
+      return [];
+    }
+
+    const code = warning.code;
+    const message = warning.message;
+    return [{
+      code: typeof code === 'string' ? code : 'SYNC_WARNING',
+      message: typeof message === 'string' ? message : 'Sync completed with a warning.',
+    }];
+  }) ?? [];
 }
 
 export function buildPayloadSummary(payload: Record<string, unknown>) {
@@ -174,6 +209,18 @@ export function buildPayloadSummary(payload: Record<string, unknown>) {
   return fallbackEntries[0] ?? 'Payload captured for operational review.';
 }
 
+export function buildCompactStatsSummary(payload: Record<string, unknown>) {
+  const stats = buildStatsSummary(payload);
+  if (stats.length === 0) {
+    return 'No stats';
+  }
+
+  return stats
+    .slice(0, 3)
+    .map((stat) => `${stat.label}: ${stat.value}`)
+    .join(' · ');
+}
+
 export function buildStatsSummary(payload: Record<string, unknown>) {
   const stats = payload.stats;
   if (!isRecord(stats)) {
@@ -193,6 +240,14 @@ export function buildStatsSummary(payload: Record<string, unknown>) {
       value,
     }];
   });
+}
+
+export function getPayloadSection(
+  payload: Record<string, unknown>,
+  key: 'requestPayload' | 'providerPayload' | 'jobPayload',
+) {
+  const section = payload[key];
+  return isRecord(section) ? section : null;
 }
 
 export function getSportSyncPreset(presetId: SportSyncPresetId) {
