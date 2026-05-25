@@ -434,10 +434,7 @@ function toSportEvent(
     participantCount,
     fieldLocked:
       detail.event.field.status === 'locked'
-      || detail.event.field.status === 'final'
-      || (detail.event.schedule.fieldLocksAt
-        ? Date.now() >= new Date(detail.event.schedule.fieldLocksAt).getTime()
-        : false),
+      || detail.event.field.status === 'final',
     metadata: {
       seasonId: detail.season.seasonId,
       seasonName: detail.season.name,

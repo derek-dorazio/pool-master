@@ -214,8 +214,9 @@ describe('mock contest feed provider event-first verification', () => {
     const rankings = await adapter.getRankings(Sport.GOLF, 'OWGR');
     expect(rankings.length).toBeGreaterThan(0);
 
-    // pool-master-rop.78.3 — typed LiveScoreResult contract per plans/117 §10.2.
-    const liveScores = await adapter.getLiveScores(eventExternalId);
+    // pool-master-rop.78.3 + pool-master-33l.8.8 — typed LiveScoreResult contract
+    // per plans/117 §10.2, now driven through explicit mock live-state control.
+    const liveScores = await adapter.getLiveScores(eventExternalId, { mockEventState: 'live' });
     expect(liveScores.category).toBe('GOLF');
     if (liveScores.category === 'GOLF') {
       expect(liveScores.rounds.length).toBeGreaterThan(0);
