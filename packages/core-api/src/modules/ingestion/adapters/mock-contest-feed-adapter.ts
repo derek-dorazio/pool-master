@@ -6,6 +6,8 @@ import type {
   ProviderHealthStatus,
   ProviderParticipant,
   ProviderParticipantResult,
+  ProviderPayloadCapture,
+  ProviderPayloadDiagnostics,
   ProviderRanking,
   SportDataProvider,
   SportEvent,
@@ -42,12 +44,23 @@ type ContestantDelta = NonNullable<
   EventDetailResponse['event']['feeds']['odds']['contestants']
 >[number];
 
-export class MockContestFeedAdapter implements SportDataProvider {
+export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloadDiagnostics {
   readonly providerId = 'mock-contest-feed';
   readonly providerName = 'Mock Contest Feed Provider';
   readonly sportsCovered = [Sport.GOLF, Sport.TENNIS, Sport.NCAA_BASKETBALL] as Sport[];
+  private providerPayloads: ProviderPayloadCapture[] = [];
 
   constructor(private readonly baseUrl: string) {}
+
+  clearProviderPayloads(): void {
+    this.providerPayloads = [];
+  }
+
+  consumeProviderPayloads(): ProviderPayloadCapture[] {
+    const payloads = this.providerPayloads;
+    this.providerPayloads = [];
+    return payloads;
+  }
 
   async getUpcomingEvents(sport: Sport, dateRange: DateRange): Promise<SportEvent[]> {
     const entries = await this.listScenarioEvents(sport);
@@ -290,7 +303,14 @@ export class MockContestFeedAdapter implements SportDataProvider {
       throw new Error(`Mock contest feed request failed: ${response.status} ${response.statusText}`);
     }
 
-    return (await response.json()) as T;
+    const raw = (await response.json()) as T;
+    this.providerPayloads.push({
+      operation: 'mock-contest-feed.request',
+      path,
+      capturedAt: new Date().toISOString(),
+      raw,
+    });
+    return raw;
   }
 }
 

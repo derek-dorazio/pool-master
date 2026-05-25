@@ -15,6 +15,7 @@ import {
   ProviderHealthCheckDtoSchema,
   ProviderIngestionJobDtoSchema,
   ProviderListResponseSchema,
+  ProviderManualSyncSubmissionResponseSchema,
   ProviderSyncRunListResponseSchema,
   SuccessSchema,
   UserDetailResponseSchema,
@@ -40,6 +41,8 @@ import type {
   ProviderEventResult,
   ProviderHealthStatus,
   ProviderParticipant,
+  ProviderPayloadCapture,
+  ProviderPayloadDiagnostics,
   ProviderRanking,
   SportDataProvider,
   SportEvent,
@@ -194,6 +197,34 @@ class EmptyCoverageProvider extends OperationalContractProvider {
   sportsCovered: Sport[] = [];
 }
 
+class EmptyDiagnosticsProvider extends OperationalContractProvider implements ProviderPayloadDiagnostics {
+  providerId = 'empty-diagnostics-provider';
+  providerName = 'Empty Diagnostics Provider';
+  private payloads: ProviderPayloadCapture[] = [];
+
+  clearProviderPayloads(): void {
+    this.payloads = [];
+  }
+
+  consumeProviderPayloads(): ProviderPayloadCapture[] {
+    const payloads = this.payloads;
+    this.payloads = [];
+    return payloads;
+  }
+
+  override async getUpcomingEvents(): Promise<SportEvent[]> {
+    this.payloads.push({
+      operation: 'test.schedule',
+      path: '/test/schedule',
+      capturedAt: '2026-04-05T12:00:00.000Z',
+      raw: {
+        events: [],
+      },
+    });
+    return [];
+  }
+}
+
 async function buildOperationalAdminApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
   const registry = new ProviderRegistry();
@@ -244,6 +275,51 @@ async function buildEmptyCoverageAdminApp(): Promise<FastifyInstance> {
   await app.ready();
 
   return app;
+}
+
+async function buildEmptyDiagnosticsAdminApp(): Promise<FastifyInstance> {
+  const app = Fastify({ logger: false });
+  const registry = new ProviderRegistry();
+  registry.register('GOLF', new EmptyDiagnosticsProvider(), 'PRIMARY');
+  const scheduler = new IngestionScheduler(registry, {
+    onEvents: async () => undefined,
+    onEventDetail: async () => undefined,
+    onRankings: async () => undefined,
+    onLiveScores: async () => undefined,
+    onJobComplete: async () => undefined,
+  }, undefined, {
+    now: () => new Date('2026-04-05T12:00:00.000Z'),
+  });
+  const providerService = new ProviderService(getPrisma(), registry, scheduler);
+
+  app.decorate('prisma', getPrisma());
+  app.setErrorHandler(globalErrorHandler);
+  await app.register(adminModule, {
+    prefix: '/api/v1/admin',
+    providerService,
+  });
+  await app.ready();
+
+  return app;
+}
+
+async function waitForProviderSyncRun(
+  syncRunId: string,
+): Promise<{ status: string; payloadJson: unknown }> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const row = await getPrisma().providerSyncRun.findUnique({
+      where: { id: syncRunId },
+      select: { status: true, payloadJson: true },
+    });
+    if (row && row.status !== 'SUBMITTED' && row.status !== 'IN_PROGRESS') {
+      return row;
+    }
+    await new Promise((resolve) => {
+      setTimeout(resolve, 25);
+    });
+  }
+
+  throw new Error(`Provider sync run ${syncRunId} did not finish in time.`);
 }
 
 describe('Contract verification (root admin)', () => {
@@ -855,6 +931,66 @@ describe('Contract verification (root admin)', () => {
       expect(ProviderIngestionJobDtoSchema.safeParse(reIngestRes.json()).success).toBe(true);
       expect(reIngestRes.json().providerId).toBe('contract-provider');
       expect(reIngestRes.json().eventId).toBe('event-1');
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('pool-master-ueu.1: manual zero-data syncs expose warning diagnostics and raw provider payload', async () => {
+    const rootAdmin = await createTestUser({
+      displayName: 'Root Admin Sync Diagnostics Contract User',
+      isRootAdmin: true,
+    });
+    await getPrisma().providerSyncRun.deleteMany({
+      where: { providerId: 'empty-diagnostics-provider' },
+    });
+    const app = await buildEmptyDiagnosticsAdminApp();
+
+    try {
+      const prepareSyncRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/admin/providers/sync/GOLF',
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+        payload: {
+          feeds: ['EVENTSCHEDULE'],
+        },
+      });
+      expect(prepareSyncRes.statusCode).toBe(202);
+      expect(ProviderManualSyncSubmissionResponseSchema.safeParse(prepareSyncRes.json()).success).toBe(true);
+      const syncRunId = prepareSyncRes.json().syncRuns[0]?.id as string;
+
+      const completedRun = await waitForProviderSyncRun(syncRunId);
+      expect(completedRun.status).toBe('COMPLETED');
+      expect(completedRun.payloadJson).toEqual(
+        expect.objectContaining({
+          jobPayload: expect.objectContaining({
+            recordsProcessed: 0,
+            status: 'COMPLETED',
+          }),
+          providerPayload: expect.objectContaining({
+            rawCaptured: true,
+            raw: [
+              expect.objectContaining({
+                path: '/test/schedule',
+                raw: { events: [] },
+              }),
+            ],
+          }),
+          outcome: expect.objectContaining({
+            severity: 'WARNING',
+            warnings: [
+              expect.objectContaining({
+                code: 'NO_PROVIDER_EVENTS',
+              }),
+            ],
+          }),
+          stats: expect.objectContaining({
+            providerRecordsReturned: 0,
+            eventsFetched: 0,
+          }),
+        }),
+      );
+      expect((completedRun.payloadJson as Record<string, unknown>).responsePayload).toBeUndefined();
     } finally {
       await app.close();
     }

@@ -27367,8 +27367,234 @@
                           },
                           "payload": {
                             "type": "object",
-                            "additionalProperties": {},
-                            "description": "Opaque provider sync payload retained for thin admin operational detail surfaces."
+                            "properties": {
+                              "runType": {
+                                "type": "string",
+                                "description": "Sync run source, such as manual sport sync or manual event sync."
+                              },
+                              "requestedFeeds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EVENTSCHEDULE",
+                                    "EVENTPARTICIPANTS",
+                                    "PARTICIPANTRANKINGS",
+                                    "EVENTLIVESCORES",
+                                    "EVENTRESULTS"
+                                  ],
+                                  "description": "Explicit ingestion feed type requested by the caller."
+                                },
+                                "description": "Feeds requested by the root-admin action."
+                              },
+                              "requestedFeed": {
+                                "type": "string",
+                                "enum": [
+                                  "EVENTSCHEDULE",
+                                  "EVENTPARTICIPANTS",
+                                  "PARTICIPANTRANKINGS",
+                                  "EVENTLIVESCORES",
+                                  "EVENTRESULTS"
+                                ],
+                                "description": "Explicit ingestion feed type requested by the caller."
+                              },
+                              "requestPayload": {
+                                "type": "object",
+                                "additionalProperties": {},
+                                "description": "Root-admin request context that submitted the sync run."
+                              },
+                              "providerPayload": {
+                                "type": "object",
+                                "properties": {
+                                  "operation": {
+                                    "type": "string",
+                                    "enum": [
+                                      "EVENTSCHEDULE",
+                                      "EVENTPARTICIPANTS",
+                                      "PARTICIPANTRANKINGS",
+                                      "EVENTLIVESCORES",
+                                      "EVENTRESULTS"
+                                    ],
+                                    "description": "Provider feed operation represented by this payload."
+                                  },
+                                  "rawCaptured": {
+                                    "type": "boolean",
+                                    "description": "Whether raw provider response JSON was captured for this run."
+                                  },
+                                  "rawTruncated": {
+                                    "type": "boolean",
+                                    "description": "Whether the captured raw provider payload was truncated before storage."
+                                  },
+                                  "raw": {
+                                    "description": "Raw provider response JSON retained for debugging when capture is available."
+                                  }
+                                },
+                                "required": [
+                                  "operation",
+                                  "rawCaptured",
+                                  "rawTruncated"
+                                ],
+                                "additionalProperties": true,
+                                "description": "Raw/debug provider payload captured for this run."
+                              },
+                              "jobPayload": {
+                                "type": "object",
+                                "properties": {
+                                  "jobType": {
+                                    "type": "string",
+                                    "description": "Internal ingestion job type that executed this sync feed."
+                                  },
+                                  "providerId": {
+                                    "type": "string",
+                                    "description": "Provider that executed the ingestion job."
+                                  },
+                                  "sport": {
+                                    "type": "string",
+                                    "enum": [
+                                      "GOLF",
+                                      "NFL",
+                                      "NBA",
+                                      "F1",
+                                      "NASCAR",
+                                      "NCAA_BASKETBALL",
+                                      "NCAA_HOCKEY",
+                                      "NCAA_FOOTBALL",
+                                      "TENNIS",
+                                      "HORSE_RACING",
+                                      "SOCCER",
+                                      "NHL",
+                                      "MLB",
+                                      "UFC"
+                                    ]
+                                  },
+                                  "eventExternalId": {
+                                    "type": "string",
+                                    "description": "External event id for event-scoped jobs, when applicable."
+                                  },
+                                  "status": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PENDING",
+                                      "RUNNING",
+                                      "COMPLETED",
+                                      "FAILED"
+                                    ],
+                                    "description": "Internal ingestion job status."
+                                  },
+                                  "startedAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "description": "When the ingestion job started."
+                                  },
+                                  "completedAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "description": "When the ingestion job completed."
+                                  },
+                                  "recordsProcessed": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Canonical records processed by the ingestion job."
+                                  },
+                                  "errors": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Error count captured by the ingestion job."
+                                  },
+                                  "errorLog": {
+                                    "type": "array",
+                                    "items": {},
+                                    "description": "Raw ingestion error-log entries for root-admin investigation."
+                                  }
+                                },
+                                "required": [
+                                  "jobType",
+                                  "providerId",
+                                  "sport",
+                                  "status",
+                                  "recordsProcessed",
+                                  "errors",
+                                  "errorLog"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Serialized ingestion job details after an ingestion job is available."
+                              },
+                              "outcome": {
+                                "type": "object",
+                                "properties": {
+                                  "severity": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SUCCESS",
+                                      "WARNING",
+                                      "ERROR"
+                                    ],
+                                    "description": "Admin-facing severity derived from run status, errors, and warnings."
+                                  },
+                                  "summary": {
+                                    "type": "string",
+                                    "description": "Human-readable root-admin summary of the sync outcome."
+                                  },
+                                  "warnings": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "code": {
+                                          "type": "string",
+                                          "description": "Stable warning code emitted by the ingestion/sync layer."
+                                        },
+                                        "message": {
+                                          "type": "string",
+                                          "description": "Human-readable warning detail for root-admin investigation."
+                                        }
+                                      },
+                                      "required": [
+                                        "code",
+                                        "message"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Warning emitted for a provider sync run that completed but needs operator attention."
+                                    },
+                                    "description": "Warnings that did not fail the run but should be visible to an operator."
+                                  },
+                                  "errors": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Count of errors captured for the run."
+                                  }
+                                },
+                                "required": [
+                                  "severity",
+                                  "summary",
+                                  "warnings",
+                                  "errors"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Admin-facing outcome and warning summary for the sync run."
+                              },
+                              "stats": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "number"
+                                },
+                                "description": "Canonical numeric sync stats used by admin diagnostics."
+                              },
+                              "recordsProcessed": {
+                                "type": "number",
+                                "description": "Legacy top-level processed-record count retained for summary compatibility."
+                              },
+                              "errors": {
+                                "type": "number",
+                                "description": "Legacy top-level error count retained for summary compatibility."
+                              },
+                              "detail": {
+                                "type": "string",
+                                "description": "Legacy human-readable detail retained for summary compatibility."
+                              }
+                            },
+                            "additionalProperties": true,
+                            "description": "Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs."
                           }
                         },
                         "required": [
@@ -27383,7 +27609,7 @@
                           "payload"
                         ],
                         "additionalProperties": false,
-                        "description": "Recent provider sync run with payload-backed operational details."
+                        "description": "Recent provider sync run with diagnostic operational details."
                       }
                     }
                   },
@@ -27606,8 +27832,234 @@
                           },
                           "payload": {
                             "type": "object",
-                            "additionalProperties": {},
-                            "description": "Opaque provider sync payload retained for thin admin operational detail surfaces."
+                            "properties": {
+                              "runType": {
+                                "type": "string",
+                                "description": "Sync run source, such as manual sport sync or manual event sync."
+                              },
+                              "requestedFeeds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EVENTSCHEDULE",
+                                    "EVENTPARTICIPANTS",
+                                    "PARTICIPANTRANKINGS",
+                                    "EVENTLIVESCORES",
+                                    "EVENTRESULTS"
+                                  ],
+                                  "description": "Explicit ingestion feed type requested by the caller."
+                                },
+                                "description": "Feeds requested by the root-admin action."
+                              },
+                              "requestedFeed": {
+                                "type": "string",
+                                "enum": [
+                                  "EVENTSCHEDULE",
+                                  "EVENTPARTICIPANTS",
+                                  "PARTICIPANTRANKINGS",
+                                  "EVENTLIVESCORES",
+                                  "EVENTRESULTS"
+                                ],
+                                "description": "Explicit ingestion feed type requested by the caller."
+                              },
+                              "requestPayload": {
+                                "type": "object",
+                                "additionalProperties": {},
+                                "description": "Root-admin request context that submitted the sync run."
+                              },
+                              "providerPayload": {
+                                "type": "object",
+                                "properties": {
+                                  "operation": {
+                                    "type": "string",
+                                    "enum": [
+                                      "EVENTSCHEDULE",
+                                      "EVENTPARTICIPANTS",
+                                      "PARTICIPANTRANKINGS",
+                                      "EVENTLIVESCORES",
+                                      "EVENTRESULTS"
+                                    ],
+                                    "description": "Provider feed operation represented by this payload."
+                                  },
+                                  "rawCaptured": {
+                                    "type": "boolean",
+                                    "description": "Whether raw provider response JSON was captured for this run."
+                                  },
+                                  "rawTruncated": {
+                                    "type": "boolean",
+                                    "description": "Whether the captured raw provider payload was truncated before storage."
+                                  },
+                                  "raw": {
+                                    "description": "Raw provider response JSON retained for debugging when capture is available."
+                                  }
+                                },
+                                "required": [
+                                  "operation",
+                                  "rawCaptured",
+                                  "rawTruncated"
+                                ],
+                                "additionalProperties": true,
+                                "description": "Raw/debug provider payload captured for this run."
+                              },
+                              "jobPayload": {
+                                "type": "object",
+                                "properties": {
+                                  "jobType": {
+                                    "type": "string",
+                                    "description": "Internal ingestion job type that executed this sync feed."
+                                  },
+                                  "providerId": {
+                                    "type": "string",
+                                    "description": "Provider that executed the ingestion job."
+                                  },
+                                  "sport": {
+                                    "type": "string",
+                                    "enum": [
+                                      "GOLF",
+                                      "NFL",
+                                      "NBA",
+                                      "F1",
+                                      "NASCAR",
+                                      "NCAA_BASKETBALL",
+                                      "NCAA_HOCKEY",
+                                      "NCAA_FOOTBALL",
+                                      "TENNIS",
+                                      "HORSE_RACING",
+                                      "SOCCER",
+                                      "NHL",
+                                      "MLB",
+                                      "UFC"
+                                    ]
+                                  },
+                                  "eventExternalId": {
+                                    "type": "string",
+                                    "description": "External event id for event-scoped jobs, when applicable."
+                                  },
+                                  "status": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PENDING",
+                                      "RUNNING",
+                                      "COMPLETED",
+                                      "FAILED"
+                                    ],
+                                    "description": "Internal ingestion job status."
+                                  },
+                                  "startedAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "description": "When the ingestion job started."
+                                  },
+                                  "completedAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "description": "When the ingestion job completed."
+                                  },
+                                  "recordsProcessed": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Canonical records processed by the ingestion job."
+                                  },
+                                  "errors": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Error count captured by the ingestion job."
+                                  },
+                                  "errorLog": {
+                                    "type": "array",
+                                    "items": {},
+                                    "description": "Raw ingestion error-log entries for root-admin investigation."
+                                  }
+                                },
+                                "required": [
+                                  "jobType",
+                                  "providerId",
+                                  "sport",
+                                  "status",
+                                  "recordsProcessed",
+                                  "errors",
+                                  "errorLog"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Serialized ingestion job details after an ingestion job is available."
+                              },
+                              "outcome": {
+                                "type": "object",
+                                "properties": {
+                                  "severity": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SUCCESS",
+                                      "WARNING",
+                                      "ERROR"
+                                    ],
+                                    "description": "Admin-facing severity derived from run status, errors, and warnings."
+                                  },
+                                  "summary": {
+                                    "type": "string",
+                                    "description": "Human-readable root-admin summary of the sync outcome."
+                                  },
+                                  "warnings": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "code": {
+                                          "type": "string",
+                                          "description": "Stable warning code emitted by the ingestion/sync layer."
+                                        },
+                                        "message": {
+                                          "type": "string",
+                                          "description": "Human-readable warning detail for root-admin investigation."
+                                        }
+                                      },
+                                      "required": [
+                                        "code",
+                                        "message"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Warning emitted for a provider sync run that completed but needs operator attention."
+                                    },
+                                    "description": "Warnings that did not fail the run but should be visible to an operator."
+                                  },
+                                  "errors": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Count of errors captured for the run."
+                                  }
+                                },
+                                "required": [
+                                  "severity",
+                                  "summary",
+                                  "warnings",
+                                  "errors"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Admin-facing outcome and warning summary for the sync run."
+                              },
+                              "stats": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "number"
+                                },
+                                "description": "Canonical numeric sync stats used by admin diagnostics."
+                              },
+                              "recordsProcessed": {
+                                "type": "number",
+                                "description": "Legacy top-level processed-record count retained for summary compatibility."
+                              },
+                              "errors": {
+                                "type": "number",
+                                "description": "Legacy top-level error count retained for summary compatibility."
+                              },
+                              "detail": {
+                                "type": "string",
+                                "description": "Legacy human-readable detail retained for summary compatibility."
+                              }
+                            },
+                            "additionalProperties": true,
+                            "description": "Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs."
                           }
                         },
                         "required": [
@@ -27622,7 +28074,7 @@
                           "payload"
                         ],
                         "additionalProperties": false,
-                        "description": "Recent provider sync run with payload-backed operational details."
+                        "description": "Recent provider sync run with diagnostic operational details."
                       }
                     }
                   },
@@ -27925,8 +28377,234 @@
                           },
                           "payload": {
                             "type": "object",
-                            "additionalProperties": {},
-                            "description": "Opaque provider sync payload retained for thin admin operational detail surfaces."
+                            "properties": {
+                              "runType": {
+                                "type": "string",
+                                "description": "Sync run source, such as manual sport sync or manual event sync."
+                              },
+                              "requestedFeeds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EVENTSCHEDULE",
+                                    "EVENTPARTICIPANTS",
+                                    "PARTICIPANTRANKINGS",
+                                    "EVENTLIVESCORES",
+                                    "EVENTRESULTS"
+                                  ],
+                                  "description": "Explicit ingestion feed type requested by the caller."
+                                },
+                                "description": "Feeds requested by the root-admin action."
+                              },
+                              "requestedFeed": {
+                                "type": "string",
+                                "enum": [
+                                  "EVENTSCHEDULE",
+                                  "EVENTPARTICIPANTS",
+                                  "PARTICIPANTRANKINGS",
+                                  "EVENTLIVESCORES",
+                                  "EVENTRESULTS"
+                                ],
+                                "description": "Explicit ingestion feed type requested by the caller."
+                              },
+                              "requestPayload": {
+                                "type": "object",
+                                "additionalProperties": {},
+                                "description": "Root-admin request context that submitted the sync run."
+                              },
+                              "providerPayload": {
+                                "type": "object",
+                                "properties": {
+                                  "operation": {
+                                    "type": "string",
+                                    "enum": [
+                                      "EVENTSCHEDULE",
+                                      "EVENTPARTICIPANTS",
+                                      "PARTICIPANTRANKINGS",
+                                      "EVENTLIVESCORES",
+                                      "EVENTRESULTS"
+                                    ],
+                                    "description": "Provider feed operation represented by this payload."
+                                  },
+                                  "rawCaptured": {
+                                    "type": "boolean",
+                                    "description": "Whether raw provider response JSON was captured for this run."
+                                  },
+                                  "rawTruncated": {
+                                    "type": "boolean",
+                                    "description": "Whether the captured raw provider payload was truncated before storage."
+                                  },
+                                  "raw": {
+                                    "description": "Raw provider response JSON retained for debugging when capture is available."
+                                  }
+                                },
+                                "required": [
+                                  "operation",
+                                  "rawCaptured",
+                                  "rawTruncated"
+                                ],
+                                "additionalProperties": true,
+                                "description": "Raw/debug provider payload captured for this run."
+                              },
+                              "jobPayload": {
+                                "type": "object",
+                                "properties": {
+                                  "jobType": {
+                                    "type": "string",
+                                    "description": "Internal ingestion job type that executed this sync feed."
+                                  },
+                                  "providerId": {
+                                    "type": "string",
+                                    "description": "Provider that executed the ingestion job."
+                                  },
+                                  "sport": {
+                                    "type": "string",
+                                    "enum": [
+                                      "GOLF",
+                                      "NFL",
+                                      "NBA",
+                                      "F1",
+                                      "NASCAR",
+                                      "NCAA_BASKETBALL",
+                                      "NCAA_HOCKEY",
+                                      "NCAA_FOOTBALL",
+                                      "TENNIS",
+                                      "HORSE_RACING",
+                                      "SOCCER",
+                                      "NHL",
+                                      "MLB",
+                                      "UFC"
+                                    ]
+                                  },
+                                  "eventExternalId": {
+                                    "type": "string",
+                                    "description": "External event id for event-scoped jobs, when applicable."
+                                  },
+                                  "status": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PENDING",
+                                      "RUNNING",
+                                      "COMPLETED",
+                                      "FAILED"
+                                    ],
+                                    "description": "Internal ingestion job status."
+                                  },
+                                  "startedAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "description": "When the ingestion job started."
+                                  },
+                                  "completedAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "description": "When the ingestion job completed."
+                                  },
+                                  "recordsProcessed": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Canonical records processed by the ingestion job."
+                                  },
+                                  "errors": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Error count captured by the ingestion job."
+                                  },
+                                  "errorLog": {
+                                    "type": "array",
+                                    "items": {},
+                                    "description": "Raw ingestion error-log entries for root-admin investigation."
+                                  }
+                                },
+                                "required": [
+                                  "jobType",
+                                  "providerId",
+                                  "sport",
+                                  "status",
+                                  "recordsProcessed",
+                                  "errors",
+                                  "errorLog"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Serialized ingestion job details after an ingestion job is available."
+                              },
+                              "outcome": {
+                                "type": "object",
+                                "properties": {
+                                  "severity": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SUCCESS",
+                                      "WARNING",
+                                      "ERROR"
+                                    ],
+                                    "description": "Admin-facing severity derived from run status, errors, and warnings."
+                                  },
+                                  "summary": {
+                                    "type": "string",
+                                    "description": "Human-readable root-admin summary of the sync outcome."
+                                  },
+                                  "warnings": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "code": {
+                                          "type": "string",
+                                          "description": "Stable warning code emitted by the ingestion/sync layer."
+                                        },
+                                        "message": {
+                                          "type": "string",
+                                          "description": "Human-readable warning detail for root-admin investigation."
+                                        }
+                                      },
+                                      "required": [
+                                        "code",
+                                        "message"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Warning emitted for a provider sync run that completed but needs operator attention."
+                                    },
+                                    "description": "Warnings that did not fail the run but should be visible to an operator."
+                                  },
+                                  "errors": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Count of errors captured for the run."
+                                  }
+                                },
+                                "required": [
+                                  "severity",
+                                  "summary",
+                                  "warnings",
+                                  "errors"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Admin-facing outcome and warning summary for the sync run."
+                              },
+                              "stats": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "number"
+                                },
+                                "description": "Canonical numeric sync stats used by admin diagnostics."
+                              },
+                              "recordsProcessed": {
+                                "type": "number",
+                                "description": "Legacy top-level processed-record count retained for summary compatibility."
+                              },
+                              "errors": {
+                                "type": "number",
+                                "description": "Legacy top-level error count retained for summary compatibility."
+                              },
+                              "detail": {
+                                "type": "string",
+                                "description": "Legacy human-readable detail retained for summary compatibility."
+                              }
+                            },
+                            "additionalProperties": true,
+                            "description": "Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs."
                           }
                         },
                         "required": [
@@ -27941,7 +28619,7 @@
                           "payload"
                         ],
                         "additionalProperties": false,
-                        "description": "Recent provider sync run with payload-backed operational details."
+                        "description": "Recent provider sync run with diagnostic operational details."
                       }
                     }
                   },

@@ -14,10 +14,13 @@ import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto'
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
 import type {
+  ProviderPayloadCapture,
   ProviderRanking,
+  SportDataProvider,
   SportEvent,
   SportEventDetail,
 } from './provider-interface';
+import { supportsProviderPayloadDiagnostics } from './provider-interface';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 
 export type IngestionFeedType =
@@ -46,6 +49,27 @@ export interface IngestionJobRecord {
   recordsProcessed: number;
   errors: number;
   errorLog: unknown[];
+  providerPayload?: IngestionJobProviderPayload;
+  stats?: Record<string, number>;
+  warnings?: IngestionJobWarning[];
+}
+
+export interface IngestionJobWarning {
+  code: string;
+  message: string;
+}
+
+export interface IngestionJobProviderPayload {
+  operation: IngestionFeedType;
+  rawCaptured: boolean;
+  rawTruncated: boolean;
+  raw?: ProviderPayloadCapture[];
+}
+
+interface IngestionJobWorkResult {
+  recordsProcessed: number;
+  stats?: Record<string, number>;
+  warnings?: IngestionJobWarning[];
 }
 
 export interface SportSyncRequest {
@@ -262,7 +286,7 @@ export class IngestionScheduler {
       return createFailedJob('EVENT_LIVE_SCORES_SYNC', 'none', sport, 'No provider registered', eventId);
     }
 
-    return this.runJob('EVENT_LIVE_SCORES_SYNC', provider.providerId, sport, async () => {
+    return this.runJob('EVENT_LIVE_SCORES_SYNC', provider.providerId, sport, 'EVENTLIVESCORES', provider, async () => {
       const result = await provider.getLiveScores(eventId);
       const updateCount = countLiveScoreUpdates(result);
       this.logger?.debug({
@@ -280,7 +304,20 @@ export class IngestionScheduler {
         category: result.category,
         updatesProcessed: updateCount,
       }, 'Completed live score poll');
-      return updateCount;
+      return {
+        recordsProcessed: updateCount,
+        stats: {
+          providerRecordsReturned: updateCount,
+          liveScoreUpdatesReturned: updateCount,
+          liveScoreUpdatesProcessed: updateCount,
+        },
+        warnings: updateCount === 0
+          ? [{
+              code: 'NO_PROVIDER_LIVE_SCORES',
+              message: 'Provider returned no live-score updates for the requested event.',
+            }]
+          : [],
+      };
     }, eventId);
   }
 
@@ -293,11 +330,21 @@ export class IngestionScheduler {
       return createFailedJob('EVENT_RESULTS_SYNC', 'none', sport, 'No provider registered', eventId);
     }
 
-    return this.runJob('EVENT_RESULTS_SYNC', provider.providerId, sport, async () => {
+    return this.runJob('EVENT_RESULTS_SYNC', provider.providerId, sport, 'EVENTRESULTS', provider, async () => {
       const results = await provider.getEventResults(eventId);
       if (!results) {
         this.logger?.warn({ sport, eventId, providerId: provider.providerId }, 'Provider returned no event results');
-        return 0;
+        return {
+          recordsProcessed: 0,
+          stats: {
+            providerRecordsReturned: 0,
+            resultsReturned: 0,
+          } as Record<string, number>,
+          warnings: [{
+            code: 'NO_PROVIDER_RESULTS',
+            message: 'Provider returned no final results for the requested event.',
+          }],
+        };
       }
 
       // pool-master-rop.78.3 — the previous path synthesized a
@@ -316,7 +363,20 @@ export class IngestionScheduler {
         providerId: provider.providerId,
         resultsReturned: results.results.length,
       }, 'Fetched event results (no live-score bridge — rop.78.7 rebuilds)');
-      return results.results.length;
+      return {
+        recordsProcessed: results.results.length,
+        stats: {
+          providerRecordsReturned: results.results.length,
+          resultsReturned: results.results.length,
+          resultsProcessed: results.results.length,
+        } as Record<string, number>,
+        warnings: results.results.length === 0
+          ? [{
+              code: 'NO_PROVIDER_RESULTS',
+              message: 'Provider returned an empty final-results payload.',
+            }]
+          : [],
+      };
     }, eventId);
   }
 
@@ -541,7 +601,7 @@ export class IngestionScheduler {
       return createFailedJob('EVENT_SCHEDULE_SYNC', 'none', sport, 'No provider registered');
     }
 
-    return this.runJob('EVENT_SCHEDULE_SYNC', provider.providerId, sport, async () => {
+    return this.runJob('EVENT_SCHEDULE_SYNC', provider.providerId, sport, 'EVENTSCHEDULE', provider, async () => {
       const events = await provider.getUpcomingEvents(sport, dateRange);
       this.logger?.debug({
         sport,
@@ -565,7 +625,20 @@ export class IngestionScheduler {
         from: dateRange.from.toISOString(),
         to: dateRange.to.toISOString(),
       }, 'Completed schedule sync for sport');
-      return events.length;
+      return {
+        recordsProcessed: events.length,
+        stats: {
+          providerRecordsReturned: events.length,
+          eventsFetched: events.length,
+          eventsProcessed: events.length,
+        },
+        warnings: events.length === 0
+          ? [{
+              code: 'NO_PROVIDER_EVENTS',
+              message: 'Provider returned no upcoming events for the requested sport/date window.',
+            }]
+          : [],
+      };
     });
   }
 
@@ -586,7 +659,7 @@ export class IngestionScheduler {
       return createFailedJob('EVENT_PARTICIPANTS_SYNC', 'none', sport, 'No provider registered');
     }
 
-    return this.runJob('EVENT_PARTICIPANTS_SYNC', provider.providerId, sport, async () => {
+    return this.runJob('EVENT_PARTICIPANTS_SYNC', provider.providerId, sport, 'EVENTPARTICIPANTS', provider, async () => {
       const events = await provider.getUpcomingEvents(sport, dateRange);
       this.logger?.debug({
         sport,
@@ -643,7 +716,16 @@ export class IngestionScheduler {
         from: dateRange.from.toISOString(),
         to: dateRange.to.toISOString(),
       }, 'Completed participant sync for sport');
-      return hydratedCount;
+      return {
+        recordsProcessed: hydratedCount,
+        stats: {
+          providerRecordsReturned: events.length,
+          eventsDiscovered: events.length,
+          eventsHydrated: hydratedCount,
+          participantsReturned,
+        },
+        warnings: buildParticipantSyncWarnings(events.length, hydratedCount, participantsReturned),
+      };
     });
   }
 
@@ -658,7 +740,7 @@ export class IngestionScheduler {
       return createFailedJob('EVENT_PARTICIPANTS_SYNC', 'none', sport, 'No provider registered', eventId);
     }
 
-    return this.runJob('EVENT_PARTICIPANTS_SYNC', provider.providerId, sport, async () => {
+    return this.runJob('EVENT_PARTICIPANTS_SYNC', provider.providerId, sport, 'EVENTPARTICIPANTS', provider, async () => {
       const detail = await provider.getEventDetails(eventId);
       if (!detail) {
         this.logger?.warn({ sport, eventId, providerId: provider.providerId }, 'Provider returned no event detail for participant sync');
@@ -672,7 +754,20 @@ export class IngestionScheduler {
         providerId: provider.providerId,
         participantCount: detail.participants.length,
       }, 'Completed participant sync for event');
-      return detail.participants.length;
+      return {
+        recordsProcessed: detail.participants.length,
+        stats: {
+          providerRecordsReturned: detail.participants.length,
+          eventsHydrated: 1,
+          participantsReturned: detail.participants.length,
+        },
+        warnings: detail.participants.length === 0
+          ? [{
+              code: 'NO_PROVIDER_PARTICIPANTS',
+              message: 'Provider returned event details with no participants.',
+            }]
+          : [],
+      };
     }, eventId);
   }
 
@@ -683,7 +778,7 @@ export class IngestionScheduler {
       return createFailedJob('PARTICIPANT_RANKINGS_SYNC', 'none', sport, 'No provider registered');
     }
 
-    return this.runJob('PARTICIPANT_RANKINGS_SYNC', provider.providerId, sport, async () => {
+    return this.runJob('PARTICIPANT_RANKINGS_SYNC', provider.providerId, sport, 'PARTICIPANTRANKINGS', provider, async () => {
       const rankings = await provider.getRankings(sport, 'default');
       this.logger?.debug({
         sport,
@@ -696,7 +791,20 @@ export class IngestionScheduler {
         providerId: provider.providerId,
         rankingsProcessed: rankings.length,
       }, 'Completed ranking sync for sport');
-      return rankings.length;
+      return {
+        recordsProcessed: rankings.length,
+        stats: {
+          providerRecordsReturned: rankings.length,
+          rankingsFetched: rankings.length,
+          rankingsProcessed: rankings.length,
+        },
+        warnings: rankings.length === 0
+          ? [{
+              code: 'NO_PROVIDER_RANKINGS',
+              message: 'Provider returned no participant rankings.',
+            }]
+          : [],
+      };
     });
   }
 
@@ -704,7 +812,9 @@ export class IngestionScheduler {
     jobType: JobType,
     providerId: string,
     sport: Sport,
-    work: () => Promise<number>,
+    feed: IngestionFeedType,
+    provider: SportDataProvider,
+    work: () => Promise<number | IngestionJobWorkResult>,
     eventExternalId?: string,
   ): Promise<IngestionJobRecord> {
     const job: IngestionJobRecord = {
@@ -727,10 +837,22 @@ export class IngestionScheduler {
         eventExternalId: eventExternalId ?? null,
         startedAt: job.startedAt?.toISOString() ?? null,
       }, 'Ingestion job started');
-      job.recordsProcessed = await work();
+      if (supportsProviderPayloadDiagnostics(provider)) {
+        provider.clearProviderPayloads();
+      }
+      const result = await work();
+      if (typeof result === 'number') {
+        job.recordsProcessed = result;
+      } else {
+        job.recordsProcessed = result.recordsProcessed;
+        job.stats = result.stats;
+        job.warnings = result.warnings;
+      }
+      job.providerPayload = buildProviderPayload(feed, provider);
       job.status = 'COMPLETED';
       job.completedAt = new Date();
     } catch (err) {
+      job.providerPayload = buildProviderPayload(feed, provider);
       const failure = toIngestionFailureLog(err);
       this.logger?.error({
         jobType,
@@ -904,7 +1026,62 @@ function createFailedJob(
     recordsProcessed: 0,
     errors: 1,
     errorLog: [{ error, at: new Date() }],
+    warnings: [],
   };
+}
+
+function buildProviderPayload(
+  operation: IngestionFeedType,
+  provider: SportDataProvider,
+): IngestionJobProviderPayload {
+  if (!supportsProviderPayloadDiagnostics(provider)) {
+    return {
+      operation,
+      rawCaptured: false,
+      rawTruncated: false,
+    };
+  }
+
+  const raw = provider.consumeProviderPayloads();
+  const payload: IngestionJobProviderPayload = {
+    operation,
+    rawCaptured: raw.length > 0,
+    rawTruncated: false,
+  };
+  if (raw.length > 0) {
+    payload.raw = raw;
+  }
+  return payload;
+}
+
+function buildParticipantSyncWarnings(
+  eventsDiscovered: number,
+  eventsHydrated: number,
+  participantsReturned: number,
+): IngestionJobWarning[] {
+  const warnings: IngestionJobWarning[] = [];
+  if (eventsDiscovered === 0) {
+    warnings.push({
+      code: 'NO_PROVIDER_EVENTS',
+      message: 'Provider returned no event candidates for participant sync.',
+    });
+  }
+
+  if (eventsDiscovered > 0 && eventsHydrated === 0) {
+    warnings.push({
+      code: 'NO_EVENT_DETAILS',
+      message: 'Provider returned event candidates but no event details were hydrated.',
+    });
+  }
+
+  if (eventsHydrated > 0 && participantsReturned === 0) {
+    warnings.push({
+      code: 'NO_PROVIDER_PARTICIPANTS',
+      message: 'Provider hydrated events but returned no participants.',
+    });
+  }
+
+  return warnings;
 }
 
 function dedupe<T extends string>(items: readonly T[]): T[] {
@@ -934,6 +1111,8 @@ function toJobLogPayload(job: IngestionJobRecord): Record<string, unknown> {
     status: job.status,
     recordsProcessed: job.recordsProcessed,
     errors: job.errors,
+    stats: job.stats ?? null,
+    warnings: job.warnings ?? [],
     startedAt: job.startedAt?.toISOString() ?? null,
     completedAt: job.completedAt?.toISOString() ?? null,
   };

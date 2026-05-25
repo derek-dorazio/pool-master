@@ -14629,8 +14629,99 @@ export interface operations {
                             completedAt: string | null;
                             /** Format: date-time */
                             createdAt: string;
-                            /** @description Opaque provider sync payload retained for thin admin operational detail surfaces. */
+                            /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
                             payload: {
+                                /** @description Sync run source, such as manual sport sync or manual event sync. */
+                                runType?: string;
+                                /** @description Feeds requested by the root-admin action. */
+                                requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                                /**
+                                 * @description Explicit ingestion feed type requested by the caller.
+                                 * @enum {string}
+                                 */
+                                requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                                /** @description Root-admin request context that submitted the sync run. */
+                                requestPayload?: {
+                                    [key: string]: unknown;
+                                };
+                                /** @description Raw/debug provider payload captured for this run. */
+                                providerPayload?: {
+                                    /**
+                                     * @description Provider feed operation represented by this payload.
+                                     * @enum {string}
+                                     */
+                                    operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                                    /** @description Whether raw provider response JSON was captured for this run. */
+                                    rawCaptured: boolean;
+                                    /** @description Whether the captured raw provider payload was truncated before storage. */
+                                    rawTruncated: boolean;
+                                    /** @description Raw provider response JSON retained for debugging when capture is available. */
+                                    raw?: unknown;
+                                } & {
+                                    [key: string]: unknown;
+                                };
+                                /** @description Serialized ingestion job details after an ingestion job is available. */
+                                jobPayload?: {
+                                    /** @description Internal ingestion job type that executed this sync feed. */
+                                    jobType: string;
+                                    /** @description Provider that executed the ingestion job. */
+                                    providerId: string;
+                                    /** @enum {string} */
+                                    sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                                    /** @description External event id for event-scoped jobs, when applicable. */
+                                    eventExternalId?: string;
+                                    /**
+                                     * @description Internal ingestion job status.
+                                     * @enum {string}
+                                     */
+                                    status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                                    /**
+                                     * Format: date-time
+                                     * @description When the ingestion job started.
+                                     */
+                                    startedAt?: string;
+                                    /**
+                                     * Format: date-time
+                                     * @description When the ingestion job completed.
+                                     */
+                                    completedAt?: string;
+                                    /** @description Canonical records processed by the ingestion job. */
+                                    recordsProcessed: number;
+                                    /** @description Error count captured by the ingestion job. */
+                                    errors: number;
+                                    /** @description Raw ingestion error-log entries for root-admin investigation. */
+                                    errorLog: unknown[];
+                                };
+                                /** @description Admin-facing outcome and warning summary for the sync run. */
+                                outcome?: {
+                                    /**
+                                     * @description Admin-facing severity derived from run status, errors, and warnings.
+                                     * @enum {string}
+                                     */
+                                    severity: "SUCCESS" | "WARNING" | "ERROR";
+                                    /** @description Human-readable root-admin summary of the sync outcome. */
+                                    summary: string;
+                                    /** @description Warnings that did not fail the run but should be visible to an operator. */
+                                    warnings: {
+                                        /** @description Stable warning code emitted by the ingestion/sync layer. */
+                                        code: string;
+                                        /** @description Human-readable warning detail for root-admin investigation. */
+                                        message: string;
+                                    }[];
+                                    /** @description Count of errors captured for the run. */
+                                    errors: number;
+                                };
+                                /** @description Canonical numeric sync stats used by admin diagnostics. */
+                                stats?: {
+                                    [key: string]: number;
+                                };
+                                /** @description Legacy top-level processed-record count retained for summary compatibility. */
+                                recordsProcessed?: number;
+                                /** @description Legacy top-level error count retained for summary compatibility. */
+                                errors?: number;
+                                /** @description Legacy human-readable detail retained for summary compatibility. */
+                                detail?: string;
+                            } & {
                                 [key: string]: unknown;
                             };
                         }[];
@@ -14714,8 +14805,99 @@ export interface operations {
                             completedAt: string | null;
                             /** Format: date-time */
                             createdAt: string;
-                            /** @description Opaque provider sync payload retained for thin admin operational detail surfaces. */
+                            /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
                             payload: {
+                                /** @description Sync run source, such as manual sport sync or manual event sync. */
+                                runType?: string;
+                                /** @description Feeds requested by the root-admin action. */
+                                requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                                /**
+                                 * @description Explicit ingestion feed type requested by the caller.
+                                 * @enum {string}
+                                 */
+                                requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                                /** @description Root-admin request context that submitted the sync run. */
+                                requestPayload?: {
+                                    [key: string]: unknown;
+                                };
+                                /** @description Raw/debug provider payload captured for this run. */
+                                providerPayload?: {
+                                    /**
+                                     * @description Provider feed operation represented by this payload.
+                                     * @enum {string}
+                                     */
+                                    operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                                    /** @description Whether raw provider response JSON was captured for this run. */
+                                    rawCaptured: boolean;
+                                    /** @description Whether the captured raw provider payload was truncated before storage. */
+                                    rawTruncated: boolean;
+                                    /** @description Raw provider response JSON retained for debugging when capture is available. */
+                                    raw?: unknown;
+                                } & {
+                                    [key: string]: unknown;
+                                };
+                                /** @description Serialized ingestion job details after an ingestion job is available. */
+                                jobPayload?: {
+                                    /** @description Internal ingestion job type that executed this sync feed. */
+                                    jobType: string;
+                                    /** @description Provider that executed the ingestion job. */
+                                    providerId: string;
+                                    /** @enum {string} */
+                                    sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                                    /** @description External event id for event-scoped jobs, when applicable. */
+                                    eventExternalId?: string;
+                                    /**
+                                     * @description Internal ingestion job status.
+                                     * @enum {string}
+                                     */
+                                    status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                                    /**
+                                     * Format: date-time
+                                     * @description When the ingestion job started.
+                                     */
+                                    startedAt?: string;
+                                    /**
+                                     * Format: date-time
+                                     * @description When the ingestion job completed.
+                                     */
+                                    completedAt?: string;
+                                    /** @description Canonical records processed by the ingestion job. */
+                                    recordsProcessed: number;
+                                    /** @description Error count captured by the ingestion job. */
+                                    errors: number;
+                                    /** @description Raw ingestion error-log entries for root-admin investigation. */
+                                    errorLog: unknown[];
+                                };
+                                /** @description Admin-facing outcome and warning summary for the sync run. */
+                                outcome?: {
+                                    /**
+                                     * @description Admin-facing severity derived from run status, errors, and warnings.
+                                     * @enum {string}
+                                     */
+                                    severity: "SUCCESS" | "WARNING" | "ERROR";
+                                    /** @description Human-readable root-admin summary of the sync outcome. */
+                                    summary: string;
+                                    /** @description Warnings that did not fail the run but should be visible to an operator. */
+                                    warnings: {
+                                        /** @description Stable warning code emitted by the ingestion/sync layer. */
+                                        code: string;
+                                        /** @description Human-readable warning detail for root-admin investigation. */
+                                        message: string;
+                                    }[];
+                                    /** @description Count of errors captured for the run. */
+                                    errors: number;
+                                };
+                                /** @description Canonical numeric sync stats used by admin diagnostics. */
+                                stats?: {
+                                    [key: string]: number;
+                                };
+                                /** @description Legacy top-level processed-record count retained for summary compatibility. */
+                                recordsProcessed?: number;
+                                /** @description Legacy top-level error count retained for summary compatibility. */
+                                errors?: number;
+                                /** @description Legacy human-readable detail retained for summary compatibility. */
+                                detail?: string;
+                            } & {
                                 [key: string]: unknown;
                             };
                         }[];
@@ -14828,8 +15010,99 @@ export interface operations {
                             completedAt: string | null;
                             /** Format: date-time */
                             createdAt: string;
-                            /** @description Opaque provider sync payload retained for thin admin operational detail surfaces. */
+                            /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
                             payload: {
+                                /** @description Sync run source, such as manual sport sync or manual event sync. */
+                                runType?: string;
+                                /** @description Feeds requested by the root-admin action. */
+                                requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                                /**
+                                 * @description Explicit ingestion feed type requested by the caller.
+                                 * @enum {string}
+                                 */
+                                requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                                /** @description Root-admin request context that submitted the sync run. */
+                                requestPayload?: {
+                                    [key: string]: unknown;
+                                };
+                                /** @description Raw/debug provider payload captured for this run. */
+                                providerPayload?: {
+                                    /**
+                                     * @description Provider feed operation represented by this payload.
+                                     * @enum {string}
+                                     */
+                                    operation: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
+                                    /** @description Whether raw provider response JSON was captured for this run. */
+                                    rawCaptured: boolean;
+                                    /** @description Whether the captured raw provider payload was truncated before storage. */
+                                    rawTruncated: boolean;
+                                    /** @description Raw provider response JSON retained for debugging when capture is available. */
+                                    raw?: unknown;
+                                } & {
+                                    [key: string]: unknown;
+                                };
+                                /** @description Serialized ingestion job details after an ingestion job is available. */
+                                jobPayload?: {
+                                    /** @description Internal ingestion job type that executed this sync feed. */
+                                    jobType: string;
+                                    /** @description Provider that executed the ingestion job. */
+                                    providerId: string;
+                                    /** @enum {string} */
+                                    sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                                    /** @description External event id for event-scoped jobs, when applicable. */
+                                    eventExternalId?: string;
+                                    /**
+                                     * @description Internal ingestion job status.
+                                     * @enum {string}
+                                     */
+                                    status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                                    /**
+                                     * Format: date-time
+                                     * @description When the ingestion job started.
+                                     */
+                                    startedAt?: string;
+                                    /**
+                                     * Format: date-time
+                                     * @description When the ingestion job completed.
+                                     */
+                                    completedAt?: string;
+                                    /** @description Canonical records processed by the ingestion job. */
+                                    recordsProcessed: number;
+                                    /** @description Error count captured by the ingestion job. */
+                                    errors: number;
+                                    /** @description Raw ingestion error-log entries for root-admin investigation. */
+                                    errorLog: unknown[];
+                                };
+                                /** @description Admin-facing outcome and warning summary for the sync run. */
+                                outcome?: {
+                                    /**
+                                     * @description Admin-facing severity derived from run status, errors, and warnings.
+                                     * @enum {string}
+                                     */
+                                    severity: "SUCCESS" | "WARNING" | "ERROR";
+                                    /** @description Human-readable root-admin summary of the sync outcome. */
+                                    summary: string;
+                                    /** @description Warnings that did not fail the run but should be visible to an operator. */
+                                    warnings: {
+                                        /** @description Stable warning code emitted by the ingestion/sync layer. */
+                                        code: string;
+                                        /** @description Human-readable warning detail for root-admin investigation. */
+                                        message: string;
+                                    }[];
+                                    /** @description Count of errors captured for the run. */
+                                    errors: number;
+                                };
+                                /** @description Canonical numeric sync stats used by admin diagnostics. */
+                                stats?: {
+                                    [key: string]: number;
+                                };
+                                /** @description Legacy top-level processed-record count retained for summary compatibility. */
+                                recordsProcessed?: number;
+                                /** @description Legacy top-level error count retained for summary compatibility. */
+                                errors?: number;
+                                /** @description Legacy human-readable detail retained for summary compatibility. */
+                                detail?: string;
+                            } & {
                                 [key: string]: unknown;
                             };
                         }[];
