@@ -37,7 +37,7 @@ export function AccountMenu({
           radius="lg"
         >
           <div className="rounded-[1.25rem] border border-border bg-background px-4 py-3">
-            <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+            <div className="text-xs uppercase text-muted-foreground">
               Signed in as
             </div>
             <div className="mt-2 text-base font-semibold text-foreground">

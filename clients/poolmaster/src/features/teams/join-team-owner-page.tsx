@@ -259,7 +259,7 @@ export function JoinTeamOwnerPage() {
                   <TeamIcon iconKey={invitationQuery.data.team.iconKey} size="md" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                  <div className="text-xs uppercase text-muted-foreground">
                     Team
                   </div>
                   <div className="truncate text-base font-semibold text-foreground">

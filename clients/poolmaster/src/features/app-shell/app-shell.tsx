@@ -235,7 +235,7 @@ export function AppShell() {
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
             <div className="space-y-1">
-              <span className="inline-flex rounded-pill border border-inverse-border px-3 py-1 font-display text-xs font-bold uppercase tracking-[0.24em] text-primary">
+              <span className="inline-flex rounded-pill border border-inverse-border px-3 py-1 font-display text-xs font-bold uppercase text-primary">
                 Ultimate Office Pool Manager
               </span>
               <h1 className="font-display text-2xl font-black tracking-normal text-on-inverse">

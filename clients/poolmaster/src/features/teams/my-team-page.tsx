@@ -927,7 +927,7 @@ export function MyTeamPage() {
                     <TeamIcon iconKey={currentIconKey} size="lg" />
                   </IconAvatar>
                   <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    <div className="text-xs uppercase text-muted-foreground">
                       Team name
                     </div>
                     <div className="mt-1 text-base font-medium">{selectedTeam.name}</div>
@@ -954,7 +954,7 @@ export function MyTeamPage() {
                 />
 
                 <Tile radius="lg">
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  <div className="text-xs uppercase text-muted-foreground">
                     Team owners
                   </div>
                   <div className="mt-3 space-y-2">

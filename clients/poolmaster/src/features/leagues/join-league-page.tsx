@@ -317,7 +317,7 @@ export function JoinLeaguePage() {
                   <TeamIcon iconKey={selectedIconKey} size="lg" />
                 </div>
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  <div className="text-xs uppercase text-muted-foreground">
                     Selected icon
                   </div>
                   <div className="mt-1 text-base font-medium text-foreground">{selectedIcon.label}</div>

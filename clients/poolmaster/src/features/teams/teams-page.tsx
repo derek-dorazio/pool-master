@@ -224,7 +224,7 @@ export function TeamsPage() {
       ) : null}
 
       <Tile>
-        <div className="hidden border-b border-border pb-3 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] md:gap-6">
+        <div className="hidden border-b border-border pb-3 text-xs font-medium uppercase text-muted-foreground md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] md:gap-6">
           <span>Team</span>
           <span>Owners</span>
         </div>
