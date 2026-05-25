@@ -10,6 +10,7 @@ import {
   Button,
   FormField,
   LinkButton,
+  LoadingState,
   PageHeader,
   Select,
   Tile,
@@ -160,85 +161,92 @@ export function RootAdminRunSportSyncPage() {
         title="Run sport sync"
       />
 
-      <Tile>
-        <div className="space-y-3">
-          <FormField label="Preset">
-            <Select
-              data-testid="root-admin-sport-sync-preset"
-              disabled={syncMutation.isPending}
-              onChange={(event) =>
-                setSportSyncPresetId(event.target.value as SportSyncPresetId)}
-              value={sportSyncPresetId}
-            >
-              {SPORT_SYNC_PRESETS.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {preset.label}
-                </option>
-              ))}
-            </Select>
-          </FormField>
+      {providersQuery.isLoading ? (
+        <LoadingState
+          body="Loading provider sport options..."
+          testId="root-admin-sport-sync-providers-loading"
+        />
+      ) : (
+        <Tile>
+          <div className="space-y-3">
+            <FormField label="Preset">
+              <Select
+                data-testid="root-admin-sport-sync-preset"
+                disabled={syncMutation.isPending}
+                onChange={(event) =>
+                  setSportSyncPresetId(event.target.value as SportSyncPresetId)}
+                value={sportSyncPresetId}
+              >
+                {SPORT_SYNC_PRESETS.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.label}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
 
-          <FormField label="Sport">
-            <Select
-              data-testid="root-admin-sport-sync-sport"
-              disabled={syncMutation.isPending}
-              onChange={(event) =>
-                setSportSyncSport(event.target.value as SyncSport)}
-              value={sportSyncSport}
-            >
-              {supportedSyncSports.map((sport) => (
-                <option key={sport} value={sport}>
-                  {sport}
-                </option>
-              ))}
-            </Select>
-          </FormField>
+            <FormField label="Sport">
+              <Select
+                data-testid="root-admin-sport-sync-sport"
+                disabled={syncMutation.isPending}
+                onChange={(event) =>
+                  setSportSyncSport(event.target.value as SyncSport)}
+                value={sportSyncSport}
+              >
+                {supportedSyncSports.map((sport) => (
+                  <option key={sport} value={sport}>
+                    {sport}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
 
-          <Tile radius="lg">
-            <p className="font-medium text-foreground">Requested feeds</p>
-            <p className="mt-2">{selectedPreset.feeds.join(' · ')}</p>
-          </Tile>
-
-          {providersQuery.isError ? (
-            <Alert>
-              {extractErrorMessage(
-                providersQuery.error,
-                { fallback: 'Provider health context is unavailable, so the sport list is using fallback options.' },
-              )}
-            </Alert>
-          ) : null}
-
-          <Button
-            data-testid="root-admin-sport-sync-now"
-            disabled={syncMutation.isPending}
-            onClick={() =>
-              syncMutation.mutate({
-                sport: sportSyncSport,
-                presetId: sportSyncPresetId,
-              })}
-          >
-            {syncMutation.isPending ? 'Syncing...' : 'Run sport sync'}
-          </Button>
-
-          {syncMutation.isError ? (
-            <Alert tone="danger">
-              {extractErrorMessage(
-                syncMutation.error,
-                { fallback: 'We could not submit the sport sync right now.' },
-              )}
-            </Alert>
-          ) : null}
-
-          {syncMutation.isSuccess ? (
-            <Tile data-testid="root-admin-sport-sync-response" radius="lg">
-              <p className="font-medium text-foreground">Latest API payload</p>
-              <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words text-xs">
-                {formatJsonPayload(syncMutation.data)}
-              </pre>
+            <Tile radius="lg">
+              <p className="font-medium text-foreground">Requested feeds</p>
+              <p className="mt-2">{selectedPreset.feeds.join(' · ')}</p>
             </Tile>
-          ) : null}
-        </div>
-      </Tile>
+
+            {providersQuery.isError ? (
+              <Alert title="Provider context unavailable">
+                {extractErrorMessage(
+                  providersQuery.error,
+                  { fallback: 'Provider health context is unavailable, so the sport list is using fallback options.' },
+                )}
+              </Alert>
+            ) : null}
+
+            <Button
+              data-testid="root-admin-sport-sync-now"
+              disabled={syncMutation.isPending}
+              onClick={() =>
+                syncMutation.mutate({
+                  sport: sportSyncSport,
+                  presetId: sportSyncPresetId,
+                })}
+            >
+              {syncMutation.isPending ? 'Syncing...' : 'Run sport sync'}
+            </Button>
+
+            {syncMutation.isError ? (
+              <Alert tone="danger">
+                {extractErrorMessage(
+                  syncMutation.error,
+                  { fallback: 'We could not submit the sport sync right now.' },
+                )}
+              </Alert>
+            ) : null}
+
+            {syncMutation.isSuccess ? (
+              <Tile data-testid="root-admin-sport-sync-response" radius="lg">
+                <p className="font-medium text-foreground">Latest API payload</p>
+                <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words text-xs">
+                  {formatJsonPayload(syncMutation.data)}
+                </pre>
+              </Tile>
+            ) : null}
+          </div>
+        </Tile>
+      )}
     </section>
   );
 }

@@ -19,7 +19,15 @@ import {
   rememberRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { getLogger } from '@/lib/logger';
-import { Alert, Chip, PageHeader, Tile } from '@/features/shared/ui';
+import {
+  Alert,
+  Chip,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  PageHeader,
+  Tile,
+} from '@/features/shared/ui';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
@@ -231,9 +239,16 @@ export function TeamsPage() {
 
         <div className="space-y-4 pt-0 md:pt-4">
           {teamsQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading teams...</p>
+            <LoadingState
+              body="Loading teams..."
+              testId="teams-page-teams-loading"
+            />
           ) : teamsQuery.isError ? (
-            <p className="text-sm text-muted-foreground">We couldn&apos;t load teams for this league.</p>
+            <ErrorState
+              body="We couldn't load teams for this league."
+              testId="teams-page-teams-error"
+              title="Teams unavailable"
+            />
           ) : teamsQuery.data?.length ? (
             teamsQuery.data.map((team) => {
               const icon = getTeamIconOption(team.iconKey);
@@ -344,7 +359,11 @@ export function TeamsPage() {
               );
             })
           ) : (
-            <p className="text-sm text-muted-foreground">No teams exist for this league yet.</p>
+            <EmptyState
+              body="No teams exist for this league yet."
+              testId="teams-page-teams-empty"
+              title="No teams yet"
+            />
           )}
         </div>
       </Tile>
