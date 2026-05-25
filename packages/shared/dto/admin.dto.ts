@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { Sport, TeamIconKey as TeamIconKeyEnum, type TeamIconKey } from '@poolmaster/shared/domain';
 import { JsonObjectSchema, PaginatedSchema } from './common.dto';
 import { UserProfileDtoSchema } from './auth.dto';
-import { IngestionFeedTypeSchema } from './ingestion.dto';
+import { IngestionFeedTypeSchema, MockEventStateSchema } from './ingestion.dto';
 
 const SportSchema = z.enum([
   Sport.GOLF,
@@ -343,6 +343,63 @@ export const ProviderManualSyncSubmissionResponseSchema = z.object({
   syncRuns: z.array(ProviderSyncRunDtoSchema),
 }).describe('Manual root-admin sync submission response. The sync runs asynchronously after the request is accepted.');
 export type ProviderManualSyncSubmissionResponse = z.infer<typeof ProviderManualSyncSubmissionResponseSchema>;
+
+export const ProviderContestQaWorkflowModeSchema = z.enum([
+  'PREPARE_CONTEST_EVENT_DATA',
+  'DRIVE_EVENT_LIVE_TEST',
+]).describe('Guided contest QA workflow mode above the low-level provider sync feed primitives.');
+export type ProviderContestQaWorkflowMode = z.infer<typeof ProviderContestQaWorkflowModeSchema>;
+
+export const ProviderContestQaWorkflowRequestSchema = z.object({
+  mode: ProviderContestQaWorkflowModeSchema.describe('Guided workflow to run.'),
+  sport: SportSchema.describe('Sport to prepare or live-test.'),
+  eventId: z.string().trim().min(1).optional().describe('Provider event identifier when the workflow targets one event.'),
+  mockEventState: MockEventStateSchema.optional().describe(
+    'Mock-provider event state used by the live-test workflow.',
+  ),
+}).describe('Root-admin guided contest QA sync workflow request.');
+export type ProviderContestQaWorkflowRequest = z.infer<typeof ProviderContestQaWorkflowRequestSchema>;
+
+export const ProviderContestQaWorkflowStepStatusSchema = z.enum(['SUBMITTED', 'SKIPPED', 'BLOCKED']);
+export type ProviderContestQaWorkflowStepStatus = z.infer<typeof ProviderContestQaWorkflowStepStatusSchema>;
+
+export const ProviderContestQaWorkflowStepDtoSchema = z.object({
+  id: z.string().describe('Stable workflow step identifier.'),
+  label: z.string().describe('Human-readable step label.'),
+  status: ProviderContestQaWorkflowStepStatusSchema.describe('Whether the workflow submitted, skipped, or blocked the step.'),
+  feeds: z.array(IngestionFeedTypeSchema).describe('Provider sync feeds represented by this step.'),
+  eventId: z.string().optional().describe('Event id targeted by this step, if event-scoped.'),
+  syncRunIds: z.array(z.string()).describe('Provider sync run ids created for this workflow step.'),
+  summary: z.string().describe('Admin-facing step outcome or reason.'),
+  warnings: z.array(ProviderSyncWarningDtoSchema).describe('Warnings that need operator attention for this step.'),
+  nextActions: z.array(z.string()).describe('Concrete next actions suggested by this step.'),
+}).describe('Single ordered step in a guided contest QA sync workflow.');
+export type ProviderContestQaWorkflowStepDto = z.infer<typeof ProviderContestQaWorkflowStepDtoSchema>;
+
+export const ProviderContestQaEventCandidateDtoSchema = z.object({
+  eventId: z.string().describe('Provider event identifier.'),
+  name: z.string().describe('Event name.'),
+  status: z.string().describe('Persisted event lifecycle status.'),
+  startsAt: z.string().datetime().describe('Event start timestamp.'),
+  participantCount: z.number().int().min(0).describe('Loaded participant count for contest readiness.'),
+  readinessStatus: z.string().describe('Admin-readable readiness status.'),
+  contestEligible: z.boolean().describe('Whether the event is currently eligible for contest creation.'),
+}).describe('Persisted future event candidate considered by the guided contest QA workflow.');
+export type ProviderContestQaEventCandidateDto = z.infer<typeof ProviderContestQaEventCandidateDtoSchema>;
+
+export const ProviderContestQaWorkflowResponseSchema = z.object({
+  workflowId: z.string().describe('Generated workflow id used to correlate submitted sync runs.'),
+  mode: ProviderContestQaWorkflowModeSchema,
+  sport: SportSchema,
+  eventId: z.string().optional(),
+  mockEventState: MockEventStateSchema.optional(),
+  submittedAt: z.string().datetime(),
+  steps: z.array(ProviderContestQaWorkflowStepDtoSchema).describe('Ordered workflow plan and submitted sync run ids.'),
+  eventCandidates: z.array(ProviderContestQaEventCandidateDtoSchema).describe('Future persisted event candidates known before the workflow submitted new feed work.'),
+  warnings: z.array(ProviderSyncWarningDtoSchema).describe('Workflow-level warnings and missing prerequisites.'),
+  nextActions: z.array(z.string()).describe('Recommended operator next actions after this workflow submission.'),
+}).describe('Root-admin guided contest QA sync workflow response.');
+export type ProviderContestQaWorkflowResponse = z.infer<typeof ProviderContestQaWorkflowResponseSchema>;
 
 export const ProviderUnmappedParticipantDtoSchema = z.object({
   providerId: z.string(),

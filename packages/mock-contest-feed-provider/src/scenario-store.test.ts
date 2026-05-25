@@ -34,25 +34,13 @@ test('pool-master-33l.8.7: ScenarioStore generates rolling Thursday-Sunday golf 
   const scenario = buildRelativeTodayGolfScenario(now);
 
   assert.equal(scenario.scenarioId, 'golf-relative-today');
-  const manualEventId = 'golf-relative-manual-test-20260426t214000z';
   assert.deepEqual(
     scenario.events.map((event) => event.eventId),
     [
-      manualEventId,
       'golf-relative-weekend-20260430',
       'golf-relative-weekend-20260507',
     ],
   );
-
-  const manualEvent = scenario.events.find((event) => event.eventId === manualEventId);
-  assert.equal(manualEvent?.name, 'Manual Test Golf Tournament for 2026-04-26T21:40:00.000Z');
-  assert.equal(manualEvent?.status, 'field_announced');
-  assert.equal(manualEvent?.field.status, 'announced');
-  assert.equal(manualEvent?.schedule.releaseAt, '2026-04-26T20:55:00.000Z');
-  assert.equal(manualEvent?.schedule.fieldLocksAt, '2026-04-26T21:20:00.000Z');
-  assert.equal(manualEvent?.schedule.startsAt, '2026-04-26T21:40:00.000Z');
-  assert.equal(manualEvent?.schedule.endsAt, '2026-04-26T22:00:00.000Z');
-  assert.equal(manualEvent?.field.contestants.length, 80);
 
   const firstWeekend = scenario.events.find((event) => event.eventId === 'golf-relative-weekend-20260430');
   assert.equal(firstWeekend?.name, 'Rolling QA Weekend 1 Championship (2026-04-30)');
@@ -121,46 +109,6 @@ test('pool-master-33l.8.7: ScenarioStore chooses the next rolling Thursday tee t
   }
 });
 
-test('pool-master-xw5.5 + pool-master-33l.8.7: relative manual-test event advances through 20-minute lifecycle windows', () => {
-  const anchor = new Date('2026-04-26T21:00:00.000Z');
-  const cases = [
-    {
-      now: new Date('2026-04-26T21:10:00.000Z'),
-      status: 'field_announced',
-      fieldStatus: 'announced',
-      result: 'pending',
-    },
-    {
-      now: new Date('2026-04-26T21:25:00.000Z'),
-      status: 'field_announced',
-      fieldStatus: 'locked',
-      result: 'pending',
-    },
-    {
-      now: new Date('2026-04-26T21:45:00.000Z'),
-      status: 'in_progress',
-      fieldStatus: 'locked',
-      result: 'pending',
-    },
-    {
-      now: new Date('2026-04-26T22:05:00.000Z'),
-      status: 'completed',
-      fieldStatus: 'final',
-      result: 'win',
-    },
-  ] as const;
-
-  for (const testCase of cases) {
-    const scenario = buildRelativeTodayGolfScenario(testCase.now, { manualTestAnchor: anchor });
-    const manualEvent = scenario.events.find((event) => event.metadata?.eventType === 'relative-manual-test');
-
-    assert.equal(manualEvent?.status, testCase.status);
-    assert.equal(manualEvent?.field.status, testCase.fieldStatus);
-    assert.equal(manualEvent?.field.contestants.length, 80);
-    assert.equal(manualEvent?.feeds.results.contestants[0]?.result, testCase.result);
-  }
-});
-
 test('pool-master-xw5.5 + pool-master-33l.8.7: ScenarioStore includes generated relative today events in the scenario catalog', () => {
   let currentNow = new Date('2026-04-26T21:00:00.000Z');
   const store = new ScenarioStore(
@@ -170,10 +118,10 @@ test('pool-master-xw5.5 + pool-master-33l.8.7: ScenarioStore includes generated 
   );
 
   const relativeScenario = store.getScenario('golf-relative-today');
-  assert.equal(relativeScenario.events.length, 3);
+  assert.equal(relativeScenario.events.length, 2);
 
   const events = store.listEvents('golf-relative-today');
-  assert.equal(events[0]?.eventId, 'golf-relative-manual-test-20260426t214000z');
+  assert.equal(events[0]?.eventId, 'golf-relative-weekend-20260430');
   assert.equal(events[0]?.status, 'field_announced');
   assert.equal(events.at(-1)?.eventId, 'golf-relative-weekend-20260507');
 
@@ -181,25 +129,46 @@ test('pool-master-xw5.5 + pool-master-33l.8.7: ScenarioStore includes generated 
   assert.equal(weekendDetail.event.field.contestants.length, 80);
   assert.equal(weekendDetail.event.schedule.startsAt, '2026-04-30T12:00:00.000Z');
 
-  currentNow = new Date('2026-04-26T21:45:00.000Z');
-  const liveEvents = store.listEvents('golf-relative-today');
-  assert.equal(liveEvents[0]?.eventId, 'golf-relative-manual-test-20260426t214000z');
-  assert.equal(liveEvents[0]?.status, 'in_progress');
-
-  const liveScores = store.getLiveScores('golf-relative-today', 'golf-relative-manual-test-20260426t214000z');
-  assert.equal(liveScores.contestants.length, 80);
-  assert.equal(liveScores.contestants[0]?.result, 'pending');
-
-  currentNow = new Date('2026-04-26T22:05:00.000Z');
-  const results = store.getSnapshot('golf-relative-today', 'golf-relative-manual-test-20260426t214000z', 'results');
-  assert.equal(results.contestants.length, 80);
-  assert.ok(results.contestants.some((contestant) => contestant.result === 'win'));
-
   currentNow = new Date('2026-04-26T22:25:00.000Z');
   const nextCycleEvents = store.listEvents('golf-relative-today');
-  assert.equal(nextCycleEvents[0]?.eventId, 'golf-relative-manual-test-20260426t230500z');
+  assert.equal(nextCycleEvents[0]?.eventId, 'golf-relative-weekend-20260430');
   assert.equal(nextCycleEvents[0]?.status, 'field_announced');
   assert.equal(nextCycleEvents.at(-1)?.eventId, 'golf-relative-weekend-20260507');
+});
+
+test('pool-master-33l.8.8: explicit mock event states control golf detail, results, and live scores', () => {
+  const store = new ScenarioStore(
+    scenarioDir,
+    undefined,
+    { now: () => new Date('2026-04-26T21:00:00.000Z') },
+  );
+  const eventId = 'golf-relative-weekend-20260430';
+
+  const openDetail = store.getEventResponse('golf-relative-today', eventId, 'open');
+  assert.equal(openDetail.event.status, 'field_announced');
+  assert.equal(openDetail.event.field.status, 'announced');
+  assert.equal(store.getLiveScores('golf-relative-today', eventId, undefined, 'open').contestants.length, 0);
+
+  const lockedDetail = store.getEventResponse('golf-relative-today', eventId, 'locked');
+  assert.equal(lockedDetail.event.status, 'field_announced');
+  assert.equal(lockedDetail.event.field.status, 'locked');
+  assert.equal(store.getLiveScores('golf-relative-today', eventId, undefined, 'locked').contestants.length, 0);
+
+  const liveDetail = store.getEventResponse('golf-relative-today', eventId, 'live');
+  assert.equal(liveDetail.event.status, 'in_progress');
+  assert.equal(liveDetail.event.field.status, 'locked');
+  const liveScores = store.getLiveScores('golf-relative-today', eventId, 2, 'live');
+  assert.equal(liveScores.contestants.length, 80);
+  assert.ok(typeof liveScores.contestants[0]?.score === 'number');
+  assert.ok(typeof liveScores.contestants[0]?.strokes === 'number');
+
+  const completedDetail = store.getEventResponse('golf-relative-today', eventId, 'completed');
+  assert.equal(completedDetail.event.status, 'completed');
+  assert.equal(completedDetail.event.field.status, 'final');
+  const completedResults = store.getSnapshot('golf-relative-today', eventId, 'results', 'completed');
+  assert.equal(completedResults.contestants.length, 80);
+  assert.ok(completedResults.contestants.some((contestant) => contestant.result === 'win'));
+  assert.ok(completedResults.contestants.every((contestant) => typeof contestant.strokes === 'number'));
 });
 
 test('pool-master-s4y: old relative manual-test event ids remain detail-resolvable after cycle rollover', () => {
@@ -214,7 +183,10 @@ test('pool-master-s4y: old relative manual-test event ids remain detail-resolvab
   assert.equal(store.getEventResponse('golf-relative-today', originalEventId).event.eventId, originalEventId);
 
   currentNow = new Date('2026-04-26T22:25:00.000Z');
-  assert.equal(store.listEvents('golf-relative-today')[0]?.eventId, 'golf-relative-manual-test-20260426t230500z');
+  assert.ok(
+    store.listEvents('golf-relative-today').every((event) =>
+      !event.eventId.startsWith('golf-relative-manual-test-')),
+  );
 
   const originalDetail = store.getEventResponse('golf-relative-today', originalEventId);
   assert.equal(originalDetail.event.eventId, originalEventId);
@@ -344,7 +316,7 @@ test('ScenarioStore throws for missing scenarios and events', () => {
   );
 });
 
-test('routes expose detail and field endpoints', async () => {
+test('pool-master-33l.8.8: routes expose detail, field, and mock event-state score endpoints', async () => {
   const previousScenarioDir = process.env.SCENARIO_DIR;
   process.env.SCENARIO_DIR = scenarioDir;
 
@@ -371,13 +343,14 @@ test('routes expose detail and field endpoints', async () => {
 
     const liveScoresResponse = await app.inject({
       method: 'GET',
-      url: '/v1/scenarios/golf-major-2026/events/golf-masters-2026/scores?tick=2',
+      url: '/v1/scenarios/golf-major-2026/events/golf-masters-2026/scores?tick=2&mockEventState=live',
     });
     assert.equal(liveScoresResponse.statusCode, 200);
     const liveScoresJson = liveScoresResponse.json();
     assert.equal(liveScoresJson.feedKind, 'results');
     assert.equal(liveScoresJson.contestants.length, 80);
     assert.ok(typeof liveScoresJson.contestants[0]?.score === 'number');
+    assert.ok(typeof liveScoresJson.contestants[0]?.strokes === 'number');
   } finally {
     await app.close();
     if (previousScenarioDir === undefined) {

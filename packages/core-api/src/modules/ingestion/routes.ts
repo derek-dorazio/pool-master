@@ -113,6 +113,7 @@ export async function ingestionModule(
       Params: { sport: string; eventId: string };
       Body: {
         feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
       };
     }>(
       '/events/:sport/:eventId/sync',
@@ -137,16 +138,19 @@ export async function ingestionModule(
           sport: request.params.sport,
           eventId: request.params.eventId,
           feeds: request.body.feeds,
+          mockEventState: request.body.mockEventState ?? null,
         }, 'Direct ingestion event sync route requested');
         const jobs = await scheduler.runEventSync({
           sport: request.params.sport as Sport,
           eventId: request.params.eventId,
           feeds: request.body.feeds,
+          mockEventState: request.body.mockEventState,
         });
         logger.info({
           sport: request.params.sport,
           eventId: request.params.eventId,
           feeds: request.body.feeds,
+          mockEventState: request.body.mockEventState ?? null,
           jobs: jobs.map((job) => ({
             jobType: job.jobType,
             providerId: job.providerId,

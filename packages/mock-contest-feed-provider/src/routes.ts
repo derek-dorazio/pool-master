@@ -5,11 +5,13 @@ import {
   eventResponseSchema,
   eventSummarySchema,
   feedKinds,
+  mockEventStateKinds,
   mockFeedProviderId,
   scenarioRecordSchema,
   scenarioSummarySchema,
   snapshotResponseSchema,
   updatesResponseSchema,
+  type MockEventStateKind,
 } from './contracts';
 import { ScenarioStore, type ScenarioStoreOptions } from './scenario-store';
 
@@ -35,6 +37,14 @@ function logRoutePayload(
   fastify.log.info({ action, data }, message);
   fastify.log.debug({ action: `${action}.payload`, data: { ...data, payload } }, `${message} payload`);
 }
+
+const eventStateQuerySchema = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    mockEventState: { type: 'string', enum: mockEventStateKinds },
+  },
+} as const;
 
 export async function mockContestFeedRoutes(
   fastify: FastifyInstance,
@@ -303,7 +313,10 @@ export async function mockContestFeedRoutes(
     },
   );
 
-  fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
+  fastify.get<{
+    Params: { scenarioId: string; eventId: string };
+    Querystring: { mockEventState?: MockEventStateKind };
+  }>(
     '/v1/scenarios/:scenarioId/events/:eventId/detail',
     {
       schema: {
@@ -321,20 +334,29 @@ export async function mockContestFeedRoutes(
         response: {
           200: eventResponseSchema,
         },
+        querystring: eventStateQuerySchema,
       },
     },
     async (request) => {
       fastify.log.debug(
-        { action: 'mockFeedRoute.getEventDetail.start', data: request.params },
+        {
+          action: 'mockFeedRoute.getEventDetail.start',
+          data: { ...request.params, mockEventState: request.query.mockEventState ?? null },
+        },
         'Serving mock contest-feed event detail with season context',
       );
-      const payload = store.getEventResponse(request.params.scenarioId, request.params.eventId);
+      const payload = store.getEventResponse(
+        request.params.scenarioId,
+        request.params.eventId,
+        request.query.mockEventState,
+      );
       logRoutePayload(
         fastify,
         'mockFeedRoute.getEventDetail',
         {
           scenarioId: request.params.scenarioId,
           eventId: request.params.eventId,
+          mockEventState: request.query.mockEventState ?? null,
           contestantCount: payload.event.field.contestants.length,
         },
         payload,
@@ -359,7 +381,10 @@ export async function mockContestFeedRoutes(
           ? 'getMockContestFeedRankingsSnapshot'
           : 'getMockContestFeedResultsSnapshot';
 
-    fastify.get<{ Params: { scenarioId: string; eventId: string } }>(
+    fastify.get<{
+      Params: { scenarioId: string; eventId: string };
+      Querystring: { mockEventState?: MockEventStateKind };
+    }>(
       `/v1/scenarios/:scenarioId/events/:eventId/${feedKind}`,
       {
         schema: {
@@ -377,14 +402,23 @@ export async function mockContestFeedRoutes(
           response: {
             200: snapshotResponseSchema,
           },
+          querystring: eventStateQuerySchema,
         },
       },
       async (request) => {
         fastify.log.debug(
-          { action: 'mockFeedRoute.getSnapshot.start', data: { ...request.params, feedKind } },
+          {
+            action: 'mockFeedRoute.getSnapshot.start',
+            data: { ...request.params, feedKind, mockEventState: request.query.mockEventState ?? null },
+          },
           'Serving mock contest-feed snapshot',
         );
-        const payload = store.getSnapshot(request.params.scenarioId, request.params.eventId, feedKind);
+        const payload = store.getSnapshot(
+          request.params.scenarioId,
+          request.params.eventId,
+          feedKind,
+          request.query.mockEventState,
+        );
         logRoutePayload(
           fastify,
           'mockFeedRoute.getSnapshot',
@@ -392,6 +426,7 @@ export async function mockContestFeedRoutes(
             scenarioId: request.params.scenarioId,
             eventId: request.params.eventId,
             feedKind,
+            mockEventState: request.query.mockEventState ?? null,
             contestantCount: payload.contestants.length,
           },
           payload,
@@ -406,7 +441,10 @@ export async function mockContestFeedRoutes(
   // surface. It accepts an optional `tick` query parameter that
   // advances the in-memory store's live-scoring state machine; the
   // legacy `/v1/live/.../scores` alias was dropped.
-  fastify.get<{ Params: { scenarioId: string; eventId: string }; Querystring: { tick?: number } }>(
+  fastify.get<{
+    Params: { scenarioId: string; eventId: string };
+    Querystring: { tick?: number; mockEventState?: MockEventStateKind };
+  }>(
     '/v1/scenarios/:scenarioId/events/:eventId/scores',
     {
       schema: {
@@ -426,6 +464,7 @@ export async function mockContestFeedRoutes(
           additionalProperties: false,
           properties: {
             tick: { type: 'integer', minimum: 1 },
+            mockEventState: { type: 'string', enum: mockEventStateKinds },
           },
         },
         response: {
@@ -435,13 +474,21 @@ export async function mockContestFeedRoutes(
     },
     async (request) => {
       fastify.log.debug(
-        { action: 'mockFeedRoute.getScoresSnapshot.start', data: { ...request.params, tick: request.query.tick ?? null } },
+        {
+          action: 'mockFeedRoute.getScoresSnapshot.start',
+          data: {
+            ...request.params,
+            tick: request.query.tick ?? null,
+            mockEventState: request.query.mockEventState ?? null,
+          },
+        },
         'Serving mock contest-feed scores snapshot',
       );
       const payload = store.getLiveScores(
         request.params.scenarioId,
         request.params.eventId,
         request.query.tick,
+        request.query.mockEventState,
       );
       logRoutePayload(
         fastify,
@@ -450,6 +497,7 @@ export async function mockContestFeedRoutes(
           scenarioId: request.params.scenarioId,
           eventId: request.params.eventId,
           tick: request.query.tick ?? null,
+          mockEventState: request.query.mockEventState ?? null,
           contestantCount: payload.contestants.length,
         },
         payload,

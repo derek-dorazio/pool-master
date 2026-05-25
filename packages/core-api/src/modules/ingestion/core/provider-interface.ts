@@ -12,7 +12,7 @@
  */
 
 import type { Sport } from '@poolmaster/shared/domain';
-import type { LiveScoreResult } from '@poolmaster/shared/dto';
+import type { LiveScoreResult, MockEventState } from '@poolmaster/shared/dto';
 
 // --- Provider Interface ---
 
@@ -27,7 +27,7 @@ export interface SportDataProvider {
   getUpcomingEvents(sport: Sport, dateRange: DateRange): Promise<SportEvent[]>;
 
   /** Fetch details for a specific event. */
-  getEventDetails(eventId: string): Promise<SportEventDetail | null>;
+  getEventDetails(eventId: string, options?: ProviderEventSyncOptions): Promise<SportEventDetail | null>;
 
   /** Fetch participant list for a sport (athletes, drivers, teams). */
   getParticipants(sport: Sport): Promise<ProviderParticipant[]>;
@@ -42,10 +42,10 @@ export interface SportDataProvider {
    * hasn't landed yet (per plans/117 §3.1, only golf-roster adapters
    * ship in Phase 4).
    */
-  getLiveScores(eventId: string): Promise<LiveScoreResult>;
+  getLiveScores(eventId: string, options?: ProviderEventSyncOptions): Promise<LiveScoreResult>;
 
   /** Fetch final results for a completed event. */
-  getEventResults(eventId: string): Promise<ProviderEventResult | null>;
+  getEventResults(eventId: string, options?: ProviderEventSyncOptions): Promise<ProviderEventResult | null>;
 
   /** Health check — is the provider API responding? */
   healthCheck(): Promise<ProviderHealthStatus>;
@@ -72,6 +72,14 @@ export function supportsProviderPayloadDiagnostics(
     && 'consumeProviderPayloads' in provider
     && typeof provider.consumeProviderPayloads === 'function'
   );
+}
+
+export interface ProviderEventSyncOptions {
+  mockEventState?: MockEventState;
+}
+
+export function supportsMockEventStateControls(provider: SportDataProvider): boolean {
+  return provider.providerId === 'mock-contest-feed';
 }
 
 /**

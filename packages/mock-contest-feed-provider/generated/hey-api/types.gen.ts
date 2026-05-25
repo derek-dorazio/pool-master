@@ -385,7 +385,9 @@ export type GetMockContestFeedScenarioEventDetailData = {
         scenarioId: string;
         eventId: string;
     };
-    query?: never;
+    query?: {
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
+    };
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/detail';
 };
 
@@ -537,7 +539,9 @@ export type GetMockContestFeedFieldSnapshotData = {
         scenarioId: string;
         eventId: string;
     };
-    query?: never;
+    query?: {
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
+    };
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/field';
 };
 
@@ -577,7 +581,9 @@ export type GetMockContestFeedOddsSnapshotData = {
         scenarioId: string;
         eventId: string;
     };
-    query?: never;
+    query?: {
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
+    };
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/odds';
 };
 
@@ -617,7 +623,9 @@ export type GetMockContestFeedRankingsSnapshotData = {
         scenarioId: string;
         eventId: string;
     };
-    query?: never;
+    query?: {
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
+    };
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/rankings';
 };
 
@@ -657,7 +665,9 @@ export type GetMockContestFeedResultsSnapshotData = {
         scenarioId: string;
         eventId: string;
     };
-    query?: never;
+    query?: {
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
+    };
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/results';
 };
 
@@ -699,6 +709,7 @@ export type GetMockContestFeedScoresSnapshotData = {
     };
     query?: {
         tick?: number;
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
     };
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/scores';
 };

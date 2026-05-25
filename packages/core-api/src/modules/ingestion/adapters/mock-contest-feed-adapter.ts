@@ -2,6 +2,7 @@ import { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult, GolfRoundUpdate } from '@poolmaster/shared/dto';
 import type {
   DateRange,
+  ProviderEventSyncOptions,
   ProviderEventResult,
   ProviderHealthStatus,
   ProviderParticipant,
@@ -76,14 +77,20 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
       );
   }
 
-  async getEventDetails(eventId: string): Promise<SportEventDetail | null> {
+  async getEventDetails(
+    eventId: string,
+    options?: ProviderEventSyncOptions,
+  ): Promise<SportEventDetail | null> {
     const match = await this.findEventById(eventId);
     if (!match) {
       return null;
     }
 
     const detail = await this.fetchJson<EventDetailResponse>(
-      `/v1/scenarios/${match.scenarioId}/events/${eventId}/detail`,
+      withMockEventState(
+        `/v1/scenarios/${match.scenarioId}/events/${eventId}/detail`,
+        options,
+      ),
     );
     const participants = resolveParticipants(detail);
 
@@ -136,12 +143,14 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
 
   /**
    * Emits a typed `LiveScoreResult` per plans/117 §10.2 for the mock-feed
-   * scenario. Most mock snapshots only carry cumulative scoreToPar, so their
-   * updates keep `strokes: null` and are intentionally skipped by persistence.
-   * rop.78.12 scenarios may carry real round strokes; those rows are safe to
-   * persist and can drive the event-driven golf-roster scoring path.
+   * scenario. The mock provider now emits round strokes for generated golf
+   * live-score snapshots so manual QA runs can persist rows and move contest
+   * scoring during explicit live-state testing.
    */
-  async getLiveScores(eventId: string): Promise<LiveScoreResult> {
+  async getLiveScores(
+    eventId: string,
+    options?: ProviderEventSyncOptions,
+  ): Promise<LiveScoreResult> {
     const empty: LiveScoreResult = { category: 'GOLF', externalEventId: eventId, rounds: [] };
     const match = await this.findEventById(eventId);
     if (!match) {
@@ -149,7 +158,10 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     }
 
     const liveScores = await this.fetchJson<FeedSnapshotResponse>(
-      `/v1/scenarios/${match.scenarioId}/events/${eventId}/scores`,
+      withMockEventState(
+        `/v1/scenarios/${match.scenarioId}/events/${eventId}/scores`,
+        options,
+      ),
     );
 
     const rounds: GolfRoundUpdate[] = liveScores.contestants
@@ -161,8 +173,6 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
         return {
           participantExternalId: contestant.contestantId,
           round: 1,
-          // No synthesis: only persist strokes when the mock feed fixture
-          // supplies them explicitly.
           strokes,
           scoreToPar: contestant.score as number,
           status: strokes === null ? 'IN_PROGRESS' : 'COMPLETED',
@@ -172,17 +182,26 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     return { category: 'GOLF', externalEventId: eventId, rounds };
   }
 
-  async getEventResults(eventId: string): Promise<ProviderEventResult | null> {
+  async getEventResults(
+    eventId: string,
+    options?: ProviderEventSyncOptions,
+  ): Promise<ProviderEventResult | null> {
     const match = await this.findEventById(eventId);
     if (!match) {
       return null;
     }
 
     const detail = await this.fetchJson<EventDetailResponse>(
-      `/v1/scenarios/${match.scenarioId}/events/${eventId}/detail`,
+      withMockEventState(
+        `/v1/scenarios/${match.scenarioId}/events/${eventId}/detail`,
+        options,
+      ),
     );
     const resultsSnapshot = await this.fetchJson<FeedSnapshotResponse>(
-      `/v1/scenarios/${match.scenarioId}/events/${eventId}/results`,
+      withMockEventState(
+        `/v1/scenarios/${match.scenarioId}/events/${eventId}/results`,
+        options,
+      ),
     );
 
     const merged = new Map<string, ContestantRecord>();
@@ -200,6 +219,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
         participantExternalId: contestant.contestantId,
         finishPosition: index + 1,
         totalScore: contestant.score,
+        totalStrokes: contestant.strokes,
         dnf: contestant.result === 'withdrawn' || contestant.result === 'cut',
         dnfReason:
           contestant.result === 'withdrawn'
@@ -318,6 +338,15 @@ function isRelativeManualTestEventId(eventId: string): boolean {
   return /^golf-relative-manual-test-\d{8}t\d{6}z$/.test(eventId);
 }
 
+function withMockEventState(path: string, options?: ProviderEventSyncOptions): string {
+  if (!options?.mockEventState) {
+    return path;
+  }
+
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}mockEventState=${encodeURIComponent(options.mockEventState)}`;
+}
+
 /**
  * Maps a mock-feed sport literal to its domain `Sport`. Returns `null`
  * for sports the adapter intentionally does not surface — currently
@@ -405,10 +434,7 @@ function toSportEvent(
     participantCount,
     fieldLocked:
       detail.event.field.status === 'locked'
-      || detail.event.field.status === 'final'
-      || (detail.event.schedule.fieldLocksAt
-        ? Date.now() >= new Date(detail.event.schedule.fieldLocksAt).getTime()
-        : false),
+      || detail.event.field.status === 'final',
     metadata: {
       seasonId: detail.season.seasonId,
       seasonName: detail.season.name,

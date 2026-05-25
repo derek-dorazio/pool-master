@@ -21,6 +21,7 @@ import {
   type FeedSnapshotRecord,
   type FeedUpdateRecord,
   type FieldSnapshotRecord,
+  type MockEventStateKind,
   type ScenarioSummary,
   type SeasonRecord,
 } from './contracts';
@@ -676,18 +677,22 @@ function buildLiveGolfScores(
   const eventSeed = event.metadata?.externalEventId ?? event.eventId;
 
   return contestants
-    .map((contestant) => ({
-      ...contestant,
-      score: scoreRelativeToPar({
+    .map((contestant) => {
+      const score = scoreRelativeToPar({
         eventSeed,
         tick,
         participantId: contestant.contestantId,
         decimalOdds: contestant.odds ?? maxOdds,
         minOdds,
         maxOdds,
-      }),
-      result: 'pending' as const,
-    }))
+      });
+      return {
+        ...contestant,
+        strokes: strokesForGolfScore(score),
+        score,
+        result: 'pending' as const,
+      };
+    })
     .sort((left, right) => {
       const leftScore = typeof left.score === 'number' ? left.score : Number.POSITIVE_INFINITY;
       const rightScore = typeof right.score === 'number' ? right.score : Number.POSITIVE_INFINITY;
@@ -697,6 +702,11 @@ function buildLiveGolfScores(
 
       return left.name.localeCompare(right.name);
     });
+}
+
+function strokesForGolfScore(score: number): number {
+  const mockGolfRoundPar = 72;
+  return mockGolfRoundPar + score;
 }
 
 function buildGolfResultFeed(
@@ -728,22 +738,27 @@ function buildGolfResultFeed(
   const eventSeed = event.metadata?.externalEventId ?? event.eventId;
 
   const scored = fieldContestants
-    .map((contestant) => ({
-      contestantId: contestant.contestantId,
-      score: scoreRelativeToPar({
+    .map((contestant) => {
+      const score = scoreRelativeToPar({
         eventSeed,
         tick: terminalTick,
         participantId: contestant.contestantId,
         decimalOdds: oddsByContestantId.get(contestant.contestantId) ?? maxOdds,
         minOdds,
         maxOdds,
-      }),
-    }))
+      });
+      return {
+        contestantId: contestant.contestantId,
+        score,
+        strokes: strokesForGolfScore(score),
+      };
+    })
     .sort((left, right) => left.score - right.score || left.contestantId.localeCompare(right.contestantId));
 
   return scored.map((contestant, index) => ({
     contestantId: contestant.contestantId,
     score: contestant.score,
+    strokes: contestant.strokes,
     result:
       event.status === 'in_progress'
         ? 'pending'
@@ -753,6 +768,63 @@ function buildGolfResultFeed(
             ? 'cut'
             : 'loss',
   }));
+}
+
+function applyMockEventState(
+  scenario: ContestFeedScenarioRecord,
+  event: ContestFeedEventRecord,
+  mockEventState: MockEventStateKind | undefined,
+): ContestFeedEventRecord {
+  if (!mockEventState) {
+    return event;
+  }
+  if (scenario.sport !== 'GOLF') {
+    throw new Error(`Mock event state controls are only supported for GOLF scenarios: ${scenario.scenarioId}`);
+  }
+
+  const status: ContestFeedEventRecord['status'] =
+    mockEventState === 'live'
+      ? 'in_progress'
+      : mockEventState === 'completed'
+        ? 'completed'
+        : 'field_announced';
+  const fieldStatus: FieldSnapshotRecord['status'] =
+    mockEventState === 'completed'
+      ? 'final'
+      : mockEventState === 'open'
+        ? 'announced'
+        : 'locked';
+  const asOf =
+    mockEventState === 'completed'
+      ? event.schedule.endsAt ?? event.schedule.startsAt
+      : mockEventState === 'live'
+        ? event.schedule.startsAt
+        : event.field.asOf;
+  const stateEvent = {
+    ...event,
+    status,
+    field: {
+      ...event.field,
+      asOf,
+      status: fieldStatus,
+      note: `Mock event state override: ${mockEventState}.`,
+    },
+  };
+  const fieldContestants = stateEvent.field.contestants;
+  const oddsContestants = stateEvent.feeds.odds.contestants;
+
+  return {
+    ...stateEvent,
+    feeds: {
+      ...stateEvent.feeds,
+      results: {
+        ...stateEvent.feeds.results,
+        asOf,
+        note: `Mock event state override: ${mockEventState}.`,
+        contestants: buildGolfResultFeed(stateEvent, fieldContestants, oddsContestants),
+      },
+    },
+  };
 }
 
 function addDays(base: Date, days: number): Date {
@@ -998,19 +1070,14 @@ function buildRollingWeekendGolfEvents(now: Date): readonly ContestFeedEventReco
 
 export function buildRelativeTodayGolfScenario(
   now = new Date(),
-  options: { readonly manualTestAnchor?: Date } = {},
 ): ContestFeedScenarioRecord {
-  const manualTestEvent = buildManualTestLifecycleEvent(options.manualTestAnchor ?? now, now);
-  const relativeEvents = [
-    manualTestEvent,
-    ...buildRollingWeekendGolfEvents(now),
-  ];
+  const relativeEvents = buildRollingWeekendGolfEvents(now);
 
   return normalizeScenario({
     scenarioId: 'golf-relative-today',
     sport: 'GOLF',
     provider: mockFeedProviderId,
-    description: 'Generated rolling golf lifecycle and upcoming weekend events for QA sync testing.',
+    description: 'Generated rolling upcoming golf weekend events for QA sync testing.',
     season: {
       seasonId: `golf-relative-${now.getUTCFullYear()}`,
       name: 'Relative QA Golf Season',
@@ -1058,14 +1125,12 @@ export interface ScenarioStoreOptions {
 const minuteMs = 60 * 1000;
 const manualTestPhaseMinutes = 20;
 const manualTestPhaseMs = manualTestPhaseMinutes * minuteMs;
-const manualTestCycleMs = manualTestPhaseMs * 4;
 const manualTestEventType = 'relative-manual-test';
 
 type ManualTestLifecyclePhase = 'open' | 'field_locked' | 'in_progress' | 'completed';
 
 export class ScenarioStore {
   private readonly staticScenarios: readonly ContestFeedScenarioRecord[];
-  private manualTestAnchor: Date;
   private readonly liveScoreTicks = new Map<string, number>();
 
   public constructor(
@@ -1073,7 +1138,6 @@ export class ScenarioStore {
     private readonly logger?: FastifyBaseLogger,
     private readonly options: ScenarioStoreOptions = {},
   ) {
-    this.manualTestAnchor = options.now?.() ?? new Date();
     const entries = readdirSync(scenarioDir, { withFileTypes: true })
       .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
       .map((entry) => loadJsonFile(join(scenarioDir, entry.name)));
@@ -1125,28 +1189,7 @@ export class ScenarioStore {
 
   private buildRelativeTodayGolfScenario(): ContestFeedScenarioRecord {
     const now = this.currentNow();
-    return buildRelativeTodayGolfScenario(now, {
-      manualTestAnchor: this.currentManualTestAnchor(now),
-    });
-  }
-
-  private currentManualTestAnchor(now: Date): Date {
-    if (now.getTime() >= this.manualTestAnchor.getTime() + manualTestCycleMs) {
-      this.manualTestAnchor = now;
-      this.liveScoreTicks.clear();
-      this.logger?.info(
-        {
-          action: 'mockScenarioStore.manualTestLifecycle.rolled',
-          data: {
-            manualTestAnchor: this.manualTestAnchor.toISOString(),
-            cycleMinutes: manualTestPhaseMinutes * 4,
-          },
-        },
-        'Rolled mock manual-test lifecycle event',
-      );
-    }
-
-    return this.manualTestAnchor;
+    return buildRelativeTodayGolfScenario(now);
   }
 
   private getScenarios(): readonly ContestFeedScenarioRecord[] {
@@ -1230,21 +1273,26 @@ export class ScenarioStore {
     return events;
   }
 
-  public getEvent(scenarioId: string, eventId: string): ContestFeedEventRecord {
+  public getEvent(
+    scenarioId: string,
+    eventId: string,
+    mockEventState?: MockEventStateKind,
+  ): ContestFeedEventRecord {
     const scenario = this.getScenario(scenarioId);
-    const event = scenario.events.find((item) => item.eventId === eventId)
+    const baseEvent = scenario.events.find((item) => item.eventId === eventId)
       ?? this.buildHistoricalManualTestEvent(scenario, eventId);
-    if (!event) {
+    if (!baseEvent) {
       this.logger?.warn(
         { action: 'mockScenarioStore.getEvent.notFound', data: { scenarioId, eventId } },
         'Mock contest-feed event was not found',
       );
       throw new Error(`Event not found: ${scenarioId}/${eventId}`);
     }
+    const event = applyMockEventState(scenario, baseEvent, mockEventState);
     this.logger?.debug(
       {
         action: 'mockScenarioStore.getEvent.success',
-        data: { scenarioId, eventId, event: summarizeEvent(event, scenario.sport) },
+        data: { scenarioId, eventId, mockEventState: mockEventState ?? null, event: summarizeEvent(event, scenario.sport) },
       },
       'Loaded mock contest-feed event',
     );
@@ -1280,7 +1328,11 @@ export class ScenarioStore {
     return event;
   }
 
-  public getEventResponse(scenarioId: string, eventId: string): ContestFeedEventResponse {
+  public getEventResponse(
+    scenarioId: string,
+    eventId: string,
+    mockEventState?: MockEventStateKind,
+  ): ContestFeedEventResponse {
     const scenario = this.getScenario(scenarioId);
     const response: ContestFeedEventResponse = {
       scenarioId,
@@ -1288,7 +1340,7 @@ export class ScenarioStore {
       provider: scenario.provider,
       scenarioDescription: scenario.description,
       season: scenario.season,
-      event: this.getEvent(scenarioId, eventId),
+      event: this.getEvent(scenarioId, eventId, mockEventState),
     };
     this.logger?.info(
       {
@@ -1296,6 +1348,7 @@ export class ScenarioStore {
         data: {
           scenarioId,
           eventId,
+          mockEventState: mockEventState ?? null,
           manualLifecycle: summarizeManualLifecycle(response.event, this.currentNow()),
           participantCount: resolveContestantsForFeed(scenario.sport, response.event).length,
         },
@@ -1309,9 +1362,14 @@ export class ScenarioStore {
     return response;
   }
 
-  public getSnapshot(scenarioId: string, eventId: string, feedKind: FeedKind): ContestFeedSnapshotResponse {
+  public getSnapshot(
+    scenarioId: string,
+    eventId: string,
+    feedKind: FeedKind,
+    mockEventState?: MockEventStateKind,
+  ): ContestFeedSnapshotResponse {
     const scenario = this.getScenario(scenarioId);
-    const event = this.getEvent(scenarioId, eventId);
+    const event = this.getEvent(scenarioId, eventId, mockEventState);
 
     if (feedKind === 'field') {
       const contestants = resolveContestantsForFeed(scenario.sport, event);
@@ -1330,6 +1388,7 @@ export class ScenarioStore {
           data: {
             scenarioId,
             eventId,
+            mockEventState: mockEventState ?? null,
             manualLifecycle: summarizeManualLifecycle(event, this.currentNow()),
             contestantCount: fieldSnapshot.contestants.length,
           },
@@ -1365,6 +1424,7 @@ export class ScenarioStore {
           scenarioId,
           eventId,
           feedKind,
+          mockEventState: mockEventState ?? null,
           manualLifecycle: summarizeManualLifecycle(event, this.currentNow()),
           contestantCount: contestants.length,
         },
@@ -1420,17 +1480,19 @@ export class ScenarioStore {
     scenarioId: string,
     eventId: string,
     explicitTick?: number,
+    mockEventState?: MockEventStateKind,
   ): ContestFeedSnapshotResponse {
     const scenario = this.getScenario(scenarioId);
-    const event = this.getEvent(scenarioId, eventId);
+    const event = this.getEvent(scenarioId, eventId, mockEventState);
     const tickKey = `${scenarioId}:${eventId}`;
     const now = this.currentNow();
     const manualLifecycle = summarizeManualLifecycle(event, now);
-    const tick = explicitTick ?? (
-      isManualTestLifecycleEvent(event)
-        ? manualLiveScoreTick(event, now)
-        : (this.liveScoreTicks.get(tickKey) ?? 0) + 1
-    );
+    const tick = explicitTick
+      ?? (mockEventState === 'completed'
+        ? 72
+        : isManualTestLifecycleEvent(event)
+          ? manualLiveScoreTick(event, now)
+          : (this.liveScoreTicks.get(tickKey) ?? 0) + 1);
     if (explicitTick === undefined && !isManualTestLifecycleEvent(event)) {
       this.liveScoreTicks.set(tickKey, tick);
     }
@@ -1439,7 +1501,7 @@ export class ScenarioStore {
       scenario.sport === 'GOLF'
       && event.feeds.results.contestants.some((contestant) => typeof contestant.strokes === 'number');
     const contestants =
-      isManualTestLifecycleEvent(event) && event.status !== 'in_progress'
+      (event.status !== 'in_progress' && event.status !== 'completed')
         ? []
         : scenario.sport === 'GOLF'
           ? explicitGolfRoundScores
@@ -1476,6 +1538,7 @@ export class ScenarioStore {
           eventId,
           tick,
           explicitTick: explicitTick ?? null,
+          mockEventState: mockEventState ?? null,
           manualLifecycle,
           contestantCount: contestants.length,
         },

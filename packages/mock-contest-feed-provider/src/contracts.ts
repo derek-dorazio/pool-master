@@ -38,6 +38,9 @@ export type ParticipantStatusKind = (typeof participantStatusKinds)[number];
 export const contestantOutcomeKinds = ['win', 'loss', 'tie', 'cut', 'withdrawn', 'pending'] as const;
 export type ContestantOutcomeKind = (typeof contestantOutcomeKinds)[number];
 
+export const mockEventStateKinds = ['open', 'locked', 'live', 'completed'] as const;
+export type MockEventStateKind = (typeof mockEventStateKinds)[number];
+
 export interface SeasonRecord {
   readonly seasonId: string;
   readonly name: string;

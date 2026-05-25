@@ -214,8 +214,9 @@ describe('mock contest feed provider event-first verification', () => {
     const rankings = await adapter.getRankings(Sport.GOLF, 'OWGR');
     expect(rankings.length).toBeGreaterThan(0);
 
-    // pool-master-rop.78.3 — typed LiveScoreResult contract per plans/117 §10.2.
-    const liveScores = await adapter.getLiveScores(eventExternalId);
+    // pool-master-rop.78.3 + pool-master-33l.8.8 — typed LiveScoreResult contract
+    // per plans/117 §10.2, now driven through explicit mock live-state control.
+    const liveScores = await adapter.getLiveScores(eventExternalId, { mockEventState: 'live' });
     expect(liveScores.category).toBe('GOLF');
     if (liveScores.category === 'GOLF') {
       expect(liveScores.rounds.length).toBeGreaterThan(0);
@@ -374,47 +375,42 @@ describe('mock contest feed provider event-first verification', () => {
     expect(latestJob.status).toBe('COMPLETED');
   });
 
-  it('pool-master-xw5.5: adapter observes manual relative event lifecycle through schedule detail live and results feeds', async () => {
-    const anchor = new Date();
-    let currentNow = anchor;
+  it('pool-master-33l.8.8: adapter applies explicit mock event states through detail live and results feeds', async () => {
+    const anchor = new Date('2026-04-26T21:00:00.000Z');
     const lifecycleProvider = await startMockContestFeedProvider({
       routes: {
         scenarioStoreOptions: {
-          now: () => currentNow,
+          now: () => anchor,
         },
       },
     });
 
     try {
       const adapter = new MockContestFeedAdapter(lifecycleProvider.baseUrl);
-      const from = new Date(anchor.getTime() - 60_000);
-      const to = new Date(anchor.getTime() + 2 * 60 * 60 * 1000);
+      const from = anchor;
+      const to = new Date(anchor.getTime() + 14 * 24 * 60 * 60 * 1000);
 
       const openEvents = await adapter.getUpcomingEvents(Sport.GOLF, { from, to });
-      const manualEvent = openEvents.find((event) =>
-        event.name.startsWith('Manual Test Golf Tournament for '),
+      const event = openEvents.find((item) =>
+        item.externalId.startsWith('golf-relative-weekend-'),
       );
-      expect(manualEvent).toBeDefined();
-      expect(manualEvent?.status).toBe('SCHEDULED');
-      expect(manualEvent?.fieldLocked).toBe(false);
+      expect(event).toBeDefined();
+      expect(event?.status).toBe('SCHEDULED');
+      expect(event?.fieldLocked).toBe(false);
 
-      const manualEventId = manualEvent?.externalId ?? '';
-      const detail = await adapter.getEventDetails(manualEventId);
-      expect(detail?.name).toBe(manualEvent?.name);
+      const eventId = event?.externalId ?? '';
+      const detail = await adapter.getEventDetails(eventId, { mockEventState: 'locked' });
+      expect(detail?.name).toBe(event?.name);
+      expect(detail?.fieldLocked).toBe(true);
       expect(detail?.participants).toHaveLength(80);
 
-      const openScores = await adapter.getLiveScores(manualEventId);
+      const openScores = await adapter.getLiveScores(eventId, { mockEventState: 'open' });
       expect(openScores.category).toBe('GOLF');
       if (openScores.category === 'GOLF') {
         expect(openScores.rounds).toHaveLength(0);
       }
 
-      currentNow = new Date(anchor.getTime() + 45 * 60 * 1000);
-      const liveEvents = await adapter.getUpcomingEvents(Sport.GOLF, { from, to });
-      const liveManualEvent = liveEvents.find((event) => event.externalId === manualEventId);
-      expect(liveManualEvent?.status).toBe('IN_PROGRESS');
-
-      const liveScores = await adapter.getLiveScores(manualEventId);
+      const liveScores = await adapter.getLiveScores(eventId, { mockEventState: 'live' });
       expect(liveScores.category).toBe('GOLF');
       if (liveScores.category === 'GOLF') {
         expect(liveScores.rounds.length).toBeGreaterThan(0);
@@ -422,18 +418,15 @@ describe('mock contest feed provider event-first verification', () => {
           expect.objectContaining({
             participantExternalId: expect.any(String),
             round: expect.any(Number),
+            strokes: expect.any(Number),
+            scoreToPar: expect.any(Number),
           }),
         );
       }
 
-      currentNow = new Date(anchor.getTime() + 65 * 60 * 1000);
-      const completedEvents = await adapter.getUpcomingEvents(Sport.GOLF, { from, to });
-      const completedManualEvent = completedEvents.find((event) => event.externalId === manualEventId);
-      expect(completedManualEvent?.status).toBe('COMPLETED');
-
-      const results = await adapter.getEventResults(manualEventId);
+      const results = await adapter.getEventResults(eventId, { mockEventState: 'completed' });
       expect(results).toMatchObject({
-        eventExternalId: manualEventId,
+        eventExternalId: eventId,
         providerId,
         status: 'OFFICIAL',
       });
@@ -442,6 +435,7 @@ describe('mock contest feed provider event-first verification', () => {
           expect.objectContaining({
             finishPosition: 1,
             totalScore: expect.any(Number),
+            totalStrokes: expect.any(Number),
           }),
         ]),
       );

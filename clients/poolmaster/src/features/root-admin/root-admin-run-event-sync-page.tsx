@@ -31,10 +31,24 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
 type EventSyncEvent = ListEventsResponses[200]['events'][number];
+type MockEventState = 'open' | 'locked' | 'live' | 'completed';
+
+const MOCK_EVENT_STATE_OPTIONS: Array<{ value: MockEventState | ''; label: string }> = [
+  { value: '', label: 'Use loaded event state' },
+  { value: 'open', label: 'Open' },
+  { value: 'locked', label: 'Locked' },
+  { value: 'live', label: 'Live' },
+  { value: 'completed', label: 'Completed' },
+];
 
 function getValidEventStatusesForPreset(
   presetId: EventSyncPresetId,
+  hasMockEventStateOverride: boolean,
 ): EventSyncEvent['status'][] {
+  if (hasMockEventStateOverride) {
+    return ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'OFFICIAL'];
+  }
+
   switch (presetId) {
     case 'EVENTLIVESCORES':
       return ['IN_PROGRESS'];
@@ -76,6 +90,7 @@ export function RootAdminRunEventSyncPage() {
     'EVENTPARTICIPANTS',
   );
   const [selectedEventExternalId, setSelectedEventExternalId] = useState('');
+  const [mockEventState, setMockEventState] = useState<MockEventState | ''>('');
 
   const providersQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.providers,
@@ -93,6 +108,14 @@ export function RootAdminRunEventSyncPage() {
     () => getSupportedSyncSports(providersQuery.data),
     [providersQuery.data],
   );
+  const supportsMockEventState = useMemo(
+    () =>
+      eventSyncSport === 'GOLF'
+      && (providersQuery.data ?? []).some((provider) =>
+        provider.providerId === 'mock-contest-feed'
+        && provider.sportsCovered.includes(eventSyncSport)),
+    [eventSyncSport, providersQuery.data],
+  );
 
   useEffect(() => {
     if (!supportedSyncSports.includes(eventSyncSport)) {
@@ -102,6 +125,12 @@ export function RootAdminRunEventSyncPage() {
       }
     }
   }, [eventSyncSport, supportedSyncSports]);
+
+  useEffect(() => {
+    if (!supportsMockEventState && mockEventState) {
+      setMockEventState('');
+    }
+  }, [mockEventState, supportsMockEventState]);
 
   const eventsQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.eventSyncEvents(eventSyncSport),
@@ -125,11 +154,14 @@ export function RootAdminRunEventSyncPage() {
 
   const selectedPreset = getEventSyncPreset(eventSyncPresetId);
   const selectableEvents = useMemo(() => {
-    const validStatuses = getValidEventStatusesForPreset(eventSyncPresetId);
+    const validStatuses = getValidEventStatusesForPreset(
+      eventSyncPresetId,
+      supportsMockEventState && mockEventState !== '',
+    );
     return (eventsQuery.data ?? []).filter((event) =>
       validStatuses.includes(event.status),
     );
-  }, [eventSyncPresetId, eventsQuery.data]);
+  }, [eventSyncPresetId, eventsQuery.data, mockEventState, supportsMockEventState]);
   const selectedEvent = selectableEvents.find((event) =>
     event.externalId === selectedEventExternalId,
   );
@@ -148,6 +180,7 @@ export function RootAdminRunEventSyncPage() {
       sport: SyncSport;
       eventId: string;
       presetId: EventSyncPresetId;
+      mockEventState?: MockEventState;
     }): Promise<EventSyncSubmission> => {
       const preset = getEventSyncPreset(input.presetId);
       const response = await adminSyncProviderEventData({
@@ -157,6 +190,7 @@ export function RootAdminRunEventSyncPage() {
         },
         body: {
           feeds: [...preset.feeds],
+          ...(input.mockEventState ? { mockEventState: input.mockEventState } : {}),
         },
       });
 
@@ -175,6 +209,7 @@ export function RootAdminRunEventSyncPage() {
             sport: input.sport,
             eventId: input.eventId,
             requestedFeeds: preset.feeds,
+            mockEventState: input.mockEventState ?? null,
           },
         },
         'Starting manual provider event sync',
@@ -203,6 +238,7 @@ export function RootAdminRunEventSyncPage() {
             data: {
               sport: eventSyncSport,
               eventId: selectedEventExternalId,
+              mockEventState: mockEventState || null,
             },
             err: error,
           },
@@ -217,6 +253,7 @@ export function RootAdminRunEventSyncPage() {
           data: {
             sport: eventSyncSport,
             eventId: selectedEventExternalId,
+            mockEventState: mockEventState || null,
           },
         },
         'Manual provider event sync failed',
@@ -295,9 +332,32 @@ export function RootAdminRunEventSyncPage() {
             </Select>
           </FormField>
 
+          {supportsMockEventState ? (
+            <FormField label="Mock event state">
+              <Select
+                data-testid="root-admin-event-sync-mock-event-state"
+                disabled={eventSyncMutation.isPending}
+                onChange={(event) =>
+                  setMockEventState(event.target.value as MockEventState | '')}
+                value={mockEventState}
+              >
+                {MOCK_EVENT_STATE_OPTIONS.map((option) => (
+                  <option key={option.value || 'loaded'} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+          ) : null}
+
           <Tile radius="lg">
             <p className="font-medium text-foreground">Requested feeds</p>
             <p className="mt-2">{selectedPreset.feeds.join(' · ')}</p>
+            {mockEventState ? (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Mock event state: {mockEventState}
+              </p>
+            ) : null}
           </Tile>
 
           {providersQuery.isError ? (
@@ -333,6 +393,7 @@ export function RootAdminRunEventSyncPage() {
                   sport: eventSyncSport,
                   eventId: selectedEvent.externalId,
                   presetId: eventSyncPresetId,
+                  mockEventState: mockEventState || undefined,
                 })
                 : undefined}
           >
