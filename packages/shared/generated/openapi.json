@@ -28766,6 +28766,453 @@
         }
       }
     },
+    "/api/v1/admin/providers/workflows/contest-qa": {
+      "post": {
+        "operationId": "adminRunContestQaWorkflow",
+        "summary": "Run guided contest QA sync workflow",
+        "tags": [
+          "Admin"
+        ],
+        "description": "Submits prerequisite-aware provider sync steps for preparing event-backed contest data or driving a mock golf live-test scenario. Low-level feed sync endpoints remain available for repair and debugging.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "PREPARE_CONTEST_EVENT_DATA",
+                      "DRIVE_EVENT_LIVE_TEST"
+                    ],
+                    "description": "Guided workflow to run."
+                  },
+                  "sport": {
+                    "type": "string",
+                    "enum": [
+                      "GOLF",
+                      "NFL",
+                      "NBA",
+                      "F1",
+                      "NASCAR",
+                      "NCAA_BASKETBALL",
+                      "NCAA_HOCKEY",
+                      "NCAA_FOOTBALL",
+                      "TENNIS",
+                      "HORSE_RACING",
+                      "SOCCER",
+                      "NHL",
+                      "MLB",
+                      "UFC"
+                    ],
+                    "description": "Sport to prepare or live-test."
+                  },
+                  "eventId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Provider event identifier when the workflow targets one event."
+                  },
+                  "mockEventState": {
+                    "type": "string",
+                    "enum": [
+                      "open",
+                      "locked",
+                      "live",
+                      "completed"
+                    ],
+                    "description": "Mock-provider event state used by the live-test workflow."
+                  }
+                },
+                "required": [
+                  "mode",
+                  "sport"
+                ],
+                "additionalProperties": false,
+                "description": "Root-admin guided contest QA sync workflow request."
+              }
+            }
+          },
+          "description": "Root-admin guided contest QA sync workflow request."
+        },
+        "responses": {
+          "202": {
+            "description": "Root-admin guided contest QA sync workflow response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workflowId": {
+                      "type": "string",
+                      "description": "Generated workflow id used to correlate submitted sync runs."
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "PREPARE_CONTEST_EVENT_DATA",
+                        "DRIVE_EVENT_LIVE_TEST"
+                      ],
+                      "description": "Guided contest QA workflow mode above the low-level provider sync feed primitives."
+                    },
+                    "sport": {
+                      "type": "string",
+                      "enum": [
+                        "GOLF",
+                        "NFL",
+                        "NBA",
+                        "F1",
+                        "NASCAR",
+                        "NCAA_BASKETBALL",
+                        "NCAA_HOCKEY",
+                        "NCAA_FOOTBALL",
+                        "TENNIS",
+                        "HORSE_RACING",
+                        "SOCCER",
+                        "NHL",
+                        "MLB",
+                        "UFC"
+                      ]
+                    },
+                    "eventId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "mockEventState": {
+                      "type": "string",
+                      "enum": [
+                        "open",
+                        "locked",
+                        "live",
+                        "completed"
+                      ],
+                      "description": "Mock-provider-only event state override for manual QA event syncs.",
+                      "nullable": true
+                    },
+                    "submittedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "steps": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Stable workflow step identifier."
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "Human-readable step label."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "SUBMITTED",
+                              "SKIPPED",
+                              "BLOCKED"
+                            ],
+                            "description": "Whether the workflow submitted, skipped, or blocked the step."
+                          },
+                          "feeds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "EVENTSCHEDULE",
+                                "EVENTPARTICIPANTS",
+                                "PARTICIPANTRANKINGS",
+                                "EVENTLIVESCORES",
+                                "EVENTRESULTS"
+                              ],
+                              "description": "Explicit ingestion feed type requested by the caller."
+                            },
+                            "description": "Provider sync feeds represented by this step."
+                          },
+                          "eventId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Event id targeted by this step, if event-scoped."
+                          },
+                          "syncRunIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Provider sync run ids created for this workflow step."
+                          },
+                          "summary": {
+                            "type": "string",
+                            "description": "Admin-facing step outcome or reason."
+                          },
+                          "warnings": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "type": "string",
+                                  "description": "Stable warning code emitted by the ingestion/sync layer."
+                                },
+                                "message": {
+                                  "type": "string",
+                                  "description": "Human-readable warning detail for root-admin investigation."
+                                }
+                              },
+                              "required": [
+                                "code",
+                                "message"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Warning emitted for a provider sync run that completed but needs operator attention."
+                            },
+                            "description": "Warnings that need operator attention for this step."
+                          },
+                          "nextActions": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Concrete next actions suggested by this step."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "status",
+                          "feeds",
+                          "eventId",
+                          "syncRunIds",
+                          "summary",
+                          "warnings",
+                          "nextActions"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Single ordered step in a guided contest QA sync workflow."
+                      },
+                      "description": "Ordered workflow plan and submitted sync run ids."
+                    },
+                    "eventCandidates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "eventId": {
+                            "type": "string",
+                            "description": "Provider event identifier."
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Event name."
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Persisted event lifecycle status."
+                          },
+                          "startsAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Event start timestamp."
+                          },
+                          "participantCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Loaded participant count for contest readiness."
+                          },
+                          "readinessStatus": {
+                            "type": "string",
+                            "description": "Admin-readable readiness status."
+                          },
+                          "contestEligible": {
+                            "type": "boolean",
+                            "description": "Whether the event is currently eligible for contest creation."
+                          }
+                        },
+                        "required": [
+                          "eventId",
+                          "name",
+                          "status",
+                          "startsAt",
+                          "participantCount",
+                          "readinessStatus",
+                          "contestEligible"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Persisted future event candidate considered by the guided contest QA workflow."
+                      },
+                      "description": "Future persisted event candidates known before the workflow submitted new feed work."
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "description": "Stable warning code emitted by the ingestion/sync layer."
+                          },
+                          "message": {
+                            "type": "string",
+                            "description": "Human-readable warning detail for root-admin investigation."
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "message"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Warning emitted for a provider sync run that completed but needs operator attention."
+                      },
+                      "description": "Workflow-level warnings and missing prerequisites."
+                    },
+                    "nextActions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Recommended operator next actions after this workflow submission."
+                    }
+                  },
+                  "required": [
+                    "workflowId",
+                    "mode",
+                    "sport",
+                    "eventId",
+                    "mockEventState",
+                    "submittedAt",
+                    "steps",
+                    "eventCandidates",
+                    "warnings",
+                    "nextActions"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Root-admin guided contest QA sync workflow response."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/contest-config-templates": {
       "get": {
         "operationId": "adminListContestConfigTemplates",

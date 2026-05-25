@@ -78,6 +78,7 @@ export interface SportSyncRequest {
   feeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS'>;
   from?: Date;
   to?: Date;
+  workflowContext?: Record<string, unknown>;
 }
 
 export interface EventSyncRequest {
@@ -85,6 +86,7 @@ export interface EventSyncRequest {
   eventId: string;
   feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
   mockEventState?: MockEventState;
+  workflowContext?: Record<string, unknown>;
 }
 
 export interface IngestionCallbacks {

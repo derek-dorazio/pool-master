@@ -2,6 +2,7 @@ import type {
   AdminListProviderSyncRunsResponses,
   AdminListProvidersResponses,
   AdminPrepareSportSyncResponses,
+  AdminRunContestQaWorkflowResponses,
   AdminSyncProviderEventDataResponses,
 } from '@/lib/api';
 
@@ -9,6 +10,7 @@ export type ProviderSyncRun = AdminListProviderSyncRunsResponses[200]['items'][n
 export type ProviderSummary = AdminListProvidersResponses[200]['items'][number];
 export type SportSyncSubmission = AdminPrepareSportSyncResponses[202];
 export type EventSyncSubmission = AdminSyncProviderEventDataResponses[202];
+export type ContestQaWorkflowSubmission = AdminRunContestQaWorkflowResponses[202];
 
 export const ALL_SYNC_SPORT_OPTIONS = [
   'GOLF',

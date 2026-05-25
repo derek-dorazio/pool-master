@@ -38,6 +38,7 @@ const operationDefinitions = {
   adminListTeams: { method: 'get', path: '/api/v1/admin/teams' },
   adminListUsers: { method: 'get', path: '/api/v1/admin/users' },
   adminPrepareSportSync: { method: 'post', path: '/api/v1/admin/providers/sync/{sport}' },
+  adminRunContestQaWorkflow: { method: 'post', path: '/api/v1/admin/providers/workflows/contest-qa' },
   adminResetIngestionSchedule: { method: 'post', path: '/api/v1/admin/config/ingestion-schedule/reset' },
   adminResetPollIntervals: { method: 'post', path: '/api/v1/admin/config/poll-intervals/reset' },
   adminResetSportIngestionOverride: { method: 'post', path: '/api/v1/admin/config/ingestion-schedule/{sport}/reset' },

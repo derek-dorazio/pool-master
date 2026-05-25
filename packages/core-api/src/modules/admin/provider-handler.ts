@@ -8,6 +8,7 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
+import type { ProviderContestQaWorkflowRequest } from '@poolmaster/shared/dto';
 import type { ProviderService } from './provider-service';
 import type { EventSyncRequest, SportSyncRequest } from '../ingestion/core/ingestion-scheduler';
 import {
@@ -35,6 +36,7 @@ export function createProviderHandlers(providerService: ProviderService) {
     triggerHealthCheck,
     prepareSportSync,
     syncEventData,
+    runContestQaWorkflow,
     getIngestionDashboard,
     reIngestEvent,
     getUnmappedParticipants,
@@ -296,6 +298,50 @@ export function createProviderHandlers(providerService: ProviderService) {
           eventId: request.params.eventId,
           mockEventState: request.body.mockEventState ?? null,
         }, 'Manual event sync failed because provider does not support mock event state controls');
+        return sendError(reply, 422, 'MOCK_EVENT_STATE_UNSUPPORTED', err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function runContestQaWorkflow(
+    request: FastifyRequest<{
+      Body: ProviderContestQaWorkflowRequest;
+    }>,
+    reply: FastifyReply,
+  ) {
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({
+      mode: request.body.mode,
+      sport: request.body.sport,
+      eventId: request.body.eventId ?? null,
+      mockEventState: request.body.mockEventState ?? null,
+    }, 'Running guided contest QA workflow');
+
+    try {
+      const result = await providerService.runContestQaWorkflow(
+        request.body,
+        rootAdminUserId,
+        rootAdminEmail,
+      );
+
+      return reply.code(202).send(result);
+    } catch (err) {
+      if (err instanceof SportProviderNotFoundError) {
+        logger.warn({ sport: request.body.sport }, 'Contest QA workflow failed because no providers were registered');
+        return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
+      }
+      if (err instanceof SportSyncNotConfiguredError) {
+        logger.warn({ sport: request.body.sport }, 'Contest QA workflow failed because sport is not enabled in ingestion config');
+        return sendError(reply, 422, 'SPORT_SYNC_NOT_CONFIGURED', err.message);
+      }
+      if (err instanceof MockEventStateUnsupportedError) {
+        logger.warn({
+          sport: request.body.sport,
+          eventId: request.body.eventId ?? null,
+          mockEventState: request.body.mockEventState ?? null,
+        }, 'Contest QA workflow failed because provider does not support mock event state controls');
         return sendError(reply, 422, 'MOCK_EVENT_STATE_UNSUPPORTED', err.message);
       }
       throw err;

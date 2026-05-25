@@ -6,9 +6,17 @@
  * mappings. It no longer synthesizes provider state from static mock data.
  */
 
+import { randomUUID } from 'node:crypto';
 import { PrismaClient, Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { Sport } from '@poolmaster/shared/domain';
+import type {
+  ProviderContestQaEventCandidateDto,
+  ProviderContestQaWorkflowRequest,
+  ProviderContestQaWorkflowResponse,
+  ProviderContestQaWorkflowStepDto,
+  ProviderSyncWarningDto,
+} from '@poolmaster/shared/dto';
 import { logAdminAction } from './admin-audit-service';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import type {
@@ -25,6 +33,7 @@ import type {
   IngestionScheduler,
   SportSyncRequest,
 } from '../ingestion/core/ingestion-scheduler';
+import { evaluateEventOperationalState } from '../events/operational-timing';
 import {
   createMailDeliveryProvider,
   readApplicationBaseUrl,
@@ -101,6 +110,8 @@ export interface ProviderManualSyncSubmissionResult {
   submittedAt: Date;
   syncRuns: ProviderSyncRun[];
 }
+
+type ContestQaWorkflowStepStatus = ProviderContestQaWorkflowStepDto['status'];
 
 export interface IngestionError {
   providerId: string;
@@ -344,6 +355,65 @@ function formatFeedLabel(feed: IngestionFeedType): string {
     case 'EVENTRESULTS':
       return 'event results';
   }
+}
+
+function buildWorkflowStep(input: {
+  id: string;
+  label: string;
+  status: ContestQaWorkflowStepStatus;
+  feeds: IngestionFeedType[];
+  eventId: string | null;
+  syncRuns: ProviderSyncRun[];
+  summary: string;
+  warnings?: ProviderSyncWarningDto[];
+  nextActions?: string[];
+}): ProviderContestQaWorkflowStepDto {
+  return {
+    id: input.id,
+    label: input.label,
+    status: input.status,
+    feeds: input.feeds,
+    eventId: input.eventId,
+    syncRunIds: input.syncRuns.map((run) => run.id),
+    summary: input.summary,
+    warnings: input.warnings ?? [],
+    nextActions: input.nextActions ?? [],
+  };
+}
+
+function getSyncRunsForFeed(syncRuns: ProviderSyncRun[], feed: IngestionFeedType): ProviderSyncRun[] {
+  return syncRuns.filter((run) => run.payload.requestedFeed === feed);
+}
+
+function getMeaningfulStateFeed(
+  mockEventState: NonNullable<ProviderContestQaWorkflowRequest['mockEventState']>,
+): 'EVENTLIVESCORES' | 'EVENTRESULTS' | null {
+  if (mockEventState === 'live') {
+    return 'EVENTLIVESCORES';
+  }
+  if (mockEventState === 'completed') {
+    return 'EVENTRESULTS';
+  }
+  return null;
+}
+
+function buildStateNextActions(
+  mockEventState: NonNullable<ProviderContestQaWorkflowRequest['mockEventState']>,
+): string[] {
+  switch (mockEventState) {
+    case 'open':
+      return ['Create contest entries or rerun with locked/live/completed when testing advances.'];
+    case 'locked':
+      return ['Verify entries are locked, then rerun with live when live-score movement is ready.'];
+    case 'live':
+      return ['Wait for live-score sync to complete, then inspect contest standings for movement.'];
+    case 'completed':
+      return ['Wait for final-results sync to complete, then inspect contest results.'];
+  }
+}
+
+function dedupeStrings(values: string[]): string[] {
+  return [...new Set(values)];
 }
 
 function buildManualSyncRunDetail(
@@ -813,6 +883,7 @@ export class ProviderService {
       requestContext: {
         from: request.from?.toISOString() ?? null,
         to: request.to?.toISOString() ?? null,
+        ...(request.workflowContext ?? {}),
       },
       submittedAt,
     });
@@ -881,6 +952,7 @@ export class ProviderService {
     const requestContext = request.mockEventState
       ? { mockEventState: request.mockEventState }
       : {};
+    const workflowContext = request.workflowContext ?? {};
 
     const submittedAt = new Date();
     this.logger?.info({
@@ -896,7 +968,10 @@ export class ProviderService {
       eventId: request.eventId,
       requestedFeeds: request.feeds,
       providerId: provider.providerId,
-      requestContext,
+      requestContext: {
+        ...requestContext,
+        ...workflowContext,
+      },
       submittedAt,
     });
 
@@ -940,6 +1015,272 @@ export class ProviderService {
       submittedAt,
       syncRuns,
     };
+  }
+
+  async runContestQaWorkflow(
+    request: ProviderContestQaWorkflowRequest,
+    rootAdminUserId: string,
+    rootAdminEmail: string,
+  ): Promise<ProviderContestQaWorkflowResponse> {
+    if (!this.scheduler) {
+      throw new Error('Ingestion scheduler is required for contest QA workflow sync');
+    }
+
+    const provider = this.registry.getProvider(request.sport);
+    if (!provider) {
+      throw new SportProviderNotFoundError(request.sport);
+    }
+    await this.assertSportSyncConfigured(request.sport);
+    if (request.mockEventState && !supportsMockEventStateControls(provider)) {
+      throw new MockEventStateUnsupportedError(provider.providerId);
+    }
+
+    const workflowId = randomUUID();
+    const submittedAt = new Date();
+    const eventCandidates = await this.listContestQaEventCandidates(request.sport);
+    const steps: ProviderContestQaWorkflowStepDto[] = [];
+    const warnings: ProviderSyncWarningDto[] = [];
+    const nextActions: string[] = [];
+    const workflowContext = {
+      workflowId,
+      workflowMode: request.mode,
+    };
+
+    this.logger?.info({
+      workflowId,
+      mode: request.mode,
+      sport: request.sport,
+      eventId: request.eventId ?? null,
+      mockEventState: request.mockEventState ?? null,
+      rootAdminUserId,
+    }, 'Submitting guided contest QA workflow');
+
+    if (request.mode === 'PREPARE_CONTEST_EVENT_DATA') {
+      if (request.eventId) {
+        steps.push(buildWorkflowStep({
+          id: 'discover-and-rank-events',
+          label: 'Discover schedule and rankings',
+          status: 'SKIPPED',
+          feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
+          eventId: null,
+          syncRuns: [],
+          summary: 'Skipped schedule and rankings because a known event was selected from the current event list.',
+          nextActions: ['Rerun this workflow without an event when schedule or ranking data needs a fresh pull.'],
+        }));
+        const participantSync = await this.syncEventData({
+          sport: request.sport,
+          eventId: request.eventId,
+          feeds: ['EVENTPARTICIPANTS'],
+          workflowContext: {
+            ...workflowContext,
+            workflowStepId: 'hydrate-event-field',
+          },
+        }, rootAdminUserId, rootAdminEmail);
+        steps.push(buildWorkflowStep({
+          id: 'hydrate-event-field',
+          label: 'Hydrate selected event field',
+          status: 'SUBMITTED',
+          feeds: participantSync.requestedFeeds,
+          eventId: request.eventId,
+          syncRuns: participantSync.syncRuns,
+          summary: 'Submitted participant hydration for the selected event.',
+          nextActions: ['After participant hydration completes, create the contest and entries from the contest create flow.'],
+        }));
+        nextActions.push('After participant hydration completes, create the contest and entries from the contest create flow.');
+      } else {
+        const sportSync = await this.prepareSportSync({
+          sport: request.sport,
+          feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
+          workflowContext: {
+            ...workflowContext,
+            workflowStepId: 'discover-and-rank-events',
+          },
+        }, rootAdminUserId, rootAdminEmail);
+        steps.push(buildWorkflowStep({
+          id: 'discover-and-rank-events',
+          label: 'Discover schedule and rankings',
+          status: 'SUBMITTED',
+          feeds: sportSync.requestedFeeds,
+          eventId: null,
+          syncRuns: sportSync.syncRuns,
+          summary: 'Submitted schedule and ranking feeds so future events and seed data can be refreshed.',
+          nextActions: ['Wait for these sync runs to complete, then select a future event.'],
+        }));
+        const warning = {
+          code: 'EVENT_SELECTION_REQUIRED',
+          message: 'Schedule and rankings were submitted, but event participant hydration needs a selected event.',
+        };
+        warnings.push(warning);
+        steps.push(buildWorkflowStep({
+          id: 'hydrate-event-field',
+          label: 'Hydrate selected event field',
+          status: 'BLOCKED',
+          feeds: ['EVENTPARTICIPANTS'],
+          eventId: null,
+          syncRuns: [],
+          summary: 'Select a future event before participant hydration can run.',
+          warnings: [warning],
+          nextActions: ['Refresh this page after schedule sync completes, select a future event, then run the prepare workflow again.'],
+        }));
+        nextActions.push('Select a future event, then run the prepare workflow again to hydrate participants.');
+      }
+    } else {
+      if (!request.eventId) {
+        const warning = {
+          code: 'EVENT_SELECTION_REQUIRED',
+          message: 'Live-test workflow needs a selected event.',
+        };
+        warnings.push(warning);
+        steps.push(buildWorkflowStep({
+          id: 'apply-event-state',
+          label: 'Apply mock event state',
+          status: 'BLOCKED',
+          feeds: ['EVENTPARTICIPANTS'],
+          eventId: null,
+          syncRuns: [],
+          summary: 'Select an event before driving a live test.',
+          warnings: [warning],
+          nextActions: ['Select a hydrated event, then choose the mock event state to test.'],
+        }));
+        nextActions.push('Select a hydrated event, then choose the mock event state to test.');
+      } else if (!request.mockEventState) {
+        const warning = {
+          code: 'MOCK_EVENT_STATE_REQUIRED',
+          message: 'Live-test workflow needs a mock event state.',
+        };
+        warnings.push(warning);
+        steps.push(buildWorkflowStep({
+          id: 'apply-event-state',
+          label: 'Apply mock event state',
+          status: 'BLOCKED',
+          feeds: ['EVENTPARTICIPANTS'],
+          eventId: request.eventId,
+          syncRuns: [],
+          summary: 'Choose open, locked, live, or completed before running the live-test workflow.',
+          warnings: [warning],
+          nextActions: ['Choose a mock event state, then run the live-test workflow again.'],
+        }));
+        nextActions.push('Choose a mock event state, then run the live-test workflow again.');
+      } else {
+        const stateFeed = getMeaningfulStateFeed(request.mockEventState);
+        const requestedStateFeeds: EventSyncRequest['feeds'] = stateFeed
+          ? ['EVENTPARTICIPANTS', stateFeed]
+          : ['EVENTPARTICIPANTS'];
+        const stateSync = await this.syncEventData({
+          sport: request.sport,
+          eventId: request.eventId,
+          feeds: requestedStateFeeds,
+          mockEventState: request.mockEventState,
+          workflowContext: {
+            ...workflowContext,
+            workflowStepId: 'apply-event-state',
+          },
+        }, rootAdminUserId, rootAdminEmail);
+        steps.push(buildWorkflowStep({
+          id: 'apply-event-state',
+          label: 'Apply mock event state',
+          status: 'SUBMITTED',
+          feeds: ['EVENTPARTICIPANTS'],
+          eventId: request.eventId,
+          syncRuns: getSyncRunsForFeed(stateSync.syncRuns, 'EVENTPARTICIPANTS'),
+          summary: `Submitted event detail hydration with mock state ${request.mockEventState}.`,
+          nextActions: buildStateNextActions(request.mockEventState),
+        }));
+
+        if (stateFeed) {
+          steps.push(buildWorkflowStep({
+            id: stateFeed === 'EVENTLIVESCORES' ? 'sync-live-scores' : 'sync-final-results',
+            label: stateFeed === 'EVENTLIVESCORES' ? 'Sync live scores' : 'Sync final results',
+            status: 'SUBMITTED',
+            feeds: [stateFeed],
+            eventId: request.eventId,
+            syncRuns: getSyncRunsForFeed(stateSync.syncRuns, stateFeed),
+            summary: `Submitted ${formatFeedLabel(stateFeed)} for mock state ${request.mockEventState}.`,
+            nextActions: stateFeed === 'EVENTLIVESCORES'
+              ? ['Open contest standings after the sync completes to verify live movement.']
+              : ['Open contest results after the sync completes to verify final scoring.'],
+          }));
+          nextActions.push(...(stateFeed === 'EVENTLIVESCORES'
+            ? ['Open contest standings after the sync completes to verify live movement.']
+            : ['Open contest results after the sync completes to verify final scoring.']));
+        } else {
+          steps.push(buildWorkflowStep({
+            id: 'sync-live-or-final-feed',
+            label: 'Sync live/final feed',
+            status: 'SKIPPED',
+            feeds: [],
+            eventId: request.eventId,
+            syncRuns: [],
+            summary: `Mock state ${request.mockEventState} does not have a meaningful live-score or final-results feed.`,
+            nextActions: ['Create or edit entries while the event is open/locked, or rerun with live/completed when scoring is ready.'],
+          }));
+          nextActions.push('Create or edit entries while the event is open/locked, or rerun with live/completed when scoring is ready.');
+        }
+      }
+    }
+
+    if (eventCandidates.length === 0) {
+      warnings.push({
+        code: 'NO_FUTURE_EVENTS_KNOWN',
+        message: 'No future persisted events were known before this workflow submission.',
+      });
+      nextActions.push('Wait for schedule sync to complete, then rerun the workflow or refresh the event list.');
+    }
+
+    return {
+      workflowId,
+      mode: request.mode,
+      sport: request.sport,
+      eventId: request.eventId ?? null,
+      mockEventState: request.mockEventState ?? null,
+      submittedAt: submittedAt.toISOString(),
+      steps,
+      eventCandidates,
+      warnings,
+      nextActions: dedupeStrings(nextActions),
+    };
+  }
+
+  private async listContestQaEventCandidates(
+    sport: Sport,
+  ): Promise<ProviderContestQaEventCandidateDto[]> {
+    const now = new Date();
+    const events = await this.prisma.sportEvent.findMany({
+      where: {
+        sport,
+        startDate: {
+          gte: now,
+        },
+      },
+      include: {
+        _count: {
+          select: {
+            sportEventParticipants: true,
+          },
+        },
+      },
+      orderBy: { startDate: 'asc' },
+      take: 10,
+    });
+
+    return events.map((event) => {
+      const operationalState = evaluateEventOperationalState({
+        participantCount: event._count.sportEventParticipants,
+        releaseAt: event.releaseAt,
+        fieldLocksAt: event.fieldLocksAt,
+        providerFieldLocked: event.fieldLocked,
+      });
+
+      return {
+        eventId: event.externalId,
+        name: event.name,
+        status: event.status,
+        startsAt: event.startDate.toISOString(),
+        participantCount: event._count.sportEventParticipants,
+        readinessStatus: operationalState.readinessStatus,
+        contestEligible: operationalState.contestEligible,
+      };
+    });
   }
 
   private async createManualSyncRunSubmissions(input: {

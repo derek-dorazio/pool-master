@@ -243,6 +243,13 @@ export function RootAdminSyncDashboardPage() {
       <Tile padding="lg">
         <div className="flex flex-wrap gap-3">
           <LinkButton
+            data-testid="root-admin-open-contest-qa-workflow-page"
+            to="/manage/sync/contest-qa-workflow"
+            variant="primary"
+          >
+            Guided contest QA workflow
+          </LinkButton>
+          <LinkButton
             data-testid="root-admin-open-run-sport-sync-page"
             to="/manage/sync/run-sport-sync"
             variant="subtle"

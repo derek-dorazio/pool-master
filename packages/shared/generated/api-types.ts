@@ -1998,6 +1998,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/providers/workflows/contest-qa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run guided contest QA sync workflow
+         * @description Submits prerequisite-aware provider sync steps for preparing event-backed contest data or driving a mock golf live-test scenario. Low-level feed sync endpoints remain available for repair and debugging.
+         */
+        post: operations["adminRunContestQaWorkflow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/contest-config-templates": {
         parameters: {
             query?: never;
@@ -15111,6 +15131,182 @@ export interface operations {
                                 [key: string]: unknown;
                             };
                         }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminRunContestQaWorkflow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Root-admin guided contest QA sync workflow request. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Guided workflow to run.
+                     * @enum {string}
+                     */
+                    mode: "PREPARE_CONTEST_EVENT_DATA" | "DRIVE_EVENT_LIVE_TEST";
+                    /**
+                     * @description Sport to prepare or live-test.
+                     * @enum {string}
+                     */
+                    sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                    /** @description Provider event identifier when the workflow targets one event. */
+                    eventId?: string;
+                    /**
+                     * @description Mock-provider event state used by the live-test workflow.
+                     * @enum {string}
+                     */
+                    mockEventState?: "open" | "locked" | "live" | "completed";
+                };
+            };
+        };
+        responses: {
+            /** @description Root-admin guided contest QA sync workflow response. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Generated workflow id used to correlate submitted sync runs. */
+                        workflowId: string;
+                        /**
+                         * @description Guided contest QA workflow mode above the low-level provider sync feed primitives.
+                         * @enum {string}
+                         */
+                        mode: "PREPARE_CONTEST_EVENT_DATA" | "DRIVE_EVENT_LIVE_TEST";
+                        /** @enum {string} */
+                        sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                        eventId: string | null;
+                        /**
+                         * @description Mock-provider-only event state override for manual QA event syncs.
+                         * @enum {string|null}
+                         */
+                        mockEventState: "open" | "locked" | "live" | "completed" | null;
+                        /** Format: date-time */
+                        submittedAt: string;
+                        /** @description Ordered workflow plan and submitted sync run ids. */
+                        steps: {
+                            /** @description Stable workflow step identifier. */
+                            id: string;
+                            /** @description Human-readable step label. */
+                            label: string;
+                            /**
+                             * @description Whether the workflow submitted, skipped, or blocked the step.
+                             * @enum {string}
+                             */
+                            status: "SUBMITTED" | "SKIPPED" | "BLOCKED";
+                            /** @description Provider sync feeds represented by this step. */
+                            feeds: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                            /** @description Event id targeted by this step, if event-scoped. */
+                            eventId: string | null;
+                            /** @description Provider sync run ids created for this workflow step. */
+                            syncRunIds: string[];
+                            /** @description Admin-facing step outcome or reason. */
+                            summary: string;
+                            /** @description Warnings that need operator attention for this step. */
+                            warnings: {
+                                /** @description Stable warning code emitted by the ingestion/sync layer. */
+                                code: string;
+                                /** @description Human-readable warning detail for root-admin investigation. */
+                                message: string;
+                            }[];
+                            /** @description Concrete next actions suggested by this step. */
+                            nextActions: string[];
+                        }[];
+                        /** @description Future persisted event candidates known before the workflow submitted new feed work. */
+                        eventCandidates: {
+                            /** @description Provider event identifier. */
+                            eventId: string;
+                            /** @description Event name. */
+                            name: string;
+                            /** @description Persisted event lifecycle status. */
+                            status: string;
+                            /**
+                             * Format: date-time
+                             * @description Event start timestamp.
+                             */
+                            startsAt: string;
+                            /** @description Loaded participant count for contest readiness. */
+                            participantCount: number;
+                            /** @description Admin-readable readiness status. */
+                            readinessStatus: string;
+                            /** @description Whether the event is currently eligible for contest creation. */
+                            contestEligible: boolean;
+                        }[];
+                        /** @description Workflow-level warnings and missing prerequisites. */
+                        warnings: {
+                            /** @description Stable warning code emitted by the ingestion/sync layer. */
+                            code: string;
+                            /** @description Human-readable warning detail for root-admin investigation. */
+                            message: string;
+                        }[];
+                        /** @description Recommended operator next actions after this workflow submission. */
+                        nextActions: string[];
                     };
                 };
             };

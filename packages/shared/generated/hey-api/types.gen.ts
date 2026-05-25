@@ -14209,6 +14209,229 @@ export type AdminSyncProviderEventDataResponses = {
 
 export type AdminSyncProviderEventDataResponse = AdminSyncProviderEventDataResponses[keyof AdminSyncProviderEventDataResponses];
 
+export type AdminRunContestQaWorkflowData = {
+    /**
+     * Root-admin guided contest QA sync workflow request.
+     */
+    body: {
+        /**
+         * Guided workflow to run.
+         */
+        mode: 'PREPARE_CONTEST_EVENT_DATA' | 'DRIVE_EVENT_LIVE_TEST';
+        /**
+         * Sport to prepare or live-test.
+         */
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        /**
+         * Provider event identifier when the workflow targets one event.
+         */
+        eventId?: string;
+        /**
+         * Mock-provider event state used by the live-test workflow.
+         */
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/providers/workflows/contest-qa';
+};
+
+export type AdminRunContestQaWorkflowErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminRunContestQaWorkflowError = AdminRunContestQaWorkflowErrors[keyof AdminRunContestQaWorkflowErrors];
+
+export type AdminRunContestQaWorkflowResponses = {
+    /**
+     * Root-admin guided contest QA sync workflow response.
+     */
+    202: {
+        /**
+         * Generated workflow id used to correlate submitted sync runs.
+         */
+        workflowId: string;
+        /**
+         * Guided contest QA workflow mode above the low-level provider sync feed primitives.
+         */
+        mode: 'PREPARE_CONTEST_EVENT_DATA' | 'DRIVE_EVENT_LIVE_TEST';
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        eventId: string;
+        /**
+         * Mock-provider-only event state override for manual QA event syncs.
+         */
+        mockEventState: 'open' | 'locked' | 'live' | 'completed';
+        submittedAt: string;
+        /**
+         * Ordered workflow plan and submitted sync run ids.
+         */
+        steps: Array<{
+            /**
+             * Stable workflow step identifier.
+             */
+            id: string;
+            /**
+             * Human-readable step label.
+             */
+            label: string;
+            /**
+             * Whether the workflow submitted, skipped, or blocked the step.
+             */
+            status: 'SUBMITTED' | 'SKIPPED' | 'BLOCKED';
+            /**
+             * Provider sync feeds represented by this step.
+             */
+            feeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+            /**
+             * Event id targeted by this step, if event-scoped.
+             */
+            eventId: string;
+            /**
+             * Provider sync run ids created for this workflow step.
+             */
+            syncRunIds: Array<string>;
+            /**
+             * Admin-facing step outcome or reason.
+             */
+            summary: string;
+            /**
+             * Warnings that need operator attention for this step.
+             */
+            warnings: Array<{
+                /**
+                 * Stable warning code emitted by the ingestion/sync layer.
+                 */
+                code: string;
+                /**
+                 * Human-readable warning detail for root-admin investigation.
+                 */
+                message: string;
+            }>;
+            /**
+             * Concrete next actions suggested by this step.
+             */
+            nextActions: Array<string>;
+        }>;
+        /**
+         * Future persisted event candidates known before the workflow submitted new feed work.
+         */
+        eventCandidates: Array<{
+            /**
+             * Provider event identifier.
+             */
+            eventId: string;
+            /**
+             * Event name.
+             */
+            name: string;
+            /**
+             * Persisted event lifecycle status.
+             */
+            status: string;
+            /**
+             * Event start timestamp.
+             */
+            startsAt: string;
+            /**
+             * Loaded participant count for contest readiness.
+             */
+            participantCount: number;
+            /**
+             * Admin-readable readiness status.
+             */
+            readinessStatus: string;
+            /**
+             * Whether the event is currently eligible for contest creation.
+             */
+            contestEligible: boolean;
+        }>;
+        /**
+         * Workflow-level warnings and missing prerequisites.
+         */
+        warnings: Array<{
+            /**
+             * Stable warning code emitted by the ingestion/sync layer.
+             */
+            code: string;
+            /**
+             * Human-readable warning detail for root-admin investigation.
+             */
+            message: string;
+        }>;
+        /**
+         * Recommended operator next actions after this workflow submission.
+         */
+        nextActions: Array<string>;
+    };
+};
+
+export type AdminRunContestQaWorkflowResponse = AdminRunContestQaWorkflowResponses[keyof AdminRunContestQaWorkflowResponses];
+
 export type AdminListContestConfigTemplatesData = {
     body?: never;
     path?: never;
