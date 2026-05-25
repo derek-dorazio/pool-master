@@ -265,6 +265,68 @@ describe('RootAdminSyncDashboardPage', () => {
     expect(screen.getByText(/"events": \[\]/)).toBeInTheDocument();
   });
 
+  it('pool-master-33l.8.9 explains unsupported captured provider detail shapes', async () => {
+    const user = userEvent.setup();
+    adminListProviderSyncRunsMock.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: 'sync-run-provider-shape',
+            providerId: 'future-feed',
+            sport: 'GOLF',
+            eventId: 'future-open-2026',
+            status: 'COMPLETED',
+            startedAt: '2026-05-25T12:00:00.000Z',
+            completedAt: '2026-05-25T12:01:00.000Z',
+            createdAt: '2026-05-25T11:59:00.000Z',
+            payload: {
+              runType: 'MANUAL_EVENT_SYNC',
+              requestedFeed: 'EVENTPARTICIPANTS',
+              outcome: {
+                severity: 'SUCCESS',
+                summary: 'Completed provider sync.',
+                warnings: [],
+                errors: 0,
+              },
+              providerPayload: {
+                operation: 'EVENTPARTICIPANTS',
+                rawCaptured: true,
+                rawTruncated: false,
+                raw: [
+                  {
+                    path: '/vendor/events/future-open-2026/field',
+                    raw: {
+                      records: [
+                        {
+                          id: 'vendor-player-1',
+                          label: 'Vendor Player',
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    renderDashboard();
+
+    expect(await screen.findByTestId('root-admin-sync-run-sync-run-provider-shape')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+
+    expect(await screen.findByText('Sync run details')).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Details' }));
+
+    expect(
+      screen.getByText(
+        'This provider captured raw payload data, but Sync Center does not yet expose run-specific detail rows for that provider shape. Use the Payloads tab to inspect the raw provider payload.',
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('pool-master-33l.8.9 renders run-specific detail rows separately from payload JSON', async () => {
     const user = userEvent.setup();
     adminListProviderSyncRunsMock.mockResolvedValue({

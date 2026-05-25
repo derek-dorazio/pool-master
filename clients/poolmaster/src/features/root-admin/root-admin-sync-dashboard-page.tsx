@@ -346,6 +346,9 @@ export function RootAdminSyncDashboardPage() {
   const requestPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'requestPayload') : null;
   const providerPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'providerPayload') : null;
   const jobPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'jobPayload') : null;
+  const evidenceEmptyMessage = providerPayload?.rawCaptured === true
+    ? 'This provider captured raw payload data, but Sync Center does not yet expose run-specific detail rows for that provider shape. Use the Payloads tab to inspect the raw provider payload.'
+    : 'No run-specific detail rows were captured for this sync.';
 
   const evidenceColumns = useMemo(
     () => [
@@ -616,7 +619,7 @@ export function RootAdminSyncDashboardPage() {
                 <DataGrid
                   columns={evidenceColumns}
                   data={evidenceRows}
-                  emptyMessage="No run-specific detail rows were captured for this sync."
+                  emptyMessage={evidenceEmptyMessage}
                   filterTestIdPrefix="root-admin-sync-detail-filter"
                   getRowId={(row) => row.id}
                   rowTestId={(row) => `root-admin-sync-detail-row-${row.id}`}
