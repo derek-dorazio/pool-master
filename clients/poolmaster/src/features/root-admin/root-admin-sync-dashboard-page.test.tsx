@@ -176,4 +176,80 @@ describe('RootAdminSyncDashboardPage', () => {
     expect(screen.getByTestId('root-admin-sync-run-sync-run-2')).toBeInTheDocument();
     expect(adminListProviderSyncRunsMock).toHaveBeenCalledTimes(1);
   });
+
+  it('pool-master-ueu.2 shows warning diagnostics and raw provider payload drill-down', async () => {
+    adminListProviderSyncRunsMock.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: 'sync-run-warning',
+            providerId: 'mock-contest-feed',
+            sport: 'GOLF',
+            eventId: null,
+            status: 'COMPLETED',
+            startedAt: '2026-05-25T12:00:00.000Z',
+            completedAt: '2026-05-25T12:01:00.000Z',
+            createdAt: '2026-05-25T11:59:00.000Z',
+            payload: {
+              runType: 'MANUAL_SPORT_SYNC',
+              requestedFeed: 'EVENTSCHEDULE',
+              outcome: {
+                severity: 'WARNING',
+                summary: 'Completed event schedule sync for GOLF (0 records).',
+                warnings: [
+                  {
+                    code: 'NO_PROVIDER_EVENTS',
+                    message: 'Provider returned no upcoming events for the requested sport/date window.',
+                  },
+                ],
+                errors: 0,
+              },
+              stats: {
+                providerRecordsReturned: 0,
+                eventsFetched: 0,
+              },
+              providerPayload: {
+                operation: 'EVENTSCHEDULE',
+                rawCaptured: true,
+                rawTruncated: false,
+                raw: [
+                  {
+                    path: '/v1/scenarios/golf/events',
+                    raw: { events: [] },
+                  },
+                ],
+              },
+              jobPayload: {
+                jobType: 'EVENT_SCHEDULE_SYNC',
+                status: 'COMPLETED',
+                recordsProcessed: 0,
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    renderDashboard();
+
+    expect(await screen.findByText('COMPLETED WITH WARNINGS')).toBeInTheDocument();
+    expect(
+      screen.getByText('Completed event schedule sync for GOLF (0 records).'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+
+    expect(await screen.findByText('Sync run details')).toBeInTheDocument();
+    expect(screen.getByText('Provider Records Returned')).toBeInTheDocument();
+    expect(screen.getByText('Events Fetched')).toBeInTheDocument();
+    expect(
+      screen.getByText('Provider returned no upcoming events for the requested sport/date window.'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show provider payload' }));
+
+    expect(await screen.findByText('Provider payload')).toBeInTheDocument();
+    expect(screen.getByText(/"rawCaptured": true/)).toBeInTheDocument();
+    expect(screen.getByText(/"events": \[\]/)).toBeInTheDocument();
+  });
 });

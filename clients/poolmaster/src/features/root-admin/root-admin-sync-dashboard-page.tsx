@@ -19,6 +19,8 @@ import {
 } from '@/features/shared/ui';
 import {
   buildPayloadSummary,
+  buildStatsSummary,
+  getPayloadOutcome,
   getProviderName,
   type ProviderSummary,
   type ProviderSyncRun,
@@ -62,8 +64,41 @@ function getStatusTone(status: string) {
   }
 }
 
+function getRunStatusTone(run: ProviderSyncRun) {
+  const outcome = getPayloadOutcome(run.payload);
+  if (outcome?.severity === 'WARNING') {
+    return 'warning';
+  }
+  if (outcome?.severity === 'ERROR') {
+    return 'danger';
+  }
+
+  return getStatusTone(run.status);
+}
+
+function getRunStatusLabel(run: ProviderSyncRun) {
+  const outcome = getPayloadOutcome(run.payload);
+  if (run.status === 'COMPLETED' && outcome?.severity === 'WARNING') {
+    return 'COMPLETED WITH WARNINGS';
+  }
+
+  return run.status;
+}
+
+function getPayloadSection(run: ProviderSyncRun | null, key: 'providerPayload' | 'jobPayload') {
+  if (!run) {
+    return null;
+  }
+
+  return run.payload[key] ?? null;
+}
+
 export function RootAdminSyncDashboardPage() {
   const [payloadRun, setPayloadRun] = useState<ProviderSyncRun | null>(null);
+  const [jsonPayload, setJsonPayload] = useState<{
+    title: string;
+    payload: unknown;
+  } | null>(null);
   const providersQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.providers,
     queryFn: async (): Promise<ProviderSummary[]> => {
@@ -169,9 +204,9 @@ export function RootAdminSyncDashboardPage() {
       }),
       syncRunColumnHelper.accessor('status', {
         header: 'Status',
-        cell: ({ getValue }) => (
-          <StatusBadge tone={getStatusTone(getValue())}>
-            {getValue()}
+        cell: ({ row }) => (
+          <StatusBadge tone={getRunStatusTone(row.original)}>
+            {getRunStatusLabel(row.original)}
           </StatusBadge>
         ),
       }),
@@ -182,12 +217,12 @@ export function RootAdminSyncDashboardPage() {
           <div className="text-muted-foreground">
             <div>{buildPayloadSummary(row.original.payload)}</div>
             <Button
-              className="mt-2 h-auto rounded-none p-0 text-xs uppercase tracking-[0.18em]"
+              className="mt-2 h-auto rounded-none p-0 text-xs uppercase"
               onClick={() => setPayloadRun(row.original)}
               type="button"
               variant="ghost"
             >
-                View payload
+                View details
             </Button>
           </div>
         ),
@@ -271,16 +306,74 @@ export function RootAdminSyncDashboardPage() {
         ) : null}
       </Tile>
       <ReadOnlyDetailModal
-        description="Provider sync run request and response details."
+        description="Provider sync run outcome, stats, warnings, and payload drill-downs."
         detailContent={
-          <pre className="whitespace-pre-wrap break-words">
-            {payloadRun ? formatJsonPayload(payloadRun.payload) : ''}
-          </pre>
+          payloadRun ? (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {buildPayloadSummary(payloadRun.payload)}
+                </p>
+                {getPayloadOutcome(payloadRun.payload)?.warnings.length ? (
+                  <div className="mt-3 space-y-2">
+                    {getPayloadOutcome(payloadRun.payload)?.warnings.map((warning, index) => (
+                      <Alert key={`${String((warning as { code?: unknown }).code)}-${index}`} tone="warning">
+                        {String((warning as { message?: unknown }).message ?? 'Sync completed with a warning.')}
+                      </Alert>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
+              {buildStatsSummary(payloadRun.payload).length > 0 ? (
+                <MetricGrid className="md:grid-cols-3">
+                  {buildStatsSummary(payloadRun.payload).map((stat) => (
+                    <MetricTile
+                      key={stat.key}
+                      label={stat.label}
+                      value={stat.value}
+                    />
+                  ))}
+                </MetricGrid>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No canonical sync stats were captured for this run.
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-3">
+                {getPayloadSection(payloadRun, 'providerPayload') ? (
+                  <Button
+                    onClick={() => setJsonPayload({
+                      title: 'Provider payload',
+                      payload: getPayloadSection(payloadRun, 'providerPayload'),
+                    })}
+                    type="button"
+                    variant="secondary"
+                  >
+                    Show provider payload
+                  </Button>
+                ) : null}
+                {getPayloadSection(payloadRun, 'jobPayload') ? (
+                  <Button
+                    onClick={() => setJsonPayload({
+                      title: 'Job payload',
+                      payload: getPayloadSection(payloadRun, 'jobPayload'),
+                    })}
+                    type="button"
+                    variant="secondary"
+                  >
+                    Show job payload
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : null
         }
         details={
           payloadRun
             ? [
-                { id: 'status', label: 'Status', value: payloadRun.status },
+                { id: 'status', label: 'Status', value: getRunStatusLabel(payloadRun) },
                 { id: 'sport', label: 'Sport', value: payloadRun.sport },
                 { id: 'event', label: 'Event', value: formatEventValue(payloadRun.eventId) },
                 {
@@ -304,7 +397,29 @@ export function RootAdminSyncDashboardPage() {
         }}
         open={Boolean(payloadRun)}
         testId="root-admin-sync-payload-modal"
-        title="Sync payload"
+        title="Sync run details"
+      />
+      <ReadOnlyDetailModal
+        description="Raw JSON captured for root-admin sync investigation."
+        detailContent={
+          <pre className="whitespace-pre-wrap break-words">
+            {formatJsonPayload(jsonPayload?.payload ?? null)}
+          </pre>
+        }
+        onCancel={() => setJsonPayload(null)}
+        onCopy={() => {
+          if (jsonPayload && navigator.clipboard) {
+            void navigator.clipboard.writeText(formatJsonPayload(jsonPayload.payload));
+          }
+        }}
+        onOpenChange={(open) => {
+          if (!open) {
+            setJsonPayload(null);
+          }
+        }}
+        open={Boolean(jsonPayload)}
+        testId="root-admin-sync-json-payload-modal"
+        title={jsonPayload?.title ?? 'Sync payload'}
       />
     </section>
   );

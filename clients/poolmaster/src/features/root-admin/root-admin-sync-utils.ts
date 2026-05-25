@@ -87,7 +87,35 @@ export function getProviderName(
   return providers?.find((provider) => provider.providerId === providerId)?.providerName ?? providerId;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+export function getPayloadOutcome(payload: Record<string, unknown>) {
+  const outcome = payload.outcome;
+  if (!isRecord(outcome)) {
+    return null;
+  }
+
+  const severity = outcome.severity;
+  const summary = outcome.summary;
+  const warnings = outcome.warnings;
+
+  return {
+    severity: severity === 'SUCCESS' || severity === 'WARNING' || severity === 'ERROR'
+      ? severity
+      : null,
+    summary: typeof summary === 'string' ? summary : null,
+    warnings: Array.isArray(warnings) ? warnings : [],
+  };
+}
+
 export function buildPayloadSummary(payload: Record<string, unknown>) {
+  const outcome = getPayloadOutcome(payload);
+  if (outcome?.summary) {
+    return outcome.summary;
+  }
+
   const primaryTextFields = ['detail', 'message', 'summary', 'runType'] as const;
   for (const key of primaryTextFields) {
     const value = payload[key];
@@ -142,6 +170,27 @@ export function buildPayloadSummary(payload: Record<string, unknown>) {
   });
 
   return fallbackEntries[0] ?? 'Payload captured for operational review.';
+}
+
+export function buildStatsSummary(payload: Record<string, unknown>) {
+  const stats = payload.stats;
+  if (!isRecord(stats)) {
+    return [];
+  }
+
+  return Object.entries(stats).flatMap(([key, value]) => {
+    if (typeof value !== 'number') {
+      return [];
+    }
+
+    return [{
+      key,
+      label: key
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/\b\w/g, (char) => char.toUpperCase()),
+      value,
+    }];
+  });
 }
 
 export function getSportSyncPreset(presetId: SportSyncPresetId) {
