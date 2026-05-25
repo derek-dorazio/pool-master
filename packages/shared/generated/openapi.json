@@ -28238,6 +28238,16 @@
                     },
                     "minItems": 1,
                     "description": "Feed types to run for a specific event sync request."
+                  },
+                  "mockEventState": {
+                    "type": "string",
+                    "enum": [
+                      "open",
+                      "locked",
+                      "live",
+                      "completed"
+                    ],
+                    "description": "Optional mock-provider-only event state override for manual QA event syncs."
                   }
                 },
                 "required": [
@@ -45307,6 +45317,16 @@
                     },
                     "minItems": 1,
                     "description": "Feed types to run for a specific event sync request."
+                  },
+                  "mockEventState": {
+                    "type": "string",
+                    "enum": [
+                      "open",
+                      "locked",
+                      "live",
+                      "completed"
+                    ],
+                    "description": "Optional mock-provider-only event state override for manual QA event syncs."
                   }
                 },
                 "required": [

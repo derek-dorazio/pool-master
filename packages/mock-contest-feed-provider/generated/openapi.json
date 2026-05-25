@@ -1528,6 +1528,20 @@
         "parameters": [
           {
             "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "locked",
+                "live",
+                "completed"
+              ]
+            },
+            "in": "query",
+            "name": "mockEventState",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "path",
@@ -2188,6 +2202,20 @@
         "parameters": [
           {
             "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "locked",
+                "live",
+                "completed"
+              ]
+            },
+            "in": "query",
+            "name": "mockEventState",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "path",
@@ -2327,6 +2355,20 @@
           "Feeds"
         ],
         "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "locked",
+                "live",
+                "completed"
+              ]
+            },
+            "in": "query",
+            "name": "mockEventState",
+            "required": false
+          },
           {
             "schema": {
               "type": "string"
@@ -2470,6 +2512,20 @@
         "parameters": [
           {
             "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "locked",
+                "live",
+                "completed"
+              ]
+            },
+            "in": "query",
+            "name": "mockEventState",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "path",
@@ -2609,6 +2665,20 @@
           "Feeds"
         ],
         "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "locked",
+                "live",
+                "completed"
+              ]
+            },
+            "in": "query",
+            "name": "mockEventState",
+            "required": false
+          },
           {
             "schema": {
               "type": "string"
@@ -2757,6 +2827,20 @@
             },
             "in": "query",
             "name": "tick",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "locked",
+                "live",
+                "completed"
+              ]
+            },
+            "in": "query",
+            "name": "mockEventState",
             "required": false
           },
           {

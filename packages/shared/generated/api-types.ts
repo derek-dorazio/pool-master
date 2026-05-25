@@ -14979,6 +14979,11 @@ export interface operations {
                 "application/json": {
                     /** @description Feed types to run for a specific event sync request. */
                     feeds: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                    /**
+                     * @description Optional mock-provider-only event state override for manual QA event syncs.
+                     * @enum {string}
+                     */
+                    mockEventState?: "open" | "locked" | "live" | "completed";
                 };
             };
         };
@@ -21322,6 +21327,11 @@ export interface operations {
                 "application/json": {
                     /** @description Feed types to run for a specific event sync request. */
                     feeds: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
+                    /**
+                     * @description Optional mock-provider-only event state override for manual QA event syncs.
+                     * @enum {string}
+                     */
+                    mockEventState?: "open" | "locked" | "live" | "completed";
                 };
             };
         };

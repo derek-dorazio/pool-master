@@ -156,4 +156,40 @@ describe('RootAdminRunEventSyncPage', () => {
       screen.getByTestId('root-admin-event-sync-response'),
     ).toHaveTextContent('golf-masters-2026');
   });
+
+  it('pool-master-33l.8.8 submits mock event state controls for scheduled golf live-score syncs', async () => {
+    renderPage();
+
+    expect(
+      await screen.findByTestId('root-admin-run-event-sync-page'),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId('root-admin-event-sync-preset'), {
+      target: { value: 'EVENTLIVESCORES' },
+    });
+    expect(screen.getByTestId('root-admin-event-sync-now')).toBeDisabled();
+
+    fireEvent.change(screen.getByTestId('root-admin-event-sync-mock-event-state'), {
+      target: { value: 'live' },
+    });
+    fireEvent.change(screen.getByTestId('root-admin-event-sync-event-id'), {
+      target: { value: 'golf-masters-2026' },
+    });
+
+    expect(screen.getByTestId('root-admin-event-sync-now')).not.toBeDisabled();
+    fireEvent.click(screen.getByTestId('root-admin-event-sync-now'));
+
+    await waitFor(() => {
+      expect(adminSyncProviderEventDataMock).toHaveBeenCalledWith({
+        path: {
+          sport: 'GOLF',
+          eventId: 'golf-masters-2026',
+        },
+        body: {
+          feeds: ['EVENTLIVESCORES'],
+          mockEventState: 'live',
+        },
+      });
+    });
+  });
 });

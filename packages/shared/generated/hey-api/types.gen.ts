@@ -13965,6 +13965,10 @@ export type AdminSyncProviderEventDataData = {
          * Feed types to run for a specific event sync request.
          */
         feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+        /**
+         * Optional mock-provider-only event state override for manual QA event syncs.
+         */
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
     };
     path: {
         sport: string;
@@ -21809,6 +21813,10 @@ export type SyncEventDataData = {
          * Feed types to run for a specific event sync request.
          */
         feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+        /**
+         * Optional mock-provider-only event state override for manual QA event syncs.
+         */
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
     };
     path: {
         sport: string;

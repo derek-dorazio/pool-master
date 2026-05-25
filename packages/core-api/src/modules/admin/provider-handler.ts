@@ -13,6 +13,7 @@ import type { EventSyncRequest, SportSyncRequest } from '../ingestion/core/inges
 import {
   ProviderConfigUnsupportedError,
   ProviderEventNotFoundError,
+  MockEventStateUnsupportedError,
   ProviderNotFoundError,
   ProviderSportCoverageError,
   SportSyncNotConfiguredError,
@@ -246,6 +247,7 @@ export function createProviderHandlers(providerService: ProviderService) {
       sport: request.params.sport,
       eventId: request.params.eventId,
       requestedFeeds: request.body.feeds,
+      mockEventState: request.body.mockEventState ?? null,
     }, 'Running manual event sync');
 
     try {
@@ -253,6 +255,7 @@ export function createProviderHandlers(providerService: ProviderService) {
         sport: request.params.sport,
         eventId: request.params.eventId,
         feeds: request.body.feeds,
+        mockEventState: request.body.mockEventState,
       }, rootAdminUserId, rootAdminEmail);
 
       return reply.code(202).send({
@@ -286,6 +289,14 @@ export function createProviderHandlers(providerService: ProviderService) {
           eventId: request.params.eventId,
         }, 'Manual event sync failed because sport is not enabled in ingestion config');
         return sendError(reply, 422, 'SPORT_SYNC_NOT_CONFIGURED', err.message);
+      }
+      if (err instanceof MockEventStateUnsupportedError) {
+        logger.warn({
+          sport: request.params.sport,
+          eventId: request.params.eventId,
+          mockEventState: request.body.mockEventState ?? null,
+        }, 'Manual event sync failed because provider does not support mock event state controls');
+        return sendError(reply, 422, 'MOCK_EVENT_STATE_UNSUPPORTED', err.message);
       }
       throw err;
     }

@@ -14,14 +14,15 @@ import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto'
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
 import type {
+  ProviderEventSyncOptions,
   ProviderPayloadCapture,
   ProviderRanking,
   SportDataProvider,
   SportEvent,
   SportEventDetail,
 } from './provider-interface';
-import { supportsProviderPayloadDiagnostics } from './provider-interface';
-import type { LiveScoreResult } from '@poolmaster/shared/dto';
+import { supportsMockEventStateControls, supportsProviderPayloadDiagnostics } from './provider-interface';
+import type { LiveScoreResult, MockEventState } from '@poolmaster/shared/dto';
 
 export type IngestionFeedType =
   | 'EVENTSCHEDULE'
@@ -83,6 +84,7 @@ export interface EventSyncRequest {
   sport: Sport;
   eventId: string;
   feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
+  mockEventState?: MockEventState;
 }
 
 export interface IngestionCallbacks {
@@ -251,26 +253,29 @@ export class IngestionScheduler {
       sport: request.sport,
       eventId: request.eventId,
       feeds: request.feeds,
+      mockEventState: request.mockEventState ?? null,
     }, 'Manual or direct event sync requested');
 
+    const options = buildProviderEventSyncOptions(request.mockEventState);
     for (const feed of dedupe(request.feeds)) {
       if (feed === 'EVENTPARTICIPANTS') {
-        jobs.push(await this.runEventFieldSync(request.sport, request.eventId));
+        jobs.push(await this.runEventFieldSync(request.sport, request.eventId, options));
         continue;
       }
 
       if (feed === 'EVENTLIVESCORES') {
-        jobs.push(await this.pollLiveScores(request.sport, request.eventId));
+        jobs.push(await this.pollLiveScores(request.sport, request.eventId, options));
         continue;
       }
 
-      jobs.push(await this.fetchEventResults(request.sport, request.eventId));
+      jobs.push(await this.fetchEventResults(request.sport, request.eventId, options));
     }
 
     this.logger?.info({
       sport: request.sport,
       eventId: request.eventId,
       feeds: request.feeds,
+      mockEventState: request.mockEventState ?? null,
       jobs: jobs.map(toJobLogPayload),
     }, 'Manual or direct event sync completed');
 
@@ -278,16 +283,26 @@ export class IngestionScheduler {
   }
 
   /** Polls live scores for a specific event. */
-  async pollLiveScores(sport: Sport, eventId: string): Promise<IngestionJobRecord> {
-    this.logger?.debug({ sport, eventId }, 'Polling live scores for event');
+  async pollLiveScores(
+    sport: Sport,
+    eventId: string,
+    options?: ProviderEventSyncOptions,
+  ): Promise<IngestionJobRecord> {
+    this.logger?.debug({ sport, eventId, mockEventState: options?.mockEventState ?? null }, 'Polling live scores for event');
     const provider = this.registry.getProvider(sport);
     if (!provider) {
       this.logger?.warn({ sport, eventId }, 'No provider registered for live score polling');
       return createFailedJob('EVENT_LIVE_SCORES_SYNC', 'none', sport, 'No provider registered', eventId);
     }
+    const unsupportedJob = createUnsupportedMockEventStateJob(provider, 'EVENT_LIVE_SCORES_SYNC', sport, eventId, options);
+    if (unsupportedJob) {
+      return unsupportedJob;
+    }
 
     return this.runJob('EVENT_LIVE_SCORES_SYNC', provider.providerId, sport, 'EVENTLIVESCORES', provider, async () => {
-      const result = await provider.getLiveScores(eventId);
+      const result = options
+        ? await provider.getLiveScores(eventId, options)
+        : await provider.getLiveScores(eventId);
       const updateCount = countLiveScoreUpdates(result);
       this.logger?.debug({
         sport,
@@ -322,16 +337,26 @@ export class IngestionScheduler {
   }
 
   /** Fetches final results for a completed event. */
-  async fetchEventResults(sport: Sport, eventId: string): Promise<IngestionJobRecord> {
-    this.logger?.debug({ sport, eventId }, 'Fetching event results');
+  async fetchEventResults(
+    sport: Sport,
+    eventId: string,
+    options?: ProviderEventSyncOptions,
+  ): Promise<IngestionJobRecord> {
+    this.logger?.debug({ sport, eventId, mockEventState: options?.mockEventState ?? null }, 'Fetching event results');
     const provider = this.registry.getProvider(sport);
     if (!provider) {
       this.logger?.warn({ sport, eventId }, 'No provider registered for event results fetch');
       return createFailedJob('EVENT_RESULTS_SYNC', 'none', sport, 'No provider registered', eventId);
     }
+    const unsupportedJob = createUnsupportedMockEventStateJob(provider, 'EVENT_RESULTS_SYNC', sport, eventId, options);
+    if (unsupportedJob) {
+      return unsupportedJob;
+    }
 
     return this.runJob('EVENT_RESULTS_SYNC', provider.providerId, sport, 'EVENTRESULTS', provider, async () => {
-      const results = await provider.getEventResults(eventId);
+      const results = options
+        ? await provider.getEventResults(eventId, options)
+        : await provider.getEventResults(eventId);
       if (!results) {
         this.logger?.warn({ sport, eventId, providerId: provider.providerId }, 'Provider returned no event results');
         return {
@@ -732,16 +757,23 @@ export class IngestionScheduler {
   private async runEventFieldSync(
     sport: Sport,
     eventId: string,
+    options?: ProviderEventSyncOptions,
   ): Promise<IngestionJobRecord> {
-    this.logger?.debug({ sport, eventId }, 'Running participant sync for event');
+    this.logger?.debug({ sport, eventId, mockEventState: options?.mockEventState ?? null }, 'Running participant sync for event');
     const provider = this.registry.getProvider(sport);
     if (!provider) {
       this.logger?.warn({ sport, eventId }, 'No provider registered for event participant sync');
       return createFailedJob('EVENT_PARTICIPANTS_SYNC', 'none', sport, 'No provider registered', eventId);
     }
+    const unsupportedJob = createUnsupportedMockEventStateJob(provider, 'EVENT_PARTICIPANTS_SYNC', sport, eventId, options);
+    if (unsupportedJob) {
+      return unsupportedJob;
+    }
 
     return this.runJob('EVENT_PARTICIPANTS_SYNC', provider.providerId, sport, 'EVENTPARTICIPANTS', provider, async () => {
-      const detail = await provider.getEventDetails(eventId);
+      const detail = options
+        ? await provider.getEventDetails(eventId, options)
+        : await provider.getEventDetails(eventId);
       if (!detail) {
         this.logger?.warn({ sport, eventId, providerId: provider.providerId }, 'Provider returned no event detail for participant sync');
         throw new Error(`Provider returned no event detail for event ${eventId}`);
@@ -1028,6 +1060,32 @@ function createFailedJob(
     errorLog: [{ error, at: new Date() }],
     warnings: [],
   };
+}
+
+function buildProviderEventSyncOptions(
+  mockEventState: MockEventState | undefined,
+): ProviderEventSyncOptions | undefined {
+  return mockEventState ? { mockEventState } : undefined;
+}
+
+function createUnsupportedMockEventStateJob(
+  provider: SportDataProvider,
+  jobType: JobType,
+  sport: Sport,
+  eventId: string,
+  options?: ProviderEventSyncOptions,
+): IngestionJobRecord | null {
+  if (!options?.mockEventState || supportsMockEventStateControls(provider)) {
+    return null;
+  }
+
+  return createFailedJob(
+    jobType,
+    provider.providerId,
+    sport,
+    `Provider ${provider.providerId} does not support mock event state controls.`,
+    eventId,
+  );
 }
 
 function buildProviderPayload(

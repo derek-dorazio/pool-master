@@ -15,6 +15,7 @@ import type {
   SportDataProvider,
   ProviderHealthStatus as AdapterHealthStatus,
 } from '../ingestion/core/provider-interface';
+import { supportsMockEventStateControls } from '../ingestion/core/provider-interface';
 import { IngestionPersistence } from '../ingestion/persistence/ingestion-persistence';
 import type {
   EventSyncRequest,
@@ -184,6 +185,13 @@ export class SportSyncNotConfiguredError extends Error {
   constructor(sport: Sport) {
     super(`Sport ${sport} is not enabled in ingestion scheduledSports config`);
     this.name = 'SportSyncNotConfiguredError';
+  }
+}
+
+export class MockEventStateUnsupportedError extends Error {
+  constructor(providerId: string) {
+    super(`Provider ${providerId} does not support mock event state controls`);
+    this.name = 'MockEventStateUnsupportedError';
   }
 }
 
@@ -867,12 +875,19 @@ export class ProviderService {
       throw new SportProviderNotFoundError(request.sport);
     }
     await this.assertSportSyncConfigured(request.sport);
+    if (request.mockEventState && !supportsMockEventStateControls(provider)) {
+      throw new MockEventStateUnsupportedError(provider.providerId);
+    }
+    const requestContext = request.mockEventState
+      ? { mockEventState: request.mockEventState }
+      : {};
 
     const submittedAt = new Date();
     this.logger?.info({
       sport: request.sport,
       eventId: request.eventId,
       requestedFeeds: request.feeds,
+      mockEventState: request.mockEventState ?? null,
       providerId: provider.providerId,
       rootAdminUserId,
     }, 'Submitting manual event sync');
@@ -881,7 +896,7 @@ export class ProviderService {
       eventId: request.eventId,
       requestedFeeds: request.feeds,
       providerId: provider.providerId,
-      requestContext: {},
+      requestContext,
       submittedAt,
     });
 
@@ -904,6 +919,7 @@ export class ProviderService {
         eventId: request.eventId,
         providerId: provider.providerId,
         requestedFeeds: request.feeds,
+        mockEventState: request.mockEventState ?? null,
         syncRunIds: syncRuns.map((run) => run.id),
       },
     });
@@ -913,6 +929,7 @@ export class ProviderService {
       eventId: request.eventId,
       providerId: provider.providerId,
       requestedFeeds: request.feeds,
+      mockEventState: request.mockEventState ?? null,
       syncRunIds: syncRuns.map((run) => run.id),
     }, 'Submitted manual event sync');
 
@@ -1045,6 +1062,7 @@ export class ProviderService {
       sport: input.request.sport,
       eventId: input.request.eventId,
       requestedFeeds: input.request.feeds,
+      mockEventState: input.request.mockEventState ?? null,
       syncRunIds: input.syncRuns.map((run) => run.id),
     }, 'Executing submitted manual event sync');
     for (const syncRun of input.syncRuns) {
@@ -1059,6 +1077,7 @@ export class ProviderService {
           sport: input.request.sport,
           eventId: input.request.eventId,
           feeds: [requestedFeed],
+          mockEventState: input.request.mockEventState,
         }),
       );
     }
