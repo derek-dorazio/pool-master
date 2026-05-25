@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { ManageContestsPage } from './manage-contests-page';
 
@@ -11,13 +12,13 @@ const listContestsMock = vi.fn();
 const logoutUserMock = vi.fn();
 const refreshTokenMock = vi.fn();
 
-vi.mock('@/lib/api', () => ({
-  getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
-  getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
-  listContests: (...args: unknown[]) => listContestsMock(...args),
-  logoutUser: (...args: unknown[]) => logoutUserMock(...args),
-  refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
-}));
+bindApiMocks({
+  getCurrentUser: getCurrentUserMock,
+  getLeagueByCode: getLeagueByCodeMock,
+  listContests: listContestsMock,
+  logoutUser: logoutUserMock,
+  refreshToken: refreshTokenMock,
+});
 
 function renderManageContestsPage() {
   const queryClient = new QueryClient({

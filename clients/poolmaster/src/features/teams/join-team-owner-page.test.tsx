@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { JoinTeamOwnerPage } from './join-team-owner-page';
 
@@ -35,17 +36,18 @@ const {
 });
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
 
-vi.mock('@/lib/api', () => ({
-  acceptTeamOwnerInvitation: (...args: unknown[]) => acceptTeamOwnerInvitationMock(...args),
-  getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
-  getTeamOwnerInvitationPreview: (...args: unknown[]) => getTeamOwnerInvitationPreviewMock(...args),
-  logoutUser: (...args: unknown[]) => logoutUserMock(...args),
-  refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
-}));
+bindApiMocks({
+  acceptTeamOwnerInvitation: acceptTeamOwnerInvitationMock,
+  getCurrentUser: getCurrentUserMock,
+  getTeamOwnerInvitationPreview: getTeamOwnerInvitationPreviewMock,
+  logoutUser: logoutUserMock,
+  refreshToken: refreshTokenMock,
+});
 
 function renderJoinTeamOwnerPage(initialEntry = '/team-invite/TEAM123') {
   const queryClient = new QueryClient({

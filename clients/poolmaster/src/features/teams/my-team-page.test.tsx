@@ -3,6 +3,7 @@ import { TeamIconKey } from '@poolmaster/shared/domain';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { MyTeamPage } from './my-team-page';
 import { QueryKeys } from '@/lib/query-keys';
@@ -28,28 +29,28 @@ const revokeSquadOwnerInvitationMock = vi.fn();
 const updateContestEntryMock = vi.fn();
 const updateLeagueSquadMock = vi.fn();
 
-vi.mock('@/lib/api', () => ({
-  changeMemberRole: (...args: unknown[]) => changeMemberRoleMock(...args),
-  createLeagueSquad: (...args: unknown[]) => createLeagueSquadMock(...args),
-  deleteLeagueSquad: (...args: unknown[]) => deleteLeagueSquadMock(...args),
-  enterContest: (...args: unknown[]) => enterContestMock(...args),
-  createSquadOwnerInvitation: (...args: unknown[]) => createSquadOwnerInvitationMock(...args),
-  getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
-  getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
-  inactivateLeagueSquad: (...args: unknown[]) => inactivateLeagueSquadMock(...args),
-  listContestEntries: (...args: unknown[]) => listContestEntriesMock(...args),
-  listContests: (...args: unknown[]) => listContestsMock(...args),
-  listLeagueMembers: (...args: unknown[]) => listLeagueMembersMock(...args),
-  listLeagueSquads: (...args: unknown[]) => listLeagueSquadsMock(...args),
-  listSquadOwnerInvitations: (...args: unknown[]) => listSquadOwnerInvitationsMock(...args),
-  logoutUser: (...args: unknown[]) => logoutUserMock(...args),
-  refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
-  removeSquadOwner: (...args: unknown[]) => removeSquadOwnerMock(...args),
-  replaceSquadOwner: (...args: unknown[]) => replaceSquadOwnerMock(...args),
-  revokeSquadOwnerInvitation: (...args: unknown[]) => revokeSquadOwnerInvitationMock(...args),
-  updateContestEntry: (...args: unknown[]) => updateContestEntryMock(...args),
-  updateLeagueSquad: (...args: unknown[]) => updateLeagueSquadMock(...args),
-}));
+bindApiMocks({
+  changeMemberRole: changeMemberRoleMock,
+  createLeagueSquad: createLeagueSquadMock,
+  deleteLeagueSquad: deleteLeagueSquadMock,
+  enterContest: enterContestMock,
+  createSquadOwnerInvitation: createSquadOwnerInvitationMock,
+  getCurrentUser: getCurrentUserMock,
+  getLeagueByCode: getLeagueByCodeMock,
+  inactivateLeagueSquad: inactivateLeagueSquadMock,
+  listContestEntries: listContestEntriesMock,
+  listContests: listContestsMock,
+  listLeagueMembers: listLeagueMembersMock,
+  listLeagueSquads: listLeagueSquadsMock,
+  listSquadOwnerInvitations: listSquadOwnerInvitationsMock,
+  logoutUser: logoutUserMock,
+  refreshToken: refreshTokenMock,
+  removeSquadOwner: removeSquadOwnerMock,
+  replaceSquadOwner: replaceSquadOwnerMock,
+  revokeSquadOwnerInvitation: revokeSquadOwnerInvitationMock,
+  updateContestEntry: updateContestEntryMock,
+  updateLeagueSquad: updateLeagueSquadMock,
+});
 
 function TeamRouteControls() {
   const navigate = useNavigate();

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import {
   AUTH_ME_QUERY_KEY,
   type AuthSessionUser,
@@ -44,14 +45,15 @@ const {
 });
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
 
-vi.mock('@/lib/api', () => ({
-  loginUser: (...args: unknown[]) => loginUserMock(...args),
-  registerUser: (...args: unknown[]) => registerUserMock(...args),
-}));
+bindApiMocks({
+  loginUser: loginUserMock,
+  registerUser: registerUserMock,
+});
 
 vi.mock('./auth-provider', () => ({
   useAuth: () => authState,

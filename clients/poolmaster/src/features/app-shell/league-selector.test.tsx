@@ -17,6 +17,7 @@ const { mockLogger } = vi.hoisted(() => {
 });
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));

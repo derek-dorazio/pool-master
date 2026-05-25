@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportOverridesPage } from './root-admin-sport-overrides-page';
 
 const {
@@ -14,14 +15,11 @@ const {
   adminSetSportIngestionOverrideMock: vi.fn(),
 }));
 
-vi.mock('@/lib/api', () => ({
-  adminGetIngestionSchedule: (...args: unknown[]) =>
-    adminGetIngestionScheduleMock(...args),
-  adminResetSportIngestionOverride: (...args: unknown[]) =>
-    adminResetSportIngestionOverrideMock(...args),
-  adminSetSportIngestionOverride: (...args: unknown[]) =>
-    adminSetSportIngestionOverrideMock(...args),
-}));
+bindApiMocks({
+  adminGetIngestionSchedule: adminGetIngestionScheduleMock,
+  adminResetSportIngestionOverride: adminResetSportIngestionOverrideMock,
+  adminSetSportIngestionOverride: adminSetSportIngestionOverrideMock,
+});
 
 function renderPage() {
   const queryClient = new QueryClient({

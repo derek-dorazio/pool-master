@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminManageLeaguesPage } from './root-admin-manage-leagues-page';
 
 const {
@@ -24,11 +25,12 @@ const {
   };
 });
 
-vi.mock('@/lib/api', () => ({
-  adminListLeagues: (...args: unknown[]) => adminListLeaguesMock(...args),
-}));
+bindApiMocks({
+  adminListLeagues: adminListLeaguesMock,
+});
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
@@ -140,9 +142,7 @@ describe('RootAdminManageLeaguesPage', () => {
     renderPage();
 
     await waitFor(() =>
-      expect(adminListLeaguesMock).toHaveBeenLastCalledWith({
-        query: {},
-      }),
+      expect(adminListLeaguesMock).toHaveBeenLastCalledWith({}),
     );
     await screen.findByTestId('root-admin-manage-leagues-link-league-active-1');
 

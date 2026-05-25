@@ -3,6 +3,7 @@ import { TeamIconKey } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { JoinLeaguePage } from './join-league-page';
 import {
@@ -52,19 +53,20 @@ const {
 });
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
 
-vi.mock('@/lib/api', () => ({
-  acceptInvitation: (...args: unknown[]) => acceptInvitationMock(...args),
-  getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
-  getInvitationPreview: (...args: unknown[]) => getInvitationPreviewMock(...args),
-  listLeagueSquads: (...args: unknown[]) => listLeagueSquadsMock(...args),
-  logoutUser: (...args: unknown[]) => logoutUserMock(...args),
-  refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
-  updateLeagueSquad: (...args: unknown[]) => updateLeagueSquadMock(...args),
-}));
+bindApiMocks({
+  acceptInvitation: acceptInvitationMock,
+  getCurrentUser: getCurrentUserMock,
+  getInvitationPreview: getInvitationPreviewMock,
+  listLeagueSquads: listLeagueSquadsMock,
+  logoutUser: logoutUserMock,
+  refreshToken: refreshTokenMock,
+  updateLeagueSquad: updateLeagueSquadMock,
+});
 
 function renderJoinLeaguePage(initialEntry = '/invite/LEAGUE123') {
   const queryClient = new QueryClient({

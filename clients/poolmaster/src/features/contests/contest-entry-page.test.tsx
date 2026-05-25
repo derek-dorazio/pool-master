@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { ContestEntryPage } from './contest-entry-page';
 import { QueryKeys } from '@/lib/query-keys';
 
@@ -58,16 +59,17 @@ const {
   };
 });
 
-vi.mock('@/lib/api', () => ({
-  getContest: (...args: unknown[]) => getContestMock(...args),
-  getDraftState: (...args: unknown[]) => getDraftStateMock(...args),
-  getLeague: (...args: unknown[]) => getLeagueMock(...args),
-  listContestEntries: (...args: unknown[]) => listContestEntriesMock(...args),
-  submitContestSelection: (...args: unknown[]) => submitContestSelectionMock(...args),
-  updateContestEntry: (...args: unknown[]) => updateContestEntryMock(...args),
-}));
+bindApiMocks({
+  getContest: getContestMock,
+  getDraftState: getDraftStateMock,
+  getLeague: getLeagueMock,
+  listContestEntries: listContestEntriesMock,
+  submitContestSelection: submitContestSelectionMock,
+  updateContestEntry: updateContestEntryMock,
+});
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));

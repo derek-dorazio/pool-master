@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { ManageLeagueModal } from './manage-league-modal';
 import {
   apiSuccess,
@@ -21,13 +22,13 @@ const getLeagueMock = vi.fn();
 const updateLeagueDetailsMock = vi.fn();
 const updateLeagueIconMock = vi.fn();
 
-vi.mock('@/lib/api', () => ({
-  getLeague: (...args: unknown[]) => getLeagueMock(...args),
-  inactivateLeague: (...args: unknown[]) => inactivateLeagueMock(...args),
-  deleteLeague: (...args: unknown[]) => deleteLeagueMock(...args),
-  updateLeagueDetails: (...args: unknown[]) => updateLeagueDetailsMock(...args),
-  updateLeagueIcon: (...args: unknown[]) => updateLeagueIconMock(...args),
-}));
+bindApiMocks({
+  getLeague: getLeagueMock,
+  inactivateLeague: inactivateLeagueMock,
+  deleteLeague: deleteLeagueMock,
+  updateLeagueDetails: updateLeagueDetailsMock,
+  updateLeagueIcon: updateLeagueIconMock,
+});
 
 function LeaguesQueryProbe({ queryFn }: { queryFn: () => Promise<LeagueSummary[]> }) {
   const leaguesQuery = useQuery({

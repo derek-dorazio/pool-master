@@ -3,6 +3,7 @@ import { TeamIconKey } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { TeamsPage } from './teams-page';
 
@@ -44,21 +45,22 @@ const {
 });
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
 
-vi.mock('@/lib/api', () => ({
-  getCurrentUser: (...args: unknown[]) => getCurrentUserMock(...args),
-  getLeagueByCode: (...args: unknown[]) => getLeagueByCodeMock(...args),
-  listLeagueMembers: (...args: unknown[]) => listLeagueMembersMock(...args),
-  listLeagueSquads: (...args: unknown[]) => listLeagueSquadsMock(...args),
-  listSquadOwnerInvitations: (...args: unknown[]) => listSquadOwnerInvitationsMock(...args),
-  logoutUser: (...args: unknown[]) => logoutUserMock(...args),
-  removeSquadOwner: (...args: unknown[]) => removeSquadOwnerMock(...args),
-  changeMemberRole: (...args: unknown[]) => changeMemberRoleMock(...args),
-  refreshToken: (...args: unknown[]) => refreshTokenMock(...args),
-}));
+bindApiMocks({
+  getCurrentUser: getCurrentUserMock,
+  getLeagueByCode: getLeagueByCodeMock,
+  listLeagueMembers: listLeagueMembersMock,
+  listLeagueSquads: listLeagueSquadsMock,
+  listSquadOwnerInvitations: listSquadOwnerInvitationsMock,
+  logoutUser: logoutUserMock,
+  removeSquadOwner: removeSquadOwnerMock,
+  changeMemberRole: changeMemberRoleMock,
+  refreshToken: refreshTokenMock,
+});
 
 function renderTeamsPage() {
   const queryClient = new QueryClient({

@@ -3,15 +3,14 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockApi } from '@/test/msw-api';
 import { WelcomePage } from './leagues-page';
 import { apiSuccess, buildLeagueSummary, listLeaguesData } from './test/fixtures';
 
 const {
-  listLeaguesMock,
   authState,
   sharedStateCalls,
 } = vi.hoisted(() => ({
-  listLeaguesMock: vi.fn(),
   authState: {
     user: {
       id: 'user-1',
@@ -24,10 +23,6 @@ const {
     error: vi.fn(),
     loading: vi.fn(),
   },
-}));
-
-vi.mock('@/lib/api', () => ({
-  listLeagues: (...args: unknown[]) => listLeaguesMock(...args),
 }));
 
 vi.mock('@/features/auth/auth-provider', () => ({
@@ -115,14 +110,14 @@ function renderWelcomePage(initialEntries = ['/welcome']) {
 
 describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
   beforeEach(() => {
-    listLeaguesMock.mockReset();
+    mockApi.listLeagues.mockReset();
     sharedStateCalls.empty.mockClear();
     sharedStateCalls.error.mockClear();
     sharedStateCalls.loading.mockClear();
   });
 
   it('pool-master-rop.63: shows the shared zero-league state and create action when the member has no leagues', async () => {
-    listLeaguesMock.mockResolvedValue(apiSuccess(listLeaguesData([])));
+    mockApi.listLeagues.mockResolvedValue(apiSuccess(listLeaguesData([])));
 
     renderWelcomePage();
 
@@ -140,7 +135,7 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
   });
 
   it('pool-master-rop.63: renders the shared loading state while leagues load', () => {
-    listLeaguesMock.mockImplementation(() => new Promise(() => {}));
+    mockApi.listLeagues.mockImplementation(() => new Promise(() => {}));
 
     renderWelcomePage();
 
@@ -155,7 +150,7 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
   });
 
   it('pool-master-rop.63: preserves redirect into the resolved league context', async () => {
-    listLeaguesMock.mockResolvedValue(apiSuccess(listLeaguesData([
+    mockApi.listLeagues.mockResolvedValue(apiSuccess(listLeaguesData([
       buildLeagueSummary({
         id: 'league-1',
         leagueCode: 'LEAGUE1',
@@ -174,7 +169,13 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
   });
 
   it('pool-master-dxd.15/pool-master-rop.63: uses the shared no-retry leagues query policy and shared error state', async () => {
-    listLeaguesMock.mockRejectedValue(new Error('League list unavailable'));
+    mockApi.listLeagues.mockResolvedValue({
+      error: {
+        code: 'LEAGUES_UNAVAILABLE',
+        message: 'League list unavailable',
+      },
+      response: { status: 500 },
+    });
 
     renderWelcomePage();
 
@@ -187,6 +188,6 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
         title: "We couldn't load your leagues.",
       }),
     );
-    await waitFor(() => expect(listLeaguesMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mockApi.listLeagues).toHaveBeenCalledTimes(1));
   });
 });

@@ -194,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         'Clearing authenticated session',
       );
 
-      await logoutUser().catch((error) => {
+      const logoutResponse = await logoutUser().catch((error) => {
         logger.warn(
           {
             action: 'auth.logout.failed',
@@ -202,7 +202,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
           'Logout request failed; clearing local session anyway',
         );
+        return null;
       });
+      if (logoutResponse?.error) {
+        logger.warn(
+          {
+            action: 'auth.logout.failed',
+            err: logoutResponse.error,
+          },
+          'Logout request failed; clearing local session anyway',
+        );
+      }
       clearAuthSession(queryClient);
       logger.info(
         {

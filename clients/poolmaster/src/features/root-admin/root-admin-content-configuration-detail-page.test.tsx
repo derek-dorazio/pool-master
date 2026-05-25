@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminContentConfigurationDetailPage } from './root-admin-content-configuration-detail-page';
 
 const {
@@ -26,14 +27,13 @@ const {
   };
 });
 
-vi.mock('@/lib/api', () => ({
-  adminListContestConfigTemplates: (...args: unknown[]) =>
-    adminListContestConfigTemplatesMock(...args),
-  adminUpdateContestConfigTemplate: (...args: unknown[]) =>
-    adminUpdateContestConfigTemplateMock(...args),
-}));
+bindApiMocks({
+  adminListContestConfigTemplates: adminListContestConfigTemplatesMock,
+  adminUpdateContestConfigTemplate: adminUpdateContestConfigTemplateMock,
+});
 
 vi.mock('@/lib/logger', () => ({
+  getOrCreateClientTraceId: () => 'test-trace-id',
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
