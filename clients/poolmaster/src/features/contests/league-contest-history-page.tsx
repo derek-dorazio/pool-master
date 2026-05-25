@@ -8,7 +8,7 @@ import {
   type ListContestsResponses,
 } from '@/lib/api';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
-import { buildLeagueContestsPath, buildLeaguePath, setRecentLeagueCode } from '@/features/leagues/league-routing';
+import { buildLeagueContestsPath, buildLeaguePath, rememberRecentLeagueCode } from '@/features/leagues/league-routing';
 import {
   Chip,
   EmptyState,
@@ -50,7 +50,7 @@ export function LeagueContestHistoryPage() {
 
   useEffect(() => {
     if (leagueQuery.data?.leagueCode) {
-      setRecentLeagueCode(leagueQuery.data.leagueCode);
+      rememberRecentLeagueCode(leagueQuery.data.leagueCode);
     }
   }, [leagueQuery.data?.leagueCode]);
 

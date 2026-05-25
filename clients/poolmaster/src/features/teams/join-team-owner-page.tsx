@@ -14,7 +14,7 @@ import {
   buildLeaguePath,
   buildLeagueTeamPath,
   buildTeamInvitePath,
-  setRecentLeagueCode,
+  rememberRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
@@ -130,7 +130,7 @@ export function JoinTeamOwnerPage() {
       );
       const leagueCode = invitationQuery.data?.league.leagueCode;
       if (leagueCode) {
-        setRecentLeagueCode(leagueCode);
+        rememberRecentLeagueCode(leagueCode);
         navigate(buildLeagueTeamPath(leagueCode));
       }
     },

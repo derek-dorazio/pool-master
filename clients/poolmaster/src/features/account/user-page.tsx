@@ -144,20 +144,6 @@ export function UserPage() {
       return;
     }
 
-    setProfileForm({
-      email: user.email ?? '',
-      firstName: user.firstName ?? '',
-      lastName: user.lastName ?? '',
-    });
-    setUsernameForm({
-      username: user.username ?? '',
-    });
-    setPreferencesForm({
-      timezone: user.timezone ?? '',
-      locale: user.locale ?? '',
-      timeFormat: user.timeFormat ?? '',
-      dateFormat: user.dateFormat ?? '',
-    });
     logger.info(
       {
         action: 'user.page.loaded',
@@ -365,13 +351,43 @@ export function UserPage() {
     );
   }
 
-  const isInactive = user.isActive === false;
-  const memberSince = formatMemberSince(user.createdAt, user.dateFormat);
+  const activeUser = user;
+  const isInactive = activeUser.isActive === false;
+  const memberSince = formatMemberSince(activeUser.createdAt, activeUser.dateFormat);
   const disableProfileEditing = isInactive || profileMutation.isPending;
   const disableUsernameEditing = isInactive || usernameMutation.isPending;
   const disablePreferencesEditing = isInactive || preferencesMutation.isPending;
   const disablePasswordEditing = isInactive || passwordMutation.isPending;
   const activeLifecycleAction = isInactive ? reactivateAccountAction : inactivateAccountAction;
+
+  function openProfileDialog() {
+    setProfileForm({
+      email: activeUser.email ?? '',
+      firstName: activeUser.firstName ?? '',
+      lastName: activeUser.lastName ?? '',
+    });
+    profileMutation.reset();
+    setActiveDialog('profile');
+  }
+
+  function openUsernameDialog() {
+    setUsernameForm({
+      username: activeUser.username ?? '',
+    });
+    usernameMutation.reset();
+    setActiveDialog('username');
+  }
+
+  function openPreferencesDialog() {
+    setPreferencesForm({
+      timezone: activeUser.timezone ?? '',
+      locale: activeUser.locale ?? '',
+      timeFormat: activeUser.timeFormat ?? '',
+      dateFormat: activeUser.dateFormat ?? '',
+    });
+    preferencesMutation.reset();
+    setActiveDialog('preferences');
+  }
 
   return (
     <section className="space-y-6" data-testid="user-page">
@@ -422,7 +438,7 @@ export function UserPage() {
               description="Update the name and email shown in account surfaces."
               data-testid="user-page-open-profile"
               label="Edit profile"
-              onClick={() => setActiveDialog('profile')}
+              onClick={openProfileDialog}
               trailing="Open"
             />
 
@@ -430,7 +446,7 @@ export function UserPage() {
               description="Update the login username used for this account."
               data-testid="user-page-open-username"
               label="Change username"
-              onClick={() => setActiveDialog('username')}
+              onClick={openUsernameDialog}
               trailing="Open"
             />
 
@@ -438,7 +454,7 @@ export function UserPage() {
               description="Manage timezone, locale, and date/time formatting."
               data-testid="user-page-open-preferences"
               label="Edit preferences"
-              onClick={() => setActiveDialog('preferences')}
+              onClick={openPreferencesDialog}
               trailing="Open"
             />
 
@@ -495,7 +511,14 @@ export function UserPage() {
         errorFallback="We could not save your profile."
         isPending={profileMutation.isPending}
         onCancel={() => setActiveDialog(null)}
-        onOpenChange={(open) => setActiveDialog(open ? 'profile' : null)}
+        onOpenChange={(open) => {
+          if (open) {
+            openProfileDialog();
+            return;
+          }
+
+          setActiveDialog(null);
+        }}
         open={activeDialog === 'profile'}
         onSave={() => void profileMutation.mutateAsync().catch(() => undefined)}
         pendingLabel="Saving..."
@@ -555,7 +578,14 @@ export function UserPage() {
         errorFallback="We could not save your username."
         isPending={usernameMutation.isPending}
         onCancel={() => setActiveDialog(null)}
-        onOpenChange={(open) => setActiveDialog(open ? 'username' : null)}
+        onOpenChange={(open) => {
+          if (open) {
+            openUsernameDialog();
+            return;
+          }
+
+          setActiveDialog(null);
+        }}
         open={activeDialog === 'username'}
         onSave={() => void usernameMutation.mutateAsync().catch(() => undefined)}
         pendingLabel="Saving..."
@@ -590,7 +620,14 @@ export function UserPage() {
         errorFallback="We could not save your preferences."
         isPending={preferencesMutation.isPending}
         onCancel={() => setActiveDialog(null)}
-        onOpenChange={(open) => setActiveDialog(open ? 'preferences' : null)}
+        onOpenChange={(open) => {
+          if (open) {
+            openPreferencesDialog();
+            return;
+          }
+
+          setActiveDialog(null);
+        }}
         open={activeDialog === 'preferences'}
         onSave={() => void preferencesMutation.mutateAsync().catch(() => undefined)}
         pendingLabel="Saving..."

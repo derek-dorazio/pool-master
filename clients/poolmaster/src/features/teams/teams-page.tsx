@@ -16,7 +16,7 @@ import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
   buildLeaguePath,
   buildLeagueTeamHomePath,
-  setRecentLeagueCode,
+  rememberRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { getLogger } from '@/lib/logger';
 import { Alert } from '@/features/shared/ui';
@@ -61,7 +61,7 @@ export function TeamsPage() {
 
   useEffect(() => {
     if (leagueQuery.data?.leagueCode) {
-      setRecentLeagueCode(leagueQuery.data.leagueCode);
+      rememberRecentLeagueCode(leagueQuery.data.leagueCode);
     }
   }, [leagueQuery.data?.leagueCode]);
 

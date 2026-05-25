@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   adminGetPollIntervals,
@@ -46,14 +46,18 @@ export function RootAdminPollIntervalsPage() {
     },
     retry: false,
   });
+  const configSource = useMemo(
+    () => pollConfigQuery.data ? clonePollConfig(pollConfigQuery.data) : null,
+    [pollConfigQuery.data],
+  );
 
   useEffect(() => {
-    if (!pollConfigQuery.data) {
+    if (!configSource || draft) {
       return;
     }
 
-    setDraft(clonePollConfig(pollConfigQuery.data));
-  }, [pollConfigQuery.data]);
+    setDraft(configSource);
+  }, [configSource, draft]);
 
   const pollConfigMutation = useInvalidatingMutation({
     mutationFn: async (nextDraft: PollIntervalConfig) => {

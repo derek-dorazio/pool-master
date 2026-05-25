@@ -13,7 +13,7 @@ import {
   buildLeagueContestCreatePath,
   buildLeagueContestsManagePath,
   buildLeaguePath,
-  setRecentLeagueCode,
+  rememberRecentLeagueCode,
 } from "@/features/leagues/league-routing";
 import { getLogger } from "@/lib/logger";
 import {
@@ -62,7 +62,7 @@ export function LeagueContestsPage() {
 
   useEffect(() => {
     if (leagueQuery.data?.leagueCode) {
-      setRecentLeagueCode(leagueQuery.data.leagueCode);
+      rememberRecentLeagueCode(leagueQuery.data.leagueCode);
     }
   }, [leagueQuery.data?.leagueCode]);
 

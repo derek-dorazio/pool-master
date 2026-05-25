@@ -75,7 +75,7 @@ export function getRecentLeagueCode() {
 
 // Keep this signal fresh from league-scoped route entry points (selector, League Home,
 // Contest Board, contest management, My Team, joins) so deep links retain context.
-export function setRecentLeagueCode(leagueCode: string) {
+export function rememberRecentLeagueCode(leagueCode: string) {
   if (typeof document === 'undefined') {
     return;
   }
