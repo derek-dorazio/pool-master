@@ -14321,11 +14321,11 @@ export type AdminRunContestQaWorkflowResponses = {
          */
         mode: 'PREPARE_CONTEST_EVENT_DATA' | 'DRIVE_EVENT_LIVE_TEST';
         sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
-        eventId: string;
+        eventId?: string;
         /**
          * Mock-provider-only event state override for manual QA event syncs.
          */
-        mockEventState: 'open' | 'locked' | 'live' | 'completed';
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
         submittedAt: string;
         /**
          * Ordered workflow plan and submitted sync run ids.
@@ -14350,7 +14350,7 @@ export type AdminRunContestQaWorkflowResponses = {
             /**
              * Event id targeted by this step, if event-scoped.
              */
-            eventId: string;
+            eventId?: string;
             /**
              * Provider sync run ids created for this workflow step.
              */

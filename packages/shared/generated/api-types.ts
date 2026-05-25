@@ -15241,12 +15241,12 @@ export interface operations {
                         mode: "PREPARE_CONTEST_EVENT_DATA" | "DRIVE_EVENT_LIVE_TEST";
                         /** @enum {string} */
                         sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
-                        eventId: string | null;
+                        eventId?: string;
                         /**
                          * @description Mock-provider-only event state override for manual QA event syncs.
-                         * @enum {string|null}
+                         * @enum {string}
                          */
-                        mockEventState: "open" | "locked" | "live" | "completed" | null;
+                        mockEventState?: "open" | "locked" | "live" | "completed";
                         /** Format: date-time */
                         submittedAt: string;
                         /** @description Ordered workflow plan and submitted sync run ids. */
@@ -15263,7 +15263,7 @@ export interface operations {
                             /** @description Provider sync feeds represented by this step. */
                             feeds: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
                             /** @description Event id targeted by this step, if event-scoped. */
-                            eventId: string | null;
+                            eventId?: string;
                             /** @description Provider sync run ids created for this workflow step. */
                             syncRunIds: string[];
                             /** @description Admin-facing step outcome or reason. */

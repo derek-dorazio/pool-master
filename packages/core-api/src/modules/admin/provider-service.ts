@@ -362,7 +362,7 @@ function buildWorkflowStep(input: {
   label: string;
   status: ContestQaWorkflowStepStatus;
   feeds: IngestionFeedType[];
-  eventId: string | null;
+  eventId?: string;
   syncRuns: ProviderSyncRun[];
   summary: string;
   warnings?: ProviderSyncWarningDto[];
@@ -373,7 +373,7 @@ function buildWorkflowStep(input: {
     label: input.label,
     status: input.status,
     feeds: input.feeds,
-    eventId: input.eventId,
+    ...(input.eventId ? { eventId: input.eventId } : {}),
     syncRunIds: input.syncRuns.map((run) => run.id),
     summary: input.summary,
     warnings: input.warnings ?? [],
@@ -1062,7 +1062,6 @@ export class ProviderService {
           label: 'Discover schedule and rankings',
           status: 'SKIPPED',
           feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
-          eventId: null,
           syncRuns: [],
           summary: 'Skipped schedule and rankings because a known event was selected from the current event list.',
           nextActions: ['Rerun this workflow without an event when schedule or ranking data needs a fresh pull.'],
@@ -1101,7 +1100,6 @@ export class ProviderService {
           label: 'Discover schedule and rankings',
           status: 'SUBMITTED',
           feeds: sportSync.requestedFeeds,
-          eventId: null,
           syncRuns: sportSync.syncRuns,
           summary: 'Submitted schedule and ranking feeds so future events and seed data can be refreshed.',
           nextActions: ['Wait for these sync runs to complete, then select a future event.'],
@@ -1116,7 +1114,6 @@ export class ProviderService {
           label: 'Hydrate selected event field',
           status: 'BLOCKED',
           feeds: ['EVENTPARTICIPANTS'],
-          eventId: null,
           syncRuns: [],
           summary: 'Select a future event before participant hydration can run.',
           warnings: [warning],
@@ -1136,7 +1133,6 @@ export class ProviderService {
           label: 'Apply mock event state',
           status: 'BLOCKED',
           feeds: ['EVENTPARTICIPANTS'],
-          eventId: null,
           syncRuns: [],
           summary: 'Select an event before driving a live test.',
           warnings: [warning],
@@ -1231,8 +1227,8 @@ export class ProviderService {
       workflowId,
       mode: request.mode,
       sport: request.sport,
-      eventId: request.eventId ?? null,
-      mockEventState: request.mockEventState ?? null,
+      ...(request.eventId ? { eventId: request.eventId } : {}),
+      ...(request.mockEventState ? { mockEventState: request.mockEventState } : {}),
       submittedAt: submittedAt.toISOString(),
       steps,
       eventCandidates,

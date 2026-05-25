@@ -28876,8 +28876,7 @@
                       ]
                     },
                     "eventId": {
-                      "type": "string",
-                      "nullable": true
+                      "type": "string"
                     },
                     "mockEventState": {
                       "type": "string",
@@ -28887,8 +28886,7 @@
                         "live",
                         "completed"
                       ],
-                      "description": "Mock-provider-only event state override for manual QA event syncs.",
-                      "nullable": true
+                      "description": "Mock-provider-only event state override for manual QA event syncs."
                     },
                     "submittedAt": {
                       "type": "string",
@@ -28933,7 +28931,6 @@
                           },
                           "eventId": {
                             "type": "string",
-                            "nullable": true,
                             "description": "Event id targeted by this step, if event-scoped."
                           },
                           "syncRunIds": {
@@ -28983,7 +28980,6 @@
                           "label",
                           "status",
                           "feeds",
-                          "eventId",
                           "syncRunIds",
                           "summary",
                           "warnings",
@@ -29079,8 +29075,6 @@
                     "workflowId",
                     "mode",
                     "sport",
-                    "eventId",
-                    "mockEventState",
                     "submittedAt",
                     "steps",
                     "eventCandidates",
