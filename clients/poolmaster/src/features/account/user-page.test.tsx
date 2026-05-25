@@ -309,6 +309,24 @@ describe('UserPage', () => {
     );
   });
 
+  it('pool-master-7wj.6 shows profile validation before submitting invalid email changes', async () => {
+    primeCurrentUser();
+
+    renderUserPage();
+
+    await screen.findByTestId('user-page');
+    fireEvent.click(screen.getByTestId('user-page-open-profile'));
+    await screen.findByTestId('user-page-profile-dialog');
+
+    fireEvent.change(screen.getByTestId('user-page-email'), {
+      target: { value: 'not-an-email' },
+    });
+    fireEvent.click(screen.getByTestId('user-page-save-profile'));
+
+    expect(await screen.findByText(/invalid email/i)).toBeVisible();
+    expect(updateAccountProfileMock).not.toHaveBeenCalled();
+  });
+
   it('pool-master-rop.78.11 changes the self username in the auth query cache', async () => {
     primeCurrentUserThenRefetches(buildCurrentUser({ username: 'derekd' }));
     updateAccountUsernameMock.mockResolvedValue({

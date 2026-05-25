@@ -1,6 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  useForm,
+  type FieldErrors,
+  type FieldPath,
+  type FieldPathValue,
+} from 'react-hook-form';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { z } from 'zod';
 import type {
   GetManagedContestResponses,
   GetLeagueByCodeResponses,
@@ -89,6 +97,35 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
 
 const SUPPORTED_CREATE_MODES: ContestMode[] = ['GOLF_TIERED'];
 const DEFAULT_CREATE_SPORT = Sport.GOLF;
+
+const contestSetupFormSchema = z.object({
+  mode: z.enum(['GOLF_TIERED', 'GOLF_CATEGORY_PICKS']),
+  contestName: z.string().trim().min(1, 'Contest name is required.'),
+  sportEventId: z.string().trim().min(1, 'Select an event before creating the contest.'),
+  selectedTemplateId: z.string(),
+  lockPreset: z.enum(['FIVE_MINUTES', 'ONE_HOUR', 'CUSTOM']),
+  customLockHours: z.string(),
+  customLockMinutes: z.string(),
+  unlimitedEntries: z.boolean(),
+  maxEntriesPerTeam: z.string(),
+  rosterSize: z.string(),
+  countedScores: z.string(),
+  tierSource: z.enum(['ODDS', 'WORLD_RANK']),
+  defaultTierSize: z.string(),
+  tieredFallbackScore: z.string(),
+  categoryFallbackScore: z.string(),
+});
+
+type ContestSetupFormValues = z.infer<typeof contestSetupFormSchema>;
+
+function getContestFormErrorMessage(errors: FieldErrors<ContestSetupFormValues>) {
+  return (
+    errors.contestName?.message
+    ?? errors.sportEventId?.message
+    ?? errors.selectedTemplateId?.message
+    ?? 'Review the contest setup fields before saving.'
+  );
+}
 
 const LOCK_PRESET_OPTIONS: Array<{
   value: LockPreset;
@@ -289,22 +326,45 @@ export function CreateContestPage() {
   const navigate = useNavigate();
   const isEditMode = Boolean(contestId);
 
-  const [mode, setMode] = useState<ContestMode>('GOLF_TIERED');
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [contestName, setContestName] = useState('');
-  const [sportEventId, setSportEventId] = useState('');
-  const [selectedTemplateId, setSelectedTemplateId] = useState('');
-  const [lockPreset, setLockPreset] = useState<LockPreset>('FIVE_MINUTES');
-  const [customLockHours, setCustomLockHours] = useState('0');
-  const [customLockMinutes, setCustomLockMinutes] = useState('5');
-  const [unlimitedEntries, setUnlimitedEntries] = useState(false);
-  const [maxEntriesPerTeam, setMaxEntriesPerTeam] = useState('1');
-  const [rosterSize, setRosterSize] = useState('6');
-  const [countedScores, setCountedScores] = useState('4');
-  const [tierSource, setTierSource] = useState<TierSource>('ODDS');
-  const [defaultTierSize, setDefaultTierSize] = useState('10');
+  const contestForm = useForm<ContestSetupFormValues>({
+    resolver: zodResolver(contestSetupFormSchema),
+    defaultValues: {
+      mode: 'GOLF_TIERED',
+      contestName: '',
+      sportEventId: '',
+      selectedTemplateId: '',
+      lockPreset: 'FIVE_MINUTES',
+      customLockHours: '0',
+      customLockMinutes: '5',
+      unlimitedEntries: false,
+      maxEntriesPerTeam: '1',
+      rosterSize: '6',
+      countedScores: '4',
+      tierSource: 'ODDS',
+      defaultTierSize: '10',
+      tieredFallbackScore: '80',
+      categoryFallbackScore: '80',
+    },
+  });
+  const {
+    mode,
+    contestName,
+    sportEventId,
+    selectedTemplateId,
+    lockPreset,
+    customLockHours,
+    customLockMinutes,
+    unlimitedEntries,
+    maxEntriesPerTeam,
+    rosterSize,
+    countedScores,
+    tierSource,
+    defaultTierSize,
+    tieredFallbackScore,
+    categoryFallbackScore,
+  } = contestForm.watch();
   const [tiers, setTiers] = useState<TierDefinition[]>(buildSeededTiers(6, 10));
-  const [tieredFallbackScore, setTieredFallbackScore] = useState('80');
   const [selectedCategories, setSelectedCategories] = useState<CategoryKey[]>([
     'SENIOR',
     'ROOKIE',
@@ -319,9 +379,18 @@ export function CreateContestPage() {
     US_PLAYER: '1',
     INTERNATIONAL_PLAYER: '1',
   });
-  const [categoryFallbackScore, setCategoryFallbackScore] = useState('80');
   const [formError, setFormError] = useState<string | null>(null);
   const [isHydratedFromManagedContest, setIsHydratedFromManagedContest] = useState(false);
+
+  const setContestFormValue = useCallback(<Field extends FieldPath<ContestSetupFormValues>>(
+    field: Field,
+    value: FieldPathValue<ContestSetupFormValues, Field>,
+  ) => {
+    contestForm.setValue(field, value, {
+      shouldDirty: true,
+      shouldValidate: false,
+    });
+  }, [contestForm]);
 
   const leagueQuery = useQuery({
     queryKey: QueryKeys.leagues.detail(leagueCode),
@@ -457,21 +526,22 @@ export function CreateContestPage() {
   function applyTemplateConfiguration(
     configuration: ManagedContestTemplate['configuration'],
   ) {
-    setMode(configuration.mode);
-    setUnlimitedEntries(configuration.maxEntriesPerSquad == null);
-    setMaxEntriesPerTeam(
+    setContestFormValue('mode', configuration.mode);
+    setContestFormValue('unlimitedEntries', configuration.maxEntriesPerSquad == null);
+    setContestFormValue(
+      'maxEntriesPerTeam',
       configuration.maxEntriesPerSquad == null
         ? '1'
         : String(configuration.maxEntriesPerSquad),
     );
 
     if (configuration.mode === 'GOLF_TIERED') {
-      setRosterSize(String(configuration.rosterSize));
-      setCountedScores(String(configuration.countedScores));
-      setTierSource(configuration.tierSource);
-      setDefaultTierSize(String(configuration.tierGeneration.defaultTierSize));
+      setContestFormValue('rosterSize', String(configuration.rosterSize));
+      setContestFormValue('countedScores', String(configuration.countedScores));
+      setContestFormValue('tierSource', configuration.tierSource);
+      setContestFormValue('defaultTierSize', String(configuration.tierGeneration.defaultTierSize));
       setTiers(configuration.tiers);
-      setTieredFallbackScore(String(configuration.cutRule.fixedScore));
+      setContestFormValue('tieredFallbackScore', String(configuration.cutRule.fixedScore));
       return;
     }
 
@@ -495,11 +565,11 @@ export function CreateContestPage() {
         },
       ),
     );
-    setCategoryFallbackScore(String(configuration.cutRule.fixedScore));
+    setContestFormValue('categoryFallbackScore', String(configuration.cutRule.fixedScore));
   }
 
   function selectTemplate(templateId: string) {
-    setSelectedTemplateId(templateId);
+    setContestFormValue('selectedTemplateId', templateId);
     const template = templatesQuery.data?.find((entry) => entry.id === templateId);
     if (template) {
       applyTemplateConfiguration(template.configuration);
@@ -520,7 +590,7 @@ export function CreateContestPage() {
       return;
     }
 
-    setMode(nextMode);
+    setContestFormValue('mode', nextMode);
   }
 
   useEffect(() => {
@@ -531,24 +601,25 @@ export function CreateContestPage() {
     const contest = managedContestQuery.data;
     const configuration = contest.configuration;
 
-    setContestName(contest.name);
-    setSportEventId(contest.sportEventId);
-    setSelectedTemplateId(contest.templateId ?? '');
-    setUnlimitedEntries(configuration.maxEntriesPerSquad == null);
-    setMaxEntriesPerTeam(
+    setContestFormValue('contestName', contest.name);
+    setContestFormValue('sportEventId', contest.sportEventId);
+    setContestFormValue('selectedTemplateId', contest.templateId ?? '');
+    setContestFormValue('unlimitedEntries', configuration.maxEntriesPerSquad == null);
+    setContestFormValue(
+      'maxEntriesPerTeam',
       configuration.maxEntriesPerSquad == null
         ? '1'
         : String(configuration.maxEntriesPerSquad),
     );
-    setMode(configuration.mode);
+    setContestFormValue('mode', configuration.mode);
 
     if (configuration.mode === 'GOLF_TIERED') {
-      setRosterSize(String(configuration.rosterSize));
-      setCountedScores(String(configuration.countedScores));
-      setTierSource(configuration.tierSource);
-      setDefaultTierSize(String(configuration.tierGeneration.defaultTierSize));
+      setContestFormValue('rosterSize', String(configuration.rosterSize));
+      setContestFormValue('countedScores', String(configuration.countedScores));
+      setContestFormValue('tierSource', configuration.tierSource);
+      setContestFormValue('defaultTierSize', String(configuration.tierGeneration.defaultTierSize));
       setTiers(configuration.tiers);
-      setTieredFallbackScore(String(configuration.cutRule.fixedScore));
+      setContestFormValue('tieredFallbackScore', String(configuration.cutRule.fixedScore));
     } else {
       setSelectedCategories(
         configuration.categories.map((category) => category.categoryKey),
@@ -565,7 +636,7 @@ export function CreateContestPage() {
           INTERNATIONAL_PLAYER: '1',
         }),
       );
-      setCategoryFallbackScore(String(configuration.cutRule.fixedScore));
+      setContestFormValue('categoryFallbackScore', String(configuration.cutRule.fixedScore));
     }
 
     const eventStart = eventsQuery.data?.find((event) => event.id === contest.sportEventId)?.startDate;
@@ -575,9 +646,9 @@ export function CreateContestPage() {
         Math.round((Date.parse(eventStart) - Date.parse(configuration.locksAt)) / 60000),
       );
       const resolvedLockPreset = resolveLockPresetFromMinutes(minutesBeforeStart);
-      setLockPreset(resolvedLockPreset.preset);
-      setCustomLockHours(resolvedLockPreset.customHours);
-      setCustomLockMinutes(resolvedLockPreset.customMinutes);
+      setContestFormValue('lockPreset', resolvedLockPreset.preset);
+      setContestFormValue('customLockHours', resolvedLockPreset.customHours);
+      setContestFormValue('customLockMinutes', resolvedLockPreset.customMinutes);
     }
 
     setIsHydratedFromManagedContest(true);
@@ -585,7 +656,7 @@ export function CreateContestPage() {
 
   useEffect(() => {
     if (!sportEventId && eligibleEvents.length) {
-      setSportEventId(eligibleEvents[0].id);
+      setContestFormValue('sportEventId', eligibleEvents[0].id);
     }
   }, [eligibleEvents, sportEventId]);
 
@@ -595,7 +666,7 @@ export function CreateContestPage() {
     }
 
     if (eligibleEvents.length) {
-      setSportEventId(eligibleEvents[0].id);
+      setContestFormValue('sportEventId', eligibleEvents[0].id);
     }
   }, [eligibleEvents, sportEventId]);
 
@@ -716,24 +787,33 @@ export function CreateContestPage() {
   ]);
 
   const saveContestMutation = useInvalidatingMutation({
-    mutationFn: async () => {
+    mutationFn: async (values: ContestSetupFormValues) => {
       if (!leagueQuery.data?.id) {
         throw new Error('League detail is still loading.');
       }
 
-      const trimmedName = contestName.trim();
-      const parsedLockAt = derivedLockAt;
-      const parsedMaxEntries = unlimitedEntries ? undefined : Number(maxEntriesPerTeam);
+      const selectedEventForSubmission =
+        eventsQuery.data?.find((event) => event.id === values.sportEventId) ?? null;
+      const selectedTemplateForSubmission =
+        templatesQuery.data?.find((template) => template.id === values.selectedTemplateId) ?? null;
+      const trimmedName = values.contestName.trim();
+      const parsedLockAt = deriveLockAtFromEvent(
+        selectedEventForSubmission?.startDate ?? null,
+        values.lockPreset,
+        values.customLockHours,
+        values.customLockMinutes,
+      );
+      const parsedMaxEntries = values.unlimitedEntries ? undefined : Number(values.maxEntriesPerTeam);
 
       if (!trimmedName) {
         throw new Error('Contest name is required.');
       }
 
-      if (!sportEventId || !selectedEvent) {
+      if (!values.sportEventId || !selectedEventForSubmission) {
         throw new Error('Select an event before creating the contest.');
       }
 
-      if (!selectedEvent.contestEligible) {
+      if (!selectedEventForSubmission.contestEligible) {
         throw new Error('Select a contest-ready event before creating the contest.');
       }
 
@@ -742,7 +822,7 @@ export function CreateContestPage() {
       }
 
       if (
-        !unlimitedEntries
+        !values.unlimitedEntries
         && (!Number.isInteger(parsedMaxEntries) || (parsedMaxEntries ?? 0) < 1)
       ) {
         throw new Error('Max entries per team must be a positive whole number.');
@@ -761,11 +841,11 @@ export function CreateContestPage() {
       };
 
       const configuration =
-        mode === 'GOLF_TIERED'
+        values.mode === 'GOLF_TIERED'
           ? (() => {
-              const parsedRosterSize = Number(rosterSize);
-              const parsedCountedScores = Number(countedScores);
-              const parsedFallback = Number(tieredFallbackScore);
+              const parsedRosterSize = Number(values.rosterSize);
+              const parsedCountedScores = Number(values.countedScores);
+              const parsedFallback = Number(values.tieredFallbackScore);
               const totalTierPickCount = tiers.reduce(
                 (total, tier) => total + tier.pickCount,
                 0,
@@ -793,7 +873,7 @@ export function CreateContestPage() {
 
               const tierFieldValidationMessage = getTierFieldValidationMessage(
                 tiers,
-                selectedEvent?.participantCount,
+                selectedEventForSubmission.participantCount,
               );
               if (tierFieldValidationMessage) {
                 throw new Error(tierFieldValidationMessage);
@@ -813,9 +893,9 @@ export function CreateContestPage() {
                 mode: 'GOLF_TIERED' as const,
                 rosterSize: parsedRosterSize,
                 countedScores: parsedCountedScores,
-                tierSource,
+                tierSource: values.tierSource,
                 tierGeneration: {
-                  defaultTierSize: Math.max(1, Number(defaultTierSize) || 1),
+                  defaultTierSize: Math.max(1, Number(values.defaultTierSize) || 1),
                 },
                 tiers,
                 cutRule: {
@@ -826,7 +906,7 @@ export function CreateContestPage() {
               };
             })()
           : (() => {
-              const parsedFallback = Number(categoryFallbackScore);
+              const parsedFallback = Number(values.categoryFallbackScore);
               const categories = buildCategoryDefinitions(selectedCategories, categoryPickCounts);
 
               if (!categories.length) {
@@ -858,15 +938,15 @@ export function CreateContestPage() {
             })();
 
       if (!isEditMode) {
-        if (!selectedTemplateId || !selectedTemplate) {
+        if (!values.selectedTemplateId || !selectedTemplateForSubmission) {
           throw new Error('Select a contest template before creating the contest.');
         }
 
         const body: CreateContestManagementRequest = {
           name: trimmedName,
-          sportEventId,
+          sportEventId: values.sportEventId,
           contestFormat: ContestFormat.ROSTER,
-          templateId: selectedTemplateId,
+          templateId: values.selectedTemplateId,
           configurationOverrides: configuration,
         };
 
@@ -906,15 +986,15 @@ export function CreateContestPage() {
 
       return configurationResponse.data.contest.id;
     },
-    onMutate: () => {
+    onMutate: (values) => {
       logger.debug(
         {
           action: isEditMode ? 'contest.save.started' : 'contest.create.started',
           data: {
             leagueCode,
             contestId: contestId ?? null,
-            sportEventId,
-            mode,
+            sportEventId: values.sportEventId,
+            mode: values.mode,
           },
         },
         isEditMode ? 'Starting contest update flow' : 'Starting contest create flow',
@@ -1205,7 +1285,7 @@ export function CreateContestPage() {
             <FormField label="Contest name">
               <Input
                 data-testid="contest-name"
-                onChange={(event) => setContestName(event.target.value)}
+                onChange={(event) => setContestFormValue('contestName', event.target.value)}
                 placeholder="Masters Pick 6"
                 type="text"
                 value={contestName}
@@ -1216,7 +1296,7 @@ export function CreateContestPage() {
               <Select
                 data-testid="contest-sport-event"
                 onChange={(event) => {
-                  setSportEventId(event.target.value);
+                  setContestFormValue('sportEventId', event.target.value);
                 }}
                 value={sportEventId}
               >
@@ -1254,7 +1334,7 @@ export function CreateContestPage() {
               <FormField label="Lock entries">
                 <Select
                   data-testid="contest-lock-preset"
-                  onChange={(event) => setLockPreset(event.target.value as LockPreset)}
+                  onChange={(event) => setContestFormValue('lockPreset', event.target.value as LockPreset)}
                   value={lockPreset}
                 >
                   {LOCK_PRESET_OPTIONS.map((option) => (
@@ -1270,7 +1350,7 @@ export function CreateContestPage() {
                     <Input
                       data-testid="contest-lock-custom-hours"
                       min={0}
-                      onChange={(event) => setCustomLockHours(event.target.value)}
+                      onChange={(event) => setContestFormValue('customLockHours', event.target.value)}
                       type="number"
                       value={customLockHours}
                     />
@@ -1279,7 +1359,7 @@ export function CreateContestPage() {
                     <Input
                       data-testid="contest-lock-custom-minutes"
                       min={0}
-                      onChange={(event) => setCustomLockMinutes(event.target.value)}
+                      onChange={(event) => setContestFormValue('customLockMinutes', event.target.value)}
                       type="number"
                       value={customLockMinutes}
                     />
@@ -1299,7 +1379,7 @@ export function CreateContestPage() {
                 <Checkbox
                   checked={unlimitedEntries}
                   data-testid="contest-max-entries-unlimited"
-                  onChange={(event) => setUnlimitedEntries(event.target.checked)}
+                  onChange={(event) => setContestFormValue('unlimitedEntries', event.target.checked)}
                 />
                 Unlimited
               </label>
@@ -1307,7 +1387,7 @@ export function CreateContestPage() {
                 <Input
                   data-testid="contest-max-entries"
                   min={1}
-                  onChange={(event) => setMaxEntriesPerTeam(event.target.value)}
+                  onChange={(event) => setContestFormValue('maxEntriesPerTeam', event.target.value)}
                   type="number"
                   value={maxEntriesPerTeam}
                 />
@@ -1321,7 +1401,7 @@ export function CreateContestPage() {
                     <Input
                       data-testid="contest-tiered-roster-size"
                       min={1}
-                      onChange={(event) => setRosterSize(event.target.value)}
+                      onChange={(event) => setContestFormValue('rosterSize', event.target.value)}
                       type="number"
                       value={rosterSize}
                     />
@@ -1330,7 +1410,7 @@ export function CreateContestPage() {
                     <Input
                       data-testid="contest-tiered-counted-scores"
                       min={1}
-                      onChange={(event) => setCountedScores(event.target.value)}
+                      onChange={(event) => setContestFormValue('countedScores', event.target.value)}
                       type="number"
                       value={countedScores}
                     />
@@ -1341,7 +1421,7 @@ export function CreateContestPage() {
                   <FormField label="Tier source">
                     <Select
                       data-testid="contest-tiered-source"
-                      onChange={(event) => setTierSource(event.target.value as TierSource)}
+                      onChange={(event) => setContestFormValue('tierSource', event.target.value as TierSource)}
                       value={tierSource}
                     >
                       <option value="ODDS">Odds</option>
@@ -1352,7 +1432,7 @@ export function CreateContestPage() {
                     <Input
                       data-testid="contest-tiered-default-tier-size"
                       min={1}
-                      onChange={(event) => setDefaultTierSize(event.target.value)}
+                      onChange={(event) => setContestFormValue('defaultTierSize', event.target.value)}
                       type="number"
                       value={defaultTierSize}
                     />
@@ -1371,7 +1451,7 @@ export function CreateContestPage() {
                     <Input
                       data-testid="contest-tiered-fallback-score"
                       min={0}
-                      onChange={(event) => setTieredFallbackScore(event.target.value)}
+                      onChange={(event) => setContestFormValue('tieredFallbackScore', event.target.value)}
                       type="number"
                       value={tieredFallbackScore}
                     />
@@ -1428,7 +1508,7 @@ export function CreateContestPage() {
                       <Input
                         data-testid="contest-category-fallback-score"
                         min={0}
-                        onChange={(event) => setCategoryFallbackScore(event.target.value)}
+                        onChange={(event) => setContestFormValue('categoryFallbackScore', event.target.value)}
                         type="number"
                         value={categoryFallbackScore}
                       />
@@ -1460,7 +1540,10 @@ export function CreateContestPage() {
                   }
                   onClick={() => {
                     setFormError(null);
-                    void saveContestMutation.mutateAsync().catch(() => undefined);
+                    void contestForm.handleSubmit(
+                      (values) => saveContestMutation.mutateAsync(values).catch(() => undefined),
+                      (errors) => setFormError(getContestFormErrorMessage(errors)),
+                    )();
                   }}
                 >
                   {saveContestMutation.isPending

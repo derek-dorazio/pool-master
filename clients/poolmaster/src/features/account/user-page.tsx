@@ -1,6 +1,19 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Controller,
+  useForm,
+  useWatch,
+} from 'react-hook-form';
+import { z } from 'zod';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import {
+  AccountPasswordChangeRequestSchema,
+  AccountProfileUpdateRequestSchema,
+  AccountPreferencesUpdateRequestSchema,
+  AccountUsernameUpdateRequestSchema,
+} from '@poolmaster/shared/dto';
 import {
   changeAccountPassword,
   deleteAccount,
@@ -40,12 +53,10 @@ import { buildUserPath } from './user-routing';
 import { extractErrorMessage } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
-type AccountPreferencesFormState = {
-  timezone: string;
-  locale: string;
-  timeFormat: '' | '12H' | '24H';
-  dateFormat: '' | 'MDY' | 'DMY' | 'YMD';
-};
+type AccountProfileFormValues = z.infer<typeof AccountProfileUpdateRequestSchema>;
+type AccountUsernameFormValues = z.infer<typeof AccountUsernameUpdateRequestSchema>;
+type AccountPreferencesFormValues = z.infer<typeof AccountPreferencesUpdateRequestSchema>;
+type AccountPasswordFormValues = z.infer<typeof AccountPasswordChangeRequestSchema>;
 
 type ActiveDialog = 'profile' | 'username' | 'preferences' | 'password' | 'lifecycle' | 'delete' | null;
 
@@ -115,24 +126,52 @@ export function UserPage() {
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
   const [emailConfirmation, setEmailConfirmation] = useState('');
   const [deleteSuccess, setDeleteSuccess] = useState(false);
-  const [profileForm, setProfileForm] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
+  const profileForm = useForm<AccountProfileFormValues>({
+    resolver: zodResolver(AccountProfileUpdateRequestSchema),
+    mode: 'onSubmit',
+    defaultValues: {
+      email: '',
+      firstName: '',
+      lastName: '',
+    },
   });
-  const [usernameForm, setUsernameForm] = useState({
-    username: '',
+  const usernameForm = useForm<AccountUsernameFormValues>({
+    resolver: zodResolver(AccountUsernameUpdateRequestSchema),
+    mode: 'onSubmit',
+    defaultValues: {
+      username: '',
+    },
   });
-  const [preferencesForm, setPreferencesForm] = useState<AccountPreferencesFormState>({
-    timezone: '',
-    locale: '',
-    timeFormat: '',
-    dateFormat: '',
+  const preferencesForm = useForm<AccountPreferencesFormValues>({
+    resolver: zodResolver(AccountPreferencesUpdateRequestSchema),
+    mode: 'onSubmit',
+    defaultValues: {
+      timezone: null,
+      locale: null,
+      timeFormat: null,
+      dateFormat: null,
+    },
   });
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmNewPassword: '',
+  const passwordForm = useForm<AccountPasswordFormValues>({
+    resolver: zodResolver(AccountPasswordChangeRequestSchema),
+    mode: 'onSubmit',
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: '',
+    },
+  });
+  const [profileEmail, profileFirstName, profileLastName] = useWatch({
+    control: profileForm.control,
+    name: ['email', 'firstName', 'lastName'],
+  });
+  const usernameValue = useWatch({
+    control: usernameForm.control,
+    name: 'username',
+  });
+  const [currentPassword, newPassword, confirmNewPassword] = useWatch({
+    control: passwordForm.control,
+    name: ['currentPassword', 'newPassword', 'confirmNewPassword'],
   });
 
   const user = auth.user;
@@ -160,12 +199,12 @@ export function UserPage() {
   }, [isSelf, logger, user, userId]);
 
   const profileMutation = useInvalidatingMutation({
-    mutationFn: async () => {
+    mutationFn: async (values: AccountProfileFormValues) => {
       const response = await updateAccountProfile({
         body: {
-          email: profileForm.email.trim().toLowerCase(),
-          firstName: profileForm.firstName.trim(),
-          lastName: profileForm.lastName.trim(),
+          email: values.email.trim().toLowerCase(),
+          firstName: values.firstName.trim(),
+          lastName: values.lastName.trim(),
         },
       });
       if (!response.data?.user) {
@@ -180,10 +219,10 @@ export function UserPage() {
   });
 
   const usernameMutation = useInvalidatingMutation({
-    mutationFn: async () => {
+    mutationFn: async (values: AccountUsernameFormValues) => {
       const response = await updateAccountUsername({
         body: {
-          username: usernameForm.username.trim().toLowerCase(),
+          username: values.username.trim().toLowerCase(),
         },
       });
       if (!response.data?.user) {
@@ -198,13 +237,13 @@ export function UserPage() {
   });
 
   const preferencesMutation = useInvalidatingMutation({
-    mutationFn: async () => {
+    mutationFn: async (values: AccountPreferencesFormValues) => {
       const response = await updateAccountPreferences({
         body: {
-          timezone: preferencesForm.timezone.trim() || undefined,
-          locale: preferencesForm.locale.trim() || undefined,
-          timeFormat: preferencesForm.timeFormat || undefined,
-          dateFormat: preferencesForm.dateFormat || undefined,
+          timezone: values.timezone?.trim() || undefined,
+          locale: values.locale?.trim() || undefined,
+          timeFormat: values.timeFormat ?? undefined,
+          dateFormat: values.dateFormat ?? undefined,
         },
       });
       if (!response.data?.user) {
@@ -219,12 +258,12 @@ export function UserPage() {
   });
 
   const passwordMutation = useInvalidatingMutation({
-    mutationFn: async () => {
+    mutationFn: async (values: AccountPasswordFormValues) => {
       const response = await changeAccountPassword({
         body: {
-          currentPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword,
-          confirmNewPassword: passwordForm.confirmNewPassword,
+          currentPassword: values.currentPassword,
+          newPassword: values.newPassword,
+          confirmNewPassword: values.confirmNewPassword,
         },
       });
       if (!response.data?.success) {
@@ -233,7 +272,7 @@ export function UserPage() {
       return response.data;
     },
     onSuccess: () => {
-      setPasswordForm({
+      passwordForm.reset({
         currentPassword: '',
         newPassword: '',
         confirmNewPassword: '',
@@ -361,7 +400,7 @@ export function UserPage() {
   const activeLifecycleAction = isInactive ? reactivateAccountAction : inactivateAccountAction;
 
   function openProfileDialog() {
-    setProfileForm({
+    profileForm.reset({
       email: activeUser.email ?? '',
       firstName: activeUser.firstName ?? '',
       lastName: activeUser.lastName ?? '',
@@ -371,7 +410,7 @@ export function UserPage() {
   }
 
   function openUsernameDialog() {
-    setUsernameForm({
+    usernameForm.reset({
       username: activeUser.username ?? '',
     });
     usernameMutation.reset();
@@ -379,14 +418,24 @@ export function UserPage() {
   }
 
   function openPreferencesDialog() {
-    setPreferencesForm({
-      timezone: activeUser.timezone ?? '',
-      locale: activeUser.locale ?? '',
-      timeFormat: activeUser.timeFormat ?? '',
-      dateFormat: activeUser.dateFormat ?? '',
+    preferencesForm.reset({
+      timezone: activeUser.timezone ?? null,
+      locale: activeUser.locale ?? null,
+      timeFormat: activeUser.timeFormat ?? null,
+      dateFormat: activeUser.dateFormat ?? null,
     });
     preferencesMutation.reset();
     setActiveDialog('preferences');
+  }
+
+  function openPasswordDialog() {
+    passwordForm.reset({
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: '',
+    });
+    passwordMutation.reset();
+    setActiveDialog('password');
   }
 
   return (
@@ -462,7 +511,7 @@ export function UserPage() {
               description="Keep your current session while revoking your other refresh sessions."
               data-testid="user-page-open-password"
               label="Change password"
-              onClick={() => setActiveDialog('password')}
+              onClick={openPasswordDialog}
               trailing="Open"
             />
 
@@ -502,9 +551,9 @@ export function UserPage() {
       <FormModal
         canSave={
           !disableProfileEditing
-          && profileForm.email.trim().length > 0
-          && profileForm.firstName.trim().length > 0
-          && profileForm.lastName.trim().length > 0
+          && (profileEmail ?? '').trim().length > 0
+          && (profileFirstName ?? '').trim().length > 0
+          && (profileLastName ?? '').trim().length > 0
         }
         description="Keep your personal name accurate for membership and account surfaces."
         error={profileMutation.isError ? profileMutation.error : null}
@@ -520,7 +569,11 @@ export function UserPage() {
           setActiveDialog(null);
         }}
         open={activeDialog === 'profile'}
-        onSave={() => void profileMutation.mutateAsync().catch(() => undefined)}
+        onSave={() =>
+          void profileForm.handleSubmit((values) =>
+            profileMutation.mutateAsync(values).catch(() => undefined),
+          )()
+        }
         pendingLabel="Saving..."
         saveLabel="Save profile"
         saveTestId="user-page-save-profile"
@@ -528,38 +581,42 @@ export function UserPage() {
         title="Edit profile"
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label="First name">
+          <FormField
+            error={profileForm.formState.errors.firstName?.message}
+            label="First name"
+          >
             <Input
               data-testid="user-page-first-name"
               disabled={disableProfileEditing}
-              onChange={(event) => {
-                profileMutation.reset();
-                setProfileForm((current) => ({ ...current, firstName: event.target.value }));
-              }}
-              value={profileForm.firstName}
+              {...profileForm.register('firstName', {
+                onChange: () => profileMutation.reset(),
+              })}
             />
           </FormField>
-          <FormField label="Last name">
+          <FormField
+            error={profileForm.formState.errors.lastName?.message}
+            label="Last name"
+          >
             <Input
               data-testid="user-page-last-name"
               disabled={disableProfileEditing}
-              onChange={(event) => {
-                profileMutation.reset();
-                setProfileForm((current) => ({ ...current, lastName: event.target.value }));
-              }}
-              value={profileForm.lastName}
+              {...profileForm.register('lastName', {
+                onChange: () => profileMutation.reset(),
+              })}
             />
           </FormField>
-          <FormField className="sm:col-span-2" label="Email">
+          <FormField
+            className="sm:col-span-2"
+            error={profileForm.formState.errors.email?.message}
+            label="Email"
+          >
             <Input
               data-testid="user-page-email"
               disabled={disableProfileEditing}
-              onChange={(event) => {
-                profileMutation.reset();
-                setProfileForm((current) => ({ ...current, email: event.target.value }));
-              }}
+              {...profileForm.register('email', {
+                onChange: () => profileMutation.reset(),
+              })}
               type="email"
-              value={profileForm.email}
             />
           </FormField>
         </div>
@@ -572,7 +629,7 @@ export function UserPage() {
       </FormModal>
 
       <FormModal
-        canSave={!disableUsernameEditing && usernameForm.username.trim().length >= 3}
+        canSave={!disableUsernameEditing && (usernameValue ?? '').trim().length >= 3}
         description="Choose a unique username for signing in and identifying your account."
         error={usernameMutation.isError ? usernameMutation.error : null}
         errorFallback="We could not save your username."
@@ -587,22 +644,27 @@ export function UserPage() {
           setActiveDialog(null);
         }}
         open={activeDialog === 'username'}
-        onSave={() => void usernameMutation.mutateAsync().catch(() => undefined)}
+        onSave={() =>
+          void usernameForm.handleSubmit((values) =>
+            usernameMutation.mutateAsync(values).catch(() => undefined),
+          )()
+        }
         pendingLabel="Saving..."
         saveLabel="Save username"
         saveTestId="user-page-save-username"
         testId="user-page-username-dialog"
         title="Change username"
       >
-        <FormField label="Username">
+        <FormField
+          error={usernameForm.formState.errors.username?.message}
+          label="Username"
+        >
           <Input
             data-testid="user-page-username"
             disabled={disableUsernameEditing}
-            onChange={(event) => {
-              usernameMutation.reset();
-              setUsernameForm({ username: event.target.value });
-            }}
-            value={usernameForm.username}
+            {...usernameForm.register('username', {
+              onChange: () => usernameMutation.reset(),
+            })}
           />
         </FormField>
 
@@ -629,7 +691,11 @@ export function UserPage() {
           setActiveDialog(null);
         }}
         open={activeDialog === 'preferences'}
-        onSave={() => void preferencesMutation.mutateAsync().catch(() => undefined)}
+        onSave={() =>
+          void preferencesForm.handleSubmit((values) =>
+            preferencesMutation.mutateAsync(values).catch(() => undefined),
+          )()
+        }
         pendingLabel="Saving..."
         saveLabel="Save preferences"
         saveTestId="user-page-save-preferences"
@@ -637,66 +703,108 @@ export function UserPage() {
         title="Edit preferences"
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label="Timezone">
-            <Input
-              data-testid="user-page-timezone"
-              disabled={disablePreferencesEditing}
-              onChange={(event) => {
-                preferencesMutation.reset();
-                setPreferencesForm((current) => ({ ...current, timezone: event.target.value }));
-              }}
-              placeholder="America/New_York"
-              value={preferencesForm.timezone}
+          <FormField
+            error={preferencesForm.formState.errors.timezone?.message}
+            label="Timezone"
+          >
+            <Controller
+              control={preferencesForm.control}
+              name="timezone"
+              render={({ field }) => (
+                <Input
+                  data-testid="user-page-timezone"
+                  disabled={disablePreferencesEditing}
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  onChange={(event) => {
+                    preferencesMutation.reset();
+                    field.onChange(event.target.value.trim() ? event.target.value : null);
+                  }}
+                  placeholder="America/New_York"
+                  ref={field.ref}
+                  value={field.value ?? ''}
+                />
+              )}
             />
           </FormField>
-          <FormField label="Locale">
-            <Input
-              data-testid="user-page-locale"
-              disabled={disablePreferencesEditing}
-              onChange={(event) => {
-                preferencesMutation.reset();
-                setPreferencesForm((current) => ({ ...current, locale: event.target.value }));
-              }}
-              placeholder="en-US"
-              value={preferencesForm.locale}
+          <FormField
+            error={preferencesForm.formState.errors.locale?.message}
+            label="Locale"
+          >
+            <Controller
+              control={preferencesForm.control}
+              name="locale"
+              render={({ field }) => (
+                <Input
+                  data-testid="user-page-locale"
+                  disabled={disablePreferencesEditing}
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  onChange={(event) => {
+                    preferencesMutation.reset();
+                    field.onChange(event.target.value.trim() ? event.target.value : null);
+                  }}
+                  placeholder="en-US"
+                  ref={field.ref}
+                  value={field.value ?? ''}
+                />
+              )}
             />
           </FormField>
-          <FormField label="Time format">
-            <Select
-              data-testid="user-page-time-format"
-              disabled={disablePreferencesEditing}
-              onChange={(event) => {
-                preferencesMutation.reset();
-                setPreferencesForm((current) => ({
-                  ...current,
-                  timeFormat: event.target.value as AccountPreferencesFormState['timeFormat'],
-                }));
-              }}
-              value={preferencesForm.timeFormat}
-            >
-              <option value="">System default</option>
-              <option value="12H">12-hour</option>
-              <option value="24H">24-hour</option>
-            </Select>
+          <FormField
+            error={preferencesForm.formState.errors.timeFormat?.message}
+            label="Time format"
+          >
+            <Controller
+              control={preferencesForm.control}
+              name="timeFormat"
+              render={({ field }) => (
+                <Select
+                  data-testid="user-page-time-format"
+                  disabled={disablePreferencesEditing}
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  onChange={(event) => {
+                    preferencesMutation.reset();
+                    field.onChange(event.target.value || null);
+                  }}
+                  ref={field.ref}
+                  value={field.value ?? ''}
+                >
+                  <option value="">System default</option>
+                  <option value="12H">12-hour</option>
+                  <option value="24H">24-hour</option>
+                </Select>
+              )}
+            />
           </FormField>
-          <FormField label="Date format">
-            <Select
-              data-testid="user-page-date-format"
-              disabled={disablePreferencesEditing}
-              onChange={(event) => {
-                preferencesMutation.reset();
-                setPreferencesForm((current) => ({
-                  ...current,
-                  dateFormat: event.target.value as AccountPreferencesFormState['dateFormat'],
-                }));
-              }}
-              value={preferencesForm.dateFormat}
-            >
-              <option value="">System default</option>
-              <option value="MDY">MM/DD/YYYY</option>
-              <option value="DMY">DD/MM/YYYY</option>
-              <option value="YMD">YYYY-MM-DD</option>
-            </Select>
+          <FormField
+            error={preferencesForm.formState.errors.dateFormat?.message}
+            label="Date format"
+          >
+            <Controller
+              control={preferencesForm.control}
+              name="dateFormat"
+              render={({ field }) => (
+                <Select
+                  data-testid="user-page-date-format"
+                  disabled={disablePreferencesEditing}
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  onChange={(event) => {
+                    preferencesMutation.reset();
+                    field.onChange(event.target.value || null);
+                  }}
+                  ref={field.ref}
+                  value={field.value ?? ''}
+                >
+                  <option value="">System default</option>
+                  <option value="MDY">MM/DD/YYYY</option>
+                  <option value="DMY">DD/MM/YYYY</option>
+                  <option value="YMD">YYYY-MM-DD</option>
+                </Select>
+              )}
+            />
           </FormField>
         </div>
 
@@ -709,55 +817,56 @@ export function UserPage() {
 
       <UserActionDialog
         description="Changing your password keeps the current session active and revokes your other refresh sessions."
-        onOpenChange={(open) => setActiveDialog(open ? 'password' : null)}
+        onOpenChange={(open) => {
+          if (open) {
+            openPasswordDialog();
+            return;
+          }
+
+          setActiveDialog(null);
+        }}
         open={activeDialog === 'password'}
         testId="user-page-password-dialog"
         title="Change password"
       >
         <div className="space-y-4">
-          <FormField label="Current password">
+          <FormField
+            error={passwordForm.formState.errors.currentPassword?.message}
+            label="Current password"
+          >
             <Input
               data-testid="user-page-current-password"
               disabled={disablePasswordEditing}
-              onChange={(event) => {
-                passwordMutation.reset();
-                setPasswordForm((current) => ({
-                  ...current,
-                  currentPassword: event.target.value,
-                }));
-              }}
+              {...passwordForm.register('currentPassword', {
+                onChange: () => passwordMutation.reset(),
+              })}
               type="password"
-              value={passwordForm.currentPassword}
             />
           </FormField>
-          <FormField label="New password">
+          <FormField
+            error={passwordForm.formState.errors.newPassword?.message}
+            label="New password"
+          >
             <Input
               data-testid="user-page-new-password"
               disabled={disablePasswordEditing}
-              onChange={(event) => {
-                passwordMutation.reset();
-                setPasswordForm((current) => ({
-                  ...current,
-                  newPassword: event.target.value,
-                }));
-              }}
+              {...passwordForm.register('newPassword', {
+                onChange: () => passwordMutation.reset(),
+              })}
               type="password"
-              value={passwordForm.newPassword}
             />
           </FormField>
-          <FormField label="Confirm new password">
+          <FormField
+            error={passwordForm.formState.errors.confirmNewPassword?.message}
+            label="Confirm new password"
+          >
             <Input
               data-testid="user-page-confirm-password"
               disabled={disablePasswordEditing}
-              onChange={(event) => {
-                passwordMutation.reset();
-                setPasswordForm((current) => ({
-                  ...current,
-                  confirmNewPassword: event.target.value,
-                }));
-              }}
+              {...passwordForm.register('confirmNewPassword', {
+                onChange: () => passwordMutation.reset(),
+              })}
               type="password"
-              value={passwordForm.confirmNewPassword}
             />
           </FormField>
         </div>
@@ -778,11 +887,15 @@ export function UserPage() {
             data-testid="user-page-save-password"
             disabled={
               disablePasswordEditing
-              || passwordForm.currentPassword.length === 0
-              || passwordForm.newPassword.length < 8
-              || passwordForm.confirmNewPassword.length < 8
+              || (currentPassword ?? '').length === 0
+              || (newPassword ?? '').length < 8
+              || (confirmNewPassword ?? '').length < 8
             }
-            onClick={() => void passwordMutation.mutateAsync().catch(() => undefined)}
+            onClick={() =>
+              void passwordForm.handleSubmit((values) =>
+                passwordMutation.mutateAsync(values).catch(() => undefined),
+              )()
+            }
             type="button"
           >
             {passwordMutation.isPending ? 'Saving...' : 'Change password'}
