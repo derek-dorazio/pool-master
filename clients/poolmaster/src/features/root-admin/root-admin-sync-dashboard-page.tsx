@@ -143,6 +143,10 @@ export function RootAdminSyncDashboardPage() {
       lastStartedAt: recentRuns[0]?.startedAt ?? recentRuns[0]?.createdAt ?? null,
     };
   }, [recentRuns]);
+  const payloadOutcome = payloadRun ? getPayloadOutcome(payloadRun.payload) : null;
+  const payloadStats = payloadRun ? buildStatsSummary(payloadRun.payload) : [];
+  const providerPayload = getPayloadSection(payloadRun, 'providerPayload');
+  const jobPayload = getPayloadSection(payloadRun, 'jobPayload');
 
   const syncHistoryColumns = useMemo(
     () => [
@@ -314,9 +318,9 @@ export function RootAdminSyncDashboardPage() {
                 <p className="text-sm font-medium text-foreground">
                   {buildPayloadSummary(payloadRun.payload)}
                 </p>
-                {getPayloadOutcome(payloadRun.payload)?.warnings.length ? (
+                {payloadOutcome?.warnings.length ? (
                   <div className="mt-3 space-y-2">
-                    {getPayloadOutcome(payloadRun.payload)?.warnings.map((warning, index) => (
+                    {payloadOutcome.warnings.map((warning, index) => (
                       <Alert key={`${String((warning as { code?: unknown }).code)}-${index}`} tone="warning">
                         {String((warning as { message?: unknown }).message ?? 'Sync completed with a warning.')}
                       </Alert>
@@ -325,9 +329,9 @@ export function RootAdminSyncDashboardPage() {
                 ) : null}
               </div>
 
-              {buildStatsSummary(payloadRun.payload).length > 0 ? (
+              {payloadStats.length > 0 ? (
                 <MetricGrid className="md:grid-cols-3">
-                  {buildStatsSummary(payloadRun.payload).map((stat) => (
+                  {payloadStats.map((stat) => (
                     <MetricTile
                       key={stat.key}
                       label={stat.label}
@@ -342,11 +346,11 @@ export function RootAdminSyncDashboardPage() {
               )}
 
               <div className="flex flex-wrap gap-3">
-                {getPayloadSection(payloadRun, 'providerPayload') ? (
+                {providerPayload ? (
                   <Button
                     onClick={() => setJsonPayload({
                       title: 'Provider payload',
-                      payload: getPayloadSection(payloadRun, 'providerPayload'),
+                      payload: providerPayload,
                     })}
                     type="button"
                     variant="secondary"
@@ -354,11 +358,11 @@ export function RootAdminSyncDashboardPage() {
                     Show provider payload
                   </Button>
                 ) : null}
-                {getPayloadSection(payloadRun, 'jobPayload') ? (
+                {jobPayload ? (
                   <Button
                     onClick={() => setJsonPayload({
                       title: 'Job payload',
-                      payload: getPayloadSection(payloadRun, 'jobPayload'),
+                      payload: jobPayload,
                     })}
                     type="button"
                     variant="secondary"

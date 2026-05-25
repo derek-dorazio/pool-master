@@ -27426,7 +27426,6 @@
                                     "description": "Whether the captured raw provider payload was truncated before storage."
                                   },
                                   "raw": {
-                                    "nullable": true,
                                     "description": "Raw provider response JSON retained for debugging when capture is available."
                                   }
                                 },
@@ -27470,7 +27469,6 @@
                                   },
                                   "eventExternalId": {
                                     "type": "string",
-                                    "nullable": true,
                                     "description": "External event id for event-scoped jobs, when applicable."
                                   },
                                   "status": {
@@ -27486,13 +27484,11 @@
                                   "startedAt": {
                                     "type": "string",
                                     "format": "date-time",
-                                    "nullable": true,
                                     "description": "When the ingestion job started."
                                   },
                                   "completedAt": {
                                     "type": "string",
                                     "format": "date-time",
-                                    "nullable": true,
                                     "description": "When the ingestion job completed."
                                   },
                                   "recordsProcessed": {
@@ -27515,17 +27511,13 @@
                                   "jobType",
                                   "providerId",
                                   "sport",
-                                  "eventExternalId",
                                   "status",
-                                  "startedAt",
-                                  "completedAt",
                                   "recordsProcessed",
                                   "errors",
                                   "errorLog"
                                 ],
                                 "additionalProperties": false,
-                                "description": "Serialized ingestion job details. Null while the run has not started or finished.",
-                                "nullable": true
+                                "description": "Serialized ingestion job details after an ingestion job is available."
                               },
                               "outcome": {
                                 "type": "object",
@@ -27587,29 +27579,6 @@
                                   "type": "number"
                                 },
                                 "description": "Canonical numeric sync stats used by admin diagnostics."
-                              },
-                              "warnings": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "code": {
-                                      "type": "string",
-                                      "description": "Stable warning code emitted by the ingestion/sync layer."
-                                    },
-                                    "message": {
-                                      "type": "string",
-                                      "description": "Human-readable warning detail for root-admin investigation."
-                                    }
-                                  },
-                                  "required": [
-                                    "code",
-                                    "message"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "Warning emitted for a provider sync run that completed but needs operator attention."
-                                },
-                                "description": "Convenience warning list duplicated from outcome for summary UI."
                               },
                               "recordsProcessed": {
                                 "type": "number",
@@ -27922,7 +27891,6 @@
                                     "description": "Whether the captured raw provider payload was truncated before storage."
                                   },
                                   "raw": {
-                                    "nullable": true,
                                     "description": "Raw provider response JSON retained for debugging when capture is available."
                                   }
                                 },
@@ -27966,7 +27934,6 @@
                                   },
                                   "eventExternalId": {
                                     "type": "string",
-                                    "nullable": true,
                                     "description": "External event id for event-scoped jobs, when applicable."
                                   },
                                   "status": {
@@ -27982,13 +27949,11 @@
                                   "startedAt": {
                                     "type": "string",
                                     "format": "date-time",
-                                    "nullable": true,
                                     "description": "When the ingestion job started."
                                   },
                                   "completedAt": {
                                     "type": "string",
                                     "format": "date-time",
-                                    "nullable": true,
                                     "description": "When the ingestion job completed."
                                   },
                                   "recordsProcessed": {
@@ -28011,17 +27976,13 @@
                                   "jobType",
                                   "providerId",
                                   "sport",
-                                  "eventExternalId",
                                   "status",
-                                  "startedAt",
-                                  "completedAt",
                                   "recordsProcessed",
                                   "errors",
                                   "errorLog"
                                 ],
                                 "additionalProperties": false,
-                                "description": "Serialized ingestion job details. Null while the run has not started or finished.",
-                                "nullable": true
+                                "description": "Serialized ingestion job details after an ingestion job is available."
                               },
                               "outcome": {
                                 "type": "object",
@@ -28083,29 +28044,6 @@
                                   "type": "number"
                                 },
                                 "description": "Canonical numeric sync stats used by admin diagnostics."
-                              },
-                              "warnings": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "code": {
-                                      "type": "string",
-                                      "description": "Stable warning code emitted by the ingestion/sync layer."
-                                    },
-                                    "message": {
-                                      "type": "string",
-                                      "description": "Human-readable warning detail for root-admin investigation."
-                                    }
-                                  },
-                                  "required": [
-                                    "code",
-                                    "message"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "Warning emitted for a provider sync run that completed but needs operator attention."
-                                },
-                                "description": "Convenience warning list duplicated from outcome for summary UI."
                               },
                               "recordsProcessed": {
                                 "type": "number",
@@ -28498,7 +28436,6 @@
                                     "description": "Whether the captured raw provider payload was truncated before storage."
                                   },
                                   "raw": {
-                                    "nullable": true,
                                     "description": "Raw provider response JSON retained for debugging when capture is available."
                                   }
                                 },
@@ -28542,7 +28479,6 @@
                                   },
                                   "eventExternalId": {
                                     "type": "string",
-                                    "nullable": true,
                                     "description": "External event id for event-scoped jobs, when applicable."
                                   },
                                   "status": {
@@ -28558,13 +28494,11 @@
                                   "startedAt": {
                                     "type": "string",
                                     "format": "date-time",
-                                    "nullable": true,
                                     "description": "When the ingestion job started."
                                   },
                                   "completedAt": {
                                     "type": "string",
                                     "format": "date-time",
-                                    "nullable": true,
                                     "description": "When the ingestion job completed."
                                   },
                                   "recordsProcessed": {
@@ -28587,17 +28521,13 @@
                                   "jobType",
                                   "providerId",
                                   "sport",
-                                  "eventExternalId",
                                   "status",
-                                  "startedAt",
-                                  "completedAt",
                                   "recordsProcessed",
                                   "errors",
                                   "errorLog"
                                 ],
                                 "additionalProperties": false,
-                                "description": "Serialized ingestion job details. Null while the run has not started or finished.",
-                                "nullable": true
+                                "description": "Serialized ingestion job details after an ingestion job is available."
                               },
                               "outcome": {
                                 "type": "object",
@@ -28659,29 +28589,6 @@
                                   "type": "number"
                                 },
                                 "description": "Canonical numeric sync stats used by admin diagnostics."
-                              },
-                              "warnings": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "code": {
-                                      "type": "string",
-                                      "description": "Stable warning code emitted by the ingestion/sync layer."
-                                    },
-                                    "message": {
-                                      "type": "string",
-                                      "description": "Human-readable warning detail for root-admin investigation."
-                                    }
-                                  },
-                                  "required": [
-                                    "code",
-                                    "message"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "Warning emitted for a provider sync run that completed but needs operator attention."
-                                },
-                                "description": "Convenience warning list duplicated from outcome for summary UI."
                               },
                               "recordsProcessed": {
                                 "type": "number",

@@ -125,12 +125,12 @@ export interface UnmappedParticipant {
   sport: Sport;
 }
 
-interface SyncOutcomePayload {
+type SyncOutcomePayload = Prisma.InputJsonObject & {
   severity: 'SUCCESS' | 'WARNING' | 'ERROR';
   summary: string;
-  warnings: Array<{ code: string; message: string }>;
+  warnings: Prisma.InputJsonArray;
   errors: number;
-}
+};
 
 export interface ProviderDetail extends ProviderSummary {
   recentHealthChecks: ProviderHealthCheck[];
@@ -272,10 +272,10 @@ function toSerializableJob(job: IngestionJobRecord): Record<string, unknown> {
     jobType: job.jobType,
     providerId: job.providerId,
     sport: job.sport,
-    eventExternalId: job.eventExternalId ?? null,
+    ...(job.eventExternalId ? { eventExternalId: job.eventExternalId } : {}),
     status: job.status,
-    startedAt: job.startedAt?.toISOString() ?? null,
-    completedAt: job.completedAt?.toISOString() ?? null,
+    ...(job.startedAt ? { startedAt: job.startedAt.toISOString() } : {}),
+    ...(job.completedAt ? { completedAt: job.completedAt.toISOString() } : {}),
     recordsProcessed: job.recordsProcessed,
     errors: job.errors,
     errorLog: job.errorLog,
@@ -299,7 +299,10 @@ function buildSyncOutcome(input: {
   return {
     severity,
     summary: input.summary,
-    warnings,
+    warnings: warnings.map((warning) => ({
+      code: warning.code,
+      message: warning.message,
+    })),
     errors: errorCount,
   };
 }
@@ -941,12 +944,10 @@ export class ProviderService {
             eventId: input.eventId,
             ...input.requestContext,
           },
-          jobPayload: null,
           providerPayload: {
             operation: feed,
             rawCaptured: false,
             rawTruncated: false,
-            raw: null,
           },
           stats: {},
           outcome: buildSyncOutcome({
@@ -964,7 +965,7 @@ export class ProviderService {
             status: 'SUBMITTED',
             startedAt: null,
             completedAt: null,
-            payloadJson: payloadJson as unknown as Prisma.InputJsonValue,
+            payloadJson,
             createdAt: input.submittedAt,
           },
         });
@@ -1072,12 +1073,10 @@ export class ProviderService {
     const startedPayload = {
       ...syncRun.payload,
       detail: `Started ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
-      jobPayload: null,
       providerPayload: {
         operation: requestedFeed,
         rawCaptured: false,
         rawTruncated: false,
-        raw: null,
       },
       outcome: buildSyncOutcome({
         status: 'IN_PROGRESS',
@@ -1117,7 +1116,6 @@ export class ProviderService {
           errors: job.errors,
         }),
         stats: job.stats ?? {},
-        warnings: job.warnings ?? [],
         recordsProcessed: job.recordsProcessed,
         errors: job.errors,
       };
@@ -1168,12 +1166,10 @@ export class ProviderService {
     const updatedPayload = {
       ...payload,
       detail: `Failed ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
-      jobPayload: null,
       providerPayload: payload.providerPayload ?? {
         operation: requestedFeed,
         rawCaptured: false,
         rawTruncated: false,
-        raw: null,
       },
       outcome: buildSyncOutcome({
         status: 'FAILED',

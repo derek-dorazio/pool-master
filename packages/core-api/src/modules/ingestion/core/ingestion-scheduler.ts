@@ -63,7 +63,7 @@ export interface IngestionJobProviderPayload {
   operation: IngestionFeedType;
   rawCaptured: boolean;
   rawTruncated: boolean;
-  raw: ProviderPayloadCapture[] | null;
+  raw?: ProviderPayloadCapture[];
 }
 
 interface IngestionJobWorkResult {
@@ -1039,17 +1039,19 @@ function buildProviderPayload(
       operation,
       rawCaptured: false,
       rawTruncated: false,
-      raw: null,
     };
   }
 
   const raw = provider.consumeProviderPayloads();
-  return {
+  const payload: IngestionJobProviderPayload = {
     operation,
     rawCaptured: raw.length > 0,
     rawTruncated: false,
-    raw,
   };
+  if (raw.length > 0) {
+    payload.raw = raw;
+  }
+  return payload;
 }
 
 function buildParticipantSyncWarnings(

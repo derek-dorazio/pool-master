@@ -13603,7 +13603,7 @@ export type AdminListProviderSyncRunsResponses = {
                     [key: string]: unknown;
                 };
                 /**
-                 * Serialized ingestion job details. Null while the run has not started or finished.
+                 * Serialized ingestion job details after an ingestion job is available.
                  */
                 jobPayload?: {
                     /**
@@ -13618,7 +13618,7 @@ export type AdminListProviderSyncRunsResponses = {
                     /**
                      * External event id for event-scoped jobs, when applicable.
                      */
-                    eventExternalId: string;
+                    eventExternalId?: string;
                     /**
                      * Internal ingestion job status.
                      */
@@ -13626,11 +13626,11 @@ export type AdminListProviderSyncRunsResponses = {
                     /**
                      * When the ingestion job started.
                      */
-                    startedAt: string;
+                    startedAt?: string;
                     /**
                      * When the ingestion job completed.
                      */
-                    completedAt: string;
+                    completedAt?: string;
                     /**
                      * Canonical records processed by the ingestion job.
                      */
@@ -13680,19 +13680,6 @@ export type AdminListProviderSyncRunsResponses = {
                 stats?: {
                     [key: string]: number;
                 };
-                /**
-                 * Convenience warning list duplicated from outcome for summary UI.
-                 */
-                warnings?: Array<{
-                    /**
-                     * Stable warning code emitted by the ingestion/sync layer.
-                     */
-                    code: string;
-                    /**
-                     * Human-readable warning detail for root-admin investigation.
-                     */
-                    message: string;
-                }>;
                 /**
                  * Legacy top-level processed-record count retained for summary compatibility.
                  */
@@ -13872,7 +13859,7 @@ export type AdminPrepareSportSyncResponses = {
                     [key: string]: unknown;
                 };
                 /**
-                 * Serialized ingestion job details. Null while the run has not started or finished.
+                 * Serialized ingestion job details after an ingestion job is available.
                  */
                 jobPayload?: {
                     /**
@@ -13887,7 +13874,7 @@ export type AdminPrepareSportSyncResponses = {
                     /**
                      * External event id for event-scoped jobs, when applicable.
                      */
-                    eventExternalId: string;
+                    eventExternalId?: string;
                     /**
                      * Internal ingestion job status.
                      */
@@ -13895,11 +13882,11 @@ export type AdminPrepareSportSyncResponses = {
                     /**
                      * When the ingestion job started.
                      */
-                    startedAt: string;
+                    startedAt?: string;
                     /**
                      * When the ingestion job completed.
                      */
-                    completedAt: string;
+                    completedAt?: string;
                     /**
                      * Canonical records processed by the ingestion job.
                      */
@@ -13949,19 +13936,6 @@ export type AdminPrepareSportSyncResponses = {
                 stats?: {
                     [key: string]: number;
                 };
-                /**
-                 * Convenience warning list duplicated from outcome for summary UI.
-                 */
-                warnings?: Array<{
-                    /**
-                     * Stable warning code emitted by the ingestion/sync layer.
-                     */
-                    code: string;
-                    /**
-                     * Human-readable warning detail for root-admin investigation.
-                     */
-                    message: string;
-                }>;
                 /**
                  * Legacy top-level processed-record count retained for summary compatibility.
                  */
@@ -14134,7 +14108,7 @@ export type AdminSyncProviderEventDataResponses = {
                     [key: string]: unknown;
                 };
                 /**
-                 * Serialized ingestion job details. Null while the run has not started or finished.
+                 * Serialized ingestion job details after an ingestion job is available.
                  */
                 jobPayload?: {
                     /**
@@ -14149,7 +14123,7 @@ export type AdminSyncProviderEventDataResponses = {
                     /**
                      * External event id for event-scoped jobs, when applicable.
                      */
-                    eventExternalId: string;
+                    eventExternalId?: string;
                     /**
                      * Internal ingestion job status.
                      */
@@ -14157,11 +14131,11 @@ export type AdminSyncProviderEventDataResponses = {
                     /**
                      * When the ingestion job started.
                      */
-                    startedAt: string;
+                    startedAt?: string;
                     /**
                      * When the ingestion job completed.
                      */
-                    completedAt: string;
+                    completedAt?: string;
                     /**
                      * Canonical records processed by the ingestion job.
                      */
@@ -14211,19 +14185,6 @@ export type AdminSyncProviderEventDataResponses = {
                 stats?: {
                     [key: string]: number;
                 };
-                /**
-                 * Convenience warning list duplicated from outcome for summary UI.
-                 */
-                warnings?: Array<{
-                    /**
-                     * Stable warning code emitted by the ingestion/sync layer.
-                     */
-                    code: string;
-                    /**
-                     * Human-readable warning detail for root-admin investigation.
-                     */
-                    message: string;
-                }>;
                 /**
                  * Legacy top-level processed-record count retained for summary compatibility.
                  */

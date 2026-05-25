@@ -14660,7 +14660,7 @@ export interface operations {
                                 } & {
                                     [key: string]: unknown;
                                 };
-                                /** @description Serialized ingestion job details. Null while the run has not started or finished. */
+                                /** @description Serialized ingestion job details after an ingestion job is available. */
                                 jobPayload?: {
                                     /** @description Internal ingestion job type that executed this sync feed. */
                                     jobType: string;
@@ -14669,7 +14669,7 @@ export interface operations {
                                     /** @enum {string} */
                                     sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
                                     /** @description External event id for event-scoped jobs, when applicable. */
-                                    eventExternalId: string | null;
+                                    eventExternalId?: string;
                                     /**
                                      * @description Internal ingestion job status.
                                      * @enum {string}
@@ -14679,19 +14679,19 @@ export interface operations {
                                      * Format: date-time
                                      * @description When the ingestion job started.
                                      */
-                                    startedAt: string | null;
+                                    startedAt?: string;
                                     /**
                                      * Format: date-time
                                      * @description When the ingestion job completed.
                                      */
-                                    completedAt: string | null;
+                                    completedAt?: string;
                                     /** @description Canonical records processed by the ingestion job. */
                                     recordsProcessed: number;
                                     /** @description Error count captured by the ingestion job. */
                                     errors: number;
                                     /** @description Raw ingestion error-log entries for root-admin investigation. */
                                     errorLog: unknown[];
-                                } | null;
+                                };
                                 /** @description Admin-facing outcome and warning summary for the sync run. */
                                 outcome?: {
                                     /**
@@ -14715,13 +14715,6 @@ export interface operations {
                                 stats?: {
                                     [key: string]: number;
                                 };
-                                /** @description Convenience warning list duplicated from outcome for summary UI. */
-                                warnings?: {
-                                    /** @description Stable warning code emitted by the ingestion/sync layer. */
-                                    code: string;
-                                    /** @description Human-readable warning detail for root-admin investigation. */
-                                    message: string;
-                                }[];
                                 /** @description Legacy top-level processed-record count retained for summary compatibility. */
                                 recordsProcessed?: number;
                                 /** @description Legacy top-level error count retained for summary compatibility. */
@@ -14843,7 +14836,7 @@ export interface operations {
                                 } & {
                                     [key: string]: unknown;
                                 };
-                                /** @description Serialized ingestion job details. Null while the run has not started or finished. */
+                                /** @description Serialized ingestion job details after an ingestion job is available. */
                                 jobPayload?: {
                                     /** @description Internal ingestion job type that executed this sync feed. */
                                     jobType: string;
@@ -14852,7 +14845,7 @@ export interface operations {
                                     /** @enum {string} */
                                     sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
                                     /** @description External event id for event-scoped jobs, when applicable. */
-                                    eventExternalId: string | null;
+                                    eventExternalId?: string;
                                     /**
                                      * @description Internal ingestion job status.
                                      * @enum {string}
@@ -14862,19 +14855,19 @@ export interface operations {
                                      * Format: date-time
                                      * @description When the ingestion job started.
                                      */
-                                    startedAt: string | null;
+                                    startedAt?: string;
                                     /**
                                      * Format: date-time
                                      * @description When the ingestion job completed.
                                      */
-                                    completedAt: string | null;
+                                    completedAt?: string;
                                     /** @description Canonical records processed by the ingestion job. */
                                     recordsProcessed: number;
                                     /** @description Error count captured by the ingestion job. */
                                     errors: number;
                                     /** @description Raw ingestion error-log entries for root-admin investigation. */
                                     errorLog: unknown[];
-                                } | null;
+                                };
                                 /** @description Admin-facing outcome and warning summary for the sync run. */
                                 outcome?: {
                                     /**
@@ -14898,13 +14891,6 @@ export interface operations {
                                 stats?: {
                                     [key: string]: number;
                                 };
-                                /** @description Convenience warning list duplicated from outcome for summary UI. */
-                                warnings?: {
-                                    /** @description Stable warning code emitted by the ingestion/sync layer. */
-                                    code: string;
-                                    /** @description Human-readable warning detail for root-admin investigation. */
-                                    message: string;
-                                }[];
                                 /** @description Legacy top-level processed-record count retained for summary compatibility. */
                                 recordsProcessed?: number;
                                 /** @description Legacy top-level error count retained for summary compatibility. */
@@ -15055,7 +15041,7 @@ export interface operations {
                                 } & {
                                     [key: string]: unknown;
                                 };
-                                /** @description Serialized ingestion job details. Null while the run has not started or finished. */
+                                /** @description Serialized ingestion job details after an ingestion job is available. */
                                 jobPayload?: {
                                     /** @description Internal ingestion job type that executed this sync feed. */
                                     jobType: string;
@@ -15064,7 +15050,7 @@ export interface operations {
                                     /** @enum {string} */
                                     sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
                                     /** @description External event id for event-scoped jobs, when applicable. */
-                                    eventExternalId: string | null;
+                                    eventExternalId?: string;
                                     /**
                                      * @description Internal ingestion job status.
                                      * @enum {string}
@@ -15074,19 +15060,19 @@ export interface operations {
                                      * Format: date-time
                                      * @description When the ingestion job started.
                                      */
-                                    startedAt: string | null;
+                                    startedAt?: string;
                                     /**
                                      * Format: date-time
                                      * @description When the ingestion job completed.
                                      */
-                                    completedAt: string | null;
+                                    completedAt?: string;
                                     /** @description Canonical records processed by the ingestion job. */
                                     recordsProcessed: number;
                                     /** @description Error count captured by the ingestion job. */
                                     errors: number;
                                     /** @description Raw ingestion error-log entries for root-admin investigation. */
                                     errorLog: unknown[];
-                                } | null;
+                                };
                                 /** @description Admin-facing outcome and warning summary for the sync run. */
                                 outcome?: {
                                     /**
@@ -15110,13 +15096,6 @@ export interface operations {
                                 stats?: {
                                     [key: string]: number;
                                 };
-                                /** @description Convenience warning list duplicated from outcome for summary UI. */
-                                warnings?: {
-                                    /** @description Stable warning code emitted by the ingestion/sync layer. */
-                                    code: string;
-                                    /** @description Human-readable warning detail for root-admin investigation. */
-                                    message: string;
-                                }[];
                                 /** @description Legacy top-level processed-record count retained for summary compatibility. */
                                 recordsProcessed?: number;
                                 /** @description Legacy top-level error count retained for summary compatibility. */
