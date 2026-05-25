@@ -15,7 +15,7 @@ import { LeagueIcon } from './league-icon';
 import { LEAGUE_ICON_OPTIONS } from './league-icon-catalog';
 import { removeLeagueSummary, syncLeagueCaches } from './league-cache';
 import { extractErrorMessage } from '@/lib/errors';
-import { Button, formatDateDisplay, Input, Textarea } from '@/features/shared/ui';
+import { Button, Chip, formatDateDisplay, Input, Textarea } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 
@@ -262,9 +262,9 @@ function ManageLeagueModalContent({
         >
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-3">
-              <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+              <Chip>
                 League management
-              </span>
+              </Chip>
               <div className="space-y-2">
                 <Dialog.Title className="text-2xl font-semibold tracking-tight">
                   Manage {league.name}

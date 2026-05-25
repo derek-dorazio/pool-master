@@ -7,6 +7,7 @@ import { createLeague } from "@/lib/api";
 import { getLogger } from "@/lib/logger";
 import {
   Button,
+  Chip,
   FormField,
   Input,
   Modal,
@@ -248,9 +249,9 @@ export function CreateLeagueModal({
       titleId="create-league-modal-title"
     >
       <div className="space-y-3">
-        <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+        <Chip>
           Commissioner setup
-        </span>
+        </Chip>
         <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
           <span
             className={`rounded-full border px-3 py-1 ${

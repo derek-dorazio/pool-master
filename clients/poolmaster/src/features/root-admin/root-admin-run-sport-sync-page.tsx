@@ -10,6 +10,7 @@ import {
   Button,
   FormField,
   LinkButton,
+  PageHeader,
   Select,
   Tile,
 } from '@/features/shared/ui';
@@ -145,29 +146,19 @@ export function RootAdminRunSportSyncPage() {
       className="space-y-6"
       data-testid="root-admin-run-sport-sync-page"
     >
-      <Tile>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Sync
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
-              Run sport sync
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Use this action when provider-fed event or participant data has not
-              populated as expected and you need to manually submit the relevant
-              sport-level ingestion workflow.
-            </p>
-          </div>
+      <PageHeader
+        actions={(
           <LinkButton
             to="/manage/sync"
             variant="subtle"
           >
             Back to Sync dashboard
           </LinkButton>
-        </div>
-      </Tile>
+        )}
+        description="Use this action when provider-fed event or participant data has not populated as expected and you need to manually submit the relevant sport-level ingestion workflow."
+        eyebrow="Sync"
+        title="Run sport sync"
+      />
 
       <Tile>
         <div className="space-y-3">

@@ -7,6 +7,7 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { getLogger } from '@/lib/logger';
 import {
   Button,
+  Chip,
   FormField,
   Input,
   LinkButton,
@@ -265,9 +266,9 @@ export function JoinLeaguePage() {
   return (
     <PublicInviteJoinPage
       context={(
-        <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+        <Chip>
           Invitation
-        </span>
+        </Chip>
       )}
       testId="join-league-page"
       title={invitationQuery.data ? `Join ${invitationQuery.data.league.name}` : 'Accept your league invite'}

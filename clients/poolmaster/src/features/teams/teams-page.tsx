@@ -19,7 +19,7 @@ import {
   rememberRecentLeagueCode,
 } from '@/features/leagues/league-routing';
 import { getLogger } from '@/lib/logger';
-import { Alert } from '@/features/shared/ui';
+import { Alert, Chip, PageHeader, Tile } from '@/features/shared/ui';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { getTeamIconOption } from './team-icon-catalog';
 import { TeamIcon } from './team-icon';
@@ -195,23 +195,21 @@ export function TeamsPage() {
 
   return (
     <section className="space-y-6" data-testid="teams-page">
-      <div className="rounded-[2rem] border border-border bg-card p-8">
-        <Link
-          className="text-sm font-medium text-primary transition hover:opacity-80"
-          to={buildLeaguePath(league.leagueCode)}
-        >
-          Back to League Home
-        </Link>
-        <span className="mt-4 inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-          League Directory
-        </span>
-        <h2 className="mt-4 text-3xl font-semibold tracking-tight">Teams and Owners</h2>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Browse every team in {league.name}. Members use this as a directory, while
-          commissioners, root admins, and team co-owners can use the inline owner actions here and
-          move to Team Home for deeper lifecycle work.
-        </p>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { href: buildLeaguePath(league.leagueCode), label: 'League Home' },
+          { label: 'Teams and Owners' },
+        ]}
+        description={(
+          <>
+            Browse every team in {league.name}. Members use this as a directory, while
+            commissioners, root admins, and team co-owners can use the inline owner actions here and
+            move to Team Home for deeper lifecycle work.
+          </>
+        )}
+        eyebrow="League Directory"
+        title="Teams and Owners"
+      />
 
       {ownerInvitationsQuery.isError ? (
         <Alert
@@ -225,7 +223,7 @@ export function TeamsPage() {
         </Alert>
       ) : null}
 
-      <section className="rounded-[2rem] border border-border bg-card p-6">
+      <Tile>
         <div className="hidden border-b border-border pb-3 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] md:gap-6">
           <span>Team</span>
           <span>Owners</span>
@@ -266,9 +264,9 @@ export function TeamsPage() {
                           {team.name}
                         </Link>
                         {team.isActive === false ? (
-                          <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                          <Chip>
                             Inactive
-                          </span>
+                          </Chip>
                         ) : null}
                       </div>
                       <p className="mt-2 text-sm text-muted-foreground">
@@ -300,13 +298,13 @@ export function TeamsPage() {
                             >
                               {getOwnerLabel(owner.firstName, owner.lastName)}
                             </Link>
-                            <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                            <Chip>
                               Active owner
-                            </span>
+                            </Chip>
                             {leagueMember ? (
-                              <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                              <Chip>
                                 {leagueMember.role === 'COMMISSIONER' ? 'Commissioner' : 'Member'}
-                              </span>
+                              </Chip>
                             ) : null}
                           </div>
                           <TeamOwnerActionMenu
@@ -332,9 +330,9 @@ export function TeamsPage() {
                         key={invitation.id}
                       >
                         <span className="text-sm text-foreground">{invitation.email}</span>
-                        <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                        <Chip>
                           {formatInvitationStatus(invitation.status)} invite
-                        </span>
+                        </Chip>
                       </div>
                     ))}
 
@@ -349,7 +347,7 @@ export function TeamsPage() {
             <p className="text-sm text-muted-foreground">No teams exist for this league yet.</p>
           )}
         </div>
-      </section>
+      </Tile>
     </section>
   );
 }
