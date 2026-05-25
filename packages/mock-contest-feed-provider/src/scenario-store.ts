@@ -767,8 +767,20 @@ function startOfUtcDay(base: Date): Date {
   return new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate()));
 }
 
-function atUtcDayOffset(base: Date, days: number, hour: number): Date {
-  return addHours(addDays(startOfUtcDay(base), days), hour);
+function nextUtcWeekdayStartAfter(base: Date, weekday: number, hour: number): Date {
+  const today = startOfUtcDay(base);
+  const daysUntilWeekday = (weekday - today.getUTCDay() + 7) % 7;
+  let candidate = addHours(addDays(today, daysUntilWeekday), hour);
+
+  if (candidate.getTime() <= base.getTime()) {
+    candidate = addDays(candidate, 7);
+  }
+
+  return candidate;
+}
+
+function toDateStamp(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
 function emptyFeeds(asOf: string): EventFeedsRecord {
@@ -954,6 +966,36 @@ function buildManualTestLifecycleEvent(anchor: Date, now: Date): ContestFeedEven
   });
 }
 
+function buildRollingWeekendGolfEvents(now: Date): readonly ContestFeedEventRecord[] {
+  const firstThursday = nextUtcWeekdayStartAfter(now, 4, 12);
+
+  return [0, 1].map((weekOffset) => {
+    const startsAt = addDays(firstThursday, weekOffset * 7);
+    const endsAt = addHours(addDays(startsAt, 3), 10);
+    const releaseAt = addDays(startsAt, -14);
+    const fieldLocksAt = addHours(startsAt, -20);
+    const dateStamp = startsAt.toISOString().slice(0, 10).replace(/-/g, '');
+    const eventId = `golf-relative-weekend-${dateStamp}`;
+    const name = `Rolling QA Weekend ${weekOffset + 1} Championship (${toDateStamp(startsAt)})`;
+
+    return buildRelativeGolfEvent({
+      eventId,
+      name,
+      status: 'field_announced',
+      startsAt,
+      endsAt,
+      releaseAt,
+      fieldLocksAt,
+      eventType: 'rolling-weekend-qa',
+      notes: [
+        `Rolling QA Thursday-Sunday tournament ${weekOffset + 1}.`,
+        `Starts Thursday ${startsAt.toISOString()} and ends Sunday ${endsAt.toISOString()}.`,
+        'Field is released early and locks before tournament start for contest creation testing.',
+      ],
+    });
+  });
+}
+
 export function buildRelativeTodayGolfScenario(
   now = new Date(),
   options: { readonly manualTestAnchor?: Date } = {},
@@ -961,58 +1003,14 @@ export function buildRelativeTodayGolfScenario(
   const manualTestEvent = buildManualTestLifecycleEvent(options.manualTestAnchor ?? now, now);
   const relativeEvents = [
     manualTestEvent,
-    buildRelativeGolfEvent({
-      eventId: 'golf-relative-locked-tomorrow',
-      name: 'Relative QA Locked Tomorrow Invitational',
-      status: 'field_announced',
-      startsAt: atUtcDayOffset(now, 1, 12),
-      releaseAt: atUtcDayOffset(now, -6, 16),
-      fieldLocksAt: addHours(now, -1),
-      notes: ['Relative event that starts tomorrow with the field already locked.'],
-    }),
-    buildRelativeGolfEvent({
-      eventId: 'golf-relative-ready-5d',
-      name: 'Relative QA Contest Ready Classic',
-      status: 'field_announced',
-      startsAt: atUtcDayOffset(now, 5, 12),
-      releaseAt: atUtcDayOffset(now, -1, 16),
-      fieldLocksAt: atUtcDayOffset(now, 4, 16),
-      notes: ['Relative event inside the participant lead window with participants available.'],
-    }),
-    buildRelativeGolfEvent({
-      eventId: 'golf-relative-field-pending-6d',
-      name: 'Relative QA Field Pending Open',
-      status: 'scheduled',
-      startsAt: atUtcDayOffset(now, 6, 12),
-      releaseAt: atUtcDayOffset(now, 2, 16),
-      fieldLocksAt: atUtcDayOffset(now, 5, 16),
-      notes: ['Relative event inside seven days but not released yet for field-availability testing.'],
-    }),
-    buildRelativeGolfEvent({
-      eventId: 'golf-relative-participant-boundary-7d',
-      name: 'Relative QA Participant Boundary Championship',
-      status: 'field_announced',
-      startsAt: atUtcDayOffset(now, 7, 12),
-      releaseAt: atUtcDayOffset(now, -1, 16),
-      fieldLocksAt: atUtcDayOffset(now, 6, 16),
-      notes: ['Relative event at the seven-day participant lead boundary.'],
-    }),
-    buildRelativeGolfEvent({
-      eventId: 'golf-relative-schedule-boundary-30d',
-      name: 'Relative QA Schedule Boundary Cup',
-      status: 'scheduled',
-      startsAt: atUtcDayOffset(now, 30, 11),
-      releaseAt: atUtcDayOffset(now, 22, 16),
-      fieldLocksAt: atUtcDayOffset(now, 29, 16),
-      notes: ['Relative event at the thirty-day schedule lookahead boundary.'],
-    }),
+    ...buildRollingWeekendGolfEvents(now),
   ];
 
   return normalizeScenario({
     scenarioId: 'golf-relative-today',
     sport: 'GOLF',
     provider: mockFeedProviderId,
-    description: 'Generated rolling golf lifecycle events anchored to the current UTC day for QA sync testing.',
+    description: 'Generated rolling golf lifecycle and upcoming weekend events for QA sync testing.',
     season: {
       seasonId: `golf-relative-${now.getUTCFullYear()}`,
       name: 'Relative QA Golf Season',
