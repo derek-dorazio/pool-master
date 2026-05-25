@@ -1838,6 +1838,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List current persisted events
+         * @description Returns current persisted SportEvent rows for the root-admin event browser. This is the latest PoolMaster database state, not a provider sync-run history payload.
+         */
+        get: operations["adminListEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/events/{eventId}/participants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List current persisted participants for an event
+         * @description Returns the latest persisted SportEventParticipant rows for a root-admin event detail modal, including participant display data, rankings, odds, valuations, and golf rounds. This endpoint reflects current database state, not a specific sync-run payload.
+         */
+        get: operations["adminListEventParticipants"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/leagues": {
         parameters: {
             query?: never;
@@ -14152,6 +14192,326 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminListEvents: {
+        parameters: {
+            query?: {
+                /** @description Optional sport filter for root-admin event browsing. */
+                sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                /** @description Optional current event-status filter. */
+                status?: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "OFFICIAL" | "CANCELLED" | "POSTPONED";
+                /** @description Maximum number of current event rows to return. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Root-admin current-state event browser response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Current persisted event rows matching the root-admin browser query. */
+                        events: {
+                            /**
+                             * Format: uuid
+                             * @description Internal SportEvent identifier.
+                             */
+                            id: string;
+                            /** @description Provider-side event identifier used by sync operations. */
+                            externalId: string;
+                            /** @description Provider/source that emitted the current event row. */
+                            providerId: string;
+                            /**
+                             * @description Sport associated with the event.
+                             * @enum {string}
+                             */
+                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                            /** @description Current event display name. */
+                            name: string;
+                            /** @description Venue name when known. */
+                            venue?: string;
+                            /** @description Human-readable event location when known. */
+                            location?: string;
+                            /**
+                             * @description Current provider-normalized event status.
+                             * @enum {string}
+                             */
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "OFFICIAL" | "CANCELLED" | "POSTPONED";
+                            /**
+                             * Format: date-time
+                             * @description Current scheduled or actual event start time.
+                             */
+                            startDate: string;
+                            /**
+                             * Format: date-time
+                             * @description Current scheduled or actual event end time when known.
+                             */
+                            endDate?: string;
+                            /**
+                             * Format: date-time
+                             * @description PoolMaster datetime when commissioner contest setup opens.
+                             */
+                            releaseAt: string;
+                            /**
+                             * Format: date-time
+                             * @description PoolMaster datetime after which field changes are locked for contest setup.
+                             */
+                            fieldLocksAt: string;
+                            /** @description Whether the current event field is locked for contest setup behavior. */
+                            fieldLocked: boolean;
+                            /** @description Provider-reported participant count when known. */
+                            participantCount?: number;
+                            /** @description Number of SportEventParticipant rows currently persisted for this event. */
+                            loadedParticipantCount: number;
+                            /**
+                             * @description Current PoolMaster contest-readiness interpretation.
+                             * @enum {string}
+                             */
+                            readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "FIELD_LOCKED";
+                            /** @description Structured reasons explaining current contest readiness. */
+                            readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "FIELD_LOCKED")[];
+                            /** @description Whether the event is currently eligible for contest creation/configuration flows. */
+                            contestEligible: boolean;
+                            /**
+                             * Format: date-time
+                             * @description When PoolMaster first persisted the event row.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description When PoolMaster last updated the event row.
+                             */
+                            updatedAt: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminListEventParticipants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Internal SportEvent identifier to inspect. */
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Root-admin current-state event participant browser response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Current persisted event state for the requested event. */
+                        event: {
+                            /**
+                             * Format: uuid
+                             * @description Internal SportEvent identifier.
+                             */
+                            id: string;
+                            /** @description Provider-side event identifier used by sync operations. */
+                            externalId: string;
+                            /** @description Provider/source that emitted the current event row. */
+                            providerId: string;
+                            /**
+                             * @description Sport associated with the event.
+                             * @enum {string}
+                             */
+                            sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                            /** @description Current event display name. */
+                            name: string;
+                            /** @description Venue name when known. */
+                            venue?: string;
+                            /** @description Human-readable event location when known. */
+                            location?: string;
+                            /**
+                             * @description Current provider-normalized event status.
+                             * @enum {string}
+                             */
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "OFFICIAL" | "CANCELLED" | "POSTPONED";
+                            /**
+                             * Format: date-time
+                             * @description Current scheduled or actual event start time.
+                             */
+                            startDate: string;
+                            /**
+                             * Format: date-time
+                             * @description Current scheduled or actual event end time when known.
+                             */
+                            endDate?: string;
+                            /**
+                             * Format: date-time
+                             * @description PoolMaster datetime when commissioner contest setup opens.
+                             */
+                            releaseAt: string;
+                            /**
+                             * Format: date-time
+                             * @description PoolMaster datetime after which field changes are locked for contest setup.
+                             */
+                            fieldLocksAt: string;
+                            /** @description Whether the current event field is locked for contest setup behavior. */
+                            fieldLocked: boolean;
+                            /** @description Provider-reported participant count when known. */
+                            participantCount?: number;
+                            /** @description Number of SportEventParticipant rows currently persisted for this event. */
+                            loadedParticipantCount: number;
+                            /**
+                             * @description Current PoolMaster contest-readiness interpretation.
+                             * @enum {string}
+                             */
+                            readinessStatus: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "FIELD_LOCKED";
+                            /** @description Structured reasons explaining current contest readiness. */
+                            readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "FIELD_LOCKED")[];
+                            /** @description Whether the event is currently eligible for contest creation/configuration flows. */
+                            contestEligible: boolean;
+                            /**
+                             * Format: date-time
+                             * @description When PoolMaster first persisted the event row.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description When PoolMaster last updated the event row.
+                             */
+                            updatedAt: string;
+                        };
+                        /** @description Current persisted participant rows for the requested event. */
+                        participants: {
+                            /**
+                             * Format: uuid
+                             * @description Internal SportEventParticipant identifier.
+                             */
+                            id: string;
+                            /**
+                             * Format: uuid
+                             * @description Owning SportEvent identifier.
+                             */
+                            sportEventId: string;
+                            /**
+                             * Format: uuid
+                             * @description Canonical Participant identifier.
+                             */
+                            participantId: string;
+                            /** @description Current participant display name. */
+                            participantName: string;
+                            /** @description Short display name when known. */
+                            shortName?: string;
+                            /** @description Participant nationality or country code when known. */
+                            nationality?: string;
+                            /** @description Provider-emitted per-event participant status. */
+                            status?: string;
+                            /** @description Current per-event world-ranking snapshot when provided. */
+                            worldRanking?: number;
+                            /** @description Current per-event odds-to-win snapshot when provided. */
+                            oddsToWin?: number;
+                            /** @description Event-relative seed number when provided. */
+                            seedNumber?: number;
+                            /** @description Current PoolMaster participant valuation price when computed. */
+                            valuationPrice?: number;
+                            /** @description Current PoolMaster participant valuation tier when computed. */
+                            valuationTier?: string;
+                            /** @description Current PoolMaster participant valuation order when computed. */
+                            valuationOrderIndex?: number;
+                            /** @description Number of persisted golf-round rows for this event participant. */
+                            roundCount: number;
+                            /** @description Total persisted golf strokes across completed/known rounds. */
+                            totalStrokes?: number;
+                            /** @description Aggregate persisted score-to-par across completed/known rounds. */
+                            scoreToPar?: number;
+                            /** @description Current persisted golf-round detail rows. */
+                            golfRounds: {
+                                /** @description Golf round number. */
+                                round: number;
+                                /** @description Persisted stroke count for this round. */
+                                strokes: number;
+                                /** @description Persisted score-to-par for this round. */
+                                scoreToPar: number;
+                                /** @description Provider-normalized round status. */
+                                status: string;
+                                /**
+                                 * Format: date-time
+                                 * @description When this round completed, if known.
+                                 */
+                                completedAt?: string;
+                            }[];
+                            /**
+                             * Format: date-time
+                             * @description When this event-participant row was last updated.
+                             */
+                            updatedAt: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -24,8 +24,14 @@ import { PrismaPlatformRuntimeConfigRepository } from './platform-runtime-config
 import { registerPlatformConfigRoutes } from './platform-config-routes';
 import { ContestTemplateAdminService } from './contest-template-service';
 import { createContestTemplateAdminHandlers } from './contest-template-handler';
+import { AdminEventBrowserService } from './event-browser-service';
+import { createEventBrowserAdminHandlers } from './event-browser-handler';
 import { auditRoutes } from './audit-routes';
 import {
+  AdminEventListQuerySchema,
+  AdminEventListResponseSchema,
+  AdminEventParticipantsParamsSchema,
+  AdminEventParticipantListResponseSchema,
   AdminListLeaguesQuerySchema,
   AdminListTeamsQuerySchema,
   AdminTeamListResponseSchema,
@@ -140,6 +146,7 @@ export async function adminModule(
     new PrismaContestConfigTemplateRepository(prisma),
     fastify.log,
   );
+  const adminEventBrowserService = new AdminEventBrowserService(prisma, fastify.log);
 
   // --- Handlers ---
   const user = createUserHandlers(userService);
@@ -148,6 +155,7 @@ export async function adminModule(
   const health = createHealthHandlers(healthService);
   const provider = createProviderHandlers(providerService);
   const contestTemplates = createContestTemplateAdminHandlers(contestTemplateAdminService);
+  const eventBrowser = createEventBrowserAdminHandlers(adminEventBrowserService);
 
   // --- User Management Routes ---
 
@@ -244,6 +252,36 @@ export async function adminModule(
       response: withAdminErrorResponses({ 200: zodToJsonSchema(SuccessSchema) }, [400, 404, 409]),
     },
     handler: user.setRootAdmin,
+  });
+
+  fastify.get('/events', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List current persisted events',
+      description:
+        'Returns current persisted SportEvent rows for the root-admin event browser. This is the latest PoolMaster database state, not a provider sync-run history payload.',
+      operationId: 'adminListEvents',
+      querystring: zodToJsonSchema(AdminEventListQuerySchema),
+      response: withAdminErrorResponses({
+        200: zodToJsonSchema(AdminEventListResponseSchema),
+      }),
+    },
+    handler: eventBrowser.listEvents,
+  });
+
+  fastify.get('/events/:eventId/participants', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'List current persisted participants for an event',
+      description:
+        'Returns the latest persisted SportEventParticipant rows for a root-admin event detail modal, including participant display data, rankings, odds, valuations, and golf rounds. This endpoint reflects current database state, not a specific sync-run payload.',
+      operationId: 'adminListEventParticipants',
+      params: zodToJsonSchema(AdminEventParticipantsParamsSchema),
+      response: withAdminErrorResponses({
+        200: zodToJsonSchema(AdminEventParticipantListResponseSchema),
+      }, [404]),
+    },
+    handler: eventBrowser.listEventParticipants,
   });
 
   fastify.delete('/users/:userId', {

@@ -12974,6 +12974,402 @@ export type AdminSetUserRootAdminResponses = {
 
 export type AdminSetUserRootAdminResponse = AdminSetUserRootAdminResponses[keyof AdminSetUserRootAdminResponses];
 
+export type AdminListEventsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Optional sport filter for root-admin event browsing.
+         */
+        sport?: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        /**
+         * Optional current event-status filter.
+         */
+        status?: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'OFFICIAL' | 'CANCELLED' | 'POSTPONED';
+        /**
+         * Maximum number of current event rows to return.
+         */
+        limit?: number;
+    };
+    url: '/api/v1/admin/events';
+};
+
+export type AdminListEventsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminListEventsError = AdminListEventsErrors[keyof AdminListEventsErrors];
+
+export type AdminListEventsResponses = {
+    /**
+     * Root-admin current-state event browser response.
+     */
+    200: {
+        /**
+         * Current persisted event rows matching the root-admin browser query.
+         */
+        events: Array<{
+            /**
+             * Internal SportEvent identifier.
+             */
+            id: string;
+            /**
+             * Provider-side event identifier used by sync operations.
+             */
+            externalId: string;
+            /**
+             * Provider/source that emitted the current event row.
+             */
+            providerId: string;
+            /**
+             * Sport associated with the event.
+             */
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+            /**
+             * Current event display name.
+             */
+            name: string;
+            /**
+             * Venue name when known.
+             */
+            venue?: string;
+            /**
+             * Human-readable event location when known.
+             */
+            location?: string;
+            /**
+             * Current provider-normalized event status.
+             */
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'OFFICIAL' | 'CANCELLED' | 'POSTPONED';
+            /**
+             * Current scheduled or actual event start time.
+             */
+            startDate: string;
+            /**
+             * Current scheduled or actual event end time when known.
+             */
+            endDate?: string;
+            /**
+             * PoolMaster datetime when commissioner contest setup opens.
+             */
+            releaseAt: string;
+            /**
+             * PoolMaster datetime after which field changes are locked for contest setup.
+             */
+            fieldLocksAt: string;
+            /**
+             * Whether the current event field is locked for contest setup behavior.
+             */
+            fieldLocked: boolean;
+            /**
+             * Provider-reported participant count when known.
+             */
+            participantCount?: number;
+            /**
+             * Number of SportEventParticipant rows currently persisted for this event.
+             */
+            loadedParticipantCount: number;
+            /**
+             * Current PoolMaster contest-readiness interpretation.
+             */
+            readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+            /**
+             * Structured reasons explaining current contest readiness.
+             */
+            readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
+            /**
+             * Whether the event is currently eligible for contest creation/configuration flows.
+             */
+            contestEligible: boolean;
+            /**
+             * When PoolMaster first persisted the event row.
+             */
+            createdAt: string;
+            /**
+             * When PoolMaster last updated the event row.
+             */
+            updatedAt: string;
+        }>;
+    };
+};
+
+export type AdminListEventsResponse = AdminListEventsResponses[keyof AdminListEventsResponses];
+
+export type AdminListEventParticipantsData = {
+    body?: never;
+    path: {
+        /**
+         * Internal SportEvent identifier to inspect.
+         */
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/events/{eventId}/participants';
+};
+
+export type AdminListEventParticipantsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminListEventParticipantsError = AdminListEventParticipantsErrors[keyof AdminListEventParticipantsErrors];
+
+export type AdminListEventParticipantsResponses = {
+    /**
+     * Root-admin current-state event participant browser response.
+     */
+    200: {
+        /**
+         * Current persisted event state for the requested event.
+         */
+        event: {
+            /**
+             * Internal SportEvent identifier.
+             */
+            id: string;
+            /**
+             * Provider-side event identifier used by sync operations.
+             */
+            externalId: string;
+            /**
+             * Provider/source that emitted the current event row.
+             */
+            providerId: string;
+            /**
+             * Sport associated with the event.
+             */
+            sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+            /**
+             * Current event display name.
+             */
+            name: string;
+            /**
+             * Venue name when known.
+             */
+            venue?: string;
+            /**
+             * Human-readable event location when known.
+             */
+            location?: string;
+            /**
+             * Current provider-normalized event status.
+             */
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'OFFICIAL' | 'CANCELLED' | 'POSTPONED';
+            /**
+             * Current scheduled or actual event start time.
+             */
+            startDate: string;
+            /**
+             * Current scheduled or actual event end time when known.
+             */
+            endDate?: string;
+            /**
+             * PoolMaster datetime when commissioner contest setup opens.
+             */
+            releaseAt: string;
+            /**
+             * PoolMaster datetime after which field changes are locked for contest setup.
+             */
+            fieldLocksAt: string;
+            /**
+             * Whether the current event field is locked for contest setup behavior.
+             */
+            fieldLocked: boolean;
+            /**
+             * Provider-reported participant count when known.
+             */
+            participantCount?: number;
+            /**
+             * Number of SportEventParticipant rows currently persisted for this event.
+             */
+            loadedParticipantCount: number;
+            /**
+             * Current PoolMaster contest-readiness interpretation.
+             */
+            readinessStatus: 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'FIELD_LOCKED';
+            /**
+             * Structured reasons explaining current contest readiness.
+             */
+            readinessReasons: Array<'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_LOCKED'>;
+            /**
+             * Whether the event is currently eligible for contest creation/configuration flows.
+             */
+            contestEligible: boolean;
+            /**
+             * When PoolMaster first persisted the event row.
+             */
+            createdAt: string;
+            /**
+             * When PoolMaster last updated the event row.
+             */
+            updatedAt: string;
+        };
+        /**
+         * Current persisted participant rows for the requested event.
+         */
+        participants: Array<{
+            /**
+             * Internal SportEventParticipant identifier.
+             */
+            id: string;
+            /**
+             * Owning SportEvent identifier.
+             */
+            sportEventId: string;
+            /**
+             * Canonical Participant identifier.
+             */
+            participantId: string;
+            /**
+             * Current participant display name.
+             */
+            participantName: string;
+            /**
+             * Short display name when known.
+             */
+            shortName?: string;
+            /**
+             * Participant nationality or country code when known.
+             */
+            nationality?: string;
+            /**
+             * Provider-emitted per-event participant status.
+             */
+            status?: string;
+            /**
+             * Current per-event world-ranking snapshot when provided.
+             */
+            worldRanking?: number;
+            /**
+             * Current per-event odds-to-win snapshot when provided.
+             */
+            oddsToWin?: number;
+            /**
+             * Event-relative seed number when provided.
+             */
+            seedNumber?: number;
+            /**
+             * Current PoolMaster participant valuation price when computed.
+             */
+            valuationPrice?: number;
+            /**
+             * Current PoolMaster participant valuation tier when computed.
+             */
+            valuationTier?: string;
+            /**
+             * Current PoolMaster participant valuation order when computed.
+             */
+            valuationOrderIndex?: number;
+            /**
+             * Number of persisted golf-round rows for this event participant.
+             */
+            roundCount: number;
+            /**
+             * Total persisted golf strokes across completed/known rounds.
+             */
+            totalStrokes?: number;
+            /**
+             * Aggregate persisted score-to-par across completed/known rounds.
+             */
+            scoreToPar?: number;
+            /**
+             * Current persisted golf-round detail rows.
+             */
+            golfRounds: Array<{
+                /**
+                 * Golf round number.
+                 */
+                round: number;
+                /**
+                 * Persisted stroke count for this round.
+                 */
+                strokes: number;
+                /**
+                 * Persisted score-to-par for this round.
+                 */
+                scoreToPar: number;
+                /**
+                 * Provider-normalized round status.
+                 */
+                status: string;
+                /**
+                 * When this round completed, if known.
+                 */
+                completedAt?: string;
+            }>;
+            /**
+             * When this event-participant row was last updated.
+             */
+            updatedAt: string;
+        }>;
+    };
+};
+
+export type AdminListEventParticipantsResponse = AdminListEventParticipantsResponses[keyof AdminListEventParticipantsResponses];
+
 export type AdminListLeaguesData = {
     body?: never;
     path?: never;
