@@ -35,37 +35,39 @@ export function WelcomePage() {
 
   if (!leaguesQuery.data?.length) {
     return (
-      <EmptyState
-        action={
-          <>
-            <p className="mb-4 max-w-2xl text-sm text-muted-foreground">
-              Create your first league
-            </p>
-            <p className="mb-5 max-w-2xl text-sm text-muted-foreground">
-              Start by creating a private league with its own league code. Once it
-              exists, this home flow will route you directly into that league
-              context.
-            </p>
-            <Button
-              data-testid="welcome-create-league"
-              onClick={() => {
-                const nextParams = new URLSearchParams(searchParams);
-                nextParams.set('createLeague', '1');
-                setSearchParams(nextParams, { replace: true });
-              }}
-              type="button"
-            >
-              Create league
-            </Button>
-          </>
-        }
-        body="Once you create leagues, they'll appear here."
-        testId="authenticated-landing-empty"
-        title={`Welcome to Ultimate Office Pool Manager, ${formatUserName(
-          auth.user?.firstName,
-          auth.user?.lastName,
-        )}.`}
-      />
+      <div data-testid="authenticated-landing">
+        <EmptyState
+          action={
+            <>
+              <p className="mb-4 max-w-2xl text-sm text-muted-foreground">
+                Create your first league
+              </p>
+              <p className="mb-5 max-w-2xl text-sm text-muted-foreground">
+                Start by creating a private league with its own league code. Once it
+                exists, this home flow will route you directly into that league
+                context.
+              </p>
+              <Button
+                data-testid="welcome-create-league"
+                onClick={() => {
+                  const nextParams = new URLSearchParams(searchParams);
+                  nextParams.set('createLeague', '1');
+                  setSearchParams(nextParams, { replace: true });
+                }}
+                type="button"
+              >
+                Create league
+              </Button>
+            </>
+          }
+          body="Once you create leagues, they'll appear here."
+          testId="authenticated-landing-empty"
+          title={`Welcome to Ultimate Office Pool Manager, ${formatUserName(
+            auth.user?.firstName,
+            auth.user?.lastName,
+          )}.`}
+        />
+      </div>
     );
   }
 

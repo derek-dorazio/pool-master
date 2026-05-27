@@ -32,6 +32,7 @@ async function upsertUser(entry) {
       lastName,
       passwordHash,
       isRootAdmin,
+      isActive: true,
     },
     create: {
       email,
@@ -41,11 +42,12 @@ async function upsertUser(entry) {
       passwordHash,
       authProvider: UserAuthProvider.EMAIL,
       isRootAdmin,
+      isActive: true,
     },
-    select: { id: true, email: true, username: true, isRootAdmin: true },
+    select: { id: true, email: true, username: true, isRootAdmin: true, isActive: true },
   });
 
-  console.log(`Upserted ${user.email} (username=${user.username}, isRootAdmin=${user.isRootAdmin})`);
+  console.log(`Upserted ${user.email} (username=${user.username}, isRootAdmin=${user.isRootAdmin}, isActive=${user.isActive})`);
 }
 
 async function main() {

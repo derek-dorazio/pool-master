@@ -122,6 +122,7 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
     renderWelcomePage();
 
     expect(await screen.findByTestId('authenticated-landing-empty')).toBeInTheDocument();
+    expect(screen.getByTestId('authenticated-landing')).toBeInTheDocument();
     expect(screen.getByTestId('shared-empty-state')).toBeInTheDocument();
     expect(sharedStateCalls.empty).toHaveBeenCalledWith(
       expect.objectContaining({
