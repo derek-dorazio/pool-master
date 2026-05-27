@@ -12,6 +12,13 @@ type LeagueDetail = {
   };
 };
 
+type AdminLeagueSummary = {
+  id: string;
+  leagueCode: string;
+  name: string;
+  isActive?: boolean;
+};
+
 export type QALeagueFixture = {
   code: string;
   id: string;
@@ -63,7 +70,62 @@ async function getLeagueByCode(page: Page): Promise<LeagueDetail | null> {
   return body.league;
 }
 
-async function createQALeague(page: Page): Promise<LeagueDetail> {
+async function getAdminQALeague(rootAdminPage: Page): Promise<AdminLeagueSummary | null> {
+  const response = await rootAdminPage.request.get(`/api/v1/leagues/code/${qaLeagueSeed.code}`);
+
+  if (response.status() === 404) {
+    return null;
+  }
+
+  if (!response.ok()) {
+    throw new Error(`QA league root-admin lookup failed: ${await errorMessage(response)}`);
+  }
+
+  const body = await parseJson(response) as { league?: AdminLeagueSummary } | null;
+  const league = body?.league;
+  if (!league) {
+    throw new Error('QA league root-admin lookup returned no league payload.');
+  }
+
+  if (league.leagueCode !== qaLeagueSeed.code || league.name !== qaLeagueSeed.name) {
+    throw new Error(`Refusing to repair unexpected QA league payload for ${qaLeagueSeed.code}.`);
+  }
+
+  return league;
+}
+
+async function deleteAdminQALeague(rootAdminPage: Page, league: AdminLeagueSummary) {
+  if (league.isActive !== false) {
+    const inactivateResponse = await rootAdminPage.request.post(`/api/v1/admin/leagues/${league.id}/inactivate`, {
+      headers: await csrfHeaders(rootAdminPage),
+    });
+
+    if (!inactivateResponse.ok()) {
+      throw new Error(`QA league root-admin inactivation failed: ${await errorMessage(inactivateResponse)}`);
+    }
+  }
+
+  const deleteResponse = await rootAdminPage.request.delete(`/api/v1/admin/leagues/${league.id}`, {
+    data: { leagueCode: qaLeagueSeed.code },
+    headers: await csrfHeaders(rootAdminPage),
+  });
+
+  if (!deleteResponse.ok()) {
+    throw new Error(`QA league root-admin deletion failed: ${await errorMessage(deleteResponse)}`);
+  }
+}
+
+async function repairConflictingQALeague(rootAdminPage: Page): Promise<boolean> {
+  const league = await getAdminQALeague(rootAdminPage);
+  if (!league) {
+    return false;
+  }
+
+  await deleteAdminQALeague(rootAdminPage, league);
+  return true;
+}
+
+async function createQALeague(page: Page, rootAdminPage: Page): Promise<LeagueDetail> {
   const response = await page.request.post('/api/v1/leagues/', {
     data: {
       name: qaLeagueSeed.name,
@@ -77,6 +139,10 @@ async function createQALeague(page: Page): Promise<LeagueDetail> {
     const existing = await getLeagueByCode(page);
     if (existing) {
       return existing;
+    }
+
+    if (await repairConflictingQALeague(rootAdminPage)) {
+      return createQALeague(page, rootAdminPage);
     }
   }
 
@@ -144,10 +210,11 @@ async function acceptInvite(page: Page, inviteCode: string) {
 export async function ensureQALeague(
   commissionerPage: Page,
   memberPage: Page,
+  rootAdminPage: Page,
 ): Promise<QALeagueFixture> {
   let league = await getLeagueByCode(commissionerPage);
   if (!league) {
-    league = await createQALeague(commissionerPage);
+    league = await createQALeague(commissionerPage, rootAdminPage);
   }
 
   if (!league.leagueRelationship?.commissioner) {

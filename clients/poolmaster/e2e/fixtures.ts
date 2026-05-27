@@ -33,8 +33,8 @@ export const test = base.extend<RoleFixtures>({
   rootAdminPage: async ({ browser }, use) => {
     await createRolePage(browser, authStatePaths.rootAdmin, use);
   },
-  qaLeague: async ({ commissionerPage, memberPage }, use) => {
-    await use(await ensureQALeague(commissionerPage, memberPage));
+  qaLeague: async ({ commissionerPage, memberPage, rootAdminPage }, use) => {
+    await use(await ensureQALeague(commissionerPage, memberPage, rootAdminPage));
   },
 });
 
