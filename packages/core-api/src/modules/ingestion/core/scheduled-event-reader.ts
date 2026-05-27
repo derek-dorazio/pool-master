@@ -3,6 +3,10 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
 import type { IngestionScheduledEventReader } from './ingestion-scheduler';
 
+type ScheduledEventIdRow = {
+  externalId: string;
+};
+
 export interface ScheduledEventReaderDependencies {
   prisma: Pick<PrismaClient, 'sportEvent'>;
   registry: Pick<ProviderRegistry, 'getProvider'>;
@@ -30,7 +34,7 @@ export function createScheduledEventReader({
         return [];
       }
 
-      const rows = await prisma.sportEvent.findMany({
+      const rows: ScheduledEventIdRow[] = await prisma.sportEvent.findMany({
         where: {
           sport,
           providerId: provider.providerId,
