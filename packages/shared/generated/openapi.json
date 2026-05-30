@@ -31669,6 +31669,414 @@
         }
       }
     },
+    "/api/v1/admin/providers/stale-events/cleanup": {
+      "post": {
+        "operationId": "adminCleanupStaleProviderEvents",
+        "summary": "Inventory or delete stale provider event rows",
+        "tags": [
+          "Admin"
+        ],
+        "description": "Inventories stale provider SportEvent rows and, in EXECUTE mode, deletes eligible event-scoped rows. Non-Golf events are stale because the current provider workflow is Golf-only. Golf events are stale only after their end time has passed. Contest-referenced events and picks protect an event from deletion.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "DRY_RUN",
+                      "EXECUTE"
+                    ],
+                    "description": "DRY_RUN inventories stale event rows without deleting. EXECUTE deletes rows that are eligible and not contest-referenced."
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "additionalProperties": false,
+                "description": "Root-admin stale provider event cleanup request."
+              }
+            }
+          },
+          "description": "Root-admin stale provider event cleanup request."
+        },
+        "responses": {
+          "200": {
+            "description": "Root-admin stale provider event cleanup response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "DRY_RUN",
+                        "EXECUTE"
+                      ],
+                      "description": "Requested cleanup mode."
+                    },
+                    "executed": {
+                      "type": "boolean",
+                      "description": "Whether this request performed deletion."
+                    },
+                    "inventoriedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the inventory was computed."
+                    },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "inventoriedEventCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Total stale provider events inventoried by the cleanup rules."
+                        },
+                        "deletableEventCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Inventoried events eligible for deletion."
+                        },
+                        "blockedEventCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Inventoried events retained because contest or pick references protect them."
+                        },
+                        "deletedEventCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Events deleted by this request. Zero for dry runs."
+                        },
+                        "sportEventParticipantCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Event participant rows attached to inventoried stale events."
+                        },
+                        "valuationCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Event participant valuation rows attached to inventoried stale events."
+                        },
+                        "golfRoundCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Golf round rows attached to inventoried stale events."
+                        },
+                        "pickCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "description": "Contest entry pick rows referencing inventoried stale event participants. These protect an event from deletion."
+                        }
+                      },
+                      "required": [
+                        "inventoriedEventCount",
+                        "deletableEventCount",
+                        "blockedEventCount",
+                        "deletedEventCount",
+                        "sportEventParticipantCount",
+                        "valuationCount",
+                        "golfRoundCount",
+                        "pickCount"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Aggregate stale provider event cleanup summary."
+                    },
+                    "bySport": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "description": "Grouping key, such as a sport, provider id, or status."
+                          },
+                          "eventCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of inventoried stale events in this group."
+                          },
+                          "deletableEventCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of events in this group eligible for deletion."
+                          },
+                          "deletedEventCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of events in this group deleted by this request. Zero for dry runs."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "eventCount",
+                          "deletableEventCount",
+                          "deletedEventCount"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Grouped stale event cleanup inventory counts."
+                      },
+                      "description": "Inventory grouped by event sport."
+                    },
+                    "byProvider": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "description": "Grouping key, such as a sport, provider id, or status."
+                          },
+                          "eventCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of inventoried stale events in this group."
+                          },
+                          "deletableEventCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of events in this group eligible for deletion."
+                          },
+                          "deletedEventCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of events in this group deleted by this request. Zero for dry runs."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "eventCount",
+                          "deletableEventCount",
+                          "deletedEventCount"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Grouped stale event cleanup inventory counts."
+                      },
+                      "description": "Inventory grouped by provider id."
+                    },
+                    "byStatus": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "description": "Grouping key, such as a sport, provider id, or status."
+                          },
+                          "eventCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of inventoried stale events in this group."
+                          },
+                          "deletableEventCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of events in this group eligible for deletion."
+                          },
+                          "deletedEventCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of events in this group deleted by this request. Zero for dry runs."
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "eventCount",
+                          "deletableEventCount",
+                          "deletedEventCount"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Grouped stale event cleanup inventory counts."
+                      },
+                      "description": "Inventory grouped by persisted event status."
+                    },
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Internal SportEvent identifier."
+                          },
+                          "providerId": {
+                            "type": "string",
+                            "description": "Provider/source associated with the stale event row."
+                          },
+                          "externalId": {
+                            "type": "string",
+                            "description": "Provider-side event identifier."
+                          },
+                          "sport": {
+                            "type": "string",
+                            "description": "Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values."
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Current persisted event name."
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Current persisted event status."
+                          },
+                          "startDate": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Persisted event start date."
+                          },
+                          "endDate": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true,
+                            "description": "Persisted event end date, when known."
+                          },
+                          "staleReason": {
+                            "type": "string",
+                            "enum": [
+                              "NON_GOLF_EVENT",
+                              "PAST_GOLF_EVENT"
+                            ],
+                            "description": "Cleanup rule that selected this stale event for inventory."
+                          },
+                          "deletable": {
+                            "type": "boolean",
+                            "description": "Whether EXECUTE mode will delete this event."
+                          },
+                          "deleted": {
+                            "type": "boolean",
+                            "description": "Whether this request deleted this event. Always false for dry runs."
+                          },
+                          "blockedReasons": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "DIRECT_CONTEST_REFERENCE",
+                                "CONTEST_SPORT_EVENT_REFERENCE",
+                                "CONTEST_ENTRY_PICK_REFERENCE"
+                              ]
+                            },
+                            "description": "Contest-related references that protect this event from deletion."
+                          },
+                          "directContestCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of Contest rows directly pointing at this event."
+                          },
+                          "contestSportEventCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of ContestSportEvent join rows pointing at this event."
+                          },
+                          "sportEventParticipantCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of SportEventParticipant rows attached to this event."
+                          },
+                          "valuationCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of SportEventParticipantValuation rows attached through this event."
+                          },
+                          "golfRoundCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of SportEventParticipantGolfRound rows attached through this event."
+                          },
+                          "pickCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of ContestEntryPick rows referencing participants in this event."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "providerId",
+                          "externalId",
+                          "sport",
+                          "name",
+                          "status",
+                          "startDate",
+                          "endDate",
+                          "staleReason",
+                          "deletable",
+                          "deleted",
+                          "blockedReasons",
+                          "directContestCount",
+                          "contestSportEventCount",
+                          "sportEventParticipantCount",
+                          "valuationCount",
+                          "golfRoundCount",
+                          "pickCount"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Single stale provider event cleanup inventory row."
+                      },
+                      "description": "Per-event cleanup inventory rows."
+                    }
+                  },
+                  "required": [
+                    "mode",
+                    "executed",
+                    "inventoriedAt",
+                    "summary",
+                    "bySport",
+                    "byProvider",
+                    "byStatus",
+                    "events"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Root-admin stale provider event cleanup response."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/providers/{providerId}": {
       "get": {
         "operationId": "adminGetProviderDetail",

@@ -15586,6 +15586,247 @@ export type AdminMapParticipantResponses = {
 
 export type AdminMapParticipantResponse = AdminMapParticipantResponses[keyof AdminMapParticipantResponses];
 
+export type AdminCleanupStaleProviderEventsData = {
+    /**
+     * Root-admin stale provider event cleanup request.
+     */
+    body: {
+        /**
+         * DRY_RUN inventories stale event rows without deleting. EXECUTE deletes rows that are eligible and not contest-referenced.
+         */
+        mode: 'DRY_RUN' | 'EXECUTE';
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/providers/stale-events/cleanup';
+};
+
+export type AdminCleanupStaleProviderEventsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminCleanupStaleProviderEventsError = AdminCleanupStaleProviderEventsErrors[keyof AdminCleanupStaleProviderEventsErrors];
+
+export type AdminCleanupStaleProviderEventsResponses = {
+    /**
+     * Root-admin stale provider event cleanup response.
+     */
+    200: {
+        /**
+         * Requested cleanup mode.
+         */
+        mode: 'DRY_RUN' | 'EXECUTE';
+        /**
+         * Whether this request performed deletion.
+         */
+        executed: boolean;
+        /**
+         * When the inventory was computed.
+         */
+        inventoriedAt: string;
+        /**
+         * Aggregate stale provider event cleanup summary.
+         */
+        summary: {
+            /**
+             * Total stale provider events inventoried by the cleanup rules.
+             */
+            inventoriedEventCount: number;
+            /**
+             * Inventoried events eligible for deletion.
+             */
+            deletableEventCount: number;
+            /**
+             * Inventoried events retained because contest or pick references protect them.
+             */
+            blockedEventCount: number;
+            /**
+             * Events deleted by this request. Zero for dry runs.
+             */
+            deletedEventCount: number;
+            /**
+             * Event participant rows attached to inventoried stale events.
+             */
+            sportEventParticipantCount: number;
+            /**
+             * Event participant valuation rows attached to inventoried stale events.
+             */
+            valuationCount: number;
+            /**
+             * Golf round rows attached to inventoried stale events.
+             */
+            golfRoundCount: number;
+            /**
+             * Contest entry pick rows referencing inventoried stale event participants. These protect an event from deletion.
+             */
+            pickCount: number;
+        };
+        /**
+         * Inventory grouped by event sport.
+         */
+        bySport: Array<{
+            /**
+             * Grouping key, such as a sport, provider id, or status.
+             */
+            key: string;
+            /**
+             * Number of inventoried stale events in this group.
+             */
+            eventCount: number;
+            /**
+             * Number of events in this group eligible for deletion.
+             */
+            deletableEventCount: number;
+            /**
+             * Number of events in this group deleted by this request. Zero for dry runs.
+             */
+            deletedEventCount: number;
+        }>;
+        /**
+         * Inventory grouped by provider id.
+         */
+        byProvider: Array<{
+            /**
+             * Grouping key, such as a sport, provider id, or status.
+             */
+            key: string;
+            /**
+             * Number of inventoried stale events in this group.
+             */
+            eventCount: number;
+            /**
+             * Number of events in this group eligible for deletion.
+             */
+            deletableEventCount: number;
+            /**
+             * Number of events in this group deleted by this request. Zero for dry runs.
+             */
+            deletedEventCount: number;
+        }>;
+        /**
+         * Inventory grouped by persisted event status.
+         */
+        byStatus: Array<{
+            /**
+             * Grouping key, such as a sport, provider id, or status.
+             */
+            key: string;
+            /**
+             * Number of inventoried stale events in this group.
+             */
+            eventCount: number;
+            /**
+             * Number of events in this group eligible for deletion.
+             */
+            deletableEventCount: number;
+            /**
+             * Number of events in this group deleted by this request. Zero for dry runs.
+             */
+            deletedEventCount: number;
+        }>;
+        /**
+         * Per-event cleanup inventory rows.
+         */
+        events: Array<{
+            /**
+             * Internal SportEvent identifier.
+             */
+            id: string;
+            /**
+             * Provider/source associated with the stale event row.
+             */
+            providerId: string;
+            /**
+             * Provider-side event identifier.
+             */
+            externalId: string;
+            /**
+             * Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values.
+             */
+            sport: string;
+            /**
+             * Current persisted event name.
+             */
+            name: string;
+            /**
+             * Current persisted event status.
+             */
+            status: string;
+            /**
+             * Persisted event start date.
+             */
+            startDate: string;
+            /**
+             * Persisted event end date, when known.
+             */
+            endDate: string;
+            /**
+             * Cleanup rule that selected this stale event for inventory.
+             */
+            staleReason: 'NON_GOLF_EVENT' | 'PAST_GOLF_EVENT';
+            /**
+             * Whether EXECUTE mode will delete this event.
+             */
+            deletable: boolean;
+            /**
+             * Whether this request deleted this event. Always false for dry runs.
+             */
+            deleted: boolean;
+            /**
+             * Contest-related references that protect this event from deletion.
+             */
+            blockedReasons: Array<'DIRECT_CONTEST_REFERENCE' | 'CONTEST_SPORT_EVENT_REFERENCE' | 'CONTEST_ENTRY_PICK_REFERENCE'>;
+            /**
+             * Number of Contest rows directly pointing at this event.
+             */
+            directContestCount: number;
+            /**
+             * Number of ContestSportEvent join rows pointing at this event.
+             */
+            contestSportEventCount: number;
+            /**
+             * Number of SportEventParticipant rows attached to this event.
+             */
+            sportEventParticipantCount: number;
+            /**
+             * Number of SportEventParticipantValuation rows attached through this event.
+             */
+            valuationCount: number;
+            /**
+             * Number of SportEventParticipantGolfRound rows attached through this event.
+             */
+            golfRoundCount: number;
+            /**
+             * Number of ContestEntryPick rows referencing participants in this event.
+             */
+            pickCount: number;
+        }>;
+    };
+};
+
+export type AdminCleanupStaleProviderEventsResponse = AdminCleanupStaleProviderEventsResponses[keyof AdminCleanupStaleProviderEventsResponses];
+
 export type AdminGetProviderDetailData = {
     body?: never;
     path: {

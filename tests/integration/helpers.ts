@@ -438,6 +438,13 @@ async function cleanupContestArtifacts(
       },
     },
   });
+  await database.contestSportEvent.deleteMany({
+    where: {
+      contestId: {
+        in: contestIds,
+      },
+    },
+  });
   await database.contest.deleteMany({
     where: {
       id: {
@@ -481,6 +488,13 @@ async function cleanupSportEventParticipantArtifacts(
         sportEventParticipantId: {
           in: sportEventParticipantIds,
         },
+      },
+    },
+  });
+  await database.sportEventParticipantGolfRound.deleteMany({
+    where: {
+      sportEventParticipantId: {
+        in: sportEventParticipantIds,
       },
     },
   });
@@ -598,6 +612,7 @@ export async function cleanupTestData(): Promise<void> {
   }
 
   await prisma.providerSyncRun.deleteMany();
+  await prisma.sportEventParticipantGolfRound.deleteMany();
   await prisma.sportEventParticipantValuation.deleteMany();
   await prisma.sportEventParticipant.deleteMany();
   await prisma.participantProviderMapping.deleteMany();

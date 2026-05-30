@@ -2138,6 +2138,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/providers/stale-events/cleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Inventory or delete stale provider event rows
+         * @description Inventories stale provider SportEvent rows and, in EXECUTE mode, deletes eligible event-scoped rows. Non-Golf events are stale because the current provider workflow is Golf-only. Golf events are stale only after their end time has passed. Contest-referenced events and picks protect an event from deletion.
+         */
+        post: operations["adminCleanupStaleProviderEvents"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/providers/{providerId}": {
         parameters: {
             query?: never;
@@ -16175,6 +16195,172 @@ export interface operations {
                          * @enum {boolean}
                          */
                         success: true;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminCleanupStaleProviderEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Root-admin stale provider event cleanup request. */
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description DRY_RUN inventories stale event rows without deleting. EXECUTE deletes rows that are eligible and not contest-referenced.
+                     * @enum {string}
+                     */
+                    mode: "DRY_RUN" | "EXECUTE";
+                };
+            };
+        };
+        responses: {
+            /** @description Root-admin stale provider event cleanup response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Requested cleanup mode.
+                         * @enum {string}
+                         */
+                        mode: "DRY_RUN" | "EXECUTE";
+                        /** @description Whether this request performed deletion. */
+                        executed: boolean;
+                        /**
+                         * Format: date-time
+                         * @description When the inventory was computed.
+                         */
+                        inventoriedAt: string;
+                        /** @description Aggregate stale provider event cleanup summary. */
+                        summary: {
+                            /** @description Total stale provider events inventoried by the cleanup rules. */
+                            inventoriedEventCount: number;
+                            /** @description Inventoried events eligible for deletion. */
+                            deletableEventCount: number;
+                            /** @description Inventoried events retained because contest or pick references protect them. */
+                            blockedEventCount: number;
+                            /** @description Events deleted by this request. Zero for dry runs. */
+                            deletedEventCount: number;
+                            /** @description Event participant rows attached to inventoried stale events. */
+                            sportEventParticipantCount: number;
+                            /** @description Event participant valuation rows attached to inventoried stale events. */
+                            valuationCount: number;
+                            /** @description Golf round rows attached to inventoried stale events. */
+                            golfRoundCount: number;
+                            /** @description Contest entry pick rows referencing inventoried stale event participants. These protect an event from deletion. */
+                            pickCount: number;
+                        };
+                        /** @description Inventory grouped by event sport. */
+                        bySport: {
+                            /** @description Grouping key, such as a sport, provider id, or status. */
+                            key: string;
+                            /** @description Number of inventoried stale events in this group. */
+                            eventCount: number;
+                            /** @description Number of events in this group eligible for deletion. */
+                            deletableEventCount: number;
+                            /** @description Number of events in this group deleted by this request. Zero for dry runs. */
+                            deletedEventCount: number;
+                        }[];
+                        /** @description Inventory grouped by provider id. */
+                        byProvider: {
+                            /** @description Grouping key, such as a sport, provider id, or status. */
+                            key: string;
+                            /** @description Number of inventoried stale events in this group. */
+                            eventCount: number;
+                            /** @description Number of events in this group eligible for deletion. */
+                            deletableEventCount: number;
+                            /** @description Number of events in this group deleted by this request. Zero for dry runs. */
+                            deletedEventCount: number;
+                        }[];
+                        /** @description Inventory grouped by persisted event status. */
+                        byStatus: {
+                            /** @description Grouping key, such as a sport, provider id, or status. */
+                            key: string;
+                            /** @description Number of inventoried stale events in this group. */
+                            eventCount: number;
+                            /** @description Number of events in this group eligible for deletion. */
+                            deletableEventCount: number;
+                            /** @description Number of events in this group deleted by this request. Zero for dry runs. */
+                            deletedEventCount: number;
+                        }[];
+                        /** @description Per-event cleanup inventory rows. */
+                        events: {
+                            /**
+                             * Format: uuid
+                             * @description Internal SportEvent identifier.
+                             */
+                            id: string;
+                            /** @description Provider/source associated with the stale event row. */
+                            providerId: string;
+                            /** @description Provider-side event identifier. */
+                            externalId: string;
+                            /** @description Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values. */
+                            sport: string;
+                            /** @description Current persisted event name. */
+                            name: string;
+                            /** @description Current persisted event status. */
+                            status: string;
+                            /**
+                             * Format: date-time
+                             * @description Persisted event start date.
+                             */
+                            startDate: string;
+                            /**
+                             * Format: date-time
+                             * @description Persisted event end date, when known.
+                             */
+                            endDate: string | null;
+                            /**
+                             * @description Cleanup rule that selected this stale event for inventory.
+                             * @enum {string}
+                             */
+                            staleReason: "NON_GOLF_EVENT" | "PAST_GOLF_EVENT";
+                            /** @description Whether EXECUTE mode will delete this event. */
+                            deletable: boolean;
+                            /** @description Whether this request deleted this event. Always false for dry runs. */
+                            deleted: boolean;
+                            /** @description Contest-related references that protect this event from deletion. */
+                            blockedReasons: ("DIRECT_CONTEST_REFERENCE" | "CONTEST_SPORT_EVENT_REFERENCE" | "CONTEST_ENTRY_PICK_REFERENCE")[];
+                            /** @description Number of Contest rows directly pointing at this event. */
+                            directContestCount: number;
+                            /** @description Number of ContestSportEvent join rows pointing at this event. */
+                            contestSportEventCount: number;
+                            /** @description Number of SportEventParticipant rows attached to this event. */
+                            sportEventParticipantCount: number;
+                            /** @description Number of SportEventParticipantValuation rows attached through this event. */
+                            valuationCount: number;
+                            /** @description Number of SportEventParticipantGolfRound rows attached through this event. */
+                            golfRoundCount: number;
+                            /** @description Number of ContestEntryPick rows referencing participants in this event. */
+                            pickCount: number;
+                        }[];
                     };
                 };
             };

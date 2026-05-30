@@ -343,6 +343,68 @@ export const ProviderIngestionJobDtoSchema = z.object({
 }).describe('Recent or active provider ingestion job.');
 export type ProviderIngestionJobDto = z.infer<typeof ProviderIngestionJobDtoSchema>;
 
+export const AdminProviderEventCleanupModeSchema = z.enum(['DRY_RUN', 'EXECUTE']);
+export type AdminProviderEventCleanupMode = z.infer<typeof AdminProviderEventCleanupModeSchema>;
+
+export const AdminProviderEventCleanupRequestSchema = z.object({
+  mode: AdminProviderEventCleanupModeSchema.describe('DRY_RUN inventories stale event rows without deleting. EXECUTE deletes rows that are eligible and not contest-referenced.'),
+}).describe('Root-admin stale provider event cleanup request.');
+export type AdminProviderEventCleanupRequest = z.infer<typeof AdminProviderEventCleanupRequestSchema>;
+
+export const AdminProviderEventCleanupGroupDtoSchema = z.object({
+  key: z.string().describe('Grouping key, such as a sport, provider id, or status.'),
+  eventCount: z.number().int().min(0).describe('Number of inventoried stale events in this group.'),
+  deletableEventCount: z.number().int().min(0).describe('Number of events in this group eligible for deletion.'),
+  deletedEventCount: z.number().int().min(0).describe('Number of events in this group deleted by this request. Zero for dry runs.'),
+}).describe('Grouped stale event cleanup inventory counts.');
+export type AdminProviderEventCleanupGroupDto = z.infer<typeof AdminProviderEventCleanupGroupDtoSchema>;
+
+export const AdminProviderEventCleanupSummaryDtoSchema = z.object({
+  inventoriedEventCount: z.number().int().min(0).describe('Total stale provider events inventoried by the cleanup rules.'),
+  deletableEventCount: z.number().int().min(0).describe('Inventoried events eligible for deletion.'),
+  blockedEventCount: z.number().int().min(0).describe('Inventoried events retained because contest or pick references protect them.'),
+  deletedEventCount: z.number().int().min(0).describe('Events deleted by this request. Zero for dry runs.'),
+  sportEventParticipantCount: z.number().int().min(0).describe('Event participant rows attached to inventoried stale events.'),
+  valuationCount: z.number().int().min(0).describe('Event participant valuation rows attached to inventoried stale events.'),
+  golfRoundCount: z.number().int().min(0).describe('Golf round rows attached to inventoried stale events.'),
+  pickCount: z.number().int().min(0).describe('Contest entry pick rows referencing inventoried stale event participants. These protect an event from deletion.'),
+}).describe('Aggregate stale provider event cleanup summary.');
+export type AdminProviderEventCleanupSummaryDto = z.infer<typeof AdminProviderEventCleanupSummaryDtoSchema>;
+
+export const AdminProviderEventCleanupRowDtoSchema = z.object({
+  id: z.string().uuid().describe('Internal SportEvent identifier.'),
+  providerId: z.string().describe('Provider/source associated with the stale event row.'),
+  externalId: z.string().describe('Provider-side event identifier.'),
+  sport: z.string().describe('Persisted sport string associated with the event row. This allows cleanup to inventory legacy stale sports that are no longer active enum values.'),
+  name: z.string().describe('Current persisted event name.'),
+  status: z.string().describe('Current persisted event status.'),
+  startDate: z.string().datetime().describe('Persisted event start date.'),
+  endDate: z.string().datetime().nullable().describe('Persisted event end date, when known.'),
+  staleReason: z.enum(['NON_GOLF_EVENT', 'PAST_GOLF_EVENT']).describe('Cleanup rule that selected this stale event for inventory.'),
+  deletable: z.boolean().describe('Whether EXECUTE mode will delete this event.'),
+  deleted: z.boolean().describe('Whether this request deleted this event. Always false for dry runs.'),
+  blockedReasons: z.array(z.enum(['DIRECT_CONTEST_REFERENCE', 'CONTEST_SPORT_EVENT_REFERENCE', 'CONTEST_ENTRY_PICK_REFERENCE'])).describe('Contest-related references that protect this event from deletion.'),
+  directContestCount: z.number().int().min(0).describe('Number of Contest rows directly pointing at this event.'),
+  contestSportEventCount: z.number().int().min(0).describe('Number of ContestSportEvent join rows pointing at this event.'),
+  sportEventParticipantCount: z.number().int().min(0).describe('Number of SportEventParticipant rows attached to this event.'),
+  valuationCount: z.number().int().min(0).describe('Number of SportEventParticipantValuation rows attached through this event.'),
+  golfRoundCount: z.number().int().min(0).describe('Number of SportEventParticipantGolfRound rows attached through this event.'),
+  pickCount: z.number().int().min(0).describe('Number of ContestEntryPick rows referencing participants in this event.'),
+}).describe('Single stale provider event cleanup inventory row.');
+export type AdminProviderEventCleanupRowDto = z.infer<typeof AdminProviderEventCleanupRowDtoSchema>;
+
+export const AdminProviderEventCleanupResponseSchema = z.object({
+  mode: AdminProviderEventCleanupModeSchema.describe('Requested cleanup mode.'),
+  executed: z.boolean().describe('Whether this request performed deletion.'),
+  inventoriedAt: z.string().datetime().describe('When the inventory was computed.'),
+  summary: AdminProviderEventCleanupSummaryDtoSchema,
+  bySport: z.array(AdminProviderEventCleanupGroupDtoSchema).describe('Inventory grouped by event sport.'),
+  byProvider: z.array(AdminProviderEventCleanupGroupDtoSchema).describe('Inventory grouped by provider id.'),
+  byStatus: z.array(AdminProviderEventCleanupGroupDtoSchema).describe('Inventory grouped by persisted event status.'),
+  events: z.array(AdminProviderEventCleanupRowDtoSchema).describe('Per-event cleanup inventory rows.'),
+}).describe('Root-admin stale provider event cleanup response.');
+export type AdminProviderEventCleanupResponse = z.infer<typeof AdminProviderEventCleanupResponseSchema>;
+
 export const ProviderSyncRunStatusSchema = z.enum(['SUBMITTED', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CANCELLED']);
 export type ProviderSyncRunStatus = z.infer<typeof ProviderSyncRunStatusSchema>;
 

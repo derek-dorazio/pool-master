@@ -38,6 +38,8 @@ import {
   AdminDeleteUserRequestSchema,
   AdminResetUserPasswordRequestSchema,
   AdminResetUserPasswordResponseSchema,
+  AdminProviderEventCleanupRequestSchema,
+  AdminProviderEventCleanupResponseSchema,
   AdminContestConfigTemplateResponseSchema,
   AdminListContestConfigTemplatesQuerySchema,
   AdminUpdateContestConfigTemplateRequestSchema,
@@ -471,6 +473,19 @@ export async function adminModule(
       },
     },
     handler: provider.mapParticipant,
+  });
+
+  fastify.post('/providers/stale-events/cleanup', {
+    schema: {
+      tags: ['Admin'],
+      summary: 'Inventory or delete stale provider event rows',
+      description:
+        'Inventories stale provider SportEvent rows and, in EXECUTE mode, deletes eligible event-scoped rows. Non-Golf events are stale because the current provider workflow is Golf-only. Golf events are stale only after their end time has passed. Contest-referenced events and picks protect an event from deletion.',
+      operationId: 'adminCleanupStaleProviderEvents',
+      body: zodToJsonSchema(AdminProviderEventCleanupRequestSchema),
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(AdminProviderEventCleanupResponseSchema) }),
+    },
+    handler: provider.cleanupStaleProviderEvents,
   });
 
   fastify.get('/providers/:providerId', {
