@@ -200,11 +200,6 @@ describe('Contest scoring recalculation integration', () => {
         status: 'ACTIVE',
       },
     });
-
-    // sportEventParticipantSourceData was dropped per plans/117 §13.2.
-    // rop.78.7 rebuilds the recalculation path against SportEventParticipantGolfRound
-    // and the per-(category × contestFormat) contribution table.
-
     const entryA = await prisma.contestEntry.create({
       data: {
         contestId: contest.id,

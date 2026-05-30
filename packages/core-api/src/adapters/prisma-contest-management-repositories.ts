@@ -113,6 +113,9 @@ export class PrismaSportEventParticipantRepository
         sportEventId: participant.sportEventId,
         participantId: participant.participantId,
         status: participant.status,
+        worldRanking: participant.worldRanking,
+        oddsToWin: participant.oddsToWin,
+        seedNumber: participant.seedNumber,
         metadata: participant.metadata as object,
       },
     });
@@ -127,6 +130,9 @@ export class PrismaSportEventParticipantRepository
       where: { id },
       data: {
         ...(updates.status !== undefined && { status: updates.status }),
+        ...(updates.worldRanking !== undefined && { worldRanking: updates.worldRanking }),
+        ...(updates.oddsToWin !== undefined && { oddsToWin: updates.oddsToWin }),
+        ...(updates.seedNumber !== undefined && { seedNumber: updates.seedNumber }),
         ...(updates.metadata !== undefined && { metadata: updates.metadata as object }),
       },
     });
@@ -774,15 +780,25 @@ function mapSportEventParticipant(row: {
   sportEventId: string;
   participantId: string;
   status: string | null;
+  worldRanking: number | null;
+  oddsToWin: { toNumber(): number } | number | null;
+  seedNumber: number | null;
   metadata: unknown;
   createdAt: Date;
   updatedAt: Date;
 }): SportEventParticipant {
+  const oddsToWin = typeof row.oddsToWin === 'number'
+    ? row.oddsToWin
+    : row.oddsToWin?.toNumber();
+
   return {
     id: row.id,
     sportEventId: row.sportEventId,
     participantId: row.participantId,
     status: row.status ?? undefined,
+    worldRanking: row.worldRanking ?? undefined,
+    oddsToWin: oddsToWin ?? undefined,
+    seedNumber: row.seedNumber ?? undefined,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

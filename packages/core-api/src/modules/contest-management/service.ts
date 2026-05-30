@@ -489,20 +489,13 @@ async function derivePersistedTierConfig(
     }));
   }
 
-  // Pre-rop.78.7: tier sort relies on stored valuation orderIndex only.
-  // Per-event ranking/odds will move onto SportEventParticipant in rop.78.5
-  // and the new scoring path in rop.78.7 will rebuild this with typed fields.
   const tierCandidates = await Promise.all(
     participants.map(async (participant) => {
-      const valuations =
-        await sportEventParticipantValuationRepo.findBySportEventParticipant(participant.id);
-      const currentValuation = valuations[0];
-
       return {
         sportEventParticipantId: participant.id,
         participantId: participant.participantId,
-        odds: undefined,
-        ranking: currentValuation?.orderIndex,
+        odds: participant.oddsToWin,
+        ranking: participant.worldRanking,
       } satisfies TierCandidate;
     }),
   );

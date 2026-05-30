@@ -78,7 +78,7 @@ export type EventSyncPresetId = (typeof EVENT_SYNC_PRESETS)[number]['id'];
 export const FEED_LABELS = {
   EVENTSCHEDULE: 'Schedule',
   EVENTPARTICIPANTS: 'Participants',
-  PARTICIPANTRANKINGS: 'Rankings / odds',
+  PARTICIPANTRANKINGS: 'World rankings',
   EVENTLIVESCORES: 'Live scores',
   EVENTRESULTS: 'Final results',
 } as const;

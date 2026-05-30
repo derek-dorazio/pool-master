@@ -136,6 +136,7 @@ class OperationalContractProvider implements SportDataProvider {
   async getRankings(): Promise<ProviderRanking[]> {
     return [
       {
+        providerId: this.providerId,
         participantExternalId: 'golfer-1',
         rankingType: 'OWGR',
         rank: 1,

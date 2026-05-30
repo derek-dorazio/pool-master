@@ -138,9 +138,9 @@ export type SportEventDto = z.infer<typeof SportEventDtoSchema>;
 
 /**
  * Canonical SportEventParticipant DTO — pure row projection per
- * plans/117 §4.1 / §12.1. The per-event ranking fields (`worldRanking`,
- * `oddsToWin`, `seedNumber`) landed in pool-master-rop.78.4 and replace
- * the dropped ParticipantSeasonRecord path.
+ * plans/117 §4.1 / §12.1. `worldRanking` is copied from the latest
+ * provider-scoped global ranking snapshot; `oddsToWin` and `seedNumber`
+ * are event-scoped values.
  *
  * All optional row columns are `.nullable()` (not `.optional()`) so the
  * DTO mirrors the row shape exactly: every key is present, with null when
@@ -152,8 +152,8 @@ export const SportEventParticipantDtoSchema = z.object({
   sportEventId: z.string().describe('Owning sport-event identifier.'),
   participantId: z.string().describe('Canonical participant identifier (the across-events Participant row).'),
   status: z.string().nullable().describe('Provider-emitted per-event participant status (ACTIVE, WITHDRAWN, etc.); null when unknown.'),
-  worldRanking: z.number().int().nullable().describe('Per-event world ranking snapshot from the provider feed at field-load time; null when not provided.'),
-  oddsToWin: z.number().nullable().describe('Per-event implied odds-to-win snapshot (decimal); null when not provided.'),
+  worldRanking: z.number().int().nullable().describe('Latest provider-scoped global world-ranking snapshot copied onto this event participant; null when not available.'),
+  oddsToWin: z.number().nullable().describe('Event-scoped implied odds-to-win snapshot (decimal); null when not provided.'),
   seedNumber: z.number().int().nullable().describe('Event-relative seed number (e.g., NCAA tournament seed); null when not provided.'),
   metadata: JsonObjectSchema.describe('Provider-emitted per-participant metadata.'),
   createdAt: DateTimeSchema,

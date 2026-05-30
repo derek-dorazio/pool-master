@@ -115,7 +115,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     return {
       ...toSportEvent(this.providerId, detail, participants.length, match.scenarioId),
       participants: participants.map((contestant) =>
-        toProviderParticipant(this.providerId, detail.sport, contestant),
+        toProviderParticipant(this.providerId, detail.sport, contestant, detail.event.eventId),
       ),
     };
   }
@@ -148,6 +148,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
         }
 
         rankings.set(contestant.contestantId, {
+          providerId: this.providerId,
           participantExternalId: contestant.contestantId,
           rankingType,
           rank: contestant.ranking,
@@ -423,6 +424,7 @@ function toProviderParticipant(
   providerId: string,
   sport: SupportedMockSport,
   contestant: ContestantRecord,
+  eventExternalId?: string,
 ): ProviderParticipant {
   const [firstName, ...lastParts] = contestant.name.split(/\s+/);
   const domainSport = toDomainSport(sport);
@@ -450,6 +452,7 @@ function toProviderParticipant(
       seed: contestant.seed,
       participantStatus: contestant.participantStatus,
       odds: contestant.odds,
+      oddsSourceEventId: typeof contestant.odds === 'number' ? eventExternalId : undefined,
       ranking: contestant.ranking,
       score: contestant.score,
       result: contestant.result,

@@ -398,8 +398,9 @@ describe('IngestionScheduler', () => {
         ]),
         getRankings: jest.fn().mockResolvedValue([
           {
+            providerId: 'mock-provider',
             participantExternalId: 'player-1',
-            rankingType: 'default',
+            rankingType: 'OWGR',
             rank: 1,
             asOfDate: new Date('2026-04-09T12:00:00.000Z'),
           },
@@ -417,7 +418,7 @@ describe('IngestionScheduler', () => {
 
       expect(provider.getUpcomingEvents).toHaveBeenCalledTimes(1);
       expect(provider.getEventDetails).not.toHaveBeenCalled();
-      expect(provider.getRankings).toHaveBeenCalledWith('GOLF', 'default');
+      expect(provider.getRankings).toHaveBeenCalledWith('GOLF', 'OWGR');
       expect(mockCallbacks.onEvents).toHaveBeenCalled();
       expect(mockCallbacks.onEventDetail).not.toHaveBeenCalled();
       expect(jobs.map((job) => job.jobType)).toEqual(['EVENT_SCHEDULE_SYNC', 'PARTICIPANT_RANKINGS_SYNC']);
@@ -1151,7 +1152,7 @@ describe('IngestionScheduler', () => {
         feed: 'EVENTPARTICIPANTS',
       }));
       expect(provider.getEventDetails).toHaveBeenCalled();
-      expect(provider.getRankings).toHaveBeenCalledWith('GOLF', 'default');
+      expect(provider.getRankings).toHaveBeenCalledWith('GOLF', 'OWGR');
       expect(mockCallbacks.onEvents).toHaveBeenCalled();
       expect(mockCallbacks.onEventDetail).toHaveBeenCalled();
       expect(mockCallbacks.onRankings).toHaveBeenCalled();

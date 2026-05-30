@@ -137,6 +137,7 @@ export class EspnAdapter implements SportDataProvider {
     for (const poll of data.rankings ?? []) {
       for (const rank of poll.ranks ?? []) {
         rankings.push({
+          providerId: this.providerId,
           participantExternalId: rank.team?.id ?? '',
           rankingType: poll.name ?? 'AP',
           rank: rank.current,

@@ -583,6 +583,7 @@ model Participant {
 
   sport            Sport                       @relation(fields: [sportId], references: [id])
   providerMappings ParticipantProviderMapping[]
+  rankingSnapshots ParticipantRankingSnapshot[]
   sportEventParticipants SportEventParticipant[]
 
   @@index([sportId])
@@ -605,6 +606,25 @@ model ParticipantProviderMapping {
   @@unique([providerId, externalId])
   @@index([participantId])
   @@map("participant_provider_mappings")
+}
+
+model ParticipantRankingSnapshot {
+  id            String   @id @default(uuid()) @db.Uuid
+  participantId String   @map("participant_id") @db.Uuid
+  providerId    String   @map("provider_id") @db.VarChar(100)
+  rankingType   String   @map("ranking_type") @db.VarChar(50)
+  rank          Int
+  points        Decimal? @db.Decimal(12, 4)
+  asOfDate      DateTime @map("as_of_date") @db.Timestamptz
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  participant Participant @relation(fields: [participantId], references: [id])
+
+  @@unique([providerId, participantId, rankingType, asOfDate])
+  @@index([providerId, rankingType, asOfDate])
+  @@index([participantId, rankingType, asOfDate])
+  @@map("participant_ranking_snapshots")
 }
 
 // =============================================================================
