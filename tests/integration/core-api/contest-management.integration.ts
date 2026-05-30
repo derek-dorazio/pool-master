@@ -54,8 +54,7 @@ describe('Contest management integration', () => {
           status: 'ACTIVE',
         },
       });
-      // sportEventParticipantSourceData was dropped per plans/117 §13.2;
-      // rop.78.5 will move per-event ranking/odds onto SportEventParticipant.
+      void eventParticipant;
     }
   }
 
@@ -125,6 +124,8 @@ describe('Contest management integration', () => {
         sportEventId,
         participantId: topParticipantId,
         status: 'ACTIVE',
+        worldRanking: 1,
+        oddsToWin: 8.5,
       },
     });
     const secondEventParticipant = await prisma.sportEventParticipant.create({
@@ -132,18 +133,16 @@ describe('Contest management integration', () => {
         sportEventId,
         participantId: secondParticipantId,
         status: 'ACTIVE',
+        worldRanking: 8,
+        oddsToWin: 18.5,
       },
     });
 
-    // sportEventParticipantSourceData was dropped per plans/117 §13.2;
-    // rop.78.5 will move per-event ranking/odds onto SportEventParticipant.
     void topEventParticipant;
     void secondEventParticipant;
   });
 
-  // Tier order depends on the dropped sportEventParticipantSourceData feed.
-  // Reactivated by SKIP: pool-master-rop.78.5 (typed ranking column).
-  it.skip('creates, reads, and updates golf-first contest management configuration', async () => {
+  it('pool-master-rop.68.1.3: creates, reads, and updates golf-first contest management configuration', async () => {
     const createRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.contestManagement(leagueId),
@@ -195,11 +194,6 @@ describe('Contest management integration', () => {
     const createdConfiguration = await getPrisma().contestConfiguration.findUniqueOrThrow({
       where: { contestId },
     });
-    // Tier participant ordering — rop.78.4 dropped the ranking/odds-based sort
-    // (it read from sportEventParticipantSourceData per plans/117 §13.2);
-    // rop.78.5 will move per-event ranking onto SportEventParticipant and
-    // rop.78.7 rebuilds tier-sort using the typed columns. Until then the order
-    // is participant-id-alphabetical, so we only assert membership.
     expect(createdConfiguration.tierConfig).toEqual([
       expect.objectContaining({
         tierKey: 'A',

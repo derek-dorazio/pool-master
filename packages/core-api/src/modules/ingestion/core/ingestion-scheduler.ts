@@ -13,6 +13,7 @@ import type { Sport } from '@poolmaster/shared/domain';
 import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
+import { resolveRankingType } from './ranking-types';
 import { SyncOrchestrator } from './sync-orchestrator';
 import { resolveSportSyncWindowPolicy } from './sync-orchestrator';
 import type {
@@ -803,10 +804,12 @@ export class IngestionScheduler {
     }
 
     return this.runJob('PARTICIPANT_RANKINGS_SYNC', provider.providerId, sport, 'PARTICIPANTRANKINGS', provider, async () => {
-      const rankings = await provider.getRankings(sport, 'default');
+      const rankingType = resolveRankingType(sport);
+      const rankings = await provider.getRankings(sport, rankingType);
       this.logger?.debug({
         sport,
         providerId: provider.providerId,
+        rankingType,
         rankingsReturned: rankings.length,
       }, 'Provider returned rankings');
       await this.callbacks.onRankings(rankings);

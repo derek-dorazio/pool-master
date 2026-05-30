@@ -160,7 +160,4 @@ describe('participant service and handler', () => {
       },
     });
   });
-
-  // Season-record handler test removed — ParticipantSeasonRecord is dropped per
-  // plans/117 §13.2; per-event ranking moves onto SportEventParticipant in rop.78.5.
 });

@@ -5,15 +5,17 @@
  * and rankings received from data providers.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { ContestStatus, type Sport } from '@poolmaster/shared/domain';
 import type {
+  ProviderRanking,
   SportEvent,
   SportEventDetail,
   ProviderParticipant,
 } from '../core/provider-interface';
 import type { IngestionJobRecord } from '../core/ingestion-scheduler';
+import { resolveRankingType } from '../core/ranking-types';
 import {
   resolveEventTiming,
   selectTimingPolicy,
@@ -119,7 +121,7 @@ export class IngestionPersistence {
           releaseAt: resolvedTiming.releaseAt,
           fieldLocksAt: resolvedTiming.fieldLocksAt,
           fieldLocked: event.fieldLocked,
-          metadata: event.metadata as any,
+          metadata: toPrismaJson(event.metadata),
         },
         update: {
           name: event.name,
@@ -133,7 +135,7 @@ export class IngestionPersistence {
           releaseAt: resolvedTiming.releaseAt,
           fieldLocksAt: resolvedTiming.fieldLocksAt,
           fieldLocked: event.fieldLocked,
-          metadata: event.metadata as any,
+          metadata: toPrismaJson(event.metadata),
         },
       });
       await this.activateContestsForStartedEvent(persistedEvent.id, event);
@@ -349,7 +351,7 @@ export class IngestionPersistence {
         completedAt: job.completedAt ?? null,
         recordsProcessed: job.recordsProcessed,
         errors: job.errors,
-        errorLog: job.errorLog as any,
+        errorLog: toPrismaJson(job.errorLog),
       },
     });
 
@@ -531,6 +533,14 @@ export class IngestionPersistence {
         continue;
       }
 
+      const worldRanking = await this.findLatestRankingForEventParticipant({
+        providerId: participant.providerId,
+        participantId: mapping.participantId,
+        sport: detail.sport,
+      });
+      const oddsToWin = readEventScopedOddsToWin(participant, detail.externalId);
+      const seedNumber = readIntegerMetadata(participant.metadata, 'seed');
+
       await this.prisma.sportEventParticipant.upsert({
         where: {
           sportEventId_participantId: {
@@ -542,11 +552,17 @@ export class IngestionPersistence {
           sportEventId: persistedEvent.id,
           participantId: mapping.participantId,
           status: participant.active ? 'ACTIVE' : 'INACTIVE',
-          metadata: participant.metadata as any,
+          worldRanking,
+          oddsToWin,
+          seedNumber,
+          metadata: toPrismaJson(participant.metadata),
         },
         update: {
           status: participant.active ? 'ACTIVE' : 'INACTIVE',
-          metadata: participant.metadata as any,
+          worldRanking,
+          oddsToWin,
+          seedNumber,
+          metadata: toPrismaJson(participant.metadata),
         },
       });
 
@@ -569,9 +585,122 @@ export class IngestionPersistence {
     };
   }
 
-  // persistRankings was dropped with ParticipantSeasonRecord per plans/117 §13.2.
-  // Per-event ranking/odds will move onto SportEventParticipant (rop.78.5)
-  // and the live-scoring pipeline (rop.78.7) replaces the season-record path.
+  /**
+   * Persist global participant ranking snapshots by provider-scoped mapping.
+   *
+   * Rankings are not event-scoped source facts. They are provider-scoped
+   * snapshots keyed by ranking type + asOf; event participant hydration copies
+   * the latest applicable snapshot onto SportEventParticipant.worldRanking.
+   */
+  async persistRankings(rankings: ProviderRanking[]): Promise<number> {
+    let count = 0;
+    this.logger?.debug({
+      count: rankings.length,
+      rankings: rankings.slice(0, 10).map((ranking) => ({
+        providerId: ranking.providerId,
+        participantExternalId: ranking.participantExternalId,
+        rankingType: ranking.rankingType,
+        rank: ranking.rank,
+        asOfDate: ranking.asOfDate.toISOString(),
+      })),
+    }, 'Persisting participant ranking snapshots from ingestion');
+
+    for (const ranking of rankings) {
+      const mapping = await this.prisma.participantProviderMapping.findUnique({
+        where: {
+          providerId_externalId: {
+            providerId: ranking.providerId,
+            externalId: ranking.participantExternalId,
+          },
+        },
+      });
+
+      if (!mapping) {
+        this.logger?.warn({
+          providerId: ranking.providerId,
+          participantExternalId: ranking.participantExternalId,
+          rankingType: ranking.rankingType,
+        }, 'Skipped participant ranking because provider mapping was not found');
+        continue;
+      }
+
+      await this.prisma.participantRankingSnapshot.upsert({
+        where: {
+          providerId_participantId_rankingType_asOfDate: {
+            providerId: ranking.providerId,
+            participantId: mapping.participantId,
+            rankingType: ranking.rankingType,
+            asOfDate: ranking.asOfDate,
+          },
+        },
+        create: {
+          providerId: ranking.providerId,
+          participantId: mapping.participantId,
+          rankingType: ranking.rankingType,
+          rank: ranking.rank,
+          points: ranking.points ?? null,
+          asOfDate: ranking.asOfDate,
+        },
+        update: {
+          rank: ranking.rank,
+          points: ranking.points ?? null,
+        },
+      });
+      count++;
+    }
+
+    this.logger?.info({ count }, 'Persisted participant ranking snapshots from ingestion');
+    return count;
+  }
+
+  private async findLatestRankingForEventParticipant(input: {
+    providerId: string;
+    participantId: string;
+    sport: Sport;
+  }): Promise<number | null> {
+    const snapshot = await this.prisma.participantRankingSnapshot.findFirst({
+      where: {
+        providerId: input.providerId,
+        participantId: input.participantId,
+        rankingType: resolveRankingType(input.sport),
+      },
+      orderBy: { asOfDate: 'desc' },
+    });
+
+    return snapshot?.rank ?? null;
+  }
+}
+
+function readEventScopedOddsToWin(
+  participant: ProviderParticipant,
+  eventExternalId: string,
+): number | null {
+  const oddsSourceEventId = participant.metadata.oddsSourceEventId;
+  if (oddsSourceEventId !== eventExternalId) {
+    return null;
+  }
+
+  return readNumberMetadata(participant.metadata, 'odds');
+}
+
+function readNumberMetadata(
+  metadata: Record<string, unknown>,
+  key: string,
+): number | null {
+  const value = metadata[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function readIntegerMetadata(
+  metadata: Record<string, unknown>,
+  key: string,
+): number | null {
+  const value = readNumberMetadata(metadata, key);
+  return value === null ? null : Math.trunc(value);
+}
+
+function toPrismaJson(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
 function collectContestStartedRecipients(

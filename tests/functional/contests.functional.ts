@@ -180,10 +180,6 @@ async function seedImportedGolfEvent(options: {
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
 
-    // sportEventParticipantSourceData was dropped per plans/117 §13.2;
-    // rop.78.5 will move per-event ranking/odds onto SportEventParticipant
-    // and rop.78.7 will rebuild scoring on top of typed detail tables.
-
     seededParticipants.push({
       participantId: participant.id,
       sportEventParticipantId: sportEventParticipant.id,
@@ -993,9 +989,6 @@ describe('SDK Functional: Contests and Entries', () => {
       },
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
-
-    // sportEventParticipantSourceData was dropped per plans/117 §13.2;
-    // rop.78.7 will rebuild via SportEventParticipantGolfRound.
 
     await prisma.contest.update({
       where: {

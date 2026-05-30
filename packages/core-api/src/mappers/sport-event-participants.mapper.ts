@@ -2,9 +2,9 @@
  * SportEventParticipant mapper — Prisma row → canonical
  * SportEventParticipantDto per plans/117 §4.1 / §12.1.
  *
- * Pure projection. The per-event ranking fields (`worldRanking`,
- * `oddsToWin`, `seedNumber`) landed in pool-master-rop.78.4 and replace
- * the dropped ParticipantSeasonRecord path.
+ * Pure projection. `worldRanking` is copied from the latest provider-scoped
+ * global ranking snapshot during event hydration; `oddsToWin` and
+ * `seedNumber` are event-scoped values from the event detail feed.
  *
  * `oddsToWin` arrives as a Prisma Decimal-like object on the row; the
  * mapper coerces to a plain number so the DTO stays JSON-serializable.

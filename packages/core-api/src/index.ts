@@ -155,11 +155,11 @@ export function buildApp() {
       app.log.info({ persisted }, 'Persisted event detail');
     },
     async onRankings(rankings: ProviderRanking[]) {
-      // Per plans/117 §13.2 the season-record persistence path was dropped.
-      // Per-event ranking will move onto SportEventParticipant in rop.78.5.
       app.log.info({
         count: rankings.length,
-      }, 'Received rankings (persistence deferred to rop.78.5)');
+      }, 'Ingested participant ranking snapshots');
+      const persisted = await ingestionPersistence.persistRankings(rankings);
+      app.log.info({ persisted }, 'Persisted participant ranking snapshots');
     },
     async onLiveScores(result: LiveScoreResult, providerId: string) {
       app.log.info({

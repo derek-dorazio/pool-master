@@ -148,6 +148,7 @@ export interface ProviderParticipant {
 }
 
 export interface ProviderRanking {
+  providerId: string;
   participantExternalId: string;
   rankingType: string;
   rank: number;

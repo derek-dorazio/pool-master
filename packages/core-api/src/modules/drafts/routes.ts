@@ -357,10 +357,6 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
         orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
       });
 
-  // Per-event world ranking will move onto SportEventParticipant.worldRanking
-  // in rop.78.5; for now, draft routes rely on stored valuation orderIndex only.
-  const rankingByParticipantId = new Map<string, number>();
-
   return {
     contest: {
       id: contest.id,
@@ -389,7 +385,7 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
         teamAffiliation: record.participant.teamAffiliation,
         status: record.status,
         price: valuation?.price ?? undefined,
-        ranking: rankingByParticipantId.get(record.participantId) ?? undefined,
+        ranking: record.worldRanking ?? undefined,
         tier: valuation?.tier ?? null,
         orderIndex: valuation?.orderIndex ?? undefined,
         isAvailable,

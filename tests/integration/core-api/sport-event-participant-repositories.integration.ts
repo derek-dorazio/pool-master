@@ -30,7 +30,7 @@ afterAll(async () => {
 });
 
 describe('Sport event participant repositories', () => {
-  it('creates and updates event participants, source data, and valuations', async () => {
+  it('pool-master-rop.68.1.3 creates and updates event participants, source data, rankings, odds, seeds, and valuations', async () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { name: Sport.GOLF },
@@ -69,11 +69,17 @@ describe('Sport event participant repositories', () => {
       sportEventId: event.id,
       participantId: participant.id,
       status: 'ACTIVE',
+      worldRanking: 11,
+      oddsToWin: 24.5,
+      seedNumber: 3,
       metadata: { teeTime: '08:30' },
     });
 
     expect(sportEventParticipant.sportEventId).toBe(event.id);
     expect(sportEventParticipant.participantId).toBe(participant.id);
+    expect(sportEventParticipant.worldRanking).toBe(11);
+    expect(sportEventParticipant.oddsToWin).toBe(24.5);
+    expect(sportEventParticipant.seedNumber).toBe(3);
 
     const valuation = await valuationRepo.create({
       sportEventParticipantId: sportEventParticipant.id,
@@ -87,6 +93,8 @@ describe('Sport event participant repositories', () => {
       sportEventParticipant.id,
       {
         status: 'IN_PROGRESS',
+        worldRanking: 8,
+        oddsToWin: 20,
         metadata: { teeTime: '08:30', started: true },
       },
     );
@@ -96,6 +104,8 @@ describe('Sport event participant repositories', () => {
     });
 
     expect(updatedParticipant.status).toBe('IN_PROGRESS');
+    expect(updatedParticipant.worldRanking).toBe(8);
+    expect(updatedParticipant.oddsToWin).toBe(20);
     expect(updatedValuation.price).toBe(9800);
     expect(updatedValuation.tier).toBe('S');
 
@@ -107,8 +117,7 @@ describe('Sport event participant repositories', () => {
     expect(participantsForEvent).toHaveLength(1);
     expect(valuations).toHaveLength(1);
 
-    // SportEventParticipantSourceData was dropped per plans/117 §13.2;
-    // rop.78.5 will move per-event ranking/odds onto SportEventParticipant
-    // and rop.78.7 will rebuild scoring on top of typed detail tables.
+    expect(participantsForEvent[0].worldRanking).toBe(8);
+    expect(participantsForEvent[0].oddsToWin).toBe(20);
   });
 });

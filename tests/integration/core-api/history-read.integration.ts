@@ -179,10 +179,6 @@ describe('History Read Integration', () => {
         status: 'ACTIVE',
       },
     });
-
-    // sportEventParticipantSourceData was dropped per plans/117 §13.2;
-    // rop.78.7 rebuilds via SportEventParticipantGolfRound + contribution table.
-
     await prisma.contestEntryPick.create({
       data: {
         entryId: challengerEntryId,

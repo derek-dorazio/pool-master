@@ -1,6 +1,10 @@
 import { Sport } from '@poolmaster/shared/domain';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
-import type { SportEvent } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
+import type {
+  ProviderRanking,
+  SportEvent,
+  SportEventDetail,
+} from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 
 function createLogger() {
   return {
@@ -79,6 +83,223 @@ function buildStartedContestCandidate() {
 }
 
 describe('IngestionPersistence', () => {
+  it('pool-master-rop.68.1.3 persists provider-scoped participant ranking snapshots by provider mapping', async () => {
+    const prisma = {
+      participantProviderMapping: {
+        findUnique: jest.fn().mockResolvedValue({ participantId: 'participant-1' }),
+      },
+      participantRankingSnapshot: {
+        upsert: jest.fn().mockResolvedValue({ id: 'ranking-snapshot-1' }),
+      },
+    };
+    const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
+    const ranking: ProviderRanking = {
+      providerId: 'mock-contest-feed',
+      participantExternalId: 'golfer-01',
+      rankingType: 'OWGR',
+      rank: 3,
+      points: 12.34,
+      asOfDate: new Date('2026-05-29T12:00:00.000Z'),
+    };
+
+    await expect(persistence.persistRankings([ranking])).resolves.toBe(1);
+
+    expect(prisma.participantProviderMapping.findUnique).toHaveBeenCalledWith({
+      where: {
+        providerId_externalId: {
+          providerId: 'mock-contest-feed',
+          externalId: 'golfer-01',
+        },
+      },
+    });
+    expect(prisma.participantRankingSnapshot.upsert).toHaveBeenCalledWith({
+      where: {
+        providerId_participantId_rankingType_asOfDate: {
+          providerId: 'mock-contest-feed',
+          participantId: 'participant-1',
+          rankingType: 'OWGR',
+          asOfDate: new Date('2026-05-29T12:00:00.000Z'),
+        },
+      },
+      create: {
+        providerId: 'mock-contest-feed',
+        participantId: 'participant-1',
+        rankingType: 'OWGR',
+        rank: 3,
+        points: 12.34,
+        asOfDate: new Date('2026-05-29T12:00:00.000Z'),
+      },
+      update: {
+        rank: 3,
+        points: 12.34,
+      },
+    });
+  });
+
+  it('pool-master-rop.68.1.3 hydrates event participants with seed, event-scoped odds, and latest global rank', async () => {
+    const prisma = {
+      contestTimingPolicy: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      sportEvent: {
+        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+        findUnique: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+      },
+      contest: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      participantProviderMapping: {
+        findUnique: jest.fn().mockResolvedValue({ participantId: 'participant-1' }),
+      },
+      participant: {
+        update: jest.fn().mockResolvedValue({ id: 'participant-1' }),
+      },
+      participantRankingSnapshot: {
+        findFirst: jest.fn().mockResolvedValue({ rank: 7 }),
+      },
+      sportEventParticipant: {
+        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' }),
+      },
+    };
+    const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
+    const detail: SportEventDetail = {
+      ...buildInProgressEvent(),
+      externalId: 'golf-open-2026',
+      status: 'SCHEDULED',
+      participants: [
+        {
+          externalId: 'golfer-01',
+          providerId: 'mock-contest-feed',
+          sport: Sport.GOLF,
+          name: 'Scottie Scheffler',
+          active: true,
+          metadata: {
+            seed: 1,
+            odds: 8.5,
+            oddsSourceEventId: 'golf-open-2026',
+          },
+        },
+      ],
+    };
+
+    await expect(persistence.persistEventDetail(detail)).resolves.toEqual({
+      eventsPersisted: 1,
+      participantsPersisted: 1,
+      sportEventParticipantsPersisted: 1,
+    });
+
+    expect(prisma.participantRankingSnapshot.findFirst).toHaveBeenCalledWith({
+      where: {
+        providerId: 'mock-contest-feed',
+        participantId: 'participant-1',
+        rankingType: 'OWGR',
+      },
+      orderBy: { asOfDate: 'desc' },
+    });
+    expect(prisma.sportEventParticipant.upsert).toHaveBeenCalledWith({
+      where: {
+        sportEventId_participantId: {
+          sportEventId: 'sport-event-1',
+          participantId: 'participant-1',
+        },
+      },
+      create: {
+        sportEventId: 'sport-event-1',
+        participantId: 'participant-1',
+        status: 'ACTIVE',
+        worldRanking: 7,
+        oddsToWin: 8.5,
+        seedNumber: 1,
+        metadata: detail.participants[0].metadata,
+      },
+      update: {
+        status: 'ACTIVE',
+        worldRanking: 7,
+        oddsToWin: 8.5,
+        seedNumber: 1,
+        metadata: detail.participants[0].metadata,
+      },
+    });
+  });
+
+  it('pool-master-rop.68.1.3 does not bleed mismatched event odds or absent global ranking onto event participants', async () => {
+    const prisma = {
+      contestTimingPolicy: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      sportEvent: {
+        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+        findUnique: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+      },
+      contest: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      participantProviderMapping: {
+        findUnique: jest.fn().mockResolvedValue({ participantId: 'participant-1' }),
+      },
+      participant: {
+        update: jest.fn().mockResolvedValue({ id: 'participant-1' }),
+      },
+      participantRankingSnapshot: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+      sportEventParticipant: {
+        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' }),
+      },
+    };
+    const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
+    const detail: SportEventDetail = {
+      ...buildInProgressEvent(),
+      externalId: 'golf-open-2026',
+      status: 'SCHEDULED',
+      participants: [
+        {
+          externalId: 'golfer-01',
+          providerId: 'mock-contest-feed',
+          sport: Sport.GOLF,
+          name: 'Scottie Scheffler',
+          active: true,
+          metadata: {
+            seed: 1,
+            odds: 8.5,
+            oddsSourceEventId: 'different-provider-event',
+          },
+        },
+      ],
+    };
+
+    await expect(persistence.persistEventDetail(detail)).resolves.toEqual({
+      eventsPersisted: 1,
+      participantsPersisted: 1,
+      sportEventParticipantsPersisted: 1,
+    });
+
+    expect(prisma.sportEventParticipant.upsert).toHaveBeenCalledWith({
+      where: {
+        sportEventId_participantId: {
+          sportEventId: 'sport-event-1',
+          participantId: 'participant-1',
+        },
+      },
+      create: {
+        sportEventId: 'sport-event-1',
+        participantId: 'participant-1',
+        status: 'ACTIVE',
+        worldRanking: null,
+        oddsToWin: null,
+        seedNumber: 1,
+        metadata: detail.participants[0].metadata,
+      },
+      update: {
+        status: 'ACTIVE',
+        worldRanking: null,
+        oddsToWin: null,
+        seedNumber: 1,
+        metadata: detail.participants[0].metadata,
+      },
+    });
+  });
+
   it('pool-master-9ya activates open contests and sends contest-started summary emails when an event starts', async () => {
     const prisma = {
       contestTimingPolicy: {

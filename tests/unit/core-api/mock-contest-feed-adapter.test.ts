@@ -153,9 +153,17 @@ describe('MockContestFeedAdapter', () => {
 
     const detail = await adapter.getEventDetails('golf-masters-2026');
     expect(detail?.participants).toHaveLength(2);
+    expect(detail?.participants[0]?.metadata).toMatchObject({
+      odds: 6.5,
+      oddsSourceEventId: 'golf-masters-2026',
+    });
 
     const rankings = await adapter.getRankings(Sport.GOLF, 'OWGR');
     expect(rankings.map((ranking) => ranking.rank)).toEqual([1, 2]);
+    expect(rankings[0]).toEqual(expect.objectContaining({
+      providerId: 'mock-contest-feed',
+      rankingType: 'OWGR',
+    }));
 
     // pool-master-rop.78.3 — the typed LiveScoreResult contract replaced
     // the legacy ProviderStatEvent[] shape. plans/117 §10.2.
