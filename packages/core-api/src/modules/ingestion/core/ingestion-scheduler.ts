@@ -16,6 +16,8 @@ import type { ProviderRegistry } from './provider-registry';
 import { resolveRankingType } from './ranking-types';
 import { SyncOrchestrator } from './sync-orchestrator';
 import { resolveSportSyncWindowPolicy } from './sync-orchestrator';
+import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
+import { syncWriteStats } from './sync-write-diagnostics';
 import type {
   EventSyncFeed,
   IngestionFeedType,
@@ -64,6 +66,7 @@ export interface IngestionJobRecord {
   providerPayload?: IngestionJobProviderPayload;
   stats?: Record<string, number>;
   warnings?: IngestionJobWarning[];
+  writeDiagnostics?: SyncWriteDiagnostics;
 }
 
 export interface IngestionJobWarning {
@@ -82,6 +85,7 @@ interface IngestionJobWorkResult {
   recordsProcessed: number;
   stats?: Record<string, number>;
   warnings?: IngestionJobWarning[];
+  writeDiagnostics?: SyncWriteDiagnostics;
 }
 
 export interface SportSyncRequest {
@@ -101,9 +105,9 @@ export interface EventSyncRequest {
 }
 
 export interface IngestionCallbacks {
-  onEvents(events: SportEvent[]): Promise<void>;
-  onEventDetail(detail: SportEventDetail): Promise<void>;
-  onRankings(rankings: ProviderRanking[]): Promise<void>;
+  onEvents(events: SportEvent[]): Promise<SyncWriteDiagnostics | void>;
+  onEventDetail(detail: SportEventDetail): Promise<SyncWriteDiagnostics | void>;
+  onRankings(rankings: ProviderRanking[]): Promise<SyncWriteDiagnostics | void>;
   onLiveScores(result: LiveScoreResult, providerId: string): Promise<void>;
   onJobComplete(job: IngestionJobRecord): Promise<void>;
 }
@@ -722,7 +726,7 @@ export class IngestionScheduler {
           to: dateRange.to.toISOString(),
         }, 'Provider returned no upcoming events for schedule sync');
       }
-      await this.callbacks.onEvents(events);
+      const writeDiagnostics = await this.callbacks.onEvents(events);
       this.logger?.info({
         sport,
         providerId: provider.providerId,
@@ -736,7 +740,9 @@ export class IngestionScheduler {
           providerRecordsReturned: events.length,
           eventsFetched: events.length,
           eventsProcessed: events.length,
+          ...syncWriteStats(writeDiagnostics ?? undefined),
         },
+        writeDiagnostics: writeDiagnostics ?? undefined,
         warnings: events.length === 0
           ? [{
               code: 'NO_PROVIDER_EVENTS',
@@ -772,7 +778,7 @@ export class IngestionScheduler {
         throw new Error(`Provider returned no event detail for event ${eventId}`);
       }
 
-      await this.callbacks.onEventDetail(detail);
+      const writeDiagnostics = await this.callbacks.onEventDetail(detail);
       this.logger?.info({
         sport,
         eventId,
@@ -785,7 +791,9 @@ export class IngestionScheduler {
           providerRecordsReturned: detail.participants.length,
           eventsHydrated: 1,
           participantsReturned: detail.participants.length,
+          ...syncWriteStats(writeDiagnostics ?? undefined),
         },
+        writeDiagnostics: writeDiagnostics ?? undefined,
         warnings: detail.participants.length === 0
           ? [{
               code: 'NO_PROVIDER_PARTICIPANTS',
@@ -812,7 +820,7 @@ export class IngestionScheduler {
         rankingType,
         rankingsReturned: rankings.length,
       }, 'Provider returned rankings');
-      await this.callbacks.onRankings(rankings);
+      const writeDiagnostics = await this.callbacks.onRankings(rankings);
       this.logger?.info({
         sport,
         providerId: provider.providerId,
@@ -824,7 +832,9 @@ export class IngestionScheduler {
           providerRecordsReturned: rankings.length,
           rankingsFetched: rankings.length,
           rankingsProcessed: rankings.length,
+          ...syncWriteStats(writeDiagnostics ?? undefined),
         },
+        writeDiagnostics: writeDiagnostics ?? undefined,
         warnings: rankings.length === 0
           ? [{
               code: 'NO_PROVIDER_RANKINGS',
@@ -878,6 +888,7 @@ export class IngestionScheduler {
         job.recordsProcessed = result.recordsProcessed;
         job.stats = result.stats;
         job.warnings = result.warnings;
+        job.writeDiagnostics = result.writeDiagnostics;
       }
       job.providerPayload = buildProviderPayload(feed, provider, payloadCaptureSession);
       job.status = 'COMPLETED';

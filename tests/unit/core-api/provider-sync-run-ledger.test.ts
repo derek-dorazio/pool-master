@@ -45,6 +45,32 @@ function createJob(overrides: Partial<IngestionJobRecord> = {}): IngestionJobRec
     },
     stats: {
       events: 3,
+      writeRows: 3,
+      writeUnchanged: 1,
+      writeCreated: 1,
+      writeUpdated: 1,
+      writeDeleted: 0,
+    },
+    writeDiagnostics: {
+      summary: {
+        total: 3,
+        unchanged: 1,
+        created: 1,
+        updated: 1,
+        deleted: 0,
+      },
+      rows: [
+        {
+          id: 'sport-event:mock-provider:event-1',
+          entityType: 'SportEvent',
+          disposition: 'UPDATED',
+          providerId: 'mock-provider',
+          externalId: 'event-1',
+          name: 'Event 1',
+          before: { status: 'SCHEDULED' },
+          after: { status: 'IN_PROGRESS' },
+        },
+      ],
     },
     warnings: [],
     ...overrides,
@@ -173,16 +199,27 @@ describe('ProviderSyncRunLedger', () => {
             errors: 0,
           }),
           providerPayload: job.providerPayload,
+          writeDiagnostics: job.writeDiagnostics,
           outcome: expect.objectContaining({
             severity: 'SUCCESS',
             summary: 'Completed event schedule sync for GOLF (3 records).',
           }),
-          stats: { events: 3 },
+          stats: {
+            events: 3,
+            writeRows: 3,
+            writeUnchanged: 1,
+            writeCreated: 1,
+            writeUpdated: 1,
+            writeDeleted: 0,
+          },
           recordsProcessed: 3,
           errors: 0,
         }),
       }),
     });
+    const completedPayload = providerSyncRunUpdate.mock.calls[1][0].data.payloadJson;
+    expect(completedPayload.writeDiagnostics).toBe(job.writeDiagnostics);
+    expect(completedPayload.jobPayload).not.toHaveProperty('writeDiagnostics');
   });
 
   it('pool-master-rop.68.2.4 marks a provider sync run failed when the ingestion job returns FAILED', async () => {

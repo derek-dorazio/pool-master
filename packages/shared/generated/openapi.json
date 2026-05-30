@@ -28196,6 +28196,110 @@
                                 "additionalProperties": false,
                                 "description": "Serialized ingestion job details after an ingestion job is available."
                               },
+                              "writeDiagnostics": {
+                                "type": "object",
+                                "properties": {
+                                  "summary": {
+                                    "type": "object",
+                                    "properties": {
+                                      "total": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "unchanged": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "created": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "updated": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "deleted": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      }
+                                    },
+                                    "required": [
+                                      "total",
+                                      "unchanged",
+                                      "created",
+                                      "updated",
+                                      "deleted"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Aggregate normalized write-effect counts for a provider sync run."
+                                  },
+                                  "rows": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "description": "Stable row id for this normalized write diagnostic row."
+                                        },
+                                        "entityType": {
+                                          "type": "string",
+                                          "description": "Normalized PoolMaster entity type represented by this row."
+                                        },
+                                        "disposition": {
+                                          "type": "string",
+                                          "enum": [
+                                            "UNCHANGED",
+                                            "CREATED",
+                                            "UPDATED",
+                                            "DELETED"
+                                          ],
+                                          "description": "Write effect for the normalized row."
+                                        },
+                                        "providerId": {
+                                          "type": "string",
+                                          "description": "Provider id associated with this row, when applicable."
+                                        },
+                                        "externalId": {
+                                          "type": "string",
+                                          "description": "Provider external id associated with this row, when applicable."
+                                        },
+                                        "participantExternalId": {
+                                          "type": "string",
+                                          "description": "Provider participant id associated with this row, when applicable."
+                                        },
+                                        "internalId": {
+                                          "type": "string",
+                                          "description": "PoolMaster internal id associated with this row, when known."
+                                        },
+                                        "name": {
+                                          "type": "string",
+                                          "description": "Display name for the row, when known."
+                                        },
+                                        "before": {
+                                          "description": "Normalized before-state JSON for UPDATED or DELETED rows."
+                                        },
+                                        "after": {
+                                          "description": "Normalized after-state JSON for CREATED or UPDATED rows."
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "entityType",
+                                        "disposition"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Single normalized write diagnostic row for a provider sync run."
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "summary",
+                                  "rows"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes."
+                              },
                               "outcome": {
                                 "type": "object",
                                 "properties": {
@@ -28659,6 +28763,110 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Serialized ingestion job details after an ingestion job is available."
+                              },
+                              "writeDiagnostics": {
+                                "type": "object",
+                                "properties": {
+                                  "summary": {
+                                    "type": "object",
+                                    "properties": {
+                                      "total": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "unchanged": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "created": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "updated": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "deleted": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      }
+                                    },
+                                    "required": [
+                                      "total",
+                                      "unchanged",
+                                      "created",
+                                      "updated",
+                                      "deleted"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Aggregate normalized write-effect counts for a provider sync run."
+                                  },
+                                  "rows": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "description": "Stable row id for this normalized write diagnostic row."
+                                        },
+                                        "entityType": {
+                                          "type": "string",
+                                          "description": "Normalized PoolMaster entity type represented by this row."
+                                        },
+                                        "disposition": {
+                                          "type": "string",
+                                          "enum": [
+                                            "UNCHANGED",
+                                            "CREATED",
+                                            "UPDATED",
+                                            "DELETED"
+                                          ],
+                                          "description": "Write effect for the normalized row."
+                                        },
+                                        "providerId": {
+                                          "type": "string",
+                                          "description": "Provider id associated with this row, when applicable."
+                                        },
+                                        "externalId": {
+                                          "type": "string",
+                                          "description": "Provider external id associated with this row, when applicable."
+                                        },
+                                        "participantExternalId": {
+                                          "type": "string",
+                                          "description": "Provider participant id associated with this row, when applicable."
+                                        },
+                                        "internalId": {
+                                          "type": "string",
+                                          "description": "PoolMaster internal id associated with this row, when known."
+                                        },
+                                        "name": {
+                                          "type": "string",
+                                          "description": "Display name for the row, when known."
+                                        },
+                                        "before": {
+                                          "description": "Normalized before-state JSON for UPDATED or DELETED rows."
+                                        },
+                                        "after": {
+                                          "description": "Normalized after-state JSON for CREATED or UPDATED rows."
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "entityType",
+                                        "disposition"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Single normalized write diagnostic row for a provider sync run."
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "summary",
+                                  "rows"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes."
                               },
                               "outcome": {
                                 "type": "object",
@@ -29214,6 +29422,110 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Serialized ingestion job details after an ingestion job is available."
+                              },
+                              "writeDiagnostics": {
+                                "type": "object",
+                                "properties": {
+                                  "summary": {
+                                    "type": "object",
+                                    "properties": {
+                                      "total": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "unchanged": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "created": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "updated": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      },
+                                      "deleted": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                      }
+                                    },
+                                    "required": [
+                                      "total",
+                                      "unchanged",
+                                      "created",
+                                      "updated",
+                                      "deleted"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Aggregate normalized write-effect counts for a provider sync run."
+                                  },
+                                  "rows": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "description": "Stable row id for this normalized write diagnostic row."
+                                        },
+                                        "entityType": {
+                                          "type": "string",
+                                          "description": "Normalized PoolMaster entity type represented by this row."
+                                        },
+                                        "disposition": {
+                                          "type": "string",
+                                          "enum": [
+                                            "UNCHANGED",
+                                            "CREATED",
+                                            "UPDATED",
+                                            "DELETED"
+                                          ],
+                                          "description": "Write effect for the normalized row."
+                                        },
+                                        "providerId": {
+                                          "type": "string",
+                                          "description": "Provider id associated with this row, when applicable."
+                                        },
+                                        "externalId": {
+                                          "type": "string",
+                                          "description": "Provider external id associated with this row, when applicable."
+                                        },
+                                        "participantExternalId": {
+                                          "type": "string",
+                                          "description": "Provider participant id associated with this row, when applicable."
+                                        },
+                                        "internalId": {
+                                          "type": "string",
+                                          "description": "PoolMaster internal id associated with this row, when known."
+                                        },
+                                        "name": {
+                                          "type": "string",
+                                          "description": "Display name for the row, when known."
+                                        },
+                                        "before": {
+                                          "description": "Normalized before-state JSON for UPDATED or DELETED rows."
+                                        },
+                                        "after": {
+                                          "description": "Normalized after-state JSON for CREATED or UPDATED rows."
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "entityType",
+                                        "disposition"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Single normalized write diagnostic row for a provider sync run."
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "summary",
+                                  "rows"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes."
                               },
                               "outcome": {
                                 "type": "object",

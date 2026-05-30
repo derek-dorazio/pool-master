@@ -14041,6 +14041,63 @@ export type AdminListProviderSyncRunsResponses = {
                     errorLog: Array<unknown>;
                 };
                 /**
+                 * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
+                 */
+                writeDiagnostics?: {
+                    /**
+                     * Aggregate normalized write-effect counts for a provider sync run.
+                     */
+                    summary: {
+                        total: number;
+                        unchanged: number;
+                        created: number;
+                        updated: number;
+                        deleted: number;
+                    };
+                    rows: Array<{
+                        /**
+                         * Stable row id for this normalized write diagnostic row.
+                         */
+                        id: string;
+                        /**
+                         * Normalized PoolMaster entity type represented by this row.
+                         */
+                        entityType: string;
+                        /**
+                         * Write effect for the normalized row.
+                         */
+                        disposition: 'UNCHANGED' | 'CREATED' | 'UPDATED' | 'DELETED';
+                        /**
+                         * Provider id associated with this row, when applicable.
+                         */
+                        providerId?: string;
+                        /**
+                         * Provider external id associated with this row, when applicable.
+                         */
+                        externalId?: string;
+                        /**
+                         * Provider participant id associated with this row, when applicable.
+                         */
+                        participantExternalId?: string;
+                        /**
+                         * PoolMaster internal id associated with this row, when known.
+                         */
+                        internalId?: string;
+                        /**
+                         * Display name for the row, when known.
+                         */
+                        name?: string;
+                        /**
+                         * Normalized before-state JSON for UPDATED or DELETED rows.
+                         */
+                        before?: unknown;
+                        /**
+                         * Normalized after-state JSON for CREATED or UPDATED rows.
+                         */
+                        after?: unknown;
+                    }>;
+                };
+                /**
                  * Admin-facing outcome and warning summary for the sync run.
                  */
                 outcome?: {
@@ -14297,6 +14354,63 @@ export type AdminPrepareSportSyncResponses = {
                     errorLog: Array<unknown>;
                 };
                 /**
+                 * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
+                 */
+                writeDiagnostics?: {
+                    /**
+                     * Aggregate normalized write-effect counts for a provider sync run.
+                     */
+                    summary: {
+                        total: number;
+                        unchanged: number;
+                        created: number;
+                        updated: number;
+                        deleted: number;
+                    };
+                    rows: Array<{
+                        /**
+                         * Stable row id for this normalized write diagnostic row.
+                         */
+                        id: string;
+                        /**
+                         * Normalized PoolMaster entity type represented by this row.
+                         */
+                        entityType: string;
+                        /**
+                         * Write effect for the normalized row.
+                         */
+                        disposition: 'UNCHANGED' | 'CREATED' | 'UPDATED' | 'DELETED';
+                        /**
+                         * Provider id associated with this row, when applicable.
+                         */
+                        providerId?: string;
+                        /**
+                         * Provider external id associated with this row, when applicable.
+                         */
+                        externalId?: string;
+                        /**
+                         * Provider participant id associated with this row, when applicable.
+                         */
+                        participantExternalId?: string;
+                        /**
+                         * PoolMaster internal id associated with this row, when known.
+                         */
+                        internalId?: string;
+                        /**
+                         * Display name for the row, when known.
+                         */
+                        name?: string;
+                        /**
+                         * Normalized before-state JSON for UPDATED or DELETED rows.
+                         */
+                        before?: unknown;
+                        /**
+                         * Normalized after-state JSON for CREATED or UPDATED rows.
+                         */
+                        after?: unknown;
+                    }>;
+                };
+                /**
                  * Admin-facing outcome and warning summary for the sync run.
                  */
                 outcome?: {
@@ -14548,6 +14662,63 @@ export type AdminSyncProviderEventDataResponses = {
                      * Raw ingestion error-log entries for root-admin investigation.
                      */
                     errorLog: Array<unknown>;
+                };
+                /**
+                 * Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.
+                 */
+                writeDiagnostics?: {
+                    /**
+                     * Aggregate normalized write-effect counts for a provider sync run.
+                     */
+                    summary: {
+                        total: number;
+                        unchanged: number;
+                        created: number;
+                        updated: number;
+                        deleted: number;
+                    };
+                    rows: Array<{
+                        /**
+                         * Stable row id for this normalized write diagnostic row.
+                         */
+                        id: string;
+                        /**
+                         * Normalized PoolMaster entity type represented by this row.
+                         */
+                        entityType: string;
+                        /**
+                         * Write effect for the normalized row.
+                         */
+                        disposition: 'UNCHANGED' | 'CREATED' | 'UPDATED' | 'DELETED';
+                        /**
+                         * Provider id associated with this row, when applicable.
+                         */
+                        providerId?: string;
+                        /**
+                         * Provider external id associated with this row, when applicable.
+                         */
+                        externalId?: string;
+                        /**
+                         * Provider participant id associated with this row, when applicable.
+                         */
+                        participantExternalId?: string;
+                        /**
+                         * PoolMaster internal id associated with this row, when known.
+                         */
+                        internalId?: string;
+                        /**
+                         * Display name for the row, when known.
+                         */
+                        name?: string;
+                        /**
+                         * Normalized before-state JSON for UPDATED or DELETED rows.
+                         */
+                        before?: unknown;
+                        /**
+                         * Normalized after-state JSON for CREATED or UPDATED rows.
+                         */
+                        after?: unknown;
+                    }>;
                 };
                 /**
                  * Admin-facing outcome and warning summary for the sync run.

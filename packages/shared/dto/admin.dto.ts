@@ -385,6 +385,38 @@ export const ProviderSyncJobPayloadDtoSchema = z.object({
 }).describe('Serialized ingestion job details for a provider sync run.');
 export type ProviderSyncJobPayloadDto = z.infer<typeof ProviderSyncJobPayloadDtoSchema>;
 
+export const ProviderSyncWriteDispositionSchema = z.enum(['UNCHANGED', 'CREATED', 'UPDATED', 'DELETED']);
+export type ProviderSyncWriteDisposition = z.infer<typeof ProviderSyncWriteDispositionSchema>;
+
+export const ProviderSyncWriteDetailRowDtoSchema = z.object({
+  id: z.string().describe('Stable row id for this normalized write diagnostic row.'),
+  entityType: z.string().describe('Normalized PoolMaster entity type represented by this row.'),
+  disposition: ProviderSyncWriteDispositionSchema.describe('Write effect for the normalized row.'),
+  providerId: z.string().optional().describe('Provider id associated with this row, when applicable.'),
+  externalId: z.string().optional().describe('Provider external id associated with this row, when applicable.'),
+  participantExternalId: z.string().optional().describe('Provider participant id associated with this row, when applicable.'),
+  internalId: z.string().optional().describe('PoolMaster internal id associated with this row, when known.'),
+  name: z.string().optional().describe('Display name for the row, when known.'),
+  before: z.unknown().optional().describe('Normalized before-state JSON for UPDATED or DELETED rows.'),
+  after: z.unknown().optional().describe('Normalized after-state JSON for CREATED or UPDATED rows.'),
+}).describe('Single normalized write diagnostic row for a provider sync run.');
+export type ProviderSyncWriteDetailRowDto = z.infer<typeof ProviderSyncWriteDetailRowDtoSchema>;
+
+export const ProviderSyncWriteSummaryDtoSchema = z.object({
+  total: z.number().int().min(0),
+  unchanged: z.number().int().min(0),
+  created: z.number().int().min(0),
+  updated: z.number().int().min(0),
+  deleted: z.number().int().min(0),
+}).describe('Aggregate normalized write-effect counts for a provider sync run.');
+export type ProviderSyncWriteSummaryDto = z.infer<typeof ProviderSyncWriteSummaryDtoSchema>;
+
+export const ProviderSyncWriteDiagnosticsDtoSchema = z.object({
+  summary: ProviderSyncWriteSummaryDtoSchema,
+  rows: z.array(ProviderSyncWriteDetailRowDtoSchema),
+}).describe('Normalized write-effect diagnostics for a provider sync run. Field syncs intentionally retain one row per normalized event participant so an 80-player Golf field can be reviewed without diffing raw JSON; raw provider payload JSON remains a separate debug payload.');
+export type ProviderSyncWriteDiagnosticsDto = z.infer<typeof ProviderSyncWriteDiagnosticsDtoSchema>;
+
 export const ProviderSyncRunPayloadDtoSchema = z.object({
   runType: z.string().optional().describe('Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.'),
   requestedFeeds: z.array(IngestionFeedTypeSchema).optional().describe('Feeds represented by the originating manual or scheduled sync request.'),
@@ -392,6 +424,7 @@ export const ProviderSyncRunPayloadDtoSchema = z.object({
   requestPayload: JsonObjectSchema.optional().describe('Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design.'),
   providerPayload: ProviderSyncProviderPayloadDtoSchema.optional().describe('Raw/debug provider payload captured for this run.'),
   jobPayload: ProviderSyncJobPayloadDtoSchema.optional().describe('Serialized ingestion job details after an ingestion job is available.'),
+  writeDiagnostics: ProviderSyncWriteDiagnosticsDtoSchema.optional().describe('Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.'),
   outcome: ProviderSyncOutcomeDtoSchema.optional().describe('Admin-facing outcome and warning summary for the sync run.'),
   stats: z.record(z.number()).optional().describe('Canonical numeric sync stats used by admin diagnostics.'),
   recordsProcessed: z.number().optional().describe('Legacy top-level processed-record count retained for summary compatibility.'),

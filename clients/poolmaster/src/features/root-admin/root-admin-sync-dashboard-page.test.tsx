@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -265,7 +265,7 @@ describe('RootAdminSyncDashboardPage', () => {
     expect(screen.getByText(/"events": \[\]/)).toBeInTheDocument();
   });
 
-  it('pool-master-33l.8.9 explains unsupported captured provider detail shapes', async () => {
+  it('pool-master-rop.68.1.4 keeps raw provider payload secondary when no normalized rows were captured', async () => {
     const user = userEvent.setup();
     adminListProviderSyncRunsMock.mockResolvedValue({
       data: {
@@ -322,12 +322,12 @@ describe('RootAdminSyncDashboardPage', () => {
 
     expect(
       screen.getByText(
-        'This provider captured raw payload data, but Sync Center does not yet expose run-specific detail rows for that provider shape. Use the Payloads tab to inspect the raw provider payload.',
+        'No normalized PoolMaster write rows were captured for this sync. Use the Payloads tab to inspect the raw provider payload.',
       ),
     ).toBeInTheDocument();
   });
 
-  it('pool-master-33l.8.9 renders run-specific detail rows separately from payload JSON', async () => {
+  it('pool-master-rop.68.1.4 renders normalized write rows and opens before-after JSON details', async () => {
     const user = userEvent.setup();
     adminListProviderSyncRunsMock.mockResolvedValue({
       data: {
@@ -346,13 +346,84 @@ describe('RootAdminSyncDashboardPage', () => {
               requestedFeed: 'EVENTPARTICIPANTS',
               outcome: {
                 severity: 'SUCCESS',
-                summary: 'Completed event participants sync for masters-2026 (2 records).',
+                summary: 'Completed event participants sync for masters-2026 (3 records).',
                 warnings: [],
                 errors: 0,
               },
               stats: {
                 eventsHydrated: 1,
-                participantsReturned: 2,
+                participantsReturned: 3,
+                writeRows: 3,
+                writeUnchanged: 1,
+                writeCreated: 1,
+                writeUpdated: 1,
+                writeDeleted: 0,
+              },
+              writeDiagnostics: {
+                summary: {
+                  total: 3,
+                  unchanged: 1,
+                  created: 1,
+                  updated: 1,
+                  deleted: 0,
+                },
+                rows: [
+                  {
+                    id: 'sport-event-participant:mock-contest-feed:masters-2026:golfer-3',
+                    entityType: 'SportEventParticipant',
+                    disposition: 'UNCHANGED',
+                    providerId: 'mock-contest-feed',
+                    externalId: 'masters-2026',
+                    participantExternalId: 'golfer-3',
+                    internalId: 'event-participant-3',
+                    name: 'Alex Example',
+                    before: {
+                      seedNumber: 9,
+                      oddsToWin: 32,
+                      worldRanking: 9,
+                    },
+                    after: {
+                      seedNumber: 9,
+                      oddsToWin: 32,
+                      worldRanking: 9,
+                    },
+                  },
+                  {
+                    id: 'sport-event-participant:mock-contest-feed:masters-2026:golfer-1',
+                    entityType: 'SportEventParticipant',
+                    disposition: 'UPDATED',
+                    providerId: 'mock-contest-feed',
+                    externalId: 'masters-2026',
+                    participantExternalId: 'golfer-1',
+                    internalId: 'event-participant-1',
+                    name: 'Jordan Example',
+                    before: {
+                      seedNumber: 4,
+                      oddsToWin: 18,
+                      worldRanking: 6,
+                    },
+                    after: {
+                      seedNumber: 3,
+                      oddsToWin: 12,
+                      worldRanking: 3,
+                    },
+                  },
+                  {
+                    id: 'sport-event-participant:mock-contest-feed:masters-2026:golfer-2',
+                    entityType: 'SportEventParticipant',
+                    disposition: 'CREATED',
+                    providerId: 'mock-contest-feed',
+                    externalId: 'masters-2026',
+                    participantExternalId: 'golfer-2',
+                    internalId: 'event-participant-2',
+                    name: 'Casey Example',
+                    after: {
+                      seedNumber: 18,
+                      oddsToWin: 24,
+                      worldRanking: 18,
+                    },
+                  },
+                ],
               },
               requestPayload: {
                 sport: 'GOLF',
@@ -385,6 +456,12 @@ describe('RootAdminSyncDashboardPage', () => {
                               ranking: 18,
                               odds: 2400,
                             },
+                            {
+                              contestantId: 'golfer-3',
+                              name: 'Alex Example',
+                              ranking: 9,
+                              odds: 3200,
+                            },
                           ],
                         },
                       },
@@ -395,7 +472,7 @@ describe('RootAdminSyncDashboardPage', () => {
               jobPayload: {
                 jobType: 'EVENT_PARTICIPANTS_SYNC',
                 status: 'COMPLETED',
-                recordsProcessed: 2,
+                recordsProcessed: 3,
               },
             },
           },
@@ -407,7 +484,7 @@ describe('RootAdminSyncDashboardPage', () => {
 
     expect(await screen.findByTestId('root-admin-sync-run-sync-run-detail')).toBeInTheDocument();
     expect(
-      await screen.findByText('Events Hydrated: 1 · Participants Returned: 2'),
+      await screen.findByText('Events Hydrated: 1 · Participants Returned: 3 · Write Rows: 3'),
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'View details' }));
@@ -417,7 +494,27 @@ describe('RootAdminSyncDashboardPage', () => {
 
     expect(await screen.findByTestId('root-admin-sync-detail-grid')).toBeInTheDocument();
     expect(screen.getByText('Jordan Example')).toBeInTheDocument();
-    expect(screen.getByText('ranking: 3 · odds: 1200')).toBeInTheDocument();
+    expect(screen.getByText('Casey Example')).toBeInTheDocument();
+    expect(screen.getByText('UPDATED')).toBeInTheDocument();
+    expect(screen.getByText('CREATED')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'View JSON details for Jordan Example' }));
+
+    expect(await screen.findByText('UPDATED SportEventParticipant')).toBeInTheDocument();
+    expect(screen.getByText(/"before": \{/)).toBeInTheDocument();
+    expect(screen.getByText(/"oddsToWin": 18/)).toBeInTheDocument();
+    expect(screen.getByText(/"after": \{/)).toBeInTheDocument();
+    expect(screen.getByText(/"oddsToWin": 12/)).toBeInTheDocument();
+
+    await user.click(within(screen.getByTestId('root-admin-sync-json-payload-modal')).getByRole('button', { name: 'Close' }));
+    await user.click(screen.getByRole('button', { name: 'View JSON details for Alex Example' }));
+
+    expect(await screen.findByText('UNCHANGED SportEventParticipant')).toBeInTheDocument();
+    expect(screen.getByText(/"before": \{/)).toBeInTheDocument();
+    expect(screen.getByText(/"after": \{/)).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-sync-json-payload-modal').textContent).toContain('"oddsToWin": 32');
+
+    await user.click(within(screen.getByTestId('root-admin-sync-json-payload-modal')).getByRole('button', { name: 'Close' }));
 
     await user.click(screen.getByRole('tab', { name: 'Payloads' }));
     await user.click(screen.getByRole('button', { name: 'Show request payload' }));
