@@ -26,8 +26,7 @@ const SCAN_ROOT = join(process.cwd(), 'packages', 'core-api', 'src');
 
 // Match `process.env.<IDENT> ?? '<NON-EMPTY-LITERAL>'` (or double-quoted /
 // backtick-template variants). Empty-string fallback (`?? ''`) is allowed
-// because it's a "not configured" sentinel, not a secret default — adapters
-// use it to detect when an API key is unset (see odds-api-adapter.ts).
+// because it's a "not configured" sentinel, not a secret default.
 // Backticks are matched alongside single/double quotes because a template
 // literal could ship a deterministic dev value just as easily as a string.
 const BANNED = /process\.env\.[A-Z_][A-Z0-9_]*\s*\?\?\s*(?:'[^']+'|"[^"]+"|`[^`]+`)/g;

@@ -16,8 +16,9 @@ priority order:
    `(Inferred)`
 
 Pairs with [`contest-event-feed-integration`](../contest-event-feed-integration/overview.md).
-This brief feeds Archie's integration plan (`plans/113-…`) and Brad's
-mock-provider mirror plan (`plans/114-…`).
+This brief feeds the active Golf sync and live-scoring Beads epics. Earlier
+provider-port planning docs were removed once they became stale; current
+execution details live in Beads.
 
 ## Selection Goals
 
@@ -239,9 +240,8 @@ pattern exists to support.
 
 This brief is the input for:
 
-- **Archie + Brad** — `plans/113-…`: integration plan to layer these
-  providers behind the existing `SportDataProvider` port, with
-  configuration, key management, and per-feed provider switching.
-- **Brad** — `plans/114-…`: mock-provider plan to mirror each real
-  provider's HTTP surface so the existing scenario fixtures can be served
-  through both the canonical mock API and a real-provider-shaped surface.
+- **Archie + Brad** — active Beads epics: implementation slices layer selected
+  providers behind the existing `SportDataProvider` port, with configuration,
+  key management, and per-feed provider switching.
+- **Brad** — active mock-provider slices: mock-provider behavior mirrors the
+  real provider contract needed by current Golf sync and live-scoring work.

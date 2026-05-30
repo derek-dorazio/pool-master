@@ -84,7 +84,7 @@ export function supportsMockEventStateControls(provider: SportDataProvider): boo
 
 /**
  * Raised by adapters whose live-score category typing hasn't landed yet
- * (e.g., openf1, espn, odds-api). Per plans/117 §3.1, Phase 4 ships only
+ * (e.g., openf1, espn). Per plans/117 §3.1, Phase 4 ships only
  * golf-roster providers; the rest stay shape-locked at the design layer
  * and throw at runtime until their slice ships.
  */

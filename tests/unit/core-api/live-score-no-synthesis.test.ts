@@ -2,7 +2,7 @@
  * Defect-proof structural assertions for pool-master-rop.78.3 — provider
  * adapter normalization.
  *
- * On origin/main, two adapters synthesized per-round golf strokes from
+ * On origin/main, legacy golf adapters synthesized per-round golf strokes from
  * `(par + scoreToPar)` using a notional par of 72 because the
  * `GolfRoundUpdate` schema required `strokes: number`. This produced
  * fabricated strokes data that the bus boundary then upserted into
@@ -19,7 +19,6 @@ import * as liveScoreDto from '@poolmaster/shared/dto/live-score.dto';
 
 const adapterPaths = [
   resolve(__dirname, '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter.ts'),
-  resolve(__dirname, '../../../packages/core-api/src/modules/ingestion/adapters/pga-tour-adapter.ts'),
 ];
 
 describe('pool-master-rop.78.3 — no synthetic golf strokes', () => {

@@ -5,9 +5,7 @@ import type { ProviderRegistry } from './provider-registry';
 import {
   EspnAdapter,
   MockContestFeedAdapter,
-  OddsApiAdapter,
   OpenF1Adapter,
-  PgaTourAdapter,
 } from '../adapters';
 
 export interface ProviderBinding {
@@ -34,14 +32,6 @@ const providerFactories: Readonly<Record<string, ProviderFactory>> = {
   },
   espn: () => new EspnAdapter(),
   openf1: () => new OpenF1Adapter(),
-  'pga-tour': () => new PgaTourAdapter(),
-  'the-odds-api': (_binding, env) => {
-    const apiKey = env.ODDS_API_KEY?.trim();
-    if (!apiKey) {
-      throw new Error('Provider "the-odds-api" requires ODDS_API_KEY.');
-    }
-    return new OddsApiAdapter(apiKey);
-  },
 };
 
 function getRuntimeEnvironment(env: NodeJS.ProcessEnv): string {
