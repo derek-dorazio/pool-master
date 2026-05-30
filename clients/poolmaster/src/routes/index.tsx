@@ -15,7 +15,6 @@ import { LeagueDetailPage } from '@/features/leagues/league-detail-page';
 import { WelcomePage } from '@/features/leagues/leagues-page';
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminContentConfigurationListPage } from '@/features/root-admin/root-admin-content-configuration-list-page';
-import { RootAdminContestQaWorkflowPage } from '@/features/root-admin/root-admin-contest-qa-workflow-page';
 import { RootAdminEventsPage } from '@/features/root-admin/root-admin-events-page';
 import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin-ingestion-schedule-page';
 import { RootAdminManageHubPage } from '@/features/root-admin/root-admin-manage-hub-page';
@@ -196,10 +195,6 @@ export const router = createBrowserRouter([
               {
                 path: 'sync',
                 element: <RootAdminSyncDashboardPage />,
-              },
-              {
-                path: 'sync/contest-qa-workflow',
-                element: <RootAdminContestQaWorkflowPage />,
               },
               {
                 path: 'sync/run-sport-sync',

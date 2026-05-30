@@ -83,7 +83,7 @@ Single Fastify + TypeScript process running on port 3000. All domain modules are
 | **drafts** | `/api/v1/drafts` | draft-room runtime and selection workflows |
 | **scoring** | `/api/v1/scoring` | participant scoring rules, aggregation rules, stat validation |
 | **notifications** | `/api/v1/notifications` | In-app notification reads, preferences, and delivery support |
-| **ingestion** | `/api/v1/ingestion` | Sports data polling, provider adapters |
+| **ingestion** | internal scheduler/admin provider services | Sports data polling, provider adapters |
 | **events** | `/api/v1/events` | Event schedule and status surfaces |
 | **admin** | `/api/v1/admin` | Root-admin platform operations retained in the service |
 | **config** | `/api/v1/config` | Public configuration and poll-interval guidance |

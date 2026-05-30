@@ -8,7 +8,7 @@ import {
   createLeague,
   enterContest,
   getStandings,
-  ingestEventScores,
+  adminSyncProviderEventData,
   loginUser,
   registerUser,
 } from '@poolmaster/shared/generated/hey-api';
@@ -81,6 +81,8 @@ const fixtureSportIds: string[] = [];
 const fixtureParticipantIds: string[] = [];
 const fixtureSportEventIds: string[] = [];
 const fixtureSportEventParticipantIds: string[] = [];
+const liveScoringSyncWaitMs = readPositiveIntegerEnv('POOLMASTER_FUNCTIONAL_SYNC_WAIT_MS', 15_000);
+const liveScoringSyncPollMs = readPositiveIntegerEnv('POOLMASTER_FUNCTIONAL_SYNC_POLL_MS', 100);
 
 afterEach(async () => {
   await cleanupFunctionalData();
@@ -219,25 +221,26 @@ describe('SDK Functional: pool-master-rop.78.12 live golf-roster scoring', () =>
         data: { status: ContestStatus.ACTIVE },
       });
 
-      const ingestResponse = await ingestEventScores({
+      const ingestResponse = await adminSyncProviderEventData({
         client: rootAdmin.client,
         path: {
           sport: Sport.GOLF,
           eventId: eventExternalId,
         },
+        body: {
+          feeds: ['EVENTLIVESCORES'],
+        },
       });
 
-      expect(ingestResponse.data?.job).toEqual(
+      expect(ingestResponse.data?.syncRuns[0]).toEqual(
         expect.objectContaining({
-          jobType: 'EVENT_LIVE_SCORES_SYNC',
           providerId,
           sport: Sport.GOLF,
-          eventExternalId,
-          status: 'COMPLETED',
-          recordsProcessed: 4,
-          errors: 0,
+          eventId: eventExternalId,
+          status: 'SUBMITTED',
         }),
       );
+      await waitForLiveScoringSync(prisma, eventExternalId);
 
       const golfRounds = await prisma.sportEventParticipantGolfRound.findMany({
         where: {
@@ -354,6 +357,47 @@ describe('SDK Functional: pool-master-rop.78.12 live golf-roster scoring', () =>
     }
   });
 });
+
+function readPositiveIntegerEnv(name: string, fallback: number): number {
+  const rawValue = process.env[name];
+  if (!rawValue) {
+    return fallback;
+  }
+
+  const parsedValue = Number(rawValue);
+  return Number.isInteger(parsedValue) && parsedValue > 0 ? parsedValue : fallback;
+}
+
+async function waitForLiveScoringSync(
+  prisma: ReturnType<typeof getFunctionalPrisma>,
+  eventExternalId: string,
+): Promise<void> {
+  const deadline = Date.now() + liveScoringSyncWaitMs;
+  while (Date.now() < deadline) {
+    const run = await prisma.providerSyncRun.findFirst({
+      where: {
+        eventId: eventExternalId,
+        payloadJson: {
+          path: ['requestedFeed'],
+          equals: 'EVENTLIVESCORES',
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { status: true },
+    });
+
+    if (run?.status === 'COMPLETED') {
+      return;
+    }
+    if (run?.status === 'FAILED') {
+      throw new Error('Builder: EVENTLIVESCORES manual sync failed for live-scoring functional fixture');
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, liveScoringSyncPollMs));
+  }
+
+  throw new Error('Builder: timed out waiting for EVENTLIVESCORES manual sync to complete');
+}
 
 async function startLocalApiHarness(eventExternalId: string): Promise<LocalApiHarness> {
   const previousEnv = {

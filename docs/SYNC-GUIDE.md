@@ -14,13 +14,12 @@ Current implementation references:
 
 ## Sync Entry Points
 
-There are three ways sync work runs.
+There are two ways sync work runs.
 
 | Entry point | Who starts it | What it returns |
 |---|---|---|
 | Scheduled scheduler | Core API `onReady`, unless `AUTO_START_SCHEDULER=false` | Persists an `ingestion_jobs` row and logs an `IngestionJobRecord` for each completed job. |
 | Root-admin manual sync pages | Root-admin manage UI through admin provider service | Immediately creates `provider_sync_runs` as `SUBMITTED`, then runs each feed asynchronously and updates each run to `IN_PROGRESS`, `COMPLETED`, or `FAILED`. |
-| Direct ingestion API routes | `/api/v1/ingestion/*` admin routes | Synchronously returns `{ job }` or `{ jobs }` with scheduler job records. |
 
 Manual sport syncs can request only sport-level feeds, and the requested sport
 must be present in `scheduledSports`:
@@ -91,7 +90,7 @@ from = now
 to = now + eventSchedule.lookaheadDays
 ```
 
-If no manual `from`/`to` is supplied, direct sport sync falls back to
+If no manual `from`/`to` is supplied, root-admin manual sport sync falls back to
 `now..now+14 days`.
 
 The mock adapter returns events whose provider `startDate` is inside the range,

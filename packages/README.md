@@ -108,7 +108,7 @@ Polls external sports data providers and publishes `stat.updated` events to the 
 | OpenF1 | F1 | Free |
 | The Odds API | All (odds/pricing) | Yes (free tier: 500 req/mo) |
 
-**Routes:** `GET /api/v1/ingestion/providers`, `POST /api/v1/ingestion/sync/:sport`, `POST /api/v1/ingestion/scores/:sport/:eventId`
+**Routes:** root-admin sync operations are exposed through `POST /api/v1/admin/providers/sync/:sport` and `POST /api/v1/admin/providers/events/:sport/:eventId/sync`; scheduled ingestion uses the internal scheduler directly.
 
 ---
 

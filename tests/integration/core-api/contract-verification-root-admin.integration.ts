@@ -4,10 +4,7 @@ import {
   AdminResetUserPasswordResponseSchema,
   AdminContestConfigTemplateResponseSchema,
   ContestConfigTemplateListResponseSchema,
-  IngestionJobsResponseSchema,
   IngestionScheduleConfigSchema,
-  IngestionProvidersResponseSchema,
-  IngestSportOddsResponseSchema,
   AdminTeamListResponseSchema,
   LeagueListResponseSchema,
   LeagueResponseSchema,
@@ -25,7 +22,6 @@ import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
 import { adminModule } from '../../../packages/core-api/src/modules/admin/routes';
 import { ProviderService } from '../../../packages/core-api/src/modules/admin/provider-service';
 import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
-import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import {
@@ -50,28 +46,6 @@ import type {
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
-
-class ContractProvider implements SportDataProvider {
-  providerId = 'contract-provider';
-  providerName = 'Contract Provider';
-  sportsCovered: Sport[] = ['GOLF'];
-
-  async getUpcomingEvents(): Promise<SportEvent[]> { return []; }
-  async getEventDetails(): Promise<SportEventDetail | null> { return null; }
-  async getParticipants(): Promise<ProviderParticipant[]> { return []; }
-  async getRankings(): Promise<ProviderRanking[]> { return []; }
-  async getLiveScores(): Promise<LiveScoreResult> { return { category: 'GOLF', externalEventId: 'unused', rounds: [] }; }
-  async getEventResults(): Promise<ProviderEventResult | null> { return null; }
-
-  async healthCheck(): Promise<ProviderHealthStatus> {
-    return {
-      providerId: this.providerId,
-      status: 'HEALTHY',
-      errorRateLastHour: 0,
-      latencyMsP95: 5,
-    };
-  }
-}
 
 class OperationalContractProvider implements SportDataProvider {
   providerId = 'contract-provider';
@@ -330,123 +304,6 @@ describe('Contract verification (root admin)', () => {
   afterAll(async () => {
     await cleanupTestData();
     await teardownIntegrationTests();
-  });
-
-  it('pool-master-rop.2: ingestion root-admin routes match their DTOs', async () => {
-    const app = Fastify({ logger: false });
-    const rootAdmin = await createTestUser({
-      displayName: 'Ingestion Contract Root Admin',
-      isRootAdmin: true,
-    });
-    const registry = new ProviderRegistry();
-    registry.register('GOLF', new ContractProvider(), 'PRIMARY');
-    app.decorate('prisma', getPrisma());
-    app.setErrorHandler(globalErrorHandler);
-
-    await app.register(ingestionModule, {
-      prefix: '/api/v1/admin/ingestion',
-      registry,
-      scheduler: {
-        async runSportSync() {
-          return [{
-            jobType: 'EVENT_SCHEDULE_SYNC',
-            providerId: 'contract-provider',
-            sport: 'GOLF',
-            status: 'COMPLETED',
-            startedAt: new Date('2026-04-09T10:00:00.000Z'),
-            completedAt: new Date('2026-04-09T10:00:01.000Z'),
-            recordsProcessed: 2,
-            errors: 0,
-            errorLog: [],
-          }];
-        },
-        async runEventSync() {
-          return [{
-            jobType: 'EVENT_LIVE_SCORES_SYNC',
-            providerId: 'contract-provider',
-            sport: 'GOLF',
-            eventExternalId: 'event-1',
-            status: 'COMPLETED',
-            startedAt: new Date('2026-04-09T10:00:00.000Z'),
-            completedAt: new Date('2026-04-09T10:00:01.000Z'),
-            recordsProcessed: 1,
-            errors: 0,
-            errorLog: [],
-          }];
-        },
-        async pollLiveScores() {
-          return {
-            jobType: 'EVENT_LIVE_SCORES_SYNC',
-            providerId: 'contract-provider',
-            sport: 'GOLF',
-            eventExternalId: 'event-1',
-            status: 'COMPLETED',
-            startedAt: new Date('2026-04-09T10:00:00.000Z'),
-            completedAt: new Date('2026-04-09T10:00:01.000Z'),
-            recordsProcessed: 1,
-            errors: 0,
-            errorLog: [],
-          };
-        },
-        async fetchEventResults() {
-          return {
-            jobType: 'EVENT_RESULTS_SYNC',
-            providerId: 'contract-provider',
-            sport: 'GOLF',
-            eventExternalId: 'event-1',
-            status: 'COMPLETED',
-            startedAt: new Date('2026-04-09T10:00:00.000Z'),
-            completedAt: new Date('2026-04-09T10:00:01.000Z'),
-            recordsProcessed: 1,
-            errors: 0,
-            errorLog: [],
-          };
-        },
-      } as any,
-      oddsAdapter: {
-        async getOdds() {
-          return [{
-            eventId: 'event-1',
-            sport: 'GOLF',
-            homeTeam: 'Player A',
-            awayTeam: 'Player B',
-            commenceTime: new Date('2026-04-09T12:00:00.000Z'),
-            odds: [],
-          }];
-        },
-      } as any,
-    });
-
-    await app.ready();
-
-    const providersRes = await app.inject({
-      method: 'GET',
-      url: '/api/v1/admin/ingestion/providers',
-      headers: rootAdmin.headers,
-    });
-    expect(providersRes.statusCode).toBe(200);
-    expect(IngestionProvidersResponseSchema.safeParse(providersRes.json()).success).toBe(true);
-
-    const syncRes = await app.inject({
-      method: 'POST',
-      url: '/api/v1/admin/ingestion/sync/GOLF',
-      payload: {
-        feeds: ['EVENTSCHEDULE'],
-      },
-      headers: rootAdmin.headers,
-    });
-    expect(syncRes.statusCode).toBe(200);
-    expect(IngestionJobsResponseSchema.safeParse(syncRes.json()).success).toBe(true);
-
-    const oddsRes = await app.inject({
-      method: 'POST',
-      url: '/api/v1/admin/ingestion/odds/GOLF',
-      headers: withoutJsonBodyHeaders(rootAdmin.headers),
-    });
-    expect(oddsRes.statusCode).toBe(200);
-    expect(IngestSportOddsResponseSchema.safeParse(oddsRes.json()).success).toBe(true);
-
-    await app.close();
   });
 
   it('admin routes reject missing root-admin identity with ErrorEnvelopeSchema', async () => {

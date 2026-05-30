@@ -55,8 +55,6 @@ import {
   ProviderIngestionDashboardResponseSchema,
   ProviderIngestionJobDtoSchema,
   ProviderUnmappedParticipantListResponseSchema,
-  ProviderContestQaWorkflowRequestSchema,
-  ProviderContestQaWorkflowResponseSchema,
   ProviderHealthCheckDtoSchema,
   ServiceHealthListResponseSchema,
   InfrastructureMetricsResponseSchema,
@@ -403,21 +401,6 @@ export async function adminModule(
       }, [404, 422]),
     },
     handler: provider.syncEventData,
-  });
-
-  fastify.post('/providers/workflows/contest-qa', {
-    schema: {
-      tags: ['Admin'],
-      summary: 'Run guided contest QA sync workflow',
-      description:
-        'Submits prerequisite-aware provider sync steps for preparing event-backed contest data or driving a mock golf live-test scenario. Low-level feed sync endpoints remain available for repair and debugging.',
-      operationId: 'adminRunContestQaWorkflow',
-      body: zodToJsonSchema(ProviderContestQaWorkflowRequestSchema),
-      response: withAdminErrorResponses({
-        202: zodToJsonSchema(ProviderContestQaWorkflowResponseSchema),
-      }, [404, 422]),
-    },
-    handler: provider.runContestQaWorkflow,
   });
 
   fastify.get('/contest-config-templates', {
