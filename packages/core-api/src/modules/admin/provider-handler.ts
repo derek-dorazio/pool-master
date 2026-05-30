@@ -8,6 +8,7 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
+import type { AdminProviderEventCleanupRequest } from '@poolmaster/shared/dto';
 import type { ProviderService } from './provider-service';
 import type { EventSyncRequest, SportSyncRequest } from '../ingestion/core/ingestion-scheduler';
 import { SyncRequestValidationError } from '../ingestion/core/sync-orchestrator';
@@ -22,6 +23,7 @@ import {
 } from './provider-service';
 import { sendError } from '../../core/error-handler';
 import { extractRootAdminContext } from './request-admin-context';
+import { mapProviderEventCleanupResultToDto } from '../../mappers';
 
 // ---------------------------------------------------------------------------
 // Handler factory
@@ -34,6 +36,7 @@ export function createProviderHandlers(providerService: ProviderService) {
     getProviderDetail,
     updateProviderConfig,
     triggerHealthCheck,
+    cleanupStaleProviderEvents,
     prepareSportSync,
     syncEventData,
     getIngestionDashboard,
@@ -41,6 +44,30 @@ export function createProviderHandlers(providerService: ProviderService) {
     getUnmappedParticipants,
     mapParticipant,
   };
+
+  async function cleanupStaleProviderEvents(
+    request: FastifyRequest<{ Body: AdminProviderEventCleanupRequest }>,
+    reply: FastifyReply,
+  ) {
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({
+      mode: request.body.mode,
+    }, 'Running stale provider event cleanup');
+
+    const result = await providerService.cleanupStaleProviderEvents(request.body.mode, {
+      rootAdminUserId,
+      rootAdminEmail,
+    });
+    logger.info({
+      mode: result.mode,
+      inventoriedEventCount: result.summary.inventoriedEventCount,
+      deletableEventCount: result.summary.deletableEventCount,
+      deletedEventCount: result.summary.deletedEventCount,
+    }, 'Ran stale provider event cleanup');
+
+    return reply.send(mapProviderEventCleanupResultToDto(result));
+  }
 
   // --- List providers (health dashboard) ---
 

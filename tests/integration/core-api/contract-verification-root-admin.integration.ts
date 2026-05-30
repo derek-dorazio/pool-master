@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import {
   AdminResetUserPasswordResponseSchema,
+  AdminProviderEventCleanupResponseSchema,
   AdminContestConfigTemplateResponseSchema,
   ContestConfigTemplateListResponseSchema,
   IngestionScheduleConfigSchema,
@@ -780,6 +781,17 @@ describe('Contract verification (root admin)', () => {
       expect(prepareSyncRes.json().syncRuns.length).toBeGreaterThanOrEqual(1);
       expect(prepareSyncRes.json().syncRuns[0]?.status).toBe('SUBMITTED');
 
+      const cleanupDryRunRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/admin/providers/stale-events/cleanup',
+        headers: rootAdmin.headers,
+        payload: { mode: 'DRY_RUN' },
+      });
+      expect(cleanupDryRunRes.statusCode).toBe(200);
+      expect(AdminProviderEventCleanupResponseSchema.safeParse(cleanupDryRunRes.json()).success).toBe(true);
+      expect(cleanupDryRunRes.json().mode).toBe('DRY_RUN');
+      expect(cleanupDryRunRes.json().executed).toBe(false);
+
       const reIngestRes = await app.inject({
         method: 'POST',
         url: '/api/v1/admin/providers/contract-provider/re-ingest/event-1',
@@ -854,7 +866,7 @@ describe('Contract verification (root admin)', () => {
     }
   });
 
-  it('root-admin routes expose stable not-found error codes', async () => {
+  it('pool-master-rop.68.1.6: root-admin routes expose stable not-found error codes', async () => {
     const rootAdmin = await createTestUser({
       displayName: 'Root Admin Contract User',
       isRootAdmin: true,
@@ -957,6 +969,12 @@ describe('Contract verification (root admin)', () => {
       expect(ErrorEnvelopeSchema.safeParse(missingSportProviderRes.json()).success).toBe(true);
       expect(missingSportProviderRes.json().error.code).toBe('SPORT_PROVIDER_NOT_FOUND');
 
+      await getPrisma().ingestionJob.deleteMany({
+        where: {
+          providerId: 'contract-provider',
+          eventExternalId: 'missing-event',
+        },
+      });
       const reIngestMissingEventRes = await app.inject({
         method: 'POST',
         url: '/api/v1/admin/providers/contract-provider/re-ingest/missing-event',
@@ -965,6 +983,12 @@ describe('Contract verification (root admin)', () => {
       expect(reIngestMissingEventRes.statusCode).toBe(404);
       expect(ErrorEnvelopeSchema.safeParse(reIngestMissingEventRes.json()).success).toBe(true);
       expect(reIngestMissingEventRes.json().error.code).toBe('PROVIDER_EVENT_NOT_FOUND');
+      expect(await getPrisma().ingestionJob.count({
+        where: {
+          providerId: 'contract-provider',
+          eventExternalId: 'missing-event',
+        },
+      })).toBe(0);
 
       const inactivateMissingLeagueRes = await getApp().inject({
         method: 'POST',

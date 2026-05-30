@@ -138,6 +138,63 @@ export interface ProviderDetail extends ProviderSummary {
   mappedParticipantCount: number;
 }
 
+export type ProviderEventCleanupMode = 'DRY_RUN' | 'EXECUTE';
+export type ProviderEventCleanupStaleReason = 'NON_GOLF_EVENT' | 'PAST_GOLF_EVENT';
+export type ProviderEventCleanupBlockedReason =
+  | 'DIRECT_CONTEST_REFERENCE'
+  | 'CONTEST_SPORT_EVENT_REFERENCE'
+  | 'CONTEST_ENTRY_PICK_REFERENCE';
+
+export interface ProviderEventCleanupRow {
+  id: string;
+  providerId: string;
+  externalId: string;
+  sport: string;
+  name: string;
+  status: string;
+  startDate: Date;
+  endDate: Date | null;
+  staleReason: ProviderEventCleanupStaleReason;
+  deletable: boolean;
+  deleted: boolean;
+  blockedReasons: ProviderEventCleanupBlockedReason[];
+  directContestCount: number;
+  contestSportEventCount: number;
+  sportEventParticipantCount: number;
+  valuationCount: number;
+  golfRoundCount: number;
+  pickCount: number;
+}
+
+export interface ProviderEventCleanupSummary {
+  inventoriedEventCount: number;
+  deletableEventCount: number;
+  blockedEventCount: number;
+  deletedEventCount: number;
+  sportEventParticipantCount: number;
+  valuationCount: number;
+  golfRoundCount: number;
+  pickCount: number;
+}
+
+export interface ProviderEventCleanupGroup {
+  key: string;
+  eventCount: number;
+  deletableEventCount: number;
+  deletedEventCount: number;
+}
+
+export interface ProviderEventCleanupResult {
+  mode: ProviderEventCleanupMode;
+  executed: boolean;
+  inventoriedAt: Date;
+  summary: ProviderEventCleanupSummary;
+  bySport: ProviderEventCleanupGroup[];
+  byProvider: ProviderEventCleanupGroup[];
+  byStatus: ProviderEventCleanupGroup[];
+  events: ProviderEventCleanupRow[];
+}
+
 // ---------------------------------------------------------------------------
 // Errors
 // ---------------------------------------------------------------------------
@@ -223,6 +280,51 @@ function parseErrorLogEntry(entry: unknown): { errorType: string; message: strin
 
 function providerDisplayName(provider: SportDataProvider): string {
   return provider.providerName;
+}
+
+function groupCleanupRows(
+  rows: ProviderEventCleanupRow[],
+  keyFor: (row: ProviderEventCleanupRow) => string,
+): ProviderEventCleanupGroup[] {
+  const groups = new Map<string, ProviderEventCleanupGroup>();
+  for (const row of rows) {
+    const key = keyFor(row);
+    const existing = groups.get(key) ?? {
+      key,
+      eventCount: 0,
+      deletableEventCount: 0,
+      deletedEventCount: 0,
+    };
+    existing.eventCount += 1;
+    if (row.deletable) existing.deletableEventCount += 1;
+    if (row.deleted) existing.deletedEventCount += 1;
+    groups.set(key, existing);
+  }
+
+  return [...groups.values()].sort((a, b) => a.key.localeCompare(b.key));
+}
+
+function summarizeCleanupRows(rows: ProviderEventCleanupRow[]): ProviderEventCleanupSummary {
+  return rows.reduce<ProviderEventCleanupSummary>((summary, row) => {
+    summary.inventoriedEventCount += 1;
+    if (row.deletable) summary.deletableEventCount += 1;
+    if (!row.deletable) summary.blockedEventCount += 1;
+    if (row.deleted) summary.deletedEventCount += 1;
+    summary.sportEventParticipantCount += row.sportEventParticipantCount;
+    summary.valuationCount += row.valuationCount;
+    summary.golfRoundCount += row.golfRoundCount;
+    summary.pickCount += row.pickCount;
+    return summary;
+  }, {
+    inventoriedEventCount: 0,
+    deletableEventCount: 0,
+    blockedEventCount: 0,
+    deletedEventCount: 0,
+    sportEventParticipantCount: 0,
+    valuationCount: 0,
+    golfRoundCount: 0,
+    pickCount: 0,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -969,6 +1071,235 @@ export class ProviderService {
     };
   }
 
+  async cleanupStaleProviderEvents(
+    mode: ProviderEventCleanupMode,
+    options: {
+      now?: Date;
+      rootAdminUserId?: string;
+      rootAdminEmail?: string;
+    } = {},
+  ): Promise<ProviderEventCleanupResult> {
+    const inventoriedAt = options.now ?? new Date();
+    this.logger?.debug({
+      mode,
+      inventoriedAt,
+    }, 'Starting stale provider event cleanup inventory');
+
+    const inventory = await this.buildStaleProviderEventInventory(inventoriedAt);
+    const deletableIds = inventory.filter((row) => row.deletable).map((row) => row.id);
+    const deletedIds = mode === 'EXECUTE'
+      ? await this.deleteStaleProviderEvents(deletableIds)
+      : new Set<string>();
+    const events = inventory.map((row) => ({
+      ...row,
+      deleted: deletedIds.has(row.id),
+    }));
+    const result: ProviderEventCleanupResult = {
+      mode,
+      executed: mode === 'EXECUTE',
+      inventoriedAt,
+      summary: summarizeCleanupRows(events),
+      bySport: groupCleanupRows(events, (row) => row.sport),
+      byProvider: groupCleanupRows(events, (row) => row.providerId),
+      byStatus: groupCleanupRows(events, (row) => row.status),
+      events,
+    };
+
+    this.logger?.info({
+      mode,
+      inventoriedEventCount: result.summary.inventoriedEventCount,
+      deletableEventCount: result.summary.deletableEventCount,
+      deletedEventCount: result.summary.deletedEventCount,
+      blockedEventCount: result.summary.blockedEventCount,
+    }, 'Completed stale provider event cleanup');
+
+    if (mode === 'EXECUTE' && options.rootAdminUserId && options.rootAdminEmail) {
+      await logAdminAction({
+        actorUserId: options.rootAdminUserId,
+        actorEmail: options.rootAdminEmail,
+        action: 'sportsdata.cleanup_stale_events',
+        resourceType: 'SPORT_EVENT',
+        resourceId: 'stale-provider-events',
+        description: `Deleted ${result.summary.deletedEventCount} stale provider event(s) after inventorying ${result.summary.inventoriedEventCount}.`,
+        afterState: {
+          mode: result.mode,
+          inventoriedAt: result.inventoriedAt.toISOString(),
+          summary: result.summary,
+          deletedEventIds: result.events
+            .filter((row) => row.deleted)
+            .map((row) => row.id),
+          blockedEventIds: result.events
+            .filter((row) => !row.deletable)
+            .map((row) => row.id),
+        },
+      });
+    }
+
+    return result;
+  }
+
+  private async buildStaleProviderEventInventory(now: Date): Promise<ProviderEventCleanupRow[]> {
+    const eventRows = await this.prisma.sportEvent.findMany({
+      orderBy: [
+        { sport: 'asc' },
+        { providerId: 'asc' },
+        { startDate: 'asc' },
+        { externalId: 'asc' },
+      ],
+      select: {
+        id: true,
+        externalId: true,
+        providerId: true,
+        sport: true,
+        name: true,
+        status: true,
+        startDate: true,
+        endDate: true,
+        _count: {
+          select: {
+            contests: true,
+            contestSportEvents: true,
+          },
+        },
+        sportEventParticipants: {
+          select: {
+            _count: {
+              select: {
+                valuations: true,
+                picks: true,
+                golfRounds: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return eventRows.flatMap((event): ProviderEventCleanupRow[] => {
+      const sport = event.sport;
+      const staleReason = this.resolveStaleProviderEventReason({
+        sport,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        now,
+      });
+      if (!staleReason) {
+        return [];
+      }
+
+      const sportEventParticipantCount = event.sportEventParticipants.length;
+      const valuationCount = event.sportEventParticipants.reduce(
+        (sum, participant) => sum + participant._count.valuations,
+        0,
+      );
+      const golfRoundCount = event.sportEventParticipants.reduce(
+        (sum, participant) => sum + participant._count.golfRounds,
+        0,
+      );
+      const pickCount = event.sportEventParticipants.reduce(
+        (sum, participant) => sum + participant._count.picks,
+        0,
+      );
+      const blockedReasons: ProviderEventCleanupBlockedReason[] = [];
+      if (event._count.contests > 0) blockedReasons.push('DIRECT_CONTEST_REFERENCE');
+      if (event._count.contestSportEvents > 0) blockedReasons.push('CONTEST_SPORT_EVENT_REFERENCE');
+      if (pickCount > 0) blockedReasons.push('CONTEST_ENTRY_PICK_REFERENCE');
+
+      return [{
+        id: event.id,
+        providerId: event.providerId,
+        externalId: event.externalId,
+        sport,
+        name: event.name,
+        status: event.status,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        staleReason,
+        deletable: blockedReasons.length === 0,
+        deleted: false,
+        blockedReasons,
+        directContestCount: event._count.contests,
+        contestSportEventCount: event._count.contestSportEvents,
+        sportEventParticipantCount,
+        valuationCount,
+        golfRoundCount,
+        pickCount,
+      }];
+    });
+  }
+
+  private resolveStaleProviderEventReason(input: {
+    sport: string;
+    startDate: Date;
+    endDate: Date | null;
+    now: Date;
+  }): ProviderEventCleanupStaleReason | null {
+    if (input.sport !== Sport.GOLF) {
+      return 'NON_GOLF_EVENT';
+    }
+
+    const eventEnd = input.endDate ?? input.startDate;
+    if (eventEnd.getTime() < input.now.getTime()) {
+      return 'PAST_GOLF_EVENT';
+    }
+
+    return null;
+  }
+
+  private async deleteStaleProviderEvents(eventIds: string[]): Promise<Set<string>> {
+    if (eventIds.length === 0) {
+      return new Set();
+    }
+
+    const deletedIds = new Set<string>();
+    await this.prisma.$transaction(async (tx) => {
+      await tx.sportEventParticipantGolfRound.deleteMany({
+        where: {
+          sportEventParticipant: {
+            sportEventId: {
+              in: eventIds,
+            },
+          },
+        },
+      });
+      await tx.sportEventParticipantValuation.deleteMany({
+        where: {
+          sportEventParticipant: {
+            sportEventId: {
+              in: eventIds,
+            },
+          },
+        },
+      });
+      await tx.sportEventParticipant.deleteMany({
+        where: {
+          sportEventId: {
+            in: eventIds,
+          },
+        },
+      });
+      for (const eventId of eventIds) {
+        const deletedEvent = await tx.sportEvent.deleteMany({
+          where: {
+            id: eventId,
+          },
+        });
+        if (deletedEvent.count === 1) {
+          deletedIds.add(eventId);
+        }
+      }
+
+      if (deletedIds.size !== eventIds.length) {
+        this.logger?.warn({
+          requestedEventCount: eventIds.length,
+          deletedEventCount: deletedIds.size,
+        }, 'Stale provider event cleanup deleted fewer event rows than requested');
+      }
+    });
+
+    return deletedIds;
+  }
+
   async reIngestEvent(
     providerId: string,
     eventId: string,
@@ -977,16 +1308,21 @@ export class ProviderService {
   ): Promise<IngestionJob> {
     this.logger?.debug({ providerId, eventId }, 'Starting manual provider event re-ingest');
     const provider = this.getProviderOrThrow(providerId);
-    const sport = provider.sportsCovered[0];
-    if (!sport) {
+    if (provider.sportsCovered.length === 0) {
       this.logger?.warn({ providerId, eventId }, 'Provider has no declared sport coverage for re-ingest');
       throw new ProviderSportCoverageError(providerId);
     }
+    const detail = await provider.getEventDetails(eventId);
+    if (!detail) {
+      this.logger?.warn({ providerId, eventId }, 'Provider did not return event detail for re-ingest');
+      throw new ProviderEventNotFoundError(providerId, eventId);
+    }
+
     const job = await this.prisma.ingestionJob.create({
       data: {
         jobType: 'MANUAL_REINGEST',
         providerId,
-        sport,
+        sport: detail.sport,
         eventExternalId: eventId,
         status: 'RUNNING',
         startedAt: new Date(),
@@ -994,26 +1330,6 @@ export class ProviderService {
         errors: 0,
         errorLog: [],
       },
-    });
-
-    const detail = await provider.getEventDetails(eventId);
-    if (!detail) {
-      this.logger?.warn({ providerId, eventId }, 'Provider did not return event detail for re-ingest');
-      await this.prisma.ingestionJob.update({
-        where: { id: job.id },
-        data: {
-          status: 'FAILED',
-          completedAt: new Date(),
-          errors: 1,
-          errorLog: [{ errorType: 'NOT_FOUND', message: `Event ${eventId} was not returned by ${provider.providerName}` }],
-        },
-      });
-      throw new ProviderEventNotFoundError(providerId, eventId);
-    }
-
-    await this.prisma.ingestionJob.update({
-      where: { id: job.id },
-      data: { sport: detail.sport },
     });
 
     await this.ingestionPersistence.persistEventDetail(detail);
