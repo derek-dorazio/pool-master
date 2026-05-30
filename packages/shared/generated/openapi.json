@@ -28078,7 +28078,7 @@
                               "requestPayload": {
                                 "type": "object",
                                 "additionalProperties": {},
-                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
+                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design."
                               },
                               "providerPayload": {
                                 "type": "object",
@@ -28543,7 +28543,7 @@
                               "requestPayload": {
                                 "type": "object",
                                 "additionalProperties": {},
-                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
+                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design."
                               },
                               "providerPayload": {
                                 "type": "object",
@@ -29098,7 +29098,7 @@
                               "requestPayload": {
                                 "type": "object",
                                 "additionalProperties": {},
-                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics."
+                                "description": "Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design."
                               },
                               "providerPayload": {
                                 "type": "object",

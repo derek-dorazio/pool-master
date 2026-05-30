@@ -14880,7 +14880,7 @@ export interface operations {
                                  * @enum {string}
                                  */
                                 requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
-                                /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                                /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design. */
                                 requestPayload?: {
                                     [key: string]: unknown;
                                 };
@@ -15056,7 +15056,7 @@ export interface operations {
                                  * @enum {string}
                                  */
                                 requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
-                                /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                                /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design. */
                                 requestPayload?: {
                                     [key: string]: unknown;
                                 };
@@ -15266,7 +15266,7 @@ export interface operations {
                                  * @enum {string}
                                  */
                                 requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
-                                /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
+                                /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design. */
                                 requestPayload?: {
                                     [key: string]: unknown;
                                 };

@@ -13971,7 +13971,7 @@ export type AdminListProviderSyncRunsResponses = {
                  */
                 requestedFeed?: 'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
                 /**
-                 * Normalized request context that submitted the sync run, including source and actor diagnostics.
+                 * Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design.
                  */
                 requestPayload?: {
                     [key: string]: unknown;
@@ -14227,7 +14227,7 @@ export type AdminPrepareSportSyncResponses = {
                  */
                 requestedFeed?: 'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
                 /**
-                 * Normalized request context that submitted the sync run, including source and actor diagnostics.
+                 * Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design.
                  */
                 requestPayload?: {
                     [key: string]: unknown;
@@ -14480,7 +14480,7 @@ export type AdminSyncProviderEventDataResponses = {
                  */
                 requestedFeed?: 'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
                 /**
-                 * Normalized request context that submitted the sync run, including source and actor diagnostics.
+                 * Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design.
                  */
                 requestPayload?: {
                     [key: string]: unknown;

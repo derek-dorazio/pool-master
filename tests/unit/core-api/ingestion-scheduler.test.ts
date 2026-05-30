@@ -631,6 +631,81 @@ describe('IngestionScheduler', () => {
       expect(mockCallbacks.onJobComplete).toHaveBeenCalledTimes(1);
     });
 
+    it('pool-master-rop.68.2.4 records configured event syncs in the provider sync run ledger once per ingestion job', async () => {
+      const now = new Date('2026-04-28T12:00:00.000Z');
+      const provider = createMockProvider({
+        getLiveScores: jest.fn().mockResolvedValue({
+          category: 'GOLF',
+          externalEventId: 'live-event',
+          rounds: [],
+        } satisfies LiveScoreResult),
+      });
+      const config = createEnabledScheduleConfig();
+      const configReader = {
+        getConfig: jest.fn().mockResolvedValue(config),
+        getPerSportConfig: jest.fn().mockResolvedValue(config),
+      };
+      const eventReader = {
+        listEventIdsForFeed: jest.fn().mockResolvedValue(['live-event']),
+      };
+      const syncRun = {
+        id: 'scheduled-event-sync-run-1',
+        providerId: 'mock-provider',
+        sport: 'GOLF' as Sport,
+        eventId: 'live-event',
+        status: 'SUBMITTED' as const,
+        startedAt: null,
+        completedAt: null,
+        createdAt: now,
+        payload: {
+          requestedFeed: 'EVENTLIVESCORES',
+        },
+      };
+      const syncRunLedger = {
+        createSubmissions: jest.fn().mockResolvedValue([syncRun]),
+        executeFeedRun: jest.fn(async (_syncRun: typeof syncRun, run: () => Promise<unknown>) => {
+          const job = await run();
+          return job as Awaited<ReturnType<IngestionScheduler['pollLiveScores']>>;
+        }),
+      };
+      const scheduler = new IngestionScheduler(
+        createMockRegistry(provider, ['GOLF' as Sport]),
+        mockCallbacks,
+        undefined,
+        {
+          configReader,
+          eventReader,
+          now: () => now,
+          syncRunLedger,
+        },
+      );
+
+      const runConfiguredEventSyncSweep = Reflect.get(
+        scheduler,
+        'runConfiguredEventSyncSweep',
+      ) as (sport: Sport, feed: 'EVENTLIVESCORES') => Promise<void>;
+      await runConfiguredEventSyncSweep.call(scheduler, 'GOLF' as Sport, 'EVENTLIVESCORES');
+
+      expect(syncRunLedger.createSubmissions).toHaveBeenCalledWith(expect.objectContaining({
+        providerId: 'mock-provider',
+        runType: 'SCHEDULED_EVENT_SYNC',
+        submittedAt: now,
+        normalizedRequest: expect.objectContaining({
+          source: 'SCHEDULED',
+          actor: { type: 'SYSTEM', name: 'scheduler' },
+          scope: expect.objectContaining({
+            type: 'EVENT',
+            sport: 'GOLF',
+            eventId: 'live-event',
+            feeds: ['EVENTLIVESCORES'],
+          }),
+        }),
+      }));
+      expect(syncRunLedger.executeFeedRun).toHaveBeenCalledWith(syncRun, expect.any(Function));
+      expect(provider.getLiveScores).toHaveBeenCalledWith('live-event');
+      expect(mockCallbacks.onJobComplete).toHaveBeenCalledTimes(1);
+    });
+
     it('pool-master-rop.68.2.2 submits configured event loops as scheduled system sync requests', async () => {
       const now = new Date('2026-04-28T12:00:00.000Z');
       const provider = createMockProvider({

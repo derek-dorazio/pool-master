@@ -389,7 +389,7 @@ export const ProviderSyncRunPayloadDtoSchema = z.object({
   runType: z.string().optional().describe('Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.'),
   requestedFeeds: z.array(IngestionFeedTypeSchema).optional().describe('Feeds represented by the originating manual or scheduled sync request.'),
   requestedFeed: IngestionFeedTypeSchema.optional().describe('Single feed represented by this sync run row.'),
-  requestPayload: JsonObjectSchema.optional().describe('Normalized request context that submitted the sync run, including source and actor diagnostics.'),
+  requestPayload: JsonObjectSchema.optional().describe('Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design.'),
   providerPayload: ProviderSyncProviderPayloadDtoSchema.optional().describe('Raw/debug provider payload captured for this run.'),
   jobPayload: ProviderSyncJobPayloadDtoSchema.optional().describe('Serialized ingestion job details after an ingestion job is available.'),
   outcome: ProviderSyncOutcomeDtoSchema.optional().describe('Admin-facing outcome and warning summary for the sync run.'),
