@@ -37,7 +37,7 @@
 │  │  │ Drafts  │ │   Scoring    │ │ Notifications│ │Ingestion│  │   │
 │  │  │ Engines │ │ Recalc +     │ │ In-App +     │ │ ESPN    │  │   │
 │  │  │         │ │ Standings    │ │ Delivery     │ │ OpenF1  │  │   │
-│  │  │         │ │ Rollups      │ │ Support      │ │ PGA Tour│  │   │
+│  │  │         │ │ Rollups      │ │ Support      │ │ MockFeed│  │   │
 │  │  └─────────┘ └──────┬───────┘ └──────────────┘ └────┬────┘  │   │
 │  │                      │                               │        │   │
 │  │              ┌───────┴───────────────────────────────┘        │   │
@@ -57,8 +57,8 @@
 ┌──────────────┐ ┌──────────┐ ┌──────────────┐
 │  PostgreSQL  │ │ AWS SES  │ │ External     │
 │  (RDS)       │ │ APNs/FCM │ │ Sports APIs  │
-│  50+ models  │ │          │ │ ESPN, OpenF1 │
-│  via Prisma  │ │          │ │ PGA Tour     │
+│  50+ models  │ │          │ │ Mock Feed,   │
+│  via Prisma  │ │          │ │ ESPN, OpenF1 │
 └──────────────┘ └──────────┘ └──────────────┘
 ```
 
@@ -121,8 +121,8 @@ Browser → CloudFront → ALB → ECS (Fastify) → Prisma → PostgreSQL
 ### 2. Sports Data Ingestion Flow
 
 ```
-ESPN/OpenF1/PGA   →   Ingestion Adapters   →   EventBus.publish('stat.updated')
-(external APIs)       (polling scheduler)            │
+MockFeed/ESPN/OpenF1 → Ingestion Adapters   →   EventBus.publish('stat.updated')
+(provider APIs)        (polling scheduler)            │
                                                      ▼
                                               Scoring Consumer
                                               (scoreParticipant)
@@ -221,8 +221,7 @@ core-api
 |----------|--------|------|-------------|
 | ESPN | NFL, NBA, MLB, NHL, NCAA | None (public) | Reasonable use |
 | OpenF1 | Formula 1 | None (public) | Reasonable use |
-| PGA Tour (via ESPN) | Golf | None (public) | Reasonable use |
-| The Odds API | All (betting odds) | API key | 500 req/mo (free) |
+| Mock Contest Feed | Golf, Tennis, NCAA basketball | Internal QA service | Active first-pass sync/testing provider |
 
 ---
 

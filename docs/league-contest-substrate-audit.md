@@ -13,7 +13,7 @@ Two data flows define the substrate's behavior. Both terminate at a Standings ro
 ### 1.1 Live-scoring write path (provider → standings)
 
 ```
-Provider (mock-feed / odds-api / openf1 / espn / pga-tour)
+Provider (mock-feed / openf1 / espn)
     ↓
 IngestionScheduler.runSportSync / pollLiveScores / fetchEventResults
     [packages/core-api/src/modules/ingestion/core/ingestion-scheduler.ts]
@@ -316,12 +316,10 @@ None of these are enforced by the code. They held true while the sport providers
 
 ### 6.1 Adapters
 
-5 adapters in `packages/core-api/src/modules/ingestion/adapters/`:
+3 active adapters in `packages/core-api/src/modules/ingestion/adapters/`:
 
 - `mock-contest-feed-adapter.ts` — exercises the mock service over HTTP (the only one wired in CI / dev)
-- `odds-api-adapter.ts` — the-odds-api.com integration
 - `openf1-adapter.ts` — F1 telemetry
-- `pga-tour-adapter.ts` — PGA Tour leaderboards
 - `espn-adapter.ts` — ESPN sports data
 
 Each implements `provider-interface.ts` (currently `getUpcomingEvents`, `getEventDetails`, `getParticipants`, `getRankings`, `getLiveScores`, `getEventResults`, `healthCheck`).

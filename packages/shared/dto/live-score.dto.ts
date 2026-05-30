@@ -4,7 +4,7 @@
  * Per plans/117 §10.2 the live-score path is normalized at the adapter
  * boundary into a sport-category-discriminated union, replacing the legacy
  * untyped `ProviderStatEvent[]` shape. Each adapter implements one category
- * (mock-feed and pga-tour return GOLF; openf1 returns F1; etc.). Schemas are
+ * (mock-feed returns GOLF; openf1 returns F1; etc.). Schemas are
  * Zod-validated at the bus boundary in `publishLiveScoreUpdate` per
  * plans/117 §10.3 — malformed adapter payloads fail validation at the
  * boundary, not inside the scoring consumer.

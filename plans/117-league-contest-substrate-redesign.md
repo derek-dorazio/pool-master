@@ -51,7 +51,8 @@ Pulled from PR #22's rules and the audit's findings. Every section below complie
 
 - Substrate redesign for **golf-roster** (the current product target — tiered golf tournaments with roster-style entry picks).
 - All schema-level work: Prisma migration, DTOs, mappers, generated SDK regeneration.
-- Provider adapter normalization for the **mock-feed** and **PGA Tour** adapters (the two that produce golf-roster data today).
+- Provider adapter normalization for the **mock-feed** adapter and the future
+  Golf provider adapter selected for production data.
 - Per-(category × contestFormat) contribution table for golf-roster.
 - Frontend consumption of the new shapes for the existing golf-roster surfaces.
 - FAPI scenario for the live-scoring pipeline (covers `pool-master-rop.15`).
@@ -470,7 +471,7 @@ export interface GolfRoundUpdate {
 }
 ```
 
-Each adapter implements a single category's `LiveScoreResult` (mock-feed and pga-tour return `category: 'GOLF'`; openf1 returns `category: 'F1'`; etc.).
+Each adapter implements a single category's `LiveScoreResult` (mock-feed returns `category: 'GOLF'`; openf1 returns `category: 'F1'`; etc.).
 
 ### 10.3 Bus boundary validation (resolves Q10)
 

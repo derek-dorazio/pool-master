@@ -64,7 +64,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
   }
 
   async getUpcomingEvents(sport: Sport, dateRange: DateRange): Promise<SportEvent[]> {
-    const entries = await this.listScenarioEvents(sport);
+    const entries = await this.listScenarioEvents(sport, dateRange);
     return entries
       .map(({ detail }) => {
         const fieldContestants = resolveParticipants(detail);
@@ -265,6 +265,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
 
   private async listScenarioEvents(
     sport: Sport,
+    dateRange?: DateRange,
   ): Promise<Array<{ scenarioId: string; detail: EventDetailResponse }>> {
     const scenarios = await this.fetchJson<ScenarioSummaryResponse>('/v1/scenarios');
     const matchingScenarioIds = scenarios.scenarios
@@ -280,12 +281,14 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
 
     const details = await Promise.all(
       eventLists.flatMap(({ scenarioId, events }) =>
-        events.map(async (event) => ({
-          scenarioId,
-          detail: await this.fetchJson<EventDetailResponse>(
-            `/v1/scenarios/${scenarioId}/events/${event.eventId}/detail`,
-          ),
-        })),
+        events
+          .filter((event) => isEventWithinDateRange(event.startsAt, dateRange))
+          .map(async (event) => ({
+            scenarioId,
+            detail: await this.fetchJson<EventDetailResponse>(
+              `/v1/scenarios/${scenarioId}/events/${event.eventId}/detail`,
+            ),
+          })),
       ),
     );
 
@@ -332,6 +335,15 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     });
     return raw;
   }
+}
+
+function isEventWithinDateRange(startsAt: string, dateRange?: DateRange): boolean {
+  if (!dateRange) {
+    return true;
+  }
+
+  const startTime = new Date(startsAt).getTime();
+  return startTime >= dateRange.from.getTime() && startTime <= dateRange.to.getTime();
 }
 
 function isRelativeManualTestEventId(eventId: string): boolean {

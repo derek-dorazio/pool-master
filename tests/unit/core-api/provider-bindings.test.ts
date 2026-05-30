@@ -45,18 +45,9 @@ describe('provider bindings', () => {
   });
 
   it('pool-master-rop.5: registers configured real sport-data adapters instead of limiting registry to mock-contest-feed', () => {
-    const pgaRegistry = new ProviderRegistry();
     const openF1Registry = new ProviderRegistry();
     const espnRegistry = new ProviderRegistry();
 
-    registerConfiguredProviders(pgaRegistry, {
-      SPORT_DATA_DEFAULT_PROVIDER: 'pga-tour',
-      SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
-        providers: {
-          'pga-tour': {},
-        },
-      }),
-    });
     registerConfiguredProviders(openF1Registry, {
       SPORT_DATA_DEFAULT_PROVIDER: 'openf1',
       SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
@@ -74,7 +65,6 @@ describe('provider bindings', () => {
       }),
     });
 
-    expect(pgaRegistry.getProvider(Sport.GOLF)?.providerId).toBe('pga-tour');
     expect(openF1Registry.getProvider(Sport.F1)?.providerId).toBe('openf1');
     expect(espnRegistry.getProvider(Sport.NFL)?.providerId).toBe('espn');
   });
@@ -168,11 +158,23 @@ describe('provider bindings', () => {
     expect(productionOverrideRegistry.getProvider(Sport.GOLF)?.providerId).toBe('mock-contest-feed');
   });
 
-  it('pool-master-rop.5: rejects the odds adapter when its API key is not configured', () => {
+  it('pool-master-rop.68.1.1: rejects stale Golf provider adapter IDs instead of registering removed providers', () => {
     const registry = new ProviderRegistry();
+    const oddsRegistry = new ProviderRegistry();
 
     expect(() =>
       registerConfiguredProviders(registry, {
+        SPORT_DATA_DEFAULT_PROVIDER: 'pga-tour',
+        SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
+          providers: {
+            'pga-tour': {},
+          },
+        }),
+      }),
+    ).toThrow('Unsupported sport data provider "pga-tour" configured for this service runtime.');
+
+    expect(() =>
+      registerConfiguredProviders(oddsRegistry, {
         SPORT_DATA_DEFAULT_PROVIDER: 'the-odds-api',
         SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
           providers: {
@@ -180,7 +182,7 @@ describe('provider bindings', () => {
           },
         }),
       }),
-    ).toThrow('Provider "the-odds-api" requires ODDS_API_KEY.');
+    ).toThrow('Unsupported sport data provider "the-odds-api" configured for this service runtime.');
   });
 
   it('does not silently register hidden providers when the environment is unconfigured', () => {
