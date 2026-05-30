@@ -159,6 +159,46 @@ function toRecord(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+function expectNumberGreaterThan(value: unknown, min: number): void {
+  expect(typeof value).toBe('number');
+  if (typeof value === 'number') {
+    expect(value).toBeGreaterThan(min);
+  }
+}
+
+async function findEventParticipantByExternalIds(input: {
+  providerId: string;
+  eventExternalId: string;
+  participantExternalId: string;
+}) {
+  const prisma = getPrisma();
+  const persistedEvent = await prisma.sportEvent.findUniqueOrThrow({
+    where: {
+      providerId_externalId: {
+        providerId: input.providerId,
+        externalId: input.eventExternalId,
+      },
+    },
+  });
+  const participantMapping = await prisma.participantProviderMapping.findUniqueOrThrow({
+    where: {
+      providerId_externalId: {
+        providerId: input.providerId,
+        externalId: input.participantExternalId,
+      },
+    },
+  });
+
+  return prisma.sportEventParticipant.findUniqueOrThrow({
+    where: {
+      sportEventId_participantId: {
+        sportEventId: persistedEvent.id,
+        participantId: participantMapping.participantId,
+      },
+    },
+  });
+}
+
 beforeAll(async () => {
   await setupIntegrationTests();
   integrationSetupComplete = true;
@@ -431,6 +471,8 @@ describe('mock contest feed provider event-first verification', () => {
     );
     const manualScheduleRuns = await waitForProviderSyncRuns(manualSchedule.syncRuns.map((run) => run.id));
     expect(manualScheduleRuns).toHaveLength(1);
+    const manualSchedulePayload = toRecord(manualScheduleRuns[0].payloadJson);
+    const manualScheduleSummary = toRecord(toRecord(manualSchedulePayload?.writeDiagnostics)?.summary);
     expect(manualScheduleRuns[0].payloadJson).toEqual(expect.objectContaining({
       requestedFeed: 'EVENTSCHEDULE',
       jobPayload: expect.objectContaining({ status: 'COMPLETED' }),
@@ -440,6 +482,7 @@ describe('mock contest feed provider event-first verification', () => {
         }),
       }),
     }));
+    expectNumberGreaterThan(manualScheduleSummary?.created, 0);
 
     const eligibleEventIds = await eventReader.listEventIdsForFeed({
       sport: Sport.GOLF,
@@ -509,32 +552,20 @@ describe('mock contest feed provider event-first verification', () => {
       scheduler.stop();
     }
 
-    const persistedEvent = await prisma.sportEvent.findUniqueOrThrow({
-      where: {
-        providerId_externalId: {
-          providerId,
-          externalId: eventExternalId,
-        },
-      },
-    });
-    const scottieMapping = await prisma.participantProviderMapping.findUniqueOrThrow({
-      where: {
-        providerId_externalId: {
-          providerId,
-          externalId: 'golfer-01',
-        },
-      },
-    });
-    const scottieEventParticipant = await prisma.sportEventParticipant.findUniqueOrThrow({
-      where: {
-        sportEventId_participantId: {
-          sportEventId: persistedEvent.id,
-          participantId: scottieMapping.participantId,
-        },
-      },
+    const scottieEventParticipant = await findEventParticipantByExternalIds({
+      providerId,
+      eventExternalId,
+      participantExternalId: 'golfer-01',
     });
     expect(scottieEventParticipant.worldRanking).toBe(1);
     expect(scottieEventParticipant.oddsToWin?.toNumber()).toBeGreaterThan(0);
+    const scheduledScottieEventParticipant = await findEventParticipantByExternalIds({
+      providerId,
+      eventExternalId: 'golf-genesis-scottish-open-2026',
+      participantExternalId: 'golfer-01',
+    });
+    expect(scheduledScottieEventParticipant.worldRanking).toBe(1);
+    expect(scheduledScottieEventParticipant.oddsToWin?.toNumber()).toBeGreaterThan(0);
 
     const scheduledRunPayloads = scheduledRuns.map((run) => toRecord(run.payloadJson));
     expect(scheduledRuns.map((run) => run.eventId).filter(Boolean).sort()).toEqual([
@@ -557,10 +588,8 @@ describe('mock contest feed provider event-first verification', () => {
       '/v1/scenarios/golf-major-2026/events/golf-genesis-scottish-open-2026/detail',
       '/v1/scenarios/golf-relative-today/events/golf-relative-weekend-20260604/detail',
     ]));
-    expect(scheduledPayloadPaths).not.toEqual(expect.arrayContaining([
-      '/v1/scenarios/tennis-grand-slam-2026/events',
-      '/v1/scenarios/ncaa-team-tournament-2026/events',
-    ]));
+    expect(scheduledPayloadPaths).not.toContain('/v1/scenarios/tennis-grand-slam-2026/events');
+    expect(scheduledPayloadPaths).not.toContain('/v1/scenarios/ncaa-team-tournament-2026/events');
 
     const persistedProviderSports = await prisma.sportEvent.findMany({
       where: { providerId },
