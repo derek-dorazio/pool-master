@@ -20,13 +20,15 @@ export const INGESTION_POLICY_FIELDS = [
     intervalLabel: 'Minutes',
     intervalKey: 'intervalMinutes',
     extraKey: 'lookaheadDays',
-    extraLabel: 'Lookahead days',
+    extraLabel: 'Schedule lookahead days',
   },
   {
     key: 'eventParticipants',
     label: 'Event participants',
     intervalLabel: 'Minutes',
     intervalKey: 'intervalMinutes',
+    extraKey: 'lookaheadDays',
+    extraLabel: 'Field lookahead days',
   },
   {
     key: 'participantRankings',

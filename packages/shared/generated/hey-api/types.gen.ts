@@ -17425,12 +17425,12 @@ export type AdminGetIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event schedule discovery.
+         * Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.
          */
         eventSchedule: {
             /**
@@ -17446,12 +17446,12 @@ export type AdminGetIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event participant hydration before the event starts.
+         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
          */
         eventParticipants: {
             /**
@@ -17467,7 +17467,7 @@ export type AdminGetIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17488,7 +17488,7 @@ export type AdminGetIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17509,7 +17509,7 @@ export type AdminGetIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17530,7 +17530,7 @@ export type AdminGetIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17557,7 +17557,7 @@ export type AdminGetIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -17578,7 +17578,7 @@ export type AdminGetIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -17599,7 +17599,7 @@ export type AdminGetIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -17620,7 +17620,7 @@ export type AdminGetIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -17641,7 +17641,7 @@ export type AdminGetIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -17662,7 +17662,7 @@ export type AdminGetIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -17696,7 +17696,7 @@ export type AdminUpdateIngestionScheduleData = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17717,7 +17717,7 @@ export type AdminUpdateIngestionScheduleData = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17738,7 +17738,7 @@ export type AdminUpdateIngestionScheduleData = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17759,7 +17759,7 @@ export type AdminUpdateIngestionScheduleData = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17780,7 +17780,7 @@ export type AdminUpdateIngestionScheduleData = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17801,7 +17801,7 @@ export type AdminUpdateIngestionScheduleData = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17864,12 +17864,12 @@ export type AdminUpdateIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event schedule discovery.
+         * Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.
          */
         eventSchedule: {
             /**
@@ -17885,12 +17885,12 @@ export type AdminUpdateIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event participant hydration before the event starts.
+         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
          */
         eventParticipants: {
             /**
@@ -17906,7 +17906,7 @@ export type AdminUpdateIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17927,7 +17927,7 @@ export type AdminUpdateIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17948,7 +17948,7 @@ export type AdminUpdateIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17969,7 +17969,7 @@ export type AdminUpdateIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -17996,7 +17996,7 @@ export type AdminUpdateIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18017,7 +18017,7 @@ export type AdminUpdateIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18038,7 +18038,7 @@ export type AdminUpdateIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18059,7 +18059,7 @@ export type AdminUpdateIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18080,7 +18080,7 @@ export type AdminUpdateIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18101,7 +18101,7 @@ export type AdminUpdateIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18135,7 +18135,7 @@ export type AdminSetSportIngestionOverrideData = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18156,7 +18156,7 @@ export type AdminSetSportIngestionOverrideData = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18177,7 +18177,7 @@ export type AdminSetSportIngestionOverrideData = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18198,7 +18198,7 @@ export type AdminSetSportIngestionOverrideData = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18219,7 +18219,7 @@ export type AdminSetSportIngestionOverrideData = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18240,7 +18240,7 @@ export type AdminSetSportIngestionOverrideData = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18305,12 +18305,12 @@ export type AdminSetSportIngestionOverrideResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event schedule discovery.
+         * Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.
          */
         eventSchedule: {
             /**
@@ -18326,12 +18326,12 @@ export type AdminSetSportIngestionOverrideResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event participant hydration before the event starts.
+         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
          */
         eventParticipants: {
             /**
@@ -18347,7 +18347,7 @@ export type AdminSetSportIngestionOverrideResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18368,7 +18368,7 @@ export type AdminSetSportIngestionOverrideResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18389,7 +18389,7 @@ export type AdminSetSportIngestionOverrideResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18410,7 +18410,7 @@ export type AdminSetSportIngestionOverrideResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18437,7 +18437,7 @@ export type AdminSetSportIngestionOverrideResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18458,7 +18458,7 @@ export type AdminSetSportIngestionOverrideResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18479,7 +18479,7 @@ export type AdminSetSportIngestionOverrideResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18500,7 +18500,7 @@ export type AdminSetSportIngestionOverrideResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18521,7 +18521,7 @@ export type AdminSetSportIngestionOverrideResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18542,7 +18542,7 @@ export type AdminSetSportIngestionOverrideResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18615,12 +18615,12 @@ export type AdminResetSportIngestionOverrideResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event schedule discovery.
+         * Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.
          */
         eventSchedule: {
             /**
@@ -18636,12 +18636,12 @@ export type AdminResetSportIngestionOverrideResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event participant hydration before the event starts.
+         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
          */
         eventParticipants: {
             /**
@@ -18657,7 +18657,7 @@ export type AdminResetSportIngestionOverrideResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18678,7 +18678,7 @@ export type AdminResetSportIngestionOverrideResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18699,7 +18699,7 @@ export type AdminResetSportIngestionOverrideResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18720,7 +18720,7 @@ export type AdminResetSportIngestionOverrideResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18747,7 +18747,7 @@ export type AdminResetSportIngestionOverrideResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18768,7 +18768,7 @@ export type AdminResetSportIngestionOverrideResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18789,7 +18789,7 @@ export type AdminResetSportIngestionOverrideResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18810,7 +18810,7 @@ export type AdminResetSportIngestionOverrideResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18831,7 +18831,7 @@ export type AdminResetSportIngestionOverrideResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18852,7 +18852,7 @@ export type AdminResetSportIngestionOverrideResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -18896,12 +18896,12 @@ export type AdminResetIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event schedule discovery.
+         * Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.
          */
         eventSchedule: {
             /**
@@ -18917,12 +18917,12 @@ export type AdminResetIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event participant hydration before the event starts.
+         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
          */
         eventParticipants: {
             /**
@@ -18938,7 +18938,7 @@ export type AdminResetIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18959,7 +18959,7 @@ export type AdminResetIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -18980,7 +18980,7 @@ export type AdminResetIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -19001,7 +19001,7 @@ export type AdminResetIngestionScheduleResponses = {
              */
             intervalSeconds?: number;
             /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
              */
             lookaheadDays?: number;
         };
@@ -19028,7 +19028,7 @@ export type AdminResetIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -19049,7 +19049,7 @@ export type AdminResetIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -19070,7 +19070,7 @@ export type AdminResetIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -19091,7 +19091,7 @@ export type AdminResetIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -19112,7 +19112,7 @@ export type AdminResetIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };
@@ -19133,7 +19133,7 @@ export type AdminResetIngestionScheduleResponses = {
                      */
                     intervalSeconds?: number;
                     /**
-                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.
+                     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.
                      */
                     lookaheadDays?: number;
                 };

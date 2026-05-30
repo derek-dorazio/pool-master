@@ -3,7 +3,7 @@
  *
  * Schedules jobs for:
  * - Event schedule sync (daily)
- * - Event participant hydration (daily)
+ * - Event participant hydration (every 6h for the next unlocked field-ready events)
  * - Ranking updates (daily)
  * - Live score polling (every 30s during active events)
  * - Provider health checks (every 5 min)
@@ -1054,7 +1054,7 @@ function resolveEventParticipantSyncWindow(
   config: IngestionScheduleConfig,
   now: Date,
 ): { from: Date; to: Date } {
-  const lookaheadDays = config.eventSchedule.lookaheadDays ?? 30;
+  const lookaheadDays = config.eventParticipants.lookaheadDays ?? 14;
   return {
     from: now,
     to: new Date(now.getTime() + lookaheadDays * 24 * 60 * 60 * 1000),
@@ -1255,12 +1255,13 @@ function defaultIngestionScheduleConfig(): IngestionScheduleConfig {
       },
     eventSchedule: {
         enabled: true,
-        intervalMinutes: 360,
-        lookaheadDays: 30,
+        intervalMinutes: 1440,
+        lookaheadDays: 365,
       },
     eventParticipants: {
         enabled: true,
-        intervalMinutes: 720,
+        intervalMinutes: 360,
+        lookaheadDays: 14,
       },
     participantRankings: {
         enabled: true,
