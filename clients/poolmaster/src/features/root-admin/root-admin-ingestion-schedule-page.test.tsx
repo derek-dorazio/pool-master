@@ -52,7 +52,6 @@ describe('RootAdminIngestionSchedulePage', () => {
         eventParticipants: {
           enabled: true,
           intervalMinutes: 720,
-          leadDaysBeforeStart: 7,
         },
         participantRankings: { enabled: true, intervalMinutes: 1440 },
         eventLiveScores: { enabled: true, intervalSeconds: 30 },
@@ -66,7 +65,7 @@ describe('RootAdminIngestionSchedulePage', () => {
     adminUpdateIngestionScheduleMock.mockResolvedValue(response);
   });
 
-  it('renders and saves the global ingestion schedule', async () => {
+  it('pool-master-rop.68.1.2 renders and saves the global ingestion schedule without participant lead days', async () => {
     renderPage();
 
     const liveScoresInput = await screen.findByTestId(
@@ -85,7 +84,6 @@ describe('RootAdminIngestionSchedulePage', () => {
           eventParticipants: {
             enabled: true,
             intervalMinutes: 720,
-            leadDaysBeforeStart: 7,
           },
           participantRankings: { enabled: true, intervalMinutes: 1440 },
           eventLiveScores: { enabled: true, intervalSeconds: 45 },

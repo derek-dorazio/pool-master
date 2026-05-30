@@ -15002,8 +15002,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @description Feed types to run for a sport-level sync request. */
-                    feeds: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS")[];
+                    /** @description Feed types to run for a sport-level sync request. Event participant, live-score, result, and odds hydration are event-scoped and must use the event sync endpoint. */
+                    feeds: ("EVENTSCHEDULE" | "PARTICIPANTRANKINGS")[];
                     /**
                      * Format: date-time
                      * @description Optional lower bound for sport-level event discovery.
@@ -17571,8 +17571,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for event schedule discovery. */
                         eventSchedule: {
@@ -17584,8 +17582,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for event participant hydration before the event starts. */
                         eventParticipants: {
@@ -17597,8 +17593,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for ranking refreshes. */
                         participantRankings: {
@@ -17610,8 +17604,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for live score polling. */
                         eventLiveScores: {
@@ -17623,8 +17615,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for completed-event result refreshes. */
                         eventResults: {
@@ -17636,8 +17626,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                         perSportOverrides: {
@@ -17653,8 +17641,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventSchedule?: {
@@ -17666,8 +17652,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventParticipants?: {
@@ -17679,8 +17663,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 participantRankings?: {
@@ -17692,8 +17674,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventLiveScores?: {
@@ -17705,8 +17685,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventResults?: {
@@ -17718,8 +17696,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                             };
                         };
@@ -17769,8 +17745,6 @@ export interface operations {
                         intervalSeconds?: number;
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                         lookaheadDays?: number;
-                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                        leadDaysBeforeStart?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
                     eventSchedule?: {
@@ -17782,8 +17756,6 @@ export interface operations {
                         intervalSeconds?: number;
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                         lookaheadDays?: number;
-                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                        leadDaysBeforeStart?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
                     eventParticipants?: {
@@ -17795,8 +17767,6 @@ export interface operations {
                         intervalSeconds?: number;
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                         lookaheadDays?: number;
-                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                        leadDaysBeforeStart?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
                     participantRankings?: {
@@ -17808,8 +17778,6 @@ export interface operations {
                         intervalSeconds?: number;
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                         lookaheadDays?: number;
-                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                        leadDaysBeforeStart?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
                     eventLiveScores?: {
@@ -17821,8 +17789,6 @@ export interface operations {
                         intervalSeconds?: number;
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                         lookaheadDays?: number;
-                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                        leadDaysBeforeStart?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
                     eventResults?: {
@@ -17834,8 +17800,6 @@ export interface operations {
                         intervalSeconds?: number;
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                         lookaheadDays?: number;
-                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                        leadDaysBeforeStart?: number;
                     };
                 };
             };
@@ -17865,8 +17829,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for event schedule discovery. */
                         eventSchedule: {
@@ -17878,8 +17840,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for event participant hydration before the event starts. */
                         eventParticipants: {
@@ -17891,8 +17851,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for ranking refreshes. */
                         participantRankings: {
@@ -17904,8 +17862,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for live score polling. */
                         eventLiveScores: {
@@ -17917,8 +17873,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for completed-event result refreshes. */
                         eventResults: {
@@ -17930,8 +17884,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                         perSportOverrides: {
@@ -17947,8 +17899,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventSchedule?: {
@@ -17960,8 +17910,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventParticipants?: {
@@ -17973,8 +17921,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 participantRankings?: {
@@ -17986,8 +17932,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventLiveScores?: {
@@ -17999,8 +17943,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventResults?: {
@@ -18012,8 +17954,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                             };
                         };
@@ -18065,8 +18005,6 @@ export interface operations {
                         intervalSeconds?: number;
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                         lookaheadDays?: number;
-                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                        leadDaysBeforeStart?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
                     eventSchedule?: {
@@ -18078,8 +18016,6 @@ export interface operations {
                         intervalSeconds?: number;
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                         lookaheadDays?: number;
-                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                        leadDaysBeforeStart?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
                     eventParticipants?: {
@@ -18091,8 +18027,6 @@ export interface operations {
                         intervalSeconds?: number;
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                         lookaheadDays?: number;
-                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                        leadDaysBeforeStart?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
                     participantRankings?: {
@@ -18104,8 +18038,6 @@ export interface operations {
                         intervalSeconds?: number;
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                         lookaheadDays?: number;
-                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                        leadDaysBeforeStart?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
                     eventLiveScores?: {
@@ -18117,8 +18049,6 @@ export interface operations {
                         intervalSeconds?: number;
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                         lookaheadDays?: number;
-                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                        leadDaysBeforeStart?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
                     eventResults?: {
@@ -18130,8 +18060,6 @@ export interface operations {
                         intervalSeconds?: number;
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                         lookaheadDays?: number;
-                        /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                        leadDaysBeforeStart?: number;
                     };
                 };
             };
@@ -18161,8 +18089,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for event schedule discovery. */
                         eventSchedule: {
@@ -18174,8 +18100,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for event participant hydration before the event starts. */
                         eventParticipants: {
@@ -18187,8 +18111,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for ranking refreshes. */
                         participantRankings: {
@@ -18200,8 +18122,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for live score polling. */
                         eventLiveScores: {
@@ -18213,8 +18133,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for completed-event result refreshes. */
                         eventResults: {
@@ -18226,8 +18144,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                         perSportOverrides: {
@@ -18243,8 +18159,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventSchedule?: {
@@ -18256,8 +18170,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventParticipants?: {
@@ -18269,8 +18181,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 participantRankings?: {
@@ -18282,8 +18192,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventLiveScores?: {
@@ -18295,8 +18203,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventResults?: {
@@ -18308,8 +18214,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                             };
                         };
@@ -18372,8 +18276,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for event schedule discovery. */
                         eventSchedule: {
@@ -18385,8 +18287,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for event participant hydration before the event starts. */
                         eventParticipants: {
@@ -18398,8 +18298,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for ranking refreshes. */
                         participantRankings: {
@@ -18411,8 +18309,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for live score polling. */
                         eventLiveScores: {
@@ -18424,8 +18320,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for completed-event result refreshes. */
                         eventResults: {
@@ -18437,8 +18331,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                         perSportOverrides: {
@@ -18454,8 +18346,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventSchedule?: {
@@ -18467,8 +18357,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventParticipants?: {
@@ -18480,8 +18368,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 participantRankings?: {
@@ -18493,8 +18379,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventLiveScores?: {
@@ -18506,8 +18390,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventResults?: {
@@ -18519,8 +18401,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                             };
                         };
@@ -18581,8 +18461,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for event schedule discovery. */
                         eventSchedule: {
@@ -18594,8 +18472,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for event participant hydration before the event starts. */
                         eventParticipants: {
@@ -18607,8 +18483,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for ranking refreshes. */
                         participantRankings: {
@@ -18620,8 +18494,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for live score polling. */
                         eventLiveScores: {
@@ -18633,8 +18505,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Scheduling policy for completed-event result refreshes. */
                         eventResults: {
@@ -18646,8 +18516,6 @@ export interface operations {
                             intervalSeconds?: number;
                             /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                             lookaheadDays?: number;
-                            /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                            leadDaysBeforeStart?: number;
                         };
                         /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
                         perSportOverrides: {
@@ -18663,8 +18531,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventSchedule?: {
@@ -18676,8 +18542,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventParticipants?: {
@@ -18689,8 +18553,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 participantRankings?: {
@@ -18702,8 +18564,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventLiveScores?: {
@@ -18715,8 +18575,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
                                 eventResults?: {
@@ -18728,8 +18586,6 @@ export interface operations {
                                     intervalSeconds?: number;
                                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
                                     lookaheadDays?: number;
-                                    /** @description How many days before event start a feed becomes eligible to run for that event lifecycle window. */
-                                    leadDaysBeforeStart?: number;
                                 };
                             };
                         };

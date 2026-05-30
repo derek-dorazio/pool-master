@@ -85,7 +85,7 @@ interface IngestionJobWorkResult {
 
 export interface SportSyncRequest {
   sport: Sport;
-  feeds: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS'>;
+  feeds: Array<'EVENTSCHEDULE' | 'PARTICIPANTRANKINGS'>;
   from?: Date;
   to?: Date;
   workflowContext?: Record<string, unknown>;
@@ -251,11 +251,6 @@ export class IngestionScheduler {
     for (const feed of dedupe(request.feeds)) {
       if (feed === 'EVENTSCHEDULE') {
         jobs.push(await this.runScheduleSync(request.sport, request.from, request.to));
-        continue;
-      }
-
-      if (feed === 'EVENTPARTICIPANTS') {
-        jobs.push(await this.runFieldSync(request.sport, request.from, request.to));
         continue;
       }
 
@@ -498,21 +493,13 @@ export class IngestionScheduler {
       return;
     }
 
-    const normalized = this.normalizeScheduledSportSync({
-      sport,
-      feeds: ['EVENTPARTICIPANTS'],
-      windowPolicy: resolveSportSyncWindowPolicy({ feeds: ['EVENTPARTICIPANTS'], config }),
-    });
-    const scope = assertScheduledSportScope(normalized);
+    const window = resolveEventParticipantSyncWindow(config, this.getNow());
     this.logger?.debug({
       sport,
-      from: scope.effectiveWindow.from.toISOString(),
-      to: scope.effectiveWindow.to.toISOString(),
+      from: window.from.toISOString(),
+      to: window.to.toISOString(),
     }, 'Running configured sport participant sync');
-    await this.executeScheduledSyncRun(normalized, () =>
-      this.runFieldSync(scope.sport, scope.effectiveWindow.from, scope.effectiveWindow.to),
-    );
-    await this.runConfiguredActiveFieldSync(scope.sport, scope.effectiveWindow);
+    await this.runConfiguredActiveFieldSync(sport, window);
   }
 
   private async runConfiguredActiveFieldSync(
@@ -755,93 +742,6 @@ export class IngestionScheduler {
               message: 'Provider returned no upcoming events for the requested sport/date window.',
             }]
           : [],
-      };
-    });
-  }
-
-  private async runFieldSync(
-    sport: Sport,
-    from?: Date,
-    to?: Date,
-  ): Promise<IngestionJobRecord> {
-    const dateRange = resolveDateRange(from, to);
-    this.logger?.debug({
-      sport,
-      from: dateRange.from.toISOString(),
-      to: dateRange.to.toISOString(),
-    }, 'Running participant sync for sport');
-    const provider = this.registry.getProvider(sport);
-    if (!provider) {
-      this.logger?.warn({ sport }, 'No provider registered for participant sync');
-      return createFailedJob('EVENT_PARTICIPANTS_SYNC', 'none', sport, 'No provider registered');
-    }
-
-    return this.runJob('EVENT_PARTICIPANTS_SYNC', provider.providerId, sport, 'EVENTPARTICIPANTS', provider, async () => {
-      const events = await provider.getUpcomingEvents(sport, dateRange);
-      this.logger?.debug({
-        sport,
-        providerId: provider.providerId,
-        eventsDiscovered: events.length,
-        eventSample: events.slice(0, 10).map(toEventSample),
-      }, 'Provider returned participant sync event candidates');
-      if (events.length === 0) {
-        this.logger?.warn({
-          sport,
-          providerId: provider.providerId,
-          from: dateRange.from.toISOString(),
-          to: dateRange.to.toISOString(),
-        }, 'Provider returned no event candidates for participant sync');
-      }
-      let hydratedCount = 0;
-      let participantsReturned = 0;
-
-      for (const event of events) {
-        this.logger?.debug({
-          sport,
-          providerId: provider.providerId,
-          eventExternalId: event.externalId,
-          eventName: event.name,
-          startDate: event.startDate.toISOString(),
-        }, 'Fetching event detail for participant sync');
-        const detail = await provider.getEventDetails(event.externalId);
-        if (!detail) {
-          this.logger?.warn({
-            sport,
-            providerId: provider.providerId,
-            eventExternalId: event.externalId,
-          }, 'Provider returned no event detail for participant sync candidate');
-          continue;
-        }
-
-        participantsReturned += detail.participants.length;
-        this.logger?.debug({
-          sport,
-          providerId: provider.providerId,
-          eventExternalId: detail.externalId,
-          participantCount: detail.participants.length,
-        }, 'Provider returned event detail for participant sync');
-        await this.callbacks.onEventDetail(detail);
-        hydratedCount += 1;
-      }
-
-      this.logger?.info({
-        sport,
-        providerId: provider.providerId,
-        eventsDiscovered: events.length,
-        eventsHydrated: hydratedCount,
-        participantsReturned,
-        from: dateRange.from.toISOString(),
-        to: dateRange.to.toISOString(),
-      }, 'Completed participant sync for sport');
-      return {
-        recordsProcessed: hydratedCount,
-        stats: {
-          providerRecordsReturned: events.length,
-          eventsDiscovered: events.length,
-          eventsHydrated: hydratedCount,
-          participantsReturned,
-        },
-        warnings: buildParticipantSyncWarnings(events.length, hydratedCount, participantsReturned),
       };
     });
   }
@@ -1136,6 +1036,17 @@ function resolveDateRange(from?: Date, to?: Date): { from: Date; to: Date } {
   };
 }
 
+function resolveEventParticipantSyncWindow(
+  config: IngestionScheduleConfig,
+  now: Date,
+): { from: Date; to: Date } {
+  const lookaheadDays = config.eventSchedule.lookaheadDays ?? 30;
+  return {
+    from: now,
+    to: new Date(now.getTime() + lookaheadDays * 24 * 60 * 60 * 1000),
+  };
+}
+
 function createFailedJob(
   jobType: JobType,
   providerId: string,
@@ -1266,36 +1177,6 @@ function createProviderPayloadCaptureSession(
   return null;
 }
 
-function buildParticipantSyncWarnings(
-  eventsDiscovered: number,
-  eventsHydrated: number,
-  participantsReturned: number,
-): IngestionJobWarning[] {
-  const warnings: IngestionJobWarning[] = [];
-  if (eventsDiscovered === 0) {
-    warnings.push({
-      code: 'NO_PROVIDER_EVENTS',
-      message: 'Provider returned no event candidates for participant sync.',
-    });
-  }
-
-  if (eventsDiscovered > 0 && eventsHydrated === 0) {
-    warnings.push({
-      code: 'NO_EVENT_DETAILS',
-      message: 'Provider returned event candidates but no event details were hydrated.',
-    });
-  }
-
-  if (eventsHydrated > 0 && participantsReturned === 0) {
-    warnings.push({
-      code: 'NO_PROVIDER_PARTICIPANTS',
-      message: 'Provider hydrated events but returned no participants.',
-    });
-  }
-
-  return warnings;
-}
-
 function dedupe<T extends string>(items: readonly T[]): T[] {
   return Array.from(new Set(items));
 }
@@ -1366,7 +1247,6 @@ function defaultIngestionScheduleConfig(): IngestionScheduleConfig {
     eventParticipants: {
         enabled: true,
         intervalMinutes: 720,
-        leadDaysBeforeStart: 7,
       },
     participantRankings: {
         enabled: true,

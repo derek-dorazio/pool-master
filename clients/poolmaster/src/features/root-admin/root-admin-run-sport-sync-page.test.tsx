@@ -76,7 +76,7 @@ describe('RootAdminRunSportSyncPage', () => {
     adminPrepareSportSyncMock.mockResolvedValue({
       data: {
         sport: 'GOLF',
-        requestedFeeds: ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS'],
+        requestedFeeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
         syncRuns: [{ id: 'sync-run-1' }],
       },
     });
@@ -93,7 +93,7 @@ describe('RootAdminRunSportSyncPage', () => {
     expect(screen.queryByTestId('root-admin-sport-sync-now')).not.toBeInTheDocument();
   });
 
-  it('submits a sport sync and shows the returned payload', async () => {
+  it('pool-master-rop.68.1.2 submits sport sync without event-scoped participant feeds', async () => {
     renderPage();
 
     expect(
@@ -106,7 +106,7 @@ describe('RootAdminRunSportSyncPage', () => {
       expect(adminPrepareSportSyncMock).toHaveBeenCalledWith({
         path: { sport: 'GOLF' },
         body: {
-          feeds: ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS'],
+          feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
         },
       });
     });

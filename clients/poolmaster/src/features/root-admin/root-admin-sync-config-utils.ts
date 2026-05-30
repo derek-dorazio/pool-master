@@ -27,8 +27,6 @@ export const INGESTION_POLICY_FIELDS = [
     label: 'Event participants',
     intervalLabel: 'Minutes',
     intervalKey: 'intervalMinutes',
-    extraKey: 'leadDaysBeforeStart',
-    extraLabel: 'Lead days',
   },
   {
     key: 'participantRankings',

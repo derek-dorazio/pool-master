@@ -11,8 +11,8 @@ export const IngestionFeedTypeSchema = z.enum([
 export type IngestionFeedType = z.infer<typeof IngestionFeedTypeSchema>;
 
 export const SportSyncRequestSchema = z.object({
-  feeds: z.array(z.enum(['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS'])).min(1).describe(
-    'Feed types to run for a sport-level sync request.',
+  feeds: z.array(z.enum(['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'])).min(1).describe(
+    'Feed types to run for a sport-level sync request. Event participant, live-score, result, and odds hydration are event-scoped and must use the event sync endpoint.',
   ),
   from: DateTimeSchema.optional().describe('Optional lower bound for sport-level event discovery.'),
   to: DateTimeSchema.optional().describe('Optional upper bound for sport-level event discovery.'),

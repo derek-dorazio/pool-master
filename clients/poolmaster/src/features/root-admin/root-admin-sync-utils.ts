@@ -40,13 +40,8 @@ export type SyncStatus = (typeof SYNC_STATUS_OPTIONS)[number];
 export const SPORT_SYNC_PRESETS = [
   {
     id: 'PREPARE_EVENT_DATA',
-    label: 'Prepare event data',
-    feeds: ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS'] as const,
-  },
-  {
-    id: 'EVENTPARTICIPANTS_ONLY',
-    label: 'Refresh participants only',
-    feeds: ['EVENTPARTICIPANTS'] as const,
+    label: 'Prepare schedule and rankings',
+    feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'] as const,
   },
   {
     id: 'EVENTSCHEDULE_ONLY',

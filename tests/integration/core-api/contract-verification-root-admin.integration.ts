@@ -639,7 +639,7 @@ describe('Contract verification (root admin)', () => {
     expect(listRes.json().teams.some((item: { id: string }) => item.id === squad.id)).toBe(true);
   });
 
-  it('root-admin provider operational routes match their DTOs on happy paths', async () => {
+  it('pool-master-rop.68.1.2 root-admin provider operational routes match their DTOs on happy paths', async () => {
     const rootAdmin = await createTestUser({
       displayName: 'Root Admin Provider Ops User',
       isRootAdmin: true,
@@ -769,12 +769,12 @@ describe('Contract verification (root admin)', () => {
         url: '/api/v1/admin/providers/sync/GOLF',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
-          feeds: ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS'],
+          feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
         },
       });
       expect(prepareSyncRes.statusCode).toBe(202);
       expect(prepareSyncRes.json().sport).toBe('GOLF');
-      expect(prepareSyncRes.json().requestedFeeds).toEqual(['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS']);
+      expect(prepareSyncRes.json().requestedFeeds).toEqual(['EVENTSCHEDULE', 'PARTICIPANTRANKINGS']);
       expect(typeof prepareSyncRes.json().submittedAt).toBe('string');
       expect(prepareSyncRes.json().syncRuns.length).toBeGreaterThanOrEqual(1);
       expect(prepareSyncRes.json().syncRuns[0]?.status).toBe('SUBMITTED');

@@ -63,9 +63,6 @@ export const IngestionFeedSchedulePolicySchema = z.object({
   lookaheadDays: z.number().int().min(0).optional().describe(
     'How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.',
   ),
-  leadDaysBeforeStart: z.number().int().min(0).optional().describe(
-    'How many days before event start a feed becomes eligible to run for that event lifecycle window.',
-  ),
 }).describe('Feed-specific ingestion scheduling policy.');
 export type IngestionFeedSchedulePolicy = z.infer<typeof IngestionFeedSchedulePolicySchema>;
 

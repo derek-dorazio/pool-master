@@ -28362,12 +28362,11 @@
                       "type": "string",
                       "enum": [
                         "EVENTSCHEDULE",
-                        "EVENTPARTICIPANTS",
                         "PARTICIPANTRANKINGS"
                       ]
                     },
                     "minItems": 1,
-                    "description": "Feed types to run for a sport-level sync request."
+                    "description": "Feed types to run for a sport-level sync request. Event participant, live-score, result, and odds hydration are event-scoped and must use the event sync endpoint."
                   },
                   "from": {
                     "type": "string",
@@ -35011,11 +35010,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -35045,11 +35039,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -35079,11 +35068,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -35113,11 +35097,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -35147,11 +35126,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -35181,11 +35155,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -35243,11 +35212,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -35274,11 +35238,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -35305,11 +35264,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -35336,11 +35290,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -35367,11 +35316,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -35398,11 +35342,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -35529,11 +35468,6 @@
                         "type": "integer",
                         "minimum": 0,
                         "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                      },
-                      "leadDaysBeforeStart": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                       }
                     },
                     "additionalProperties": false,
@@ -35560,11 +35494,6 @@
                         "type": "integer",
                         "minimum": 0,
                         "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                      },
-                      "leadDaysBeforeStart": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                       }
                     },
                     "additionalProperties": false,
@@ -35591,11 +35520,6 @@
                         "type": "integer",
                         "minimum": 0,
                         "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                      },
-                      "leadDaysBeforeStart": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                       }
                     },
                     "additionalProperties": false,
@@ -35622,11 +35546,6 @@
                         "type": "integer",
                         "minimum": 0,
                         "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                      },
-                      "leadDaysBeforeStart": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                       }
                     },
                     "additionalProperties": false,
@@ -35653,11 +35572,6 @@
                         "type": "integer",
                         "minimum": 0,
                         "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                      },
-                      "leadDaysBeforeStart": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                       }
                     },
                     "additionalProperties": false,
@@ -35684,11 +35598,6 @@
                         "type": "integer",
                         "minimum": 0,
                         "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                      },
-                      "leadDaysBeforeStart": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                       }
                     },
                     "additionalProperties": false,
@@ -35758,11 +35667,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -35792,11 +35696,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -35826,11 +35725,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -35860,11 +35754,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -35894,11 +35783,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -35928,11 +35812,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -35990,11 +35869,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -36021,11 +35895,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -36052,11 +35921,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -36083,11 +35947,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -36114,11 +35973,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -36145,11 +35999,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -36278,11 +36127,6 @@
                         "type": "integer",
                         "minimum": 0,
                         "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                      },
-                      "leadDaysBeforeStart": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                       }
                     },
                     "additionalProperties": false,
@@ -36309,11 +36153,6 @@
                         "type": "integer",
                         "minimum": 0,
                         "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                      },
-                      "leadDaysBeforeStart": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                       }
                     },
                     "additionalProperties": false,
@@ -36340,11 +36179,6 @@
                         "type": "integer",
                         "minimum": 0,
                         "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                      },
-                      "leadDaysBeforeStart": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                       }
                     },
                     "additionalProperties": false,
@@ -36371,11 +36205,6 @@
                         "type": "integer",
                         "minimum": 0,
                         "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                      },
-                      "leadDaysBeforeStart": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                       }
                     },
                     "additionalProperties": false,
@@ -36402,11 +36231,6 @@
                         "type": "integer",
                         "minimum": 0,
                         "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                      },
-                      "leadDaysBeforeStart": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                       }
                     },
                     "additionalProperties": false,
@@ -36433,11 +36257,6 @@
                         "type": "integer",
                         "minimum": 0,
                         "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                      },
-                      "leadDaysBeforeStart": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                       }
                     },
                     "additionalProperties": false,
@@ -36517,11 +36336,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -36551,11 +36365,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -36585,11 +36394,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -36619,11 +36423,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -36653,11 +36452,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -36687,11 +36481,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -36749,11 +36538,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -36780,11 +36564,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -36811,11 +36590,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -36842,11 +36616,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -36873,11 +36642,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -36904,11 +36668,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -37052,11 +36811,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -37086,11 +36840,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -37120,11 +36869,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -37154,11 +36898,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -37188,11 +36927,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -37222,11 +36956,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -37284,11 +37013,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -37315,11 +37039,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -37346,11 +37065,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -37377,11 +37091,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -37408,11 +37117,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -37439,11 +37143,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -37577,11 +37276,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -37611,11 +37305,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -37645,11 +37334,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -37679,11 +37363,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -37713,11 +37392,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -37747,11 +37421,6 @@
                           "type": "integer",
                           "minimum": 0,
                           "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                        },
-                        "leadDaysBeforeStart": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                         }
                       },
                       "required": [
@@ -37809,11 +37478,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -37840,11 +37504,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -37871,11 +37530,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -37902,11 +37556,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -37933,11 +37582,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,
@@ -37964,11 +37608,6 @@
                                 "type": "integer",
                                 "minimum": 0,
                                 "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window."
-                              },
-                              "leadDaysBeforeStart": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "How many days before event start a feed becomes eligible to run for that event lifecycle window."
                               }
                             },
                             "additionalProperties": false,

@@ -98,7 +98,7 @@ describe('SDK Functional: Root Admin', () => {
         sport: 'GOLF',
       },
       body: {
-        feeds: ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS'],
+        feeds: ['EVENTSCHEDULE', 'PARTICIPANTRANKINGS'],
       },
     });
 
@@ -123,7 +123,7 @@ describe('SDK Functional: Root Admin', () => {
     });
   });
 
-  it('allows a promoted root-admin user to read root-admin service data', async () => {
+  it('pool-master-rop.68.1.2 allows a promoted root-admin user to read root-admin service data', async () => {
     const user = await buildRegisteredUser({
       displayName: 'Root Admin Service User',
     });

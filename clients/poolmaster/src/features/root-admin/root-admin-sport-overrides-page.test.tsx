@@ -52,7 +52,6 @@ describe('RootAdminSportOverridesPage', () => {
         eventParticipants: {
           enabled: true,
           intervalMinutes: 720,
-          leadDaysBeforeStart: 7,
         },
         participantRankings: { enabled: true, intervalMinutes: 1440 },
         eventLiveScores: { enabled: true, intervalSeconds: 30 },
@@ -86,7 +85,7 @@ describe('RootAdminSportOverridesPage', () => {
     expect(error).toHaveTextContent('Schedule unavailable');
   });
 
-  it('renders and saves a sport-specific override', async () => {
+  it('pool-master-rop.68.1.2 renders and saves a sport-specific override without participant lead days', async () => {
     renderPage();
 
     const liveScoresToggle = await screen.findByTestId(

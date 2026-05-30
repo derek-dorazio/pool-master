@@ -29,8 +29,7 @@ type IngestionEditableField =
   | 'enabled'
   | 'intervalMinutes'
   | 'intervalSeconds'
-  | 'lookaheadDays'
-  | 'leadDaysBeforeStart';
+  | 'lookaheadDays';
 
 export function RootAdminIngestionSchedulePage() {
   const [draft, setDraft] = useState<IngestionScheduleConfig | null>(null);

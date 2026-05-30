@@ -85,7 +85,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
     });
   });
 
-  it('pool-master-rop.13 lists scheduled events inside the configured window for participant hydration', async () => {
+  it('pool-master-rop.68.1.2 lists only field-available scheduled events inside the configured window for participant hydration', async () => {
     const prisma = createPrisma();
     const registry = {
       getProvider: jest.fn().mockReturnValue({ providerId: 'mock-contest-feed' }),
@@ -108,6 +108,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
         OR: [
           {
             status: 'SCHEDULED',
+            releaseAt: { lte: new Date('2026-04-26T22:30:00.000Z') },
             startDate: {
               gte: new Date('2026-04-26T22:30:00.000Z'),
               lte: new Date('2026-05-03T22:30:00.000Z'),
@@ -120,5 +121,80 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
         externalId: true,
       },
     });
+  });
+
+  it('pool-master-rop.68.1.2 excludes unreleased and completed events from participant hydration candidates', async () => {
+    const now = new Date('2026-04-26T22:30:00.000Z');
+    const from = new Date('2026-04-26T22:30:00.000Z');
+    const to = new Date('2026-05-03T22:30:00.000Z');
+    const rows = [
+      {
+        externalId: 'released-field-event',
+        sport: 'GOLF',
+        providerId: 'mock-contest-feed',
+        status: 'SCHEDULED',
+        releaseAt: new Date('2026-04-26T22:00:00.000Z'),
+        startDate: new Date('2026-04-30T12:00:00.000Z'),
+      },
+      {
+        externalId: 'unreleased-field-event',
+        sport: 'GOLF',
+        providerId: 'mock-contest-feed',
+        status: 'SCHEDULED',
+        releaseAt: new Date('2026-04-27T22:00:00.000Z'),
+        startDate: new Date('2026-04-30T12:00:00.000Z'),
+      },
+      {
+        externalId: 'completed-event',
+        sport: 'GOLF',
+        providerId: 'mock-contest-feed',
+        status: 'COMPLETED',
+        releaseAt: new Date('2026-04-20T22:00:00.000Z'),
+        startDate: new Date('2026-04-24T12:00:00.000Z'),
+      },
+      {
+        externalId: 'in-progress-event',
+        sport: 'GOLF',
+        providerId: 'mock-contest-feed',
+        status: 'IN_PROGRESS',
+        releaseAt: new Date('2026-04-20T22:00:00.000Z'),
+        startDate: new Date('2026-04-24T12:00:00.000Z'),
+      },
+    ];
+    const prisma = {
+      sportEvent: {
+        findMany: jest.fn(async ({ where }) => rows
+          .filter((row) => {
+            const [scheduledWhere, inProgressWhere] = where.OR;
+            const scheduledMatch =
+              row.status === scheduledWhere.status
+              && row.releaseAt.getTime() <= scheduledWhere.releaseAt.lte.getTime()
+              && row.startDate.getTime() >= scheduledWhere.startDate.gte.getTime()
+              && row.startDate.getTime() <= scheduledWhere.startDate.lte.getTime();
+            const inProgressMatch = row.status === inProgressWhere.status;
+            return (
+              row.sport === where.sport
+              && row.providerId === where.providerId
+              && row.externalId !== ''
+              && (scheduledMatch || inProgressMatch)
+            );
+          })
+          .map((row) => ({ externalId: row.externalId }))),
+      },
+    };
+    const registry = {
+      getProvider: jest.fn().mockReturnValue({ providerId: 'mock-contest-feed' }),
+    };
+    const reader = createScheduledEventReader({ prisma: prisma as never, registry: registry as never });
+
+    const eventIds = await reader.listEventIdsForFeed({
+      sport: 'GOLF' as Sport,
+      feed: 'EVENTPARTICIPANTS',
+      now,
+      from,
+      to,
+    });
+
+    expect(eventIds).toEqual(['released-field-event', 'in-progress-event']);
   });
 });
