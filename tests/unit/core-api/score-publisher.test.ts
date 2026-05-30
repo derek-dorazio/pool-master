@@ -46,7 +46,8 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         sportEvent: buildSportEventStub(),
         participantProviderMapping: { findMany: jest.fn() },
         sportEventParticipant: { findMany: jest.fn() },
-        sportEventParticipantGolfRound: { upsert: jest.fn() },
+        sportEventParticipantGolfRound: { upsert: jest.fn(), findMany: jest.fn() },
+        sportEventParticipantGolfStanding: { upsert: jest.fn() },
       } as any;
       const bus = buildBus();
 
@@ -82,6 +83,13 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         },
         sportEventParticipantGolfRound: {
           upsert: jest.fn().mockResolvedValue({}),
+          findMany: jest.fn().mockResolvedValue([
+            { sportEventParticipantId: 'sep-rory', round: 1, strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' },
+            { sportEventParticipantId: 'sep-tiger', round: 1, strokes: 73, scoreToPar: 1, thru: 9, status: 'IN_PROGRESS' },
+          ]),
+        },
+        sportEventParticipantGolfStanding: {
+          upsert: jest.fn().mockResolvedValue({}),
         },
       } as any;
       const bus = buildBus();
@@ -91,7 +99,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         externalEventId: 'evt-ext-1',
         rounds: [
           { participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
-          { participantExternalId: 'tiger', round: 1, strokes: 73, scoreToPar: 1, status: 'IN_PROGRESS' },
+          { participantExternalId: 'tiger', round: 1, strokes: 73, scoreToPar: 1, thru: 9, status: 'IN_PROGRESS' },
         ],
       };
 
@@ -116,7 +124,31 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       expect(prisma.sportEventParticipantGolfRound.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { sportEventParticipantId_round: { sportEventParticipantId: 'sep-rory', round: 1 } },
-          create: expect.objectContaining({ strokes: 70, scoreToPar: -2, status: 'COMPLETED' }),
+          create: expect.objectContaining({ strokes: 70, scoreToPar: -2, thru: null, status: 'COMPLETED' }),
+        }),
+      );
+      expect(prisma.sportEventParticipantGolfStanding.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { sportEventParticipantId: 'sep-rory' },
+          create: expect.objectContaining({
+            eventScoreToPar: -2,
+            eventStrokes: 70,
+            currentRound: 1,
+            currentRoundThru: 18,
+            status: 'COMPLETE',
+          }),
+        }),
+      );
+      expect(prisma.sportEventParticipantGolfStanding.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { sportEventParticipantId: 'sep-tiger' },
+          create: expect.objectContaining({
+            eventScoreToPar: 1,
+            eventStrokes: 73,
+            currentRound: 1,
+            currentRoundThru: 9,
+            status: 'IN_PROGRESS',
+          }),
         }),
       );
       expect(bus.publish).toHaveBeenCalledWith(
@@ -145,6 +177,12 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           ]),
         },
         sportEventParticipantGolfRound: {
+          upsert: jest.fn().mockResolvedValue({}),
+          findMany: jest.fn().mockResolvedValue([
+            { sportEventParticipantId: 'sep-rory', round: 1, strokes: 70, scoreToPar: -2, thru: null, status: 'IN_PROGRESS' },
+          ]),
+        },
+        sportEventParticipantGolfStanding: {
           upsert: jest.fn().mockResolvedValue({}),
         },
       } as any;
@@ -191,6 +229,12 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         },
         sportEventParticipantGolfRound: {
           upsert: jest.fn().mockResolvedValue({}),
+          findMany: jest.fn().mockResolvedValue([
+            { sportEventParticipantId: 'sep-rory', round: 1, strokes: 70, scoreToPar: -2, thru: null, status: 'COMPLETED' },
+          ]),
+        },
+        sportEventParticipantGolfStanding: {
+          upsert: jest.fn().mockResolvedValue({}),
         },
       } as any;
       const logger = { warn: jest.fn(), info: jest.fn(), error: jest.fn() } as any;
@@ -235,7 +279,9 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         },
         sportEventParticipantGolfRound: {
           upsert: jest.fn().mockResolvedValue({}),
+          findMany: jest.fn(),
         },
+        sportEventParticipantGolfStanding: { upsert: jest.fn() },
       } as any;
       const bus = buildBus();
 
@@ -262,7 +308,8 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         sportEvent: { findUnique: jest.fn().mockResolvedValue(null) },
         participantProviderMapping: { findMany: jest.fn() },
         sportEventParticipant: { findMany: jest.fn() },
-        sportEventParticipantGolfRound: { upsert: jest.fn() },
+        sportEventParticipantGolfRound: { upsert: jest.fn(), findMany: jest.fn() },
+        sportEventParticipantGolfStanding: { upsert: jest.fn() },
       } as any;
       const logger = { warn: jest.fn(), info: jest.fn(), error: jest.fn() } as any;
       const bus = buildBus();
@@ -300,7 +347,8 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         sportEvent: buildSportEventStub(),
         participantProviderMapping: { findMany: jest.fn() },
         sportEventParticipant: { findMany: jest.fn() },
-        sportEventParticipantGolfRound: { upsert: jest.fn() },
+        sportEventParticipantGolfRound: { upsert: jest.fn(), findMany: jest.fn() },
+        sportEventParticipantGolfStanding: { upsert: jest.fn() },
       } as any;
       const bus = buildBus();
 

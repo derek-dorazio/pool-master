@@ -26657,11 +26657,63 @@
                           },
                           "totalStrokes": {
                             "type": "integer",
-                            "description": "Total persisted golf strokes across completed/known rounds."
+                            "description": "Current Golf event total strokes. Prefers SportEventParticipantGolfStanding when present."
                           },
                           "scoreToPar": {
                             "type": "integer",
-                            "description": "Aggregate persisted score-to-par across completed/known rounds."
+                            "description": "Current Golf event score-to-par. Prefers SportEventParticipantGolfStanding when present."
+                          },
+                          "golfStanding": {
+                            "type": "object",
+                            "properties": {
+                              "eventScoreToPar": {
+                                "type": "integer",
+                                "description": "Current event total score relative to par across persisted Golf rounds."
+                              },
+                              "eventStrokes": {
+                                "type": "integer",
+                                "description": "Current event total strokes across persisted Golf rounds."
+                              },
+                              "currentRound": {
+                                "type": "integer",
+                                "description": "Current or latest round represented in the standing."
+                              },
+                              "currentRoundThru": {
+                                "type": "integer",
+                                "description": "Completed holes for the current round when known."
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "active",
+                                  "in-progress",
+                                  "complete",
+                                  "withdrawn",
+                                  "missed-cut"
+                                ],
+                                "description": "Normalized current Golf live status for this event participant."
+                              },
+                              "position": {
+                                "type": "integer",
+                                "description": "Numeric leaderboard position when available."
+                              },
+                              "displayPosition": {
+                                "type": "string",
+                                "description": "Provider/display leaderboard position label when available."
+                              },
+                              "asOf": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Provider or ingestion timestamp for the standing snapshot."
+                              }
+                            },
+                            "required": [
+                              "eventScoreToPar",
+                              "eventStrokes",
+                              "status"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Maintained current Golf event standing when live/final score data has been persisted."
                           },
                           "golfRounds": {
                             "type": "array",
@@ -26679,6 +26731,10 @@
                                 "scoreToPar": {
                                   "type": "integer",
                                   "description": "Persisted score-to-par for this round."
+                                },
+                                "thru": {
+                                  "type": "integer",
+                                  "description": "Completed holes in this round when known for an in-progress/live round."
                                 },
                                 "status": {
                                   "type": "string",

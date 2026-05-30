@@ -68,6 +68,32 @@ Normalized live golfer status values are:
 
 Playoff/extra-hole behavior is modeled through round/thru/score movement and event completion timing, not by adding a `playoff` status enum value in the first pass.
 
+## Data Golf Public Docs Findings
+
+Source: Data Golf API Access, https://datagolf.com/api-access.
+
+The public Data Golf API documentation confirms these implementation inputs:
+
+- API access requires a Scratch Plus subscription and API key.
+- The shared API rate limit is 45 requests per minute across all endpoints.
+- `get-schedule`: `https://feeds.datagolf.com/get-schedule?tour=[tour]&season=[season]&upcoming_only=[upcoming_only]&file_format=json&key=API_TOKEN` covers primary tour season schedules and includes event names/IDs, course names/IDs, locations, and winners for completed tournaments.
+- `preds/in-play`: `https://feeds.datagolf.com/preds/in-play?tour=[tour]&dead_heat=[dead_heat]&odds_format=[odds_format]&file_format=json&key=API_TOKEN` is a live model endpoint for ongoing PGA, DP World, opposite-field PGA, Korn Ferry, and LIV/alternate events. Its public description says it updates at 5-minute intervals and returns live finish probabilities.
+- `preds/live-tournament-stats`: `https://feeds.datagolf.com/preds/live-tournament-stats?stats=[stats]&round=[round]&display=[display]&file_format=json&key=API_TOKEN` returns live strokes-gained and traditional stats by round or event cumulative, but this is enrichment, not required for PoolMaster's first member leaderboard.
+- Historical raw data endpoints are explicitly historical archive endpoints and are not the source for live scoring.
+
+The public docs do not expose enough JSON shape to prove all PoolMaster-required live score fields. Until we have subscription payloads, the following remain subscription-gated:
+
+- exact event identifier field and whether it matches `get-schedule` event IDs directly
+- exact player identifier field and whether it matches `field-updates` player IDs directly
+- whether live rows include total event score relative to par
+- whether live rows include current-round score relative to par
+- whether live rows include `thru`
+- whether live rows include event strokes and/or current-round strokes
+- whether live rows include a first-class player status
+- whether `get-schedule` exposes a machine status or only completed-tournament winner fields
+
+PoolMaster's first normalized target remains the shape needed by the app: event ID, participant ID, player name, round, event total relative to par, current-round score relative to par, `thru`, strokes, and normalized status. The mock provider will implement that target now. A future Data Golf adapter slice must validate subscription payloads against this target before enabling production Data Golf live scoring.
+
 ## Event-Side Model
 
 `SportEventParticipantGolfRound` remains one row per event participant per round. It needs `thru` added so in-progress display can show how many holes have been completed.

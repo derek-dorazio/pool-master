@@ -214,6 +214,14 @@ enum PrismaParticipantMappingConfidence {
   MANUAL
 }
 
+enum PrismaGolfLiveStatus {
+  ACTIVE      @map("active")
+  IN_PROGRESS @map("in-progress")
+  COMPLETE    @map("complete")
+  WITHDRAWN   @map("withdrawn")
+  MISSED_CUT  @map("missed-cut")
+}
+
 enum PrismaSport {
   GOLF
   NFL
@@ -1052,6 +1060,7 @@ model SportEventParticipant {
   valuations  SportEventParticipantValuation[]
   picks       ContestEntryPick[]
   golfRounds  SportEventParticipantGolfRound[]
+  golfStanding SportEventParticipantGolfStanding?
 
   @@unique([sportEventId, participantId])
   @@index([sportEventId])
@@ -1070,6 +1079,7 @@ model SportEventParticipantGolfRound {
   round                   Int
   strokes                 Int
   scoreToPar              Int      @map("score_to_par")
+  thru                    Int?
   status                  String   @default("PENDING") @db.VarChar(20)
   completedAt             DateTime? @map("completed_at") @db.Timestamptz
   createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -1080,6 +1090,29 @@ model SportEventParticipantGolfRound {
   @@unique([sportEventParticipantId, round])
   @@index([sportEventParticipantId])
   @@map("sport_event_participant_golf_rounds")
+}
+
+/// Maintained event-level Golf participant standing. One row per event golfer,
+/// updated from live/final round rows and used by member leaderboard reads.
+model SportEventParticipantGolfStanding {
+  id                      String                @id @default(uuid()) @db.Uuid
+  sportEventParticipantId String                @unique @map("sport_event_participant_id") @db.Uuid
+  eventScoreToPar         Int                   @map("event_score_to_par")
+  eventStrokes            Int                   @map("event_strokes")
+  currentRound            Int?                  @map("current_round")
+  currentRoundThru        Int?                  @map("current_round_thru")
+  status                  PrismaGolfLiveStatus  @default(ACTIVE)
+  position                Int?
+  displayPosition         String?               @map("display_position") @db.VarChar(20)
+  asOf                    DateTime?             @map("as_of") @db.Timestamptz
+  createdAt               DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
+
+  @@index([status])
+  @@index([position])
+  @@map("sport_event_participant_golf_standings")
 }
 
 model SportEventParticipantValuation {

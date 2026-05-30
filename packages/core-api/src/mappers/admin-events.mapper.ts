@@ -31,6 +31,24 @@ function toNumberOrNull(value: DecimalLike | number | null | undefined): number 
   return null;
 }
 
+function mapGolfStandingStatusToDto(
+  status: string,
+): 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut' {
+  switch (status) {
+    case 'IN_PROGRESS':
+      return 'in-progress';
+    case 'COMPLETE':
+      return 'complete';
+    case 'WITHDRAWN':
+      return 'withdrawn';
+    case 'MISSED_CUT':
+      return 'missed-cut';
+    case 'ACTIVE':
+    default:
+      return 'active';
+  }
+}
+
 export interface AdminEventSummaryRow {
   id: string;
   externalId: string;
@@ -76,9 +94,20 @@ export interface AdminEventParticipantRow {
     round: number;
     strokes: number;
     scoreToPar: number;
+    thru: number | null;
     status: string;
     completedAt: Date | null;
   }>;
+  golfStanding: {
+    eventScoreToPar: number;
+    eventStrokes: number;
+    currentRound: number | null;
+    currentRoundThru: number | null;
+    status: string;
+    position: number | null;
+    displayPosition: string | null;
+    asOf: Date | null;
+  } | null;
 }
 
 export function mapAdminEventSummaryToDto(
@@ -121,10 +150,14 @@ export function mapAdminEventParticipantToDto(
 ): AdminEventParticipantDto {
   const primaryValuation = row.valuations[0];
   const oddsToWin = toNumberOrNull(row.oddsToWin);
-  const scoreToPar = row.golfRounds.length
+  const scoreToPar = row.golfStanding
+    ? row.golfStanding.eventScoreToPar
+    : row.golfRounds.length
     ? row.golfRounds.reduce((sum, round) => sum + round.scoreToPar, 0)
     : null;
-  const totalStrokes = row.golfRounds.length
+  const totalStrokes = row.golfStanding
+    ? row.golfStanding.eventStrokes
+    : row.golfRounds.length
     ? row.golfRounds.reduce((sum, round) => sum + round.strokes, 0)
     : null;
 
@@ -151,10 +184,25 @@ export function mapAdminEventParticipantToDto(
     roundCount: row.golfRounds.length,
     ...(totalStrokes !== null ? { totalStrokes } : {}),
     ...(scoreToPar !== null ? { scoreToPar } : {}),
+    ...(row.golfStanding
+      ? {
+          golfStanding: {
+            eventScoreToPar: row.golfStanding.eventScoreToPar,
+            eventStrokes: row.golfStanding.eventStrokes,
+            ...(row.golfStanding.currentRound !== null ? { currentRound: row.golfStanding.currentRound } : {}),
+            ...(row.golfStanding.currentRoundThru !== null ? { currentRoundThru: row.golfStanding.currentRoundThru } : {}),
+            status: mapGolfStandingStatusToDto(row.golfStanding.status),
+            ...(row.golfStanding.position !== null ? { position: row.golfStanding.position } : {}),
+            ...(row.golfStanding.displayPosition !== null ? { displayPosition: row.golfStanding.displayPosition } : {}),
+            ...(row.golfStanding.asOf ? { asOf: row.golfStanding.asOf.toISOString() } : {}),
+          },
+        }
+      : {}),
     golfRounds: row.golfRounds.map((round) => ({
       round: round.round,
       strokes: round.strokes,
       scoreToPar: round.scoreToPar,
+      ...(round.thru !== null ? { thru: round.thru } : {}),
       status: round.status,
       ...(round.completedAt ? { completedAt: round.completedAt.toISOString() } : {}),
     })),

@@ -40,6 +40,9 @@ export const GolfRoundUpdateSchema = z.object({
     'Per-round strokes. Null when the provider only exposes cumulative scoreToPar without per-round detail (mock + ESPN leaderboard); rop.78.7 supplies real strokes from PGA Tour. Persistence skips rounds with null strokes until then.',
   ),
   scoreToPar: z.number().int(),
+  thru: z.number().int().min(0).optional().describe(
+    'Number of completed holes in this round when the provider reports an in-progress round; can exceed 18 for playoff/extra-hole movement.',
+  ),
   status: z.enum(['IN_PROGRESS', 'COMPLETED', 'DNF', 'DSQ']),
   completedAt: z.string().datetime().optional(),
 }).describe('Golf round update emitted by golf adapters per plans/117 §6.1.');

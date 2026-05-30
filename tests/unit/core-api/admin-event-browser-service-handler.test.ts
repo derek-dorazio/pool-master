@@ -85,6 +85,7 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
             round: 1,
             strokes: 70,
             scoreToPar: -2,
+            thru: 18,
             status: 'COMPLETE',
             completedAt: new Date('2026-05-07T21:00:00.000Z'),
           },
@@ -92,10 +93,21 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
             round: 2,
             strokes: 71,
             scoreToPar: -1,
+            thru: 9,
             status: 'COMPLETE',
             completedAt: new Date('2026-05-08T21:00:00.000Z'),
           },
         ],
+        golfStanding: {
+          eventScoreToPar: -3,
+          eventStrokes: 141,
+          currentRound: 2,
+          currentRoundThru: 9,
+          status: 'IN_PROGRESS',
+          position: 4,
+          displayPosition: 'T4',
+          asOf: new Date('2026-05-08T18:00:00.000Z'),
+        },
       },
     ]);
     const service = new AdminEventBrowserService({
@@ -121,6 +133,16 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
         roundCount: 2,
         totalStrokes: 141,
         scoreToPar: -3,
+        golfStanding: expect.objectContaining({
+          eventScoreToPar: -3,
+          eventStrokes: 141,
+          currentRound: 2,
+          currentRoundThru: 9,
+          status: 'in-progress',
+          position: 4,
+          displayPosition: 'T4',
+          asOf: '2026-05-08T18:00:00.000Z',
+        }),
       }),
     ]);
   });

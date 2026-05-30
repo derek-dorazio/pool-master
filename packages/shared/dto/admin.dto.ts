@@ -178,10 +178,25 @@ export const AdminEventParticipantGolfRoundDtoSchema = z.object({
   round: z.number().int().describe('Golf round number.'),
   strokes: z.number().int().describe('Persisted stroke count for this round.'),
   scoreToPar: z.number().int().describe('Persisted score-to-par for this round.'),
+  thru: z.number().int().optional().describe('Completed holes in this round when known for an in-progress/live round.'),
   status: z.string().describe('Provider-normalized round status.'),
   completedAt: z.string().datetime().optional().describe('When this round completed, if known.'),
 }).describe('Current persisted golf-round row for an event participant.');
 export type AdminEventParticipantGolfRoundDto = z.infer<typeof AdminEventParticipantGolfRoundDtoSchema>;
+
+export const AdminEventParticipantGolfStandingDtoSchema = z.object({
+  eventScoreToPar: z.number().int().describe('Current event total score relative to par across persisted Golf rounds.'),
+  eventStrokes: z.number().int().describe('Current event total strokes across persisted Golf rounds.'),
+  currentRound: z.number().int().optional().describe('Current or latest round represented in the standing.'),
+  currentRoundThru: z.number().int().optional().describe('Completed holes for the current round when known.'),
+  status: z.enum(['active', 'in-progress', 'complete', 'withdrawn', 'missed-cut']).describe(
+    'Normalized current Golf live status for this event participant.',
+  ),
+  position: z.number().int().optional().describe('Numeric leaderboard position when available.'),
+  displayPosition: z.string().optional().describe('Provider/display leaderboard position label when available.'),
+  asOf: z.string().datetime().optional().describe('Provider or ingestion timestamp for the standing snapshot.'),
+}).describe('Current persisted Golf event-participant standing row.');
+export type AdminEventParticipantGolfStandingDto = z.infer<typeof AdminEventParticipantGolfStandingDtoSchema>;
 
 export const AdminEventParticipantsParamsSchema = z.object({
   eventId: z.string().uuid().describe('Internal SportEvent identifier to inspect.'),
@@ -203,8 +218,9 @@ export const AdminEventParticipantDtoSchema = z.object({
   valuationTier: z.string().optional().describe('Current PoolMaster participant valuation tier when computed.'),
   valuationOrderIndex: z.number().int().optional().describe('Current PoolMaster participant valuation order when computed.'),
   roundCount: z.number().int().describe('Number of persisted golf-round rows for this event participant.'),
-  totalStrokes: z.number().int().optional().describe('Total persisted golf strokes across completed/known rounds.'),
-  scoreToPar: z.number().int().optional().describe('Aggregate persisted score-to-par across completed/known rounds.'),
+  totalStrokes: z.number().int().optional().describe('Current Golf event total strokes. Prefers SportEventParticipantGolfStanding when present.'),
+  scoreToPar: z.number().int().optional().describe('Current Golf event score-to-par. Prefers SportEventParticipantGolfStanding when present.'),
+  golfStanding: AdminEventParticipantGolfStandingDtoSchema.optional().describe('Maintained current Golf event standing when live/final score data has been persisted.'),
   golfRounds: z.array(AdminEventParticipantGolfRoundDtoSchema).describe('Current persisted golf-round detail rows.'),
   updatedAt: z.string().datetime().describe('When this event-participant row was last updated.'),
 }).describe('Root-admin current-state event participant row with ranking, odds, valuation, and golf-score details.');

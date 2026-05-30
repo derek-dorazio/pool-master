@@ -66,6 +66,10 @@ execution details live in Beads.
   events, field, rankings, live scoring, results, **and** outright odds
   for tier/price derivation, all from one subscription and one key.
 - **First-pass golf cost:** **$30/mo.** No second vendor needed.
+- **First-pass live cadence:** production live-score polling is 5 minutes;
+  QA scheduled polling is 15 minutes. This stays comfortably below Data
+  Golf's documented 45 requests/minute rate limit for the first Golf
+  implementation. Manual event sync remains the main QA scenario driver.
 - **Premium upgrade path:** SportsDataIO or SportRadar when we outgrow
   Data Golf's 45 RPM rate limit or need licensed/official feeds for
   redistribution.
@@ -227,9 +231,6 @@ pattern exists to support.
 - `SDP-002` Is **The Odds API** legally acceptable as our only odds source
   given its bookmaker aggregation model and our use case (contest tier
   derivation, not betting)? `(Needs Review — legal/compliance)`
-- `SDP-003` Does Data Golf's 45 RPM rate limit accommodate our planned
-  live-poll cadence for `EVENTLIVESCORES` during a tournament weekend?
-  `(Needs Review — operational)`
 - `SDP-004` What is the production-readiness status of API-Tennis (still
   flagged as beta)? `(Needs Review — vendor)`
 - `SDP-005` Is API-Football's coverage depth for FIFA World Cup 2026
