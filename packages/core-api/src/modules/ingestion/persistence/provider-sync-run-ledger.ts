@@ -146,6 +146,7 @@ export class ProviderSyncRunLedger {
         detail,
         jobPayload: toSerializableJob(job),
         providerPayload: job.providerPayload ?? startedPayload.providerPayload,
+        writeDiagnostics: job.writeDiagnostics,
         outcome: buildSyncOutcome({
           status,
           summary: detail,
@@ -190,6 +191,9 @@ export class ProviderSyncRunLedger {
 
       return job;
     } catch (error) {
+      // Failed executions do not have a trustworthy completed write set. Keep
+      // writeDiagnostics reserved for normalized rows that were actually
+      // compared and returned by a completed persistence callback.
       await this.failSubmittedRun(syncRun, error, startedAt, startedPayload);
       throw error;
     }

@@ -139,8 +139,9 @@ export function buildApp() {
           participantCount: event.participantCount ?? null,
         })),
       }, 'Ingested events');
-      const persisted = await ingestionPersistence.persistEvents(events);
-      app.log.info({ persisted }, 'Persisted sport events');
+      const persisted = await ingestionPersistence.persistEventsWithDiagnostics(events);
+      app.log.info({ persisted: persisted.count }, 'Persisted sport events');
+      return persisted.writeDiagnostics;
     },
     async onEventDetail(detail: SportEventDetail) {
       app.log.info({
@@ -151,15 +152,17 @@ export function buildApp() {
         startDate: detail.startDate.toISOString(),
         participantCount: detail.participants.length,
       }, 'Ingested event detail');
-      const persisted = await ingestionPersistence.persistEventDetail(detail);
-      app.log.info({ persisted }, 'Persisted event detail');
+      const persisted = await ingestionPersistence.persistEventDetailWithDiagnostics(detail);
+      app.log.info({ persisted: persisted.value }, 'Persisted event detail');
+      return persisted.writeDiagnostics;
     },
     async onRankings(rankings: ProviderRanking[]) {
       app.log.info({
         count: rankings.length,
       }, 'Ingested participant ranking snapshots');
-      const persisted = await ingestionPersistence.persistRankings(rankings);
-      app.log.info({ persisted }, 'Persisted participant ranking snapshots');
+      const persisted = await ingestionPersistence.persistRankingsWithDiagnostics(rankings);
+      app.log.info({ persisted: persisted.count }, 'Persisted participant ranking snapshots');
+      return persisted.writeDiagnostics;
     },
     async onLiveScores(result: LiveScoreResult, providerId: string) {
       app.log.info({

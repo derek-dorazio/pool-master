@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -39,13 +40,14 @@ import { QueryKeys } from '@/lib/query-keys';
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
 type SyncRunEvidenceRow = {
   id: string;
-  source: string;
-  path: string;
-  recordType: string;
+  disposition: 'UNCHANGED' | 'CREATED' | 'UPDATED' | 'DELETED';
+  entityType: string;
   identifier: string;
   name: string;
-  status: string;
-  metrics: string;
+  providerId: string;
+  eventId: string;
+  participantId: string;
+  detailsPayload: unknown;
 };
 
 const evidenceColumnHelper = createColumnHelper<SyncRunEvidenceRow>();
@@ -129,165 +131,33 @@ function getPayloadSeverity(payload: Record<string, unknown>) {
     : null;
 }
 
-function toDisplayValue(value: unknown) {
-  if (typeof value === 'string' && value.trim().length > 0) {
-    return value;
-  }
-  if (typeof value === 'number' || typeof value === 'boolean') {
-    return String(value);
-  }
-  return '';
-}
-
-function buildRecordMetrics(record: Record<string, unknown>) {
-  const metricKeys = [
-    'ranking',
-    'rank',
-    'odds',
-    'score',
-    'scoreToPar',
-    'strokes',
-    'currentRound',
-    'finishPosition',
-    'totalScore',
-    'totalStrokes',
-  ];
-
-  return metricKeys.flatMap((key) => {
-    const value = record[key];
-    return value === undefined || value === null ? [] : [`${key}: ${String(value)}`];
-  }).join(' · ');
-}
-
-function buildEvidenceRow(input: {
-  index: number;
-  path: string;
-  record: Record<string, unknown>;
-  recordType: string;
-  source: string;
-}): SyncRunEvidenceRow {
-  const identifier =
-    toDisplayValue(input.record.eventId)
-    || toDisplayValue(input.record.externalId)
-    || toDisplayValue(input.record.contestantId)
-    || toDisplayValue(input.record.participantExternalId)
-    || toDisplayValue(input.record.id)
-    || `row-${input.index + 1}`;
-
-  return {
-    id: `${input.path}-${input.recordType}-${identifier}-${input.index}`,
-    source: input.source,
-    path: input.path,
-    recordType: input.recordType,
-    identifier,
-    name: toDisplayValue(input.record.name) || toDisplayValue(input.record.displayName) || 'No name',
-    status: toDisplayValue(input.record.status) || toDisplayValue(input.record.result) || 'No status',
-    metrics: buildRecordMetrics(input.record) || 'No metrics',
-  };
-}
-
-function extractContestants(
-  raw: Record<string, unknown>,
-): Array<{ record: Record<string, unknown>; recordType: string }> {
-  const directContestants = raw.contestants;
-  if (Array.isArray(directContestants)) {
-    return directContestants
-      .filter(isRecord)
-      .map((record) => ({ record, recordType: 'Participant' }));
-  }
-
-  const event = raw.event;
-  if (!isRecord(event)) {
-    return [];
-  }
-
-  const field = event.field;
-  const feeds = event.feeds;
-  const fieldContestants = isRecord(field) && Array.isArray(field.contestants)
-    ? field.contestants.filter(isRecord).map((record) => ({ record, recordType: 'Field participant' }))
-    : [];
-  const odds = isRecord(feeds) && isRecord(feeds.odds) && Array.isArray(feeds.odds.contestants)
-    ? feeds.odds.contestants.filter(isRecord).map((record) => ({ record, recordType: 'Odds participant' }))
-    : [];
-  const rankings = isRecord(feeds) && isRecord(feeds.rankings) && Array.isArray(feeds.rankings.contestants)
-    ? feeds.rankings.contestants.filter(isRecord).map((record) => ({ record, recordType: 'Ranking participant' }))
-    : [];
-  const results = isRecord(feeds) && isRecord(feeds.results) && Array.isArray(feeds.results.contestants)
-    ? feeds.results.contestants.filter(isRecord).map((record) => ({ record, recordType: 'Result participant' }))
-    : [];
-
-  return [...fieldContestants, ...odds, ...rankings, ...results];
-}
-
 function buildRunEvidenceRows(run: ProviderSyncRun | null): SyncRunEvidenceRow[] {
-  const providerPayload = run ? getPayloadSection(run.payload, 'providerPayload') : null;
-  const rawCaptures = providerPayload?.raw;
-  if (!Array.isArray(rawCaptures)) {
+  const writeRows = run?.payload.writeDiagnostics?.rows;
+  if (!writeRows) {
     return [];
   }
 
-  return rawCaptures.flatMap((capture, captureIndex) => {
-    if (!isRecord(capture)) {
-      return [];
-    }
-
-    const raw = capture.raw;
-    if (!isRecord(raw)) {
-      return [];
-    }
-
-    const path = toDisplayValue(capture.path) || `capture-${captureIndex + 1}`;
-    const source = toDisplayValue(capture.operation) || 'provider payload';
-    const rows: SyncRunEvidenceRow[] = [];
-    const events = raw.events;
-
-    if (Array.isArray(events)) {
-      rows.push(...events.filter(isRecord).map((record, index) =>
-        buildEvidenceRow({
-          index,
-          path,
-          record,
-          recordType: 'Event',
-          source,
-        }),
-      ));
-    }
-
-    if (isRecord(raw.event)) {
-      rows.push(buildEvidenceRow({
-        index: 0,
-        path,
-        record: raw.event,
-        recordType: 'Event detail',
-        source,
-      }));
-    }
-
-    rows.push(...extractContestants(raw).map(({ record, recordType }, index) =>
-      buildEvidenceRow({
-        index,
-        path,
-        record,
-        recordType,
-        source,
-      }),
-    ));
-
-    const rounds = raw.rounds;
-    if (Array.isArray(rounds)) {
-      rows.push(...rounds.filter(isRecord).map((record, index) =>
-        buildEvidenceRow({
-          index,
-          path,
-          record,
-          recordType: 'Live score',
-          source,
-        }),
-      ));
-    }
-
-    return rows;
-  });
+  return writeRows.map((row) => ({
+    id: row.id,
+    disposition: row.disposition,
+    entityType: row.entityType,
+    identifier: row.internalId ?? row.externalId ?? row.participantExternalId ?? row.id,
+    name: row.name ?? 'No name',
+    providerId: row.providerId ?? 'No provider',
+    eventId: row.externalId ?? 'No event',
+    participantId: row.participantExternalId ?? 'No participant',
+    detailsPayload: {
+      disposition: row.disposition,
+      entityType: row.entityType,
+      providerId: row.providerId ?? null,
+      externalId: row.externalId ?? null,
+      participantExternalId: row.participantExternalId ?? null,
+      internalId: row.internalId ?? null,
+      name: row.name ?? null,
+      ...(row.before === undefined ? {} : { before: row.before }),
+      ...(row.after === undefined ? {} : { after: row.after }),
+    },
+  }));
 }
 
 export function RootAdminSyncDashboardPage() {
@@ -346,14 +216,23 @@ export function RootAdminSyncDashboardPage() {
   const requestPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'requestPayload') : null;
   const providerPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'providerPayload') : null;
   const jobPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'jobPayload') : null;
-  const evidenceEmptyMessage = providerPayload?.rawCaptured === true
-    ? 'This provider captured raw payload data, but Sync Center does not yet expose run-specific detail rows for that provider shape. Use the Payloads tab to inspect the raw provider payload.'
-    : 'No run-specific detail rows were captured for this sync.';
+  const evidenceEmptyMessage = [
+    'No normalized PoolMaster write rows were captured for this sync.',
+    providerPayload?.rawCaptured === true ? 'Use the Payloads tab to inspect the raw provider payload.' : null,
+  ].filter(Boolean).join(' ');
 
   const evidenceColumns = useMemo(
     () => [
-      evidenceColumnHelper.accessor('recordType', {
-        header: 'Type',
+      evidenceColumnHelper.accessor('disposition', {
+        header: 'Operation',
+        cell: ({ getValue }) => (
+          <StatusBadge tone={getValue() === 'UPDATED' || getValue() === 'CREATED' || getValue() === 'DELETED' ? 'warning' : 'neutral'}>
+            {getValue()}
+          </StatusBadge>
+        ),
+      }),
+      evidenceColumnHelper.accessor('entityType', {
+        header: 'Entity',
         cell: ({ getValue }) => <span className="text-foreground">{getValue()}</span>,
       }),
       evidenceColumnHelper.accessor('name', {
@@ -364,17 +243,32 @@ export function RootAdminSyncDashboardPage() {
         header: 'Identifier',
         cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
       }),
-      evidenceColumnHelper.accessor('status', {
-        header: 'Status',
+      evidenceColumnHelper.accessor('participantId', {
+        header: 'Participant',
         cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
       }),
-      evidenceColumnHelper.accessor('metrics', {
-        header: 'Metrics',
+      evidenceColumnHelper.accessor('providerId', {
+        header: 'Provider',
         cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
       }),
-      evidenceColumnHelper.accessor('path', {
-        header: 'Source path',
-        cell: ({ getValue }) => <span className="text-muted-foreground">{getValue()}</span>,
+      evidenceColumnHelper.display({
+        id: 'details',
+        header: 'Details',
+        cell: ({ row }) => (
+          <Button
+            aria-label={`View JSON details for ${row.original.name}`}
+            className="inline-flex items-center gap-2"
+            onClick={() => setJsonPayload({
+              title: `${row.original.disposition} ${row.original.entityType}`,
+              payload: row.original.detailsPayload,
+            })}
+            type="button"
+            variant="secondary"
+          >
+            <Search aria-hidden="true" className="size-4" />
+            View JSON
+          </Button>
+        ),
       }),
     ],
     [],

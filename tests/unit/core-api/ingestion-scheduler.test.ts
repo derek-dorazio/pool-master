@@ -209,7 +209,7 @@ describe('IngestionScheduler', () => {
       );
     });
 
-    it('invokes onEvents and onJobComplete callbacks with fetched events', async () => {
+    it('pool-master-rop.68.1.4 carries write diagnostics from persistence callbacks into completed jobs', async () => {
       const mockEvents: SportEvent[] = [
         {
           externalId: 'evt-1',
@@ -236,6 +236,36 @@ describe('IngestionScheduler', () => {
         getUpcomingEvents: jest.fn().mockResolvedValue(mockEvents),
       });
       const registry = createMockRegistry(provider);
+      mockCallbacks.onEvents = jest.fn().mockResolvedValue({
+        summary: {
+          total: 2,
+          unchanged: 1,
+          created: 1,
+          updated: 0,
+          deleted: 0,
+        },
+        rows: [
+          {
+            id: 'sport-event:mock-provider:evt-1',
+            entityType: 'SportEvent',
+            disposition: 'CREATED',
+            providerId: 'mock-provider',
+            externalId: 'evt-1',
+            name: 'The Masters',
+            after: { status: 'SCHEDULED' },
+          },
+          {
+            id: 'sport-event:mock-provider:evt-2',
+            entityType: 'SportEvent',
+            disposition: 'UNCHANGED',
+            providerId: 'mock-provider',
+            externalId: 'evt-2',
+            name: 'US Open',
+            before: { status: 'SCHEDULED' },
+            after: { status: 'SCHEDULED' },
+          },
+        ],
+      });
       const scheduler = new IngestionScheduler(registry, mockCallbacks);
 
       const job = await scheduler.syncSport('GOLF' as Sport);
@@ -246,10 +276,25 @@ describe('IngestionScheduler', () => {
           status: 'COMPLETED',
           jobType: 'EVENT_SCHEDULE_SYNC',
           recordsProcessed: 2,
+          stats: expect.objectContaining({
+            writeRows: 2,
+            writeUnchanged: 1,
+            writeCreated: 1,
+            writeUpdated: 0,
+            writeDeleted: 0,
+          }),
+          writeDiagnostics: expect.objectContaining({
+            summary: expect.objectContaining({
+              total: 2,
+              unchanged: 1,
+              created: 1,
+            }),
+          }),
         }),
       );
       expect(job.status).toBe('COMPLETED');
       expect(job.recordsProcessed).toBe(2);
+      expect(job.writeDiagnostics?.rows).toHaveLength(2);
     });
 
     it('invokes onJobComplete with COMPLETED status on success', async () => {
