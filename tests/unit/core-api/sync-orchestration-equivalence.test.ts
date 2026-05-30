@@ -1,3 +1,11 @@
+/**
+ * pool-master-rop.68.2.6 — scheduled/manual sync equivalence coverage.
+ *
+ * These tests prove that equivalent scheduled and manual sync requests persist
+ * the same provider_sync_runs diagnostics after removing the deliberately
+ * different source, actor, and runType fields.
+ */
+
 import { Prisma } from '@prisma/client';
 import { Sport } from '@poolmaster/shared/domain';
 import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';

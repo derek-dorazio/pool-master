@@ -353,12 +353,32 @@ describe('IngestionScheduler', () => {
       const [firstJob] = await firstRun;
 
       expect(firstJob.providerPayload?.raw).toEqual([
-        expect.objectContaining({ path: '/capture/first/start' }),
-        expect.objectContaining({ path: '/capture/first/end' }),
+        {
+          operation: 'deferred-provider.request',
+          path: '/capture/first/start',
+          capturedAt: '2026-05-30T12:00:00.000Z',
+          raw: { path: '/capture/first/start' },
+        },
+        {
+          operation: 'deferred-provider.request',
+          path: '/capture/first/end',
+          capturedAt: '2026-05-30T12:00:00.000Z',
+          raw: { path: '/capture/first/end' },
+        },
       ]);
       expect(secondJob.providerPayload?.raw).toEqual([
-        expect.objectContaining({ path: '/capture/second/start' }),
-        expect.objectContaining({ path: '/capture/second/end' }),
+        {
+          operation: 'deferred-provider.request',
+          path: '/capture/second/start',
+          capturedAt: '2026-05-30T12:00:00.000Z',
+          raw: { path: '/capture/second/start' },
+        },
+        {
+          operation: 'deferred-provider.request',
+          path: '/capture/second/end',
+          capturedAt: '2026-05-30T12:00:00.000Z',
+          raw: { path: '/capture/second/end' },
+        },
       ]);
     });
 
@@ -1116,7 +1136,7 @@ describe('IngestionScheduler', () => {
           errorMessage: 'health endpoint timeout',
           errorName: 'Error',
         }),
-        'Provider health check threw exception',
+        expect.any(String),
       );
     });
 

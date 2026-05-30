@@ -52,6 +52,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
   readonly providerName = 'Mock Contest Feed Provider';
   readonly sportsCovered = [Sport.GOLF, Sport.TENNIS, Sport.NCAA_BASKETBALL] as Sport[];
   private readonly providerPayloadCaptureStorage = new AsyncLocalStorage<ProviderPayloadCapture[]>();
+  // Legacy fallback for direct adapter calls outside a run-scoped capture session.
   private providerPayloads: ProviderPayloadCapture[] = [];
 
   constructor(private readonly baseUrl: string) {}
