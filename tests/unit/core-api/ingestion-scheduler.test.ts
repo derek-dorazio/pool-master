@@ -7,6 +7,8 @@
 
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type { IngestionCallbacks } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
+import type { SyncOrchestratorRequest } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type {
   SportDataProvider,
   SportEvent,
@@ -58,6 +60,27 @@ function createMockRegistry(provider: SportDataProvider | null, supportedSports:
     getAllProviders: jest.fn().mockReturnValue(provider ? [provider] : []),
     updateHealth: jest.fn(),
   } as any;
+}
+
+function createEnabledScheduleConfig() {
+  return {
+    scheduledSports: ['GOLF'],
+    healthCheck: { enabled: true, intervalMinutes: 5 },
+    eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 30 },
+    eventParticipants: { enabled: true, intervalMinutes: 720, leadDaysBeforeStart: 7 },
+    participantRankings: { enabled: true, intervalMinutes: 1440 },
+    eventLiveScores: { enabled: true, intervalSeconds: 30 },
+    eventResults: { enabled: true, intervalMinutes: 30 },
+    perSportOverrides: {},
+  };
+}
+
+function createSyncOrchestratorSpy(now: Date) {
+  const actualOrchestrator = new SyncOrchestrator({ now: () => now });
+  return {
+    normalizeRequest: jest.fn((request: SyncOrchestratorRequest) =>
+      actualOrchestrator.normalizeRequest(request)),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -470,6 +493,159 @@ describe('IngestionScheduler', () => {
           status: 'FAILED',
         }),
       );
+    });
+  });
+
+  describe('scheduled sync orchestrator routing', () => {
+    it('pool-master-rop.68.2.2 submits configured sport loops as scheduled system sync requests', async () => {
+      const now = new Date('2026-04-28T12:00:00.000Z');
+      const provider = createMockProvider({
+        getRankings: jest.fn().mockResolvedValue([]),
+        getUpcomingEvents: jest.fn().mockResolvedValue([]),
+      });
+      const config = createEnabledScheduleConfig();
+      const configReader = {
+        getConfig: jest.fn().mockResolvedValue(config),
+        getPerSportConfig: jest.fn().mockResolvedValue(config),
+      };
+      const syncOrchestrator = createSyncOrchestratorSpy(now);
+      const scheduler = new IngestionScheduler(
+        createMockRegistry(provider, ['GOLF' as Sport]),
+        mockCallbacks,
+        undefined,
+        {
+          configReader,
+          now: () => now,
+          syncOrchestrator,
+        },
+      );
+
+      await (scheduler as any).runConfiguredSportScheduleSync('GOLF' as Sport);
+      await (scheduler as any).runConfiguredSportFieldSync('GOLF' as Sport);
+      await (scheduler as any).runConfiguredSportRankingSync('GOLF' as Sport);
+
+      expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith({
+        source: 'SCHEDULED',
+        actor: { type: 'SYSTEM', name: 'scheduler' },
+        scope: {
+          type: 'SPORT',
+          sport: 'GOLF',
+          feeds: ['EVENTSCHEDULE'],
+          window: {
+            from: now,
+            to: new Date('2026-05-28T12:00:00.000Z'),
+          },
+        },
+      });
+      expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith({
+        source: 'SCHEDULED',
+        actor: { type: 'SYSTEM', name: 'scheduler' },
+        scope: {
+          type: 'SPORT',
+          sport: 'GOLF',
+          feeds: ['EVENTPARTICIPANTS'],
+          window: {
+            from: now,
+            to: new Date('2026-05-28T12:00:00.000Z'),
+          },
+        },
+      });
+      expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith({
+        source: 'SCHEDULED',
+        actor: { type: 'SYSTEM', name: 'scheduler' },
+        scope: {
+          type: 'SPORT',
+          sport: 'GOLF',
+          feeds: ['PARTICIPANTRANKINGS'],
+        },
+      });
+      expect(mockCallbacks.onJobComplete).toHaveBeenCalledTimes(3);
+    });
+
+    it('pool-master-rop.68.2.2 submits configured event loops as scheduled system sync requests', async () => {
+      const now = new Date('2026-04-28T12:00:00.000Z');
+      const provider = createMockProvider({
+        getEventDetails: jest.fn().mockResolvedValue({
+          externalId: 'active-event',
+          providerId: 'mock-provider',
+          sport: 'GOLF' as Sport,
+          name: 'Active Event',
+          startDate: now,
+          status: 'IN_PROGRESS',
+          fieldLocked: true,
+          metadata: {},
+          participants: [],
+        } satisfies SportEventDetail),
+        getLiveScores: jest.fn().mockResolvedValue({
+          category: 'GOLF',
+          externalEventId: 'live-event',
+          rounds: [],
+        } satisfies LiveScoreResult),
+        getEventResults: jest.fn().mockResolvedValue(null),
+        getUpcomingEvents: jest.fn().mockResolvedValue([]),
+      });
+      const config = createEnabledScheduleConfig();
+      const configReader = {
+        getConfig: jest.fn().mockResolvedValue(config),
+        getPerSportConfig: jest.fn().mockResolvedValue(config),
+      };
+      const eventReader = {
+        listEventIdsForFeed: jest.fn(async ({ feed }: { feed: string }) => {
+          if (feed === 'EVENTPARTICIPANTS') return ['active-event'];
+          if (feed === 'EVENTLIVESCORES') return ['live-event'];
+          return ['result-event'];
+        }),
+      };
+      const syncOrchestrator = createSyncOrchestratorSpy(now);
+      const scheduler = new IngestionScheduler(
+        createMockRegistry(provider, ['GOLF' as Sport]),
+        mockCallbacks,
+        undefined,
+        {
+          configReader,
+          eventReader,
+          now: () => now,
+          syncOrchestrator,
+        },
+      );
+
+      await (scheduler as any).runConfiguredSportFieldSync('GOLF' as Sport);
+      await (scheduler as any).runConfiguredEventSyncSweep('GOLF' as Sport, 'EVENTLIVESCORES');
+      await (scheduler as any).runConfiguredEventSyncSweep('GOLF' as Sport, 'EVENTRESULTS');
+
+      expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith(expect.objectContaining({
+        source: 'SCHEDULED',
+        actor: { type: 'SYSTEM', name: 'scheduler' },
+        scope: {
+          type: 'EVENT',
+          sport: 'GOLF',
+          eventId: 'active-event',
+          feeds: ['EVENTPARTICIPANTS'],
+        },
+      }));
+      expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith(expect.objectContaining({
+        source: 'SCHEDULED',
+        actor: { type: 'SYSTEM', name: 'scheduler' },
+        scope: {
+          type: 'EVENT',
+          sport: 'GOLF',
+          eventId: 'live-event',
+          feeds: ['EVENTLIVESCORES'],
+        },
+      }));
+      expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith(expect.objectContaining({
+        source: 'SCHEDULED',
+        actor: { type: 'SYSTEM', name: 'scheduler' },
+        scope: {
+          type: 'EVENT',
+          sport: 'GOLF',
+          eventId: 'result-event',
+          feeds: ['EVENTRESULTS'],
+        },
+      }));
+      expect(provider.getEventDetails).toHaveBeenCalledWith('active-event');
+      expect(provider.getLiveScores).toHaveBeenCalledWith('live-event');
+      expect(provider.getEventResults).toHaveBeenCalledWith('result-event');
     });
   });
 

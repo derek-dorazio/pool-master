@@ -5,10 +5,9 @@ import type { ProviderEventSyncOptions } from './provider-interface';
 /**
  * Internal sync-intent boundary for pool-master-rop.68.2.
  *
- * This slice defines and validates the canonical request shape only. Scheduler
- * and manual root-admin wiring are intentionally deferred to
- * pool-master-rop.68.2.2 and pool-master-rop.68.2.3 so provider execution
- * behavior stays unchanged while the shared model lands.
+ * This boundary owns the canonical sync request shape. Scheduled jobs route
+ * through it as of pool-master-rop.68.2.2; manual root-admin wiring is tracked
+ * by pool-master-rop.68.2.3.
  */
 
 export type { IngestionFeedType } from '@poolmaster/shared/dto';
