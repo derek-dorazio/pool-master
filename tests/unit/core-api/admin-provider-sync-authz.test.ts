@@ -5,6 +5,7 @@ import { ErrorEnvelopeSchema, ProviderManualSyncSubmissionResponseSchema } from 
 import { adminModule } from '../../../packages/core-api/src/modules/admin/routes';
 import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
 import type { ProviderService } from '../../../packages/core-api/src/modules/admin/provider-service';
+import { SyncRequestValidationError } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -137,6 +138,50 @@ describe('pool-master-rop.68.4.1 retained admin provider sync route authorizatio
       eventId: 'event-1',
       feeds: ['EVENTLIVESCORES'],
     }, 'root-admin-user', 'root@example.test');
+
+    await app.close();
+  });
+
+  it('pool-master-rop.68.2.3 maps sync request validation errors to 422 responses', async () => {
+    const { app, providerService } = await buildAdminSyncApp(true);
+    providerService.prepareSportSync.mockRejectedValueOnce(
+      new SyncRequestValidationError('INVALID_SYNC_WINDOW', 'Sync request window end must be greater than or equal to its start.'),
+    );
+    providerService.syncEventData.mockRejectedValueOnce(
+      new SyncRequestValidationError('INVALID_EVENT_ID', 'Event-scoped sync requests require a non-empty provider event ID.'),
+    );
+
+    const sportRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/admin/providers/sync/GOLF',
+      headers: authHeaders('root-admin-user'),
+      payload: {
+        feeds: ['EVENTSCHEDULE'],
+        from: '2026-06-15T00:00:00.000Z',
+        to: '2026-06-01T00:00:00.000Z',
+      },
+    });
+    expect(sportRes.statusCode).toBe(422);
+    expect(sportRes.json().error).toEqual({
+      code: 'SYNC_REQUEST_INVALID',
+      message: 'Sync request window end must be greater than or equal to its start.',
+      details: { validationCode: 'INVALID_SYNC_WINDOW' },
+    });
+
+    const eventRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/admin/providers/events/GOLF/event-1/sync',
+      headers: authHeaders('root-admin-user'),
+      payload: {
+        feeds: ['EVENTLIVESCORES'],
+      },
+    });
+    expect(eventRes.statusCode).toBe(422);
+    expect(eventRes.json().error).toEqual({
+      code: 'SYNC_REQUEST_INVALID',
+      message: 'Event-scoped sync requests require a non-empty provider event ID.',
+      details: { validationCode: 'INVALID_EVENT_ID' },
+    });
 
     await app.close();
   });

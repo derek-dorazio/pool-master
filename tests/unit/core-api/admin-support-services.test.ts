@@ -9,6 +9,7 @@ import { HealthService } from '../../../packages/core-api/src/modules/admin/heal
 import { IngestionConfigService } from '../../../packages/core-api/src/modules/admin/ingestion-config-service';
 import { PollConfigService } from '../../../packages/core-api/src/modules/admin/poll-config-service';
 import { ProviderService } from '../../../packages/core-api/src/modules/admin/provider-service';
+import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import { UserNotFoundError, UserService } from '../../../packages/core-api/src/modules/admin/user-service';
 import { Sport } from '../../../packages/shared/domain';
 
@@ -24,6 +25,12 @@ function createLogger() {
     error: jest.fn(),
     fatal: jest.fn(),
   };
+}
+
+async function flushMicrotasks(times = 5): Promise<void> {
+  for (let index = 0; index < times; index += 1) {
+    await Promise.resolve();
+  }
 }
 
 describe('admin support services', () => {
@@ -341,6 +348,255 @@ describe('admin support services', () => {
       }, 'admin-1', 'admin@example.com')).rejects.toMatchObject({
         name: 'SportSyncNotConfiguredError',
       });
+    });
+
+    it('pool-master-rop.68.2.3 pool-master-rop.68.2.5 proves deferred manual sport sync uses the normalized window', async () => {
+      const now = new Date('2026-05-30T12:00:00.000Z');
+      let deferredSync: (() => void) | undefined;
+      const setImmediateSpy = jest
+        .spyOn(global, 'setImmediate')
+        .mockImplementation((callback: () => void) => {
+          deferredSync = callback;
+          return 0 as unknown as NodeJS.Immediate;
+        });
+      const providerSyncRunCreate = jest.fn().mockImplementation(async ({ data }) => ({
+        id: 'sync-run-1',
+        providerId: data.providerId,
+        sport: data.sport,
+        eventId: data.eventId,
+        status: data.status,
+        startedAt: data.startedAt,
+        completedAt: data.completedAt,
+        createdAt: data.createdAt,
+        payloadJson: data.payloadJson,
+      }));
+      const providerSyncRunUpdate = jest.fn().mockResolvedValue({});
+      const registry = {
+        getProvider: jest.fn().mockReturnValue({
+          providerId: 'mock-contest-feed',
+          providerName: 'Mock Contest Feed Provider',
+          sportsCovered: [Sport.GOLF],
+        }),
+      };
+      const scheduler = {
+        runSportSync: jest.fn().mockResolvedValue([{
+          jobType: 'EVENT_SCHEDULE_SYNC',
+          providerId: 'mock-contest-feed',
+          sport: Sport.GOLF,
+          status: 'COMPLETED',
+          recordsProcessed: 1,
+          errors: 0,
+          errorLog: [],
+          warnings: [],
+          stats: { providerRecordsReturned: 1 },
+        }]),
+      };
+      const ingestionConfigReader = {
+        getConfig: jest.fn().mockResolvedValue({
+          scheduledSports: [Sport.GOLF],
+          healthCheck: { enabled: true, intervalMinutes: 5 },
+          eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 45 },
+          eventParticipants: { enabled: true, intervalMinutes: 720, leadDaysBeforeStart: 7 },
+          participantRankings: { enabled: true, intervalMinutes: 1440 },
+          eventLiveScores: { enabled: true, intervalSeconds: 30 },
+          eventResults: { enabled: true, intervalMinutes: 30 },
+          perSportOverrides: {},
+        }),
+        getPerSportConfig: jest.fn().mockResolvedValue({
+          scheduledSports: [Sport.GOLF],
+          healthCheck: { enabled: true, intervalMinutes: 5 },
+          eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 45 },
+          eventParticipants: { enabled: true, intervalMinutes: 720, leadDaysBeforeStart: 7 },
+          participantRankings: { enabled: true, intervalMinutes: 1440 },
+          eventLiveScores: { enabled: true, intervalSeconds: 30 },
+          eventResults: { enabled: true, intervalMinutes: 30 },
+          perSportOverrides: {},
+        }),
+      };
+      const service = new ProviderService(
+        {
+          providerSyncRun: {
+            create: providerSyncRunCreate,
+            update: providerSyncRunUpdate,
+          },
+        } as any,
+        registry as any,
+        scheduler as any,
+        createLogger() as any,
+        ingestionConfigReader,
+        undefined,
+        undefined,
+        new SyncOrchestrator({ now: () => now }),
+      );
+
+      try {
+        const result = await service.prepareSportSync({
+          sport: Sport.GOLF,
+          feeds: ['EVENTSCHEDULE'],
+        }, 'admin-1', 'admin@example.com');
+
+        expect(result.requestedFeeds).toEqual(['EVENTSCHEDULE']);
+        expect(providerSyncRunCreate).toHaveBeenCalledWith(expect.objectContaining({
+          data: expect.objectContaining({
+            sport: Sport.GOLF,
+            eventId: null,
+            payloadJson: expect.objectContaining({
+              requestedFeed: 'EVENTSCHEDULE',
+              requestPayload: expect.objectContaining({
+                source: 'MANUAL',
+                actor: {
+                  type: 'ROOT_ADMIN',
+                  userId: 'admin-1',
+                  email: 'admin@example.com',
+                },
+                from: null,
+                to: null,
+                effectiveWindow: {
+                  from: '2026-05-30T12:00:00.000Z',
+                  to: '2026-07-14T12:00:00.000Z',
+                  defaultedFrom: true,
+                  defaultedTo: true,
+                },
+              }),
+            }),
+          }),
+        }));
+        const payloadJson = providerSyncRunCreate.mock.calls[0][0].data.payloadJson;
+        expect(payloadJson).not.toHaveProperty('source');
+        expect(payloadJson).not.toHaveProperty('actor');
+        expect(payloadJson).not.toHaveProperty('effectiveWindow');
+        expect(deferredSync).toBeDefined();
+        deferredSync?.();
+        await flushMicrotasks();
+        expect(scheduler.runSportSync).toHaveBeenCalledWith({
+          sport: Sport.GOLF,
+          feeds: ['EVENTSCHEDULE'],
+          from: new Date('2026-05-30T12:00:00.000Z'),
+          to: new Date('2026-07-14T12:00:00.000Z'),
+        });
+      } finally {
+        setImmediateSpy.mockRestore();
+      }
+    });
+
+    it('pool-master-rop.68.2.3 normalizes manual event sync before submission', async () => {
+      const now = new Date('2026-05-30T12:00:00.000Z');
+      let deferredSync: (() => void) | undefined;
+      const setImmediateSpy = jest
+        .spyOn(global, 'setImmediate')
+        .mockImplementation((callback: () => void) => {
+          deferredSync = callback;
+          return 0 as unknown as NodeJS.Immediate;
+        });
+      const providerSyncRunCreate = jest.fn().mockImplementation(async ({ data }) => ({
+        id: 'sync-run-1',
+        providerId: data.providerId,
+        sport: data.sport,
+        eventId: data.eventId,
+        status: data.status,
+        startedAt: data.startedAt,
+        completedAt: data.completedAt,
+        createdAt: data.createdAt,
+        payloadJson: data.payloadJson,
+      }));
+      const providerSyncRunUpdate = jest.fn().mockResolvedValue({});
+      const registry = {
+        getProvider: jest.fn().mockReturnValue({
+          providerId: 'mock-contest-feed',
+          providerName: 'Mock Contest Feed Provider',
+          sportsCovered: [Sport.GOLF],
+          getEventDetails: jest.fn(),
+          setMockEventState: jest.fn(),
+        }),
+      };
+      const scheduler = {
+        runEventSync: jest.fn().mockResolvedValue([{
+          jobType: 'EVENT_LIVE_SCORES_SYNC',
+          providerId: 'mock-contest-feed',
+          sport: Sport.GOLF,
+          eventExternalId: 'golf-open-championship-2026',
+          status: 'COMPLETED',
+          recordsProcessed: 1,
+          errors: 0,
+          errorLog: [],
+          warnings: [],
+          stats: { liveScoreUpdatesReturned: 1 },
+        }]),
+      };
+      const ingestionConfigReader = {
+        getConfig: jest.fn().mockResolvedValue({
+          scheduledSports: [Sport.GOLF],
+          healthCheck: { enabled: true, intervalMinutes: 5 },
+          eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 30 },
+          eventParticipants: { enabled: true, intervalMinutes: 720, leadDaysBeforeStart: 7 },
+          participantRankings: { enabled: true, intervalMinutes: 1440 },
+          eventLiveScores: { enabled: true, intervalSeconds: 30 },
+          eventResults: { enabled: true, intervalMinutes: 30 },
+          perSportOverrides: {},
+        }),
+        getPerSportConfig: jest.fn(),
+      };
+      const service = new ProviderService(
+        {
+          providerSyncRun: {
+            create: providerSyncRunCreate,
+            update: providerSyncRunUpdate,
+          },
+        } as any,
+        registry as any,
+        scheduler as any,
+        createLogger() as any,
+        ingestionConfigReader,
+        undefined,
+        undefined,
+        new SyncOrchestrator({ now: () => now }),
+      );
+
+      try {
+        const result = await service.syncEventData({
+          sport: Sport.GOLF,
+          eventId: '  golf-open-championship-2026  ',
+          feeds: ['EVENTLIVESCORES', 'EVENTLIVESCORES'],
+          mockEventState: 'live',
+        }, 'admin-1', 'admin@example.com');
+
+        expect(result.eventId).toBe('golf-open-championship-2026');
+        expect(result.requestedFeeds).toEqual(['EVENTLIVESCORES']);
+        expect(providerSyncRunCreate).toHaveBeenCalledWith(expect.objectContaining({
+          data: expect.objectContaining({
+            sport: Sport.GOLF,
+            eventId: 'golf-open-championship-2026',
+            payloadJson: expect.objectContaining({
+              requestedFeeds: ['EVENTLIVESCORES'],
+              requestedFeed: 'EVENTLIVESCORES',
+              requestPayload: expect.objectContaining({
+                source: 'MANUAL',
+                actor: {
+                  type: 'ROOT_ADMIN',
+                  userId: 'admin-1',
+                  email: 'admin@example.com',
+                },
+                mockEventState: 'live',
+              }),
+            }),
+          }),
+        }));
+        const payloadJson = providerSyncRunCreate.mock.calls[0][0].data.payloadJson;
+        expect(payloadJson).not.toHaveProperty('source');
+        expect(payloadJson).not.toHaveProperty('actor');
+        expect(payloadJson).not.toHaveProperty('mockEventState');
+        expect(deferredSync).toBeDefined();
+        deferredSync?.();
+        await flushMicrotasks();
+        expect(scheduler.runEventSync).toHaveBeenCalledWith({
+          sport: Sport.GOLF,
+          eventId: 'golf-open-championship-2026',
+          feeds: ['EVENTLIVESCORES'],
+          mockEventState: 'live',
+        });
+      } finally {
+        setImmediateSpy.mockRestore();
+      }
     });
 
   });

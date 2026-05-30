@@ -13,7 +13,18 @@ import type { Sport } from '@poolmaster/shared/domain';
 import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
-import type { IngestionFeedType } from './sync-orchestrator';
+import { SyncOrchestrator } from './sync-orchestrator';
+import { resolveSportSyncWindowPolicy } from './sync-orchestrator';
+import type {
+  EventSyncFeed,
+  IngestionFeedType,
+  NormalizedEventSyncScope,
+  NormalizedSportSyncScope,
+  SportSyncFeed,
+  SyncOrchestratorRequest,
+  SyncRequestSource,
+  SyncWindowPolicy,
+} from './sync-orchestrator';
 import type {
   ProviderEventSyncOptions,
   ProviderPayloadCapture,
@@ -112,19 +123,31 @@ export interface IngestionSchedulerOptions {
   configReader?: IngestionScheduleConfigReader;
   eventReader?: IngestionScheduledEventReader;
   now?: () => Date;
+  syncOrchestrator?: Pick<SyncOrchestrator, 'normalizeRequest'>;
 }
+
+const SCHEDULED_SYNC_SOURCE: SyncRequestSource = 'SCHEDULED';
+const SCHEDULED_SYNC_ACTOR = {
+  type: 'SYSTEM',
+  name: 'scheduler',
+} as const;
 
 export class IngestionScheduler {
   private timers: NodeJS.Timeout[] = [];
   private running = false;
   private readonly startedSportLoops = new Set<Sport>();
+  private readonly syncOrchestrator: Pick<SyncOrchestrator, 'normalizeRequest'>;
 
   constructor(
     private readonly registry: ProviderRegistry,
     private readonly callbacks: IngestionCallbacks,
     private readonly logger?: FastifyBaseLogger,
     private readonly options: IngestionSchedulerOptions = {},
-  ) {}
+  ) {
+    this.syncOrchestrator = options.syncOrchestrator ?? new SyncOrchestrator({
+      now: () => this.getNow(),
+    });
+  }
 
   /** Starts all scheduled ingestion jobs. */
   start(): void {
@@ -219,7 +242,7 @@ export class IngestionScheduler {
       feeds: request.feeds,
       from: request.from?.toISOString() ?? null,
       to: request.to?.toISOString() ?? null,
-    }, 'Manual or direct sport sync requested');
+    }, 'Ad hoc sport sync requested');
 
     for (const feed of dedupe(request.feeds)) {
       if (feed === 'EVENTSCHEDULE') {
@@ -239,7 +262,7 @@ export class IngestionScheduler {
       sport: request.sport,
       feeds: request.feeds,
       jobs: jobs.map(toJobLogPayload),
-    }, 'Manual or direct sport sync completed');
+    }, 'Ad hoc sport sync completed');
 
     return jobs;
   }
@@ -252,7 +275,7 @@ export class IngestionScheduler {
       eventId: request.eventId,
       feeds: request.feeds,
       mockEventState: request.mockEventState ?? null,
-    }, 'Manual or direct event sync requested');
+    }, 'Ad hoc event sync requested');
 
     const options = buildProviderEventSyncOptions(request.mockEventState);
     for (const feed of dedupe(request.feeds)) {
@@ -275,7 +298,7 @@ export class IngestionScheduler {
       feeds: request.feeds,
       mockEventState: request.mockEventState ?? null,
       jobs: jobs.map(toJobLogPayload),
-    }, 'Manual or direct event sync completed');
+    }, 'Ad hoc event sync completed');
 
     return jobs;
   }
@@ -427,18 +450,6 @@ export class IngestionScheduler {
     }
   }
 
-  private async syncAllSchedules(): Promise<void> {
-    this.logger?.debug('Running startup/interval schedule sync sweep');
-    const sports = this.registry.getSupportedSports();
-    for (const sport of sports) {
-      try {
-        await this.runScheduleSync(sport);
-      } catch {
-        this.logger?.error({ sport }, 'Schedule sync sweep failed for sport');
-      }
-    }
-  }
-
   private async runConfiguredSportScheduleSync(sport: Sport): Promise<void> {
     if (!(await this.isSportScheduled(sport))) {
       this.logger?.debug({ sport }, 'Skipping scheduled sport schedule sync because sport is not configured');
@@ -451,17 +462,17 @@ export class IngestionScheduler {
       return;
     }
 
-    const now = this.getNow();
-    const lookaheadDays = config.eventSchedule.lookaheadDays ?? 30;
-    const from = now;
-    const to = addDays(now, lookaheadDays);
+    const scope = this.normalizeScheduledSportSync({
+      sport,
+      feeds: ['EVENTSCHEDULE'],
+      windowPolicy: resolveSportSyncWindowPolicy({ feeds: ['EVENTSCHEDULE'], config }),
+    });
     this.logger?.debug({
       sport,
-      from: from.toISOString(),
-      to: to.toISOString(),
-      lookaheadDays,
+      from: scope.effectiveWindow.from.toISOString(),
+      to: scope.effectiveWindow.to.toISOString(),
     }, 'Running configured sport schedule sync');
-    await this.runScheduleSync(sport, from, to);
+    await this.runScheduleSync(scope.sport, scope.effectiveWindow.from, scope.effectiveWindow.to);
   }
 
   private async runConfiguredSportFieldSync(sport: Sport): Promise<void> {
@@ -476,22 +487,18 @@ export class IngestionScheduler {
       return;
     }
 
-    const now = this.getNow();
-    const participantLeadDays = config.eventParticipants.leadDaysBeforeStart ?? 7;
-    const scheduleLookaheadDays = config.eventSchedule.lookaheadDays ?? 30;
-    const lookaheadDays = Math.max(scheduleLookaheadDays, participantLeadDays);
-    const from = now;
-    const to = addDays(now, lookaheadDays);
+    const scope = this.normalizeScheduledSportSync({
+      sport,
+      feeds: ['EVENTPARTICIPANTS'],
+      windowPolicy: resolveSportSyncWindowPolicy({ feeds: ['EVENTPARTICIPANTS'], config }),
+    });
     this.logger?.debug({
       sport,
-      from: from.toISOString(),
-      to: to.toISOString(),
-      participantLeadDays,
-      scheduleLookaheadDays,
-      lookaheadDays,
+      from: scope.effectiveWindow.from.toISOString(),
+      to: scope.effectiveWindow.to.toISOString(),
     }, 'Running configured sport participant sync');
-    await this.runFieldSync(sport, from, to);
-    await this.runConfiguredActiveFieldSync(sport, { from, to });
+    await this.runFieldSync(scope.sport, scope.effectiveWindow.from, scope.effectiveWindow.to);
+    await this.runConfiguredActiveFieldSync(scope.sport, scope.effectiveWindow);
   }
 
   private async runConfiguredActiveFieldSync(
@@ -519,7 +526,12 @@ export class IngestionScheduler {
     }, 'Resolved active event participant sync candidates');
 
     for (const eventId of eventIds) {
-      await this.runEventFieldSync(sport, eventId);
+      const scope = this.normalizeScheduledEventSync({
+        sport,
+        eventId,
+        feeds: ['EVENTPARTICIPANTS'],
+      });
+      await this.runEventFieldSync(scope.sport, scope.eventId, scope.providerOptions);
     }
   }
 
@@ -536,7 +548,11 @@ export class IngestionScheduler {
     }
 
     this.logger?.debug({ sport }, 'Running configured sport ranking sync');
-    await this.runRankingSync(sport);
+    const scope = this.normalizeScheduledSportSync({
+      sport,
+      feeds: ['PARTICIPANTRANKINGS'],
+    });
+    await this.runRankingSync(scope.sport);
   }
 
   private async runConfiguredEventSyncSweep(
@@ -575,36 +591,65 @@ export class IngestionScheduler {
     }, 'Resolved scheduled event sync candidates');
 
     for (const eventId of eventIds) {
-      if (feed === 'EVENTLIVESCORES') {
-        await this.pollLiveScores(sport, eventId);
+      const scope = this.normalizeScheduledEventSync({
+        sport,
+        eventId,
+        feeds: [feed],
+      });
+      if (scope.feeds[0] === 'EVENTLIVESCORES') {
+        await this.pollLiveScores(scope.sport, scope.eventId, scope.providerOptions);
       } else {
-        await this.fetchEventResults(sport, eventId);
+        await this.fetchEventResults(scope.sport, scope.eventId, scope.providerOptions);
       }
     }
   }
 
-  private async syncAllFields(): Promise<void> {
-    this.logger?.debug('Running startup/interval participant sync sweep');
-    const sports = this.registry.getSupportedSports();
-    for (const sport of sports) {
-      try {
-        await this.runFieldSync(sport);
-      } catch {
-        this.logger?.error({ sport }, 'Participant sync sweep failed for sport');
-      }
+  private normalizeScheduledSportSync(input: {
+    sport: Sport;
+    feeds: readonly SportSyncFeed[];
+    window?: { from?: Date; to?: Date };
+    windowPolicy?: SyncWindowPolicy;
+  }): NormalizedSportSyncScope {
+    const normalized = this.syncOrchestrator.normalizeRequest({
+      source: SCHEDULED_SYNC_SOURCE,
+      actor: SCHEDULED_SYNC_ACTOR,
+      scope: {
+        type: 'SPORT',
+        sport: input.sport,
+        feeds: input.feeds,
+        window: input.window,
+        windowPolicy: input.windowPolicy,
+      },
+    } satisfies SyncOrchestratorRequest);
+
+    if (normalized.scope.type !== 'SPORT') {
+      throw new Error('Scheduled sport sync normalization returned an event scope.');
     }
+
+    return normalized.scope;
   }
 
-  private async syncAllRankings(): Promise<void> {
-    this.logger?.debug('Running startup/interval ranking sync sweep');
-    const sports = this.registry.getSupportedSports();
-    for (const sport of sports) {
-      try {
-        await this.runRankingSync(sport);
-      } catch {
-        this.logger?.error({ sport }, 'Ranking sync sweep failed for sport');
-      }
+  private normalizeScheduledEventSync(input: {
+    sport: Sport;
+    eventId: string;
+    feeds: readonly EventSyncFeed[];
+  }): NormalizedEventSyncScope {
+    const normalized = this.syncOrchestrator.normalizeRequest({
+      source: SCHEDULED_SYNC_SOURCE,
+      actor: SCHEDULED_SYNC_ACTOR,
+      scope: {
+        type: 'EVENT',
+        sport: input.sport,
+        eventId: input.eventId,
+        feeds: input.feeds,
+      },
+    } satisfies SyncOrchestratorRequest);
+
+    if (normalized.scope.type !== 'EVENT') {
+      throw new Error('Scheduled event sync normalization returned a sport scope.');
     }
+
+    return normalized.scope;
   }
 
   private async runScheduleSync(
@@ -1244,8 +1289,4 @@ function toDelayMs(
   }
 
   return CONFIG_RECHECK_MS;
-}
-
-function addDays(base: Date, days: number): Date {
-  return new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
 }
