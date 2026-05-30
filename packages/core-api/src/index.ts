@@ -56,6 +56,7 @@ import type { IngestionCallbacks, IngestionJobRecord } from './modules/ingestion
 import type { ProviderRanking, SportEvent, SportEventDetail } from './modules/ingestion/core';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
+import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import {
@@ -197,9 +198,11 @@ export function buildApp() {
     },
   };
 
+  const providerSyncRunLedger = new ProviderSyncRunLedger(prisma, app.log);
   const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log, {
     configReader: ingestionConfigService,
     eventReader: createScheduledEventReader({ prisma, registry, logger: app.log }),
+    syncRunLedger: providerSyncRunLedger,
   });
   const providerService = new ProviderService(
     prisma,
@@ -209,6 +212,8 @@ export function buildApp() {
     ingestionConfigService,
     mailDelivery,
     appBaseUrl,
+    undefined,
+    providerSyncRunLedger,
   );
 
   // =========================================================================

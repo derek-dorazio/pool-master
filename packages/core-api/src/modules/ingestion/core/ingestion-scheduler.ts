@@ -18,6 +18,7 @@ import { resolveSportSyncWindowPolicy } from './sync-orchestrator';
 import type {
   EventSyncFeed,
   IngestionFeedType,
+  NormalizedSyncRequest,
   NormalizedEventSyncScope,
   NormalizedSportSyncScope,
   SportSyncFeed,
@@ -35,6 +36,7 @@ import type {
 } from './provider-interface';
 import { supportsMockEventStateControls, supportsProviderPayloadDiagnostics } from './provider-interface';
 import type { LiveScoreResult, MockEventState } from '@poolmaster/shared/dto';
+import type { ProviderSyncRunLedger } from '../persistence/provider-sync-run-ledger';
 
 export type { IngestionFeedType } from './sync-orchestrator';
 
@@ -124,6 +126,7 @@ export interface IngestionSchedulerOptions {
   eventReader?: IngestionScheduledEventReader;
   now?: () => Date;
   syncOrchestrator?: Pick<SyncOrchestrator, 'normalizeRequest'>;
+  syncRunLedger?: Pick<ProviderSyncRunLedger, 'createSubmissions' | 'executeFeedRun'>;
 }
 
 const SCHEDULED_SYNC_SOURCE: SyncRequestSource = 'SCHEDULED';
@@ -462,17 +465,20 @@ export class IngestionScheduler {
       return;
     }
 
-    const scope = this.normalizeScheduledSportSync({
+    const normalized = this.normalizeScheduledSportSync({
       sport,
       feeds: ['EVENTSCHEDULE'],
       windowPolicy: resolveSportSyncWindowPolicy({ feeds: ['EVENTSCHEDULE'], config }),
     });
+    const scope = assertScheduledSportScope(normalized);
     this.logger?.debug({
       sport,
       from: scope.effectiveWindow.from.toISOString(),
       to: scope.effectiveWindow.to.toISOString(),
     }, 'Running configured sport schedule sync');
-    await this.runScheduleSync(scope.sport, scope.effectiveWindow.from, scope.effectiveWindow.to);
+    await this.executeScheduledSyncRun(normalized, () =>
+      this.runScheduleSync(scope.sport, scope.effectiveWindow.from, scope.effectiveWindow.to),
+    );
   }
 
   private async runConfiguredSportFieldSync(sport: Sport): Promise<void> {
@@ -487,17 +493,20 @@ export class IngestionScheduler {
       return;
     }
 
-    const scope = this.normalizeScheduledSportSync({
+    const normalized = this.normalizeScheduledSportSync({
       sport,
       feeds: ['EVENTPARTICIPANTS'],
       windowPolicy: resolveSportSyncWindowPolicy({ feeds: ['EVENTPARTICIPANTS'], config }),
     });
+    const scope = assertScheduledSportScope(normalized);
     this.logger?.debug({
       sport,
       from: scope.effectiveWindow.from.toISOString(),
       to: scope.effectiveWindow.to.toISOString(),
     }, 'Running configured sport participant sync');
-    await this.runFieldSync(scope.sport, scope.effectiveWindow.from, scope.effectiveWindow.to);
+    await this.executeScheduledSyncRun(normalized, () =>
+      this.runFieldSync(scope.sport, scope.effectiveWindow.from, scope.effectiveWindow.to),
+    );
     await this.runConfiguredActiveFieldSync(scope.sport, scope.effectiveWindow);
   }
 
@@ -526,12 +535,15 @@ export class IngestionScheduler {
     }, 'Resolved active event participant sync candidates');
 
     for (const eventId of eventIds) {
-      const scope = this.normalizeScheduledEventSync({
+      const normalized = this.normalizeScheduledEventSync({
         sport,
         eventId,
         feeds: ['EVENTPARTICIPANTS'],
       });
-      await this.runEventFieldSync(scope.sport, scope.eventId, scope.providerOptions);
+      const scope = assertScheduledEventScope(normalized);
+      await this.executeScheduledSyncRun(normalized, () =>
+        this.runEventFieldSync(scope.sport, scope.eventId, scope.providerOptions),
+      );
     }
   }
 
@@ -548,11 +560,12 @@ export class IngestionScheduler {
     }
 
     this.logger?.debug({ sport }, 'Running configured sport ranking sync');
-    const scope = this.normalizeScheduledSportSync({
+    const normalized = this.normalizeScheduledSportSync({
       sport,
       feeds: ['PARTICIPANTRANKINGS'],
     });
-    await this.runRankingSync(scope.sport);
+    const scope = assertScheduledSportScope(normalized);
+    await this.executeScheduledSyncRun(normalized, () => this.runRankingSync(scope.sport));
   }
 
   private async runConfiguredEventSyncSweep(
@@ -591,15 +604,20 @@ export class IngestionScheduler {
     }, 'Resolved scheduled event sync candidates');
 
     for (const eventId of eventIds) {
-      const scope = this.normalizeScheduledEventSync({
+      const normalized = this.normalizeScheduledEventSync({
         sport,
         eventId,
         feeds: [feed],
       });
+      const scope = assertScheduledEventScope(normalized);
       if (scope.feeds[0] === 'EVENTLIVESCORES') {
-        await this.pollLiveScores(scope.sport, scope.eventId, scope.providerOptions);
+        await this.executeScheduledSyncRun(normalized, () =>
+          this.pollLiveScores(scope.sport, scope.eventId, scope.providerOptions),
+        );
       } else {
-        await this.fetchEventResults(scope.sport, scope.eventId, scope.providerOptions);
+        await this.executeScheduledSyncRun(normalized, () =>
+          this.fetchEventResults(scope.sport, scope.eventId, scope.providerOptions),
+        );
       }
     }
   }
@@ -609,7 +627,7 @@ export class IngestionScheduler {
     feeds: readonly SportSyncFeed[];
     window?: { from?: Date; to?: Date };
     windowPolicy?: SyncWindowPolicy;
-  }): NormalizedSportSyncScope {
+  }): NormalizedSyncRequest {
     const normalized = this.syncOrchestrator.normalizeRequest({
       source: SCHEDULED_SYNC_SOURCE,
       actor: SCHEDULED_SYNC_ACTOR,
@@ -626,14 +644,14 @@ export class IngestionScheduler {
       throw new Error('Scheduled sport sync normalization returned an event scope.');
     }
 
-    return normalized.scope;
+    return normalized;
   }
 
   private normalizeScheduledEventSync(input: {
     sport: Sport;
     eventId: string;
     feeds: readonly EventSyncFeed[];
-  }): NormalizedEventSyncScope {
+  }): NormalizedSyncRequest {
     const normalized = this.syncOrchestrator.normalizeRequest({
       source: SCHEDULED_SYNC_SOURCE,
       actor: SCHEDULED_SYNC_ACTOR,
@@ -649,7 +667,33 @@ export class IngestionScheduler {
       throw new Error('Scheduled event sync normalization returned a sport scope.');
     }
 
-    return normalized.scope;
+    return normalized;
+  }
+
+  private async executeScheduledSyncRun(
+    normalizedRequest: NormalizedSyncRequest,
+    run: () => Promise<IngestionJobRecord>,
+  ): Promise<IngestionJobRecord> {
+    const syncRunLedger = this.options.syncRunLedger;
+    if (!syncRunLedger) {
+      return run();
+    }
+
+    const target = getNormalizedSyncTarget(normalizedRequest);
+    const provider = this.registry.getProvider(target.sport);
+    const providerId = provider?.providerId ?? 'none';
+    const [syncRun] = await syncRunLedger.createSubmissions({
+      normalizedRequest,
+      providerId,
+      submittedAt: this.getNow(),
+      runType: target.eventId ? 'SCHEDULED_EVENT_SYNC' : 'SCHEDULED_SPORT_SYNC',
+    });
+
+    if (!syncRun) {
+      throw new Error('Scheduled sync ledger did not create a provider sync run.');
+    }
+
+    return syncRunLedger.executeFeedRun(syncRun, run);
   }
 
   private async runScheduleSync(
@@ -1102,6 +1146,37 @@ function createFailedJob(
     errors: 1,
     errorLog: [{ error, at: new Date() }],
     warnings: [],
+  };
+}
+
+function assertScheduledSportScope(normalized: NormalizedSyncRequest): NormalizedSportSyncScope {
+  if (normalized.scope.type !== 'SPORT') {
+    throw new Error('Scheduled sport sync normalization returned an event scope.');
+  }
+  return normalized.scope;
+}
+
+function assertScheduledEventScope(normalized: NormalizedSyncRequest): NormalizedEventSyncScope {
+  if (normalized.scope.type !== 'EVENT') {
+    throw new Error('Scheduled event sync normalization returned a sport scope.');
+  }
+  return normalized.scope;
+}
+
+function getNormalizedSyncTarget(normalized: NormalizedSyncRequest): {
+  sport: Sport;
+  eventId: string | null;
+} {
+  if (normalized.scope.type === 'SPORT') {
+    return {
+      sport: normalized.scope.sport,
+      eventId: null,
+    };
+  }
+
+  return {
+    sport: normalized.scope.sport,
+    eventId: normalized.scope.eventId,
   };
 }
 

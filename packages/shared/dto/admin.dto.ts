@@ -386,10 +386,10 @@ export const ProviderSyncJobPayloadDtoSchema = z.object({
 export type ProviderSyncJobPayloadDto = z.infer<typeof ProviderSyncJobPayloadDtoSchema>;
 
 export const ProviderSyncRunPayloadDtoSchema = z.object({
-  runType: z.string().optional().describe('Sync run source, such as manual sport sync or manual event sync.'),
-  requestedFeeds: z.array(IngestionFeedTypeSchema).optional().describe('Feeds requested by the root-admin action.'),
+  runType: z.string().optional().describe('Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.'),
+  requestedFeeds: z.array(IngestionFeedTypeSchema).optional().describe('Feeds represented by the originating manual or scheduled sync request.'),
   requestedFeed: IngestionFeedTypeSchema.optional().describe('Single feed represented by this sync run row.'),
-  requestPayload: JsonObjectSchema.optional().describe('Root-admin request context that submitted the sync run.'),
+  requestPayload: JsonObjectSchema.optional().describe('Normalized request context that submitted the sync run, including source and actor diagnostics.'),
   providerPayload: ProviderSyncProviderPayloadDtoSchema.optional().describe('Raw/debug provider payload captured for this run.'),
   jobPayload: ProviderSyncJobPayloadDtoSchema.optional().describe('Serialized ingestion job details after an ingestion job is available.'),
   outcome: ProviderSyncOutcomeDtoSchema.optional().describe('Admin-facing outcome and warning summary for the sync run.'),

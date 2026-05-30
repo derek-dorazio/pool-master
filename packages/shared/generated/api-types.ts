@@ -14871,16 +14871,16 @@ export interface operations {
                             createdAt: string;
                             /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
                             payload: {
-                                /** @description Sync run source, such as manual sport sync or manual event sync. */
+                                /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
                                 runType?: string;
-                                /** @description Feeds requested by the root-admin action. */
+                                /** @description Feeds represented by the originating manual or scheduled sync request. */
                                 requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
                                 /**
                                  * @description Explicit ingestion feed type requested by the caller.
                                  * @enum {string}
                                  */
                                 requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
-                                /** @description Root-admin request context that submitted the sync run. */
+                                /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
                                 requestPayload?: {
                                     [key: string]: unknown;
                                 };
@@ -15047,16 +15047,16 @@ export interface operations {
                             createdAt: string;
                             /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
                             payload: {
-                                /** @description Sync run source, such as manual sport sync or manual event sync. */
+                                /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
                                 runType?: string;
-                                /** @description Feeds requested by the root-admin action. */
+                                /** @description Feeds represented by the originating manual or scheduled sync request. */
                                 requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
                                 /**
                                  * @description Explicit ingestion feed type requested by the caller.
                                  * @enum {string}
                                  */
                                 requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
-                                /** @description Root-admin request context that submitted the sync run. */
+                                /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
                                 requestPayload?: {
                                     [key: string]: unknown;
                                 };
@@ -15257,16 +15257,16 @@ export interface operations {
                             createdAt: string;
                             /** @description Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs. */
                             payload: {
-                                /** @description Sync run source, such as manual sport sync or manual event sync. */
+                                /** @description Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync. */
                                 runType?: string;
-                                /** @description Feeds requested by the root-admin action. */
+                                /** @description Feeds represented by the originating manual or scheduled sync request. */
                                 requestedFeeds?: ("EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS")[];
                                 /**
                                  * @description Explicit ingestion feed type requested by the caller.
                                  * @enum {string}
                                  */
                                 requestedFeed?: "EVENTSCHEDULE" | "EVENTPARTICIPANTS" | "PARTICIPANTRANKINGS" | "EVENTLIVESCORES" | "EVENTRESULTS";
-                                /** @description Root-admin request context that submitted the sync run. */
+                                /** @description Normalized request context that submitted the sync run, including source and actor diagnostics. */
                                 requestPayload?: {
                                     [key: string]: unknown;
                                 };
