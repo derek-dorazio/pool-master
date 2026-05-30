@@ -30,7 +30,7 @@ afterAll(async () => {
 });
 
 describe('Sport event participant repositories', () => {
-  it('creates and updates event participants, source data, and valuations', async () => {
+  it('pool-master-rop.68.1.3 creates and updates event participants, source data, rankings, odds, seeds, and valuations', async () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { name: Sport.GOLF },

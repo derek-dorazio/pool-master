@@ -102,7 +102,7 @@ describe('IngestionPersistence', () => {
       asOfDate: new Date('2026-05-29T12:00:00.000Z'),
     };
 
-    await expect((persistence as any).persistRankings([ranking])).resolves.toBe(1);
+    await expect(persistence.persistRankings([ranking])).resolves.toBe(1);
 
     expect(prisma.participantProviderMapping.findUnique).toHaveBeenCalledWith({
       where: {
@@ -216,6 +216,84 @@ describe('IngestionPersistence', () => {
         status: 'ACTIVE',
         worldRanking: 7,
         oddsToWin: 8.5,
+        seedNumber: 1,
+        metadata: detail.participants[0].metadata,
+      },
+    });
+  });
+
+  it('pool-master-rop.68.1.3 does not bleed mismatched event odds or absent global ranking onto event participants', async () => {
+    const prisma = {
+      contestTimingPolicy: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      sportEvent: {
+        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+        findUnique: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+      },
+      contest: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      participantProviderMapping: {
+        findUnique: jest.fn().mockResolvedValue({ participantId: 'participant-1' }),
+      },
+      participant: {
+        update: jest.fn().mockResolvedValue({ id: 'participant-1' }),
+      },
+      participantRankingSnapshot: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+      sportEventParticipant: {
+        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' }),
+      },
+    };
+    const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
+    const detail: SportEventDetail = {
+      ...buildInProgressEvent(),
+      externalId: 'golf-open-2026',
+      status: 'SCHEDULED',
+      participants: [
+        {
+          externalId: 'golfer-01',
+          providerId: 'mock-contest-feed',
+          sport: Sport.GOLF,
+          name: 'Scottie Scheffler',
+          active: true,
+          metadata: {
+            seed: 1,
+            odds: 8.5,
+            oddsSourceEventId: 'different-provider-event',
+          },
+        },
+      ],
+    };
+
+    await expect(persistence.persistEventDetail(detail)).resolves.toEqual({
+      eventsPersisted: 1,
+      participantsPersisted: 1,
+      sportEventParticipantsPersisted: 1,
+    });
+
+    expect(prisma.sportEventParticipant.upsert).toHaveBeenCalledWith({
+      where: {
+        sportEventId_participantId: {
+          sportEventId: 'sport-event-1',
+          participantId: 'participant-1',
+        },
+      },
+      create: {
+        sportEventId: 'sport-event-1',
+        participantId: 'participant-1',
+        status: 'ACTIVE',
+        worldRanking: null,
+        oddsToWin: null,
+        seedNumber: 1,
+        metadata: detail.participants[0].metadata,
+      },
+      update: {
+        status: 'ACTIVE',
+        worldRanking: null,
+        oddsToWin: null,
         seedNumber: 1,
         metadata: detail.participants[0].metadata,
       },

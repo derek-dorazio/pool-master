@@ -190,7 +190,7 @@ describe('mock contest feed provider event-first verification', () => {
     });
   });
 
-  it('bridges the real mock provider into adapter ingestion persistence and ranking persistence', async () => {
+  it('pool-master-rop.68.1.3 bridges the real mock provider into adapter ingestion persistence and ranking persistence', async () => {
     const prisma = getPrisma();
     const adapter = new MockContestFeedAdapter(mockProvider.baseUrl);
     const persistence = new IngestionPersistence(prisma);
