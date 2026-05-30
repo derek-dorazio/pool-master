@@ -31,7 +31,6 @@ const DEFAULT_INGESTION_CONFIG: IngestionScheduleConfig = {
   eventParticipants: {
     enabled: true,
     intervalMinutes: 720,
-    leadDaysBeforeStart: 7,
   },
   participantRankings: {
     enabled: true,

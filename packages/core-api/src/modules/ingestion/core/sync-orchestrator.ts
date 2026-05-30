@@ -15,7 +15,6 @@ export type { IngestionFeedType } from '@poolmaster/shared/dto';
 
 export const SPORT_SYNC_FEEDS = [
   'EVENTSCHEDULE',
-  'EVENTPARTICIPANTS',
   'PARTICIPANTRANKINGS',
 ] as const satisfies readonly IngestionFeedType[];
 
@@ -27,7 +26,6 @@ export const EVENT_SYNC_FEEDS = [
 
 const DEFAULT_SYNC_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 const DEFAULT_SCHEDULE_LOOKAHEAD_DAYS = 30;
-const DEFAULT_PARTICIPANT_LEAD_DAYS = 7;
 
 export type SyncRequestSource = 'SCHEDULED' | 'MANUAL';
 export type SportSyncFeed = typeof SPORT_SYNC_FEEDS[number];
@@ -280,14 +278,9 @@ export function resolveSportSyncWindowPolicy(input: {
 }): SyncWindowPolicy {
   const feeds = normalizeSportFeeds(input.feeds);
   const scheduleLookaheadDays = input.config?.eventSchedule.lookaheadDays ?? DEFAULT_SCHEDULE_LOOKAHEAD_DAYS;
-  const participantLeadDays = input.config?.eventParticipants.leadDaysBeforeStart ?? DEFAULT_PARTICIPANT_LEAD_DAYS;
   const defaultLookaheadDays = feeds.reduce((maxLookaheadDays, feed) => {
     if (feed === 'EVENTSCHEDULE') {
       return Math.max(maxLookaheadDays, scheduleLookaheadDays);
-    }
-
-    if (feed === 'EVENTPARTICIPANTS') {
-      return Math.max(maxLookaheadDays, scheduleLookaheadDays, participantLeadDays);
     }
 
     return maxLookaheadDays;

@@ -323,6 +323,73 @@ describe('MockContestFeedAdapter', () => {
     );
   });
 
+  it('pool-master-rop.68.1.2: reuses schedule scenario context for event detail lookup', async () => {
+    const scopedScenarioResponse = {
+      scenarios: [
+        { scenarioId: 'golf-major-2026', sport: 'GOLF' },
+        { scenarioId: 'tennis-major-2026', sport: 'TENNIS' },
+      ],
+    };
+    const scopedGolfEventList = {
+      scenarioId: 'golf-major-2026',
+      events: [
+        {
+          eventId: 'golf-in-window-2026',
+          name: 'In Window Golf Event',
+          status: 'field_announced',
+          startsAt: '2026-04-09T14:00:00.000Z',
+          endsAt: '2026-04-12T22:00:00.000Z',
+          releaseAt: '2026-04-06T12:00:00.000Z',
+          fieldLocksAt: '2026-04-08T12:00:00.000Z',
+          venueName: 'Augusta National',
+          fieldStatus: 'announced',
+          contestantCount: 2,
+        },
+      ],
+    };
+    const inWindowDetail = {
+      ...eventDetailResponse,
+      event: {
+        ...eventDetailResponse.event,
+        eventId: 'golf-in-window-2026',
+        metadata: {
+          ...eventDetailResponse.event.metadata,
+          externalEventId: 'golf-in-window-2026',
+        },
+      },
+    };
+
+    const fetchSpy = jest.fn(async (input: string | URL) => {
+      const url = String(input);
+      if (url.endsWith('/v1/scenarios')) return okJson(scopedScenarioResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events')) return okJson(scopedGolfEventList);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-in-window-2026/detail')) {
+        return okJson(inWindowDetail);
+      }
+      if (url.endsWith('/v1/scenarios/tennis-major-2026/events')) {
+        throw new Error('Event detail lookup must not scan unrelated scenario event lists');
+      }
+      throw new Error(`Unhandled fetch URL: ${url}`);
+    });
+    global.fetch = fetchSpy as unknown as typeof fetch;
+
+    const adapter = new MockContestFeedAdapter('http://mock-contest-feed-provider.qa.poolmaster.internal:3105');
+
+    await adapter.getUpcomingEvents(Sport.GOLF, {
+      from: new Date('2026-04-01T00:00:00.000Z'),
+      to: new Date('2026-04-30T00:00:00.000Z'),
+    });
+    fetchSpy.mockClear();
+
+    const detail = await adapter.getEventDetails('golf-in-window-2026');
+
+    expect(detail?.externalId).toBe('golf-in-window-2026');
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'http://mock-contest-feed-provider.qa.poolmaster.internal:3105/v1/scenarios/golf-major-2026/events/golf-in-window-2026/detail',
+    );
+  });
+
   it('pool-master-rop.78.13: filters TEAM_TOURNAMENT scenarios out of NCAA_BASKETBALL ingestion', async () => {
     // Regression for the SDK enum widening introduced by this slice.
     // The mock provider ships `correction-and-tie-2026` with

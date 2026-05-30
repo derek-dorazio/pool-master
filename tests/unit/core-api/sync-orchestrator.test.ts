@@ -62,14 +62,14 @@ describe('SyncOrchestrator request model', () => {
       scope: {
         type: 'SPORT',
         sport: Sport.GOLF,
-        feeds: ['EVENTPARTICIPANTS'],
+        feeds: ['EVENTSCHEDULE'],
       },
     });
 
     expect(normalized.scope).toMatchObject({
       type: 'SPORT',
       sport: Sport.GOLF,
-      feeds: ['EVENTPARTICIPANTS'],
+      feeds: ['EVENTSCHEDULE'],
       requestedWindow: {},
       effectiveWindow: {
         from: now,
@@ -86,7 +86,7 @@ describe('SyncOrchestrator request model', () => {
       scheduledSports: [Sport.GOLF],
       healthCheck: { enabled: true, intervalMinutes: 5 },
       eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 45 },
-      eventParticipants: { enabled: true, intervalMinutes: 720, leadDaysBeforeStart: 7 },
+      eventParticipants: { enabled: true, intervalMinutes: 720 },
       participantRankings: { enabled: true, intervalMinutes: 1440 },
       eventLiveScores: { enabled: true, intervalSeconds: 30 },
       eventResults: { enabled: true, intervalMinutes: 30 },
@@ -221,7 +221,7 @@ describe('SyncOrchestrator request model', () => {
       scope: {
         type: 'SPORT',
         sport: Sport.GOLF,
-        feeds: ['EVENTLIVESCORES'],
+        feeds: ['EVENTPARTICIPANTS'],
       },
     }), 'INVALID_SPORT_FEED');
 

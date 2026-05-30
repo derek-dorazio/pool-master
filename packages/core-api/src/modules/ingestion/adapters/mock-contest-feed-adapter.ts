@@ -54,6 +54,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
   private readonly providerPayloadCaptureStorage = new AsyncLocalStorage<ProviderPayloadCapture[]>();
   // Legacy fallback for direct adapter calls outside a run-scoped capture session.
   private providerPayloads: ProviderPayloadCapture[] = [];
+  private readonly scenarioIdByEventId = new Map<string, string>();
 
   constructor(private readonly baseUrl: string) {}
 
@@ -83,9 +84,9 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
   async getUpcomingEvents(sport: Sport, dateRange: DateRange): Promise<SportEvent[]> {
     const entries = await this.listScenarioEvents(sport, dateRange);
     return entries
-      .map(({ detail }) => {
+      .map(({ scenarioId, detail }) => {
         const fieldContestants = resolveParticipants(detail);
-        return toSportEvent(this.providerId, detail, fieldContestants.length);
+        return toSportEvent(this.providerId, detail, fieldContestants.length, scenarioId);
       })
       .filter(
         (event) =>
@@ -112,7 +113,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     const participants = resolveParticipants(detail);
 
     return {
-      ...toSportEvent(this.providerId, detail, participants.length),
+      ...toSportEvent(this.providerId, detail, participants.length, match.scenarioId),
       participants: participants.map((contestant) =>
         toProviderParticipant(this.providerId, detail.sport, contestant),
       ),
@@ -292,6 +293,9 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     const eventLists = await Promise.all(
       matchingScenarioIds.map(async (scenarioId) => {
         const list = await this.fetchJson<EventListResponse>(`/v1/scenarios/${scenarioId}/events`);
+        for (const event of list.events) {
+          this.scenarioIdByEventId.set(event.eventId, scenarioId);
+        }
         return { scenarioId, events: list.events };
       }),
     );
@@ -315,6 +319,11 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
   private async findEventById(
     eventId: string,
   ): Promise<{ scenarioId: string } | null> {
+    const cachedScenarioId = this.scenarioIdByEventId.get(eventId);
+    if (cachedScenarioId) {
+      return { scenarioId: cachedScenarioId };
+    }
+
     const scenarios = await this.fetchJson<ScenarioSummaryResponse>('/v1/scenarios');
     const relativeTodayScenario = scenarios.scenarios.find(
       (scenario) => scenario.scenarioId === 'golf-relative-today',
@@ -453,6 +462,7 @@ function toSportEvent(
   providerId: string,
   detail: EventDetailResponse,
   participantCount: number,
+  scenarioId?: string,
 ): SportEvent {
   const domainSport = toDomainSport(detail.sport);
   if (!domainSport) {
@@ -480,6 +490,7 @@ function toSportEvent(
       seasonYear: detail.season.year,
       eventType: detail.event.metadata?.eventType,
       tour: detail.event.metadata?.tour,
+      scenarioId,
       releaseAt: detail.event.schedule.releaseAt,
       fieldLocksAt: detail.event.schedule.fieldLocksAt,
     },

@@ -466,7 +466,6 @@ export function isSportSyncFeedType(
   feed: unknown,
 ): feed is SportSyncRequest['feeds'][number] {
   return feed === 'EVENTSCHEDULE'
-    || feed === 'EVENTPARTICIPANTS'
     || feed === 'PARTICIPANTRANKINGS';
 }
 

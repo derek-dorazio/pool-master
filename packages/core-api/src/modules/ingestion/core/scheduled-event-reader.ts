@@ -73,6 +73,7 @@ function toFeedWhere(
       OR: [
         {
           status: 'SCHEDULED',
+          releaseAt: { lte: now },
           startDate: {
             gte: from ?? now,
             ...(to ? { lte: to } : {}),
