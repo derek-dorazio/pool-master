@@ -27,6 +27,12 @@ function createLogger() {
   };
 }
 
+async function flushMicrotasks(times = 5): Promise<void> {
+  for (let index = 0; index < times; index += 1) {
+    await Promise.resolve();
+  }
+}
+
 describe('admin support services', () => {
   describe('UserService', () => {
     it('searches users with pagination and mapped profile fields', async () => {
@@ -346,9 +352,13 @@ describe('admin support services', () => {
 
     it('pool-master-rop.68.2.3 pool-master-rop.68.2.5 normalizes manual sport sync before submission', async () => {
       const now = new Date('2026-05-30T12:00:00.000Z');
+      let deferredSync: (() => void) | undefined;
       const setImmediateSpy = jest
         .spyOn(global, 'setImmediate')
-        .mockImplementation(() => 0 as unknown as NodeJS.Immediate);
+        .mockImplementation((callback: () => void) => {
+          deferredSync = callback;
+          return 0 as unknown as NodeJS.Immediate;
+        });
       const providerSyncRunCreate = jest.fn().mockImplementation(async ({ data }) => ({
         id: 'sync-run-1',
         providerId: data.providerId,
@@ -360,6 +370,7 @@ describe('admin support services', () => {
         createdAt: data.createdAt,
         payloadJson: data.payloadJson,
       }));
+      const providerSyncRunUpdate = jest.fn().mockResolvedValue({});
       const registry = {
         getProvider: jest.fn().mockReturnValue({
           providerId: 'mock-contest-feed',
@@ -368,7 +379,17 @@ describe('admin support services', () => {
         }),
       };
       const scheduler = {
-        runSportSync: jest.fn(),
+        runSportSync: jest.fn().mockResolvedValue([{
+          jobType: 'EVENT_SCHEDULE_SYNC',
+          providerId: 'mock-contest-feed',
+          sport: Sport.GOLF,
+          status: 'COMPLETED',
+          recordsProcessed: 1,
+          errors: 0,
+          errorLog: [],
+          warnings: [],
+          stats: { providerRecordsReturned: 1 },
+        }]),
       };
       const ingestionConfigReader = {
         getConfig: jest.fn().mockResolvedValue({
@@ -396,6 +417,7 @@ describe('admin support services', () => {
         {
           providerSyncRun: {
             create: providerSyncRunCreate,
+            update: providerSyncRunUpdate,
           },
         } as any,
         registry as any,
@@ -439,6 +461,19 @@ describe('admin support services', () => {
             }),
           }),
         }));
+        const payloadJson = providerSyncRunCreate.mock.calls[0][0].data.payloadJson;
+        expect(payloadJson).not.toHaveProperty('source');
+        expect(payloadJson).not.toHaveProperty('actor');
+        expect(payloadJson).not.toHaveProperty('effectiveWindow');
+        expect(deferredSync).toBeDefined();
+        deferredSync?.();
+        await flushMicrotasks();
+        expect(scheduler.runSportSync).toHaveBeenCalledWith({
+          sport: Sport.GOLF,
+          feeds: ['EVENTSCHEDULE'],
+          from: new Date('2026-05-30T12:00:00.000Z'),
+          to: new Date('2026-07-14T12:00:00.000Z'),
+        });
       } finally {
         setImmediateSpy.mockRestore();
       }
@@ -446,9 +481,13 @@ describe('admin support services', () => {
 
     it('pool-master-rop.68.2.3 normalizes manual event sync before submission', async () => {
       const now = new Date('2026-05-30T12:00:00.000Z');
+      let deferredSync: (() => void) | undefined;
       const setImmediateSpy = jest
         .spyOn(global, 'setImmediate')
-        .mockImplementation(() => 0 as unknown as NodeJS.Immediate);
+        .mockImplementation((callback: () => void) => {
+          deferredSync = callback;
+          return 0 as unknown as NodeJS.Immediate;
+        });
       const providerSyncRunCreate = jest.fn().mockImplementation(async ({ data }) => ({
         id: 'sync-run-1',
         providerId: data.providerId,
@@ -460,6 +499,7 @@ describe('admin support services', () => {
         createdAt: data.createdAt,
         payloadJson: data.payloadJson,
       }));
+      const providerSyncRunUpdate = jest.fn().mockResolvedValue({});
       const registry = {
         getProvider: jest.fn().mockReturnValue({
           providerId: 'mock-contest-feed',
@@ -470,7 +510,18 @@ describe('admin support services', () => {
         }),
       };
       const scheduler = {
-        runEventSync: jest.fn(),
+        runEventSync: jest.fn().mockResolvedValue([{
+          jobType: 'EVENT_LIVE_SCORES_SYNC',
+          providerId: 'mock-contest-feed',
+          sport: Sport.GOLF,
+          eventExternalId: 'golf-open-championship-2026',
+          status: 'COMPLETED',
+          recordsProcessed: 1,
+          errors: 0,
+          errorLog: [],
+          warnings: [],
+          stats: { liveScoreUpdatesReturned: 1 },
+        }]),
       };
       const ingestionConfigReader = {
         getConfig: jest.fn().mockResolvedValue({
@@ -489,6 +540,7 @@ describe('admin support services', () => {
         {
           providerSyncRun: {
             create: providerSyncRunCreate,
+            update: providerSyncRunUpdate,
           },
         } as any,
         registry as any,
@@ -529,6 +581,19 @@ describe('admin support services', () => {
             }),
           }),
         }));
+        const payloadJson = providerSyncRunCreate.mock.calls[0][0].data.payloadJson;
+        expect(payloadJson).not.toHaveProperty('source');
+        expect(payloadJson).not.toHaveProperty('actor');
+        expect(payloadJson).not.toHaveProperty('mockEventState');
+        expect(deferredSync).toBeDefined();
+        deferredSync?.();
+        await flushMicrotasks();
+        expect(scheduler.runEventSync).toHaveBeenCalledWith({
+          sport: Sport.GOLF,
+          eventId: 'golf-open-championship-2026',
+          feeds: ['EVENTLIVESCORES'],
+          mockEventState: 'live',
+        });
       } finally {
         setImmediateSpy.mockRestore();
       }

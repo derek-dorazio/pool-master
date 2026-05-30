@@ -10,6 +10,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
 import type { ProviderService } from './provider-service';
 import type { EventSyncRequest, SportSyncRequest } from '../ingestion/core/ingestion-scheduler';
+import { SyncRequestValidationError } from '../ingestion/core/sync-orchestrator';
 import {
   ProviderConfigUnsupportedError,
   ProviderEventNotFoundError,
@@ -230,6 +231,13 @@ export function createProviderHandlers(providerService: ProviderService) {
         logger.warn({ sport: request.params.sport }, 'Sport sync preparation failed because sport is not enabled in ingestion config');
         return sendError(reply, 422, 'SPORT_SYNC_NOT_CONFIGURED', err.message);
       }
+      if (err instanceof SyncRequestValidationError) {
+        logger.warn({
+          sport: request.params.sport,
+          validationCode: err.code,
+        }, 'Sport sync preparation failed validation');
+        return sendError(reply, 422, 'SYNC_REQUEST_INVALID', err.message, { validationCode: err.code });
+      }
       throw err;
     }
   }
@@ -297,6 +305,14 @@ export function createProviderHandlers(providerService: ProviderService) {
           mockEventState: request.body.mockEventState ?? null,
         }, 'Manual event sync failed because provider does not support mock event state controls');
         return sendError(reply, 422, 'MOCK_EVENT_STATE_UNSUPPORTED', err.message);
+      }
+      if (err instanceof SyncRequestValidationError) {
+        logger.warn({
+          sport: request.params.sport,
+          eventId: request.params.eventId,
+          validationCode: err.code,
+        }, 'Manual event sync failed validation');
+        return sendError(reply, 422, 'SYNC_REQUEST_INVALID', err.message, { validationCode: err.code });
       }
       throw err;
     }

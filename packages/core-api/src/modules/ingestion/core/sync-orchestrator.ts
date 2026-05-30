@@ -293,7 +293,7 @@ export function resolveSportSyncWindowPolicy(input: {
     return maxLookaheadDays;
   }, 0);
 
-  return { defaultLookaheadDays };
+  return defaultLookaheadDays > 0 ? { defaultLookaheadDays } : {};
 }
 
 function cloneRequestedWindow(requestedWindow: SyncRequestedWindow | undefined): SyncRequestedWindow {

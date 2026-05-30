@@ -1059,7 +1059,6 @@ export class ProviderService {
             summary: buildSubmittedSyncRunDetail(feed, input.sport, input.eventId),
           }),
           detail: buildSubmittedSyncRunDetail(feed, input.sport, input.eventId),
-          ...input.requestContext,
         };
         const row = await this.prisma.providerSyncRun.create({
           data: {

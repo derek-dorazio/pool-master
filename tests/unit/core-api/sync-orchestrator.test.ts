@@ -130,6 +130,35 @@ describe('SyncOrchestrator request model', () => {
     expect(manual.scope).toEqual(scheduled.scope);
   });
 
+  it('pool-master-rop.68.2.5: leaves windowless sport feeds on the default sync window policy', () => {
+    const now = new Date('2026-05-30T12:00:00.000Z');
+    const windowPolicy = resolveSportSyncWindowPolicy({
+      feeds: ['PARTICIPANTRANKINGS'],
+    });
+
+    const normalized = normalizeSyncRequest({
+      source: 'MANUAL',
+      actor: rootAdminActor,
+      scope: {
+        type: 'SPORT',
+        sport: Sport.GOLF,
+        feeds: ['PARTICIPANTRANKINGS'],
+        windowPolicy,
+      },
+    }, { now: () => now });
+
+    expect(windowPolicy).toEqual({});
+    expect(normalized.scope).toMatchObject({
+      type: 'SPORT',
+      effectiveWindow: {
+        from: now,
+        to: new Date('2026-06-13T12:00:00.000Z'),
+        defaultedFrom: true,
+        defaultedTo: true,
+      },
+    });
+  });
+
   it('pool-master-rop.68.2.1: normalizes manual event sync mock override into provider options', () => {
     const normalized = normalizeSyncRequest({
       source: 'MANUAL',

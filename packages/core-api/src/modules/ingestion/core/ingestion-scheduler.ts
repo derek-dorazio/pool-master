@@ -462,7 +462,6 @@ export class IngestionScheduler {
       return;
     }
 
-    const lookaheadDays = config.eventSchedule.lookaheadDays ?? 30;
     const scope = this.normalizeScheduledSportSync({
       sport,
       feeds: ['EVENTSCHEDULE'],
@@ -472,7 +471,6 @@ export class IngestionScheduler {
       sport,
       from: scope.effectiveWindow.from.toISOString(),
       to: scope.effectiveWindow.to.toISOString(),
-      lookaheadDays,
     }, 'Running configured sport schedule sync');
     await this.runScheduleSync(scope.sport, scope.effectiveWindow.from, scope.effectiveWindow.to);
   }
@@ -489,9 +487,6 @@ export class IngestionScheduler {
       return;
     }
 
-    const participantLeadDays = config.eventParticipants.leadDaysBeforeStart ?? 7;
-    const scheduleLookaheadDays = config.eventSchedule.lookaheadDays ?? 30;
-    const lookaheadDays = Math.max(scheduleLookaheadDays, participantLeadDays);
     const scope = this.normalizeScheduledSportSync({
       sport,
       feeds: ['EVENTPARTICIPANTS'],
@@ -501,9 +496,6 @@ export class IngestionScheduler {
       sport,
       from: scope.effectiveWindow.from.toISOString(),
       to: scope.effectiveWindow.to.toISOString(),
-      participantLeadDays,
-      scheduleLookaheadDays,
-      lookaheadDays,
     }, 'Running configured sport participant sync');
     await this.runFieldSync(scope.sport, scope.effectiveWindow.from, scope.effectiveWindow.to);
     await this.runConfiguredActiveFieldSync(scope.sport, scope.effectiveWindow);
