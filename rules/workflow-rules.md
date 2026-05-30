@@ -786,7 +786,6 @@ Not every commit needs a branch + PR + multi-pass review. The carve-out below co
 
 - `.beads/issues.jsonl` — Beads state changes (epic/story creation, status updates, close reasons, dependency edits, label edits).
 - `plans/<NN>-*.md` — narrative plan files updated *during* execution: mid-slice notes, status updates, deferred-section additions, completion notes. New plan files of substantial size should land with their first slice (see *Docs ride with code* below); trivial plan housekeeping pushes direct.
-- `docs/SESSION-HANDOFF.md` — session resume notes.
 - `requirements/` and `tech-specs/` artifacts under active design discussion (before implementation begins).
 - Trivial typo, link, or formatting fixes anywhere in `docs/` or `rules/` that do not change rule meaning.
 

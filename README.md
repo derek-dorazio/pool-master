@@ -148,11 +148,12 @@ poolmaster/
 ## Documentation
 
 ### Guides
-- [Architecture Overview](docs/ARCHITECTURE.md) — Components, dependencies, data flow
-- [Authentication & Authorization](docs/AUTHENTICATION-AUTHORIZATION.md) — Current backend auth model and frontend transition notes
-- [Standard Auth Model](docs/STANDARD-AUTH-MODEL.md) — Recommended conventional local-auth + Google OIDC + cookie-session target for PoolMaster
-- [Database Schema](docs/DATABASE-SCHEMA.md) — ERDs and a practical data dictionary for PostgreSQL tables and app ownership
 - [Developer Setup Guide](docs/DEVELOPER-SETUP.md) — Environment setup, Docker, database, running services
+- [CI and Quality Gates](docs/CI-AND-QUALITY-GATES.md) — GitHub Actions, branch protection, local gate commands
+- [Contest Rules](docs/CONTEST-RULES.md) — Future sport and contest-format ideas
+- [Email Delivery](docs/EMAIL-DELIVERY.md) — Local and deployed email provider configuration
+- [Logging Operations](docs/LOGGING-OPERATIONS.md) — Runtime and browser log diagnostics
+- [QA Cleanup Runbook](docs/QA-CLEANUP-RUNBOOK.md) — Supported QA browser-data cleanup workflow
 
 ### Code READMEs
 - [Backend Services](packages/README.md) — Monolith modules, shared package, API routes, engines

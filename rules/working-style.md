@@ -135,8 +135,9 @@ This is a solo + agent-driven workflow. There is no human catching loops in real
 
 - when a session discovers a durable workflow preference, prefer capturing it in
   `rules/` or `docs/` rather than relying on conversational memory alone
-- use `docs/SESSION-HANDOFF.md` for short “resume here” notes when a session is
-  intentionally paused or the machine/repo context is about to change
+- use Beads notes and active plan updates for durable “resume here” context
+  when a session is intentionally paused or the machine/repo context is about
+  to change
 - when product discussions resolve broad goals, actor behavior, or operating
   principles, update the shared `requirements/product-overview/` and
   `requirements/product-requirements/` artifacts continuously rather than

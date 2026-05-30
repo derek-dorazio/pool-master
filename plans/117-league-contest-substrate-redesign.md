@@ -2,7 +2,8 @@
 
 **Beads epic:** `pool-master-rop.78`
 **Phase:** 2 (Design) of 4 (Investigate → Design → Review → Implement)
-**Phase 1 deliverable:** [`docs/league-contest-substrate-audit.md`](../docs/league-contest-substrate-audit.md)
+**Phase 1 deliverable:** retired stale audit document; the actionable findings
+were moved into Beads and summarized below.
 **Author:** Archie (lead) with Dom (domain) + Brad (service / scoring) — design distilled from the rop.78 substrate-audit conversation
 **Status:** Phase 2 deliverable. **Phase 3 (user review) is the explicit gate** before Phase 4 implementation slices spawn.
 
@@ -14,7 +15,10 @@ This plan replaces the existing league/contest/scoring substrate with a strongly
 
 The redesign is grounded in two anchors:
 
-- **Phase 1 audit** (`docs/league-contest-substrate-audit.md`) — found 24 `JsonObjectSchema` sites at audit time (now 23 after PR #21), routes emitting domain objects without mappers, dual rank-assignment paths that disagree under load, no per-contest scoring lock, and provider-feed `ProviderStatEvent`s unvalidated at the bus boundary.
+- **Phase 1 audit findings** — found 24 `JsonObjectSchema` sites at audit time
+  (now 23 after PR #21), routes emitting domain objects without mappers, dual
+  rank-assignment paths that disagree under load, no per-contest scoring lock,
+  and provider-feed `ProviderStatEvent`s unvalidated at the bus boundary.
 - **Rules landed by PR #22** (`rop-1xz`) — strongly-typed end-to-end principle; one canonical DTO per entity; discriminated unions are physical not nullable-conditional; make-impossible-states-unrepresentable at the storage layer; open-ended additive substrate design; no-data clean reworks; validity matrices in code.
 
 Every design decision below cites those anchors. Where the design conversation locked an answer, the answer is stated and the rationale is one sentence. Where Phase 4 still owes an implementation choice, that's flagged in §17.

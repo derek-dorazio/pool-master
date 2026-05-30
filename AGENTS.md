@@ -118,11 +118,10 @@ Important:
 
 - Check whether the work is already tracked in Beads and/or `plans/`, update the relevant Beads items as work starts and finishes. Plans are narrative only — they do not carry task rows.
 - At the start of a resumed session, re-read `rules/working-style.md` to restore the expected collaboration style and continuity defaults before implementing.
-- When a prior session intentionally paused work, check `docs/SESSION-HANDOFF.md` for the current "resume here" note before choosing the next slice.
 - When a refactor changes architecture, testing patterns, or developer workflow, update the matching `rules/*.md` files in the same effort.
 - Do not maintain competing instruction sets across `AGENTS.md`, `CLAUDE.md`, `rules/`, `personas/`, and the tool-specific wrapper directories.
 - Treat `requirements/` and `tech-specs/` as design inputs and handoff artifacts; Beads is the live execution/refinement tracker and `plans/` remain the narrative execution context.
-- **Not every change needs a PR.** Beads state, narrative plan updates during execution, session-handoff notes, and trivial doc fixes are direct-push to `main` per `rules/workflow-rules.md §6` *What skips the PR flow*. Substantive plan, rule, ADR, or persona changes still go through the branch + PR + multi-pass review flow — and when in doubt, the agent asks the user before pushing direct (per *Substantive plan or rule change — ask before pushing*).
+- **Not every change needs a PR.** Beads state, narrative plan updates during execution, and trivial doc fixes are direct-push to `main` per `rules/workflow-rules.md §6` *What skips the PR flow*. Substantive plan, rule, ADR, or persona changes still go through the branch + PR + multi-pass review flow — and when in doubt, the agent asks the user before pushing direct (per *Substantive plan or rule change — ask before pushing*).
 
 ## Documentation Expectations
 
