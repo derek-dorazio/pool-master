@@ -20,7 +20,6 @@ import { IngestionPersistence } from '../ingestion/persistence/ingestion-persist
 import type {
   EventSyncRequest,
   IngestionFeedType,
-  IngestionJobRecord,
   IngestionScheduleConfigReader,
   IngestionScheduler,
   SportSyncRequest,
@@ -30,8 +29,15 @@ import {
   resolveSportSyncWindowPolicy,
   type NormalizedEventSyncScope,
   type NormalizedSportSyncScope,
-  type NormalizedSyncRequest,
 } from '../ingestion/core/sync-orchestrator';
+import {
+  ProviderSyncRunLedger,
+  buildNormalizedSyncRequestContext,
+  isEventSyncFeedType,
+  isSportSyncFeedType,
+  mapProviderSyncRunRow,
+  type ProviderSyncRunRecord,
+} from '../ingestion/persistence/provider-sync-run-ledger';
 import {
   createMailDeliveryProvider,
   readApplicationBaseUrl,
@@ -89,17 +95,7 @@ export interface IngestionJob {
   errors: number;
 }
 
-export interface ProviderSyncRun {
-  id: string;
-  providerId: string;
-  sport: Sport;
-  eventId: string | null;
-  status: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-  startedAt: Date | null;
-  completedAt: Date | null;
-  createdAt: Date;
-  payload: Record<string, unknown>;
-}
+export type ProviderSyncRun = ProviderSyncRunRecord;
 
 export interface ProviderManualSyncSubmissionResult {
   sport: Sport;
@@ -132,13 +128,6 @@ export interface UnmappedParticipant {
   externalName: string;
   sport: Sport;
 }
-
-type SyncOutcomePayload = Prisma.InputJsonObject & {
-  severity: 'SUCCESS' | 'WARNING' | 'ERROR';
-  summary: string;
-  warnings: Prisma.InputJsonArray;
-  errors: number;
-};
 
 export interface ProviderDetail extends ProviderSummary {
   recentHealthChecks: ProviderHealthCheck[];
@@ -236,178 +225,6 @@ function providerDisplayName(provider: SportDataProvider): string {
   return provider.providerName;
 }
 
-function normalizeSyncRunPayload(payload: Prisma.JsonValue): Record<string, unknown> {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    return {};
-  }
-  return payload as Record<string, unknown>;
-}
-
-function mapJobTypeToFeed(jobType: IngestionJobRecord['jobType']): IngestionFeedType {
-  switch (jobType) {
-    case 'EVENT_SCHEDULE_SYNC':
-      return 'EVENTSCHEDULE';
-    case 'EVENT_PARTICIPANTS_SYNC':
-      return 'EVENTPARTICIPANTS';
-    case 'PARTICIPANT_RANKINGS_SYNC':
-      return 'PARTICIPANTRANKINGS';
-    case 'EVENT_LIVE_SCORES_SYNC':
-      return 'EVENTLIVESCORES';
-    case 'EVENT_RESULTS_SYNC':
-      return 'EVENTRESULTS';
-    case 'HEALTH_CHECK':
-      return 'EVENTSCHEDULE';
-  }
-}
-
-function buildSubmittedSyncRunDetail(
-  feed: IngestionFeedType,
-  sport: Sport,
-  eventId: string | null,
-): string {
-  const target = eventId ?? sport;
-  return `Submitted ${formatFeedLabel(feed)} sync for ${target}.`;
-}
-
-function toJsonSafeErrorPayload(error: unknown): Record<string, unknown> {
-  if (error instanceof Error) {
-    return {
-      name: error.name,
-      message: error.message,
-    };
-  }
-
-  return {
-    message: String(error),
-  };
-}
-
-function toSerializableJob(job: IngestionJobRecord): Record<string, unknown> {
-  return {
-    jobType: job.jobType,
-    providerId: job.providerId,
-    sport: job.sport,
-    ...(job.eventExternalId ? { eventExternalId: job.eventExternalId } : {}),
-    status: job.status,
-    ...(job.startedAt ? { startedAt: job.startedAt.toISOString() } : {}),
-    ...(job.completedAt ? { completedAt: job.completedAt.toISOString() } : {}),
-    recordsProcessed: job.recordsProcessed,
-    errors: job.errors,
-    errorLog: job.errorLog,
-  };
-}
-
-function buildSyncOutcome(input: {
-  status: ProviderSyncRun['status'];
-  summary: string;
-  warnings?: IngestionJobRecord['warnings'];
-  errors?: number;
-}): SyncOutcomePayload {
-  const warnings = input.warnings ?? [];
-  const errorCount = input.errors ?? 0;
-  const severity = input.status === 'FAILED' || errorCount > 0
-    ? 'ERROR'
-    : warnings.length > 0
-      ? 'WARNING'
-      : 'SUCCESS';
-
-  return {
-    severity,
-    summary: input.summary,
-    warnings: warnings.map((warning) => ({
-      code: warning.code,
-      message: warning.message,
-    })),
-    errors: errorCount,
-  };
-}
-
-function isSportSyncFeedType(
-  feed: unknown,
-): feed is SportSyncRequest['feeds'][number] {
-  return feed === 'EVENTSCHEDULE'
-    || feed === 'EVENTPARTICIPANTS'
-    || feed === 'PARTICIPANTRANKINGS';
-}
-
-function isEventSyncFeedType(
-  feed: unknown,
-): feed is EventSyncRequest['feeds'][number] {
-  return feed === 'EVENTPARTICIPANTS'
-    || feed === 'EVENTLIVESCORES'
-    || feed === 'EVENTRESULTS';
-}
-
-function formatFeedLabel(feed: IngestionFeedType): string {
-  switch (feed) {
-    case 'EVENTSCHEDULE':
-      return 'event schedule';
-    case 'EVENTPARTICIPANTS':
-      return 'event participants';
-    case 'PARTICIPANTRANKINGS':
-      return 'participant rankings';
-    case 'EVENTLIVESCORES':
-      return 'event live scores';
-    case 'EVENTRESULTS':
-      return 'event results';
-  }
-}
-
-function buildManualSyncRunDetail(
-  job: IngestionJobRecord,
-  eventId: string | null,
-): string {
-  const target = eventId ?? job.eventExternalId ?? job.sport;
-  const feed = formatFeedLabel(mapJobTypeToFeed(job.jobType));
-  if (job.status === 'FAILED') {
-    const error =
-      typeof job.errorLog[0] === 'object'
-      && job.errorLog[0] !== null
-      && 'error' in job.errorLog[0]
-      && typeof (job.errorLog[0] as { error?: unknown }).error === 'string'
-        ? (job.errorLog[0] as { error: string }).error
-        : 'Unknown ingestion failure';
-    return `Failed ${feed} sync for ${target}: ${error}`;
-  }
-
-  return `Completed ${feed} sync for ${target} (${job.recordsProcessed} records).`;
-}
-
-function serializeDate(value: Date | undefined): string | null {
-  return value?.toISOString() ?? null;
-}
-
-function buildNormalizedSyncRequestContext(normalized: NormalizedSyncRequest): Record<string, unknown> {
-  if (normalized.scope.type === 'SPORT') {
-    return {
-      source: normalized.source,
-      actor: normalized.actor,
-      workflowContext: normalized.workflowContext,
-      from: serializeDate(normalized.scope.requestedWindow.from),
-      to: serializeDate(normalized.scope.requestedWindow.to),
-      requestedWindow: {
-        from: serializeDate(normalized.scope.requestedWindow.from),
-        to: serializeDate(normalized.scope.requestedWindow.to),
-      },
-      effectiveWindow: {
-        from: normalized.scope.effectiveWindow.from.toISOString(),
-        to: normalized.scope.effectiveWindow.to.toISOString(),
-        defaultedFrom: normalized.scope.effectiveWindow.defaultedFrom,
-        defaultedTo: normalized.scope.effectiveWindow.defaultedTo,
-      },
-      normalizedAt: normalized.normalizedAt.toISOString(),
-    };
-  }
-
-  return {
-    source: normalized.source,
-    actor: normalized.actor,
-    workflowContext: normalized.workflowContext,
-    mockEventState: normalized.scope.mockEventState ?? null,
-    normalizedAt: normalized.normalizedAt.toISOString(),
-  };
-}
-
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
@@ -415,6 +232,7 @@ function buildNormalizedSyncRequestContext(normalized: NormalizedSyncRequest): R
 export class ProviderService {
   private readonly ingestionPersistence: IngestionPersistence;
   private readonly syncOrchestrator: Pick<SyncOrchestrator, 'normalizeRequest'>;
+  private readonly syncRunLedger: ProviderSyncRunLedger;
 
   constructor(
     private readonly prisma: PrismaClient,
@@ -425,8 +243,10 @@ export class ProviderService {
     mailDelivery?: MailDeliveryProvider,
     appBaseUrl?: string,
     syncOrchestrator?: Pick<SyncOrchestrator, 'normalizeRequest'>,
+    syncRunLedger?: ProviderSyncRunLedger,
   ) {
     this.syncOrchestrator = syncOrchestrator ?? new SyncOrchestrator();
+    this.syncRunLedger = syncRunLedger ?? new ProviderSyncRunLedger(prisma, logger);
     this.ingestionPersistence = new IngestionPersistence(
       prisma,
       logger,
@@ -756,17 +576,7 @@ export class ProviderService {
       take: filters.limit ?? 20,
     });
 
-    return runs.map((row) => ({
-      id: row.id,
-      providerId: row.providerId,
-      sport: row.sport as Sport,
-      eventId: row.eventId,
-      status: row.status as ProviderSyncRun['status'],
-      startedAt: row.startedAt,
-      completedAt: row.completedAt,
-      createdAt: row.createdAt,
-      payload: normalizeSyncRunPayload(row.payloadJson),
-    }));
+    return runs.map(mapProviderSyncRunRow);
   }
 
   async updateProviderConfig(
@@ -878,13 +688,11 @@ export class ProviderService {
     }
 
     const submittedAt = new Date();
-    const syncRuns = await this.createManualSyncRunSubmissions({
-      sport: normalizedScope.sport,
-      eventId: null,
-      requestedFeeds: normalizedScope.feeds,
+    const syncRuns = await this.syncRunLedger.createSubmissions({
+      normalizedRequest,
       providerId: provider.providerId,
-      requestContext: buildNormalizedSyncRequestContext(normalizedRequest),
       submittedAt,
+      runType: 'MANUAL_SPORT_SYNC',
     });
 
     setImmediate(() => {
@@ -978,13 +786,11 @@ export class ProviderService {
       providerId: provider.providerId,
       rootAdminUserId,
     }, 'Submitting manual event sync');
-    const syncRuns = await this.createManualSyncRunSubmissions({
-      sport: normalizedScope.sport,
-      eventId: normalizedScope.eventId,
-      requestedFeeds: normalizedScope.feeds,
+    const syncRuns = await this.syncRunLedger.createSubmissions({
+      normalizedRequest,
       providerId: provider.providerId,
-      requestContext: buildNormalizedSyncRequestContext(normalizedRequest),
       submittedAt,
+      runType: 'MANUAL_EVENT_SYNC',
     });
 
     setImmediate(() => {
@@ -1029,87 +835,6 @@ export class ProviderService {
     };
   }
 
-  private async createManualSyncRunSubmissions(input: {
-    sport: Sport;
-    eventId: string | null;
-    requestedFeeds: IngestionFeedType[];
-    providerId: string;
-    requestContext: Record<string, unknown>;
-    submittedAt: Date;
-  }): Promise<ProviderSyncRun[]> {
-    const runs = await Promise.all(
-      input.requestedFeeds.map(async (feed) => {
-        const payloadJson = {
-          runType: input.eventId ? 'MANUAL_EVENT_SYNC' : 'MANUAL_SPORT_SYNC',
-          requestedFeeds: input.requestedFeeds,
-          requestedFeed: feed,
-          requestPayload: {
-            sport: input.sport,
-            eventId: input.eventId,
-            ...input.requestContext,
-          },
-          providerPayload: {
-            operation: feed,
-            rawCaptured: false,
-            rawTruncated: false,
-          },
-          stats: {},
-          outcome: buildSyncOutcome({
-            status: 'SUBMITTED',
-            summary: buildSubmittedSyncRunDetail(feed, input.sport, input.eventId),
-          }),
-          detail: buildSubmittedSyncRunDetail(feed, input.sport, input.eventId),
-        };
-        const row = await this.prisma.providerSyncRun.create({
-          data: {
-            providerId: input.providerId,
-            sport: input.sport,
-            eventId: input.eventId,
-            status: 'SUBMITTED',
-            startedAt: null,
-            completedAt: null,
-            payloadJson,
-            createdAt: input.submittedAt,
-          },
-        });
-
-        return {
-          id: row.id,
-          providerId: row.providerId,
-          sport: row.sport as Sport,
-          eventId: row.eventId,
-          status: row.status as ProviderSyncRun['status'],
-          startedAt: row.startedAt,
-          completedAt: row.completedAt,
-          createdAt: row.createdAt,
-          payload: normalizeSyncRunPayload(row.payloadJson),
-        };
-      }),
-    );
-
-    return runs;
-  }
-
-  private async updateSyncRun(
-    syncRunId: string,
-    update: {
-      status: ProviderSyncRun['status'];
-      startedAt?: Date | null;
-      completedAt?: Date | null;
-      payload: Record<string, unknown>;
-    },
-  ): Promise<void> {
-    await this.prisma.providerSyncRun.update({
-      where: { id: syncRunId },
-      data: {
-        status: update.status,
-        startedAt: update.startedAt,
-        completedAt: update.completedAt,
-        payloadJson: update.payload as Prisma.InputJsonValue,
-      },
-    });
-  }
-
   private async executeSubmittedSportSync(input: {
     normalizedScope: NormalizedSportSyncScope;
     syncRuns: ProviderSyncRun[];
@@ -1124,18 +849,23 @@ export class ProviderService {
     for (const syncRun of input.syncRuns) {
       const requestedFeed = syncRun.payload.requestedFeed;
       if (!isSportSyncFeedType(requestedFeed)) {
-        await this.failSubmittedSyncRun(syncRun, new Error(`Unsupported sport sync feed: ${String(requestedFeed)}`));
+        await this.syncRunLedger.failSubmittedRun(syncRun, new Error(`Unsupported sport sync feed: ${String(requestedFeed)}`));
         continue;
       }
 
-      await this.executeSubmittedFeedRun(syncRun, () =>
-        this.scheduler!.runSportSync({
-          sport: input.normalizedScope.sport,
-          feeds: [requestedFeed],
-          from: input.normalizedScope.effectiveWindow.from,
-          to: input.normalizedScope.effectiveWindow.to,
-        }),
-      );
+      try {
+        await this.syncRunLedger.executeFeedRun(syncRun, () =>
+          this.scheduler!.runSportSync({
+            sport: input.normalizedScope.sport,
+            feeds: [requestedFeed],
+            from: input.normalizedScope.effectiveWindow.from,
+            to: input.normalizedScope.effectiveWindow.to,
+          }),
+        );
+      } catch {
+        // The ledger already marks the submitted run as failed; keep the
+        // asynchronous manual submission worker moving through remaining feeds.
+      }
     }
   }
 
@@ -1153,156 +883,24 @@ export class ProviderService {
     for (const syncRun of input.syncRuns) {
       const requestedFeed = syncRun.payload.requestedFeed;
       if (!isEventSyncFeedType(requestedFeed)) {
-        await this.failSubmittedSyncRun(syncRun, new Error(`Unsupported event sync feed: ${String(requestedFeed)}`));
+        await this.syncRunLedger.failSubmittedRun(syncRun, new Error(`Unsupported event sync feed: ${String(requestedFeed)}`));
         continue;
       }
 
-      await this.executeSubmittedFeedRun(syncRun, () =>
-        this.scheduler!.runEventSync({
-          sport: input.normalizedScope.sport,
-          eventId: input.normalizedScope.eventId,
-          feeds: [requestedFeed],
-          mockEventState: input.normalizedScope.mockEventState,
-        }),
-      );
-    }
-  }
-
-  private async executeSubmittedFeedRun(
-    syncRun: ProviderSyncRun,
-    run: () => Promise<IngestionJobRecord[]>,
-  ): Promise<void> {
-    const startedAt = new Date();
-    const requestedFeed = syncRun.payload.requestedFeed;
-    const startedPayload = {
-      ...syncRun.payload,
-      detail: `Started ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
-      providerPayload: {
-        operation: requestedFeed,
-        rawCaptured: false,
-        rawTruncated: false,
-      },
-      outcome: buildSyncOutcome({
-        status: 'IN_PROGRESS',
-        summary: `Started ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
-      }),
-    };
-
-    await this.updateSyncRun(syncRun.id, {
-      status: 'IN_PROGRESS',
-      startedAt,
-      completedAt: null,
-      payload: startedPayload,
-    });
-    this.logger?.debug({
-      syncRunId: syncRun.id,
-      providerId: syncRun.providerId,
-      sport: syncRun.sport,
-      eventId: syncRun.eventId,
-      requestedFeed,
-      startedAt: startedAt.toISOString(),
-    }, 'Manual sync feed run started');
-
-    try {
-      const [job] = await run();
-      const completedAt = new Date();
-      const status: ProviderSyncRun['status'] = job.status === 'FAILED' ? 'FAILED' : 'COMPLETED';
-      const detail = buildManualSyncRunDetail(job, syncRun.eventId);
-      const payload = {
-        ...startedPayload,
-        detail,
-        jobPayload: toSerializableJob(job),
-        providerPayload: job.providerPayload ?? startedPayload.providerPayload,
-        outcome: buildSyncOutcome({
-          status,
-          summary: detail,
-          warnings: job.warnings,
-          errors: job.errors,
-        }),
-        stats: job.stats ?? {},
-        recordsProcessed: job.recordsProcessed,
-        errors: job.errors,
-      };
-
-      await this.updateSyncRun(syncRun.id, {
-        status,
-        startedAt,
-        completedAt,
-        payload,
-      });
-
-      if (status === 'FAILED') {
-        this.logger?.error(
-          {
-            syncRunId: syncRun.id,
-            providerId: syncRun.providerId,
-            sport: syncRun.sport,
-            eventId: syncRun.eventId,
-            job: toSerializableJob(job),
-          },
-          'Manual sync feed run failed.',
+      try {
+        await this.syncRunLedger.executeFeedRun(syncRun, () =>
+          this.scheduler!.runEventSync({
+            sport: input.normalizedScope.sport,
+            eventId: input.normalizedScope.eventId,
+            feeds: [requestedFeed],
+            mockEventState: input.normalizedScope.mockEventState,
+          }),
         );
-      } else {
-        this.logger?.info(
-          {
-            syncRunId: syncRun.id,
-            providerId: syncRun.providerId,
-            sport: syncRun.sport,
-            eventId: syncRun.eventId,
-            job: toSerializableJob(job),
-          },
-          'Manual sync feed run completed.',
-        );
+      } catch {
+        // The ledger already marks the submitted run as failed; keep the
+        // asynchronous manual submission worker moving through remaining feeds.
       }
-    } catch (error) {
-      await this.failSubmittedSyncRun(syncRun, error, startedAt, startedPayload);
     }
-  }
-
-  private async failSubmittedSyncRun(
-    syncRun: ProviderSyncRun,
-    error: unknown,
-    startedAt: Date | null = new Date(),
-    payload: Record<string, unknown> = syncRun.payload,
-  ): Promise<void> {
-    const requestedFeed = syncRun.payload.requestedFeed;
-    const completedAt = new Date();
-    const updatedPayload = {
-      ...payload,
-      detail: `Failed ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
-      providerPayload: payload.providerPayload ?? {
-        operation: requestedFeed,
-        rawCaptured: false,
-        rawTruncated: false,
-      },
-      outcome: buildSyncOutcome({
-        status: 'FAILED',
-        summary: `Failed ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
-        errors: 1,
-      }),
-      errors: 1,
-      failurePayload: {
-        error: toJsonSafeErrorPayload(error),
-      },
-    };
-
-    await this.updateSyncRun(syncRun.id, {
-      status: 'FAILED',
-      startedAt,
-      completedAt,
-      payload: updatedPayload,
-    });
-
-    this.logger?.error(
-      {
-        syncRunId: syncRun.id,
-        providerId: syncRun.providerId,
-        sport: syncRun.sport,
-        eventId: syncRun.eventId,
-        error: toJsonSafeErrorPayload(error),
-      },
-      'Manual sync feed run failed unexpectedly.',
-    );
   }
 
   async getIngestionDashboard(): Promise<IngestionDashboard> {

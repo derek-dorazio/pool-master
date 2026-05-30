@@ -13959,11 +13959,11 @@ export type AdminListProviderSyncRunsResponses = {
              */
             payload: {
                 /**
-                 * Sync run source, such as manual sport sync or manual event sync.
+                 * Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.
                  */
                 runType?: string;
                 /**
-                 * Feeds requested by the root-admin action.
+                 * Feeds represented by the originating manual or scheduled sync request.
                  */
                 requestedFeeds?: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
                 /**
@@ -13971,7 +13971,7 @@ export type AdminListProviderSyncRunsResponses = {
                  */
                 requestedFeed?: 'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
                 /**
-                 * Root-admin request context that submitted the sync run.
+                 * Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design.
                  */
                 requestPayload?: {
                     [key: string]: unknown;
@@ -14215,11 +14215,11 @@ export type AdminPrepareSportSyncResponses = {
              */
             payload: {
                 /**
-                 * Sync run source, such as manual sport sync or manual event sync.
+                 * Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.
                  */
                 runType?: string;
                 /**
-                 * Feeds requested by the root-admin action.
+                 * Feeds represented by the originating manual or scheduled sync request.
                  */
                 requestedFeeds?: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
                 /**
@@ -14227,7 +14227,7 @@ export type AdminPrepareSportSyncResponses = {
                  */
                 requestedFeed?: 'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
                 /**
-                 * Root-admin request context that submitted the sync run.
+                 * Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design.
                  */
                 requestPayload?: {
                     [key: string]: unknown;
@@ -14468,11 +14468,11 @@ export type AdminSyncProviderEventDataResponses = {
              */
             payload: {
                 /**
-                 * Sync run source, such as manual sport sync or manual event sync.
+                 * Sync run source, such as manual/scheduled sport sync or manual/scheduled event sync.
                  */
                 runType?: string;
                 /**
-                 * Feeds requested by the root-admin action.
+                 * Feeds represented by the originating manual or scheduled sync request.
                  */
                 requestedFeeds?: Array<'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS'>;
                 /**
@@ -14480,7 +14480,7 @@ export type AdminSyncProviderEventDataResponses = {
                  */
                 requestedFeed?: 'EVENTSCHEDULE' | 'EVENTPARTICIPANTS' | 'PARTICIPANTRANKINGS' | 'EVENTLIVESCORES' | 'EVENTRESULTS';
                 /**
-                 * Root-admin request context that submitted the sync run.
+                 * Normalized request context that submitted the sync run, including source and actor diagnostics. Sport-scope runs include requested/effective window fields; event-scope runs omit window fields by design.
                  */
                 requestPayload?: {
                     [key: string]: unknown;
