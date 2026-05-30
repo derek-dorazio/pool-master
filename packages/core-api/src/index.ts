@@ -55,8 +55,6 @@ import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './
 import type { IngestionCallbacks, IngestionJobRecord } from './modules/ingestion/core';
 import type { ProviderRanking, SportEvent, SportEventDetail } from './modules/ingestion/core';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
-import { OddsApiAdapter } from './modules/ingestion/adapters';
-import { ingestionModule } from './modules/ingestion/routes';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
@@ -75,7 +73,6 @@ export function buildApp() {
 
   const registry = new ProviderRegistry();
   registerConfiguredProviders(registry, process.env, app.log);
-  const oddsAdapter = new OddsApiAdapter();
   const mailDelivery = createMailDeliveryProvider(
     readMailDeliveryConfig(process.env),
     app.log,
@@ -271,17 +268,6 @@ export function buildApp() {
   app.register(notificationsModule, {
     prefix: '/api/v1',
     prisma,
-  });
-
-  // =========================================================================
-  // Ingestion module
-  // =========================================================================
-
-  app.register(ingestionModule, {
-    prefix: '/api/v1/ingestion',
-    registry,
-    scheduler: ingestionScheduler,
-    oddsAdapter,
   });
 
   // =========================================================================
