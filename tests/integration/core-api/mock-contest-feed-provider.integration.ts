@@ -3,7 +3,10 @@ import { IngestionPersistence } from '../../../packages/core-api/src/modules/ing
 import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import type { IngestionScheduleConfig } from '../../../packages/shared/dto/config.dto';
+import { createScheduledEventReader } from '../../../packages/core-api/src/modules/ingestion/core/scheduled-event-reader';
 import { ProviderService } from '../../../packages/core-api/src/modules/admin/provider-service';
+import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import {
   cleanupTestData,
   createTestUser,
@@ -15,6 +18,17 @@ import { startMockContestFeedProvider } from '../mock-contest-feed-provider-help
 
 const providerId = 'mock-contest-feed';
 const eventExternalId = 'golf-masters-2026';
+const syncVerificationNow = new Date('2026-05-30T12:00:00.000Z');
+const syncVerificationConfig: IngestionScheduleConfig = {
+  scheduledSports: [Sport.GOLF],
+  healthCheck: { enabled: true, intervalMinutes: 5 },
+  eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
+  eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
+  participantRankings: { enabled: true, intervalMinutes: 1440 },
+  eventLiveScores: { enabled: false, intervalSeconds: 30 },
+  eventResults: { enabled: false, intervalMinutes: 30 },
+  perSportOverrides: {},
+};
 
 let mockProvider: Awaited<ReturnType<typeof startMockContestFeedProvider>>;
 let importedParticipantExternalIds: string[] = [];
@@ -81,6 +95,68 @@ async function cleanupMockProviderImportData(): Promise<void> {
     });
   }
   importedParticipantExternalIds = [];
+}
+
+async function waitForProviderSyncRuns(ids: string[]) {
+  const idOrder = new Map(ids.map((id, index) => [id, index]));
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const rows = await getPrisma().providerSyncRun.findMany({
+      where: { id: { in: ids } },
+    });
+    const terminalRows = rows.filter((row) => row.status === 'COMPLETED' || row.status === 'FAILED');
+    if (rows.length === ids.length && terminalRows.length === ids.length) {
+      const failedRun = rows.find((row) => row.status === 'FAILED');
+      if (failedRun) {
+        throw new Error(`Provider sync run ${failedRun.id} failed: ${JSON.stringify(failedRun.payloadJson)}`);
+      }
+      return rows.sort((left, right) => (idOrder.get(left.id) ?? 0) - (idOrder.get(right.id) ?? 0));
+    }
+    await new Promise((resolve) => {
+      setTimeout(resolve, 25);
+    });
+  }
+
+  throw new Error(`Timed out waiting for provider sync runs: ${ids.join(', ')}`);
+}
+
+async function waitForScheduledProviderSyncRuns(providerIdToFind: string, expectedRunCount: number) {
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    const rows = await getPrisma().providerSyncRun.findMany({
+      where: { providerId: providerIdToFind },
+    });
+    const scheduledRows = rows.filter((run) =>
+      toRecord(toRecord(run.payloadJson)?.requestPayload)?.source === 'SCHEDULED',
+    );
+    const terminalRows = scheduledRows.filter((row) => row.status === 'COMPLETED' || row.status === 'FAILED');
+    if (scheduledRows.length >= expectedRunCount && terminalRows.length >= expectedRunCount) {
+      const failedRun = scheduledRows.find((row) => row.status === 'FAILED');
+      if (failedRun) {
+        throw new Error(`Scheduled provider sync run ${failedRun.id} failed: ${JSON.stringify(failedRun.payloadJson)}`);
+      }
+      return scheduledRows;
+    }
+    await new Promise((resolve) => {
+      setTimeout(resolve, 25);
+    });
+  }
+
+  throw new Error(`Timed out waiting for ${expectedRunCount} scheduled provider sync runs for ${providerIdToFind}`);
+}
+
+function providerPayloadPaths(payloadJson: unknown): string[] {
+  const payload = toRecord(payloadJson);
+  const providerPayload = toRecord(payload?.providerPayload);
+  const rawItems = Array.isArray(providerPayload?.raw) ? providerPayload.raw : [];
+  return rawItems.flatMap((item) => {
+    const path = toRecord(item)?.path;
+    return typeof path === 'string' ? [path] : [];
+  });
+}
+
+function toRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
 }
 
 beforeAll(async () => {
@@ -295,6 +371,208 @@ describe('mock contest feed provider event-first verification', () => {
     expect(scottieEventParticipant.worldRanking).toBe(1);
     expect(scottieEventParticipant.seedNumber).toBe(1);
     expect(scottieEventParticipant.oddsToWin?.toNumber()).toBeGreaterThan(0);
+  });
+
+  it('pool-master-rop.68.1.7 verifies manual and scheduled Golf sync workflow with scoped payload diagnostics', async () => {
+    const prisma = getPrisma();
+    const provider = new MockContestFeedAdapter(mockProvider.baseUrl);
+    const registry = new ProviderRegistry();
+    registry.register(Sport.GOLF, provider, 'PRIMARY');
+    const persistence = new IngestionPersistence(prisma);
+    const syncRunLedger = new ProviderSyncRunLedger(prisma);
+    const eventReader = createScheduledEventReader({ prisma, registry });
+    const configReader = {
+      getConfig: async () => syncVerificationConfig,
+      getPerSportConfig: async () => syncVerificationConfig,
+    };
+    const completedJobs: Array<{ jobType: string; eventExternalId?: string }> = [];
+    const scheduler = new IngestionScheduler(registry, {
+      onEvents: async (events) => (await persistence.persistEventsWithDiagnostics(events)).writeDiagnostics,
+      onEventDetail: async (detail) => (await persistence.persistEventDetailWithDiagnostics(detail)).writeDiagnostics,
+      onRankings: async (rankings) => (await persistence.persistRankingsWithDiagnostics(rankings)).writeDiagnostics,
+      onLiveScores: async () => undefined,
+      onJobComplete: async (job) => {
+        completedJobs.push({
+          jobType: job.jobType,
+          eventExternalId: job.eventExternalId,
+        });
+      },
+    }, undefined, {
+      configReader,
+      eventReader,
+      now: () => syncVerificationNow,
+      syncRunLedger,
+    });
+    const rootAdmin = await createTestUser({
+      displayName: 'Golf Sync Verification Root Admin',
+      isRootAdmin: true,
+    });
+    const providerService = new ProviderService(
+      prisma,
+      registry,
+      scheduler,
+      undefined,
+      configReader,
+      undefined,
+      undefined,
+      undefined,
+      syncRunLedger,
+    );
+
+    const manualSchedule = await providerService.prepareSportSync(
+      {
+        sport: Sport.GOLF,
+        feeds: ['EVENTSCHEDULE'],
+        from: new Date('2026-04-01T00:00:00.000Z'),
+        to: new Date('2026-06-30T23:59:59.999Z'),
+      },
+      rootAdmin.user.id,
+      rootAdmin.user.email,
+    );
+    const manualScheduleRuns = await waitForProviderSyncRuns(manualSchedule.syncRuns.map((run) => run.id));
+    expect(manualScheduleRuns).toHaveLength(1);
+    expect(manualScheduleRuns[0].payloadJson).toEqual(expect.objectContaining({
+      requestedFeed: 'EVENTSCHEDULE',
+      jobPayload: expect.objectContaining({ status: 'COMPLETED' }),
+      writeDiagnostics: expect.objectContaining({
+        summary: expect.objectContaining({
+          created: expect.any(Number),
+        }),
+      }),
+    }));
+
+    const eligibleEventIds = await eventReader.listEventIdsForFeed({
+      sport: Sport.GOLF,
+      feed: 'EVENTPARTICIPANTS',
+      from: syncVerificationNow,
+      to: new Date(syncVerificationNow.getTime() + 14 * 24 * 60 * 60 * 1000),
+      now: syncVerificationNow,
+    });
+    expect(eligibleEventIds).toEqual([
+      'golf-genesis-scottish-open-2026',
+      'golf-relative-weekend-20260604',
+    ]);
+
+    const manualField = await providerService.syncEventData(
+      {
+        sport: Sport.GOLF,
+        eventId: eventExternalId,
+        feeds: ['EVENTPARTICIPANTS'],
+      },
+      rootAdmin.user.id,
+      rootAdmin.user.email,
+    );
+    await waitForProviderSyncRuns(manualField.syncRuns.map((run) => run.id));
+
+    const manualRankings = await providerService.prepareSportSync(
+      {
+        sport: Sport.GOLF,
+        feeds: ['PARTICIPANTRANKINGS'],
+      },
+      rootAdmin.user.id,
+      rootAdmin.user.email,
+    );
+    await waitForProviderSyncRuns(manualRankings.syncRuns.map((run) => run.id));
+
+    const manualFieldAfterRankings = await providerService.syncEventData(
+      {
+        sport: Sport.GOLF,
+        eventId: eventExternalId,
+        feeds: ['EVENTPARTICIPANTS'],
+      },
+      rootAdmin.user.id,
+      rootAdmin.user.email,
+    );
+    const fieldRuns = await waitForProviderSyncRuns(manualFieldAfterRankings.syncRuns.map((run) => run.id));
+    expect(fieldRuns[0].payloadJson).toEqual(expect.objectContaining({
+      requestedFeed: 'EVENTPARTICIPANTS',
+      jobPayload: expect.objectContaining({ status: 'COMPLETED' }),
+      writeDiagnostics: expect.objectContaining({
+        summary: expect.objectContaining({
+          total: 80,
+        }),
+        rows: expect.arrayContaining([
+          expect.objectContaining({
+            entityType: 'SportEventParticipant',
+            externalId: eventExternalId,
+            participantExternalId: 'golfer-01',
+          }),
+        ]),
+      }),
+    }));
+
+    scheduler.start();
+    let scheduledRuns: Awaited<ReturnType<typeof waitForScheduledProviderSyncRuns>>;
+    try {
+      scheduledRuns = await waitForScheduledProviderSyncRuns(providerId, 4);
+    } finally {
+      scheduler.stop();
+    }
+
+    const persistedEvent = await prisma.sportEvent.findUniqueOrThrow({
+      where: {
+        providerId_externalId: {
+          providerId,
+          externalId: eventExternalId,
+        },
+      },
+    });
+    const scottieMapping = await prisma.participantProviderMapping.findUniqueOrThrow({
+      where: {
+        providerId_externalId: {
+          providerId,
+          externalId: 'golfer-01',
+        },
+      },
+    });
+    const scottieEventParticipant = await prisma.sportEventParticipant.findUniqueOrThrow({
+      where: {
+        sportEventId_participantId: {
+          sportEventId: persistedEvent.id,
+          participantId: scottieMapping.participantId,
+        },
+      },
+    });
+    expect(scottieEventParticipant.worldRanking).toBe(1);
+    expect(scottieEventParticipant.oddsToWin?.toNumber()).toBeGreaterThan(0);
+
+    const scheduledRunPayloads = scheduledRuns.map((run) => toRecord(run.payloadJson));
+    expect(scheduledRuns.map((run) => run.eventId).filter(Boolean).sort()).toEqual([
+      'golf-genesis-scottish-open-2026',
+      'golf-relative-weekend-20260604',
+    ].sort());
+    expect(scheduledRunPayloads.map((payload) => payload?.requestedFeed).sort()).toEqual([
+      'EVENTSCHEDULE',
+      'EVENTPARTICIPANTS',
+      'EVENTPARTICIPANTS',
+      'PARTICIPANTRANKINGS',
+    ].sort());
+
+    const scheduledPayloadPaths = scheduledRuns
+      .flatMap((run) => providerPayloadPaths(run.payloadJson));
+    expect(scheduledPayloadPaths).toEqual(expect.arrayContaining([
+      '/v1/scenarios',
+      '/v1/scenarios/golf-major-2026/events',
+      '/v1/scenarios/golf-major-2026/events/golf-masters-2026/detail',
+      '/v1/scenarios/golf-major-2026/events/golf-genesis-scottish-open-2026/detail',
+      '/v1/scenarios/golf-relative-today/events/golf-relative-weekend-20260604/detail',
+    ]));
+    expect(scheduledPayloadPaths).not.toEqual(expect.arrayContaining([
+      '/v1/scenarios/tennis-grand-slam-2026/events',
+      '/v1/scenarios/ncaa-team-tournament-2026/events',
+    ]));
+
+    const persistedProviderSports = await prisma.sportEvent.findMany({
+      where: { providerId },
+      distinct: ['sport'],
+      select: { sport: true },
+    });
+    expect(persistedProviderSports.map((row) => row.sport)).toEqual(['GOLF']);
+    expect(completedJobs).toEqual(expect.arrayContaining([
+      expect.objectContaining({ jobType: 'EVENT_SCHEDULE_SYNC' }),
+      expect.objectContaining({ jobType: 'PARTICIPANT_RANKINGS_SYNC' }),
+      expect.objectContaining({ jobType: 'EVENT_PARTICIPANTS_SYNC', eventExternalId }),
+    ]));
   });
 
   it('keeps startup-style schedule sync shallow until manual re-ingest loads contest-ready event detail', async () => {
