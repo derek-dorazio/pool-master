@@ -862,7 +862,13 @@ export class ProviderService {
             to: input.normalizedScope.effectiveWindow.to,
           }),
         );
-      } catch {
+      } catch (error) {
+        this.logger?.error({
+          syncRunId: syncRun.id,
+          sport: input.normalizedScope.sport,
+          requestedFeed,
+          error,
+        }, 'Manual sport sync feed failed after provider sync run was marked failed');
         // The ledger already marks the submitted run as failed; keep the
         // asynchronous manual submission worker moving through remaining feeds.
       }
@@ -896,7 +902,14 @@ export class ProviderService {
             mockEventState: input.normalizedScope.mockEventState,
           }),
         );
-      } catch {
+      } catch (error) {
+        this.logger?.error({
+          syncRunId: syncRun.id,
+          sport: input.normalizedScope.sport,
+          eventId: input.normalizedScope.eventId,
+          requestedFeed,
+          error,
+        }, 'Manual event sync feed failed after provider sync run was marked failed');
         // The ledger already marks the submitted run as failed; keep the
         // asynchronous manual submission worker moving through remaining feeds.
       }

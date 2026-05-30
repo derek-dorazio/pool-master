@@ -29,6 +29,7 @@ import type {
 import type {
   ProviderEventSyncOptions,
   ProviderPayloadCapture,
+  ProviderPayloadCaptureSession,
   ProviderRanking,
   SportDataProvider,
   SportEvent,
@@ -440,15 +441,19 @@ export class IngestionScheduler {
           providerId: provider.providerId,
           status: health.status,
         }, 'Completed provider health check');
-      } catch {
+      } catch (error) {
+        const failure = toIngestionFailureLog(error);
         this.registry.updateHealth(provider.providerId, {
           providerId: provider.providerId,
           status: 'DOWN',
           errorRateLastHour: 1,
           latencyMsP95: 0,
-          message: 'Health check threw exception',
+          message: `Health check failed: ${failure.errorMessage}`,
         });
-        this.logger?.error({ providerId: provider.providerId }, 'Provider health check threw exception');
+        this.logger?.error({
+          providerId: provider.providerId,
+          ...failure,
+        }, 'Provider health check threw exception');
       }
     }
   }
@@ -948,6 +953,8 @@ export class IngestionScheduler {
       errorLog: [],
     };
 
+    const payloadCaptureSession = createProviderPayloadCaptureSession(provider);
+
     try {
       this.logger?.debug({
         jobType,
@@ -956,10 +963,12 @@ export class IngestionScheduler {
         eventExternalId: eventExternalId ?? null,
         startedAt: job.startedAt?.toISOString() ?? null,
       }, 'Ingestion job started');
-      if (supportsProviderPayloadDiagnostics(provider)) {
+      if (supportsProviderPayloadDiagnostics(provider) && !payloadCaptureSession) {
         provider.clearProviderPayloads();
       }
-      const result = await work();
+      const result = payloadCaptureSession
+        ? await payloadCaptureSession.run(work)
+        : await work();
       if (typeof result === 'number') {
         job.recordsProcessed = result;
       } else {
@@ -967,11 +976,11 @@ export class IngestionScheduler {
         job.stats = result.stats;
         job.warnings = result.warnings;
       }
-      job.providerPayload = buildProviderPayload(feed, provider);
+      job.providerPayload = buildProviderPayload(feed, provider, payloadCaptureSession);
       job.status = 'COMPLETED';
       job.completedAt = new Date();
     } catch (err) {
-      job.providerPayload = buildProviderPayload(feed, provider);
+      job.providerPayload = buildProviderPayload(feed, provider, payloadCaptureSession);
       const failure = toIngestionFailureLog(err);
       this.logger?.error({
         jobType,
@@ -1209,7 +1218,21 @@ function createUnsupportedMockEventStateJob(
 function buildProviderPayload(
   operation: IngestionFeedType,
   provider: SportDataProvider,
+  captureSession?: ProviderPayloadCaptureSession | null,
 ): IngestionJobProviderPayload {
+  if (captureSession) {
+    const raw = captureSession.consumeProviderPayloads();
+    const payload: IngestionJobProviderPayload = {
+      operation,
+      rawCaptured: raw.length > 0,
+      rawTruncated: false,
+    };
+    if (raw.length > 0) {
+      payload.raw = raw;
+    }
+    return payload;
+  }
+
   if (!supportsProviderPayloadDiagnostics(provider)) {
     return {
       operation,
@@ -1228,6 +1251,19 @@ function buildProviderPayload(
     payload.raw = raw;
   }
   return payload;
+}
+
+function createProviderPayloadCaptureSession(
+  provider: SportDataProvider,
+): ProviderPayloadCaptureSession | null {
+  if (
+    supportsProviderPayloadDiagnostics(provider)
+    && typeof provider.beginProviderPayloadCapture === 'function'
+  ) {
+    return provider.beginProviderPayloadCapture();
+  }
+
+  return null;
 }
 
 function buildParticipantSyncWarnings(
