@@ -13,6 +13,7 @@ import type { Sport } from '@poolmaster/shared/domain';
 import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
+import type { IngestionFeedType } from './sync-orchestrator';
 import type {
   ProviderEventSyncOptions,
   ProviderPayloadCapture,
@@ -24,12 +25,7 @@ import type {
 import { supportsMockEventStateControls, supportsProviderPayloadDiagnostics } from './provider-interface';
 import type { LiveScoreResult, MockEventState } from '@poolmaster/shared/dto';
 
-export type IngestionFeedType =
-  | 'EVENTSCHEDULE'
-  | 'EVENTPARTICIPANTS'
-  | 'PARTICIPANTRANKINGS'
-  | 'EVENTLIVESCORES'
-  | 'EVENTRESULTS';
+export type { IngestionFeedType } from './sync-orchestrator';
 
 export type JobType =
   | 'EVENT_SCHEDULE_SYNC'

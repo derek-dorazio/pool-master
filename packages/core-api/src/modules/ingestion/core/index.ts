@@ -16,7 +16,6 @@ export { IngestionScheduler } from './ingestion-scheduler';
 export type {
   EventSyncRequest,
   IngestionCallbacks,
-  IngestionFeedType,
   IngestionJobRecord,
   JobType,
   SportSyncRequest,
@@ -27,3 +26,27 @@ export {
   LiveScorePersistenceUnsupportedError,
 } from './score-publisher';
 export type { LiveScorePublisherDeps } from './score-publisher';
+export {
+  EVENT_SYNC_FEEDS,
+  SPORT_SYNC_FEEDS,
+  SyncOrchestrator,
+  SyncRequestValidationError,
+  normalizeSyncRequest,
+} from './sync-orchestrator';
+export type {
+  EventSyncFeed,
+  IngestionFeedType,
+  NormalizedEventSyncScope,
+  NormalizedSportSyncScope,
+  NormalizedSyncRequest,
+  NormalizedSyncScope,
+  RootAdminSyncActor,
+  SportSyncFeed,
+  SyncActorContext,
+  SyncEffectiveWindow,
+  SyncOrchestratorRequest,
+  SyncRequestSource,
+  SyncRequestValidationCode,
+  SyncRequestedWindow,
+  SystemSyncActor,
+} from './sync-orchestrator';
