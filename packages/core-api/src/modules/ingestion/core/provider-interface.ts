@@ -58,9 +58,15 @@ export interface ProviderPayloadCapture {
   raw: unknown;
 }
 
+export interface ProviderPayloadCaptureSession {
+  run<T>(work: () => Promise<T>): Promise<T>;
+  consumeProviderPayloads(): ProviderPayloadCapture[];
+}
+
 export interface ProviderPayloadDiagnostics {
   clearProviderPayloads(): void;
   consumeProviderPayloads(): ProviderPayloadCapture[];
+  beginProviderPayloadCapture?(): ProviderPayloadCaptureSession;
 }
 
 export function supportsProviderPayloadDiagnostics(

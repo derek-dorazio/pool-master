@@ -116,6 +116,9 @@ export async function publishLiveScoreUpdate(
   // 4. Emit typed bus event. sportEventId carries the resolved internal id
   // so consumers can read the persisted detail rows by (sportEventId, category)
   // without re-resolving from externalEventId + providerId.
+  // Subscriber failures are treated as live-score ingestion failures. The
+  // polling run is idempotent, so the next poll can retry after the failed
+  // provider_sync_runs row captures the error context.
   const persistedEvent: LiveScorePersistedEvent = {
     id: randomUUID(),
     type: 'live_score.persisted',

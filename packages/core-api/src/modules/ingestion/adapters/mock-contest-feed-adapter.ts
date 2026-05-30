@@ -1,5 +1,6 @@
 import { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult, GolfRoundUpdate } from '@poolmaster/shared/dto';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import type {
   DateRange,
   ProviderEventSyncOptions,
@@ -8,6 +9,7 @@ import type {
   ProviderParticipant,
   ProviderParticipantResult,
   ProviderPayloadCapture,
+  ProviderPayloadCaptureSession,
   ProviderPayloadDiagnostics,
   ProviderRanking,
   SportDataProvider,
@@ -49,6 +51,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
   readonly providerId = 'mock-contest-feed';
   readonly providerName = 'Mock Contest Feed Provider';
   readonly sportsCovered = [Sport.GOLF, Sport.TENNIS, Sport.NCAA_BASKETBALL] as Sport[];
+  private readonly providerPayloadCaptureStorage = new AsyncLocalStorage<ProviderPayloadCapture[]>();
   private providerPayloads: ProviderPayloadCapture[] = [];
 
   constructor(private readonly baseUrl: string) {}
@@ -61,6 +64,19 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     const payloads = this.providerPayloads;
     this.providerPayloads = [];
     return payloads;
+  }
+
+  beginProviderPayloadCapture(): ProviderPayloadCaptureSession {
+    const providerPayloads: ProviderPayloadCapture[] = [];
+    return {
+      run: async <T>(work: () => Promise<T>): Promise<T> =>
+        this.providerPayloadCaptureStorage.run(providerPayloads, work),
+      consumeProviderPayloads: (): ProviderPayloadCapture[] => {
+        const payloads = [...providerPayloads];
+        providerPayloads.length = 0;
+        return payloads;
+      },
+    };
   }
 
   async getUpcomingEvents(sport: Sport, dateRange: DateRange): Promise<SportEvent[]> {
@@ -327,13 +343,23 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     }
 
     const raw = (await response.json()) as T;
-    this.providerPayloads.push({
+    this.recordProviderPayload({
       operation: 'mock-contest-feed.request',
       path,
       capturedAt: new Date().toISOString(),
       raw,
     });
     return raw;
+  }
+
+  private recordProviderPayload(payload: ProviderPayloadCapture): void {
+    const activeCapture = this.providerPayloadCaptureStorage.getStore();
+    if (activeCapture) {
+      activeCapture.push(payload);
+      return;
+    }
+
+    this.providerPayloads.push(payload);
   }
 }
 

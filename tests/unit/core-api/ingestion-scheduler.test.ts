@@ -6,10 +6,14 @@
  */
 
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
-import type { IngestionCallbacks } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import type { IngestionCallbacks, SportSyncRequest } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { SyncOrchestratorRequest } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import type {
+  DateRange,
+  ProviderPayloadCapture,
+  ProviderPayloadDiagnostics,
   SportDataProvider,
   SportEvent,
   SportEventDetail,
@@ -81,6 +85,99 @@ function createSyncOrchestratorSpy(now: Date) {
     normalizeRequest: jest.fn((request: SyncOrchestratorRequest) =>
       actualOrchestrator.normalizeRequest(request)),
   };
+}
+
+class DeferredPayloadCaptureProvider implements SportDataProvider, ProviderPayloadDiagnostics {
+  readonly providerId = 'deferred-provider';
+  readonly providerName = 'Deferred Provider';
+  readonly sportsCovered = ['GOLF' as Sport];
+  private readonly captureStorage = new AsyncLocalStorage<ProviderPayloadCapture[]>();
+  private legacyPayloads: ProviderPayloadCapture[] = [];
+  private callCount = 0;
+  private readonly callResolvers: Array<() => void> = [];
+  private readonly releaseResolvers = new Map<string, () => void>();
+
+  clearProviderPayloads(): void {
+    this.legacyPayloads = [];
+  }
+
+  consumeProviderPayloads(): ProviderPayloadCapture[] {
+    const payloads = this.legacyPayloads;
+    this.legacyPayloads = [];
+    return payloads;
+  }
+
+  beginProviderPayloadCapture() {
+    const payloads: ProviderPayloadCapture[] = [];
+    return {
+      run: async <T>(work: () => Promise<T>): Promise<T> =>
+        this.captureStorage.run(payloads, work),
+      consumeProviderPayloads: (): ProviderPayloadCapture[] => {
+        const captured = [...payloads];
+        payloads.length = 0;
+        return captured;
+      },
+    };
+  }
+
+  async waitForCallCount(count: number): Promise<void> {
+    if (this.callCount >= count) {
+      return;
+    }
+    await new Promise<void>((resolve) => {
+      const check = () => {
+        if (this.callCount >= count) {
+          resolve();
+          return;
+        }
+        this.callResolvers.push(check);
+      };
+      check();
+    });
+  }
+
+  release(label: string): void {
+    this.releaseResolvers.get(label)?.();
+  }
+
+  async getUpcomingEvents(_sport: Sport, _dateRange: DateRange): Promise<SportEvent[]> {
+    this.callCount += 1;
+    const label = this.callCount === 1 ? 'first' : 'second';
+    this.record(`/capture/${label}/start`);
+    this.callResolvers.splice(0).forEach((resolve) => resolve());
+    await new Promise<void>((resolve) => {
+      this.releaseResolvers.set(label, resolve);
+    });
+    this.record(`/capture/${label}/end`);
+    return [];
+  }
+
+  getEventDetails = jest.fn().mockResolvedValue(null);
+  getParticipants = jest.fn().mockResolvedValue([]);
+  getRankings = jest.fn().mockResolvedValue([]);
+  getLiveScores = jest.fn().mockResolvedValue({ category: 'GOLF', externalEventId: 'evt-ext', rounds: [] } satisfies LiveScoreResult);
+  getEventResults = jest.fn().mockResolvedValue(null);
+  healthCheck = jest.fn().mockResolvedValue({
+    providerId: 'deferred-provider',
+    status: 'HEALTHY',
+    errorRateLastHour: 0,
+    latencyMsP95: 50,
+  });
+
+  private record(path: string): void {
+    const payload: ProviderPayloadCapture = {
+      operation: 'deferred-provider.request',
+      path,
+      capturedAt: new Date('2026-05-30T12:00:00.000Z').toISOString(),
+      raw: { path },
+    };
+    const activeCapture = this.captureStorage.getStore();
+    if (activeCapture) {
+      activeCapture.push(payload);
+      return;
+    }
+    this.legacyPayloads.push(payload);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -234,6 +331,37 @@ describe('IngestionScheduler', () => {
   });
 
   describe('runSportSync', () => {
+    it('pool-master-rop.68.2.7 isolates provider payload diagnostics for overlapping sync runs', async () => {
+      const provider = new DeferredPayloadCaptureProvider();
+      const registry = createMockRegistry(provider);
+      const scheduler = new IngestionScheduler(registry, mockCallbacks);
+      const request: SportSyncRequest = {
+        sport: 'GOLF' as Sport,
+        feeds: ['EVENTSCHEDULE'],
+        from: new Date('2026-05-30T12:00:00.000Z'),
+        to: new Date('2026-06-29T12:00:00.000Z'),
+      };
+
+      const firstRun = scheduler.runSportSync(request);
+      await provider.waitForCallCount(1);
+      const secondRun = scheduler.runSportSync(request);
+      await provider.waitForCallCount(2);
+
+      provider.release('second');
+      const [secondJob] = await secondRun;
+      provider.release('first');
+      const [firstJob] = await firstRun;
+
+      expect(firstJob.providerPayload?.raw).toEqual([
+        expect.objectContaining({ path: '/capture/first/start' }),
+        expect.objectContaining({ path: '/capture/first/end' }),
+      ]);
+      expect(secondJob.providerPayload?.raw).toEqual([
+        expect.objectContaining({ path: '/capture/second/start' }),
+        expect.objectContaining({ path: '/capture/second/end' }),
+      ]);
+    });
+
     it('runs only the requested sport-level feeds', async () => {
       const detail: SportEventDetail = {
         externalId: 'evt-1',
@@ -958,6 +1086,38 @@ describe('IngestionScheduler', () => {
 
     afterEach(() => {
       jest.useRealTimers();
+    });
+
+    it('pool-master-rop.68.2.7 preserves provider health check exception context', async () => {
+      const provider = createMockProvider({
+        healthCheck: jest.fn().mockRejectedValue(new Error('health endpoint timeout')),
+      });
+      const registry = createMockRegistry(provider);
+      const logger = {
+        debug: jest.fn(),
+        error: jest.fn(),
+        info: jest.fn(),
+        warn: jest.fn(),
+      } as any;
+      const scheduler = new IngestionScheduler(registry, mockCallbacks, logger);
+
+      await (scheduler as any).runHealthChecks();
+
+      expect(registry.updateHealth).toHaveBeenCalledWith('mock-provider', {
+        providerId: 'mock-provider',
+        status: 'DOWN',
+        errorRateLastHour: 1,
+        latencyMsP95: 0,
+        message: 'Health check failed: health endpoint timeout',
+      });
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          providerId: 'mock-provider',
+          errorMessage: 'health endpoint timeout',
+          errorName: 'Error',
+        }),
+        'Provider health check threw exception',
+      );
     });
 
     it('start() begins polling and runs startup schedule, field, and ranking syncs', async () => {
