@@ -26,6 +26,13 @@ import type {
   SportSyncRequest,
 } from '../ingestion/core/ingestion-scheduler';
 import {
+  SyncOrchestrator,
+  resolveSportSyncWindowPolicy,
+  type NormalizedEventSyncScope,
+  type NormalizedSportSyncScope,
+  type NormalizedSyncRequest,
+} from '../ingestion/core/sync-orchestrator';
+import {
   createMailDeliveryProvider,
   readApplicationBaseUrl,
   readMailDeliveryConfig,
@@ -366,12 +373,48 @@ function buildManualSyncRunDetail(
   return `Completed ${feed} sync for ${target} (${job.recordsProcessed} records).`;
 }
 
+function serializeDate(value: Date | undefined): string | null {
+  return value?.toISOString() ?? null;
+}
+
+function buildNormalizedSyncRequestContext(normalized: NormalizedSyncRequest): Record<string, unknown> {
+  if (normalized.scope.type === 'SPORT') {
+    return {
+      source: normalized.source,
+      actor: normalized.actor,
+      workflowContext: normalized.workflowContext,
+      from: serializeDate(normalized.scope.requestedWindow.from),
+      to: serializeDate(normalized.scope.requestedWindow.to),
+      requestedWindow: {
+        from: serializeDate(normalized.scope.requestedWindow.from),
+        to: serializeDate(normalized.scope.requestedWindow.to),
+      },
+      effectiveWindow: {
+        from: normalized.scope.effectiveWindow.from.toISOString(),
+        to: normalized.scope.effectiveWindow.to.toISOString(),
+        defaultedFrom: normalized.scope.effectiveWindow.defaultedFrom,
+        defaultedTo: normalized.scope.effectiveWindow.defaultedTo,
+      },
+      normalizedAt: normalized.normalizedAt.toISOString(),
+    };
+  }
+
+  return {
+    source: normalized.source,
+    actor: normalized.actor,
+    workflowContext: normalized.workflowContext,
+    mockEventState: normalized.scope.mockEventState ?? null,
+    normalizedAt: normalized.normalizedAt.toISOString(),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
 
 export class ProviderService {
   private readonly ingestionPersistence: IngestionPersistence;
+  private readonly syncOrchestrator: Pick<SyncOrchestrator, 'normalizeRequest'>;
 
   constructor(
     private readonly prisma: PrismaClient,
@@ -381,7 +424,9 @@ export class ProviderService {
     private readonly ingestionConfigReader?: IngestionScheduleConfigReader,
     mailDelivery?: MailDeliveryProvider,
     appBaseUrl?: string,
+    syncOrchestrator?: Pick<SyncOrchestrator, 'normalizeRequest'>,
   ) {
+    this.syncOrchestrator = syncOrchestrator ?? new SyncOrchestrator();
     this.ingestionPersistence = new IngestionPersistence(
       prisma,
       logger,
@@ -482,6 +527,10 @@ export class ProviderService {
       }, 'Sync requested for sport that is not enabled in ingestion config');
       throw new SportSyncNotConfiguredError(sport);
     }
+  }
+
+  private async getSportSyncConfig(sport: Sport) {
+    return this.ingestionConfigReader?.getPerSportConfig(sport);
   }
 
   private async buildIngestionStat(
@@ -800,28 +849,47 @@ export class ProviderService {
       throw new SportProviderNotFoundError(sport);
     }
     await this.assertSportSyncConfigured(sport);
+    const config = await this.getSportSyncConfig(sport);
+    const normalizedRequest = this.syncOrchestrator.normalizeRequest({
+      source: 'MANUAL',
+      actor: {
+        type: 'ROOT_ADMIN',
+        userId: rootAdminUserId,
+        email: rootAdminEmail,
+      },
+      scope: {
+        type: 'SPORT',
+        sport,
+        feeds: request.feeds,
+        window: {
+          from: request.from,
+          to: request.to,
+        },
+        windowPolicy: resolveSportSyncWindowPolicy({ feeds: request.feeds, config }),
+      },
+      workflowContext: request.workflowContext,
+    });
+    if (normalizedRequest.scope.type !== 'SPORT') {
+      throw new Error('Manual sport sync normalization returned an event scope.');
+    }
+    const normalizedScope = normalizedRequest.scope;
     if (!this.scheduler) {
       throw new Error('Ingestion scheduler is required for manual sport sync');
     }
 
     const submittedAt = new Date();
     const syncRuns = await this.createManualSyncRunSubmissions({
-      sport,
+      sport: normalizedScope.sport,
       eventId: null,
-      requestedFeeds: request.feeds,
+      requestedFeeds: normalizedScope.feeds,
       providerId: provider.providerId,
-      requestContext: {
-        from: request.from?.toISOString() ?? null,
-        to: request.to?.toISOString() ?? null,
-        ...(request.workflowContext ?? {}),
-      },
+      requestContext: buildNormalizedSyncRequestContext(normalizedRequest),
       submittedAt,
     });
 
     setImmediate(() => {
       void this.executeSubmittedSportSync({
-        sport,
-        request,
+        normalizedScope,
         syncRuns,
       });
     });
@@ -831,28 +899,29 @@ export class ProviderService {
       actorEmail: rootAdminEmail,
       action: 'sportsdata.sync_sport_submitted',
       resourceType: 'SPORT',
-      resourceId: sport,
-      description: `Submitted ${sport} manual feed sync for ${request.feeds.join(', ')}`,
+      resourceId: normalizedScope.sport,
+      description: `Submitted ${normalizedScope.sport} manual feed sync for ${normalizedScope.feeds.join(', ')}`,
       afterState: {
-        sport,
+        sport: normalizedScope.sport,
         providerId: provider.providerId,
-        requestedFeeds: request.feeds,
+        requestedFeeds: normalizedScope.feeds,
+        effectiveWindow: buildNormalizedSyncRequestContext(normalizedRequest).effectiveWindow,
         syncRunIds: syncRuns.map((run) => run.id),
       },
     });
 
     this.logger?.info({
-      sport,
+      sport: normalizedScope.sport,
       providerId: provider.providerId,
-      requestedFeeds: request.feeds,
-      from: request.from?.toISOString() ?? null,
-      to: request.to?.toISOString() ?? null,
+      requestedFeeds: normalizedScope.feeds,
+      from: normalizedScope.effectiveWindow.from.toISOString(),
+      to: normalizedScope.effectiveWindow.to.toISOString(),
       syncRunIds: syncRuns.map((run) => run.id),
     }, 'Submitted manual sport sync');
     return {
-      sport,
+      sport: normalizedScope.sport,
       eventId: null,
-      requestedFeeds: request.feeds,
+      requestedFeeds: normalizedScope.feeds,
       submittedAt,
       syncRuns,
     };
@@ -879,35 +948,48 @@ export class ProviderService {
     if (request.mockEventState && !supportsMockEventStateControls(provider)) {
       throw new MockEventStateUnsupportedError(provider.providerId);
     }
-    const requestContext = request.mockEventState
-      ? { mockEventState: request.mockEventState }
-      : {};
-    const workflowContext = request.workflowContext ?? {};
+    const normalizedRequest = this.syncOrchestrator.normalizeRequest({
+      source: 'MANUAL',
+      actor: {
+        type: 'ROOT_ADMIN',
+        userId: rootAdminUserId,
+        email: rootAdminEmail,
+      },
+      scope: {
+        type: 'EVENT',
+        sport: request.sport,
+        eventId: request.eventId,
+        feeds: request.feeds,
+        mockEventState: request.mockEventState,
+      },
+      workflowContext: request.workflowContext,
+    });
+    if (normalizedRequest.scope.type !== 'EVENT') {
+      throw new Error('Manual event sync normalization returned a sport scope.');
+    }
+    const normalizedScope = normalizedRequest.scope;
 
     const submittedAt = new Date();
     this.logger?.info({
-      sport: request.sport,
-      eventId: request.eventId,
-      requestedFeeds: request.feeds,
-      mockEventState: request.mockEventState ?? null,
+      sport: normalizedScope.sport,
+      eventId: normalizedScope.eventId,
+      requestedFeeds: normalizedScope.feeds,
+      mockEventState: normalizedScope.mockEventState ?? null,
       providerId: provider.providerId,
       rootAdminUserId,
     }, 'Submitting manual event sync');
     const syncRuns = await this.createManualSyncRunSubmissions({
-      sport: request.sport,
-      eventId: request.eventId,
-      requestedFeeds: request.feeds,
+      sport: normalizedScope.sport,
+      eventId: normalizedScope.eventId,
+      requestedFeeds: normalizedScope.feeds,
       providerId: provider.providerId,
-      requestContext: {
-        ...requestContext,
-        ...workflowContext,
-      },
+      requestContext: buildNormalizedSyncRequestContext(normalizedRequest),
       submittedAt,
     });
 
     setImmediate(() => {
       void this.executeSubmittedEventSync({
-        request,
+        normalizedScope,
         syncRuns,
       });
     });
@@ -917,31 +999,31 @@ export class ProviderService {
       actorEmail: rootAdminEmail,
       action: 'sportsdata.sync_event_submitted',
       resourceType: 'SPORT_EVENT',
-      resourceId: `${request.sport}:${request.eventId}`,
-      description: `Submitted ${request.sport} manual event sync for ${request.eventId}`,
+      resourceId: `${normalizedScope.sport}:${normalizedScope.eventId}`,
+      description: `Submitted ${normalizedScope.sport} manual event sync for ${normalizedScope.eventId}`,
       afterState: {
-        sport: request.sport,
-        eventId: request.eventId,
+        sport: normalizedScope.sport,
+        eventId: normalizedScope.eventId,
         providerId: provider.providerId,
-        requestedFeeds: request.feeds,
-        mockEventState: request.mockEventState ?? null,
+        requestedFeeds: normalizedScope.feeds,
+        mockEventState: normalizedScope.mockEventState ?? null,
         syncRunIds: syncRuns.map((run) => run.id),
       },
     });
 
     this.logger?.info({
-      sport: request.sport,
-      eventId: request.eventId,
+      sport: normalizedScope.sport,
+      eventId: normalizedScope.eventId,
       providerId: provider.providerId,
-      requestedFeeds: request.feeds,
-      mockEventState: request.mockEventState ?? null,
+      requestedFeeds: normalizedScope.feeds,
+      mockEventState: normalizedScope.mockEventState ?? null,
       syncRunIds: syncRuns.map((run) => run.id),
     }, 'Submitted manual event sync');
 
     return {
-      sport: request.sport,
-      eventId: request.eventId,
-      requestedFeeds: request.feeds,
+      sport: normalizedScope.sport,
+      eventId: normalizedScope.eventId,
+      requestedFeeds: normalizedScope.feeds,
       submittedAt,
       syncRuns,
     };
@@ -1030,16 +1112,15 @@ export class ProviderService {
   }
 
   private async executeSubmittedSportSync(input: {
-    sport: Sport;
-    request: SportSyncRequest;
+    normalizedScope: NormalizedSportSyncScope;
     syncRuns: ProviderSyncRun[];
   }): Promise<void> {
     this.logger?.debug({
-      sport: input.sport,
-      requestedFeeds: input.request.feeds,
+      sport: input.normalizedScope.sport,
+      requestedFeeds: input.normalizedScope.feeds,
       syncRunIds: input.syncRuns.map((run) => run.id),
-      from: input.request.from?.toISOString() ?? null,
-      to: input.request.to?.toISOString() ?? null,
+      from: input.normalizedScope.effectiveWindow.from.toISOString(),
+      to: input.normalizedScope.effectiveWindow.to.toISOString(),
     }, 'Executing submitted manual sport sync');
     for (const syncRun of input.syncRuns) {
       const requestedFeed = syncRun.payload.requestedFeed;
@@ -1050,24 +1131,24 @@ export class ProviderService {
 
       await this.executeSubmittedFeedRun(syncRun, () =>
         this.scheduler!.runSportSync({
-          sport: input.sport,
+          sport: input.normalizedScope.sport,
           feeds: [requestedFeed],
-          from: input.request.from,
-          to: input.request.to,
+          from: input.normalizedScope.effectiveWindow.from,
+          to: input.normalizedScope.effectiveWindow.to,
         }),
       );
     }
   }
 
   private async executeSubmittedEventSync(input: {
-    request: EventSyncRequest;
+    normalizedScope: NormalizedEventSyncScope;
     syncRuns: ProviderSyncRun[];
   }): Promise<void> {
     this.logger?.debug({
-      sport: input.request.sport,
-      eventId: input.request.eventId,
-      requestedFeeds: input.request.feeds,
-      mockEventState: input.request.mockEventState ?? null,
+      sport: input.normalizedScope.sport,
+      eventId: input.normalizedScope.eventId,
+      requestedFeeds: input.normalizedScope.feeds,
+      mockEventState: input.normalizedScope.mockEventState ?? null,
       syncRunIds: input.syncRuns.map((run) => run.id),
     }, 'Executing submitted manual event sync');
     for (const syncRun of input.syncRuns) {
@@ -1079,10 +1160,10 @@ export class ProviderService {
 
       await this.executeSubmittedFeedRun(syncRun, () =>
         this.scheduler!.runEventSync({
-          sport: input.request.sport,
-          eventId: input.request.eventId,
+          sport: input.normalizedScope.sport,
+          eventId: input.normalizedScope.eventId,
           feeds: [requestedFeed],
-          mockEventState: input.request.mockEventState,
+          mockEventState: input.normalizedScope.mockEventState,
         }),
       );
     }

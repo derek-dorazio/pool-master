@@ -531,10 +531,7 @@ describe('IngestionScheduler', () => {
           type: 'SPORT',
           sport: 'GOLF',
           feeds: ['EVENTSCHEDULE'],
-          window: {
-            from: now,
-            to: new Date('2026-05-28T12:00:00.000Z'),
-          },
+          windowPolicy: { defaultLookaheadDays: 30 },
         },
       });
       expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith({
@@ -544,10 +541,7 @@ describe('IngestionScheduler', () => {
           type: 'SPORT',
           sport: 'GOLF',
           feeds: ['EVENTPARTICIPANTS'],
-          window: {
-            from: now,
-            to: new Date('2026-05-28T12:00:00.000Z'),
-          },
+          windowPolicy: { defaultLookaheadDays: 30 },
         },
       });
       expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith({
@@ -860,8 +854,7 @@ describe('IngestionScheduler', () => {
       await Promise.resolve();
       await jest.runOnlyPendingTimersAsync();
 
-      // Initial sync calls getSupportedSports (from syncAllSchedules, syncAllFields, syncAllRankings)
-      // and getAllProviders (from runHealthChecks)
+      // Initial sync resolves configured sports and provider health before the feed loops run.
       expect(registry.getAllProviders).toHaveBeenCalled();
       expect(registry.getSupportedSports).toHaveBeenCalled();
       expect((provider.getUpcomingEvents as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);

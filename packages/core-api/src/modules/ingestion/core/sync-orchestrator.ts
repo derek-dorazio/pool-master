@@ -1,5 +1,6 @@
 import type { Sport } from '@poolmaster/shared/domain';
 import type { IngestionFeedType, MockEventState } from '@poolmaster/shared/dto';
+import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { ProviderEventSyncOptions } from './provider-interface';
 
 /**
@@ -25,6 +26,8 @@ export const EVENT_SYNC_FEEDS = [
 ] as const satisfies readonly IngestionFeedType[];
 
 const DEFAULT_SYNC_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+const DEFAULT_SCHEDULE_LOOKAHEAD_DAYS = 30;
+const DEFAULT_PARTICIPANT_LEAD_DAYS = 7;
 
 export type SyncRequestSource = 'SCHEDULED' | 'MANUAL';
 export type SportSyncFeed = typeof SPORT_SYNC_FEEDS[number];
@@ -48,6 +51,10 @@ export interface SyncRequestedWindow {
   to?: Date;
 }
 
+export interface SyncWindowPolicy {
+  defaultLookaheadDays?: number;
+}
+
 export interface SyncEffectiveWindow {
   from: Date;
   to: Date;
@@ -60,6 +67,7 @@ export interface SportSyncScopeInput {
   sport: Sport;
   feeds: readonly IngestionFeedType[];
   window?: SyncRequestedWindow;
+  windowPolicy?: SyncWindowPolicy;
 }
 
 export interface EventSyncScopeInput {
@@ -161,7 +169,7 @@ function normalizeScope(request: SyncOrchestratorRequest, now: Date): Normalized
       sport: request.scope.sport,
       feeds: normalizeSportFeeds(request.scope.feeds),
       requestedWindow: cloneRequestedWindow(request.scope.window),
-      effectiveWindow: resolveEffectiveWindow(request.scope.window, now),
+      effectiveWindow: resolveEffectiveWindow(request.scope.window, now, request.scope.windowPolicy),
     };
   }
 
@@ -243,9 +251,13 @@ function dedupeAndValidateFeeds<TFeed extends IngestionFeedType>(
 function resolveEffectiveWindow(
   requestedWindow: SyncRequestedWindow | undefined,
   now: Date,
+  windowPolicy?: SyncWindowPolicy,
 ): SyncEffectiveWindow {
   const from = cloneDate(requestedWindow?.from ?? now);
-  const to = cloneDate(requestedWindow?.to ?? new Date(from.getTime() + DEFAULT_SYNC_WINDOW_MS));
+  const defaultWindowMs = typeof windowPolicy?.defaultLookaheadDays === 'number'
+    ? windowPolicy.defaultLookaheadDays * 24 * 60 * 60 * 1000
+    : DEFAULT_SYNC_WINDOW_MS;
+  const to = cloneDate(requestedWindow?.to ?? new Date(from.getTime() + defaultWindowMs));
 
   if (to.getTime() < from.getTime()) {
     throw new SyncRequestValidationError(
@@ -260,6 +272,28 @@ function resolveEffectiveWindow(
     defaultedFrom: !requestedWindow?.from,
     defaultedTo: !requestedWindow?.to,
   };
+}
+
+export function resolveSportSyncWindowPolicy(input: {
+  feeds: readonly IngestionFeedType[];
+  config?: IngestionScheduleConfig;
+}): SyncWindowPolicy {
+  const feeds = normalizeSportFeeds(input.feeds);
+  const scheduleLookaheadDays = input.config?.eventSchedule.lookaheadDays ?? DEFAULT_SCHEDULE_LOOKAHEAD_DAYS;
+  const participantLeadDays = input.config?.eventParticipants.leadDaysBeforeStart ?? DEFAULT_PARTICIPANT_LEAD_DAYS;
+  const defaultLookaheadDays = feeds.reduce((maxLookaheadDays, feed) => {
+    if (feed === 'EVENTSCHEDULE') {
+      return Math.max(maxLookaheadDays, scheduleLookaheadDays);
+    }
+
+    if (feed === 'EVENTPARTICIPANTS') {
+      return Math.max(maxLookaheadDays, scheduleLookaheadDays, participantLeadDays);
+    }
+
+    return maxLookaheadDays;
+  }, 0);
+
+  return { defaultLookaheadDays };
 }
 
 function cloneRequestedWindow(requestedWindow: SyncRequestedWindow | undefined): SyncRequestedWindow {

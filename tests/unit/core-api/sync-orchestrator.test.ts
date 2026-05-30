@@ -3,6 +3,7 @@ import {
   SyncOrchestrator,
   SyncRequestValidationError,
   normalizeSyncRequest,
+  resolveSportSyncWindowPolicy,
 } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 
 describe('SyncOrchestrator request model', () => {
@@ -77,6 +78,56 @@ describe('SyncOrchestrator request model', () => {
         defaultedTo: true,
       },
     });
+  });
+
+  it('pool-master-rop.68.2.5: resolves the same configured sport window for scheduled and manual omitted-window sync', () => {
+    const now = new Date('2026-05-30T12:00:00.000Z');
+    const config = {
+      scheduledSports: [Sport.GOLF],
+      healthCheck: { enabled: true, intervalMinutes: 5 },
+      eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 45 },
+      eventParticipants: { enabled: true, intervalMinutes: 720, leadDaysBeforeStart: 7 },
+      participantRankings: { enabled: true, intervalMinutes: 1440 },
+      eventLiveScores: { enabled: true, intervalSeconds: 30 },
+      eventResults: { enabled: true, intervalMinutes: 30 },
+      perSportOverrides: {},
+    };
+    const windowPolicy = resolveSportSyncWindowPolicy({
+      feeds: ['EVENTSCHEDULE'],
+      config,
+    });
+
+    const scheduled = normalizeSyncRequest({
+      source: 'SCHEDULED',
+      actor: schedulerActor,
+      scope: {
+        type: 'SPORT',
+        sport: Sport.GOLF,
+        feeds: ['EVENTSCHEDULE'],
+        windowPolicy,
+      },
+    }, { now: () => now });
+    const manual = normalizeSyncRequest({
+      source: 'MANUAL',
+      actor: rootAdminActor,
+      scope: {
+        type: 'SPORT',
+        sport: Sport.GOLF,
+        feeds: ['EVENTSCHEDULE'],
+        windowPolicy,
+      },
+    }, { now: () => now });
+
+    expect(scheduled.scope).toMatchObject({
+      type: 'SPORT',
+      effectiveWindow: {
+        from: now,
+        to: new Date('2026-07-14T12:00:00.000Z'),
+        defaultedFrom: true,
+        defaultedTo: true,
+      },
+    });
+    expect(manual.scope).toEqual(scheduled.scope);
   });
 
   it('pool-master-rop.68.2.1: normalizes manual event sync mock override into provider options', () => {

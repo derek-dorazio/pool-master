@@ -14,6 +14,7 @@ import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto'
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderRegistry } from './provider-registry';
 import { SyncOrchestrator } from './sync-orchestrator';
+import { resolveSportSyncWindowPolicy } from './sync-orchestrator';
 import type {
   EventSyncFeed,
   IngestionFeedType,
@@ -22,6 +23,7 @@ import type {
   SportSyncFeed,
   SyncOrchestratorRequest,
   SyncRequestSource,
+  SyncWindowPolicy,
 } from './sync-orchestrator';
 import type {
   ProviderEventSyncOptions,
@@ -240,7 +242,7 @@ export class IngestionScheduler {
       feeds: request.feeds,
       from: request.from?.toISOString() ?? null,
       to: request.to?.toISOString() ?? null,
-    }, 'Manual or direct sport sync requested');
+    }, 'Ad hoc sport sync requested');
 
     for (const feed of dedupe(request.feeds)) {
       if (feed === 'EVENTSCHEDULE') {
@@ -260,7 +262,7 @@ export class IngestionScheduler {
       sport: request.sport,
       feeds: request.feeds,
       jobs: jobs.map(toJobLogPayload),
-    }, 'Manual or direct sport sync completed');
+    }, 'Ad hoc sport sync completed');
 
     return jobs;
   }
@@ -273,7 +275,7 @@ export class IngestionScheduler {
       eventId: request.eventId,
       feeds: request.feeds,
       mockEventState: request.mockEventState ?? null,
-    }, 'Manual or direct event sync requested');
+    }, 'Ad hoc event sync requested');
 
     const options = buildProviderEventSyncOptions(request.mockEventState);
     for (const feed of dedupe(request.feeds)) {
@@ -296,7 +298,7 @@ export class IngestionScheduler {
       feeds: request.feeds,
       mockEventState: request.mockEventState ?? null,
       jobs: jobs.map(toJobLogPayload),
-    }, 'Manual or direct event sync completed');
+    }, 'Ad hoc event sync completed');
 
     return jobs;
   }
@@ -448,18 +450,6 @@ export class IngestionScheduler {
     }
   }
 
-  private async syncAllSchedules(): Promise<void> {
-    this.logger?.debug('Running startup/interval schedule sync sweep');
-    const sports = this.registry.getSupportedSports();
-    for (const sport of sports) {
-      try {
-        await this.runScheduleSync(sport);
-      } catch {
-        this.logger?.error({ sport }, 'Schedule sync sweep failed for sport');
-      }
-    }
-  }
-
   private async runConfiguredSportScheduleSync(sport: Sport): Promise<void> {
     if (!(await this.isSportScheduled(sport))) {
       this.logger?.debug({ sport }, 'Skipping scheduled sport schedule sync because sport is not configured');
@@ -472,21 +462,18 @@ export class IngestionScheduler {
       return;
     }
 
-    const now = this.getNow();
     const lookaheadDays = config.eventSchedule.lookaheadDays ?? 30;
-    const from = now;
-    const to = addDays(now, lookaheadDays);
-    this.logger?.debug({
-      sport,
-      from: from.toISOString(),
-      to: to.toISOString(),
-      lookaheadDays,
-    }, 'Running configured sport schedule sync');
     const scope = this.normalizeScheduledSportSync({
       sport,
       feeds: ['EVENTSCHEDULE'],
-      window: { from, to },
+      windowPolicy: resolveSportSyncWindowPolicy({ feeds: ['EVENTSCHEDULE'], config }),
     });
+    this.logger?.debug({
+      sport,
+      from: scope.effectiveWindow.from.toISOString(),
+      to: scope.effectiveWindow.to.toISOString(),
+      lookaheadDays,
+    }, 'Running configured sport schedule sync');
     await this.runScheduleSync(scope.sport, scope.effectiveWindow.from, scope.effectiveWindow.to);
   }
 
@@ -502,25 +489,22 @@ export class IngestionScheduler {
       return;
     }
 
-    const now = this.getNow();
     const participantLeadDays = config.eventParticipants.leadDaysBeforeStart ?? 7;
     const scheduleLookaheadDays = config.eventSchedule.lookaheadDays ?? 30;
     const lookaheadDays = Math.max(scheduleLookaheadDays, participantLeadDays);
-    const from = now;
-    const to = addDays(now, lookaheadDays);
+    const scope = this.normalizeScheduledSportSync({
+      sport,
+      feeds: ['EVENTPARTICIPANTS'],
+      windowPolicy: resolveSportSyncWindowPolicy({ feeds: ['EVENTPARTICIPANTS'], config }),
+    });
     this.logger?.debug({
       sport,
-      from: from.toISOString(),
-      to: to.toISOString(),
+      from: scope.effectiveWindow.from.toISOString(),
+      to: scope.effectiveWindow.to.toISOString(),
       participantLeadDays,
       scheduleLookaheadDays,
       lookaheadDays,
     }, 'Running configured sport participant sync');
-    const scope = this.normalizeScheduledSportSync({
-      sport,
-      feeds: ['EVENTPARTICIPANTS'],
-      window: { from, to },
-    });
     await this.runFieldSync(scope.sport, scope.effectiveWindow.from, scope.effectiveWindow.to);
     await this.runConfiguredActiveFieldSync(scope.sport, scope.effectiveWindow);
   }
@@ -628,34 +612,11 @@ export class IngestionScheduler {
     }
   }
 
-  private async syncAllFields(): Promise<void> {
-    this.logger?.debug('Running startup/interval participant sync sweep');
-    const sports = this.registry.getSupportedSports();
-    for (const sport of sports) {
-      try {
-        await this.runFieldSync(sport);
-      } catch {
-        this.logger?.error({ sport }, 'Participant sync sweep failed for sport');
-      }
-    }
-  }
-
-  private async syncAllRankings(): Promise<void> {
-    this.logger?.debug('Running startup/interval ranking sync sweep');
-    const sports = this.registry.getSupportedSports();
-    for (const sport of sports) {
-      try {
-        await this.runRankingSync(sport);
-      } catch {
-        this.logger?.error({ sport }, 'Ranking sync sweep failed for sport');
-      }
-    }
-  }
-
   private normalizeScheduledSportSync(input: {
     sport: Sport;
     feeds: readonly SportSyncFeed[];
     window?: { from?: Date; to?: Date };
+    windowPolicy?: SyncWindowPolicy;
   }): NormalizedSportSyncScope {
     const normalized = this.syncOrchestrator.normalizeRequest({
       source: SCHEDULED_SYNC_SOURCE,
@@ -665,6 +626,7 @@ export class IngestionScheduler {
         sport: input.sport,
         feeds: input.feeds,
         window: input.window,
+        windowPolicy: input.windowPolicy,
       },
     } satisfies SyncOrchestratorRequest);
 
@@ -1335,8 +1297,4 @@ function toDelayMs(
   }
 
   return CONFIG_RECHECK_MS;
-}
-
-function addDays(base: Date, days: number): Date {
-  return new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
 }
