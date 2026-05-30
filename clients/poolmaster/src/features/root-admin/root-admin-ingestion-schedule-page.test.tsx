@@ -48,10 +48,11 @@ describe('RootAdminIngestionSchedulePage', () => {
     const response = {
       data: {
         healthCheck: { enabled: true, intervalMinutes: 5 },
-        eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 30 },
+        eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
         eventParticipants: {
           enabled: true,
-          intervalMinutes: 720,
+          intervalMinutes: 360,
+          lookaheadDays: 14,
         },
         participantRankings: { enabled: true, intervalMinutes: 1440 },
         eventLiveScores: { enabled: true, intervalSeconds: 30 },
@@ -65,7 +66,7 @@ describe('RootAdminIngestionSchedulePage', () => {
     adminUpdateIngestionScheduleMock.mockResolvedValue(response);
   });
 
-  it('pool-master-rop.68.1.2 renders and saves the global ingestion schedule without participant lead days', async () => {
+  it('pool-master-rop.68.1.5 renders and saves the global ingestion schedule with separate schedule and field windows', async () => {
     renderPage();
 
     const liveScoresInput = await screen.findByTestId(
@@ -80,10 +81,11 @@ describe('RootAdminIngestionSchedulePage', () => {
       expect(adminUpdateIngestionScheduleMock).toHaveBeenCalledWith({
         body: {
           healthCheck: { enabled: true, intervalMinutes: 5 },
-          eventSchedule: { enabled: true, intervalMinutes: 360, lookaheadDays: 30 },
+          eventSchedule: { enabled: true, intervalMinutes: 1440, lookaheadDays: 365 },
           eventParticipants: {
             enabled: true,
-            intervalMinutes: 720,
+            intervalMinutes: 360,
+            lookaheadDays: 14,
           },
           participantRankings: { enabled: true, intervalMinutes: 1440 },
           eventLiveScores: { enabled: true, intervalSeconds: 45 },

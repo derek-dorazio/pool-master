@@ -17863,10 +17863,10 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
-                        /** @description Scheduling policy for event schedule discovery. */
+                        /** @description Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change. */
                         eventSchedule: {
                             /** @description Whether the feed should be scheduled automatically. */
                             enabled: boolean;
@@ -17874,10 +17874,10 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
-                        /** @description Scheduling policy for event participant hydration before the event starts. */
+                        /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
                         eventParticipants: {
                             /** @description Whether the feed should be scheduled automatically. */
                             enabled: boolean;
@@ -17885,7 +17885,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for ranking refreshes. */
@@ -17896,7 +17896,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for live score polling. */
@@ -17907,7 +17907,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for completed-event result refreshes. */
@@ -17918,7 +17918,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
@@ -17933,7 +17933,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -17944,7 +17944,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -17955,7 +17955,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -17966,7 +17966,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -17977,7 +17977,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -17988,7 +17988,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                             };
@@ -18037,7 +18037,7 @@ export interface operations {
                         intervalMinutes?: number;
                         /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                         intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                         lookaheadDays?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
@@ -18048,7 +18048,7 @@ export interface operations {
                         intervalMinutes?: number;
                         /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                         intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                         lookaheadDays?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
@@ -18059,7 +18059,7 @@ export interface operations {
                         intervalMinutes?: number;
                         /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                         intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                         lookaheadDays?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
@@ -18070,7 +18070,7 @@ export interface operations {
                         intervalMinutes?: number;
                         /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                         intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                         lookaheadDays?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
@@ -18081,7 +18081,7 @@ export interface operations {
                         intervalMinutes?: number;
                         /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                         intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                         lookaheadDays?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
@@ -18092,7 +18092,7 @@ export interface operations {
                         intervalMinutes?: number;
                         /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                         intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                         lookaheadDays?: number;
                     };
                 };
@@ -18121,10 +18121,10 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
-                        /** @description Scheduling policy for event schedule discovery. */
+                        /** @description Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change. */
                         eventSchedule: {
                             /** @description Whether the feed should be scheduled automatically. */
                             enabled: boolean;
@@ -18132,10 +18132,10 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
-                        /** @description Scheduling policy for event participant hydration before the event starts. */
+                        /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
                         eventParticipants: {
                             /** @description Whether the feed should be scheduled automatically. */
                             enabled: boolean;
@@ -18143,7 +18143,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for ranking refreshes. */
@@ -18154,7 +18154,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for live score polling. */
@@ -18165,7 +18165,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for completed-event result refreshes. */
@@ -18176,7 +18176,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
@@ -18191,7 +18191,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18202,7 +18202,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18213,7 +18213,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18224,7 +18224,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18235,7 +18235,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18246,7 +18246,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                             };
@@ -18297,7 +18297,7 @@ export interface operations {
                         intervalMinutes?: number;
                         /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                         intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                         lookaheadDays?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
@@ -18308,7 +18308,7 @@ export interface operations {
                         intervalMinutes?: number;
                         /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                         intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                         lookaheadDays?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
@@ -18319,7 +18319,7 @@ export interface operations {
                         intervalMinutes?: number;
                         /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                         intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                         lookaheadDays?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
@@ -18330,7 +18330,7 @@ export interface operations {
                         intervalMinutes?: number;
                         /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                         intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                         lookaheadDays?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
@@ -18341,7 +18341,7 @@ export interface operations {
                         intervalMinutes?: number;
                         /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                         intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                         lookaheadDays?: number;
                     };
                     /** @description Partial feed-scheduling override payload. */
@@ -18352,7 +18352,7 @@ export interface operations {
                         intervalMinutes?: number;
                         /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                         intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                         lookaheadDays?: number;
                     };
                 };
@@ -18381,10 +18381,10 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
-                        /** @description Scheduling policy for event schedule discovery. */
+                        /** @description Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change. */
                         eventSchedule: {
                             /** @description Whether the feed should be scheduled automatically. */
                             enabled: boolean;
@@ -18392,10 +18392,10 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
-                        /** @description Scheduling policy for event participant hydration before the event starts. */
+                        /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
                         eventParticipants: {
                             /** @description Whether the feed should be scheduled automatically. */
                             enabled: boolean;
@@ -18403,7 +18403,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for ranking refreshes. */
@@ -18414,7 +18414,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for live score polling. */
@@ -18425,7 +18425,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for completed-event result refreshes. */
@@ -18436,7 +18436,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
@@ -18451,7 +18451,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18462,7 +18462,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18473,7 +18473,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18484,7 +18484,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18495,7 +18495,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18506,7 +18506,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                             };
@@ -18568,10 +18568,10 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
-                        /** @description Scheduling policy for event schedule discovery. */
+                        /** @description Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change. */
                         eventSchedule: {
                             /** @description Whether the feed should be scheduled automatically. */
                             enabled: boolean;
@@ -18579,10 +18579,10 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
-                        /** @description Scheduling policy for event participant hydration before the event starts. */
+                        /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
                         eventParticipants: {
                             /** @description Whether the feed should be scheduled automatically. */
                             enabled: boolean;
@@ -18590,7 +18590,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for ranking refreshes. */
@@ -18601,7 +18601,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for live score polling. */
@@ -18612,7 +18612,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for completed-event result refreshes. */
@@ -18623,7 +18623,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
@@ -18638,7 +18638,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18649,7 +18649,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18660,7 +18660,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18671,7 +18671,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18682,7 +18682,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18693,7 +18693,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                             };
@@ -18753,10 +18753,10 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
-                        /** @description Scheduling policy for event schedule discovery. */
+                        /** @description Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change. */
                         eventSchedule: {
                             /** @description Whether the feed should be scheduled automatically. */
                             enabled: boolean;
@@ -18764,10 +18764,10 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
-                        /** @description Scheduling policy for event participant hydration before the event starts. */
+                        /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
                         eventParticipants: {
                             /** @description Whether the feed should be scheduled automatically. */
                             enabled: boolean;
@@ -18775,7 +18775,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for ranking refreshes. */
@@ -18786,7 +18786,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for live score polling. */
@@ -18797,7 +18797,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Scheduling policy for completed-event result refreshes. */
@@ -18808,7 +18808,7 @@ export interface operations {
                             intervalMinutes?: number;
                             /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                             intervalSeconds?: number;
-                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                             lookaheadDays?: number;
                         };
                         /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
@@ -18823,7 +18823,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18834,7 +18834,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18845,7 +18845,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18856,7 +18856,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18867,7 +18867,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                                 /** @description Partial feed-scheduling override payload. */
@@ -18878,7 +18878,7 @@ export interface operations {
                                     intervalMinutes?: number;
                                     /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
                                     intervalSeconds?: number;
-                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. */
+                                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies. */
                                     lookaheadDays?: number;
                                 };
                             };

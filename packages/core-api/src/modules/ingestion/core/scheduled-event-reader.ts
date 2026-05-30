@@ -39,6 +39,13 @@ export function createScheduledEventReader({
           },
           ...toFeedWhere(feed, now, from, to),
         },
+        orderBy: feed === 'EVENTPARTICIPANTS'
+          ? [
+              { startDate: 'asc' },
+              { externalId: 'asc' },
+            ]
+          : undefined,
+        take: feed === 'EVENTPARTICIPANTS' ? 2 : undefined,
         select: {
           externalId: true,
         },
@@ -70,17 +77,14 @@ function toFeedWhere(
 
   if (feed === 'EVENTPARTICIPANTS') {
     return {
-      OR: [
-        {
-          status: 'SCHEDULED',
-          releaseAt: { lte: now },
-          startDate: {
-            gte: from ?? now,
-            ...(to ? { lte: to } : {}),
-          },
-        },
-        { status: 'IN_PROGRESS' },
-      ],
+      status: 'SCHEDULED',
+      releaseAt: { lte: now },
+      fieldLocked: false,
+      fieldLocksAt: { gt: now },
+      startDate: {
+        gte: from ?? now,
+        ...(to ? { lte: to } : {}),
+      },
     };
   }
 

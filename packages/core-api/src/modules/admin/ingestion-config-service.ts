@@ -25,12 +25,13 @@ const DEFAULT_INGESTION_CONFIG: IngestionScheduleConfig = {
   },
   eventSchedule: {
     enabled: true,
-    intervalMinutes: 360,
-    lookaheadDays: 30,
+    intervalMinutes: 1440,
+    lookaheadDays: 365,
   },
   eventParticipants: {
     enabled: true,
-    intervalMinutes: 720,
+    intervalMinutes: 360,
+    lookaheadDays: 14,
   },
   participantRankings: {
     enabled: true,

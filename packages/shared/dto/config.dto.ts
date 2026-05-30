@@ -61,7 +61,7 @@ export const IngestionFeedSchedulePolicySchema = z.object({
     'How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.',
   ),
   lookaheadDays: z.number().int().min(0).optional().describe(
-    'How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window.',
+    'How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window. Schedule discovery and event participant hydration use independent lookahead policies.',
   ),
 }).describe('Feed-specific ingestion scheduling policy.');
 export type IngestionFeedSchedulePolicy = z.infer<typeof IngestionFeedSchedulePolicySchema>;
@@ -81,10 +81,10 @@ export const IngestionScheduleConfigBodySchema = z.object({
     'Scheduling policy for provider health checks.',
   ),
   eventSchedule: IngestionFeedSchedulePolicySchema.describe(
-    'Scheduling policy for event schedule discovery.',
+    'Scheduling policy for event schedule discovery. Golf schedule discovery is intentionally low-cadence because provider schedules are season-scale and rarely change.',
   ),
   eventParticipants: IngestionFeedSchedulePolicySchema.describe(
-    'Scheduling policy for event participant hydration before the event starts.',
+    'Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.',
   ),
   participantRankings: IngestionFeedSchedulePolicySchema.describe(
     'Scheduling policy for ranking refreshes.',
