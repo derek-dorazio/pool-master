@@ -350,7 +350,7 @@ describe('admin support services', () => {
       });
     });
 
-    it('pool-master-rop.68.2.3 pool-master-rop.68.2.5 normalizes manual sport sync before submission', async () => {
+    it('pool-master-rop.68.2.3 pool-master-rop.68.2.5 proves deferred manual sport sync uses the normalized window', async () => {
       const now = new Date('2026-05-30T12:00:00.000Z');
       let deferredSync: (() => void) | undefined;
       const setImmediateSpy = jest
