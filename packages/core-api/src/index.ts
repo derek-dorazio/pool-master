@@ -169,7 +169,7 @@ export function buildApp() {
         category: result.category,
         providerId,
       }, 'Ingested live scores (typed LiveScoreResult)');
-      await publishLiveScoreUpdate(result, {
+      return publishLiveScoreUpdate(result, {
         prisma,
         providerId,
         logger: app.log,

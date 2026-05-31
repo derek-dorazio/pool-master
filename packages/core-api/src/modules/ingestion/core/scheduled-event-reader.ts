@@ -90,5 +90,6 @@ function toFeedWhere(
 
   return {
     status: { in: ['IN_PROGRESS'] },
+    sportEventParticipants: { some: {} },
   };
 }

@@ -39,7 +39,7 @@ const DEFAULT_INGESTION_CONFIG: IngestionScheduleConfig = {
   },
   eventLiveScores: {
     enabled: true,
-    intervalSeconds: 30,
+    intervalSeconds: 300,
   },
   eventResults: {
     enabled: true,
