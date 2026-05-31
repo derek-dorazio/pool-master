@@ -882,6 +882,7 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(refreshedEntryResponse.data?.entry?.tiebreakerValue).toBe(271);
   });
 
+  // pool-master-eux.5: contest-entry detail keeps picks as pointers after legacy score fields are removed.
   it('pool-master-eux.5 returns expanded contest-entry detail with pick pointers only', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({
       displayName: 'Entry Detail Commissioner',

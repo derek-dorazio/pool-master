@@ -47,6 +47,9 @@ type ContestEntryParticipant = NonNullable<ContestEntryDetail['participants']>[n
 type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 
 function sortDetailedParticipants(participants: ContestEntryParticipant[]) {
+  // pool-master-eux.5 removed the legacy score blob that previously implied
+  // finish order here. Keep this generic contest detail view alphabetical; the
+  // Golf-specific leaderboard API owns score/rank ordering.
   return [...participants].sort((left, right) =>
     left.participantName.localeCompare(right.participantName),
   );

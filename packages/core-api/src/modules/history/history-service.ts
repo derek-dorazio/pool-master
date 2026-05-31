@@ -35,7 +35,10 @@ export class HistoryService {
     const results = await this.getCompletedContestResults(contestId);
 
     if (results.length === 0) {
-      this.logger.warn({ contestId }, 'history get contest summary missing settled Golf standings');
+      this.logger.warn(
+        { contestId },
+        'history get contest summary unavailable until pool-master-eux.6 settlement persistence lands',
+      );
       return null;
     }
 
@@ -74,6 +77,8 @@ export class HistoryService {
   async getMemberResults(leagueMembershipId: string): Promise<ContestHistoryResult[]> {
     this.logger.debug({ leagueMembershipId }, 'history get member results start');
     this.logger.info({ leagueMembershipId, resultCount: 0 }, 'history get member results completed without legacy entry totals');
+    // pool-master-eux.5 removed the generic score-history source. pool-master-eux.6
+    // will replace this with Golf-specific ContestEntryGolfStanding settlement reads.
     return [];
   }
 
@@ -81,6 +86,8 @@ export class HistoryService {
   async getLeagueResults(leagueId: string): Promise<ContestHistoryResult[]> {
     this.logger.debug({ leagueId }, 'history get league results start');
     this.logger.info({ leagueId, resultCount: 0 }, 'history get league results completed without legacy entry totals');
+    // pool-master-eux.5 removed the generic score-history source. pool-master-eux.6
+    // will replace this with Golf-specific ContestEntryGolfStanding settlement reads.
     return [];
   }
 
@@ -132,12 +139,17 @@ export class HistoryService {
   async getContestPayouts(contestId: string): Promise<ContestHistoryPayout[]> {
     this.logger.debug({ contestId }, 'history get contest payouts start');
     this.logger.info({ contestId, payoutCount: 0 }, 'history get contest payouts completed without legacy prize awards');
+    // pool-master-eux.5 removed legacy prize-award history. pool-master-eux.6 will
+    // define the replacement settlement/payout read once final Golf standings persist.
     return [];
   }
 
   private async getCompletedContestResults(contestId: string): Promise<ContestHistoryResult[]> {
     this.logger.debug({ contestId }, 'history get completed contest results start');
     this.logger.info({ contestId, resultCount: 0 }, 'history get completed contest results completed without legacy entry totals');
+    // pool-master-eux.5 intentionally deleted the generic completed-results source
+    // instead of preserving stale ContestEntry totals. pool-master-eux.6 owns the
+    // replacement ContestEntryGolfStanding settlement model and history read path.
     return [];
   }
 }
