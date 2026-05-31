@@ -1,8 +1,12 @@
+import { randomUUID } from 'node:crypto';
 import { Sport } from '@poolmaster/shared/domain';
+import { EventBus } from '@poolmaster/shared/events/event-bus';
+import { GolfLeaderboardResponseSchema } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
-import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import { IngestionScheduler, publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core';
+import { GolfContestSettlementService } from '../../../packages/core-api/src/modules/contests/golf-contest-settlement-service';
 import type { IngestionScheduleConfig } from '../../../packages/shared/dto/config.dto';
 import { createScheduledEventReader } from '../../../packages/core-api/src/modules/ingestion/core/scheduled-event-reader';
 import { ProviderService } from '../../../packages/core-api/src/modules/admin/provider-service';
@@ -10,6 +14,7 @@ import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/in
 import {
   cleanupTestData,
   createTestUser,
+  getApp,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -69,6 +74,15 @@ async function cleanupMockProviderImportData(): Promise<void> {
   const participantIds = providerMappings.map((mapping) => mapping.participantId);
 
   await prisma.sportEventParticipantValuation.deleteMany({
+    where: {
+      sportEventParticipant: {
+        sportEvent: {
+          providerId,
+        },
+      },
+    },
+  });
+  await prisma.sportEventParticipantGolfRound.deleteMany({
     where: {
       sportEventParticipant: {
         sportEvent: {
@@ -226,6 +240,209 @@ async function findEventParticipantByExternalIds(input: {
   });
 }
 
+async function loadSportEventParticipants(participantExternalIds: string[]) {
+  const entries = await Promise.all(
+    participantExternalIds.map(async (participantExternalId) => [
+      participantExternalId,
+      await findEventParticipantByExternalIds({
+        providerId,
+        eventExternalId,
+        participantExternalId,
+      }),
+    ] as const),
+  );
+  return new Map(entries);
+}
+
+function requiredSportEventParticipantId(
+  participantsByExternalId: Map<string, Awaited<ReturnType<typeof findEventParticipantByExternalIds>>>,
+  participantExternalId: string,
+): string {
+  const participant = participantsByExternalId.get(participantExternalId);
+  if (!participant) {
+    throw new Error(`Expected sport event participant for ${participantExternalId}`);
+  }
+  return participant.id;
+}
+
+async function createGolfLiveVerificationContests(input: {
+  ownerUserId: string;
+  sportEventId: string;
+  directPicks: {
+    leader: string[];
+    chaser: string[];
+  };
+}) {
+  const prisma = getPrisma();
+  const suffix = randomUUID().slice(0, 8).toUpperCase();
+  const league = await prisma.league.create({
+    data: {
+      leagueCode: `GLE${suffix}`,
+      name: `Golf Live E2E League ${suffix}`,
+      createdBy: input.ownerUserId,
+    },
+  });
+  await prisma.leagueMembership.create({
+    data: {
+      leagueId: league.id,
+      userId: input.ownerUserId,
+      role: 'COMMISSIONER',
+      status: 'ACTIVE',
+      joinedAt: new Date(),
+    },
+  });
+  const [leaderSquad, chaserSquad] = await Promise.all([
+    prisma.squad.create({
+      data: {
+        leagueId: league.id,
+        createdBy: input.ownerUserId,
+        name: `Live Leader ${suffix}`,
+      },
+    }),
+    prisma.squad.create({
+      data: {
+        leagueId: league.id,
+        createdBy: input.ownerUserId,
+        name: `Live Chaser ${suffix}`,
+      },
+    }),
+  ]);
+  await prisma.squadMembership.create({
+    data: {
+      leagueId: league.id,
+      squadId: leaderSquad.id,
+      userId: input.ownerUserId,
+      status: 'ACTIVE',
+    },
+  });
+
+  const [directContest, joinedContest] = await Promise.all([
+    prisma.contest.create({
+      data: {
+        leagueId: league.id,
+        sportEventId: input.sportEventId,
+        name: `Direct Golf Live E2E ${suffix}`,
+        status: 'ACTIVE',
+        contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
+        scoringEngine: 'STROKE_PLAY',
+      },
+    }),
+    prisma.contest.create({
+      data: {
+        leagueId: league.id,
+        sportEventId: null,
+        name: `Joined Golf Live E2E ${suffix}`,
+        status: 'ACTIVE',
+        contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
+        scoringEngine: 'STROKE_PLAY',
+      },
+    }),
+  ]);
+  await prisma.contestSportEvent.create({
+    data: {
+      contestId: joinedContest.id,
+      sportEventId: input.sportEventId,
+    },
+  });
+  await Promise.all([
+    createGolfLiveContestConfiguration(directContest.id),
+    createGolfLiveContestConfiguration(joinedContest.id),
+  ]);
+  const directEntries = await createGolfLiveEntries({
+    contestId: directContest.id,
+    leaderSquadId: leaderSquad.id,
+    chaserSquadId: chaserSquad.id,
+    leaderPicks: input.directPicks.leader,
+    chaserPicks: input.directPicks.chaser,
+  });
+  const joinedEntries = await createGolfLiveEntries({
+    contestId: joinedContest.id,
+    leaderSquadId: leaderSquad.id,
+    chaserSquadId: chaserSquad.id,
+    leaderPicks: input.directPicks.leader,
+    chaserPicks: input.directPicks.chaser,
+  });
+
+  return { directContest, joinedContest, directEntries, joinedEntries };
+}
+
+async function createGolfLiveContestConfiguration(contestId: string) {
+  return getPrisma().contestConfiguration.create({
+    data: {
+      contestId,
+      selectionType: 'TIERED',
+      configJson: {
+        countedScores: 2,
+      },
+      rosterSize: 3,
+      pickCount: 3,
+    },
+  });
+}
+
+async function createGolfLiveEntries(input: {
+  contestId: string;
+  leaderSquadId: string;
+  chaserSquadId: string;
+  leaderPicks: string[];
+  chaserPicks: string[];
+}) {
+  const prisma = getPrisma();
+  const [leader, chaser] = await Promise.all([
+    prisma.contestEntry.create({
+      data: {
+        contestId: input.contestId,
+        squadId: input.leaderSquadId,
+        entryNumber: 1,
+        name: `Leader ${input.contestId.slice(0, 8)}`,
+        status: 'ACTIVE',
+      },
+    }),
+    prisma.contestEntry.create({
+      data: {
+        contestId: input.contestId,
+        squadId: input.chaserSquadId,
+        entryNumber: 2,
+        name: `Chaser ${input.contestId.slice(0, 8)}`,
+        status: 'ACTIVE',
+      },
+    }),
+  ]);
+  await Promise.all([
+    ...input.leaderPicks.map((sportEventParticipantId, index) =>
+      createGolfLivePick(leader.id, sportEventParticipantId, index + 1),
+    ),
+    ...input.chaserPicks.map((sportEventParticipantId, index) =>
+      createGolfLivePick(chaser.id, sportEventParticipantId, index + 1),
+    ),
+  ]);
+
+  return { leader, chaser };
+}
+
+async function createGolfLivePick(entryId: string, sportEventParticipantId: string, slot: number) {
+  return getPrisma().contestEntryPick.create({
+    data: {
+      entryId,
+      sportEventParticipantId,
+      contestFormat: 'ROSTER',
+      slot,
+    },
+  });
+}
+
+async function readGolfLeaderboard(contestId: string, headers: Record<string, string>) {
+  const response = await getApp().inject({
+    method: 'GET',
+    url: `/api/v1/contests/${contestId}/golf/leaderboard`,
+    headers,
+  });
+  expect(response.statusCode).toBe(200);
+  return GolfLeaderboardResponseSchema.parse(response.json());
+}
+
 beforeAll(async () => {
   await setupIntegrationTests();
   integrationSetupComplete = true;
@@ -233,8 +450,8 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-  await cleanupMockProviderImportData();
   await cleanupTestData();
+  await cleanupMockProviderImportData();
 });
 
 afterAll(async () => {
@@ -242,6 +459,7 @@ afterAll(async () => {
     return;
   }
 
+  await cleanupTestData();
   await cleanupMockProviderImportData();
   await mockProvider.close();
   await teardownIntegrationTests();
@@ -629,6 +847,271 @@ describe('mock contest feed provider event-first verification', () => {
       expect.objectContaining({ jobType: 'PARTICIPANT_RANKINGS_SYNC' }),
       expect.objectContaining({ jobType: 'EVENT_PARTICIPANTS_SYNC', eventExternalId }),
     ]));
+  });
+
+  it('pool-master-eux.8: verifies Golf live scoring through leaderboard movement and completed settlement', async () => {
+    const prisma = getPrisma();
+    const provider = new MockContestFeedAdapter(mockProvider.baseUrl);
+    const registry = new ProviderRegistry();
+    registry.register(Sport.GOLF, provider, 'PRIMARY');
+    const bus = new EventBus();
+    const contestCompletedEvents: unknown[] = [];
+    bus.subscribe('contest.completed', async (event) => {
+      contestCompletedEvents.push(event);
+    });
+    const settlement = new GolfContestSettlementService(prisma, undefined, bus);
+    const persistence = new IngestionPersistence(
+      prisma,
+      undefined,
+      undefined,
+      'http://localhost:5173',
+      settlement,
+    );
+    const syncRunLedger = new ProviderSyncRunLedger(prisma);
+    const eventReader = createScheduledEventReader({ prisma, registry });
+    const scheduler = new IngestionScheduler(registry, {
+      onEvents: async (events) => (await persistence.persistEventsWithDiagnostics(events)).writeDiagnostics,
+      onEventDetail: async (detail) => (await persistence.persistEventDetailWithDiagnostics(detail)).writeDiagnostics,
+      onRankings: async (rankings) => (await persistence.persistRankingsWithDiagnostics(rankings)).writeDiagnostics,
+      onLiveScores: async (result, providerIdForResult) =>
+        publishLiveScoreUpdate(result, { prisma, providerId: providerIdForResult, bus }),
+      onJobComplete: async (job) => {
+        await persistence.persistIngestionJob(job);
+      },
+    }, undefined, {
+      eventReader,
+      syncRunLedger,
+    });
+    const rootAdmin = await createTestUser({
+      displayName: 'Golf Live E2E Root Admin',
+      isRootAdmin: true,
+    });
+    const providerService = new ProviderService(
+      prisma,
+      registry,
+      scheduler,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      syncRunLedger,
+    );
+
+    const schedule = await providerService.prepareSportSync(
+      {
+        sport: Sport.GOLF,
+        feeds: ['EVENTSCHEDULE'],
+        from: new Date('2026-04-01T00:00:00.000Z'),
+        to: new Date('2026-06-30T23:59:59.999Z'),
+      },
+      rootAdmin.user.id,
+      rootAdmin.user.email,
+    );
+    await waitForProviderSyncRuns(schedule.syncRuns.map((run) => run.id));
+
+    const field = await providerService.syncEventData(
+      {
+        sport: Sport.GOLF,
+        eventId: eventExternalId,
+        feeds: ['EVENTPARTICIPANTS'],
+        mockEventState: 'locked',
+      },
+      rootAdmin.user.id,
+      rootAdmin.user.email,
+    );
+    await waitForProviderSyncRuns(field.syncRuns.map((run) => run.id));
+
+    const event = await prisma.sportEvent.findUniqueOrThrow({
+      where: {
+        providerId_externalId: {
+          providerId,
+          externalId: eventExternalId,
+        },
+      },
+    });
+    const selectedParticipants = await loadSportEventParticipants([
+      'golfer-01',
+      'golfer-02',
+      'golfer-03',
+      'golfer-04',
+      'golfer-05',
+      'golfer-06',
+    ]);
+    const golfer01SportEventParticipantId = requiredSportEventParticipantId(selectedParticipants, 'golfer-01');
+    const golfer02SportEventParticipantId = requiredSportEventParticipantId(selectedParticipants, 'golfer-02');
+    const golfer03SportEventParticipantId = requiredSportEventParticipantId(selectedParticipants, 'golfer-03');
+    const golfer04SportEventParticipantId = requiredSportEventParticipantId(selectedParticipants, 'golfer-04');
+    const golfer05SportEventParticipantId = requiredSportEventParticipantId(selectedParticipants, 'golfer-05');
+    const golfer06SportEventParticipantId = requiredSportEventParticipantId(selectedParticipants, 'golfer-06');
+    const { directContest, joinedContest, directEntries, joinedEntries } =
+      await createGolfLiveVerificationContests({
+        ownerUserId: rootAdmin.user.id,
+        sportEventId: event.id,
+        directPicks: {
+          leader: [
+            golfer01SportEventParticipantId,
+            golfer02SportEventParticipantId,
+            golfer05SportEventParticipantId,
+          ],
+          chaser: [
+            golfer03SportEventParticipantId,
+            golfer04SportEventParticipantId,
+            golfer06SportEventParticipantId,
+          ],
+        },
+      });
+
+    const beforeLive = await readGolfLeaderboard(directContest.id, rootAdmin.headers);
+    expect(beforeLive.entries.every((entry) => entry.totalScoreToPar === null)).toBe(true);
+    expect(beforeLive.entries.every((entry) => entry.scoredPickCount === 0)).toBe(true);
+
+    const r2Complete = await providerService.syncEventData(
+      {
+        sport: Sport.GOLF,
+        eventId: eventExternalId,
+        feeds: ['EVENTLIVESCORES'],
+        mockEventState: 'golf-r2-complete',
+      },
+      rootAdmin.user.id,
+      rootAdmin.user.email,
+    );
+    await waitForProviderSyncRuns(r2Complete.syncRuns.map((run) => run.id));
+
+    const leaderboardAfterR2 = await readGolfLeaderboard(directContest.id, rootAdmin.headers);
+    const leaderAfterR2 = leaderboardAfterR2.entries.find((entry) => entry.entryId === directEntries.leader.id);
+    expect(leaderAfterR2?.totalScoreToPar).not.toBeNull();
+    expect(leaderAfterR2?.scoredPickCount).toBe(3);
+    expect(leaderAfterR2?.countingPickCount).toBe(2);
+    expect(leaderAfterR2?.picks.filter((pick) => pick.isCounting)).toHaveLength(2);
+    expect(leaderAfterR2?.picks.filter((pick) => pick.isDropped)).toHaveLength(1);
+    const golfer01AfterR2 = leaderAfterR2?.picks.find(
+      (pick) => pick.sportEventParticipantId === golfer01SportEventParticipantId,
+    )?.participant.totalScoreToPar;
+    expect(golfer01AfterR2).not.toBeNull();
+    await expect(prisma.contestEntryGolfStanding.count({
+      where: { contestId: { in: [directContest.id, joinedContest.id] } },
+    })).resolves.toBe(0);
+    await expect(prisma.contest.findMany({
+      where: { id: { in: [directContest.id, joinedContest.id] } },
+      select: { status: true },
+    })).resolves.toEqual(expect.arrayContaining([
+      { status: 'ACTIVE' },
+      { status: 'ACTIVE' },
+    ]));
+
+    const corrected = await providerService.syncEventData(
+      {
+        sport: Sport.GOLF,
+        eventId: eventExternalId,
+        feeds: ['EVENTLIVESCORES'],
+        mockEventState: 'golf-correction',
+      },
+      rootAdmin.user.id,
+      rootAdmin.user.email,
+    );
+    await waitForProviderSyncRuns(corrected.syncRuns.map((run) => run.id));
+
+    const leaderboardAfterCorrection = await readGolfLeaderboard(directContest.id, rootAdmin.headers);
+    const leaderAfterCorrection = leaderboardAfterCorrection.entries.find((entry) => entry.entryId === directEntries.leader.id);
+    const golfer01AfterCorrection = leaderAfterCorrection?.picks.find(
+      (pick) => pick.sportEventParticipantId === golfer01SportEventParticipantId,
+    )?.participant.totalScoreToPar;
+    expect(golfer01AfterCorrection).toBe((golfer01AfterR2 ?? 0) - 2);
+    expect(leaderAfterCorrection?.picks.filter((pick) => pick.isCounting)).toHaveLength(2);
+    expect(leaderAfterCorrection?.picks.filter((pick) => pick.isDropped)).toHaveLength(1);
+
+    const finalLive = await providerService.syncEventData(
+      {
+        sport: Sport.GOLF,
+        eventId: eventExternalId,
+        feeds: ['EVENTLIVESCORES'],
+        mockEventState: 'golf-completed',
+      },
+      rootAdmin.user.id,
+      rootAdmin.user.email,
+    );
+    await waitForProviderSyncRuns(finalLive.syncRuns.map((run) => run.id));
+    await expect(prisma.contestEntryGolfStanding.count({
+      where: { contestId: { in: [directContest.id, joinedContest.id] } },
+    })).resolves.toBe(0);
+
+    const completedDetail = await providerService.syncEventData(
+      {
+        sport: Sport.GOLF,
+        eventId: eventExternalId,
+        feeds: ['EVENTPARTICIPANTS'],
+        mockEventState: 'golf-completed',
+      },
+      rootAdmin.user.id,
+      rootAdmin.user.email,
+    );
+    await waitForProviderSyncRuns(completedDetail.syncRuns.map((run) => run.id));
+
+    await expect(prisma.sportEvent.findUniqueOrThrow({
+      where: {
+        providerId_externalId: {
+          providerId,
+          externalId: eventExternalId,
+        },
+      },
+      select: { status: true },
+    })).resolves.toEqual({ status: 'COMPLETED' });
+    await expect(prisma.contest.findMany({
+      where: { id: { in: [directContest.id, joinedContest.id] } },
+      select: { id: true, status: true },
+      orderBy: { id: 'asc' },
+    })).resolves.toEqual([
+      expect.objectContaining({ status: 'COMPLETED' }),
+      expect.objectContaining({ status: 'COMPLETED' }),
+    ]);
+    await expect(prisma.contestEntryGolfStanding.count({
+      where: {
+        contestEntryId: {
+          in: [
+            directEntries.leader.id,
+            directEntries.chaser.id,
+            joinedEntries.leader.id,
+            joinedEntries.chaser.id,
+          ],
+        },
+      },
+    })).resolves.toBe(4);
+    expect(contestCompletedEvents).toHaveLength(2);
+
+    const completedLiveCandidates = await eventReader.listEventIdsForFeed({
+      sport: Sport.GOLF,
+      feed: 'EVENTLIVESCORES',
+      from: new Date('2026-04-01T00:00:00.000Z'),
+      to: new Date('2026-06-30T23:59:59.999Z'),
+      now: new Date('2026-05-31T23:00:00.000Z'),
+    });
+    expect(completedLiveCandidates).not.toContain(eventExternalId);
+
+    const rerunCompletedDetail = await providerService.syncEventData(
+      {
+        sport: Sport.GOLF,
+        eventId: eventExternalId,
+        feeds: ['EVENTPARTICIPANTS'],
+        mockEventState: 'golf-completed',
+      },
+      rootAdmin.user.id,
+      rootAdmin.user.email,
+    );
+    await waitForProviderSyncRuns(rerunCompletedDetail.syncRuns.map((run) => run.id));
+    await expect(prisma.contestEntryGolfStanding.count({
+      where: {
+        contestEntryId: {
+          in: [
+            directEntries.leader.id,
+            directEntries.chaser.id,
+            joinedEntries.leader.id,
+            joinedEntries.chaser.id,
+          ],
+        },
+      },
+    })).resolves.toBe(4);
+    expect(contestCompletedEvents).toHaveLength(2);
   });
 
   it('keeps startup-style schedule sync shallow until manual re-ingest loads contest-ready event detail', async () => {

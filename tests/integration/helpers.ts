@@ -569,6 +569,7 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.sportEventParticipantGolfStanding.deleteMany();
   await prisma.sportEventParticipantValuation.deleteMany();
   await prisma.sportEventParticipant.deleteMany();
+  await prisma.participantRankingSnapshot.deleteMany();
   await prisma.participantProviderMapping.deleteMany();
   await prisma.participant.deleteMany();
   await prisma.sportEvent.deleteMany();
