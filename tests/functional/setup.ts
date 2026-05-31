@@ -205,6 +205,13 @@ async function cleanupContestArtifacts(
       },
     },
   });
+  await database.contestEntryGolfStanding.deleteMany({
+    where: {
+      contestId: {
+        in: contestIds,
+      },
+    },
+  });
   await database.contestEntry.deleteMany({
     where: {
       contestId: {

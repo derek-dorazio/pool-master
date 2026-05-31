@@ -28,6 +28,13 @@ import {
   type MailDeliveryProvider,
 } from '../../email';
 
+interface CompletedSportEventSettlement {
+  settleCompletedSportEvent(
+    sportEventId: string,
+    input?: { completedAt?: Date },
+  ): Promise<unknown>;
+}
+
 interface ContestStartedEmailUser {
   id: string;
   email: string;
@@ -77,6 +84,7 @@ export class IngestionPersistence {
     private readonly logger?: FastifyBaseLogger,
     private readonly mailDelivery?: MailDeliveryProvider,
     private readonly appBaseUrl = 'http://localhost:5173',
+    private readonly golfContestSettlement?: CompletedSportEventSettlement,
   ) {}
 
   /**
@@ -175,6 +183,7 @@ export class IngestionPersistence {
         after,
       });
       await this.activateContestsForStartedEvent(persistedEvent.id, event);
+      await this.settleContestsForCompletedEvent(persistedEvent.id, event);
       count++;
       this.logger?.debug({
         providerId: event.providerId,
@@ -193,6 +202,19 @@ export class IngestionPersistence {
       value: count,
       writeDiagnostics: summarizeSyncWriteRows(detailRows),
     };
+  }
+
+  private async settleContestsForCompletedEvent(
+    sportEventId: string,
+    event: SportEvent,
+  ): Promise<void> {
+    if (event.status !== 'COMPLETED' || !this.golfContestSettlement) {
+      return;
+    }
+
+    await this.golfContestSettlement.settleCompletedSportEvent(sportEventId, {
+      completedAt: event.endDate ?? event.startDate,
+    });
   }
 
   private async activateContestsForStartedEvent(

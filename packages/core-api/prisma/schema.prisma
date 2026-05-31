@@ -660,6 +660,7 @@ model Contest {
   sportEvent      SportEvent?             @relation(fields: [sportEventId], references: [id])
   configuration   ContestConfiguration?
   entries         ContestEntry[]
+  golfStandings   ContestEntryGolfStanding[]
   draftSession    DraftSession?
   contestSportEvents ContestSportEvent[]
 
@@ -824,9 +825,37 @@ model ContestEntry {
 
   picks              ContestEntryPick[]
   draftPickHistories DraftPickHistory[]
+  golfStanding       ContestEntryGolfStanding?
 
   @@unique([contestId, squadId, entryNumber])
   @@map("contest_entries")
+}
+
+/// Final Golf-specific contest-entry standing persisted when the event schedule
+/// marks the related SportEvent completed. This is the frozen contest aggregate;
+/// live/member leaderboard reads still compute current dropped/counting picks at
+/// read time from SportEventParticipantGolfStanding rows.
+model ContestEntryGolfStanding {
+  id                String   @id @default(uuid()) @db.Uuid
+  contestId         String   @map("contest_id") @db.Uuid
+  contestEntryId    String   @unique @map("contest_entry_id") @db.Uuid
+  totalScoreToPar   Int?     @map("total_score_to_par")
+  position          Int?
+  displayPosition   String?  @map("display_position") @db.VarChar(20)
+  countingPickCount Int      @map("counting_pick_count")
+  scoredPickCount   Int      @map("scored_pick_count")
+  status            String   @default("FINAL") @db.VarChar(20)
+  asOf              DateTime? @map("as_of") @db.Timestamptz
+  settledAt         DateTime @map("settled_at") @db.Timestamptz
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  contest      Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  contestEntry ContestEntry @relation(fields: [contestEntryId], references: [id], onDelete: Cascade)
+
+  @@index([contestId, position])
+  @@index([status])
+  @@map("contest_entry_golf_standings")
 }
 
 /// A pick on a contest entry — references a SportEventParticipant.

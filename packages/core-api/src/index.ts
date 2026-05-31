@@ -50,6 +50,7 @@ import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
+import { GolfContestSettlementService } from './modules/contests/golf-contest-settlement-service';
 import {
   createMailDeliveryProvider,
   readApplicationBaseUrl,
@@ -70,11 +71,13 @@ export function buildApp() {
     app.log,
   );
   const appBaseUrl = readApplicationBaseUrl(process.env);
+  const golfContestSettlement = new GolfContestSettlementService(prisma, app.log);
   const ingestionPersistence = new IngestionPersistence(
     prisma,
     app.log,
     mailDelivery,
     appBaseUrl,
+    golfContestSettlement,
   );
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
   const pollConfigService = new PollConfigService(runtimeConfigRepository, app.log);

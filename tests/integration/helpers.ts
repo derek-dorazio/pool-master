@@ -344,6 +344,13 @@ async function cleanupContestArtifacts(
       },
     },
   });
+  await database.contestEntryGolfStanding.deleteMany({
+    where: {
+      contestId: {
+        in: contestIds,
+      },
+    },
+  });
   await database.contestEntry.deleteMany({
     where: {
       contestId: {
@@ -555,6 +562,7 @@ export async function cleanupTestData(): Promise<void> {
   }
 
   await prisma.providerSyncRun.deleteMany();
+  await prisma.contestEntryGolfStanding.deleteMany();
   await prisma.sportEventParticipantGolfRound.deleteMany();
   // Keep standing cleanup before SportEventParticipant because the standing
   // table intentionally uses an explicit child row rather than FK cascade.
