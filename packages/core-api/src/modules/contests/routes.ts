@@ -18,6 +18,7 @@ import {
   CreateContestRequestSchema,
   ExtendContestDeadlineRequestSchema,
   ExtendPickClockRequestSchema,
+  GolfLeaderboardResponseSchema,
   MyContestEntryResponseSchema,
   PauseContestDraftRequestSchema,
   ReopenContestRequestSchema,
@@ -215,6 +216,22 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       },
     },
     handler: handlers.getEntry,
+  });
+
+  fastify.get('/:contestId/golf/leaderboard', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Get Golf contest leaderboard',
+      description:
+        'Returns the member-facing Golf leaderboard for a contest. Entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers and ContestEntry.totalScore is not the score source.',
+      operationId: 'getGolfContestLeaderboard',
+      response: {
+        200: zodToJsonSchema(GolfLeaderboardResponseSchema),
+        400: zodToJsonSchema(ErrorEnvelopeSchema),
+        404: zodToJsonSchema(ErrorEnvelopeSchema),
+      },
+    },
+    handler: handlers.getGolfLeaderboard,
   });
 
   fastify.get('/:contestId/entries/me', {

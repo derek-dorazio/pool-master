@@ -13,6 +13,9 @@ import type {
   ContestEntryListResponse,
   ContestEntryDetailResponse,
   ContestEntryResponse,
+  GolfLeaderboardResponse,
+  GolfLeaderboardStatus,
+  GolfLeaderboardRoundDisplayType,
   MyContestEntryResponse,
 } from '@poolmaster/shared/dto';
 import type {
@@ -70,6 +73,79 @@ export interface ContestEntryParticipantRow {
   contestPoints: number;
   pickedAt: Date;
   latestPerformance: Record<string, unknown>;
+}
+
+export interface GolfLeaderboardRoundCellRow {
+  round: 1 | 2 | 3 | 4;
+  status: GolfLeaderboardStatus;
+  strokes: number | null;
+  scoreToPar: number | null;
+  thru: number | null;
+  displayType: GolfLeaderboardRoundDisplayType;
+  displayValue: string | null;
+}
+
+export interface GolfLeaderboardParticipantRow {
+  sportEventParticipantId: string;
+  participantId: string;
+  name: string;
+  shortName: string | null;
+  participantStatus: string | null;
+  worldRanking: number | null;
+  oddsToWin: number | null;
+  seedNumber: number | null;
+  totalScoreToPar: number | null;
+  totalStrokes: number | null;
+  thru: number | null;
+  currentRound: number | null;
+  status: GolfLeaderboardStatus;
+  position: number | null;
+  displayPosition: string | null;
+  asOf: Date | null;
+  rounds: {
+    r1: GolfLeaderboardRoundCellRow | null;
+    r2: GolfLeaderboardRoundCellRow | null;
+    r3: GolfLeaderboardRoundCellRow | null;
+    r4: GolfLeaderboardRoundCellRow | null;
+  };
+}
+
+export interface GolfLeaderboardEntryPickRow {
+  pickId: string;
+  sportEventParticipantId: string;
+  pickedAt: Date;
+  slot: number | null;
+  tier: string | null;
+  isCounting: boolean;
+  isDropped: boolean;
+  participant: GolfLeaderboardParticipantRow;
+}
+
+export interface GolfLeaderboardEntryRow {
+  entryId: string;
+  entryName: string;
+  entryNumber: number;
+  squadId: string;
+  squadName: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  totalScoreToPar: number | null;
+  position: number | null;
+  displayPosition: string | null;
+  countingPickCount: number;
+  scoredPickCount: number;
+  picks: GolfLeaderboardEntryPickRow[];
+}
+
+export interface GolfLeaderboardModel {
+  contestId: string;
+  sportEventId: string;
+  countingRule: {
+    type: 'BEST_N_GOLFERS';
+    count: number;
+  };
+  participants: GolfLeaderboardParticipantRow[];
+  entries: GolfLeaderboardEntryRow[];
+  asOf: Date | null;
 }
 
 export function toContestSummaryDto(
@@ -264,4 +340,62 @@ export function toMyContestEntryResponse(
   entry: ContestEntryDto | null,
 ): MyContestEntryResponse {
   return { contestId, entry };
+}
+
+export function toGolfLeaderboardResponse(
+  leaderboard: GolfLeaderboardModel,
+): GolfLeaderboardResponse {
+  return {
+    contestId: leaderboard.contestId,
+    sportEventId: leaderboard.sportEventId,
+    scoringMode: 'GOLF_TO_PAR',
+    countingRule: leaderboard.countingRule,
+    participants: leaderboard.participants.map(toGolfLeaderboardParticipantDto),
+    entries: leaderboard.entries.map((entry) => ({
+      entryId: entry.entryId,
+      entryName: entry.entryName,
+      entryNumber: entry.entryNumber,
+      squadId: entry.squadId,
+      squadName: entry.squadName,
+      status: entry.status,
+      totalScoreToPar: entry.totalScoreToPar,
+      position: entry.position,
+      displayPosition: entry.displayPosition,
+      countingPickCount: entry.countingPickCount,
+      scoredPickCount: entry.scoredPickCount,
+      picks: entry.picks.map((pick) => ({
+        pickId: pick.pickId,
+        sportEventParticipantId: pick.sportEventParticipantId,
+        pickedAt: pick.pickedAt.toISOString(),
+        slot: pick.slot,
+        tier: pick.tier,
+        isCounting: pick.isCounting,
+        isDropped: pick.isDropped,
+        participant: toGolfLeaderboardParticipantDto(pick.participant),
+      })),
+    })),
+    asOf: leaderboard.asOf?.toISOString() ?? null,
+  };
+}
+
+function toGolfLeaderboardParticipantDto(participant: GolfLeaderboardParticipantRow) {
+  return {
+    sportEventParticipantId: participant.sportEventParticipantId,
+    participantId: participant.participantId,
+    name: participant.name,
+    shortName: participant.shortName,
+    participantStatus: participant.participantStatus,
+    worldRanking: participant.worldRanking,
+    oddsToWin: participant.oddsToWin,
+    seedNumber: participant.seedNumber,
+    totalScoreToPar: participant.totalScoreToPar,
+    totalStrokes: participant.totalStrokes,
+    thru: participant.thru,
+    currentRound: participant.currentRound,
+    status: participant.status,
+    position: participant.position,
+    displayPosition: participant.displayPosition,
+    asOf: participant.asOf?.toISOString() ?? null,
+    rounds: participant.rounds,
+  };
 }

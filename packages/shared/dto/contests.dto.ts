@@ -267,6 +267,115 @@ export const ContestEntryDetailDtoSchema = ContestEntryDtoSchema.extend({
 }).describe('Expanded contest entry detail.');
 export type ContestEntryDetailDto = z.infer<typeof ContestEntryDetailDtoSchema>;
 
+const GolfLeaderboardStatusSchema = z.enum([
+  'active',
+  'in-progress',
+  'complete',
+  'withdrawn',
+  'missed-cut',
+]).describe(
+  'Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.',
+);
+export type GolfLeaderboardStatus = z.infer<typeof GolfLeaderboardStatusSchema>;
+
+const GolfLeaderboardRoundDisplayTypeSchema = z.enum([
+  'EMPTY',
+  'TO_PAR',
+  'STROKES',
+]).describe(
+  'How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.',
+);
+export type GolfLeaderboardRoundDisplayType = z.infer<typeof GolfLeaderboardRoundDisplayTypeSchema>;
+
+export const GolfLeaderboardRoundCellDtoSchema = z.object({
+  round: z.number().int().min(1).max(4).describe('Golf round number represented by this leaderboard column.'),
+  status: GolfLeaderboardStatusSchema.describe('Normalized status for this round cell.'),
+  strokes: z.number().int().nullable().describe('Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.'),
+  scoreToPar: z.number().int().nullable().describe('Round score relative to par. Used as the visible round value while the round is in progress.'),
+  thru: z.number().int().min(0).max(18).nullable().describe('Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.'),
+  displayType: GolfLeaderboardRoundDisplayTypeSchema,
+  displayValue: z.string().nullable().describe('Preformatted member-facing value for this round column using Golf display rules.'),
+}).describe('Single R1/R2/R3/R4 Golf leaderboard cell for a picked golfer.');
+export type GolfLeaderboardRoundCellDto = z.infer<typeof GolfLeaderboardRoundCellDtoSchema>;
+
+export const GolfLeaderboardRoundColumnsDtoSchema = z.object({
+  r1: GolfLeaderboardRoundCellDtoSchema.nullable().describe('Round 1 leaderboard column.'),
+  r2: GolfLeaderboardRoundCellDtoSchema.nullable().describe('Round 2 leaderboard column.'),
+  r3: GolfLeaderboardRoundCellDtoSchema.nullable().describe('Round 3 leaderboard column.'),
+  r4: GolfLeaderboardRoundCellDtoSchema.nullable().describe('Round 4 leaderboard column.'),
+}).describe('Fixed four-round Golf leaderboard columns.');
+export type GolfLeaderboardRoundColumnsDto = z.infer<typeof GolfLeaderboardRoundColumnsDtoSchema>;
+
+export const GolfLeaderboardParticipantDtoSchema = z.object({
+  sportEventParticipantId: z.string().describe('SportEventParticipant row selected by contest picks.'),
+  participantId: z.string().describe('Canonical participant identifier.'),
+  name: z.string().describe('Golfer display name.'),
+  shortName: z.string().nullable().describe('Optional shorter golfer display name.'),
+  participantStatus: z.string().nullable().describe('Provider/player availability status on the event participant row.'),
+  worldRanking: z.number().int().nullable().describe('Latest copied global world ranking on this event participant.'),
+  oddsToWin: z.number().nullable().describe('Event-scoped odds-to-win for this golfer.'),
+  seedNumber: z.number().int().nullable().describe('Event seed/order when supplied by the provider.'),
+  totalScoreToPar: z.number().int().nullable().describe('TOT column value: current event total relative to par. Lower is better.'),
+  totalStrokes: z.number().int().nullable().describe('Current event total strokes across persisted Golf rounds.'),
+  thru: z.number().int().min(0).max(18).nullable().describe('THR column value while the golfer is currently on course; null after round completion or before play.'),
+  currentRound: z.number().int().min(1).max(4).nullable().describe('Current or latest round represented by the standing.'),
+  status: GolfLeaderboardStatusSchema,
+  position: z.number().int().nullable().describe('Event leaderboard position for this golfer when available.'),
+  displayPosition: z.string().nullable().describe('Provider/display position such as T2 when available.'),
+  asOf: z.string().datetime().nullable().describe('Provider timestamp for the current Golf standing.'),
+  rounds: GolfLeaderboardRoundColumnsDtoSchema.describe('R1 through R4 detail for expanded member leaderboard rows.'),
+}).describe(
+  'Golf event participant read model used by the contest leaderboard. This is loaded once per event and joined to entry picks in memory.',
+);
+export type GolfLeaderboardParticipantDto = z.infer<typeof GolfLeaderboardParticipantDtoSchema>;
+
+export const GolfLeaderboardEntryPickDtoSchema = z.object({
+  pickId: z.string().describe('ContestEntryPick row identifier. The pick remains a pointer to sportEventParticipantId; score data comes from the event participant read model.'),
+  sportEventParticipantId: z.string().describe('Selected SportEventParticipant.'),
+  pickedAt: z.string().datetime().describe('When this golfer was selected.'),
+  slot: z.number().int().nullable().describe('Optional roster slot from the pick row.'),
+  tier: z.string().nullable().describe('Optional tier/category from the pick row.'),
+  isCounting: z.boolean().describe('Whether this pick currently counts toward the entry score under the contest configuration.'),
+  isDropped: z.boolean().describe('Whether this scored pick is currently dropped/crossed out because better selected golfers fill the counting slots.'),
+  participant: GolfLeaderboardParticipantDtoSchema.describe('Expanded golfer event data for this pick.'),
+}).describe('Expanded Golf pick row for a contest leaderboard entry.');
+export type GolfLeaderboardEntryPickDto = z.infer<typeof GolfLeaderboardEntryPickDtoSchema>;
+
+export const GolfLeaderboardEntryDtoSchema = z.object({
+  entryId: z.string().describe('Contest entry identifier.'),
+  entryName: z.string().describe('Team entry display name.'),
+  entryNumber: z.number().int().min(1).describe('Entry number for squads allowed to submit multiple entries.'),
+  squadId: z.string().describe('Squad/team identifier.'),
+  squadName: z.string().describe('Squad/team display name.'),
+  status: z.enum(['ACTIVE', 'INACTIVE']).describe('Contest entry lifecycle status.'),
+  totalScoreToPar: z.number().int().nullable().describe('Entry leaderboard total computed from currently counting golfer TOT values. Lower is better.'),
+  position: z.number().int().nullable().describe('Computed contest leaderboard rank for this entry.'),
+  displayPosition: z.string().nullable().describe('Computed display rank, including T-prefix for ties.'),
+  countingPickCount: z.number().int().min(0).describe('How many selected golfers count toward this entry under the contest configuration.'),
+  scoredPickCount: z.number().int().min(0).describe('How many selected golfers currently have event standings.'),
+  picks: z.array(GolfLeaderboardEntryPickDtoSchema).describe('Selected golfers with counting/dropped flags computed at read time.'),
+}).describe('Single Team row in the Golf contest leaderboard.');
+export type GolfLeaderboardEntryDto = z.infer<typeof GolfLeaderboardEntryDtoSchema>;
+
+export const GolfLeaderboardCountingRuleDtoSchema = z.object({
+  type: z.literal('BEST_N_GOLFERS').describe('Golf roster rule: sum the best N selected golfer totals for the entry.'),
+  count: z.number().int().min(1).describe('Number of selected golfers that currently count toward each entry total.'),
+}).describe('Contest scoring interpretation used by the Golf leaderboard read API.');
+export type GolfLeaderboardCountingRuleDto = z.infer<typeof GolfLeaderboardCountingRuleDtoSchema>;
+
+export const GolfLeaderboardResponseSchema = z.object({
+  contestId: z.string().describe('Contest whose leaderboard was requested.'),
+  sportEventId: z.string().describe('Golf sport event backing this contest leaderboard.'),
+  scoringMode: z.literal('GOLF_TO_PAR').describe('Golf leaderboard totals are relative to par and lower is better.'),
+  countingRule: GolfLeaderboardCountingRuleDtoSchema,
+  participants: z.array(GolfLeaderboardParticipantDtoSchema).describe('All event participants for the contest event, loaded once for UI joins and filtering.'),
+  entries: z.array(GolfLeaderboardEntryDtoSchema).describe('Contest entries ordered by computed Golf total.'),
+  asOf: z.string().datetime().nullable().describe('Latest provider standing timestamp represented in the leaderboard, or null when no standing timestamps are available.'),
+}).describe(
+  'Member-facing Golf contest leaderboard. Entry totals are computed from SportEventParticipantGolfStanding and SportEventParticipantGolfRound, not ContestEntry.totalScore.',
+);
+export type GolfLeaderboardResponse = z.infer<typeof GolfLeaderboardResponseSchema>;
+
 // --- Responses ---
 
 const nullablePositiveIntSchema = z
