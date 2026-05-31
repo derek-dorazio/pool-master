@@ -69,6 +69,13 @@ async function cleanupContestArtifacts(): Promise<void> {
         },
       },
     });
+    await prisma.sportEventParticipantGolfStanding.deleteMany({
+      where: {
+        sportEventParticipantId: {
+          in: createdSportEventParticipantIds,
+        },
+      },
+    });
     await prisma.sportEventParticipantValuation.deleteMany({
       where: {
         sportEventParticipantId: {

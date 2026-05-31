@@ -109,6 +109,11 @@ describe('events routes', () => {
         ],
       });
     } finally {
+      await prisma.sportEventParticipantGolfStanding.deleteMany({
+        where: {
+          sportEventParticipant: { sportEventId: eligibleEventId },
+        },
+      });
       await prisma.sportEventParticipant.deleteMany({
         where: { sportEventId: eligibleEventId },
       });
@@ -212,6 +217,11 @@ describe('events routes', () => {
         readinessReasons: ['FIELD_LOCKED'],
       });
     } finally {
+      await prisma.sportEventParticipantGolfStanding.deleteMany({
+        where: {
+          sportEventParticipant: { sportEventId: lockedEventId },
+        },
+      });
       await prisma.sportEventParticipant.deleteMany({
         where: { sportEventId: lockedEventId },
       });

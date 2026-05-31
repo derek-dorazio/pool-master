@@ -15,6 +15,11 @@ afterAll(async () => {
   await prisma.sportEventParticipantValuation.deleteMany({
     where: { valuationSource: 'integration-test' },
   });
+  await prisma.sportEventParticipantGolfStanding.deleteMany({
+    where: {
+      sportEventParticipant: { sportEvent: { externalId: 'integration-event-participants' } },
+    },
+  });
   await prisma.sportEventParticipant.deleteMany({
     where: {
       sportEvent: { externalId: 'integration-event-participants' },
