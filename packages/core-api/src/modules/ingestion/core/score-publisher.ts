@@ -24,6 +24,8 @@ import {
   type LiveScoreResult,
 } from '@poolmaster/shared/dto';
 import { randomUUID } from 'node:crypto';
+import type { SyncWriteDetailRow, SyncWriteDiagnostics } from './sync-write-diagnostics';
+import { emptySyncWriteDiagnostics, mergeSyncWriteDiagnostics, summarizeSyncWriteRows } from './sync-write-diagnostics';
 
 export class LiveScoreValidationError extends Error {
   constructor(reason: string, public readonly issues: unknown) {
@@ -51,15 +53,22 @@ export interface LiveScorePublisherDeps {
   logger?: FastifyBaseLogger;
 }
 
+export interface LiveScorePersistenceResult {
+  updatesReturned: number;
+  updatesPersisted: number;
+  updatesSkipped: number;
+  writeDiagnostics: SyncWriteDiagnostics;
+}
+
 /**
- * Validate, persist, and emit. Returns the number of detail rows actually
- * persisted (excludes participants whose external id couldn't be resolved
- * to a `SportEventParticipant` row, which are logged as warnings).
+ * Validate, persist, and emit. Returns event-side persistence diagnostics for
+ * normalized round and standing rows; skipped provider rows are counted in
+ * stats but are not written as fake diagnostic entities.
  */
 export async function publishLiveScoreUpdate(
   result: LiveScoreResult,
   deps: LiveScorePublisherDeps,
-): Promise<number> {
+): Promise<LiveScorePersistenceResult> {
   // 1. Validate at the bus boundary.
   const parsed = LiveScoreResultSchema.safeParse(result);
   if (!parsed.success) {
@@ -73,6 +82,7 @@ export async function publishLiveScoreUpdate(
     throw new LiveScoreValidationError('schema mismatch', parsed.error.issues);
   }
   const validated = parsed.data;
+  const updatesReturned = countLiveScoreUpdates(validated);
 
   // 2/3. Resolve external → internal SportEvent so persistence is scoped
   // to one event, then dispatch to the per-category persistence path.
@@ -92,13 +102,18 @@ export async function publishLiveScoreUpdate(
     // because consumers read the persisted rows by (sportEventId, category);
     // a phantom zero-update event with no usable sportEventId is just noise.
     // The WARN above is the diagnostic record.
-    return 0;
+    return {
+      updatesReturned,
+      updatesPersisted: 0,
+      updatesSkipped: updatesReturned,
+      writeDiagnostics: emptySyncWriteDiagnostics(),
+    };
   }
 
-  let updatesPersisted = 0;
+  let persistenceResult: LiveScorePersistenceResult;
   switch (validated.category) {
     case 'GOLF':
-      updatesPersisted = await persistGolfRounds(
+      persistenceResult = await persistGolfRounds(
         sportEvent.id,
         validated.rounds,
         deps,
@@ -127,20 +142,27 @@ export async function publishLiveScoreUpdate(
     category: validated.category,
     providerId: deps.providerId,
     sportEventId: sportEvent.id,
-    updatesPersisted,
+    updatesPersisted: persistenceResult.updatesPersisted,
     ingestedAt: new Date().toISOString(),
   };
   await (deps.bus ?? eventBus).publish('live_score.persisted', persistedEvent);
 
-  return updatesPersisted;
+  return persistenceResult;
 }
 
 async function persistGolfRounds(
   sportEventId: string,
   rounds: readonly GolfRoundUpdate[],
   deps: LiveScorePublisherDeps,
-): Promise<number> {
-  if (rounds.length === 0) return 0;
+): Promise<LiveScorePersistenceResult> {
+  if (rounds.length === 0) {
+    return {
+      updatesReturned: 0,
+      updatesPersisted: 0,
+      updatesSkipped: 0,
+      writeDiagnostics: emptySyncWriteDiagnostics(),
+    };
+  }
 
   // Resolve participantExternalId → SportEventParticipant.id via
   // ParticipantProviderMapping → SportEventParticipant scoped to this event.
@@ -169,8 +191,14 @@ async function persistGolfRounds(
   }
 
   let persisted = 0;
+  let skipped = 0;
   const affectedSportEventParticipantIds = new Set<string>();
+  const detailRows: SyncWriteDetailRow[] = [];
   const standingAsOf = new Date();
+  const persistableRounds: Array<{
+    round: GolfRoundUpdate & { strokes: number };
+    sportEventParticipantId: string;
+  }> = [];
   for (const round of rounds) {
     if (round.strokes === null) {
       // Provider doesn't expose per-round strokes (mock-feed, ESPN
@@ -184,6 +212,7 @@ async function persistGolfRounds(
         },
         'Skipping golf round update — provider does not expose per-round strokes',
       );
+      skipped += 1;
       continue;
     }
     const participantId = participantIdByExternalId.get(round.participantExternalId);
@@ -195,6 +224,7 @@ async function persistGolfRounds(
         },
         'Skipping golf round update — provider participant has no internal mapping',
       );
+      skipped += 1;
       continue;
     }
     const sportEventParticipantId = sepByParticipantId.get(participantId);
@@ -206,10 +236,33 @@ async function persistGolfRounds(
         },
         'Skipping golf round update — no SportEventParticipant row for participant in this event',
       );
+      skipped += 1;
       continue;
     }
 
-    await deps.prisma.sportEventParticipantGolfRound.upsert({
+    persistableRounds.push({ round: { ...round, strokes: round.strokes }, sportEventParticipantId });
+  }
+
+  const existingRoundRows = persistableRounds.length === 0
+    ? []
+    : await deps.prisma.sportEventParticipantGolfRound.findMany({
+        where: {
+          OR: persistableRounds.map(({ round, sportEventParticipantId }) => ({
+            sportEventParticipantId,
+            round: round.round,
+          })),
+        },
+      });
+  const existingRoundByKey = new Map(
+    existingRoundRows.map((row) => [buildGolfRoundKey(row.sportEventParticipantId, row.round), row]),
+  );
+
+  for (const { round, sportEventParticipantId } of persistableRounds) {
+    const beforeRound = existingRoundByKey.get(buildGolfRoundKey(sportEventParticipantId, round.round));
+    const before = beforeRound ? normalizeGolfRoundRow(beforeRound) : undefined;
+    const after = normalizeGolfRoundInput(sportEventParticipantId, round);
+
+    const persistedRound = await deps.prisma.sportEventParticipantGolfRound.upsert({
       where: {
         sportEventParticipantId_round: {
           sportEventParticipantId,
@@ -233,21 +286,38 @@ async function persistGolfRounds(
         completedAt: round.completedAt ? new Date(round.completedAt) : null,
       },
     });
+    detailRows.push({
+      id: `golf-round:${sportEventParticipantId}:${round.round}`,
+      entityType: 'SportEventParticipantGolfRound',
+      disposition: resolveDisposition(before, after),
+      participantExternalId: round.participantExternalId,
+      internalId: persistedRound.id,
+      ...(before ? { before } : {}),
+      after,
+    });
     affectedSportEventParticipantIds.add(sportEventParticipantId);
     persisted += 1;
   }
 
-  await refreshGolfStandings([...affectedSportEventParticipantIds], deps, standingAsOf);
+  const standingDiagnostics = await refreshGolfStandings([...affectedSportEventParticipantIds], deps, standingAsOf);
 
-  return persisted;
+  return {
+    updatesReturned: rounds.length,
+    updatesPersisted: persisted,
+    updatesSkipped: skipped,
+    writeDiagnostics: mergeSyncWriteDiagnostics([
+      summarizeSyncWriteRows(detailRows),
+      standingDiagnostics,
+    ]),
+  };
 }
 
 async function refreshGolfStandings(
   sportEventParticipantIds: readonly string[],
   deps: LiveScorePublisherDeps,
   asOf: Date,
-): Promise<void> {
-  if (sportEventParticipantIds.length === 0) return;
+): Promise<SyncWriteDiagnostics> {
+  if (sportEventParticipantIds.length === 0) return emptySyncWriteDiagnostics();
 
   const rows = await deps.prisma.sportEventParticipantGolfRound.findMany({
     where: { sportEventParticipantId: { in: [...sportEventParticipantIds] } },
@@ -262,12 +332,19 @@ async function refreshGolfStandings(
     },
   });
 
+  const detailRows: SyncWriteDetailRow[] = [];
   const rowsByParticipant = new Map<string, typeof rows>();
   for (const row of rows) {
     const participantRows = rowsByParticipant.get(row.sportEventParticipantId) ?? [];
     participantRows.push(row);
     rowsByParticipant.set(row.sportEventParticipantId, participantRows);
   }
+  const existingStandings = await deps.prisma.sportEventParticipantGolfStanding.findMany({
+    where: { sportEventParticipantId: { in: [...sportEventParticipantIds] } },
+  });
+  const existingStandingByParticipantId = new Map(
+    existingStandings.map((standing) => [standing.sportEventParticipantId, standing]),
+  );
 
   for (const sportEventParticipantId of sportEventParticipantIds) {
     const participantRows = rowsByParticipant.get(sportEventParticipantId) ?? [];
@@ -281,7 +358,18 @@ async function refreshGolfStandings(
     const currentRoundThru = currentRound.thru ?? (currentRound.status === 'COMPLETED' ? 18 : null);
     const status = mapGolfLiveStatus(currentRound.status);
 
-    await deps.prisma.sportEventParticipantGolfStanding.upsert({
+    const existingStanding = existingStandingByParticipantId.get(sportEventParticipantId);
+    const before = existingStanding ? normalizeGolfStandingRow(existingStanding) : undefined;
+    const after = normalizeGolfStandingInput({
+      sportEventParticipantId,
+      eventScoreToPar,
+      eventStrokes,
+      currentRound: currentRound.round,
+      currentRoundThru,
+      status,
+    });
+
+    const persistedStanding = await deps.prisma.sportEventParticipantGolfStanding.upsert({
       where: { sportEventParticipantId },
       create: {
         sportEventParticipantId,
@@ -301,7 +389,17 @@ async function refreshGolfStandings(
         asOf,
       },
     });
+    detailRows.push({
+      id: `golf-standing:${sportEventParticipantId}`,
+      entityType: 'SportEventParticipantGolfStanding',
+      disposition: resolveDisposition(before, after),
+      internalId: persistedStanding.id,
+      ...(before ? { before } : {}),
+      after,
+    });
   }
+
+  return summarizeSyncWriteRows(detailRows);
 }
 
 function mapGolfLiveStatus(roundStatus: string): PrismaGolfLiveStatus {
@@ -316,4 +414,130 @@ function mapGolfLiveStatus(roundStatus: string): PrismaGolfLiveStatus {
     default:
       return PrismaGolfLiveStatus.ACTIVE;
   }
+}
+
+function countLiveScoreUpdates(result: LiveScoreResult): number {
+  switch (result.category) {
+    case 'GOLF':
+      return result.rounds.length;
+    case 'BASKETBALL':
+      return result.games.length;
+    case 'F1':
+      return result.results.length;
+    case 'NFL':
+      return result.games.length;
+    case 'NASCAR':
+      return result.results.length;
+    case 'TENNIS':
+      return result.matches.length;
+    case 'SOCCER':
+      return result.matches.length;
+  }
+}
+
+function resolveDisposition(
+  before: Record<string, unknown> | undefined,
+  after: Record<string, unknown>,
+): SyncWriteDetailRow['disposition'] {
+  if (!before) {
+    return 'CREATED';
+  }
+
+  return stableJson(before) === stableJson(after) ? 'UNCHANGED' : 'UPDATED';
+}
+
+function normalizeGolfRoundInput(
+  sportEventParticipantId: string,
+  round: GolfRoundUpdate,
+): Record<string, unknown> {
+  return {
+    sportEventParticipantId,
+    round: round.round,
+    strokes: round.strokes,
+    scoreToPar: round.scoreToPar,
+    thru: round.thru ?? null,
+    status: round.status,
+    completedAt: round.completedAt ?? null,
+  };
+}
+
+function normalizeGolfRoundRow(row: {
+  sportEventParticipantId: string;
+  round: number;
+  strokes: number;
+  scoreToPar: number;
+  thru: number | null;
+  status: string;
+  completedAt: Date | null;
+}): Record<string, unknown> {
+  return {
+    sportEventParticipantId: row.sportEventParticipantId,
+    round: row.round,
+    strokes: row.strokes,
+    scoreToPar: row.scoreToPar,
+    thru: row.thru,
+    status: row.status,
+    completedAt: row.completedAt?.toISOString() ?? null,
+  };
+}
+
+function buildGolfRoundKey(sportEventParticipantId: string, round: number): string {
+  return `${sportEventParticipantId}:${round}`;
+}
+
+function normalizeGolfStandingInput(input: {
+  sportEventParticipantId: string;
+  eventScoreToPar: number;
+  eventStrokes: number;
+  currentRound: number | null;
+  currentRoundThru: number | null;
+  status: PrismaGolfLiveStatus;
+}): Record<string, unknown> {
+  // `asOf` is intentionally excluded from write diagnostics. It advances on
+  // every poll, but member-visible standing values are unchanged when score,
+  // round, thru, and status match the prior standing row.
+  return {
+    sportEventParticipantId: input.sportEventParticipantId,
+    eventScoreToPar: input.eventScoreToPar,
+    eventStrokes: input.eventStrokes,
+    currentRound: input.currentRound,
+    currentRoundThru: input.currentRoundThru,
+    status: input.status,
+  };
+}
+
+function normalizeGolfStandingRow(row: {
+  sportEventParticipantId: string;
+  eventScoreToPar: number;
+  eventStrokes: number;
+  currentRound: number | null;
+  currentRoundThru: number | null;
+  status: PrismaGolfLiveStatus;
+}): Record<string, unknown> {
+  return {
+    sportEventParticipantId: row.sportEventParticipantId,
+    eventScoreToPar: row.eventScoreToPar,
+    eventStrokes: row.eventStrokes,
+    currentRound: row.currentRound,
+    currentRoundThru: row.currentRoundThru,
+    status: row.status,
+  };
+}
+
+function stableJson(value: unknown): string {
+  return JSON.stringify(sortJson(value));
+}
+
+function sortJson(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sortJson);
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, child]) => [key, sortJson(child)]),
+    );
+  }
+  return value;
 }

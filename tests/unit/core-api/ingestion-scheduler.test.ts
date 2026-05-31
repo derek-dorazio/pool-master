@@ -52,8 +52,26 @@ function createMockCallbacks(): IngestionCallbacks {
     onEvents: jest.fn().mockResolvedValue(undefined),
     onEventDetail: jest.fn().mockResolvedValue(undefined),
     onRankings: jest.fn().mockResolvedValue(undefined),
-    onLiveScores: jest.fn().mockResolvedValue(undefined),
+    onLiveScores: jest.fn().mockResolvedValue(emptyLiveScorePersistenceResult()),
     onJobComplete: jest.fn().mockResolvedValue(undefined),
+  };
+}
+
+function emptyLiveScorePersistenceResult() {
+  return {
+    updatesReturned: 0,
+    updatesPersisted: 0,
+    updatesSkipped: 0,
+    writeDiagnostics: {
+      summary: {
+        total: 0,
+        unchanged: 0,
+        created: 0,
+        updated: 0,
+        deleted: 0,
+      },
+      rows: [],
+    },
   };
 }
 
@@ -489,6 +507,32 @@ describe('IngestionScheduler', () => {
         getLiveScores: jest.fn().mockResolvedValue(mockResult),
       });
       const registry = createMockRegistry(provider);
+      mockCallbacks.onLiveScores = jest.fn().mockResolvedValue({
+        updatesReturned: 1,
+        updatesPersisted: 1,
+        updatesSkipped: 0,
+        writeDiagnostics: {
+          summary: {
+            total: 2,
+            unchanged: 1,
+            created: 1,
+            updated: 0,
+            deleted: 0,
+          },
+          rows: [
+            {
+              id: 'golf-round:sep-1:1',
+              entityType: 'SportEventParticipantGolfRound',
+              disposition: 'CREATED',
+            },
+            {
+              id: 'golf-standing:sep-1',
+              entityType: 'SportEventParticipantGolfStanding',
+              disposition: 'UNCHANGED',
+            },
+          ],
+        },
+      });
       const scheduler = new IngestionScheduler(registry, mockCallbacks);
 
       const job = await scheduler.pollLiveScores('GOLF' as Sport, 'evt-1');
@@ -497,6 +541,18 @@ describe('IngestionScheduler', () => {
       expect(mockCallbacks.onLiveScores).toHaveBeenCalledWith(mockResult, 'mock-provider');
       expect(job.status).toBe('COMPLETED');
       expect(job.recordsProcessed).toBe(1);
+      expect(job.stats).toMatchObject({
+        providerRecordsReturned: 1,
+        liveScoreUpdatesReturned: 1,
+        liveScoreUpdatesProcessed: 1,
+        liveScoreUpdatesSkipped: 0,
+        writeRows: 2,
+        writeUnchanged: 1,
+        writeCreated: 1,
+        writeUpdated: 0,
+        writeDeleted: 0,
+      });
+      expect(job.writeDiagnostics?.rows).toHaveLength(2);
     });
 
     it('succeeds with empty results', async () => {
@@ -872,6 +928,60 @@ describe('IngestionScheduler', () => {
       }));
       expect(syncRunLedger.executeFeedRun).toHaveBeenCalledWith(syncRun, expect.any(Function));
       expect(provider.getLiveScores).toHaveBeenCalledWith('live-event');
+      expect(mockCallbacks.onJobComplete).toHaveBeenCalledTimes(1);
+    });
+
+    it('pool-master-eux.3 skips duplicate scheduled live-score runs while the same event/feed is in flight', async () => {
+      const now = new Date('2026-04-28T12:00:00.000Z');
+      let releaseLiveScore: (() => void) | undefined;
+      let markLiveScoreCallStarted: (() => void) | undefined;
+      const liveScoreCallStarted = new Promise<void>((resolve) => {
+        markLiveScoreCallStarted = resolve;
+      });
+      const getLiveScores = jest.fn(() => {
+        markLiveScoreCallStarted?.();
+        return new Promise<LiveScoreResult>((resolve) => {
+          releaseLiveScore = () => resolve({
+            category: 'GOLF',
+            externalEventId: 'live-event',
+            rounds: [],
+          });
+        });
+      });
+      const provider = createMockProvider({
+        getLiveScores,
+      });
+      const config = createEnabledScheduleConfig();
+      const configReader = {
+        getConfig: jest.fn().mockResolvedValue(config),
+        getPerSportConfig: jest.fn().mockResolvedValue(config),
+      };
+      const eventReader = {
+        listEventIdsForFeed: jest.fn().mockResolvedValue(['live-event']),
+      };
+      const scheduler = new IngestionScheduler(
+        createMockRegistry(provider, ['GOLF' as Sport]),
+        mockCallbacks,
+        undefined,
+        {
+          configReader,
+          eventReader,
+          now: () => now,
+        },
+      );
+      const runConfiguredEventSyncSweep = Reflect.get(
+        scheduler,
+        'runConfiguredEventSyncSweep',
+      ) as (sport: Sport, feed: 'EVENTLIVESCORES') => Promise<void>;
+
+      const firstRun = runConfiguredEventSyncSweep.call(scheduler, 'GOLF' as Sport, 'EVENTLIVESCORES');
+      await liveScoreCallStarted;
+      await runConfiguredEventSyncSweep.call(scheduler, 'GOLF' as Sport, 'EVENTLIVESCORES');
+      expect(provider.getLiveScores).toHaveBeenCalledTimes(1);
+      expect(mockCallbacks.onJobComplete).not.toHaveBeenCalled();
+
+      releaseLiveScore?.();
+      await firstRun;
       expect(mockCallbacks.onJobComplete).toHaveBeenCalledTimes(1);
     });
 

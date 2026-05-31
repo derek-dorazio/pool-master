@@ -41,6 +41,7 @@ import type {
 import { supportsMockEventStateControls, supportsProviderPayloadDiagnostics } from './provider-interface';
 import type { LiveScoreResult, MockEventState } from '@poolmaster/shared/dto';
 import type { ProviderSyncRunLedger } from '../persistence/provider-sync-run-ledger';
+import type { LiveScorePersistenceResult } from './score-publisher';
 
 export type { IngestionFeedType } from './sync-orchestrator';
 
@@ -108,7 +109,7 @@ export interface IngestionCallbacks {
   onEvents(events: SportEvent[]): Promise<SyncWriteDiagnostics | void>;
   onEventDetail(detail: SportEventDetail): Promise<SyncWriteDiagnostics | void>;
   onRankings(rankings: ProviderRanking[]): Promise<SyncWriteDiagnostics | void>;
-  onLiveScores(result: LiveScoreResult, providerId: string): Promise<void>;
+  onLiveScores(result: LiveScoreResult, providerId: string): Promise<LiveScorePersistenceResult>;
   onJobComplete(job: IngestionJobRecord): Promise<void>;
 }
 
@@ -145,6 +146,7 @@ export class IngestionScheduler {
   private timers: NodeJS.Timeout[] = [];
   private running = false;
   private readonly startedSportLoops = new Set<Sport>();
+  private readonly inFlightScheduledEventSyncs = new Set<string>();
   private readonly syncOrchestrator: Pick<SyncOrchestrator, 'normalizeRequest'>;
 
   constructor(
@@ -235,6 +237,7 @@ export class IngestionScheduler {
     }
     this.timers = [];
     this.startedSportLoops.clear();
+    this.inFlightScheduledEventSyncs.clear();
     this.logger?.info('Ingestion scheduler stopped');
   }
 
@@ -336,21 +339,28 @@ export class IngestionScheduler {
         category: result.category,
         updatesReturned: updateCount,
       }, 'Provider returned live scores');
-      await this.callbacks.onLiveScores(result, provider.providerId);
+      const persistenceResult = await this.callbacks.onLiveScores(result, provider.providerId);
+      const writeDiagnostics = persistenceResult.writeDiagnostics;
+      const updatesPersisted = persistenceResult.updatesPersisted;
+      const updatesSkipped = persistenceResult.updatesSkipped;
       this.logger?.info({
         sport,
         eventId,
         providerId: provider.providerId,
         category: result.category,
-        updatesProcessed: updateCount,
+        updatesProcessed: updatesPersisted,
+        updatesSkipped,
       }, 'Completed live score poll');
       return {
         recordsProcessed: updateCount,
         stats: {
           providerRecordsReturned: updateCount,
           liveScoreUpdatesReturned: updateCount,
-          liveScoreUpdatesProcessed: updateCount,
+          liveScoreUpdatesProcessed: updatesPersisted,
+          liveScoreUpdatesSkipped: updatesSkipped,
+          ...syncWriteStats(writeDiagnostics),
         },
+        writeDiagnostics,
         warnings: updateCount === 0
           ? [{
               code: 'NO_PROVIDER_LIVE_SCORES',
@@ -601,20 +611,30 @@ export class IngestionScheduler {
     }, 'Resolved scheduled event sync candidates');
 
     for (const eventId of eventIds) {
+      const inFlightKey = buildScheduledEventSyncKey(sport, feed, eventId);
+      if (this.inFlightScheduledEventSyncs.has(inFlightKey)) {
+        this.logger?.debug({ sport, feed, eventId }, 'Skipping scheduled event sync because a run is already in flight');
+        continue;
+      }
+      this.inFlightScheduledEventSyncs.add(inFlightKey);
       const normalized = this.normalizeScheduledEventSync({
         sport,
         eventId,
         feeds: [feed],
       });
       const scope = assertScheduledEventScope(normalized);
-      if (scope.feeds[0] === 'EVENTLIVESCORES') {
-        await this.executeScheduledSyncRun(normalized, () =>
-          this.pollLiveScores(scope.sport, scope.eventId, scope.providerOptions),
-        );
-      } else {
-        await this.executeScheduledSyncRun(normalized, () =>
-          this.fetchEventResults(scope.sport, scope.eventId, scope.providerOptions),
-        );
+      try {
+        if (scope.feeds[0] === 'EVENTLIVESCORES') {
+          await this.executeScheduledSyncRun(normalized, () =>
+            this.pollLiveScores(scope.sport, scope.eventId, scope.providerOptions),
+          );
+        } else {
+          await this.executeScheduledSyncRun(normalized, () =>
+            this.fetchEventResults(scope.sport, scope.eventId, scope.providerOptions),
+          );
+        }
+      } finally {
+        this.inFlightScheduledEventSyncs.delete(inFlightKey);
       }
     }
   }
@@ -1120,6 +1140,14 @@ function buildProviderEventSyncOptions(
   return mockEventState ? { mockEventState } : undefined;
 }
 
+function buildScheduledEventSyncKey(
+  sport: Sport,
+  feed: 'EVENTLIVESCORES' | 'EVENTRESULTS',
+  eventId: string,
+): string {
+  return `${sport}:${feed}:${eventId}`;
+}
+
 function createUnsupportedMockEventStateJob(
   provider: SportDataProvider,
   jobType: JobType,
@@ -1269,7 +1297,7 @@ function defaultIngestionScheduleConfig(): IngestionScheduleConfig {
       },
     eventLiveScores: {
         enabled: true,
-        intervalSeconds: 30,
+        intervalSeconds: 300,
       },
     eventResults: {
         enabled: true,

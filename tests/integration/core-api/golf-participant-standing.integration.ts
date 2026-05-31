@@ -64,7 +64,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
       },
     });
 
-    await publishLiveScoreUpdate(
+    const persisted = await publishLiveScoreUpdate(
       {
         category: 'GOLF',
         externalEventId: 'golf-standing-event-1',
@@ -92,6 +92,21 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
         bus: eventBus,
       },
     );
+
+    expect(persisted).toMatchObject({
+      updatesReturned: 2,
+      updatesPersisted: 2,
+      updatesSkipped: 0,
+      writeDiagnostics: {
+        summary: {
+          total: 3,
+          unchanged: 0,
+          created: 3,
+          updated: 0,
+          deleted: 0,
+        },
+      },
+    });
 
     const row = await prisma.sportEventParticipant.findUniqueOrThrow({
       where: { id: sportEventParticipant.id },

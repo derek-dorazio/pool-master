@@ -30,6 +30,24 @@ const syncVerificationConfig: IngestionScheduleConfig = {
   perSportOverrides: {},
 };
 
+function emptyLiveScorePersistenceResult() {
+  return {
+    updatesReturned: 0,
+    updatesPersisted: 0,
+    updatesSkipped: 0,
+    writeDiagnostics: {
+      summary: {
+        total: 0,
+        unchanged: 0,
+        created: 0,
+        updated: 0,
+        deleted: 0,
+      },
+      rows: [],
+    },
+  };
+}
+
 let mockProvider: Awaited<ReturnType<typeof startMockContestFeedProvider>>;
 let importedParticipantExternalIds: string[] = [];
 let integrationSetupComplete = false;
@@ -439,7 +457,7 @@ describe('mock contest feed provider event-first verification', () => {
       onEvents: async (events) => (await persistence.persistEventsWithDiagnostics(events)).writeDiagnostics,
       onEventDetail: async (detail) => (await persistence.persistEventDetailWithDiagnostics(detail)).writeDiagnostics,
       onRankings: async (rankings) => (await persistence.persistRankingsWithDiagnostics(rankings)).writeDiagnostics,
-      onLiveScores: async () => undefined,
+      onLiveScores: async () => emptyLiveScorePersistenceResult(),
       onJobComplete: async (job) => {
         completedJobs.push({
           jobType: job.jobType,
@@ -638,7 +656,7 @@ describe('mock contest feed provider event-first verification', () => {
         await persistence.persistEventDetail(detail);
       },
       onRankings: async () => undefined,
-      onLiveScores: async () => undefined,
+      onLiveScores: async () => emptyLiveScorePersistenceResult(),
       onJobComplete: async () => undefined,
     });
 

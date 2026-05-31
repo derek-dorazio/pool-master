@@ -32,6 +32,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
         providerId: 'mock-contest-feed',
         externalId: { not: '' },
         status: { in: ['IN_PROGRESS'] },
+        sportEventParticipants: { some: {} },
       },
       orderBy: undefined,
       take: undefined,
@@ -40,6 +41,29 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
       },
     });
     expect(eventIds).toEqual(['golf-relative-live-now']);
+  });
+
+  it('pool-master-eux.3 requires hydrated event participants before scheduled live-score polling', async () => {
+    const prisma = createPrisma();
+    const registry = {
+      getProvider: jest.fn().mockReturnValue({ providerId: 'mock-contest-feed' }),
+    };
+    const reader = createScheduledEventReader({ prisma: prisma as never, registry: registry as never });
+
+    await reader.listEventIdsForFeed({
+      sport: 'GOLF' as Sport,
+      feed: 'EVENTLIVESCORES',
+      now: new Date('2026-04-26T22:30:00.000Z'),
+    });
+
+    expect(prisma.sportEvent.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: { in: ['IN_PROGRESS'] },
+          sportEventParticipants: { some: {} },
+        }),
+      }),
+    );
   });
 
   it('skips scheduled event candidates when no provider is registered for the sport', async () => {

@@ -45,9 +45,27 @@ function createMockCallbacks(overrides: Partial<IngestionCallbacks> = {}): Inges
     onEvents: jest.fn().mockResolvedValue(undefined),
     onEventDetail: jest.fn().mockResolvedValue(undefined),
     onRankings: jest.fn().mockResolvedValue(undefined),
-    onLiveScores: jest.fn().mockResolvedValue(undefined),
+    onLiveScores: jest.fn().mockResolvedValue(emptyLiveScorePersistenceResult()),
     onJobComplete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
+  };
+}
+
+function emptyLiveScorePersistenceResult() {
+  return {
+    updatesReturned: 0,
+    updatesPersisted: 0,
+    updatesSkipped: 0,
+    writeDiagnostics: {
+      summary: {
+        total: 0,
+        unchanged: 0,
+        created: 0,
+        updated: 0,
+        deleted: 0,
+      },
+      rows: [],
+    },
   };
 }
 

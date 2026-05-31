@@ -308,7 +308,7 @@ describe('admin support services', () => {
       await expect(service.resetDefaults('admin-1', 'admin@example.com')).resolves.toEqual(
         expect.objectContaining({
           scheduledSports: ['GOLF'],
-          eventLiveScores: expect.objectContaining({ intervalSeconds: 30 }),
+          eventLiveScores: expect.objectContaining({ intervalSeconds: 300 }),
         }),
       );
     });

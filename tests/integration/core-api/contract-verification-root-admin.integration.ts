@@ -48,6 +48,24 @@ import type {
 import type { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 
+function emptyLiveScorePersistenceResult() {
+  return {
+    updatesReturned: 0,
+    updatesPersisted: 0,
+    updatesSkipped: 0,
+    writeDiagnostics: {
+      summary: {
+        total: 0,
+        unchanged: 0,
+        created: 0,
+        updated: 0,
+        deleted: 0,
+      },
+      rows: [],
+    },
+  };
+}
+
 class OperationalContractProvider implements SportDataProvider {
   providerId = 'contract-provider';
   providerName = 'Contract Provider';
@@ -209,7 +227,7 @@ async function buildOperationalAdminApp(): Promise<FastifyInstance> {
     onEvents: async () => undefined,
     onEventDetail: async () => undefined,
     onRankings: async () => undefined,
-    onLiveScores: async () => undefined,
+    onLiveScores: async () => emptyLiveScorePersistenceResult(),
     onJobComplete: async () => undefined,
   }, undefined, {
     now: () => new Date('2026-04-05T12:00:00.000Z'),
@@ -235,7 +253,7 @@ async function buildEmptyCoverageAdminApp(): Promise<FastifyInstance> {
     onEvents: async () => undefined,
     onEventDetail: async () => undefined,
     onRankings: async () => undefined,
-    onLiveScores: async () => undefined,
+    onLiveScores: async () => emptyLiveScorePersistenceResult(),
     onJobComplete: async () => undefined,
   }, undefined, {
     now: () => new Date('2026-04-05T12:00:00.000Z'),
@@ -261,7 +279,7 @@ async function buildEmptyDiagnosticsAdminApp(): Promise<FastifyInstance> {
     onEvents: async () => undefined,
     onEventDetail: async () => undefined,
     onRankings: async () => undefined,
-    onLiveScores: async () => undefined,
+    onLiveScores: async () => emptyLiveScorePersistenceResult(),
     onJobComplete: async () => undefined,
   }, undefined, {
     now: () => new Date('2026-04-05T12:00:00.000Z'),
