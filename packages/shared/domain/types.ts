@@ -279,8 +279,6 @@ export interface ContestEntry extends DomainEntity {
   name: string;
   status: 'ACTIVE' | 'INACTIVE';
   tiebreakerValue?: number | null;
-  totalScore: number;
-  standingsPosition?: number;
   isEliminated: boolean;
 }
 
@@ -330,7 +328,6 @@ export interface ContestHistoryResult extends DomainEntity {
   contestId: string;
   entryId: string;
   finalRank: number;
-  totalScore: number;
   prizeAmount?: number;
 
   // Denormalised history fields (immutable after contest close)
@@ -408,8 +405,6 @@ export interface ContestHistorySummary {
 
 /** Headline contest-history highlight metrics. */
 export interface ContestHighlights {
-  highestScore?: { entryId: string; entryName: string; score: number };
-  lowestScore?: { entryId: string; entryName: string; score: number };
   closestFinish?: { margin: number };
   winnerMargin?: number;
 }

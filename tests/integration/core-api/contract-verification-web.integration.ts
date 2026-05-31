@@ -26,7 +26,6 @@ import {
   LeagueDashboardResponseSchema,
   LeagueResponseSchema,
   MeResponseSchema,
-  ScoringConfigValidationResponseSchema,
   SendLeagueInvitationsResponseSchema,
   SquadListResponseSchema,
   SquadResponseSchema,
@@ -555,7 +554,7 @@ describe('Contract verification (web)', () => {
     expect(parsed.success).toBe(true);
   });
 
-  it('account consent and scoring validation routes match their DTOs', async () => {
+  it('pool-master-eux.5 account consent routes match their DTOs without legacy scoring validation', async () => {
     const user = await createTestUser({ displayName: 'Contract Consent User' });
 
     const consentRes = await getApp().inject({
@@ -580,30 +579,6 @@ describe('Contract verification (web)', () => {
     });
     expect(consentHistoryRes.statusCode).toBe(200);
     expect(ConsentHistoryResponseSchema.safeParse(consentHistoryRes.json()).success).toBe(true);
-
-    const scoringRes = await getApp().inject({
-      method: 'POST',
-      url: '/api/v1/scoring/config/validate',
-      headers: user.headers,
-      payload: {
-        sport: 'GOLF',
-        scoring_type: 'STROKE_PLAY',
-        stat_rules: [],
-        position_rules: [],
-        bonus_rules: [],
-        penalty_rules: [],
-        multiplier_rules: [],
-        bracket_round_rules: [],
-        special_slots: [],
-        dnf_handling: 'ZERO',
-        counting_method: 'ALL',
-        lower_is_better: true,
-      },
-    });
-    expect(scoringRes.statusCode).toBe(200);
-    expect(
-      ScoringConfigValidationResponseSchema.safeParse(scoringRes.json()).success,
-    ).toBe(true);
   });
 
   it('account lifecycle routes match their shared response DTOs', async () => {

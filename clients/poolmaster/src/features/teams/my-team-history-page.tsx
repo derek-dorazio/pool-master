@@ -290,10 +290,6 @@ export function MyTeamHistoryPage() {
                             {entry.squadName} · Entry {entry.entryNumber}
                           </div>
                         </div>
-                        <div className="text-right text-sm text-muted-foreground">
-                          <div>{entry.standingsPosition ? `#${entry.standingsPosition}` : 'Rank pending'}</div>
-                          <div>{entry.totalScore} pts</div>
-                        </div>
                       </div>
                       <div className="mt-4">
                         <Link

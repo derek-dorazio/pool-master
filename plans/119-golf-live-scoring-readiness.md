@@ -213,6 +213,8 @@ This epic should remove legacy concepts rather than leaving them as "deprecated"
 
 All code references must be removed or replaced, including services, mappers, DTOs, OpenAPI, generated clients, UI columns, fixtures, and tests. The replacement is Golf-specific event standings plus Golf-specific contest leaderboard/settlement models.
 
+`pool-master-eux.5` completed this legacy removal scope. It removed the generic score fields, contribution/prize/participant-score tables, generic scoring/standings services, rollup/consumer surfaces, stale generated contracts, and active UI/test references. History endpoints that previously depended on generic completed-entry totals now intentionally return empty/not-found until `pool-master-eux.6` lands `ContestEntryGolfStanding` settlement and the replacement history read path.
+
 ## Implementation Slices
 
 Task state lives in Beads. The child stories for this plan are:

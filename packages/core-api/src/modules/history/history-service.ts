@@ -1,16 +1,14 @@
 /**
- * HistoryService — reads contest history, standings, and summaries.
+ * HistoryService — reads contest history and roster snapshots.
  */
 
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestHistorySummary,
-  ContestHighlights,
   ContestHistoryPayout,
   ContestHistoryResult,
 } from '@poolmaster/shared/domain';
-import { ContestStatus, LeagueMembershipStatus, SquadMembershipStatus } from '@poolmaster/shared/domain';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
 
@@ -37,20 +35,15 @@ export class HistoryService {
     const results = await this.getCompletedContestResults(contestId);
 
     if (results.length === 0) {
-      this.logger.warn({ contestId }, 'history get contest summary missing history');
+      this.logger.warn(
+        { contestId },
+        'history get contest summary unavailable until pool-master-eux.6 settlement persistence lands',
+      );
       return null;
     }
 
     const first = results[0];
-
     const payouts = await this.getContestPayouts(contestId);
-
-    const entries = await this.prisma.contestEntry.findMany({
-      where: { contestId },
-    });
-    const entryNameMap = new Map(entries.map((e) => [e.id, e.name]));
-
-    const highlights = buildHighlights(results, entryNameMap);
 
     const summary = {
       contestId,
@@ -62,7 +55,7 @@ export class HistoryService {
       numEntries: first.numEntries ?? results.length,
       finalStandings: results,
       payouts,
-      highlights,
+      highlights: {},
     };
     this.logger.info({
       contestId,
@@ -83,30 +76,19 @@ export class HistoryService {
   /** Returns all contest results for a league member across all contests. */
   async getMemberResults(leagueMembershipId: string): Promise<ContestHistoryResult[]> {
     this.logger.debug({ leagueMembershipId }, 'history get member results start');
-    const membership = await this.prisma.leagueMembership.findUnique({
-      where: { id: leagueMembershipId },
-      select: { leagueId: true, userId: true },
-    });
-    if (!membership) {
-      this.logger.warn({ leagueMembershipId }, 'history get member results missing membership');
-      return [];
-    }
-
-    const results = await this.buildFallbackResults({
-      leagueId: membership.leagueId,
-      userId: membership.userId,
-    });
-    const filtered = results.filter((result) => result.leagueMembershipId === leagueMembershipId);
-    this.logger.info({ leagueMembershipId, resultCount: filtered.length }, 'history get member results completed');
-    return filtered;
+    this.logger.info({ leagueMembershipId, resultCount: 0 }, 'history get member results completed without legacy entry totals');
+    // pool-master-eux.5 removed the generic score-history source. pool-master-eux.6
+    // will replace this with Golf-specific ContestEntryGolfStanding settlement reads.
+    return [];
   }
 
   /** Returns all contest results for a league. */
   async getLeagueResults(leagueId: string): Promise<ContestHistoryResult[]> {
     this.logger.debug({ leagueId }, 'history get league results start');
-    const results = await this.buildFallbackResults({ leagueId });
-    this.logger.info({ leagueId, resultCount: results.length }, 'history get league results completed');
-    return results;
+    this.logger.info({ leagueId, resultCount: 0 }, 'history get league results completed without legacy entry totals');
+    // pool-master-eux.5 removed the generic score-history source. pool-master-eux.6
+    // will replace this with Golf-specific ContestEntryGolfStanding settlement reads.
+    return [];
   }
 
   /** Returns roster history snapshot for an entry. */
@@ -147,9 +129,6 @@ export class HistoryService {
         draftRound: pick.draftRound ?? undefined,
         draftPickNumber: pick.draftPickNumber ?? undefined,
         autoPicked: pick.isAutoPicked,
-        // latestPerformance — was sourced from dropped sportEventParticipantSourceData;
-        // rop.78.7 will rebuild via SportEventParticipantGolfRound + contribution table.
-        latestPerformance: {},
       })),
     };
     this.logger.info({ contestId, entryId, pickCount: rosterHistory.picks.length }, 'history get roster history completed');
@@ -159,248 +138,18 @@ export class HistoryService {
   /** Returns payout history for a contest. */
   async getContestPayouts(contestId: string): Promise<ContestHistoryPayout[]> {
     this.logger.debug({ contestId }, 'history get contest payouts start');
-    const awards = await this.prisma.contestEntryPrizeAward.findMany({
-      where: { entry: { contestId } },
-      include: {
-        entry: {
-          include: {
-            squad: {
-              include: {
-                memberships: {
-                  where: { status: SquadMembershipStatus.ACTIVE },
-                  orderBy: { joinedAt: 'asc' },
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: [{ awardedAt: 'asc' }, { createdAt: 'asc' }],
-    });
-
-    if (awards.length === 0) {
-      this.logger.warn({ contestId }, 'history get contest payouts no awards');
-      return [];
-    }
-
-    const leagueMemberships = await this.prisma.leagueMembership.findMany({
-      where: {
-        leagueId: awards[0]?.entry.squad.leagueId,
-        userId: {
-          in: awards
-            .map((award) => award.entry.squad.memberships[0]?.userId)
-            .filter((userId): userId is string => Boolean(userId)),
-        },
-      },
-    });
-    const leagueMembershipIdByUserId = new Map(
-      leagueMemberships.map((membership) => [membership.userId, membership.id]),
-    );
-
-    const payouts: ContestHistoryPayout[] = awards.map((award, index) => ({
-      id: award.id,
-      contestId: award.entry.contestId,
-      leagueId: award.entry.squad.leagueId,
-      entryId: award.entryId,
-      leagueMembershipId:
-        leagueMembershipIdByUserId.get(award.entry.squad.memberships[0]?.userId ?? '') ?? '',
-      prizeType: 'FINAL_STANDING',
-      prizeLabel: award.displayName,
-      prizeRank: index + 1,
-      amount: award.amount ?? 0,
-      isCash: true,
-      nonCashDescription: undefined,
-      paidAt: award.awardedAt,
-      acknowledgedByMember: false,
-      createdAt: award.createdAt,
-    }));
-    this.logger.info({ contestId, payoutCount: payouts.length }, 'history get contest payouts completed');
-    return payouts;
+    this.logger.info({ contestId, payoutCount: 0 }, 'history get contest payouts completed without legacy prize awards');
+    // pool-master-eux.5 removed legacy prize-award history. pool-master-eux.6 will
+    // define the replacement settlement/payout read once final Golf standings persist.
+    return [];
   }
 
   private async getCompletedContestResults(contestId: string): Promise<ContestHistoryResult[]> {
     this.logger.debug({ contestId }, 'history get completed contest results start');
-    const results = await this.buildFallbackResults({ contestId });
-    this.logger.info({ contestId, resultCount: results.length }, 'history get completed contest results completed');
-    return results;
+    this.logger.info({ contestId, resultCount: 0 }, 'history get completed contest results completed without legacy entry totals');
+    // pool-master-eux.5 intentionally deleted the generic completed-results source
+    // instead of preserving stale ContestEntry totals. pool-master-eux.6 owns the
+    // replacement ContestEntryGolfStanding settlement model and history read path.
+    return [];
   }
-
-  private async buildFallbackResults(filters: {
-    contestId?: string;
-    leagueId?: string;
-    userId?: string;
-  }): Promise<ContestHistoryResult[]> {
-    this.logger.debug({
-      contestId: filters.contestId ?? null,
-      leagueId: filters.leagueId ?? null,
-      userId: filters.userId ?? null,
-    }, 'history build fallback results start');
-    const contests = await this.prisma.contest.findMany({
-      where: {
-        ...(filters.contestId && { id: filters.contestId }),
-        ...(filters.leagueId && { leagueId: filters.leagueId }),
-        status: ContestStatus.COMPLETED,
-      },
-      include: {
-        sportEvent: {
-          select: { sport: true },
-        },
-        entries: {
-          include: {
-            squad: {
-              include: {
-                memberships: {
-                  where: {
-                    status: SquadMembershipStatus.ACTIVE,
-                    ...(filters.userId && { userId: filters.userId }),
-                  },
-                  orderBy: { joinedAt: 'asc' },
-                },
-              },
-            },
-            prizeAwards: {
-              orderBy: [{ awardedAt: 'asc' }, { createdAt: 'asc' }],
-            },
-          },
-          orderBy: [{ standingsPosition: 'asc' }, { createdAt: 'asc' }],
-        },
-      },
-      orderBy: [{ endsAt: 'desc' }, { createdAt: 'desc' }],
-    });
-
-    if (contests.length === 0) {
-      this.logger.warn({
-        contestId: filters.contestId ?? null,
-        leagueId: filters.leagueId ?? null,
-        userId: filters.userId ?? null,
-      }, 'history build fallback results no completed contests');
-      return [];
-    }
-
-    const membershipPairs = contests.flatMap((contest) =>
-      contest.entries.flatMap((entry) =>
-        entry.squad.memberships.map((membership) => ({
-          leagueId: contest.leagueId,
-          userId: membership.userId,
-        })),
-      ),
-    );
-    const uniqueMembershipPairs = Array.from(
-      new Map(
-        membershipPairs.map((pair) => [`${pair.leagueId}:${pair.userId}`, pair] as const),
-      ).values(),
-    );
-
-    const leagueMemberships = await this.prisma.leagueMembership.findMany({
-      where: {
-        status: LeagueMembershipStatus.ACTIVE,
-        OR: uniqueMembershipPairs.map((pair) => ({
-          leagueId: pair.leagueId,
-          userId: pair.userId,
-        })),
-      },
-    });
-    const leagueMembershipIdByKey = new Map(
-      leagueMemberships.map((membership) => [
-        `${membership.leagueId}:${membership.userId}`,
-        membership.id,
-      ]),
-    );
-
-    const results = contests.flatMap((contest) => {
-      const numEntries = contest.entries.length;
-      const winnerScore = contest.entries[0]?.totalScore ?? 0;
-
-      return contest.entries
-        .filter((entry) => entry.squad.memberships.length > 0)
-        .map((entry) => {
-          const firstMembership = entry.squad.memberships[0]!;
-          const leagueMembershipId = leagueMembershipIdByKey.get(
-            `${contest.leagueId}:${firstMembership.userId}`,
-          );
-          const prizeAmount = entry.prizeAwards.reduce(
-            (sum, award) => sum + (award.amount ?? 0),
-            0,
-          );
-          const rank = entry.standingsPosition ?? numEntries;
-
-          return {
-            id: `${contest.id}:${entry.id}`,
-            contestId: contest.id,
-            entryId: entry.id,
-            finalRank: rank,
-            totalScore: entry.totalScore,
-            prizeAmount: prizeAmount > 0 ? prizeAmount : undefined,
-            leagueId: contest.leagueId,
-            leagueMembershipId,
-            contestName: contest.name,
-            contestFormat: contest.contestFormat,
-            sport: contest.sportEvent?.sport ?? undefined,
-            numEntries,
-            startedAt: contest.startsAt ?? undefined,
-            endedAt: contest.endsAt ?? undefined,
-            isWinner: rank === 1,
-            isPaidPosition: entry.prizeAwards.length > 0,
-            entryFeePaid: undefined,
-            prizeLabel: entry.prizeAwards[0]?.displayName,
-            netResult: undefined,
-            percentileRank: numEntries > 0 ? ((numEntries - rank + 1) / numEntries) * 100 : undefined,
-            pointsBehindWinner: winnerScore - entry.totalScore,
-            pointsBehindNext: undefined,
-            draftPosition: undefined,
-            rosterSnapshotId: undefined,
-            closedAt: contest.endsAt ?? undefined,
-            createdAt: entry.createdAt,
-            updatedAt: entry.updatedAt,
-          } satisfies ContestHistoryResult;
-        });
-    });
-    this.logger.info({
-      contestId: filters.contestId ?? null,
-      leagueId: filters.leagueId ?? null,
-      userId: filters.userId ?? null,
-      resultCount: results.length,
-      contestCount: contests.length,
-    }, 'history build fallback results completed');
-    return results;
-  }
-}
-
-function buildHighlights(
-  results: Array<{ entryId: string; totalScore: number; finalRank: number }>,
-  entryNames: Map<string, string>,
-): ContestHighlights {
-  if (results.length === 0) return {};
-
-  const sorted = [...results].sort((a, b) => b.totalScore - a.totalScore);
-  const highest = sorted[0];
-  const lowest = sorted[sorted.length - 1];
-
-  // Closest finish: smallest gap between consecutive ranks
-  let closestMargin = Infinity;
-  let winnerMargin: number | undefined;
-
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const gap = Math.abs(sorted[i].totalScore - sorted[i + 1].totalScore);
-    if (gap < closestMargin) closestMargin = gap;
-  }
-
-  if (sorted.length >= 2) {
-    winnerMargin = Math.abs(sorted[0].totalScore - sorted[1].totalScore);
-  }
-
-  return {
-    highestScore: {
-      entryId: highest.entryId,
-      entryName: entryNames.get(highest.entryId) ?? '',
-      score: highest.totalScore,
-    },
-    lowestScore: {
-      entryId: lowest.entryId,
-      entryName: entryNames.get(lowest.entryId) ?? '',
-      score: lowest.totalScore,
-    },
-    closestFinish: closestMargin < Infinity ? { margin: closestMargin } : undefined,
-    winnerMargin,
-  };
 }

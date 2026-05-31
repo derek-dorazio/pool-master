@@ -84,7 +84,6 @@ export const API_ROUTES = {
     detail: (id: string) => `/api/v1/contests/${id}`,
     entries: (id: string) => `/api/v1/contests/${id}/entries`,
     myEntry: (id: string) => `/api/v1/contests/${id}/entries/me`,
-    standings: (id: string) => `/api/v1/contests/${id}/standings`,
     pool: (id: string) => `/api/v1/contests/${id}/pool`,
   },
 
@@ -95,14 +94,6 @@ export const API_ROUTES = {
       `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}`,
     configuration: (leagueId: string, contestId: string) =>
       `/api/v1/leagues/${leagueId}/contest-management/contests/${contestId}/configuration`,
-  },
-
-  scoring: {
-    leaderboard: (contestId: string) => `/api/v1/scoring/contests/${contestId}/leaderboard`,
-    entry: (contestId: string, entryId: string) => `/api/v1/scoring/contests/${contestId}/entry/${entryId}`,
-    participant: (contestId: string, participantId: string) => `/api/v1/scoring/contests/${contestId}/participant/${participantId}`,
-    rollup: (contestId: string) => `/api/v1/scoring/contests/${contestId}/rollup`,
-    health: '/api/v1/scoring/health',
   },
 
   // Drafts

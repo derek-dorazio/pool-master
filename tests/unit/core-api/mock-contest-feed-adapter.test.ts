@@ -27,8 +27,8 @@ const eventDetailResponse = {
   scenarioId: 'golf-major-2026',
   sport: 'GOLF',
   season: {
-    seasonId: 'pga-2026',
-    name: 'PGA Tour 2026',
+    seasonId: 'golf-2026',
+    name: 'Mock Golf 2026',
     year: 2026,
   },
   event: {

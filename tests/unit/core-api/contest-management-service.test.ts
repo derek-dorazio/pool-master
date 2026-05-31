@@ -198,8 +198,8 @@ function createAggregationRuleRepo(): ContestEntryAggregationRuleRepository {
     findByContestConfiguration: jest.fn().mockResolvedValue({
       id: 'agg-existing',
       contestConfigurationId: 'config-1',
-      aggregationDefinitionId: 'SUM_TOP_N_ENTRIES',
-      config: { topN: 4, lowerIsBetter: true },
+      aggregationDefinitionId: 'SUM_ALL_ENTRIES',
+      config: { lowerIsBetter: true },
       active: true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -214,7 +214,7 @@ function createAggregationRuleRepo(): ContestEntryAggregationRuleRepository {
       id,
       contestConfigurationId: 'config-1',
       aggregationDefinitionId:
-        updates.aggregationDefinitionId ?? 'SUM_TOP_N_ENTRIES',
+        updates.aggregationDefinitionId ?? 'SUM_ALL_ENTRIES',
       config: updates.config ?? {},
       active: updates.active ?? true,
       createdAt: new Date('2026-04-07T12:00:03.000Z'),
@@ -399,8 +399,8 @@ describe('ContestManagementService', () => {
     expect(contestEntryAggregationRuleRepo.update).toHaveBeenCalledWith(
       'agg-existing',
       {
-        aggregationDefinitionId: 'SUM_TOP_N_ENTRIES',
-        config: { topN: 4, lowerIsBetter: true },
+        aggregationDefinitionId: 'SUM_ALL_ENTRIES',
+        config: { lowerIsBetter: true },
         active: true,
       },
     );

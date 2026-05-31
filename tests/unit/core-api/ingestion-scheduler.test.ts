@@ -1150,14 +1150,14 @@ describe('IngestionScheduler', () => {
           {
             participantExternalId: 'player-1',
             finishPosition: 1,
-            totalScore: -12,
+            scoreToPar: -12,
             dnf: false,
             stats: { STROKES: 276 },
           },
           {
             participantExternalId: 'player-2',
             finishPosition: 2,
-            totalScore: -10,
+            scoreToPar: -10,
             dnf: false,
             stats: { STROKES: 278 },
           },

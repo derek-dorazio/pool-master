@@ -42,26 +42,6 @@ async function cleanupContestArtifacts(): Promise<void> {
   const prisma = getFunctionalPrisma();
 
   if (createdSportEventParticipantIds.length > 0) {
-    await prisma.contestEntryParticipantScoreEvent.deleteMany({
-      where: {
-        participantScore: {
-          pick: {
-            sportEventParticipantId: {
-              in: createdSportEventParticipantIds,
-            },
-          },
-        },
-      },
-    });
-    await prisma.contestEntryParticipantScore.deleteMany({
-      where: {
-        pick: {
-          sportEventParticipantId: {
-            in: createdSportEventParticipantIds,
-          },
-        },
-      },
-    });
     await prisma.contestEntryPick.deleteMany({
       where: {
         sportEventParticipantId: {
@@ -410,11 +390,6 @@ describe('SDK Functional: Contests and Entries', () => {
         participantId: selectedParticipant.participantId,
         participantName: selectedParticipant.participantName,
         participantStatus: 'ACTIVE',
-        // latestPerformance — rop.78.4 dropped sportEventParticipantSourceData
-        // (the source); rop.78.7 rebuilds the snapshot via
-        // SportEventParticipantGolfRound + the per-(category × contestFormat)
-        // contribution table.
-        latestPerformance: {},
       }),
     ]);
 
@@ -641,7 +616,6 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(enterResponse.data).toBeDefined();
     expect(enterResponse.data?.contestId).toBe(contestId);
     expect(enterResponse.data?.entry.status).toBe('ACTIVE');
-    expect(enterResponse.data?.entry.totalScore).toBe(0);
     expect(enterResponse.data?.entry.entryNumber).toBe(1);
 
     const secondEnterResponse = await enterContest({
@@ -796,7 +770,6 @@ describe('SDK Functional: Contests and Entries', () => {
         entryNumber: 2,
         name: 'Rename Functional League Entry 2',
         status: 'ACTIVE',
-        totalScore: 0,
         isEliminated: false,
       },
     });
@@ -909,7 +882,8 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(refreshedEntryResponse.data?.entry?.tiebreakerValue).toBe(271);
   });
 
-  it('returns expanded contest-entry detail with roster picks and latest performance', async () => {
+  // pool-master-eux.5: contest-entry detail keeps picks as pointers after legacy score fields are removed.
+  it('pool-master-eux.5 returns expanded contest-entry detail with pick pointers only', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({
       displayName: 'Entry Detail Commissioner',
       leagueName: 'Entry Detail Functional League',
@@ -1042,14 +1016,6 @@ describe('SDK Functional: Contests and Entries', () => {
       },
     });
 
-    await prisma.contestEntryParticipantScore.create({
-      data: {
-        entryId: entryId as string,
-        pickId: pick.id,
-        pointsEarned: -11,
-      },
-    });
-
     const detailResponse = await getContestEntry({
       client: commissioner.client,
       path: {
@@ -1064,12 +1030,6 @@ describe('SDK Functional: Contests and Entries', () => {
         participantId: participant.id,
         participantName: participant.name,
         participantStatus: 'ACTIVE',
-        contestPoints: -11,
-        // latestPerformance is intentionally empty in rop.78.4 — the
-        // dropped sportEventParticipantSourceData was its source; rop.78.7
-        // rebuilds the snapshot via SportEventParticipantGolfRound + the
-        // per-(category × contestFormat) contribution table.
-        latestPerformance: {},
       }),
     ]);
   });

@@ -187,47 +187,7 @@ async function cleanupContestArtifacts(
     return;
   }
 
-  await database.contestEntryParticipantScoreEvent.deleteMany({
-    where: {
-      participantScore: {
-        entry: {
-          contestId: {
-            in: contestIds,
-          },
-        },
-      },
-    },
-  });
-  await database.contestEntryParticipantScore.deleteMany({
-    where: {
-      entry: {
-        contestId: {
-          in: contestIds,
-        },
-      },
-    },
-  });
   await database.draftPickHistory.deleteMany({
-    where: {
-      entry: {
-        contestId: {
-          in: contestIds,
-        },
-      },
-    },
-  });
-  await database.contestEntryPickGolfRosterContribution.deleteMany({
-    where: {
-      pick: {
-        entry: {
-          contestId: {
-            in: contestIds,
-          },
-        },
-      },
-    },
-  });
-  await database.contestEntryPrizeAward.deleteMany({
     where: {
       entry: {
         contestId: {
@@ -310,36 +270,7 @@ async function cleanupSportEventParticipantArtifacts(
     return;
   }
 
-  await database.contestEntryParticipantScoreEvent.deleteMany({
-    where: {
-      participantScore: {
-        pick: {
-          sportEventParticipantId: {
-            in: sportEventParticipantIds,
-          },
-        },
-      },
-    },
-  });
-  await database.contestEntryParticipantScore.deleteMany({
-    where: {
-      pick: {
-        sportEventParticipantId: {
-          in: sportEventParticipantIds,
-        },
-      },
-    },
-  });
   await database.draftPickHistory.deleteMany({
-    where: {
-      pick: {
-        sportEventParticipantId: {
-          in: sportEventParticipantIds,
-        },
-      },
-    },
-  });
-  await database.contestEntryPickGolfRosterContribution.deleteMany({
     where: {
       pick: {
         sportEventParticipantId: {

@@ -1018,7 +1018,7 @@ export interface paths {
         };
         /**
          * Get contest entry detail
-         * @description Returns a contest entry plus its current picked participants and latest performance context for entry-detail and expanded leaderboard surfaces.
+         * @description Returns a contest entry plus its picked participants. Golf scoring data is exposed by the Golf leaderboard endpoint rather than copied onto picks.
          */
         get: operations["getContestEntry"];
         put?: never;
@@ -1042,7 +1042,7 @@ export interface paths {
         };
         /**
          * Get Golf contest leaderboard
-         * @description Returns the member-facing Golf leaderboard for a contest. Entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers and ContestEntry.totalScore is not the score source.
+         * @description Returns the member-facing Golf leaderboard for a contest. Entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers.
          */
         get: operations["getGolfContestLeaderboard"];
         put?: never;
@@ -1156,46 +1156,6 @@ export interface paths {
          * @description Adds extra time to the current drafter turn through the contest override surface.
          */
         post: operations["extendPickClock"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/scoring/adjust": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Manually adjust an entry score
-         * @description Applies a manual score adjustment to a contest entry when commissioner or admin scoring intervention is required.
-         */
-        post: operations["adjustScore"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/scoring/recalculate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Recalculate standings for a contest
-         * @description Triggers a standings recalculation for the contest after score or configuration corrections.
-         */
-        post: operations["recalculateStandings"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1368,66 +1328,6 @@ export interface paths {
          * @description Updates mutable participant fields such as display metadata and identifiers.
          */
         patch: operations["updateParticipant"];
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/standings/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get the full paginated leaderboard
-         * @description Returns the full contest leaderboard with pagination support for standings pages and deep leaderboard browsing.
-         */
-        get: operations["getStandings"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/standings/summary": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get top N standings summary for dashboard widgets
-         * @description Returns a compact top-of-leaderboard summary intended for widgets and dashboard-style standings previews.
-         */
-        get: operations["getStandingsSummary"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/contests/{contestId}/standings/my-entry": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get the current user's entry with rank context
-         * @description Returns the authenticated user entry plus surrounding rank context so the user can see their standing without loading the full leaderboard.
-         */
-        get: operations["getMyStandingsEntry"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/v1/contests/{id}/history/summary": {
@@ -2820,126 +2720,6 @@ export interface paths {
          * @description Skips the current snake-draft pick and advances the draft when a drafter turn should be bypassed.
          */
         post: operations["skipSnakeDraftTurn"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/scoring/config/validate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Validate a scoring configuration
-         * @description Validates a proposed scoring configuration and returns structured feedback before commissioners save it to a contest.
-         */
-        post: operations["validateScoringConfig"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/scoring/contests/{contestId}/leaderboard": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get contest leaderboard
-         * @description Returns the scoring leaderboard for the contest as computed by the scoring service.
-         */
-        get: operations["getContestLeaderboard"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/scoring/contests/{contestId}/entry/{entryId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get entry score breakdown
-         * @description Returns the score breakdown for a specific entry so users or commissioners can inspect how the total score was calculated.
-         */
-        get: operations["getEntryScore"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/scoring/contests/{contestId}/participant/{participantId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get participant score history in a contest
-         * @description Returns participant-level score history for the contest so scoring and audit surfaces can inspect event-by-event contributions.
-         */
-        get: operations["getParticipantScore"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/scoring/contests/{contestId}/rollup": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Trigger manual standings rollup
-         * @description Triggers a manual standings rollup for the contest when scoring data needs to be recomputed on demand.
-         */
-        post: operations["triggerStandingsRollup"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/scoring/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get scoring service health
-         * @description Returns health information for the scoring subsystem and its supporting rollup and processing concerns.
-         */
-        get: operations["getScoringHealth"];
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -9823,8 +9603,6 @@ export interface operations {
                             /** @enum {string} */
                             status: "ACTIVE" | "INACTIVE";
                             tiebreakerValue?: number | null;
-                            totalScore: number;
-                            standingsPosition?: number | null;
                             isEliminated: boolean;
                             /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
                             picksCount: number;
@@ -9847,17 +9625,11 @@ export interface operations {
                                 participantStatus?: string | null;
                                 position?: string | null;
                                 teamAffiliation?: string | null;
-                                /** @description Current points earned within the contest for this picked participant. */
-                                contestPoints: number;
                                 /**
                                  * Format: date-time
                                  * @description When the participant was added to the contest entry.
                                  */
                                 pickedAt: string;
-                                /** @description Latest provider-backed performance snapshot available for the picked participant. */
-                                latestPerformance: {
-                                    [key: string]: unknown;
-                                };
                             }[];
                         }[];
                     };
@@ -9937,8 +9709,6 @@ export interface operations {
                             /** @enum {string} */
                             status: "ACTIVE" | "INACTIVE";
                             tiebreakerValue?: number | null;
-                            totalScore: number;
-                            standingsPosition?: number | null;
                             isEliminated: boolean;
                             /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
                             picksCount: number;
@@ -9961,17 +9731,11 @@ export interface operations {
                                 participantStatus?: string | null;
                                 position?: string | null;
                                 teamAffiliation?: string | null;
-                                /** @description Current points earned within the contest for this picked participant. */
-                                contestPoints: number;
                                 /**
                                  * Format: date-time
                                  * @description When the participant was added to the contest entry.
                                  */
                                 pickedAt: string;
-                                /** @description Latest provider-backed performance snapshot available for the picked participant. */
-                                latestPerformance: {
-                                    [key: string]: unknown;
-                                };
                             }[];
                         };
                     };
@@ -10059,8 +9823,6 @@ export interface operations {
                             /** @enum {string} */
                             status: "ACTIVE" | "INACTIVE";
                             tiebreakerValue?: number | null;
-                            totalScore: number;
-                            standingsPosition?: number | null;
                             isEliminated: boolean;
                             /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
                             picksCount: number;
@@ -10129,7 +9891,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Member-facing Golf contest leaderboard. Entry totals are computed from SportEventParticipantGolfStanding and SportEventParticipantGolfRound, not ContestEntry.totalScore. */
+            /** @description Member-facing Golf contest leaderboard. Entry totals are computed from SportEventParticipantGolfStanding and SportEventParticipantGolfRound. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -10554,8 +10316,6 @@ export interface operations {
                             /** @enum {string} */
                             status: "ACTIVE" | "INACTIVE";
                             tiebreakerValue?: number | null;
-                            totalScore: number;
-                            standingsPosition?: number | null;
                             isEliminated: boolean;
                             /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
                             picksCount: number;
@@ -10644,8 +10404,6 @@ export interface operations {
                             /** @enum {string} */
                             status: "ACTIVE" | "INACTIVE";
                             tiebreakerValue?: number | null;
-                            totalScore: number;
-                            standingsPosition?: number | null;
                             isEliminated: boolean;
                             /** @description Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners. */
                             picksCount: number;
@@ -10923,83 +10681,6 @@ export interface operations {
                          * @enum {boolean}
                          */
                         success: true;
-                    };
-                };
-            };
-        };
-    };
-    adjustScore: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        /** @description Admin or commissioner score-adjustment request. */
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** @description Entry whose score should be adjusted. */
-                    entryId: string;
-                    /** @description Positive or negative manual score adjustment. */
-                    adjustment: number;
-                    /** @description Reason recorded in audit history for the score adjustment. */
-                    reason: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Confirms that the requested operation succeeded.
-                         * @enum {boolean}
-                         */
-                        success: true;
-                    };
-                };
-            };
-        };
-    };
-    recalculateStandings: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Contest recalculation result. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Contest that was recalculated. */
-                        contestId: string;
-                        /** @description How many entries were affected by the recalculation. */
-                        teamsAffected: number;
-                        /** @description Whether the recalculation changed at least one rank or score. */
-                        standingsChanged: boolean;
-                        /** @description Per-entry changes produced by the recalculation. */
-                        changes: {
-                            entryId: string;
-                            oldRank: number;
-                            newRank: number;
-                            oldScore: number;
-                            newScore: number;
-                        }[];
                     };
                 };
             };
@@ -12243,317 +11924,6 @@ export interface operations {
                              * @description When the participant record was last updated.
                              */
                             updatedAt: string;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getStandings: {
-        parameters: {
-            query?: {
-                page?: string;
-                pageSize?: string;
-                sortBy?: "rank" | "score" | "name";
-            };
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Paginated standings response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Requested standings page. */
-                        standings: {
-                            /** @description Current standing rank for the entry. */
-                            rank: number;
-                            /** @description Contest entry identifier. */
-                            entryId: string;
-                            /** @description Display name for the entry. */
-                            entryName: string;
-                            /** @description Display name for the entry owner. */
-                            ownerDisplayName: string;
-                            /** @description Owner user or membership identifier associated with the entry. */
-                            ownerId: string;
-                            /** @description Current total score for the entry. */
-                            totalScore: number;
-                            /** @description Previous published rank when movement can be computed. */
-                            previousRank: number | null;
-                            /**
-                             * @description Rank movement indicator since the last standings update.
-                             * @enum {string}
-                             */
-                            movement: "up" | "down" | "same" | "new";
-                            /** @description Whether the entry can no longer improve because it has been eliminated. */
-                            isEliminated: boolean;
-                            /**
-                             * Format: date-time
-                             * @description When the standing entry was last recalculated.
-                             */
-                            lastUpdatedAt: string;
-                        }[];
-                        /** @description Total number of standings entries in the contest. */
-                        total: number;
-                        /** @description Current standings page number. */
-                        page: number;
-                        /** @description Current standings page size. */
-                        pageSize: number;
-                        /** @description Contest whose standings are being returned. */
-                        contestId: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getStandingsSummary: {
-        parameters: {
-            query?: {
-                topN?: string;
-            };
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Condensed standings-summary response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Top-ranked entries used for condensed leaderboard surfaces. */
-                        topEntries: {
-                            /** @description Current standing rank for the entry. */
-                            rank: number;
-                            /** @description Contest entry identifier. */
-                            entryId: string;
-                            /** @description Display name for the entry. */
-                            entryName: string;
-                            /** @description Display name for the entry owner. */
-                            ownerDisplayName: string;
-                            /** @description Owner user or membership identifier associated with the entry. */
-                            ownerId: string;
-                            /** @description Current total score for the entry. */
-                            totalScore: number;
-                            /** @description Previous published rank when movement can be computed. */
-                            previousRank: number | null;
-                            /**
-                             * @description Rank movement indicator since the last standings update.
-                             * @enum {string}
-                             */
-                            movement: "up" | "down" | "same" | "new";
-                            /** @description Whether the entry can no longer improve because it has been eliminated. */
-                            isEliminated: boolean;
-                            /**
-                             * Format: date-time
-                             * @description When the standing entry was last recalculated.
-                             */
-                            lastUpdatedAt: string;
-                        }[];
-                        /** @description Total number of entries in the contest. */
-                        totalEntries: number;
-                        /** @description Contest whose standings summary is being returned. */
-                        contestId: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getMyStandingsEntry: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Current-user standings-entry response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Current user entry row within the contest standings. */
-                        entry: {
-                            /** @description Current standing rank for the entry. */
-                            rank: number;
-                            /** @description Contest entry identifier. */
-                            entryId: string;
-                            /** @description Display name for the entry. */
-                            entryName: string;
-                            /** @description Display name for the entry owner. */
-                            ownerDisplayName: string;
-                            /** @description Owner user or membership identifier associated with the entry. */
-                            ownerId: string;
-                            /** @description Current total score for the entry. */
-                            totalScore: number;
-                            /** @description Previous published rank when movement can be computed. */
-                            previousRank: number | null;
-                            /**
-                             * @description Rank movement indicator since the last standings update.
-                             * @enum {string}
-                             */
-                            movement: "up" | "down" | "same" | "new";
-                            /** @description Whether the entry can no longer improve because it has been eliminated. */
-                            isEliminated: boolean;
-                            /**
-                             * Format: date-time
-                             * @description When the standing entry was last recalculated.
-                             */
-                            lastUpdatedAt: string;
-                        };
-                        /** @description Total number of entries in the contest. */
-                        totalEntries: number;
-                        /** @description Contest whose personal standings entry is being returned. */
-                        contestId: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
                         };
                     };
                 };
@@ -21359,437 +20729,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    validateScoringConfig: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    contest_id?: string;
-                    sport: string;
-                    /** @enum {string} */
-                    scoring_type: "CUMULATIVE" | "KNOCKOUT" | "BRACKET" | "STROKE_PLAY" | "POSITION";
-                    stat_rules?: {
-                        [key: string]: unknown;
-                    }[];
-                    position_rules?: {
-                        [key: string]: unknown;
-                    }[];
-                    bonus_rules?: {
-                        [key: string]: unknown;
-                    }[];
-                    penalty_rules?: {
-                        [key: string]: unknown;
-                    }[];
-                    multiplier_rules?: {
-                        [key: string]: unknown;
-                    }[];
-                    bracket_round_rules?: {
-                        [key: string]: unknown;
-                    }[];
-                    upset_bonus_config?: null | {
-                        [key: string]: unknown;
-                    };
-                    special_slots?: {
-                        [key: string]: unknown;
-                    }[];
-                    tiebreaker_config?: {
-                        [key: string]: unknown;
-                    };
-                    missed_event_score?: number;
-                    missed_event_points?: number;
-                    /** @enum {string} */
-                    dnf_handling?: "ZERO" | "EXCLUDE" | "LAST_PLACE" | "PENALTY" | "MISSED_CUT_SCORE";
-                    /** @enum {string} */
-                    counting_method?: "ALL" | "BEST_N" | "DROP_LOWEST_N";
-                    best_n?: number;
-                    drop_lowest_n?: number;
-                    lower_is_better?: boolean;
-                };
-            };
-        };
-        responses: {
-            /** @description Scoring-configuration validation response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Whether the supplied scoring configuration passed validation. */
-                        valid: boolean;
-                        /** @description Normalized scoring configuration after validation, when available. */
-                        config?: {
-                            [key: string]: unknown;
-                        };
-                        /** @description Non-blocking warnings surfaced during validation. */
-                        warnings?: string[];
-                        /** @description Validation errors returned when the config is invalid. */
-                        errors?: unknown[];
-                    };
-                };
-            };
-            /** @description Scoring-configuration validation response. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Whether the supplied scoring configuration passed validation. */
-                        valid: boolean;
-                        /** @description Normalized scoring configuration after validation, when available. */
-                        config?: {
-                            [key: string]: unknown;
-                        };
-                        /** @description Non-blocking warnings surfaced during validation. */
-                        warnings?: string[];
-                        /** @description Validation errors returned when the config is invalid. */
-                        errors?: unknown[];
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getContestLeaderboard: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Scoring leaderboard response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Contest whose leaderboard is being returned. */
-                        contestId: string;
-                        /** @description Current contest leaderboard. */
-                        leaderboard: {
-                            /** @description Entry identifier. */
-                            entryId: string;
-                            /** @description Current leaderboard rank. */
-                            rank: number;
-                            /** @description Current total score for the entry. */
-                            totalScore: number;
-                            /** @description Whether the rank is shared with another entry. */
-                            isTied: boolean;
-                        }[];
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getEntryScore: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-                entryId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Contest-entry score detail response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        entryId: string;
-                        contestId: string;
-                        totalScore: number;
-                        /** @description Score timeline for the contest entry. */
-                        timeline: {
-                            contestId: string;
-                            entryId: string;
-                            /** Format: date-time */
-                            eventTimestamp: string;
-                            pointsEarned: number;
-                            runningTotal: number;
-                            /** @description Per-participant contributions at this scoring event timestamp. */
-                            participantBreakdowns: {
-                                participantId: string;
-                                participantName?: string | null;
-                                contextLabel?: string | null;
-                                statPoints: number;
-                                positionPoints: number;
-                                bonusPoints: number;
-                                penaltyPoints: number;
-                                multipliedTotal: number;
-                                dnfAdjustment: number;
-                                /** @description Final score contribution after all components and adjustments. */
-                                finalScore: number;
-                            }[];
-                        }[];
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getParticipantScore: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-                participantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Participant score-history response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        participantId: string;
-                        contestId: string;
-                        scores: {
-                            contestId: string;
-                            participantId: string;
-                            eventTimestamp: string;
-                            stats: {
-                                [key: string]: number;
-                            };
-                            points: number;
-                            /** @description Detailed point breakdown for the participant score event. */
-                            breakdown: {
-                                participantId: string;
-                                participantName?: string | null;
-                                contextLabel?: string | null;
-                                statPoints: number;
-                                positionPoints: number;
-                                bonusPoints: number;
-                                penaltyPoints: number;
-                                multipliedTotal: number;
-                                dnfAdjustment: number;
-                                /** @description Final score contribution after all components and adjustments. */
-                                finalScore: number;
-                            };
-                        }[];
-                        /** @description Total points accumulated by the participant in the contest. */
-                        totalPoints: number;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    triggerStandingsRollup: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contestId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Standings-rollup response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        contestId: string;
-                        entriesUpdated: number;
-                        rankChanges: number;
-                        /**
-                         * Format: date-time
-                         * @description When the standings rollup completed.
-                         */
-                        rolledUpAt: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Error payload object. */
-                        error: {
-                            /** @description Stable machine-readable error code. */
-                            code: string;
-                            /** @description Human-readable error summary safe to show to clients. */
-                            message: string;
-                            /** @description Optional structured details for client-specific handling or diagnostics. */
-                            details?: unknown;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    getScoringHealth: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Scoring-service health response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {string} */
-                        status: "ok";
-                        service: string;
-                        /**
-                         * @description Always true: the scoring path is event-driven via live_score.persisted (plans/117 §11.3). The legacy `rollupRunning` / `activeContests` fields were removed in pool-master-rop.78.8 along with the periodic rollup interval.
-                         * @enum {boolean}
-                         */
-                        eventDriven: true;
-                        /**
-                         * Format: date-time
-                         * @description When the scoring-health snapshot was recorded.
-                         */
-                        timestamp: string;
-                    };
-                };
-            };
-            /** @description Standard API error envelope. */
-            500: {
                 headers: {
                     [name: string]: unknown;
                 };

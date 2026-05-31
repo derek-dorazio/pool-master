@@ -3,9 +3,6 @@ import type {
   ContestCoreSummary,
   ContestConfiguration,
   ContestEntryAggregationRule,
-  ContestEntryParticipantScore,
-  ContestEntryParticipantScoreEvent,
-  ContestEntryPrizeAward,
   ContestPrizeDefinition,
   ParticipantContestScoringRule,
   SportEventParticipant,
@@ -127,46 +124,4 @@ export interface ContestPrizeDefinitionRepository {
     updates: Partial<ContestPrizeDefinition>,
   ): Promise<ContestPrizeDefinition>;
   delete(id: string): Promise<void>;
-}
-
-export interface ContestEntryParticipantScoreRepository {
-  findById(id: string): Promise<ContestEntryParticipantScore | null>;
-  findByEntry(entryId: string): Promise<ContestEntryParticipantScore[]>;
-  create(
-    score: Omit<ContestEntryParticipantScore, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<ContestEntryParticipantScore>;
-  update(
-    id: string,
-    updates: Partial<ContestEntryParticipantScore>,
-  ): Promise<ContestEntryParticipantScore>;
-  deleteByEntry(entryId: string): Promise<number>;
-}
-
-export interface ContestEntryParticipantScoreEventRepository {
-  findById(id: string): Promise<ContestEntryParticipantScoreEvent | null>;
-  findByParticipantScore(
-    contestEntryParticipantScoreId: string,
-  ): Promise<ContestEntryParticipantScoreEvent[]>;
-  create(
-    event: Omit<
-      ContestEntryParticipantScoreEvent,
-      'id' | 'createdAt' | 'updatedAt'
-    >,
-  ): Promise<ContestEntryParticipantScoreEvent>;
-  createMany(
-    events: Omit<
-      ContestEntryParticipantScoreEvent,
-      'id' | 'createdAt' | 'updatedAt'
-    >[],
-  ): Promise<number>;
-  deleteByParticipantScore(contestEntryParticipantScoreId: string): Promise<number>;
-}
-
-export interface ContestEntryPrizeAwardRepository {
-  findById(id: string): Promise<ContestEntryPrizeAward | null>;
-  findByEntry(entryId: string): Promise<ContestEntryPrizeAward[]>;
-  create(
-    award: Omit<ContestEntryPrizeAward, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<ContestEntryPrizeAward>;
-  deleteByEntry(entryId: string): Promise<number>;
 }

@@ -646,15 +646,14 @@ function buildParticipantScoringConfig(
 }
 
 function buildAggregationRule(configuration: GolfContestConfig): {
-  aggregationDefinitionId: 'SUM_TOP_N_ENTRIES' | 'SUM_ALL_ENTRIES';
+  aggregationDefinitionId: 'SUM_ALL_ENTRIES';
   config: Record<string, unknown>;
   active: boolean;
 } {
   if (configuration.mode === GolfContestConfigMode.GOLF_TIERED) {
     return {
-      aggregationDefinitionId: 'SUM_TOP_N_ENTRIES',
+      aggregationDefinitionId: 'SUM_ALL_ENTRIES',
       config: {
-        topN: configuration.countedScores,
         lowerIsBetter: true,
       },
       active: true,

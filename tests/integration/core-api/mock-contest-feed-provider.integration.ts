@@ -784,7 +784,7 @@ describe('mock contest feed provider event-first verification', () => {
         expect.arrayContaining([
           expect.objectContaining({
             finishPosition: 1,
-            totalScore: expect.any(Number),
+            scoreToPar: expect.any(Number),
             totalStrokes: expect.any(Number),
           }),
         ]),

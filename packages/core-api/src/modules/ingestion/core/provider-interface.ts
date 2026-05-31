@@ -166,7 +166,7 @@ export interface ProviderEventResult {
 export interface ProviderParticipantResult {
   participantExternalId: string;
   finishPosition: number;
-  totalScore?: number;
+  scoreToPar?: number;
   totalStrokes?: number;
   dnf: boolean;
   dnfReason?: string;

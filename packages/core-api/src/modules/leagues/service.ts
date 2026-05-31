@@ -349,17 +349,8 @@ export class LeagueService {
       data: { leagueId },
     }, 'Deleting league-owned records');
     await this.prisma.$transaction(async (tx) => {
-      await tx.contestEntryParticipantScoreEvent.deleteMany({
-        where: { participantScore: { entry: { contest: { leagueId } } } },
-      });
       await tx.draftPickHistory.deleteMany({
         where: { session: { contest: { leagueId } } },
-      });
-      await tx.contestEntryParticipantScore.deleteMany({
-        where: { entry: { contest: { leagueId } } },
-      });
-      await tx.contestEntryPrizeAward.deleteMany({
-        where: { entry: { contest: { leagueId } } },
       });
       await tx.contestEntryPick.deleteMany({
         where: { entry: { contest: { leagueId } } },

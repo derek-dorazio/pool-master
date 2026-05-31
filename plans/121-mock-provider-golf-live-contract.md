@@ -6,7 +6,7 @@ Beads story: `pool-master-eux.7` (child of epic `pool-master-eux`, narrative com
 
 This plan is the implementation-level design companion for `pool-master-eux.7`. Plan 119 locks the product-level Golf live-scoring direction; this plan locks the architectural boundary between the mock provider and PoolMaster for the live-scores path, plus the wire-contract changes needed to deliver the nine deterministic live states without putting consumer-side synthesis or fallback logic into PoolMaster.
 
-It exists because a first implementation attempt landed deterministic logic on the wrong side of the boundary. Capturing the rule and the correct shape here so the next attempt does not repeat the mistake.
+It exists because a first implementation attempt landed deterministic logic on the wrong side of the boundary. Capturing the rule and the correct shape here so the next attempt does not repeat the mistake. That rejected attempt also closed the Beads story with the wrong conclusion; `pool-master-eux.7` must remain open until the provider owns the deterministic wire payloads and PoolMaster's adapter is only a mapper.
 
 ## Architectural Rule (Governing)
 
@@ -50,22 +50,24 @@ This plan exists so the next attempt avoids each of those failure modes.
 
 ### Mock provider (owns everything below)
 
-1. Extend `ContestantRecord` in `packages/mock-contest-feed-provider/src/contracts.ts` (or add a parallel `LiveGolfContestantRecord` shape used only on the live-scores response) to carry per-round live detail. The shape mirrors the bus-side `GolfRoundUpdate`:
+1. Add a `/scores`-specific live response shape rather than adding `rounds?` to the generic `ContestantRecord`. The live response should use a `LiveGolfContestantRecord` with a required `rounds` array. This keeps schedule, field, odds, rankings, and results snapshots from inheriting live-only optional fields and makes it impossible for PoolMaster to keep consuming the old single-score `/scores` shape by accident.
 
    ```ts
    interface LiveGolfRoundRecord {
      readonly round: number;             // 1–8
-     readonly strokes: number | null;     // null permitted only if the provider doesn't expose per-round strokes
+     readonly strokes: number;            // mock provider must emit strokes; real providers can be mapped later if unknown
      readonly scoreToPar: number;
      readonly thru?: number;              // 0–18+; values > 18 represent extra-hole/playoff movement
-     readonly status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ';
+     readonly status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
      readonly completedAt?: string;       // ISO 8601
    }
    ```
 
+   If the current bus-side `GolfRoundUpdate` status enum does not include `MISSED_CUT`, this slice must extend that enum and `mapGolfLiveStatus` deliberately. That is not provider-specific synthesis; it is the shared normalized live-score contract required by plan 119's locked golfer status set.
+
 2. Extend `mockEventStateKinds` with the new Golf live-state tokens (see *Deterministic States* below). The token list is part of the contract surface.
 
-3. In `scenario-store.ts`, the `/scores` snapshot for Golf events is generated server-side based on the requested state token plus the scenario fixture. The store decides round count, per-round scores, statuses, thru values, and any participant-status transitions. Output is complete and deterministic — querying the same token returns the same response across runs.
+3. In `scenario-store.ts`, the `/scores` snapshot for Golf events is generated server-side based on the requested state token plus the scenario fixture. The store decides round count, per-round scores, statuses, thru values, and any participant-status transitions. Output is complete and deterministic — querying the same token returns the same response across runs. The provider may reuse existing deterministic hash helpers internally, but all score/stroke math stays inside the mock provider package.
 
 4. Generated artifacts (mock provider OpenAPI + hey-api, root OpenAPI + hey-api + api-types) refreshed in the same slice.
 
@@ -78,11 +80,11 @@ This plan exists so the next attempt avoids each of those failure modes.
 3. The mapper does NOT:
    - Branch on the value of `mockEventState`.
    - Compute, derive, or adjust any per-round score, stroke total, par value, or status.
-   - Apply any fallback when `score`, `strokes`, `rounds`, or any other field is missing on a contestant — emit zero rounds for that contestant or surface the missing-field condition; do not invent values.
+   - Apply any fallback when `strokes`, `rounds`, or any other field is missing on a contestant. For the new `/scores` live shape, missing required live fields are provider contract defects and should fail validation rather than being silently repaired.
    - Override the provider's emission based on `participantStatus` (withdrawn, cut, etc.). If the provider wants a participant to produce a DNF round, the provider must emit the DNF round; the adapter does not synthesize it.
    - Short-circuit the HTTP fetch based on the state token. If the provider's response contains zero contestants, the adapter naturally emits zero rounds; the short circuit is not the consumer's concern.
 
-4. The bus-boundary contract on `GolfRoundUpdate` is unchanged — only the wire-side shape gains the per-round detail.
+4. The bus-boundary `GolfRoundUpdate` shape stays structurally the same, but its status enum must add `MISSED_CUT` so provider-emitted cut states can persist into `SportEventParticipantGolfStanding.status` without inference.
 
 ### PoolMaster everywhere else
 
@@ -102,18 +104,25 @@ Each state is a value of `mockEventStateKinds` that, when sent to the mock provi
 | `golf-r4-complete-pending-final` | Four rounds per non-cut contestant, all COMPLETED, with the upstream event status still `in_progress` (schedule has not yet marked the event COMPLETED) | `in_progress` |
 | `golf-playoff` | Four COMPLETED rounds plus a fifth round for the top contestants with `thru > 18` (extra-hole movement); the winner's R5 is COMPLETED, the runner-up's R5 is IN_PROGRESS. No `playoff` status enum value introduced | `in_progress` |
 | `golf-completed` (existing `completed` token retained) | Final-state rounds and results; event status flips to COMPLETED | `completed` |
-| `golf-late-correction` | Event status is COMPLETED; the wire response carries a corrected R4 row for at least one named contestant. PoolMaster's polling gate (see plan 119, PR #68) currently excludes COMPLETED events from live-score polling — design review must decide whether this state is reachable through the normal sync path, through a manual override, or whether it requires lifting that gate | `completed` |
+| `golf-late-correction` | Event status is COMPLETED; the wire response carries a corrected R4 row for at least one named contestant. QA reaches this through manual root-admin event sync with `mockEventState: 'golf-late-correction'`; scheduled live polling remains IN_PROGRESS-only | `completed` |
 
 Withdrawn / cut emission is the provider's responsibility:
 
-- Withdrawn participants emit a single DNF round (status `DNF`). The provider's `mapGolfLiveStatus`-aware standing refresh will land them on `WITHDRAWN`.
-- Cut participants emit R1 + R2 only and stop. Whether the cut classification flows through `participantStatus`, a per-round status, or both is a design-review decision recorded under *Open Questions* below.
+- Withdrawn participants emit a terminal DNF round for the current round at the time of withdrawal and no later rounds. The provider, not the adapter, chooses the round number for each deterministic state.
+- Disqualified participants emit a terminal DSQ round for the current round at the time of disqualification and no later rounds.
+- Cut participants emit R1 + R2 only, set `participantStatus: 'cut'` on the live contestant record, and emit a terminal `MISSED_CUT` round status on R2 so `SportEventParticipantGolfStanding.status` can become `MISSED_CUT` without consumer-side inference.
 
-`MISSED_CUT` standing status has no inbound round-status path in `mapGolfLiveStatus` today (PR #67 review finding). This slice does not introduce a new round-level status value. If the standing-side MISSED_CUT path matters for the QA scenarios this slice supports, that extension is a separate slice.
+`MISSED_CUT` is part of the locked golfer status set from plan 119, so this slice must not leave it as an unreachable standing status for mock-provider live scoring.
 
 ## Existing Pre-Live Tokens (Backward Compatibility)
 
-The current `mockEventStateKinds` enum is `'open' | 'locked' | 'live' | 'completed'`. These tokens are used by pre-`pool-master-eux.7` QA scripts. The new slice should not remove them; the four existing tokens continue to behave as they do today (single-round emission through the legacy path). The eight new `golf-*` tokens are additive.
+The current `mockEventStateKinds` enum is `'open' | 'locked' | 'live' | 'completed'`. These tokens are used by pre-`pool-master-eux.7` QA scripts. The new slice should not remove them, but the `/scores` endpoint must not retain a legacy single-score path. For Golf `/scores`, legacy tokens become aliases into the provider-owned live response model:
+
+- `open` and `locked` produce the same zero-contestant `/scores` shape as `golf-pre-live`.
+- `live` produces a deterministic in-progress live response, equivalent to the closest supported Golf live token.
+- `completed` produces the same final live response as `golf-completed`.
+
+This preserves QA compatibility without keeping two live-score contracts alive.
 
 ## Required Wire-Contract Changes
 
@@ -121,12 +130,12 @@ In the mock provider (`packages/mock-contest-feed-provider/`):
 
 - `src/contracts.ts`:
   - Extend `mockEventStateKinds` with the new `golf-*` tokens.
-  - Add `rounds?` to `ContestantRecord` (or define a parallel `LiveGolfContestantRecord` and add it as a sibling field on `ContestFeedSnapshotResponse`).
-  - Add `LiveGolfRoundRecord` interface + JSON Schema for the per-round shape.
+  - Define `LiveGolfContestantRecord`, `LiveGolfRoundRecord`, and a `/scores` response schema whose contestants use the live shape with required `rounds`.
+  - Do not add `rounds?` to the generic `ContestantRecord`.
 - `src/scenario-store.ts`:
   - Add a deterministic per-state Golf live-scores builder.
-  - Route `golf-*` tokens through it; route legacy tokens through the existing path.
-  - Validate parsed `rounds[]` content during scenario-fixture loading.
+  - Route `golf-*` tokens and legacy aliases through it. Do not route any Golf `/scores` request through the old single-score path.
+  - Validate generated `rounds[]` content before responding: known contestant ID, round 1–8, non-negative strokes, coherent `thru`, coherent terminal statuses, no duplicate `(contestantId, round)` rows.
 - Generated `openapi.json` + `hey-api` artifacts refreshed.
 
 In shared (`packages/shared/dto/ingestion.dto.ts`):
@@ -136,6 +145,7 @@ In shared (`packages/shared/dto/ingestion.dto.ts`):
 In PoolMaster (`packages/core-api/src/modules/ingestion/adapters/`):
 
 - Reduce `MockContestFeedAdapter.getLiveScores` to a thin one-to-one mapper. Remove all state-token forks, score math, fallbacks, overrides, and short-circuits.
+- Its only permitted use of `mockEventState` is passing the query parameter through `withMockEventState`. Any other comparison against a concrete state token in the adapter is a plan violation.
 
 Generated root `openapi.json` + `hey-api` + `api-types` refreshed.
 
@@ -148,8 +158,10 @@ Generated root `openapi.json` + `hey-api` + `api-types` refreshed.
 5. Refresh root OpenAPI + hey-api.
 6. Reduce the PoolMaster adapter to a one-to-one mapper.
 7. Tests:
-   - Mock provider scenario-store tests covering each `golf-*` state's wire shape (run inside the mock provider package).
+   - Mock provider route/scenario-store tests covering each `golf-*` state's wire shape at `/v1/scenarios/:scenarioId/events/:eventId/scores?mockEventState=<token>`. These tests must assert the wire response itself includes multi-round `rounds[]`; testing only PoolMaster's mapped output is insufficient.
+   - Alias tests for `open`, `locked`, `live`, and `completed` proving they return the new live response shape rather than the old single-score shape.
    - PoolMaster adapter tests covering the one-to-one mapping (no per-state branching in test setup — feed the adapter the wire shape and assert it passes through unchanged into `GolfRoundUpdate[]`).
+   - A negative/static regression check or focused unit assertion proving `MockContestFeedAdapter.getLiveScores` does not inspect concrete `mockEventState` values beyond appending the query string.
 8. Close `pool-master-eux.7` in Beads.
 
 This sequencing keeps the mock provider's wire surface coherent before PoolMaster starts consuming it.
@@ -159,33 +171,37 @@ This sequencing keeps the mock provider's wire surface coherent before PoolMaste
 - `pool-master-eux.3`, `.4`, `.5`, `.6`, `.8` (other epic children with their own scope).
 - Production Data Golf adapter behavior (subscription-gated; out of scope per plan 119).
 - Schedule-driven event completion semantics (already locked in plan 119).
-- Standing-side `MISSED_CUT` round-status inbound path (PR #67 follow-up; separate slice).
-- Tightening the polling-gate behavior for `golf-late-correction` reachability (recorded as an open question).
+- Tightening the scheduled live-polling gate for completed-event corrections. This plan chooses manual reachability for `golf-late-correction`; scheduled polling still excludes `COMPLETED` events.
 
-## Open Questions for Design Review
+## Locked Answers From Design Review
 
-1. **Wire shape placement** — Does the per-round detail belong as `rounds?` on `ContestantRecord` (one optional field used only on the live-scores response, ignored on other snapshot kinds) or as a parallel `LiveGolfContestantRecord` shape returned only by the `/scores` endpoint? The first is smaller; the second is cleaner.
+1. **Wire shape placement** — Use a parallel `/scores` live shape with `LiveGolfContestantRecord`; do not add live-only optional fields to `ContestantRecord`.
 
-2. **Score generation in the store** — The existing `scoreRelativeToPar` helper in `scenario-store.ts` already produces deterministic single-score output using an FNV-1a hash on `(eventSeed, tick, participantId, decimalOdds)`. Should the new per-round drift extend that helper (different `tick` per round?) or be a parallel function?
+2. **Score generation in the store** — Keep all deterministic score/stroke generation in `packages/mock-contest-feed-provider`. Reusing existing hash helpers is fine, but PoolMaster must not contain per-state score math or fallback score generation.
 
-3. **Cut classification path** — When the scenario calls a contestant `cut`, should the wire response set `participantStatus: 'cut'` on the contestant *and* stop emitting rounds after R2, or only stop emitting rounds? Picking both makes the data more legible; picking only one keeps the consumer-side inference simpler.
+3. **Cut classification path** — Emit both `participantStatus: 'cut'` and a terminal R2 `MISSED_CUT` live round. This makes the provider payload legible and gives PoolMaster an explicit normalized status path.
 
-4. **`golf-late-correction` reachability** — PR #68's live-polling gate currently filters event candidates to `IN_PROGRESS` status only. A `golf-late-correction` state produces a COMPLETED upstream event. Is this state intended to be reached through:
-   - Manual root-admin event sync (orchestrator path, not the polling gate)
-   - A relaxation of the polling gate for this specific state
-   - Documentation only (operators know to trigger this manually)?
+4. **`golf-late-correction` reachability** — Reach it through manual root-admin event sync with `mockEventState: 'golf-late-correction'`. Do not relax scheduled live polling; scheduled polling still selects only `IN_PROGRESS` events.
 
-   The mock provider should still produce the correct wire shape regardless; this question is about how QA reaches it.
+5. **Playoff representation** — Model extra-hole movement as `round: 5` with `thru > 18` and score movement. Do not add a `playoff` status enum value.
 
-5. **Playoff representation locking** — Plan 119 locks "playoff/extra-hole movement is modeled through round + thru + score, not via a `playoff` status enum." The proposed wire shape uses `round: 5, thru: 19+`. Confirm before locking it into the wire schema.
+6. **Withdrawn / DNF semantics** — A withdrawn golfer emits one terminal DNF round in the current round for that state and no later rounds.
 
-6. **Withdrawn vs DNF semantics** — The provider's withdrawn emission is a single DNF round. Should that DNF round carry `round: 1` (truncated emission) or `round: <current round at time of withdrawal>`? Both are reasonable; pick before implementation.
+7. **`completedAt` field** — Populate deterministic `completedAt` values for COMPLETED, DNF, DSQ, and MISSED_CUT rounds. Leave it absent for IN_PROGRESS rounds.
 
-7. **`completedAt` field** — Should the wire-side `LiveGolfRoundRecord` populate `completedAt` for COMPLETED rounds? It's optional in `GolfRoundUpdate`. The mock provider could supply a deterministic ISO timestamp derived from `event.schedule.startsAt + round_offset`, but the value would have no real semantic for downstream consumers other than ordering.
+8. **Validation** — Validate generated live responses before returning them from the provider route and cover that validation in provider tests. The builder is the source of the generated rounds, so validation belongs next to the builder/route contract, not in PoolMaster.
 
-8. **Fixture validation** — Scenario fixtures currently validate single-score `results` contestants. The new `rounds[]` will need parser + cross-reference validation (no rounds reference unknown contestants, statuses are coherent across rounds for a participant, etc.). What validation belongs in `validateScenario` vs the deterministic builder?
+9. **Worktree workflow** — Parallel-agent worktree policy is out of scope for this plan. If we want to make that durable, update `rules/workflow-rules.md` separately rather than mixing it into the mock-provider contract.
 
-9. **Worktree workflow convention** — Independent of this slice, the first attempt was disrupted by parallel work on a shared checkout. Should the team adopt a documented convention to use `git worktree add` when multiple agents may be active on the same repo? Captured here because it surfaced during this plan's drafting; route to `rules/workflow-rules.md` if accepted as a durable convention.
+## Implementation Guardrails
+
+Before `pool-master-eux.7` can close, review must confirm:
+
+- A direct request to the mock provider `/scores` endpoint with every supported `golf-*` token returns the deterministic multi-round live shape.
+- The PoolMaster adapter still performs an HTTP fetch for `golf-pre-live`; zero rounds come from the provider response, not from a consumer-side short circuit.
+- The PoolMaster adapter contains no concrete `golf-*`, `open`, `locked`, `live`, or `completed` token comparisons other than the existing query-string pass-through helper.
+- There is no PoolMaster-side helper that resembles per-round mock scoring math, correction deltas, playoff score generation, or participant-status override.
+- Missing required live-round fields fail provider/adapter validation; they are not replaced with fallback values.
 
 ## References
 

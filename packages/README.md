@@ -12,11 +12,11 @@ Modular monolith — all backend modules run in a single Fastify process on port
               │   core-api :3000    │
               ├─────────────────────┤
               │ auth / leagues      │──→ PostgreSQL (Prisma)
-              │ contests / standings│
+              │ contests / events   │
               │ drafts (engines)    │
-              │ scoring / prizes    │
+              │ golf standings      │
               │ notifications       │──→ SES / APNs / FCM
-              │ ingestion           │──→ ESPN / OpenF1 / PGA
+              │ ingestion           │──→ provider adapters
               │ admin / consent     │
               └─────────────────────┘
 ```
@@ -30,11 +30,10 @@ Modular monolith — all backend modules run in a single Fastify process on port
 | **auth** | `/api/v1/auth` | Register, login, refresh, logout, OAuth |
 | **leagues** | `/api/v1/leagues` | League creation, summaries, member directories, activity state, invite ownership |
 | **invitations** | `/api/v1/invitations` | Invitation preview and invite acceptance flows |
-| **contests** | `/api/v1/contests` | Contest CRUD, contest summaries, entries, standings, overrides, recalculation |
+| **contests** | `/api/v1/contests` | Contest CRUD, contest summaries, entries, picks, and sport-specific leaderboard reads |
 | **contest-management** | `/api/v1/contests/:contestId/manage` | Commissioner-owned contest configuration and management workflows |
 | **participants** | `/api/v1/participants` | Search, CRUD, season records, provider mappings |
-| **standings** | `/api/v1/contests/:id/standings` | Leaderboards, rankings |
-| **history** | `/api/v1/` | Completed contest summaries, standings, payouts, roster history, league/member results |
+| **history** | `/api/v1/` | Historical contest reads and roster history; final Golf settlement results land through the Golf-specific scoring model |
 | **account-consent** | `/api/v1/account` | Consent and age-affirmation capture |
 | **events** | `/api/v1/events` | Provider event records, schedules, statuses, and event lookup APIs |
 | **admin** | `/api/v1/admin` | Platform admin operations for health, provider ingestion, migrations, audit, and contest administration |
@@ -55,30 +54,7 @@ Pure-function engines that take state + input and return new state (immutable).
 | `TieredPickEngine` | Pick N from defined tier groups (non-exclusive) | Tiered roster contests |
 | `BudgetPickEngine` | Build roster within cost budget (non-exclusive) | Budget roster contests |
 
-The active backend-first pass centers on the current PoolMaster web flows while retaining the broader contest/scoring backbone behind the same monolith.
-
-### Scoring Module (`modules/scoring/`)
-
-Contest scoring is driven by configured participant scoring rules, entry aggregation rules, and prize definitions owned by `ContestConfiguration`.
-
-| Component | Purpose |
-|-----------|---------|
-| `participant-scoring-definition-registry.ts` | Maps scoring definition ids to concrete participant scoring functions |
-| `entry-aggregation-function-registry.ts` | Maps aggregation ids to entry-total aggregation functions |
-| `contest-scoring-recalculation-service.ts` | Rebuilds participant score events, entry totals, standings, and prize awards |
-| `contest-entry-scoring-result-service.ts` | Persists participant score totals, score events, prize awards, and entry summary fields |
-| `stat-event-consumer.ts` | Treats incoming stat updates as contest recalculation triggers |
-| `standings-rollup.ts` | Recomputes standings on `ContestEntry.standingsPosition` |
-
-Launch scoring definitions currently implemented on this branch:
-- `GOLF_RELATIVE_TO_PAR_TOTAL`
-- `TEAM_WIN_POINTS`
-- `ROUND_MULTIPLIER`
-- `SEED_DIFFERENTIAL_BONUS`
-
-Launch entry aggregation rules currently implemented on this branch:
-- `SUM_ALL_ENTRIES`
-- `SUM_TOP_N_ENTRIES`
+The active backend-first pass centers on current PoolMaster web flows and uses sport-specific read models for sport-specific leaderboards. Golf event scoring is stored on event participant round and standing tables; contest entries keep pick pointers and Golf leaderboard rows are computed from those event-side standings.
 
 ### Notification Module (`modules/notifications/`)
 
@@ -99,14 +75,13 @@ Current active surface: in-app notification reads, preference updates, and deliv
 
 ### Ingestion Module (`modules/ingestion/`)
 
-Polls external sports data providers and publishes `stat.updated` events to the in-process EventBus.
+Polls configured sports data providers, upserts normalized event data, and stores provider sync diagnostics for operator review.
 
 | Adapter | Sport(s) | API Key |
 |---------|----------|---------|
 | ESPN | NFL, NBA, MLB, NHL, NCAA | Free |
-| PGA Tour | Golf | Free |
 | OpenF1 | F1 | Free |
-| The Odds API | All (odds/pricing) | Yes (free tier: 500 req/mo) |
+| Mock contest feed | Golf and QA scenarios | Local/QA only |
 
 **Routes:** root-admin sync operations are exposed through `POST /api/v1/admin/providers/sync/:sport` and `POST /api/v1/admin/providers/events/:sport/:eventId/sync`; scheduled ingestion uses the internal scheduler directly.
 
@@ -116,7 +91,7 @@ Polls external sports data providers and publishes `stat.updated` events to the 
 
 | Layer | Files | Purpose |
 |-------|-------|---------|
-| `domain/` | `enums.ts`, `types.ts`, `scoring-config.ts`, `entitlements.ts` | 40+ domain interfaces, 20+ enum types, Zod-validated scoring config |
+| `domain/` | `enums.ts`, `types.ts`, `scoring-config.ts`, `entitlements.ts` | Domain interfaces, enum types, and Zod-validated contest configuration |
 | `db/` | `ports.ts` | 25+ repository port interfaces (hexagonal architecture) |
 | `events/` | `base.ts`, `draft.ts`, `scoring.ts`, `contest.ts`, `notification.ts`, `event-bus.ts` | Domain events + in-process EventBus |
 | `utils/` | `id.ts` | `generateId()` via `crypto.randomUUID()` |
@@ -137,7 +112,6 @@ Polls external sports data providers and publishes `stat.updated` events to the 
 |-----------|-------------|
 | **PostgreSQL 16** | Primary database via Prisma ORM (50+ models) |
 | **In-process EventBus** | Domain-event fan-out inside the monolith |
-| **In-process EventBus** | `stat.updated` → scoring → `score.updated` → `standings.updated` |
 
 ## Standalone Support Packages
 

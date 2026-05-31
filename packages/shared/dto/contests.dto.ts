@@ -8,7 +8,6 @@ import {
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
-import { JsonObjectSchema } from './common.dto';
 import { LeagueAuditEntryDtoSchema, type LeagueAuditEntryDto } from './audit.dto';
 import {
   GolfCategoryDefinitionSchema,
@@ -113,13 +112,6 @@ export const ExtendPickClockRequestSchema = z.object({
 }).describe('Commissioner request payload for extending the current draft turn.');
 export type ExtendPickClockRequest = z.infer<typeof ExtendPickClockRequestSchema>;
 
-export const AdjustContestScoreRequestSchema = z.object({
-  entryId: z.string().describe('Entry whose score should be adjusted.'),
-  adjustment: z.number().describe('Positive or negative manual score adjustment.'),
-  reason: z.string().describe('Reason recorded in audit history for the score adjustment.'),
-}).describe('Admin or commissioner score-adjustment request.');
-export type AdjustContestScoreRequest = z.infer<typeof AdjustContestScoreRequestSchema>;
-
 export const ReopenContestRequestSchema = z.object({
   reason: z.string().describe('Reason recorded for reopening the contest.'),
 }).describe('Request payload for reopening a closed contest.');
@@ -201,8 +193,6 @@ export const ContestEntryDtoSchema = z.object({
   name: z.string(),
   status: z.enum(['ACTIVE', 'INACTIVE']),
   tiebreakerValue: z.number().int().nullable().optional(),
-  totalScore: z.number(),
-  standingsPosition: z.number().nullable().optional(),
   isEliminated: z.boolean(),
   picksCount: z.number().int().min(0).describe('Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners.'),
   createdAt: z.string().datetime().describe('When the contest entry was created.'),
@@ -256,10 +246,8 @@ export const ContestEntryParticipantDetailDtoSchema = z.object({
   participantStatus: z.string().nullable().optional(),
   position: z.string().nullable().optional(),
   teamAffiliation: z.string().nullable().optional(),
-  contestPoints: z.number().describe('Current points earned within the contest for this picked participant.'),
   pickedAt: z.string().datetime().describe('When the participant was added to the contest entry.'),
-  latestPerformance: JsonObjectSchema.describe('Latest provider-backed performance snapshot available for the picked participant.'),
-}).describe('Contest entry participant detail used by entry-detail and expanded leaderboard surfaces.');
+}).describe('Contest entry participant detail. Picks remain pointers to event participants; Golf scoring data is returned by the Golf leaderboard endpoint.');
 export type ContestEntryParticipantDetailDto = z.infer<typeof ContestEntryParticipantDetailDtoSchema>;
 
 export const ContestEntryDetailDtoSchema = ContestEntryDtoSchema.extend({
@@ -372,7 +360,7 @@ export const GolfLeaderboardResponseSchema = z.object({
   entries: z.array(GolfLeaderboardEntryDtoSchema).describe('Contest entries ordered by computed Golf total.'),
   asOf: z.string().datetime().nullable().describe('Latest provider standing timestamp represented in the leaderboard, or null when no standing timestamps are available.'),
 }).describe(
-  'Member-facing Golf contest leaderboard. Entry totals are computed from SportEventParticipantGolfStanding and SportEventParticipantGolfRound, not ContestEntry.totalScore.',
+  'Member-facing Golf contest leaderboard. Entry totals are computed from SportEventParticipantGolfStanding and SportEventParticipantGolfRound.',
 );
 export type GolfLeaderboardResponse = z.infer<typeof GolfLeaderboardResponseSchema>;
 
@@ -454,25 +442,6 @@ export const ContestEntryDeletionResponseSchema = z.object({
   deleted: z.literal(true).describe('Confirms that the delete operation succeeded.'),
 }).describe('Contest-entry deletion response.');
 export type ContestEntryDeletionResponse = z.infer<typeof ContestEntryDeletionResponseSchema>;
-
-export const ContestRecalculationResponseSchema = z.object({
-  contestId: z.string().describe('Contest that was recalculated.'),
-  teamsAffected: z.number().describe('How many entries were affected by the recalculation.'),
-  standingsChanged: z.boolean().describe('Whether the recalculation changed at least one rank or score.'),
-  changes: z.array(
-    z.object({
-      entryId: z.string(),
-      oldRank: z.number(),
-      newRank: z.number(),
-      oldScore: z.number(),
-      newScore: z.number(),
-    }),
-  ).describe('Per-entry changes produced by the recalculation.'),
-}).describe('Contest recalculation result.');
-export type ContestRecalculationResponse = z.infer<typeof ContestRecalculationResponseSchema>;
-
-export const ContestStandingsRecalculationResponseSchema =
-  ContestRecalculationResponseSchema;
 
 // Per pool-master-rop.14.1: the audit-log entry shape is identical for league
 // and contest scopes — both endpoints query the same `commissionerAuditLog`

@@ -23,7 +23,6 @@ import { contestsModule, contestsByIdModule } from './modules/contests/routes';
 import { contestManagementModule } from './modules/contest-management/routes';
 import { eventsModule } from './modules/events/routes';
 import { participantsModule } from './modules/participants/routes';
-import { standingsModule } from './modules/standings/routes';
 import { historyModule } from './modules/history/routes';
 import { accountConsentModule } from './modules/account-consent/routes';
 import { accountModule } from './modules/account/routes';
@@ -38,14 +37,6 @@ import { versionModule } from './modules/version/routes';
 
 // Draft module
 import { draftsModule } from './modules/drafts/routes';
-
-// Scoring module
-import { eventBus } from '@poolmaster/shared/events/event-bus';
-import { StandingsRollup } from './modules/scoring/rollup/standings-rollup';
-import { ScoringService } from './modules/scoring/service';
-import { scoringRoutes } from './modules/scoring/routes';
-import { ContestScoringRecalculationService } from './modules/contest-scoring';
-import { LiveScoreConsumer } from './modules/scoring/consumer/live-score-consumer';
 
 // Notification module
 import { notificationsModule } from './modules/notifications/routes';
@@ -88,24 +79,6 @@ export function buildApp() {
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
   const pollConfigService = new PollConfigService(runtimeConfigRepository, app.log);
   const ingestionConfigService = new IngestionConfigService(runtimeConfigRepository, app.log);
-
-  // --- Scoring subsystem (Prisma-backed) ---
-  // pool-master-rop.78.3 — the legacy ContestLookup + stat-event consumer
-  // path was retired with the ProviderStatEvent contract.
-  // pool-master-rop.78.7 — the typed live_score.persisted consumer is
-  // wired below; it dispatches to per-(category × contestFormat) scoring
-  // functions (Phase 4 ships golf-roster only) and reranks via the
-  // existing standingsRollup.
-  const standingsRollup = new StandingsRollup({ eventBus, prisma, logger: app.log });
-  const scoringService = new ScoringService({ standingsRollup, prisma, logger: app.log });
-  const contestScoringRecalculationService = new ContestScoringRecalculationService(prisma, app.log);
-  void contestScoringRecalculationService;
-  const liveScoreConsumer = new LiveScoreConsumer({
-    prisma,
-    eventBus,
-    standingsRollup,
-    logger: app.log,
-  });
 
   // =========================================================================
   // Core plugins
@@ -233,7 +206,6 @@ export function buildApp() {
   app.register(contestsByIdModule, { prefix: '/api/v1/contests' });
   app.register(eventsModule, { prefix: '/api/v1/events' });
   app.register(participantsModule, { prefix: '/api/v1/participants' });
-  app.register(standingsModule, { prefix: '/api/v1/contests/:contestId/standings' });
   app.register(historyModule, { prefix: '/api/v1' });
   app.register(accountModule, { prefix: '/api/v1/account' });
   app.register(accountConsentModule, { prefix: '/api/v1/account' });
@@ -251,24 +223,6 @@ export function buildApp() {
   // Draft module
   // =========================================================================
   app.register(draftsModule, { prefix: '/api/v1/drafts' });
-
-  // =========================================================================
-  // Scoring module
-  // =========================================================================
-  app.register(scoringRoutes, { prefix: '/api/v1', scoringService });
-
-  // pool-master-rop.78.7 — typed live_score.persisted consumer subscribed
-  // here. It dispatches per (event.category × pick.contestFormat) and runs
-  // the scoring → contributions → totalScore → rerank pipeline under a
-  // per-contest advisory lock (plans/117 §11.3, §11.4, §11.5).
-  // pool-master-rop.78.8 — periodic StandingsRollup interval retired; the
-  // event-driven path is now the canonical single write path.
-  // ContestScoringRecalculationService remains for explicit triggers
-  // (admin override, contest reopen) but is no longer a parallel update
-  // mechanism that races with stat-event scoring (plans/117 §11.3).
-  if (!isOpenApiExport) {
-    liveScoreConsumer.subscribe();
-  }
 
   // =========================================================================
   // Notification module
@@ -297,9 +251,7 @@ export function buildApp() {
   });
 
   app.addHook('onClose', async () => {
-    liveScoreConsumer.unsubscribe();
     ingestionScheduler.stop();
-    eventBus.clear();
     await prisma.$disconnect();
   });
 

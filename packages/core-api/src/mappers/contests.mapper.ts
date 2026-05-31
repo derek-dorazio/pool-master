@@ -54,8 +54,6 @@ interface ContestEntryRow {
   name: string;
   status: ContestEntry['status'];
   tiebreakerValue?: number | null;
-  totalScore: number;
-  standingsPosition?: number | null;
   isEliminated: boolean;
   picksCount: number;
   createdAt: Date;
@@ -70,9 +68,7 @@ export interface ContestEntryParticipantRow {
   participantStatus?: string | null;
   position?: string | null;
   teamAffiliation?: string | null;
-  contestPoints: number;
   pickedAt: Date;
-  latestPerformance: Record<string, unknown>;
 }
 
 export interface GolfLeaderboardRoundCellRow {
@@ -263,8 +259,6 @@ export function toContestEntryDto(
     name: entry.name,
     status: entry.status as ContestEntryDto['status'],
     tiebreakerValue: entry.tiebreakerValue ?? null,
-    totalScore: entry.totalScore,
-    standingsPosition: entry.standingsPosition ?? null,
     isEliminated: entry.isEliminated,
     picksCount: entry.picksCount,
     createdAt: entry.createdAt.toISOString(),
@@ -287,9 +281,7 @@ export function toContestEntryParticipantDetailDto(
     participantStatus: participant.participantStatus ?? null,
     position: participant.position ?? null,
     teamAffiliation: participant.teamAffiliation ?? null,
-    contestPoints: participant.contestPoints,
     pickedAt: participant.pickedAt.toISOString(),
-    latestPerformance: participant.latestPerformance,
   };
 }
 

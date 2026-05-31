@@ -46,66 +46,13 @@ type ContestEntryDetail = ListContestEntriesResponses[200]['entries'][number];
 type ContestEntryParticipant = NonNullable<ContestEntryDetail['participants']>[number];
 type TeamSummary = ListLeagueSquadsResponses[200]['squads'][number];
 
-function formatRelativeToPar(value: unknown) {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
-    return null;
-  }
-
-  if (value === 0) {
-    return 'E';
-  }
-
-  return value > 0 ? `+${value}` : `${value}`;
-}
-
-function formatRoundScore(value: unknown) {
-  return typeof value === 'number' && Number.isFinite(value) ? String(value) : '—';
-}
-
-function readLatestPerformanceMetric(
-  latestPerformance: Record<string, unknown>,
-  key: string,
-) {
-  return latestPerformance[key];
-}
-
-function getParticipantPerformanceView(participant: ContestEntryParticipant) {
-  const latestPerformance = participant.latestPerformance ?? {};
-  const scoreToPar = formatRelativeToPar(
-    readLatestPerformanceMetric(latestPerformance, 'scoreToPar'),
-  );
-  const finishPosition = readLatestPerformanceMetric(latestPerformance, 'finishPosition');
-  const thru = readLatestPerformanceMetric(latestPerformance, 'thru');
-  const roundScores = [1, 2, 3, 4].map((round) =>
-    formatRoundScore(readLatestPerformanceMetric(latestPerformance, `round${round}`)),
-  );
-
-  return {
-    scoreToPar,
-    finishPosition: typeof finishPosition === 'number' ? finishPosition : null,
-    thru:
-      typeof thru === 'number' || typeof thru === 'string'
-        ? String(thru)
-        : null,
-    roundScores,
-  };
-}
-
 function sortDetailedParticipants(participants: ContestEntryParticipant[]) {
-  return [...participants].sort((left, right) => {
-    const leftPerformance = getParticipantPerformanceView(left);
-    const rightPerformance = getParticipantPerformanceView(right);
-
-    if (
-      leftPerformance.finishPosition !== null
-      && rightPerformance.finishPosition !== null
-      && leftPerformance.finishPosition !== rightPerformance.finishPosition
-    ) {
-      return leftPerformance.finishPosition - rightPerformance.finishPosition;
-    }
-
-    return left.participantName.localeCompare(right.participantName);
-  });
+  // pool-master-eux.5 removed the legacy score blob that previously implied
+  // finish order here. Keep this generic contest detail view alphabetical; the
+  // Golf-specific leaderboard API owns score/rank ordering.
+  return [...participants].sort((left, right) =>
+    left.participantName.localeCompare(right.participantName),
+  );
 }
 
 function ParticipantsTable({
@@ -127,22 +74,16 @@ function ParticipantsTable({
 
   return (
     <Tile className="mt-4 overflow-x-auto" padding="none" radius="lg">
-      <div className="grid grid-cols-[minmax(0,1.5fr)_80px_70px_repeat(4,56px)] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
+      <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(120px,0.8fr)_minmax(120px,0.8fr)] gap-2 border-b border-border px-4 py-3 text-xs font-medium uppercase text-muted-foreground">
         <span>Participant</span>
-        <span className="text-right">Total</span>
-        <span className="text-right">Thru</span>
-        <span className="text-right">R1</span>
-        <span className="text-right">R2</span>
-        <span className="text-right">R3</span>
-        <span className="text-right">R4</span>
+        <span>Status</span>
+        <span>Affiliation</span>
       </div>
       <div className="divide-y divide-border">
         {sorted.map((participant) => {
-          const performance = getParticipantPerformanceView(participant);
-
           return (
             <div
-              className="grid grid-cols-[minmax(0,1.5fr)_80px_70px_repeat(4,56px)] gap-2 px-4 py-3 text-sm"
+              className="grid grid-cols-[minmax(0,1.5fr)_minmax(120px,0.8fr)_minmax(120px,0.8fr)] gap-2 px-4 py-3 text-sm"
               data-testid={`contest-leaderboard-participant-${entryId}-${participant.participantId}`}
               key={participant.pickId}
             >
@@ -154,17 +95,12 @@ function ParticipantsTable({
                     : participant.teamAffiliation ?? participant.position ?? 'Contest participant'}
                 </div>
               </div>
-              <span className="text-right font-medium text-foreground">
-                {performance.scoreToPar ?? formatRelativeToPar(participant.contestPoints) ?? '—'}
+              <span className="text-muted-foreground">
+                {participant.participantStatus ?? 'Active'}
               </span>
-              <span className="text-right text-muted-foreground">
-                {performance.thru ?? '—'}
+              <span className="text-muted-foreground">
+                {participant.teamAffiliation ?? participant.position ?? '—'}
               </span>
-              {performance.roundScores.map((roundScore, index) => (
-                <span className="text-right text-muted-foreground" key={`${participant.pickId}-round-${index + 1}`}>
-                  {roundScore}
-                </span>
-              ))}
             </div>
           );
         })}
@@ -529,10 +465,6 @@ export function ContestDetailPage() {
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <div className="text-right text-sm text-muted-foreground">
-                        <div>{entry.standingsPosition ? `#${entry.standingsPosition}` : 'Rank pending'}</div>
-                        <div>{entry.totalScore} pts</div>
-                      </div>
                       <Button
                         data-testid={`contest-board-toggle-${entry.id}`}
                         onClick={() =>
