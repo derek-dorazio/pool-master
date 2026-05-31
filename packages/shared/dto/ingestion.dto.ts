@@ -19,7 +19,21 @@ export const SportSyncRequestSchema = z.object({
 }).describe('Feed-aware sport sync request.');
 export type SportSyncRequest = z.infer<typeof SportSyncRequestSchema>;
 
-export const MockEventStateSchema = z.enum(['open', 'locked', 'live', 'completed']).describe(
+export const MockEventStateSchema = z.enum([
+  'open',
+  'locked',
+  'live',
+  'completed',
+  'golf-pre-live',
+  'golf-r1-in-progress',
+  'golf-r1-complete',
+  'golf-r2-complete',
+  'golf-correction',
+  'golf-r4-complete-pending-final',
+  'golf-playoff',
+  'golf-completed',
+  'golf-late-correction',
+]).describe(
   'Mock-provider-only event state override for manual QA event syncs.',
 );
 export type MockEventState = z.infer<typeof MockEventStateSchema>;

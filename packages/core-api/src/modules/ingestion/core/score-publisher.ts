@@ -409,6 +409,8 @@ function mapGolfLiveStatus(roundStatus: string): PrismaGolfLiveStatus {
     case 'DNF':
     case 'DSQ':
       return PrismaGolfLiveStatus.WITHDRAWN;
+    case 'MISSED_CUT':
+      return PrismaGolfLiveStatus.MISSED_CUT;
     default:
       return PrismaGolfLiveStatus.ACTIVE;
   }

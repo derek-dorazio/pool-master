@@ -386,7 +386,7 @@ export type GetMockContestFeedScenarioEventDetailData = {
         eventId: string;
     };
     query?: {
-        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction';
     };
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/detail';
 };
@@ -540,7 +540,7 @@ export type GetMockContestFeedFieldSnapshotData = {
         eventId: string;
     };
     query?: {
-        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction';
     };
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/field';
 };
@@ -582,7 +582,7 @@ export type GetMockContestFeedOddsSnapshotData = {
         eventId: string;
     };
     query?: {
-        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction';
     };
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/odds';
 };
@@ -624,7 +624,7 @@ export type GetMockContestFeedRankingsSnapshotData = {
         eventId: string;
     };
     query?: {
-        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction';
     };
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/rankings';
 };
@@ -666,7 +666,7 @@ export type GetMockContestFeedResultsSnapshotData = {
         eventId: string;
     };
     query?: {
-        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction';
     };
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/results';
 };
@@ -709,7 +709,7 @@ export type GetMockContestFeedScoresSnapshotData = {
     };
     query?: {
         tick?: number;
-        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction';
     };
     url: '/v1/scenarios/{scenarioId}/events/{eventId}/scores';
 };
@@ -722,7 +722,7 @@ export type GetMockContestFeedScoresSnapshotResponses = {
         scenarioId: string;
         eventId: string;
         eventName: string;
-        feedKind: 'field' | 'odds' | 'rankings' | 'results';
+        feedKind: 'results';
         asOf: string;
         note?: string;
         contestants: Array<{
@@ -732,12 +732,14 @@ export type GetMockContestFeedScoresSnapshotResponses = {
             countryCode?: string;
             seed?: number;
             participantStatus?: 'active' | 'provisional' | 'withdrawn' | 'alternate' | 'cut' | 'eliminated' | 'inactive';
-            odds?: number;
-            ranking?: number;
-            strokes?: number;
-            score?: number;
-            result?: 'win' | 'loss' | 'tie' | 'cut' | 'withdrawn' | 'pending';
-            note?: string;
+            rounds: Array<{
+                round: number;
+                strokes: number;
+                scoreToPar: number;
+                thru?: number;
+                status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+                completedAt?: string;
+            }>;
         }>;
     };
 };

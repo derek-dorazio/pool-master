@@ -159,8 +159,9 @@ test('pool-master-33l.8.8: explicit mock event states control golf detail, resul
   assert.equal(liveDetail.event.field.status, 'locked');
   const liveScores = store.getLiveScores('golf-relative-today', eventId, 2, 'live');
   assert.equal(liveScores.contestants.length, 80);
-  assert.ok(typeof liveScores.contestants[0]?.score === 'number');
-  assert.ok(typeof liveScores.contestants[0]?.strokes === 'number');
+  assert.equal(liveScores.contestants[0]?.rounds.length, 1);
+  assert.equal(liveScores.contestants[0]?.rounds[0]?.status, 'IN_PROGRESS');
+  assert.ok(typeof liveScores.contestants[0]?.rounds[0]?.strokes === 'number');
 
   const completedDetail = store.getEventResponse('golf-relative-today', eventId, 'completed');
   assert.equal(completedDetail.event.status, 'completed');
@@ -169,6 +170,143 @@ test('pool-master-33l.8.8: explicit mock event states control golf detail, resul
   assert.equal(completedResults.contestants.length, 80);
   assert.ok(completedResults.contestants.some((contestant) => contestant.result === 'win'));
   assert.ok(completedResults.contestants.every((contestant) => typeof contestant.strokes === 'number'));
+});
+
+test('pool-master-eux.7: golf mock live-state tokens emit provider-owned multi-round /scores payloads', () => {
+  const store = new ScenarioStore(
+    scenarioDir,
+    undefined,
+    { now: () => new Date('2026-04-26T21:00:00.000Z') },
+  );
+  const scenarioId = 'golf-relative-today';
+  const eventId = 'golf-relative-weekend-20260430';
+
+  const preLive = store.getLiveScores(scenarioId, eventId, undefined, 'golf-pre-live');
+  assert.equal(preLive.contestants.length, 0);
+
+  const r1InProgress = store.getLiveScores(scenarioId, eventId, undefined, 'golf-r1-in-progress');
+  assert.equal(r1InProgress.contestants.length, 80);
+  assert.equal(r1InProgress.contestants[0]?.rounds.length, 1);
+  assert.equal(r1InProgress.contestants[0]?.rounds[0]?.status, 'IN_PROGRESS');
+  assert.ok((r1InProgress.contestants[0]?.rounds[0]?.thru ?? 18) < 18);
+  assert.equal(r1InProgress.contestants[0]?.rounds[0]?.completedAt, undefined);
+
+  const r1Complete = store.getLiveScores(scenarioId, eventId, undefined, 'golf-r1-complete');
+  assert.equal(r1Complete.contestants[0]?.rounds[0]?.status, 'COMPLETED');
+  assert.equal(r1Complete.contestants[0]?.rounds[0]?.thru, 18);
+  assert.ok(typeof r1Complete.contestants[0]?.rounds[0]?.completedAt === 'string');
+
+  const r2Complete = store.getLiveScores(scenarioId, eventId, undefined, 'golf-r2-complete');
+  assert.ok(r2Complete.contestants.some((contestant) =>
+    contestant.participantStatus === 'cut'
+    && contestant.rounds.at(-1)?.status === 'MISSED_CUT',
+  ));
+
+  const corrected = store.getLiveScores(scenarioId, eventId, undefined, 'golf-correction');
+  const r2Golfer01 = r2Complete.contestants.find((contestant) => contestant.contestantId === 'golfer-01');
+  const correctedGolfer01 = corrected.contestants.find((contestant) => contestant.contestantId === 'golfer-01');
+  assert.equal(
+    correctedGolfer01?.rounds.find((round) => round.round === 2)?.scoreToPar,
+    (r2Golfer01?.rounds.find((round) => round.round === 2)?.scoreToPar ?? 0) - 2,
+  );
+
+  const r4PendingFinal = store.getLiveScores(scenarioId, eventId, undefined, 'golf-r4-complete-pending-final');
+  assert.equal(store.getEventResponse(scenarioId, eventId, 'golf-r4-complete-pending-final').event.status, 'in_progress');
+  assert.ok(r4PendingFinal.contestants.some((contestant) => contestant.rounds.length === 4));
+  assert.ok(r4PendingFinal.contestants.some((contestant) => contestant.rounds.at(-1)?.status === 'DNF'));
+  assert.ok(r4PendingFinal.contestants.some((contestant) => contestant.rounds.at(-1)?.status === 'DSQ'));
+
+  const playoff = store.getLiveScores(scenarioId, eventId, undefined, 'golf-playoff');
+  const playoffContestants = playoff.contestants.filter((contestant) =>
+    contestant.rounds.some((round) => round.round === 5),
+  );
+  assert.equal(playoffContestants.length, 2);
+  assert.ok(playoffContestants.some((contestant) =>
+    contestant.rounds.some((round) => round.round === 5 && round.status === 'IN_PROGRESS' && (round.thru ?? 0) > 18),
+  ));
+
+  const completed = store.getLiveScores(scenarioId, eventId, undefined, 'golf-completed');
+  assert.equal(store.getEventResponse(scenarioId, eventId, 'golf-completed').event.status, 'completed');
+  assert.ok(completed.contestants.every((contestant) => contestant.rounds.every((round) => round.status !== 'IN_PROGRESS')));
+
+  const lateCorrection = store.getLiveScores(scenarioId, eventId, undefined, 'golf-late-correction');
+  const completedGolfer01 = completed.contestants.find((contestant) => contestant.contestantId === 'golfer-01');
+  const lateGolfer01 = lateCorrection.contestants.find((contestant) => contestant.contestantId === 'golfer-01');
+  assert.equal(
+    lateGolfer01?.rounds.find((round) => round.round === 4)?.scoreToPar,
+    (completedGolfer01?.rounds.find((round) => round.round === 4)?.scoreToPar ?? 0) - 2,
+  );
+});
+
+test('pool-master-eux.7: legacy mock event states are aliases into the live /scores shape', () => {
+  const store = new ScenarioStore(
+    scenarioDir,
+    undefined,
+    { now: () => new Date('2026-04-26T21:00:00.000Z') },
+  );
+  const scenarioId = 'golf-relative-today';
+  const eventId = 'golf-relative-weekend-20260430';
+
+  assert.equal(store.getLiveScores(scenarioId, eventId, undefined, 'open').contestants.length, 0);
+  assert.equal(store.getLiveScores(scenarioId, eventId, undefined, 'locked').contestants.length, 0);
+
+  const live = store.getLiveScores(scenarioId, eventId, undefined, 'live');
+  assert.equal(live.contestants[0]?.rounds[0]?.status, 'IN_PROGRESS');
+  assert.equal('score' in (live.contestants[0] ?? {}), false);
+  assert.equal('strokes' in (live.contestants[0] ?? {}), false);
+
+  const completed = store.getLiveScores(scenarioId, eventId, undefined, 'completed');
+  assert.equal(store.getEventResponse(scenarioId, eventId, 'completed').event.status, 'completed');
+  assert.ok(completed.contestants.some((contestant) => contestant.rounds.some((round) => round.round === 4)));
+});
+
+test('pool-master-eux.7: direct /scores requests expose every golf live-state wire contract', async () => {
+  const previousScenarioDir = process.env.SCENARIO_DIR;
+  process.env.SCENARIO_DIR = scenarioDir;
+  const app = await buildApp();
+  const tokens = [
+    'golf-pre-live',
+    'golf-r1-in-progress',
+    'golf-r1-complete',
+    'golf-r2-complete',
+    'golf-correction',
+    'golf-r4-complete-pending-final',
+    'golf-playoff',
+    'golf-completed',
+    'golf-late-correction',
+  ] as const;
+
+  try {
+    for (const token of tokens) {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/scenarios/golf-major-2026/events/golf-masters-2026/scores?mockEventState=${token}`,
+      });
+      assert.equal(response.statusCode, 200);
+      const payload = response.json();
+      assert.equal(payload.feedKind, 'results');
+      assert.equal(payload.eventId, 'golf-masters-2026');
+
+      if (token === 'golf-pre-live') {
+        assert.equal(payload.contestants.length, 0);
+        continue;
+      }
+
+      assert.equal(payload.contestants.length, 80);
+      assert.equal(Array.isArray(payload.contestants[0].rounds), true);
+      assert.equal('score' in payload.contestants[0], false);
+      assert.equal('strokes' in payload.contestants[0], false);
+      assert.equal(typeof payload.contestants[0].rounds[0].strokes, 'number');
+      assert.equal(typeof payload.contestants[0].rounds[0].scoreToPar, 'number');
+    }
+  } finally {
+    await app.close();
+    if (previousScenarioDir === undefined) {
+      delete process.env.SCENARIO_DIR;
+    } else {
+      process.env.SCENARIO_DIR = previousScenarioDir;
+    }
+  }
 });
 
 test('pool-master-s4y: old relative manual-test event ids remain detail-resolvable after cycle rollover', () => {
@@ -349,8 +487,9 @@ test('pool-master-33l.8.8: routes expose detail, field, and mock event-state sco
     const liveScoresJson = liveScoresResponse.json();
     assert.equal(liveScoresJson.feedKind, 'results');
     assert.equal(liveScoresJson.contestants.length, 80);
-    assert.ok(typeof liveScoresJson.contestants[0]?.score === 'number');
-    assert.ok(typeof liveScoresJson.contestants[0]?.strokes === 'number');
+    assert.equal(liveScoresJson.contestants[0]?.rounds.length, 1);
+    assert.equal(liveScoresJson.contestants[0]?.rounds[0]?.status, 'IN_PROGRESS');
+    assert.ok(typeof liveScoresJson.contestants[0]?.rounds[0]?.strokes === 'number');
   } finally {
     await app.close();
     if (previousScenarioDir === undefined) {

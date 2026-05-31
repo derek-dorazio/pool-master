@@ -38,8 +38,31 @@ export type ParticipantStatusKind = (typeof participantStatusKinds)[number];
 export const contestantOutcomeKinds = ['win', 'loss', 'tie', 'cut', 'withdrawn', 'pending'] as const;
 export type ContestantOutcomeKind = (typeof contestantOutcomeKinds)[number];
 
-export const mockEventStateKinds = ['open', 'locked', 'live', 'completed'] as const;
+export const mockEventStateKinds = [
+  'open',
+  'locked',
+  'live',
+  'completed',
+  'golf-pre-live',
+  'golf-r1-in-progress',
+  'golf-r1-complete',
+  'golf-r2-complete',
+  'golf-correction',
+  'golf-r4-complete-pending-final',
+  'golf-playoff',
+  'golf-completed',
+  'golf-late-correction',
+] as const;
 export type MockEventStateKind = (typeof mockEventStateKinds)[number];
+
+export const liveGolfRoundStatusKinds = [
+  'IN_PROGRESS',
+  'COMPLETED',
+  'DNF',
+  'DSQ',
+  'MISSED_CUT',
+] as const;
+export type LiveGolfRoundStatusKind = (typeof liveGolfRoundStatusKinds)[number];
 
 export interface SeasonRecord {
   readonly seasonId: string;
@@ -185,6 +208,35 @@ export interface ContestFeedSnapshotResponse {
   readonly contestants: readonly ContestantRecord[];
 }
 
+export interface LiveGolfRoundRecord {
+  readonly round: number;
+  readonly strokes: number;
+  readonly scoreToPar: number;
+  readonly thru?: number;
+  readonly status: LiveGolfRoundStatusKind;
+  readonly completedAt?: string;
+}
+
+export interface LiveGolfContestantRecord {
+  readonly contestantId: string;
+  readonly name: string;
+  readonly teamName?: string;
+  readonly countryCode?: string;
+  readonly seed?: number;
+  readonly participantStatus?: ParticipantStatusKind;
+  readonly rounds: readonly LiveGolfRoundRecord[];
+}
+
+export interface LiveScoresSnapshotResponse {
+  readonly scenarioId: string;
+  readonly eventId: string;
+  readonly eventName: string;
+  readonly feedKind: 'results';
+  readonly asOf: string;
+  readonly note?: string;
+  readonly contestants: readonly LiveGolfContestantRecord[];
+}
+
 export interface ContestFeedEventResponse {
   readonly scenarioId: string;
   readonly sport: SupportedSport;
@@ -203,6 +255,7 @@ export interface ContestFeedUpdateResponse {
 
 const participantStatusKindsSchemaEnum = [...participantStatusKinds] as const;
 const contestantOutcomeKindsSchemaEnum = [...contestantOutcomeKinds] as const;
+const liveGolfRoundStatusKindsSchemaEnum = [...liveGolfRoundStatusKinds] as const;
 
 export const seasonRecordSchema = {
   type: 'object',
@@ -431,6 +484,53 @@ export const snapshotResponseSchema = {
     asOf: { type: 'string', format: 'date-time' },
     note: { type: 'string' },
     contestants: { type: 'array', items: contestantRecordSchema },
+  },
+} as const;
+
+export const liveGolfRoundRecordSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['round', 'strokes', 'scoreToPar', 'status'],
+  properties: {
+    round: { type: 'integer', minimum: 1, maximum: 8 },
+    strokes: { type: 'integer', minimum: 0 },
+    scoreToPar: { type: 'integer' },
+    thru: { type: 'integer', minimum: 0 },
+    status: { type: 'string', enum: liveGolfRoundStatusKindsSchemaEnum },
+    completedAt: { type: 'string', format: 'date-time' },
+  },
+} as const;
+
+export const liveGolfContestantRecordSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['contestantId', 'name', 'rounds'],
+  properties: {
+    contestantId: { type: 'string' },
+    name: { type: 'string' },
+    teamName: { type: 'string' },
+    countryCode: { type: 'string' },
+    seed: { type: 'number' },
+    participantStatus: { type: 'string', enum: participantStatusKindsSchemaEnum },
+    rounds: {
+      type: 'array',
+      items: liveGolfRoundRecordSchema,
+    },
+  },
+} as const;
+
+export const liveScoresSnapshotResponseSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['scenarioId', 'eventId', 'eventName', 'feedKind', 'asOf', 'contestants'],
+  properties: {
+    scenarioId: { type: 'string' },
+    eventId: { type: 'string' },
+    eventName: { type: 'string' },
+    feedKind: { type: 'string', const: 'results' },
+    asOf: { type: 'string', format: 'date-time' },
+    note: { type: 'string' },
+    contestants: { type: 'array', items: liveGolfContestantRecordSchema },
   },
 } as const;
 
