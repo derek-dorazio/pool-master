@@ -328,6 +328,7 @@ export interface ContestHistoryResult extends DomainEntity {
   contestId: string;
   entryId: string;
   finalRank: number;
+  finalScoreToPar?: number;
   prizeAmount?: number;
 
   // Denormalised history fields (immutable after contest close)

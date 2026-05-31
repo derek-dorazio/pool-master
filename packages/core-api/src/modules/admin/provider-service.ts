@@ -17,6 +17,7 @@ import type {
 } from '../ingestion/core/provider-interface';
 import { supportsMockEventStateControls } from '../ingestion/core/provider-interface';
 import { IngestionPersistence } from '../ingestion/persistence/ingestion-persistence';
+import { GolfContestSettlementService } from '../contests/golf-contest-settlement-service';
 import type {
   EventSyncRequest,
   IngestionFeedType,
@@ -354,6 +355,7 @@ export class ProviderService {
       logger,
       mailDelivery ?? createMailDeliveryProvider(readMailDeliveryConfig(process.env), logger),
       appBaseUrl ?? readApplicationBaseUrl(process.env),
+      new GolfContestSettlementService(prisma, logger),
     );
   }
 

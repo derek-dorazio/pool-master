@@ -15,8 +15,8 @@ afterAll(async () => {
   await teardownIntegrationTests();
 });
 
-describe('pool-master-eux.5: history read deferral after legacy scoring removal', () => {
-  it('pool-master-eux.5: returns not found for completed contest history until Golf settlement persists', async () => {
+describe('pool-master-eux.6: history reads without settled Golf standings', () => {
+  it('pool-master-eux.6: returns not found for a completed contest with no final standing rows', async () => {
     const prisma = getPrisma();
     const suffix = randomUUID().slice(0, 8);
     const owner = await createTestUser({ displayName: `History Stub ${suffix}` });

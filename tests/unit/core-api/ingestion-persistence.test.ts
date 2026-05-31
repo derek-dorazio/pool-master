@@ -201,6 +201,50 @@ describe('IngestionPersistence', () => {
     });
   });
 
+  it('pool-master-eux.6 triggers Golf contest settlement from completed schedule events', async () => {
+    const settlement = {
+      settleCompletedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
+    };
+    const eventEndDate = new Date('2026-05-31T22:00:00.000Z');
+    const prisma = {
+      contestTimingPolicy: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      sportEvent: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+      },
+    };
+    const persistence = new IngestionPersistence(
+      prisma as any,
+      createLogger() as any,
+      undefined,
+      'http://localhost:5173',
+      settlement,
+    );
+
+    await persistence.persistEventsWithDiagnostics([
+      {
+        externalId: 'golf-completed-2026',
+        providerId: 'mock-contest-feed',
+        sport: Sport.GOLF,
+        name: 'Completed Golf Event',
+        startDate: new Date('2026-05-28T12:00:00.000Z'),
+        endDate: eventEndDate,
+        status: 'COMPLETED',
+        fieldLocked: true,
+        metadata: {
+          releaseAt: '2026-05-20T12:00:00.000Z',
+          fieldLocksAt: '2026-05-27T16:00:00.000Z',
+        },
+      },
+    ]);
+
+    expect(settlement.settleCompletedSportEvent).toHaveBeenCalledWith('sport-event-1', {
+      completedAt: eventEndDate,
+    });
+  });
+
   it('pool-master-rop.68.1.3 persists provider-scoped participant ranking snapshots by provider mapping', async () => {
     const prisma = {
       participantProviderMapping: {
