@@ -61,7 +61,7 @@ export class HistoryService {
     if (results.length === 0) {
       this.logger.warn(
         { contestId },
-        'history get contest summary unavailable until pool-master-eux.6 settlement persistence lands',
+        'history get contest summary missing settled Golf standings',
       );
       return null;
     }
@@ -185,8 +185,8 @@ export class HistoryService {
   async getContestPayouts(contestId: string): Promise<ContestHistoryPayout[]> {
     this.logger.debug({ contestId }, 'history get contest payouts start');
     this.logger.info({ contestId, payoutCount: 0 }, 'history get contest payouts completed without legacy prize awards');
-    // pool-master-eux.5 removed legacy prize-award history. pool-master-eux.6 will
-    // define the replacement settlement/payout read once final Golf standings persist.
+    // pool-master-eux.5 removed legacy prize-award history. Golf standing
+    // settlement does not yet define payout calculation or award persistence.
     return [];
   }
 

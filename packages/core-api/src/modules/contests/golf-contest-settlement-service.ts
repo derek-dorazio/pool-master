@@ -33,13 +33,6 @@ export interface GolfContestSettlementSummary {
   standingsUpserted: number;
 }
 
-export class GolfContestSettlementError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'GolfContestSettlementError';
-  }
-}
-
 export class GolfContestSettlementService {
   constructor(
     private readonly prisma: PrismaClient,
@@ -125,18 +118,22 @@ export class GolfContestSettlementService {
 
     let standingsUpserted = 0;
     let contestsCompleted = 0;
+    let contestsSettled = 0;
     for (const contest of contests) {
       const countingRule = resolveGolfLeaderboardCountingRule(contest.configuration);
       if (!countingRule) {
-        throw new GolfContestSettlementError(
-          `Contest ${contest.id} cannot be settled because it has no Golf counting rule.`,
-        );
+        this.logger.error({
+          contestId: contest.id,
+          sportEventId,
+        }, 'Skipped Golf contest settlement because contest has no counting rule');
+        continue;
       }
       const rankedEntries = rankGolfLeaderboardEntries(
         contest.entries.map((entry) =>
           buildGolfLeaderboardEntry(entry, participantById, countingRule),
         ),
       );
+      contestsSettled++;
 
       for (const entry of rankedEntries) {
         await this.prisma.contestEntryGolfStanding.upsert({
@@ -187,14 +184,14 @@ export class GolfContestSettlementService {
     this.logger.info({
       sportEventId,
       sportEventName: sportEvent.name,
-      contestsSettled: contests.length,
+      contestsSettled,
       contestsCompleted,
       standingsUpserted,
     }, 'Golf contest settlement completed from completed sport event');
 
     return {
       sportEventId,
-      contestsSettled: contests.length,
+      contestsSettled,
       contestsCompleted,
       standingsUpserted,
     };

@@ -106,7 +106,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
         strokes: 291,
       }),
     ]);
-    const [directContest, joinedContest] = await Promise.all([
+    const [directContest, joinedContest, invalidContest] = await Promise.all([
       createSettlementContest({
         leagueId: league.id,
         sportEventId: event.id,
@@ -116,6 +116,17 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
         leagueId: league.id,
         sportEventId: null,
         name: `Joined Settlement ${suffix}`,
+      }),
+      prisma.contest.create({
+        data: {
+          leagueId: league.id,
+          sportEventId: event.id,
+          name: `Invalid Settlement ${suffix}`,
+          status: 'ACTIVE',
+          contestFormat: 'ROSTER',
+          selectionType: 'TIERED',
+          scoringEngine: 'STROKE_PLAY',
+        },
       }),
     ]);
     await prisma.contestSportEvent.create({
@@ -146,13 +157,14 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       standingsUpserted: 4,
     });
     await expect(prisma.contest.findMany({
-      where: { id: { in: [directContest.id, joinedContest.id] } },
+      where: { id: { in: [directContest.id, joinedContest.id, invalidContest.id] } },
       select: { status: true, endsAt: true },
       orderBy: { id: 'asc' },
-    })).resolves.toEqual([
-      { status: 'COMPLETED', endsAt: new Date('2026-05-31T22:00:00.000Z') },
-      { status: 'COMPLETED', endsAt: new Date('2026-05-31T22:00:00.000Z') },
-    ]);
+    })).resolves.toEqual(expect.arrayContaining([
+      expect.objectContaining({ status: 'COMPLETED', endsAt: new Date('2026-05-31T22:00:00.000Z') }),
+      expect.objectContaining({ status: 'COMPLETED', endsAt: new Date('2026-05-31T22:00:00.000Z') }),
+      expect.objectContaining({ status: 'ACTIVE', endsAt: null }),
+    ]));
     expect(completedEvents).toHaveLength(2);
     const standings = await prisma.contestEntryGolfStanding.findMany({
       where: { contestId: directContest.id },
