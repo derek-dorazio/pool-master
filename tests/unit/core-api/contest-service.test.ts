@@ -230,6 +230,58 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function buildGolfLeaderboardParticipantRow(input: {
+  id: string;
+  participantName: string;
+  eventScoreToPar: number;
+  eventStrokes: number;
+  status: string;
+  currentRound?: number;
+  currentRoundThru?: number;
+  rounds?: Array<{
+    round: number;
+    strokes: number;
+    scoreToPar: number;
+    thru: number | null;
+    status: string;
+  }>;
+}) {
+  return {
+    id: input.id,
+    participantId: `participant-${input.id}`,
+    status: 'active',
+    worldRanking: null,
+    oddsToWin: null,
+    seedNumber: null,
+    participant: {
+      id: `participant-${input.id}`,
+      name: input.participantName,
+      shortName: null,
+    },
+    golfStanding: {
+      eventScoreToPar: input.eventScoreToPar,
+      eventStrokes: input.eventStrokes,
+      currentRound: input.currentRound ?? 2,
+      currentRoundThru: input.currentRoundThru ?? 18,
+      status: input.status,
+      position: null,
+      displayPosition: null,
+      asOf: new Date('2026-05-31T18:00:00.000Z'),
+    },
+    golfRounds: input.rounds ?? [],
+  };
+}
+
+function buildGolfLeaderboardPick(id: string, sportEventParticipantId: string) {
+  return {
+    id,
+    sportEventParticipantId,
+    pickedAt: new Date(`2026-05-30T12:00:0${id.slice(-1)}.000Z`),
+    slot: null,
+    tier: null,
+  };
+}
+
 describe('ContestService', () => {
   describe('createContest', () => {
     it('creates a contest and selection config', async () => {
@@ -882,6 +934,161 @@ describe('ContestService', () => {
       expect(result.isJoined).toBe(true);
       expect(result.myEntryId).toBe('entry-1');
       expect(result.entries[0].squadName).toBe("Derek's Squad");
+    });
+
+    it('pool-master-eux.4: computes the Golf leaderboard from event standings instead of ContestEntry totals', async () => {
+      const contest = buildContest({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        sportEventId: 'event-1',
+        status: ContestStatus.ACTIVE,
+      });
+      const contestRepo = createMockContestRepo({
+        findById: jest.fn().mockResolvedValue(contest),
+      });
+      const membershipRepo = createMockMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(
+          buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' }),
+        ),
+      });
+      const contestFindUnique = jest.fn().mockResolvedValue({
+        id: 'contest-1',
+        sportEvent: {
+          id: 'event-1',
+          sport: Sport.GOLF,
+        },
+        contestSportEvents: [],
+        configuration: {
+          configJson: {
+            mode: 'GOLF_TIERED',
+            countedScores: 2,
+          },
+          rosterSize: 3,
+          pickCount: 3,
+          rounds: 4,
+        },
+      });
+      const participantFindMany = jest.fn().mockResolvedValue([
+        buildGolfLeaderboardParticipantRow({
+          id: 'sep-1',
+          participantName: 'Rory McIlroy',
+          eventScoreToPar: -5,
+          eventStrokes: 139,
+          status: 'IN_PROGRESS',
+          currentRound: 2,
+          currentRoundThru: 9,
+          rounds: [
+            { round: 1, strokes: 69, scoreToPar: -3, thru: null, status: 'COMPLETED' },
+            { round: 2, strokes: 47, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' },
+          ],
+        }),
+        buildGolfLeaderboardParticipantRow({
+          id: 'sep-2',
+          participantName: 'Scottie Scheffler',
+          eventScoreToPar: -2,
+          eventStrokes: 142,
+          status: 'COMPLETE',
+          currentRound: 2,
+          currentRoundThru: 18,
+        }),
+        buildGolfLeaderboardParticipantRow({
+          id: 'sep-3',
+          participantName: 'Jordan Spieth',
+          eventScoreToPar: 1,
+          eventStrokes: 145,
+          status: 'COMPLETE',
+        }),
+        buildGolfLeaderboardParticipantRow({
+          id: 'sep-4',
+          participantName: 'Ludvig Aberg',
+          eventScoreToPar: -7,
+          eventStrokes: 137,
+          status: 'COMPLETE',
+        }),
+      ]);
+      const contestEntryFindMany = jest.fn().mockResolvedValue([
+        {
+          id: 'entry-1',
+          entryNumber: 1,
+          name: 'Legacy Inflated Entry',
+          status: 'ACTIVE',
+          squadId: 'squad-1',
+          squad: { name: 'Ryans Gonna Win' },
+          picks: [
+            buildGolfLeaderboardPick('pick-1', 'sep-1'),
+            buildGolfLeaderboardPick('pick-2', 'sep-2'),
+            buildGolfLeaderboardPick('pick-3', 'sep-3'),
+          ],
+        },
+        {
+          id: 'entry-2',
+          entryNumber: 2,
+          name: 'Live Standing Entry',
+          status: 'ACTIVE',
+          squadId: 'squad-2',
+          squad: { name: 'Lets Go Cam!' },
+          picks: [
+            buildGolfLeaderboardPick('pick-4', 'sep-4'),
+            buildGolfLeaderboardPick('pick-5', 'sep-2'),
+            buildGolfLeaderboardPick('pick-6', 'sep-3'),
+          ],
+        },
+      ]);
+      const prisma = createMockPrisma({
+        contest: { findUnique: contestFindUnique },
+        sportEventParticipant: { findMany: participantFindMany },
+        contestEntry: { findMany: contestEntryFindMany },
+      });
+      const service = new ContestService(
+        contestRepo,
+        createMockContestConfigurationRepo(),
+        membershipRepo,
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo(),
+        createMockEntryRepo(),
+        prisma as any,
+      );
+
+      const result = await service.getGolfLeaderboard('contest-1', 'user-1');
+
+      expect(result.countingRule).toEqual({ type: 'BEST_N_GOLFERS', count: 2 });
+      expect(result.entries.map((entry) => [entry.entryId, entry.totalScoreToPar, entry.position])).toEqual([
+        ['entry-2', -9, 1],
+        ['entry-1', -7, 2],
+      ]);
+      expect(result.entries[0].picks.map((pick) => ({
+        pickId: pick.pickId,
+        isCounting: pick.isCounting,
+        isDropped: pick.isDropped,
+      }))).toEqual([
+        { pickId: 'pick-4', isCounting: true, isDropped: false },
+        { pickId: 'pick-5', isCounting: true, isDropped: false },
+        { pickId: 'pick-6', isCounting: false, isDropped: true },
+      ]);
+      const rory = result.participants.find((participant) => participant.sportEventParticipantId === 'sep-1');
+      expect(rory?.totalScoreToPar).toBe(-5);
+      expect(rory?.thru).toBe(9);
+      expect(rory?.rounds.r1).toEqual(expect.objectContaining({
+        displayType: 'STROKES',
+        displayValue: '69',
+      }));
+      expect(rory?.rounds.r2).toEqual(expect.objectContaining({
+        displayType: 'TO_PAR',
+        displayValue: '-2',
+        thru: 9,
+      }));
+      expect(contestEntryFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          select: expect.not.objectContaining({
+            totalScore: expect.anything(),
+            standingsPosition: expect.anything(),
+          }),
+          orderBy: expect.not.arrayContaining([
+            expect.objectContaining({ standingsPosition: expect.anything() }),
+          ]),
+        }),
+      );
     });
 
     it('rejects leaving a contest after picks already exist', async () => {

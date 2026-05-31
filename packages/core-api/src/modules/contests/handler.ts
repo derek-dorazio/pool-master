@@ -20,6 +20,7 @@ import {
   toContestEntryResponse,
   toMyContestEntryResponse,
   toContestResponse,
+  toGolfLeaderboardResponse,
 } from '../../mappers/contests.mapper';
 import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
@@ -105,6 +106,7 @@ export function createContestHandlers(contestService: ContestService) {
     getContest,
     listEntries,
     getEntry,
+    getGolfLeaderboard,
     getMyEntry,
     createMyEntry,
     deleteMyEntry,
@@ -266,6 +268,43 @@ export function createContestHandlers(contestService: ContestService) {
         return sendError(reply, 400, err.code, err.message);
       }
       logger.error({ contestId: request.params.contestId, entryId: request.params.entryId, userId, err }, 'contest entry detail route failed');
+      throw err;
+    }
+  }
+
+  async function getGolfLeaderboard(
+    request: FastifyRequest<{ Params: { contestId: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = createRequestContextLogger(request);
+    const userId = request.authUser?.userId as string;
+    logger.debug({ contestId: request.params.contestId, userId }, 'contest golf leaderboard route start');
+    try {
+      const leaderboard = await contestService.getGolfLeaderboard(
+        request.params.contestId,
+        userId,
+      );
+      logger.info({
+        contestId: request.params.contestId,
+        userId,
+        entryCount: leaderboard.entries.length,
+        participantCount: leaderboard.participants.length,
+      }, 'contest golf leaderboard route completed');
+      return reply.send(toGolfLeaderboardResponse(leaderboard));
+    } catch (err) {
+      if (err instanceof ContestNotFoundError) {
+        logger.warn({ contestId: request.params.contestId, userId }, 'contest golf leaderboard route missing contest');
+        return sendError(reply, 404, 'CONTEST_NOT_FOUND', err.message);
+      }
+      if (err instanceof ContestOperationError || err instanceof ContestEntryOperationError) {
+        logger.warn({
+          contestId: request.params.contestId,
+          userId,
+          code: err.code,
+        }, 'contest golf leaderboard route rejected');
+        return sendError(reply, 400, err.code, err.message);
+      }
+      logger.error({ contestId: request.params.contestId, userId, err }, 'contest golf leaderboard route failed');
       throw err;
     }
   }

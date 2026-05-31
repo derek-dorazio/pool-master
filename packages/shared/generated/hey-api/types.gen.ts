@@ -8296,6 +8296,597 @@ export type UpdateContestEntryResponses = {
 
 export type UpdateContestEntryResponse = UpdateContestEntryResponses[keyof UpdateContestEntryResponses];
 
+export type GetGolfContestLeaderboardData = {
+    body?: never;
+    path: {
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/contests/{contestId}/golf/leaderboard';
+};
+
+export type GetGolfContestLeaderboardErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type GetGolfContestLeaderboardError = GetGolfContestLeaderboardErrors[keyof GetGolfContestLeaderboardErrors];
+
+export type GetGolfContestLeaderboardResponses = {
+    /**
+     * Member-facing Golf contest leaderboard. Entry totals are computed from SportEventParticipantGolfStanding and SportEventParticipantGolfRound, not ContestEntry.totalScore.
+     */
+    200: {
+        /**
+         * Contest whose leaderboard was requested.
+         */
+        contestId: string;
+        /**
+         * Golf sport event backing this contest leaderboard.
+         */
+        sportEventId: string;
+        /**
+         * Golf leaderboard totals are relative to par and lower is better.
+         */
+        scoringMode: 'GOLF_TO_PAR';
+        /**
+         * Contest scoring interpretation used by the Golf leaderboard read API.
+         */
+        countingRule: {
+            /**
+             * Golf roster rule: sum the best N selected golfer totals for the entry.
+             */
+            type: 'BEST_N_GOLFERS';
+            /**
+             * Number of selected golfers that currently count toward each entry total.
+             */
+            count: number;
+        };
+        /**
+         * All event participants for the contest event, loaded once for UI joins and filtering.
+         */
+        participants: Array<{
+            /**
+             * SportEventParticipant row selected by contest picks.
+             */
+            sportEventParticipantId: string;
+            /**
+             * Canonical participant identifier.
+             */
+            participantId: string;
+            /**
+             * Golfer display name.
+             */
+            name: string;
+            /**
+             * Optional shorter golfer display name.
+             */
+            shortName: string;
+            /**
+             * Provider/player availability status on the event participant row.
+             */
+            participantStatus: string;
+            /**
+             * Latest copied global world ranking on this event participant.
+             */
+            worldRanking: number;
+            /**
+             * Event-scoped odds-to-win for this golfer.
+             */
+            oddsToWin: number;
+            /**
+             * Event seed/order when supplied by the provider.
+             */
+            seedNumber: number;
+            /**
+             * TOT column value: current event total relative to par. Lower is better.
+             */
+            totalScoreToPar: number;
+            /**
+             * Current event total strokes across persisted Golf rounds.
+             */
+            totalStrokes: number;
+            /**
+             * THR column value while the golfer is currently on course; null after round completion or before play.
+             */
+            thru: number;
+            /**
+             * Current or latest round represented by the standing.
+             */
+            currentRound: number;
+            /**
+             * Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
+             */
+            status: 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut';
+            /**
+             * Event leaderboard position for this golfer when available.
+             */
+            position: number;
+            /**
+             * Provider/display position such as T2 when available.
+             */
+            displayPosition: string;
+            /**
+             * Provider timestamp for the current Golf standing.
+             */
+            asOf: string;
+            /**
+             * R1 through R4 detail for expanded member leaderboard rows.
+             */
+            rounds: {
+                /**
+                 * Round 1 leaderboard column.
+                 */
+                r1: {
+                    /**
+                     * Golf round number represented by this leaderboard column.
+                     */
+                    round: number;
+                    /**
+                     * Normalized status for this round cell.
+                     */
+                    status: 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut';
+                    /**
+                     * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
+                     */
+                    strokes: number;
+                    /**
+                     * Round score relative to par. Used as the visible round value while the round is in progress.
+                     */
+                    scoreToPar: number;
+                    /**
+                     * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
+                     */
+                    thru: number;
+                    /**
+                     * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                     */
+                    displayType: 'EMPTY' | 'TO_PAR' | 'STROKES';
+                    /**
+                     * Preformatted member-facing value for this round column using Golf display rules.
+                     */
+                    displayValue: string;
+                };
+                /**
+                 * Round 1 leaderboard column.
+                 */
+                r2: {
+                    /**
+                     * Golf round number represented by this leaderboard column.
+                     */
+                    round: number;
+                    /**
+                     * Normalized status for this round cell.
+                     */
+                    status: 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut';
+                    /**
+                     * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
+                     */
+                    strokes: number;
+                    /**
+                     * Round score relative to par. Used as the visible round value while the round is in progress.
+                     */
+                    scoreToPar: number;
+                    /**
+                     * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
+                     */
+                    thru: number;
+                    /**
+                     * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                     */
+                    displayType: 'EMPTY' | 'TO_PAR' | 'STROKES';
+                    /**
+                     * Preformatted member-facing value for this round column using Golf display rules.
+                     */
+                    displayValue: string;
+                };
+                /**
+                 * Round 1 leaderboard column.
+                 */
+                r3: {
+                    /**
+                     * Golf round number represented by this leaderboard column.
+                     */
+                    round: number;
+                    /**
+                     * Normalized status for this round cell.
+                     */
+                    status: 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut';
+                    /**
+                     * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
+                     */
+                    strokes: number;
+                    /**
+                     * Round score relative to par. Used as the visible round value while the round is in progress.
+                     */
+                    scoreToPar: number;
+                    /**
+                     * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
+                     */
+                    thru: number;
+                    /**
+                     * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                     */
+                    displayType: 'EMPTY' | 'TO_PAR' | 'STROKES';
+                    /**
+                     * Preformatted member-facing value for this round column using Golf display rules.
+                     */
+                    displayValue: string;
+                };
+                /**
+                 * Round 1 leaderboard column.
+                 */
+                r4: {
+                    /**
+                     * Golf round number represented by this leaderboard column.
+                     */
+                    round: number;
+                    /**
+                     * Normalized status for this round cell.
+                     */
+                    status: 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut';
+                    /**
+                     * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
+                     */
+                    strokes: number;
+                    /**
+                     * Round score relative to par. Used as the visible round value while the round is in progress.
+                     */
+                    scoreToPar: number;
+                    /**
+                     * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
+                     */
+                    thru: number;
+                    /**
+                     * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                     */
+                    displayType: 'EMPTY' | 'TO_PAR' | 'STROKES';
+                    /**
+                     * Preformatted member-facing value for this round column using Golf display rules.
+                     */
+                    displayValue: string;
+                };
+            };
+        }>;
+        /**
+         * Contest entries ordered by computed Golf total.
+         */
+        entries: Array<{
+            /**
+             * Contest entry identifier.
+             */
+            entryId: string;
+            /**
+             * Team entry display name.
+             */
+            entryName: string;
+            /**
+             * Entry number for squads allowed to submit multiple entries.
+             */
+            entryNumber: number;
+            /**
+             * Squad/team identifier.
+             */
+            squadId: string;
+            /**
+             * Squad/team display name.
+             */
+            squadName: string;
+            /**
+             * Contest entry lifecycle status.
+             */
+            status: 'ACTIVE' | 'INACTIVE';
+            /**
+             * Entry leaderboard total computed from currently counting golfer TOT values. Lower is better.
+             */
+            totalScoreToPar: number;
+            /**
+             * Computed contest leaderboard rank for this entry.
+             */
+            position: number;
+            /**
+             * Computed display rank, including T-prefix for ties.
+             */
+            displayPosition: string;
+            /**
+             * How many selected golfers count toward this entry under the contest configuration.
+             */
+            countingPickCount: number;
+            /**
+             * How many selected golfers currently have event standings.
+             */
+            scoredPickCount: number;
+            /**
+             * Selected golfers with counting/dropped flags computed at read time.
+             */
+            picks: Array<{
+                /**
+                 * ContestEntryPick row identifier. The pick remains a pointer to sportEventParticipantId; score data comes from the event participant read model.
+                 */
+                pickId: string;
+                /**
+                 * Selected SportEventParticipant.
+                 */
+                sportEventParticipantId: string;
+                /**
+                 * When this golfer was selected.
+                 */
+                pickedAt: string;
+                /**
+                 * Optional roster slot from the pick row.
+                 */
+                slot: number;
+                /**
+                 * Optional tier/category from the pick row.
+                 */
+                tier: string;
+                /**
+                 * Whether this pick currently counts toward the entry score under the contest configuration.
+                 */
+                isCounting: boolean;
+                /**
+                 * Whether this scored pick is currently dropped/crossed out because better selected golfers fill the counting slots.
+                 */
+                isDropped: boolean;
+                /**
+                 * Expanded golfer event data for this pick.
+                 */
+                participant: {
+                    /**
+                     * SportEventParticipant row selected by contest picks.
+                     */
+                    sportEventParticipantId: string;
+                    /**
+                     * Canonical participant identifier.
+                     */
+                    participantId: string;
+                    /**
+                     * Golfer display name.
+                     */
+                    name: string;
+                    /**
+                     * Optional shorter golfer display name.
+                     */
+                    shortName: string;
+                    /**
+                     * Provider/player availability status on the event participant row.
+                     */
+                    participantStatus: string;
+                    /**
+                     * Latest copied global world ranking on this event participant.
+                     */
+                    worldRanking: number;
+                    /**
+                     * Event-scoped odds-to-win for this golfer.
+                     */
+                    oddsToWin: number;
+                    /**
+                     * Event seed/order when supplied by the provider.
+                     */
+                    seedNumber: number;
+                    /**
+                     * TOT column value: current event total relative to par. Lower is better.
+                     */
+                    totalScoreToPar: number;
+                    /**
+                     * Current event total strokes across persisted Golf rounds.
+                     */
+                    totalStrokes: number;
+                    /**
+                     * THR column value while the golfer is currently on course; null after round completion or before play.
+                     */
+                    thru: number;
+                    /**
+                     * Current or latest round represented by the standing.
+                     */
+                    currentRound: number;
+                    /**
+                     * Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status.
+                     */
+                    status: 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut';
+                    /**
+                     * Event leaderboard position for this golfer when available.
+                     */
+                    position: number;
+                    /**
+                     * Provider/display position such as T2 when available.
+                     */
+                    displayPosition: string;
+                    /**
+                     * Provider timestamp for the current Golf standing.
+                     */
+                    asOf: string;
+                    /**
+                     * R1 through R4 detail for expanded member leaderboard rows.
+                     */
+                    rounds: {
+                        /**
+                         * Round 1 leaderboard column.
+                         */
+                        r1: {
+                            /**
+                             * Golf round number represented by this leaderboard column.
+                             */
+                            round: number;
+                            /**
+                             * Normalized status for this round cell.
+                             */
+                            status: 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut';
+                            /**
+                             * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
+                             */
+                            strokes: number;
+                            /**
+                             * Round score relative to par. Used as the visible round value while the round is in progress.
+                             */
+                            scoreToPar: number;
+                            /**
+                             * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
+                             */
+                            thru: number;
+                            /**
+                             * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                             */
+                            displayType: 'EMPTY' | 'TO_PAR' | 'STROKES';
+                            /**
+                             * Preformatted member-facing value for this round column using Golf display rules.
+                             */
+                            displayValue: string;
+                        };
+                        /**
+                         * Round 1 leaderboard column.
+                         */
+                        r2: {
+                            /**
+                             * Golf round number represented by this leaderboard column.
+                             */
+                            round: number;
+                            /**
+                             * Normalized status for this round cell.
+                             */
+                            status: 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut';
+                            /**
+                             * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
+                             */
+                            strokes: number;
+                            /**
+                             * Round score relative to par. Used as the visible round value while the round is in progress.
+                             */
+                            scoreToPar: number;
+                            /**
+                             * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
+                             */
+                            thru: number;
+                            /**
+                             * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                             */
+                            displayType: 'EMPTY' | 'TO_PAR' | 'STROKES';
+                            /**
+                             * Preformatted member-facing value for this round column using Golf display rules.
+                             */
+                            displayValue: string;
+                        };
+                        /**
+                         * Round 1 leaderboard column.
+                         */
+                        r3: {
+                            /**
+                             * Golf round number represented by this leaderboard column.
+                             */
+                            round: number;
+                            /**
+                             * Normalized status for this round cell.
+                             */
+                            status: 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut';
+                            /**
+                             * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
+                             */
+                            strokes: number;
+                            /**
+                             * Round score relative to par. Used as the visible round value while the round is in progress.
+                             */
+                            scoreToPar: number;
+                            /**
+                             * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
+                             */
+                            thru: number;
+                            /**
+                             * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                             */
+                            displayType: 'EMPTY' | 'TO_PAR' | 'STROKES';
+                            /**
+                             * Preformatted member-facing value for this round column using Golf display rules.
+                             */
+                            displayValue: string;
+                        };
+                        /**
+                         * Round 1 leaderboard column.
+                         */
+                        r4: {
+                            /**
+                             * Golf round number represented by this leaderboard column.
+                             */
+                            round: number;
+                            /**
+                             * Normalized status for this round cell.
+                             */
+                            status: 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut';
+                            /**
+                             * Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete.
+                             */
+                            strokes: number;
+                            /**
+                             * Round score relative to par. Used as the visible round value while the round is in progress.
+                             */
+                            scoreToPar: number;
+                            /**
+                             * Completed holes for an in-progress round. Null when the golfer is not currently on course for this round.
+                             */
+                            thru: number;
+                            /**
+                             * How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty.
+                             */
+                            displayType: 'EMPTY' | 'TO_PAR' | 'STROKES';
+                            /**
+                             * Preformatted member-facing value for this round column using Golf display rules.
+                             */
+                            displayValue: string;
+                        };
+                    };
+                };
+            }>;
+        }>;
+        /**
+         * Latest provider standing timestamp represented in the leaderboard, or null when no standing timestamps are available.
+         */
+        asOf: string;
+    };
+};
+
+export type GetGolfContestLeaderboardResponse = GetGolfContestLeaderboardResponses[keyof GetGolfContestLeaderboardResponses];
+
 export type LeaveContestData = {
     body?: never;
     path: {

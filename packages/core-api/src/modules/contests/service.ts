@@ -37,6 +37,11 @@ import {
   toContestEntryDto,
   toContestEntryDetailDto,
   type ContestEntryParticipantRow,
+  type GolfLeaderboardEntryPickRow,
+  type GolfLeaderboardEntryRow,
+  type GolfLeaderboardModel,
+  type GolfLeaderboardParticipantRow,
+  type GolfLeaderboardRoundCellRow,
 } from '../../mappers/contests.mapper';
 import {
   renderSystemEmailTemplate,
@@ -120,6 +125,18 @@ interface EmailRecipientUser {
   firstName: string;
   lastName: string;
   username: string;
+}
+
+interface GolfLeaderboardCountingRule {
+  type: 'BEST_N_GOLFERS';
+  count: number;
+}
+
+interface GolfContestConfigurationRow {
+  configJson: unknown;
+  rosterSize: number | null;
+  pickCount: number | null;
+  rounds: number | null;
 }
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
@@ -460,6 +477,94 @@ export class ContestService {
     );
 
     return { entry, picksRevealed };
+  }
+
+  async getGolfLeaderboard(
+    contestId: string,
+    requesterUserId: string,
+  ): Promise<GolfLeaderboardModel> {
+    const context = await this.getEntryContext(contestId, requesterUserId);
+    if (!contestPicksRevealed(context.contest.status)) {
+      throw new ContestOperationError(
+        'Golf leaderboard is not available until contest picks are revealed.',
+        'CONTEST_GOLF_LEADERBOARD_PICKS_HIDDEN',
+      );
+    }
+
+    const prisma = this.requirePrisma();
+    const contest = await prisma.contest.findUnique({
+      where: { id: contestId },
+      select: {
+        id: true,
+        sportEvent: {
+          select: {
+            id: true,
+            sport: true,
+          },
+        },
+        contestSportEvents: {
+          select: {
+            sportEvent: {
+              select: {
+                id: true,
+                sport: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+        configuration: {
+          select: {
+            configJson: true,
+            rosterSize: true,
+            pickCount: true,
+            rounds: true,
+          },
+        },
+      },
+    });
+
+    const sportEvent = contest?.sportEvent ?? contest?.contestSportEvents[0]?.sportEvent ?? null;
+    if (!contest || !sportEvent) {
+      throw new ContestOperationError(
+        'Golf leaderboard requires a contest sport event.',
+        'CONTEST_GOLF_LEADERBOARD_EVENT_REQUIRED',
+      );
+    }
+    if (sportEvent.sport !== Sport.GOLF) {
+      throw new ContestOperationError(
+        'Golf leaderboard is only available for Golf contests.',
+        'CONTEST_GOLF_LEADERBOARD_SPORT_UNSUPPORTED',
+      );
+    }
+
+    const countingRule = resolveGolfLeaderboardCountingRule(contest.configuration);
+    const [participants, entries] = await Promise.all([
+      this.loadGolfLeaderboardParticipants(sportEvent.id),
+      this.loadGolfLeaderboardEntries(contestId),
+    ]);
+    const participantById = new Map(
+      participants.map((participant) => [participant.sportEventParticipantId, participant]),
+    );
+
+    const entryRows = entries.map((entry) =>
+      buildGolfLeaderboardEntry(entry, participantById, countingRule),
+    );
+    const rankedEntries = rankGolfLeaderboardEntries(entryRows);
+    const latestAsOf = participants.reduce<Date | null>((latest, participant) => {
+      if (!participant.asOf) return latest;
+      if (!latest || participant.asOf.getTime() > latest.getTime()) return participant.asOf;
+      return latest;
+    }, null);
+
+    return {
+      contestId,
+      sportEventId: sportEvent.id,
+      countingRule,
+      participants,
+      entries: rankedEntries,
+      asOf: latestAsOf,
+    };
   }
 
   async createEntry(
@@ -991,6 +1096,130 @@ export class ContestService {
     return grouped;
   }
 
+  private async loadGolfLeaderboardParticipants(
+    sportEventId: string,
+  ): Promise<GolfLeaderboardParticipantRow[]> {
+    const rows = await this.requirePrisma().sportEventParticipant.findMany({
+      where: { sportEventId },
+      select: {
+        id: true,
+        participantId: true,
+        status: true,
+        worldRanking: true,
+        oddsToWin: true,
+        seedNumber: true,
+        participant: {
+          select: {
+            id: true,
+            name: true,
+            shortName: true,
+          },
+        },
+        golfStanding: {
+          select: {
+            eventScoreToPar: true,
+            eventStrokes: true,
+            currentRound: true,
+            currentRoundThru: true,
+            status: true,
+            position: true,
+            displayPosition: true,
+            asOf: true,
+          },
+        },
+        golfRounds: {
+          select: {
+            round: true,
+            strokes: true,
+            scoreToPar: true,
+            thru: true,
+            status: true,
+          },
+          orderBy: { round: 'asc' },
+        },
+      },
+      orderBy: [
+        { seedNumber: 'asc' },
+        { createdAt: 'asc' },
+      ],
+    });
+
+    return rows.map((row) => {
+      const standing = row.golfStanding;
+      const normalizedStatus = standing
+        ? mapGolfLeaderboardStatus(String(standing.status))
+        : 'active';
+      return {
+        sportEventParticipantId: row.id,
+        participantId: row.participantId,
+        name: row.participant.name,
+        shortName: row.participant.shortName ?? null,
+        participantStatus: row.status ?? null,
+        worldRanking: row.worldRanking ?? null,
+        oddsToWin: decimalToNumber(row.oddsToWin),
+        seedNumber: row.seedNumber ?? null,
+        totalScoreToPar: standing?.eventScoreToPar ?? null,
+        totalStrokes: standing?.eventStrokes ?? null,
+        thru: normalizedStatus === 'in-progress'
+          ? standing?.currentRoundThru ?? null
+          : null,
+        currentRound: standing?.currentRound ?? null,
+        status: normalizedStatus,
+        position: standing?.position ?? null,
+        displayPosition: standing?.displayPosition ?? null,
+        asOf: standing?.asOf ?? null,
+        rounds: buildGolfRoundColumns(row.golfRounds),
+      };
+    });
+  }
+
+  private async loadGolfLeaderboardEntries(contestId: string): Promise<Array<{
+    id: string;
+    entryNumber: number;
+    name: string;
+    status: string;
+    squadId: string;
+    squad: { name: string };
+    picks: Array<{
+      id: string;
+      sportEventParticipantId: string;
+      pickedAt: Date;
+      slot: number | null;
+      tier: string | null;
+    }>;
+  }>> {
+    return this.requirePrisma().contestEntry.findMany({
+      where: {
+        contestId,
+        status: 'ACTIVE',
+      },
+      select: {
+        id: true,
+        entryNumber: true,
+        name: true,
+        status: true,
+        squadId: true,
+        squad: {
+          select: { name: true },
+        },
+        picks: {
+          select: {
+            id: true,
+            sportEventParticipantId: true,
+            pickedAt: true,
+            slot: true,
+            tier: true,
+          },
+          orderBy: [{ pickedAt: 'asc' }, { id: 'asc' }],
+        },
+      },
+      orderBy: [
+        { entryNumber: 'asc' },
+        { createdAt: 'asc' },
+      ],
+    });
+  }
+
   private async loadEntryDtoById(entryId: string): Promise<ContestEntryDto> {
     const prisma = this.requirePrisma();
     const row = await prisma.contestEntry.findUnique({
@@ -1289,4 +1518,261 @@ function isContestJoinable(status: ContestStatus): boolean {
  */
 export function contestPicksRevealed(status: ContestStatus): boolean {
   return !isContestJoinable(status);
+}
+
+function resolveGolfLeaderboardCountingRule(
+  configuration: GolfContestConfigurationRow | null,
+): GolfLeaderboardCountingRule {
+  const configJson = configuration?.configJson;
+  const configRecord =
+    configJson && typeof configJson === 'object' && !Array.isArray(configJson)
+      ? configJson as Record<string, unknown>
+      : null;
+  const countedScores = readPositiveInteger(configRecord?.countedScores)
+    ?? readPositiveInteger(configuration?.rosterSize)
+    ?? readPositiveInteger(configuration?.pickCount);
+
+  if (!countedScores) {
+    throw new ContestOperationError(
+      'Golf leaderboard requires a contest configuration with countedScores, rosterSize, or pickCount.',
+      'CONTEST_GOLF_LEADERBOARD_COUNTING_RULE_MISSING',
+    );
+  }
+
+  return {
+    type: 'BEST_N_GOLFERS',
+    count: countedScores,
+  };
+}
+
+function buildGolfLeaderboardEntry(
+  entry: {
+    id: string;
+    entryNumber: number;
+    name: string;
+    status: string;
+    squadId: string;
+    squad: { name: string };
+    picks: Array<{
+      id: string;
+      sportEventParticipantId: string;
+      pickedAt: Date;
+      slot: number | null;
+      tier: string | null;
+    }>;
+  },
+  participantById: Map<string, GolfLeaderboardParticipantRow>,
+  countingRule: GolfLeaderboardCountingRule,
+): GolfLeaderboardEntryRow {
+  const scoredPicks = entry.picks
+    .map((pick) => ({
+      pick,
+      participant: participantById.get(pick.sportEventParticipantId) ?? null,
+    }))
+    .filter((row): row is {
+      pick: typeof entry.picks[number];
+      participant: GolfLeaderboardParticipantRow;
+    } => row.participant !== null && row.participant.totalScoreToPar !== null)
+    .sort((left, right) =>
+      compareGolfScores(
+        left.participant.totalScoreToPar,
+        right.participant.totalScoreToPar,
+      )
+      || left.participant.name.localeCompare(right.participant.name)
+      || left.pick.id.localeCompare(right.pick.id),
+    );
+  const countingPickIds = new Set(
+    scoredPicks.slice(0, countingRule.count).map((row) => row.pick.id),
+  );
+  const picks: GolfLeaderboardEntryPickRow[] = entry.picks
+    .map((pick) => {
+      const participant = participantById.get(pick.sportEventParticipantId);
+      if (!participant) {
+        return null;
+      }
+      const hasScore = participant.totalScoreToPar !== null;
+      const isCounting = countingPickIds.has(pick.id);
+      return {
+        pickId: pick.id,
+        sportEventParticipantId: pick.sportEventParticipantId,
+        pickedAt: pick.pickedAt,
+        slot: pick.slot,
+        tier: pick.tier,
+        isCounting,
+        isDropped: hasScore && !isCounting,
+        participant,
+      };
+    })
+    .filter((pick): pick is GolfLeaderboardEntryPickRow => pick !== null)
+    .sort(compareGolfLeaderboardEntryPicks);
+  const countingScores: number[] = [];
+  for (const pick of picks) {
+    if (pick.isCounting && pick.participant.totalScoreToPar !== null) {
+      countingScores.push(pick.participant.totalScoreToPar);
+    }
+  }
+
+  return {
+    entryId: entry.id,
+    entryName: entry.name,
+    entryNumber: entry.entryNumber,
+    squadId: entry.squadId,
+    squadName: entry.squad.name,
+    status: entry.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
+    totalScoreToPar: countingScores.length > 0
+      ? countingScores.reduce((sum, score) => sum + score, 0)
+      : null,
+    position: null,
+    displayPosition: null,
+    countingPickCount: countingRule.count,
+    scoredPickCount: scoredPicks.length,
+    picks,
+  };
+}
+
+function compareGolfLeaderboardEntryPicks(
+  left: GolfLeaderboardEntryPickRow,
+  right: GolfLeaderboardEntryPickRow,
+): number {
+  const leftScore = left.participant.totalScoreToPar;
+  const rightScore = right.participant.totalScoreToPar;
+  if (leftScore !== null && rightScore !== null) {
+    return compareGolfScores(leftScore, rightScore)
+      || left.participant.name.localeCompare(right.participant.name)
+      || left.pickId.localeCompare(right.pickId);
+  }
+  if (leftScore !== null) return -1;
+  if (rightScore !== null) return 1;
+
+  return compareGolfScores(left.slot, right.slot)
+    || left.pickedAt.getTime() - right.pickedAt.getTime()
+    || left.pickId.localeCompare(right.pickId);
+}
+
+function rankGolfLeaderboardEntries(entries: GolfLeaderboardEntryRow[]): GolfLeaderboardEntryRow[] {
+  const sorted = [...entries].sort((left, right) =>
+    compareGolfScores(left.totalScoreToPar, right.totalScoreToPar)
+    || left.entryNumber - right.entryNumber
+    || left.entryName.localeCompare(right.entryName)
+    || left.entryId.localeCompare(right.entryId),
+  );
+  const scoreCounts = new Map<number, number>();
+  for (const entry of sorted) {
+    if (entry.totalScoreToPar !== null) {
+      scoreCounts.set(entry.totalScoreToPar, (scoreCounts.get(entry.totalScoreToPar) ?? 0) + 1);
+    }
+  }
+
+  let lastScore: number | null = null;
+  let lastPosition = 0;
+  return sorted.map((entry, index) => {
+    if (entry.totalScoreToPar === null) {
+      return {
+        ...entry,
+        position: null,
+        displayPosition: null,
+      };
+    }
+    if (lastScore === null || entry.totalScoreToPar !== lastScore) {
+      lastScore = entry.totalScoreToPar;
+      lastPosition = index + 1;
+    }
+    const tieCount = scoreCounts.get(entry.totalScoreToPar) ?? 1;
+    return {
+      ...entry,
+      position: lastPosition,
+      displayPosition: tieCount > 1 ? `T${lastPosition}` : String(lastPosition),
+    };
+  });
+}
+
+function compareGolfScores(left: number | null, right: number | null): number {
+  if (left === null && right === null) return 0;
+  if (left === null) return 1;
+  if (right === null) return -1;
+  return left - right;
+}
+
+function buildGolfRoundColumns(
+  rounds: Array<{
+    round: number;
+    strokes: number;
+    scoreToPar: number;
+    thru: number | null;
+    status: string;
+  }>,
+): GolfLeaderboardParticipantRow['rounds'] {
+  const columns: GolfLeaderboardParticipantRow['rounds'] = {
+    r1: null,
+    r2: null,
+    r3: null,
+    r4: null,
+  };
+  for (const round of rounds) {
+    if (round.round < 1 || round.round > 4) {
+      continue;
+    }
+    const cell = toGolfRoundCell(round);
+    columns[`r${round.round}` as keyof GolfLeaderboardParticipantRow['rounds']] = cell;
+  }
+  return columns;
+}
+
+function toGolfRoundCell(round: {
+  round: number;
+  strokes: number;
+  scoreToPar: number;
+  thru: number | null;
+  status: string;
+}): GolfLeaderboardRoundCellRow {
+  const status = mapGolfLeaderboardStatus(round.status);
+  const isComplete = status === 'complete';
+  const displayType = isComplete ? 'STROKES' : 'TO_PAR';
+  return {
+    round: round.round as 1 | 2 | 3 | 4,
+    status,
+    strokes: round.strokes,
+    scoreToPar: round.scoreToPar,
+    thru: status === 'in-progress' ? round.thru ?? null : null,
+    displayType,
+    displayValue: isComplete ? String(round.strokes) : formatRelativeToPar(round.scoreToPar),
+  };
+}
+
+function mapGolfLeaderboardStatus(status: string): GolfLeaderboardParticipantRow['status'] {
+  switch (status) {
+    case 'IN_PROGRESS':
+    case 'in-progress':
+      return 'in-progress';
+    case 'COMPLETE':
+    case 'COMPLETED':
+    case 'complete':
+      return 'complete';
+    case 'WITHDRAWN':
+    case 'DNF':
+    case 'DSQ':
+    case 'withdrawn':
+      return 'withdrawn';
+    case 'MISSED_CUT':
+    case 'missed-cut':
+      return 'missed-cut';
+    case 'ACTIVE':
+    case 'PENDING':
+    case 'active':
+    default:
+      return 'active';
+  }
+}
+
+function decimalToNumber(value: { toNumber: () => number } | number | null): number | null {
+  if (value === null) return null;
+  if (typeof value === 'number') return value;
+  return value.toNumber();
+}
+
+function readPositiveInteger(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
+    return null;
+  }
+  return value;
 }

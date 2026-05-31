@@ -17488,6 +17488,1118 @@
         }
       }
     },
+    "/api/v1/contests/{contestId}/golf/leaderboard": {
+      "get": {
+        "operationId": "getGolfContestLeaderboard",
+        "summary": "Get Golf contest leaderboard",
+        "tags": [
+          "Contests"
+        ],
+        "description": "Returns the member-facing Golf leaderboard for a contest. Entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers and ContestEntry.totalScore is not the score source.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member-facing Golf contest leaderboard. Entry totals are computed from SportEventParticipantGolfStanding and SportEventParticipantGolfRound, not ContestEntry.totalScore.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contestId": {
+                      "type": "string",
+                      "description": "Contest whose leaderboard was requested."
+                    },
+                    "sportEventId": {
+                      "type": "string",
+                      "description": "Golf sport event backing this contest leaderboard."
+                    },
+                    "scoringMode": {
+                      "type": "string",
+                      "enum": [
+                        "GOLF_TO_PAR"
+                      ],
+                      "description": "Golf leaderboard totals are relative to par and lower is better."
+                    },
+                    "countingRule": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "BEST_N_GOLFERS"
+                          ],
+                          "description": "Golf roster rule: sum the best N selected golfer totals for the entry."
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Number of selected golfers that currently count toward each entry total."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "count"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Contest scoring interpretation used by the Golf leaderboard read API."
+                    },
+                    "participants": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "sportEventParticipantId": {
+                            "type": "string",
+                            "description": "SportEventParticipant row selected by contest picks."
+                          },
+                          "participantId": {
+                            "type": "string",
+                            "description": "Canonical participant identifier."
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Golfer display name."
+                          },
+                          "shortName": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Optional shorter golfer display name."
+                          },
+                          "participantStatus": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Provider/player availability status on the event participant row."
+                          },
+                          "worldRanking": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Latest copied global world ranking on this event participant."
+                          },
+                          "oddsToWin": {
+                            "type": "number",
+                            "nullable": true,
+                            "description": "Event-scoped odds-to-win for this golfer."
+                          },
+                          "seedNumber": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Event seed/order when supplied by the provider."
+                          },
+                          "totalScoreToPar": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "TOT column value: current event total relative to par. Lower is better."
+                          },
+                          "totalStrokes": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Current event total strokes across persisted Golf rounds."
+                          },
+                          "thru": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 18,
+                            "nullable": true,
+                            "description": "THR column value while the golfer is currently on course; null after round completion or before play."
+                          },
+                          "currentRound": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 4,
+                            "nullable": true,
+                            "description": "Current or latest round represented by the standing."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "in-progress",
+                              "complete",
+                              "withdrawn",
+                              "missed-cut"
+                            ],
+                            "description": "Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status."
+                          },
+                          "position": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Event leaderboard position for this golfer when available."
+                          },
+                          "displayPosition": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Provider/display position such as T2 when available."
+                          },
+                          "asOf": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true,
+                            "description": "Provider timestamp for the current Golf standing."
+                          },
+                          "rounds": {
+                            "type": "object",
+                            "properties": {
+                              "r1": {
+                                "type": "object",
+                                "properties": {
+                                  "round": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 4,
+                                    "description": "Golf round number represented by this leaderboard column."
+                                  },
+                                  "status": {
+                                    "type": "string",
+                                    "enum": [
+                                      "active",
+                                      "in-progress",
+                                      "complete",
+                                      "withdrawn",
+                                      "missed-cut"
+                                    ],
+                                    "description": "Normalized status for this round cell."
+                                  },
+                                  "strokes": {
+                                    "type": "integer",
+                                    "nullable": true,
+                                    "description": "Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete."
+                                  },
+                                  "scoreToPar": {
+                                    "type": "integer",
+                                    "nullable": true,
+                                    "description": "Round score relative to par. Used as the visible round value while the round is in progress."
+                                  },
+                                  "thru": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 18,
+                                    "nullable": true,
+                                    "description": "Completed holes for an in-progress round. Null when the golfer is not currently on course for this round."
+                                  },
+                                  "displayType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "EMPTY",
+                                      "TO_PAR",
+                                      "STROKES"
+                                    ],
+                                    "description": "How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty."
+                                  },
+                                  "displayValue": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Preformatted member-facing value for this round column using Golf display rules."
+                                  }
+                                },
+                                "required": [
+                                  "round",
+                                  "status",
+                                  "strokes",
+                                  "scoreToPar",
+                                  "thru",
+                                  "displayType",
+                                  "displayValue"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Round 1 leaderboard column.",
+                                "nullable": true
+                              },
+                              "r2": {
+                                "allOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "round": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 4,
+                                        "description": "Golf round number represented by this leaderboard column."
+                                      },
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "active",
+                                          "in-progress",
+                                          "complete",
+                                          "withdrawn",
+                                          "missed-cut"
+                                        ],
+                                        "description": "Normalized status for this round cell."
+                                      },
+                                      "strokes": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "description": "Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete."
+                                      },
+                                      "scoreToPar": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "description": "Round score relative to par. Used as the visible round value while the round is in progress."
+                                      },
+                                      "thru": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 18,
+                                        "nullable": true,
+                                        "description": "Completed holes for an in-progress round. Null when the golfer is not currently on course for this round."
+                                      },
+                                      "displayType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "EMPTY",
+                                          "TO_PAR",
+                                          "STROKES"
+                                        ],
+                                        "description": "How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty."
+                                      },
+                                      "displayValue": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "description": "Preformatted member-facing value for this round column using Golf display rules."
+                                      }
+                                    },
+                                    "required": [
+                                      "round",
+                                      "status",
+                                      "strokes",
+                                      "scoreToPar",
+                                      "thru",
+                                      "displayType",
+                                      "displayValue"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Round 1 leaderboard column.",
+                                    "nullable": true
+                                  }
+                                ],
+                                "nullable": true,
+                                "description": "Round 2 leaderboard column."
+                              },
+                              "r3": {
+                                "allOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "round": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 4,
+                                        "description": "Golf round number represented by this leaderboard column."
+                                      },
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "active",
+                                          "in-progress",
+                                          "complete",
+                                          "withdrawn",
+                                          "missed-cut"
+                                        ],
+                                        "description": "Normalized status for this round cell."
+                                      },
+                                      "strokes": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "description": "Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete."
+                                      },
+                                      "scoreToPar": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "description": "Round score relative to par. Used as the visible round value while the round is in progress."
+                                      },
+                                      "thru": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 18,
+                                        "nullable": true,
+                                        "description": "Completed holes for an in-progress round. Null when the golfer is not currently on course for this round."
+                                      },
+                                      "displayType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "EMPTY",
+                                          "TO_PAR",
+                                          "STROKES"
+                                        ],
+                                        "description": "How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty."
+                                      },
+                                      "displayValue": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "description": "Preformatted member-facing value for this round column using Golf display rules."
+                                      }
+                                    },
+                                    "required": [
+                                      "round",
+                                      "status",
+                                      "strokes",
+                                      "scoreToPar",
+                                      "thru",
+                                      "displayType",
+                                      "displayValue"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Round 1 leaderboard column.",
+                                    "nullable": true
+                                  }
+                                ],
+                                "nullable": true,
+                                "description": "Round 3 leaderboard column."
+                              },
+                              "r4": {
+                                "allOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "round": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 4,
+                                        "description": "Golf round number represented by this leaderboard column."
+                                      },
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "active",
+                                          "in-progress",
+                                          "complete",
+                                          "withdrawn",
+                                          "missed-cut"
+                                        ],
+                                        "description": "Normalized status for this round cell."
+                                      },
+                                      "strokes": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "description": "Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete."
+                                      },
+                                      "scoreToPar": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "description": "Round score relative to par. Used as the visible round value while the round is in progress."
+                                      },
+                                      "thru": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 18,
+                                        "nullable": true,
+                                        "description": "Completed holes for an in-progress round. Null when the golfer is not currently on course for this round."
+                                      },
+                                      "displayType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "EMPTY",
+                                          "TO_PAR",
+                                          "STROKES"
+                                        ],
+                                        "description": "How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty."
+                                      },
+                                      "displayValue": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "description": "Preformatted member-facing value for this round column using Golf display rules."
+                                      }
+                                    },
+                                    "required": [
+                                      "round",
+                                      "status",
+                                      "strokes",
+                                      "scoreToPar",
+                                      "thru",
+                                      "displayType",
+                                      "displayValue"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Round 1 leaderboard column.",
+                                    "nullable": true
+                                  }
+                                ],
+                                "nullable": true,
+                                "description": "Round 4 leaderboard column."
+                              }
+                            },
+                            "required": [
+                              "r1",
+                              "r2",
+                              "r3",
+                              "r4"
+                            ],
+                            "additionalProperties": false,
+                            "description": "R1 through R4 detail for expanded member leaderboard rows."
+                          }
+                        },
+                        "required": [
+                          "sportEventParticipantId",
+                          "participantId",
+                          "name",
+                          "shortName",
+                          "participantStatus",
+                          "worldRanking",
+                          "oddsToWin",
+                          "seedNumber",
+                          "totalScoreToPar",
+                          "totalStrokes",
+                          "thru",
+                          "currentRound",
+                          "status",
+                          "position",
+                          "displayPosition",
+                          "asOf",
+                          "rounds"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Golf event participant read model used by the contest leaderboard. This is loaded once per event and joined to entry picks in memory."
+                      },
+                      "description": "All event participants for the contest event, loaded once for UI joins and filtering."
+                    },
+                    "entries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "entryId": {
+                            "type": "string",
+                            "description": "Contest entry identifier."
+                          },
+                          "entryName": {
+                            "type": "string",
+                            "description": "Team entry display name."
+                          },
+                          "entryNumber": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Entry number for squads allowed to submit multiple entries."
+                          },
+                          "squadId": {
+                            "type": "string",
+                            "description": "Squad/team identifier."
+                          },
+                          "squadName": {
+                            "type": "string",
+                            "description": "Squad/team display name."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "ACTIVE",
+                              "INACTIVE"
+                            ],
+                            "description": "Contest entry lifecycle status."
+                          },
+                          "totalScoreToPar": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Entry leaderboard total computed from currently counting golfer TOT values. Lower is better."
+                          },
+                          "position": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Computed contest leaderboard rank for this entry."
+                          },
+                          "displayPosition": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Computed display rank, including T-prefix for ties."
+                          },
+                          "countingPickCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "How many selected golfers count toward this entry under the contest configuration."
+                          },
+                          "scoredPickCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "How many selected golfers currently have event standings."
+                          },
+                          "picks": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "pickId": {
+                                  "type": "string",
+                                  "description": "ContestEntryPick row identifier. The pick remains a pointer to sportEventParticipantId; score data comes from the event participant read model."
+                                },
+                                "sportEventParticipantId": {
+                                  "type": "string",
+                                  "description": "Selected SportEventParticipant."
+                                },
+                                "pickedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "description": "When this golfer was selected."
+                                },
+                                "slot": {
+                                  "type": "integer",
+                                  "nullable": true,
+                                  "description": "Optional roster slot from the pick row."
+                                },
+                                "tier": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "Optional tier/category from the pick row."
+                                },
+                                "isCounting": {
+                                  "type": "boolean",
+                                  "description": "Whether this pick currently counts toward the entry score under the contest configuration."
+                                },
+                                "isDropped": {
+                                  "type": "boolean",
+                                  "description": "Whether this scored pick is currently dropped/crossed out because better selected golfers fill the counting slots."
+                                },
+                                "participant": {
+                                  "type": "object",
+                                  "properties": {
+                                    "sportEventParticipantId": {
+                                      "type": "string",
+                                      "description": "SportEventParticipant row selected by contest picks."
+                                    },
+                                    "participantId": {
+                                      "type": "string",
+                                      "description": "Canonical participant identifier."
+                                    },
+                                    "name": {
+                                      "type": "string",
+                                      "description": "Golfer display name."
+                                    },
+                                    "shortName": {
+                                      "type": "string",
+                                      "nullable": true,
+                                      "description": "Optional shorter golfer display name."
+                                    },
+                                    "participantStatus": {
+                                      "type": "string",
+                                      "nullable": true,
+                                      "description": "Provider/player availability status on the event participant row."
+                                    },
+                                    "worldRanking": {
+                                      "type": "integer",
+                                      "nullable": true,
+                                      "description": "Latest copied global world ranking on this event participant."
+                                    },
+                                    "oddsToWin": {
+                                      "type": "number",
+                                      "nullable": true,
+                                      "description": "Event-scoped odds-to-win for this golfer."
+                                    },
+                                    "seedNumber": {
+                                      "type": "integer",
+                                      "nullable": true,
+                                      "description": "Event seed/order when supplied by the provider."
+                                    },
+                                    "totalScoreToPar": {
+                                      "type": "integer",
+                                      "nullable": true,
+                                      "description": "TOT column value: current event total relative to par. Lower is better."
+                                    },
+                                    "totalStrokes": {
+                                      "type": "integer",
+                                      "nullable": true,
+                                      "description": "Current event total strokes across persisted Golf rounds."
+                                    },
+                                    "thru": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 18,
+                                      "nullable": true,
+                                      "description": "THR column value while the golfer is currently on course; null after round completion or before play."
+                                    },
+                                    "currentRound": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4,
+                                      "nullable": true,
+                                      "description": "Current or latest round represented by the standing."
+                                    },
+                                    "status": {
+                                      "type": "string",
+                                      "enum": [
+                                        "active",
+                                        "in-progress",
+                                        "complete",
+                                        "withdrawn",
+                                        "missed-cut"
+                                      ],
+                                      "description": "Normalized Golf participant status for member leaderboard display. Playoff movement is represented by score/thru changes, not a separate status."
+                                    },
+                                    "position": {
+                                      "type": "integer",
+                                      "nullable": true,
+                                      "description": "Event leaderboard position for this golfer when available."
+                                    },
+                                    "displayPosition": {
+                                      "type": "string",
+                                      "nullable": true,
+                                      "description": "Provider/display position such as T2 when available."
+                                    },
+                                    "asOf": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true,
+                                      "description": "Provider timestamp for the current Golf standing."
+                                    },
+                                    "rounds": {
+                                      "type": "object",
+                                      "properties": {
+                                        "r1": {
+                                          "type": "object",
+                                          "properties": {
+                                            "round": {
+                                              "type": "integer",
+                                              "minimum": 1,
+                                              "maximum": 4,
+                                              "description": "Golf round number represented by this leaderboard column."
+                                            },
+                                            "status": {
+                                              "type": "string",
+                                              "enum": [
+                                                "active",
+                                                "in-progress",
+                                                "complete",
+                                                "withdrawn",
+                                                "missed-cut"
+                                              ],
+                                              "description": "Normalized status for this round cell."
+                                            },
+                                            "strokes": {
+                                              "type": "integer",
+                                              "nullable": true,
+                                              "description": "Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete."
+                                            },
+                                            "scoreToPar": {
+                                              "type": "integer",
+                                              "nullable": true,
+                                              "description": "Round score relative to par. Used as the visible round value while the round is in progress."
+                                            },
+                                            "thru": {
+                                              "type": "integer",
+                                              "minimum": 0,
+                                              "maximum": 18,
+                                              "nullable": true,
+                                              "description": "Completed holes for an in-progress round. Null when the golfer is not currently on course for this round."
+                                            },
+                                            "displayType": {
+                                              "type": "string",
+                                              "enum": [
+                                                "EMPTY",
+                                                "TO_PAR",
+                                                "STROKES"
+                                              ],
+                                              "description": "How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty."
+                                            },
+                                            "displayValue": {
+                                              "type": "string",
+                                              "nullable": true,
+                                              "description": "Preformatted member-facing value for this round column using Golf display rules."
+                                            }
+                                          },
+                                          "required": [
+                                            "round",
+                                            "status",
+                                            "strokes",
+                                            "scoreToPar",
+                                            "thru",
+                                            "displayType",
+                                            "displayValue"
+                                          ],
+                                          "additionalProperties": false,
+                                          "description": "Round 1 leaderboard column.",
+                                          "nullable": true
+                                        },
+                                        "r2": {
+                                          "allOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "round": {
+                                                  "type": "integer",
+                                                  "minimum": 1,
+                                                  "maximum": 4,
+                                                  "description": "Golf round number represented by this leaderboard column."
+                                                },
+                                                "status": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "active",
+                                                    "in-progress",
+                                                    "complete",
+                                                    "withdrawn",
+                                                    "missed-cut"
+                                                  ],
+                                                  "description": "Normalized status for this round cell."
+                                                },
+                                                "strokes": {
+                                                  "type": "integer",
+                                                  "nullable": true,
+                                                  "description": "Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete."
+                                                },
+                                                "scoreToPar": {
+                                                  "type": "integer",
+                                                  "nullable": true,
+                                                  "description": "Round score relative to par. Used as the visible round value while the round is in progress."
+                                                },
+                                                "thru": {
+                                                  "type": "integer",
+                                                  "minimum": 0,
+                                                  "maximum": 18,
+                                                  "nullable": true,
+                                                  "description": "Completed holes for an in-progress round. Null when the golfer is not currently on course for this round."
+                                                },
+                                                "displayType": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "EMPTY",
+                                                    "TO_PAR",
+                                                    "STROKES"
+                                                  ],
+                                                  "description": "How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty."
+                                                },
+                                                "displayValue": {
+                                                  "type": "string",
+                                                  "nullable": true,
+                                                  "description": "Preformatted member-facing value for this round column using Golf display rules."
+                                                }
+                                              },
+                                              "required": [
+                                                "round",
+                                                "status",
+                                                "strokes",
+                                                "scoreToPar",
+                                                "thru",
+                                                "displayType",
+                                                "displayValue"
+                                              ],
+                                              "additionalProperties": false,
+                                              "description": "Round 1 leaderboard column.",
+                                              "nullable": true
+                                            }
+                                          ],
+                                          "nullable": true,
+                                          "description": "Round 2 leaderboard column."
+                                        },
+                                        "r3": {
+                                          "allOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "round": {
+                                                  "type": "integer",
+                                                  "minimum": 1,
+                                                  "maximum": 4,
+                                                  "description": "Golf round number represented by this leaderboard column."
+                                                },
+                                                "status": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "active",
+                                                    "in-progress",
+                                                    "complete",
+                                                    "withdrawn",
+                                                    "missed-cut"
+                                                  ],
+                                                  "description": "Normalized status for this round cell."
+                                                },
+                                                "strokes": {
+                                                  "type": "integer",
+                                                  "nullable": true,
+                                                  "description": "Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete."
+                                                },
+                                                "scoreToPar": {
+                                                  "type": "integer",
+                                                  "nullable": true,
+                                                  "description": "Round score relative to par. Used as the visible round value while the round is in progress."
+                                                },
+                                                "thru": {
+                                                  "type": "integer",
+                                                  "minimum": 0,
+                                                  "maximum": 18,
+                                                  "nullable": true,
+                                                  "description": "Completed holes for an in-progress round. Null when the golfer is not currently on course for this round."
+                                                },
+                                                "displayType": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "EMPTY",
+                                                    "TO_PAR",
+                                                    "STROKES"
+                                                  ],
+                                                  "description": "How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty."
+                                                },
+                                                "displayValue": {
+                                                  "type": "string",
+                                                  "nullable": true,
+                                                  "description": "Preformatted member-facing value for this round column using Golf display rules."
+                                                }
+                                              },
+                                              "required": [
+                                                "round",
+                                                "status",
+                                                "strokes",
+                                                "scoreToPar",
+                                                "thru",
+                                                "displayType",
+                                                "displayValue"
+                                              ],
+                                              "additionalProperties": false,
+                                              "description": "Round 1 leaderboard column.",
+                                              "nullable": true
+                                            }
+                                          ],
+                                          "nullable": true,
+                                          "description": "Round 3 leaderboard column."
+                                        },
+                                        "r4": {
+                                          "allOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "round": {
+                                                  "type": "integer",
+                                                  "minimum": 1,
+                                                  "maximum": 4,
+                                                  "description": "Golf round number represented by this leaderboard column."
+                                                },
+                                                "status": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "active",
+                                                    "in-progress",
+                                                    "complete",
+                                                    "withdrawn",
+                                                    "missed-cut"
+                                                  ],
+                                                  "description": "Normalized status for this round cell."
+                                                },
+                                                "strokes": {
+                                                  "type": "integer",
+                                                  "nullable": true,
+                                                  "description": "Raw strokes for the round when available. In-progress strokes are diagnostic; clients display scoreToPar until the round is complete."
+                                                },
+                                                "scoreToPar": {
+                                                  "type": "integer",
+                                                  "nullable": true,
+                                                  "description": "Round score relative to par. Used as the visible round value while the round is in progress."
+                                                },
+                                                "thru": {
+                                                  "type": "integer",
+                                                  "minimum": 0,
+                                                  "maximum": 18,
+                                                  "nullable": true,
+                                                  "description": "Completed holes for an in-progress round. Null when the golfer is not currently on course for this round."
+                                                },
+                                                "displayType": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "EMPTY",
+                                                    "TO_PAR",
+                                                    "STROKES"
+                                                  ],
+                                                  "description": "How the round column should be rendered: in-progress rounds show relative-to-par, completed rounds show strokes, and missing rounds show empty."
+                                                },
+                                                "displayValue": {
+                                                  "type": "string",
+                                                  "nullable": true,
+                                                  "description": "Preformatted member-facing value for this round column using Golf display rules."
+                                                }
+                                              },
+                                              "required": [
+                                                "round",
+                                                "status",
+                                                "strokes",
+                                                "scoreToPar",
+                                                "thru",
+                                                "displayType",
+                                                "displayValue"
+                                              ],
+                                              "additionalProperties": false,
+                                              "description": "Round 1 leaderboard column.",
+                                              "nullable": true
+                                            }
+                                          ],
+                                          "nullable": true,
+                                          "description": "Round 4 leaderboard column."
+                                        }
+                                      },
+                                      "required": [
+                                        "r1",
+                                        "r2",
+                                        "r3",
+                                        "r4"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "R1 through R4 detail for expanded member leaderboard rows."
+                                    }
+                                  },
+                                  "required": [
+                                    "sportEventParticipantId",
+                                    "participantId",
+                                    "name",
+                                    "shortName",
+                                    "participantStatus",
+                                    "worldRanking",
+                                    "oddsToWin",
+                                    "seedNumber",
+                                    "totalScoreToPar",
+                                    "totalStrokes",
+                                    "thru",
+                                    "currentRound",
+                                    "status",
+                                    "position",
+                                    "displayPosition",
+                                    "asOf",
+                                    "rounds"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Expanded golfer event data for this pick."
+                                }
+                              },
+                              "required": [
+                                "pickId",
+                                "sportEventParticipantId",
+                                "pickedAt",
+                                "slot",
+                                "tier",
+                                "isCounting",
+                                "isDropped",
+                                "participant"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Expanded Golf pick row for a contest leaderboard entry."
+                            },
+                            "description": "Selected golfers with counting/dropped flags computed at read time."
+                          }
+                        },
+                        "required": [
+                          "entryId",
+                          "entryName",
+                          "entryNumber",
+                          "squadId",
+                          "squadName",
+                          "status",
+                          "totalScoreToPar",
+                          "position",
+                          "displayPosition",
+                          "countingPickCount",
+                          "scoredPickCount",
+                          "picks"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Single Team row in the Golf contest leaderboard."
+                      },
+                      "description": "Contest entries ordered by computed Golf total."
+                    },
+                    "asOf": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true,
+                      "description": "Latest provider standing timestamp represented in the leaderboard, or null when no standing timestamps are available."
+                    }
+                  },
+                  "required": [
+                    "contestId",
+                    "sportEventId",
+                    "scoringMode",
+                    "countingRule",
+                    "participants",
+                    "entries",
+                    "asOf"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Member-facing Golf contest leaderboard. Entry totals are computed from SportEventParticipantGolfStanding and SportEventParticipantGolfRound, not ContestEntry.totalScore."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/contests/{contestId}/entries/me": {
       "get": {
         "operationId": "getMyContestEntry",
