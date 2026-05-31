@@ -498,6 +498,8 @@ async function cleanupSportEventParticipantArtifacts(
       },
     },
   });
+  // SportEventParticipantGolfStanding has an explicit RESTRICT FK so tests
+  // exercise the same child-before-parent cleanup order as production cleanup.
   await database.sportEventParticipantGolfStanding.deleteMany({
     where: {
       sportEventParticipantId: {
@@ -620,6 +622,8 @@ export async function cleanupTestData(): Promise<void> {
 
   await prisma.providerSyncRun.deleteMany();
   await prisma.sportEventParticipantGolfRound.deleteMany();
+  // Keep standing cleanup before SportEventParticipant because the standing
+  // table intentionally uses an explicit child row rather than FK cascade.
   await prisma.sportEventParticipantGolfStanding.deleteMany();
   await prisma.sportEventParticipantValuation.deleteMany();
   await prisma.sportEventParticipant.deleteMany();

@@ -5,6 +5,8 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { Sport } from '@poolmaster/shared/domain';
+import { eventBus } from '@poolmaster/shared/events/event-bus';
+import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -33,6 +35,13 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
         status: 'ACTIVE',
       },
     });
+    await prisma.participantProviderMapping.create({
+      data: {
+        participantId: participant.id,
+        providerId: 'integration-test',
+        externalId: 'golf-standing-player-1',
+      },
+    });
     const event = await prisma.sportEvent.create({
       data: {
         externalId: 'golf-standing-event-1',
@@ -55,29 +64,34 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
       },
     });
 
-    await prisma.sportEventParticipantGolfRound.create({
-      data: {
-        sportEventParticipantId: sportEventParticipant.id,
-        round: 2,
-        strokes: 33,
-        scoreToPar: -3,
-        thru: 9,
-        status: 'IN_PROGRESS',
+    await publishLiveScoreUpdate(
+      {
+        category: 'GOLF',
+        externalEventId: 'golf-standing-event-1',
+        rounds: [
+          {
+            participantExternalId: 'golf-standing-player-1',
+            round: 1,
+            strokes: 68,
+            scoreToPar: -4,
+            status: 'COMPLETED',
+          },
+          {
+            participantExternalId: 'golf-standing-player-1',
+            round: 2,
+            strokes: 33,
+            scoreToPar: -3,
+            thru: 9,
+            status: 'IN_PROGRESS',
+          },
+        ],
       },
-    });
-    await prisma.sportEventParticipantGolfStanding.create({
-      data: {
-        sportEventParticipantId: sportEventParticipant.id,
-        eventScoreToPar: -4,
-        eventStrokes: 101,
-        currentRound: 2,
-        currentRoundThru: 9,
-        status: 'IN_PROGRESS',
-        position: 3,
-        displayPosition: 'T3',
-        asOf: new Date('2026-05-08T18:00:00.000Z'),
+      {
+        prisma,
+        providerId: 'integration-test',
+        bus: eventBus,
       },
-    });
+    );
 
     const row = await prisma.sportEventParticipant.findUniqueOrThrow({
       where: { id: sportEventParticipant.id },
@@ -87,24 +101,38 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
       },
     });
 
-    expect(row.golfRounds).toEqual([
+    expect(row.golfRounds).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        round: 1,
+        strokes: 68,
+        scoreToPar: -4,
+        thru: null,
+      }),
       expect.objectContaining({
         round: 2,
         strokes: 33,
         scoreToPar: -3,
         thru: 9,
       }),
-    ]);
+    ]));
     expect(row.golfStanding).toEqual(
       expect.objectContaining({
-        eventScoreToPar: -4,
+        eventScoreToPar: -7,
         eventStrokes: 101,
         currentRound: 2,
         currentRoundThru: 9,
         status: 'IN_PROGRESS',
-        position: 3,
-        displayPosition: 'T3',
       }),
     );
+    await expect(
+      prisma.sportEventParticipantGolfStanding.create({
+        data: {
+          sportEventParticipantId: sportEventParticipant.id,
+          eventScoreToPar: -7,
+          eventStrokes: 101,
+          status: 'IN_PROGRESS',
+        },
+      }),
+    ).rejects.toThrow();
   });
 });

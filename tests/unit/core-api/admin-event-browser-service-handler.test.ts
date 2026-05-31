@@ -147,6 +147,61 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
     ]);
   });
 
+  it('pool-master-eux.2 falls back to round aggregation when no golf standing exists yet', async () => {
+    const findUnique = jest.fn().mockResolvedValue(createEventRow());
+    const findMany = jest.fn().mockResolvedValue([
+      {
+        id: sportEventParticipantId,
+        sportEventId: eventId,
+        participantId,
+        status: 'ACTIVE',
+        worldRanking: null,
+        oddsToWin: null,
+        seedNumber: null,
+        updatedAt: new Date('2026-05-01T12:00:00.000Z'),
+        participant: {
+          name: 'Fallback Golfer',
+          shortName: null,
+          nationality: null,
+        },
+        valuations: [],
+        golfRounds: [
+          {
+            round: 1,
+            strokes: 69,
+            scoreToPar: -3,
+            thru: 18,
+            status: 'COMPLETED',
+            completedAt: new Date('2026-05-07T21:00:00.000Z'),
+          },
+          {
+            round: 2,
+            strokes: 73,
+            scoreToPar: 1,
+            thru: 18,
+            status: 'COMPLETED',
+            completedAt: new Date('2026-05-08T21:00:00.000Z'),
+          },
+        ],
+        golfStanding: null,
+      },
+    ]);
+    const service = new AdminEventBrowserService({
+      sportEvent: { findUnique },
+      sportEventParticipant: { findMany },
+    } as never);
+
+    const response = await service.listEventParticipants(eventId);
+
+    expect(response?.participants[0]).toMatchObject({
+      participantName: 'Fallback Golfer',
+      roundCount: 2,
+      totalStrokes: 142,
+      scoreToPar: -2,
+    });
+    expect(response?.participants[0]).not.toHaveProperty('golfStanding');
+  });
+
   it('returns EVENT_NOT_FOUND when a participant modal targets a missing event', async () => {
     const service = {
       listEventParticipants: jest.fn().mockResolvedValue(null),

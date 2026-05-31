@@ -2,6 +2,7 @@ import type {
   AdminEventParticipantDto,
   AdminEventSummaryDto,
 } from '@poolmaster/shared/dto';
+import type { PrismaGolfLiveStatus } from '@prisma/client';
 import type {
   EventReadinessReasonDto,
   EventReadinessStatusDto,
@@ -32,7 +33,7 @@ function toNumberOrNull(value: DecimalLike | number | null | undefined): number 
 }
 
 function mapGolfStandingStatusToDto(
-  status: string,
+  status: PrismaGolfLiveStatus,
 ): 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut' {
   switch (status) {
     case 'IN_PROGRESS':
@@ -44,7 +45,6 @@ function mapGolfStandingStatusToDto(
     case 'MISSED_CUT':
       return 'missed-cut';
     case 'ACTIVE':
-    default:
       return 'active';
   }
 }
@@ -103,7 +103,7 @@ export interface AdminEventParticipantRow {
     eventStrokes: number;
     currentRound: number | null;
     currentRoundThru: number | null;
-    status: string;
+    status: PrismaGolfLiveStatus;
     position: number | null;
     displayPosition: string | null;
     asOf: Date | null;

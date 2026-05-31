@@ -84,7 +84,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         sportEventParticipantGolfRound: {
           upsert: jest.fn().mockResolvedValue({}),
           findMany: jest.fn().mockResolvedValue([
-            { sportEventParticipantId: 'sep-rory', round: 1, strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' },
+            { sportEventParticipantId: 'sep-rory', round: 1, strokes: 70, scoreToPar: -2, thru: null, status: 'COMPLETED' },
             { sportEventParticipantId: 'sep-tiger', round: 1, strokes: 73, scoreToPar: 1, thru: 9, status: 'IN_PROGRESS' },
           ]),
         },
@@ -159,6 +159,77 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           providerId: 'mock-contest-feed',
           sportEventId: 'evt-internal-1',
           updatesPersisted: 2,
+        }),
+      );
+    });
+
+    it('pool-master-eux.2 maps non-finishers and pending standings without contest fanout', async () => {
+      const prisma = {
+        sportEvent: buildSportEventStub('evt-internal-1'),
+        participantProviderMapping: {
+          findMany: jest.fn().mockResolvedValue([
+            { externalId: 'dnf-golfer', participantId: 'pp-dnf' },
+            { externalId: 'dsq-golfer', participantId: 'pp-dsq' },
+            { externalId: 'pending-golfer', participantId: 'pp-pending' },
+          ]),
+        },
+        sportEventParticipant: {
+          findMany: jest.fn().mockResolvedValue([
+            { id: 'sep-dnf', participantId: 'pp-dnf' },
+            { id: 'sep-dsq', participantId: 'pp-dsq' },
+            { id: 'sep-pending', participantId: 'pp-pending' },
+          ]),
+        },
+        sportEventParticipantGolfRound: {
+          upsert: jest.fn().mockResolvedValue({}),
+          findMany: jest.fn().mockResolvedValue([
+            { sportEventParticipantId: 'sep-dnf', round: 1, strokes: 75, scoreToPar: 3, thru: null, status: 'DNF' },
+            { sportEventParticipantId: 'sep-dsq', round: 1, strokes: 75, scoreToPar: 3, thru: null, status: 'DSQ' },
+            { sportEventParticipantId: 'sep-pending', round: 2, strokes: 0, scoreToPar: 0, thru: null, status: 'PENDING' },
+          ]),
+        },
+        sportEventParticipantGolfStanding: {
+          upsert: jest.fn().mockResolvedValue({}),
+        },
+      } as any;
+      const bus = buildBus();
+
+      const result: LiveScoreResult = {
+        category: 'GOLF',
+        externalEventId: 'evt-ext-1',
+        rounds: [
+          { participantExternalId: 'dnf-golfer', round: 1, strokes: 75, scoreToPar: 3, status: 'DNF' },
+          { participantExternalId: 'dsq-golfer', round: 1, strokes: 75, scoreToPar: 3, status: 'DSQ' },
+          { participantExternalId: 'pending-golfer', round: 1, strokes: 36, scoreToPar: 0, status: 'IN_PROGRESS' },
+        ],
+      };
+
+      await publishLiveScoreUpdate(result, {
+        prisma,
+        providerId: 'mock-contest-feed',
+        bus,
+      });
+
+      expect(prisma.sportEventParticipantGolfStanding.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { sportEventParticipantId: 'sep-dnf' },
+          create: expect.objectContaining({ status: 'WITHDRAWN' }),
+        }),
+      );
+      expect(prisma.sportEventParticipantGolfStanding.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { sportEventParticipantId: 'sep-dsq' },
+          create: expect.objectContaining({ status: 'WITHDRAWN' }),
+        }),
+      );
+      expect(prisma.sportEventParticipantGolfStanding.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { sportEventParticipantId: 'sep-pending' },
+          create: expect.objectContaining({
+            currentRound: 2,
+            currentRoundThru: null,
+            status: 'ACTIVE',
+          }),
         }),
       );
     });
