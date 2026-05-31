@@ -14,8 +14,6 @@ export function createOverrideHandlers(overrideService: OverrideService) {
     pauseDraft,
     resumeDraft,
     extendPickClock,
-    adjustScore,
-    recalculateStandings,
     reopenContest,
     closeContest,
     extendDeadline,
@@ -90,40 +88,6 @@ export function createOverrideHandlers(overrideService: OverrideService) {
         request.body.additionalSeconds,
       );
       return reply.status(204).send();
-    } catch (err) {
-      handleOverrideError(err, reply);
-    }
-  }
-
-  async function adjustScore(
-    request: FastifyRequest<{
-      Params: { contestId: string };
-      Body: { entryId: string; adjustment: number; reason: string };
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    try {
-      await overrideService.adjustScore(
-        request.params.contestId,
-        request.body.entryId,
-        request.body.adjustment,
-        request.body.reason,
-      );
-      return reply.status(204).send();
-    } catch (err) {
-      handleOverrideError(err, reply);
-    }
-  }
-
-  async function recalculateStandings(
-    request: FastifyRequest<{ Params: { contestId: string } }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    try {
-      const result = await overrideService.recalculateStandings(
-        request.params.contestId,
-      );
-      return reply.send(result);
     } catch (err) {
       handleOverrideError(err, reply);
     }

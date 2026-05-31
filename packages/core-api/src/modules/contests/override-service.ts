@@ -6,27 +6,10 @@
 
 import type {
   ContestRepository,
-  ContestEntryRepository,
   DraftSessionRepository,
 } from '@poolmaster/shared/db';
 import type { Contest, DraftSession } from '@poolmaster/shared/domain';
 import { ContestStatus, DraftStatus } from '@poolmaster/shared/domain';
-import type { ContestScoringRecalculationService } from '../contest-scoring';
-
-export interface RecalculationResult {
-  contestId: string;
-  teamsAffected: number;
-  standingsChanged: boolean;
-  changes: StandingsChange[];
-}
-
-export interface StandingsChange {
-  entryId: string;
-  oldRank: number;
-  newRank: number;
-  oldScore: number;
-  newScore: number;
-}
 
 const UNDO_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -34,8 +17,6 @@ export class OverrideService {
   constructor(
     private readonly contestRepo: ContestRepository,
     private readonly draftSessionRepo: DraftSessionRepository,
-    private readonly entryRepo: ContestEntryRepository,
-    private readonly contestScoringRecalculationService: ContestScoringRecalculationService,
   ) {}
 
   // --- Draft Overrides (08-018, 08-019, 08-020) ---
@@ -101,33 +82,6 @@ export class OverrideService {
     await this.draftSessionRepo.update(session.id, {
       currentTurnStartedAt: shiftedTurnStart,
     } as Partial<DraftSession>);
-  }
-
-  // --- Scoring Overrides (08-021, 08-022) ---
-
-  /** Adjusts a contest entry's total score by a delta amount. */
-  async adjustScore(
-    contestId: string,
-    entryId: string,
-    adjustment: number,
-    _reason: string,
-  ): Promise<void> {
-    const entry = await this.entryRepo.findById(entryId);
-    if (!entry || entry.contestId !== contestId) {
-      throw new OverrideError('Entry not found in this contest', 'CONTEST_ENTRY_NOT_FOUND');
-    }
-    await this.entryRepo.update(entryId, {
-      totalScore: entry.totalScore + adjustment,
-    });
-  }
-
-  /** Forces a recalculation of standings based on current entry scores. */
-  async recalculateStandings(contestId: string): Promise<RecalculationResult> {
-    const contest = await this.contestRepo.findById(contestId);
-    if (!contest) {
-      throw new OverrideError('Contest not found', 'CONTEST_NOT_FOUND');
-    }
-    return this.contestScoringRecalculationService.recalculateContest(contestId);
   }
 
   // --- Contest Lifecycle Overrides (08-023) ---

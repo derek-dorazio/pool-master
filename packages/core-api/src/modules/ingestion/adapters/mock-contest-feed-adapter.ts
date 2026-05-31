@@ -237,7 +237,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
       .map<ProviderParticipantResult>((contestant, index) => ({
         participantExternalId: contestant.contestantId,
         finishPosition: index + 1,
-        totalScore: contestant.score,
+        scoreToPar: contestant.score,
         totalStrokes: contestant.strokes,
         dnf: contestant.result === 'withdrawn' || contestant.result === 'cut',
         dnfReason:

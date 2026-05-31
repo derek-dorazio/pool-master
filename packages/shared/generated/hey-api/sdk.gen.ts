@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AcceptTeamOwnerInvitationData, AcceptTeamOwnerInvitationErrors, AcceptTeamOwnerInvitationResponses, ActivateLeagueData, ActivateLeagueErrors, ActivateLeagueResponses, AddSquadOwnerData, AddSquadOwnerErrors, AddSquadOwnerResponses, AdjustScoreData, AdjustScoreResponses, AdminCleanupStaleProviderEventsData, AdminCleanupStaleProviderEventsErrors, AdminCleanupStaleProviderEventsResponses, AdminDeleteLeagueData, AdminDeleteLeagueErrors, AdminDeleteLeagueResponses, AdminDeleteUserData, AdminDeleteUserErrors, AdminDeleteUserResponses, AdminDisableUserData, AdminDisableUserErrors, AdminDisableUserResponses, AdminEnableUserData, AdminEnableUserErrors, AdminEnableUserResponses, AdminExportAuditLogData, AdminExportAuditLogErrors, AdminExportAuditLogResponses, AdminForceLogoutData, AdminForceLogoutErrors, AdminForceLogoutResponses, AdminGetAlertRulesData, AdminGetAlertRulesErrors, AdminGetAlertRulesResponses, AdminGetAuditEntryData, AdminGetAuditEntryErrors, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsErrors, AdminGetBusinessMetricsResponses, AdminGetErrorDetailData, AdminGetErrorDetailErrors, AdminGetErrorDetailResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsErrors, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardErrors, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleErrors, AdminGetIngestionScheduleResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsErrors, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailErrors, AdminGetProviderDetailResponses, AdminGetServiceHealthData, AdminGetServiceHealthErrors, AdminGetServiceHealthResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsErrors, AdminGetUnmappedParticipantsResponses, AdminGetUserDetailData, AdminGetUserDetailErrors, AdminGetUserDetailResponses, AdminInactivateLeagueData, AdminInactivateLeagueErrors, AdminInactivateLeagueResponses, AdminListAuditLogData, AdminListAuditLogErrors, AdminListAuditLogResponses, AdminListContestConfigTemplatesData, AdminListContestConfigTemplatesErrors, AdminListContestConfigTemplatesResponses, AdminListEventParticipantsData, AdminListEventParticipantsErrors, AdminListEventParticipantsResponses, AdminListEventsData, AdminListEventsErrors, AdminListEventsResponses, AdminListLeaguesData, AdminListLeaguesErrors, AdminListLeaguesResponses, AdminListProvidersData, AdminListProvidersErrors, AdminListProvidersResponses, AdminListProviderSyncRunsData, AdminListProviderSyncRunsErrors, AdminListProviderSyncRunsResponses, AdminListTeamsData, AdminListTeamsErrors, AdminListTeamsResponses, AdminListUsersData, AdminListUsersErrors, AdminListUsersResponses, AdminMapParticipantData, AdminMapParticipantErrors, AdminMapParticipantResponses, AdminMuteAlertData, AdminMuteAlertErrors, AdminMuteAlertResponses, AdminPrepareSportSyncData, AdminPrepareSportSyncErrors, AdminPrepareSportSyncResponses, AdminReIngestEventData, AdminReIngestEventErrors, AdminReIngestEventResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsErrors, AdminResetPollIntervalsResponses, AdminResetSportIngestionOverrideData, AdminResetSportIngestionOverrideErrors, AdminResetSportIngestionOverrideResponses, AdminResetUserPasswordData, AdminResetUserPasswordErrors, AdminResetUserPasswordResponses, AdminSearchErrorsData, AdminSearchErrorsErrors, AdminSearchErrorsResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideErrors, AdminSetSportIngestionOverrideResponses, AdminSetUserRootAdminData, AdminSetUserRootAdminErrors, AdminSetUserRootAdminResponses, AdminSyncProviderEventDataData, AdminSyncProviderEventDataErrors, AdminSyncProviderEventDataResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckErrors, AdminTriggerHealthCheckResponses, AdminUnmuteAlertData, AdminUnmuteAlertErrors, AdminUnmuteAlertResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleErrors, AdminUpdateAlertRuleResponses, AdminUpdateContestConfigTemplateData, AdminUpdateContestConfigTemplateErrors, AdminUpdateContestConfigTemplateResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleErrors, AdminUpdateIngestionScheduleResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsErrors, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigErrors, AdminUpdateProviderConfigResponses, ChangeAccountPasswordData, ChangeAccountPasswordErrors, ChangeAccountPasswordResponses, ChangeMemberRoleData, ChangeMemberRoleErrors, ChangeMemberRoleResponses, CloseContestData, CloseContestResponses, CopySeasonData, CopySeasonErrors, CopySeasonResponses, CreateContestData, CreateContestErrors, CreateContestResponses, CreateLeagueData, CreateLeagueErrors, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadErrors, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestErrors, CreateManagedContestResponses, CreateParticipantData, CreateParticipantResponses, CreateSquadOwnerInvitationData, CreateSquadOwnerInvitationErrors, CreateSquadOwnerInvitationResponses, DeleteAccountData, DeleteAccountErrors, DeleteAccountResponses, DeleteContestData, DeleteContestErrors, DeleteContestResponses, DeleteLeagueData, DeleteLeagueErrors, DeleteLeagueResponses, DeleteLeagueSquadData, DeleteLeagueSquadErrors, DeleteLeagueSquadResponses, DismissNotificationData, DismissNotificationResponses, EnterContestData, EnterContestErrors, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendCurrentTurnData, ExtendCurrentTurnErrors, ExtendCurrentTurnResponses, ExtendPickClockData, ExtendPickClockResponses, GenerateInviteLinkData, GenerateInviteLinkErrors, GenerateInviteLinkResponses, GetConsentHistoryData, GetConsentHistoryResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestData, GetContestEntryData, GetContestEntryErrors, GetContestEntryResponses, GetContestErrors, GetContestHistoryStandingsData, GetContestHistoryStandingsResponses, GetContestHistorySummaryData, GetContestHistorySummaryErrors, GetContestHistorySummaryResponses, GetContestLeaderboardData, GetContestLeaderboardErrors, GetContestLeaderboardResponses, GetContestPayoutsData, GetContestPayoutsResponses, GetContestResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetDraftStateData, GetDraftStateErrors, GetDraftStateResponses, GetEntryScoreData, GetEntryScoreErrors, GetEntryScoreResponses, GetGolfContestLeaderboardData, GetGolfContestLeaderboardErrors, GetGolfContestLeaderboardResponses, GetHealthData, GetHealthResponses, GetInvitationPreviewData, GetInvitationPreviewErrors, GetInvitationPreviewResponses, GetLeagueAuditLogData, GetLeagueAuditLogErrors, GetLeagueAuditLogResponses, GetLeagueByCodeData, GetLeagueByCodeErrors, GetLeagueByCodeResponses, GetLeagueDashboardData, GetLeagueDashboardErrors, GetLeagueDashboardResponses, GetLeagueData, GetLeagueErrors, GetLeagueResponses, GetLeagueResultsData, GetLeagueResultsResponses, GetLeagueSquadData, GetLeagueSquadErrors, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestErrors, GetManagedContestResponses, GetMemberAuditLogData, GetMemberAuditLogErrors, GetMemberAuditLogResponses, GetMemberResultsData, GetMemberResultsResponses, GetMyContestEntryData, GetMyContestEntryErrors, GetMyContestEntryResponses, GetMyStandingsEntryData, GetMyStandingsEntryErrors, GetMyStandingsEntryResponses, GetParticipantData, GetParticipantErrors, GetParticipantResponses, GetParticipantScoreData, GetParticipantScoreErrors, GetParticipantScoreResponses, GetPollIntervalsData, GetPollIntervalsResponses, GetRootVersionData, GetRootVersionResponses, GetRosterHistoryData, GetRosterHistoryErrors, GetRosterHistoryResponses, GetScoringHealthData, GetScoringHealthErrors, GetScoringHealthResponses, GetStandingsData, GetStandingsErrors, GetStandingsResponses, GetStandingsSummaryData, GetStandingsSummaryErrors, GetStandingsSummaryResponses, GetTeamOwnerInvitationPreviewData, GetTeamOwnerInvitationPreviewErrors, GetTeamOwnerInvitationPreviewResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountResponses, GetVersionData, GetVersionResponses, ImportMembersData, ImportMembersErrors, ImportMembersResponses, InactivateAccountData, InactivateAccountErrors, InactivateAccountResponses, InactivateLeagueData, InactivateLeagueErrors, InactivateLeagueResponses, InactivateLeagueSquadData, InactivateLeagueSquadErrors, InactivateLeagueSquadResponses, IngestClientLogsData, IngestClientLogsErrors, IngestClientLogsResponses, LeaveContestData, LeaveContestErrors, LeaveContestResponses, LeaveLeagueData, LeaveLeagueErrors, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesErrors, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventsData, ListEventsResponses, ListLeagueMembersData, ListLeagueMembersErrors, ListLeagueMembersResponses, ListLeaguesData, ListLeaguesErrors, ListLeagueSquadsData, ListLeagueSquadsErrors, ListLeagueSquadsResponses, ListLeaguesResponses, ListManagedContestTemplatesData, ListManagedContestTemplatesErrors, ListManagedContestTemplatesResponses, ListNotificationsData, ListNotificationsResponses, ListParticipantsData, ListParticipantsResponses, ListSquadOwnerInvitationsData, ListSquadOwnerInvitationsErrors, ListSquadOwnerInvitationsResponses, LoginUserData, LoginUserErrors, LoginUserResponses, LogoutUserData, LogoutUserErrors, LogoutUserResponses, MarkAllNotificationsReadData, MarkAllNotificationsReadResponses, MarkNotificationReadData, MarkNotificationReadResponses, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftErrors, PauseDraftResponses, ReactivateAccountData, ReactivateAccountErrors, ReactivateAccountResponses, RecalculateStandingsData, RecalculateStandingsResponses, RecordConsentData, RecordConsentResponses, RefreshTokenData, RefreshTokenErrors, RefreshTokenResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RemoveMemberData, RemoveMemberErrors, RemoveMemberResponses, RemoveSquadOwnerData, RemoveSquadOwnerErrors, RemoveSquadOwnerResponses, ReopenContestData, ReopenContestResponses, ReplaceSquadOwnerData, ReplaceSquadOwnerErrors, ReplaceSquadOwnerResponses, ResolveActionItemData, ResolveActionItemErrors, ResolveActionItemResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftErrors, ResumeDraftResponses, RevokeInviteLinkData, RevokeInviteLinkErrors, RevokeInviteLinkResponses, RevokeSquadOwnerInvitationData, RevokeSquadOwnerInvitationErrors, RevokeSquadOwnerInvitationResponses, SendLeagueInvitationsData, SendLeagueInvitationsErrors, SendLeagueInvitationsResponses, SkipSnakeDraftTurnData, SkipSnakeDraftTurnErrors, SkipSnakeDraftTurnResponses, StartDraftData, StartDraftErrors, StartDraftResponses, SubmitContestSelectionData, SubmitContestSelectionErrors, SubmitContestSelectionResponses, TriggerStandingsRollupData, TriggerStandingsRollupErrors, TriggerStandingsRollupResponses, UndoContestDraftSelectionData, UndoContestDraftSelectionResponses, UndoSnakeDraftSelectionData, UndoSnakeDraftSelectionErrors, UndoSnakeDraftSelectionResponses, UpdateAccountPreferencesData, UpdateAccountPreferencesErrors, UpdateAccountPreferencesResponses, UpdateAccountProfileData, UpdateAccountProfileErrors, UpdateAccountProfileResponses, UpdateAccountUsernameData, UpdateAccountUsernameErrors, UpdateAccountUsernameResponses, UpdateContestData, UpdateContestEntryData, UpdateContestEntryErrors, UpdateContestEntryResponses, UpdateContestErrors, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateLeagueDetailsData, UpdateLeagueDetailsErrors, UpdateLeagueDetailsResponses, UpdateLeagueIconData, UpdateLeagueIconErrors, UpdateLeagueIconResponses, UpdateLeagueSquadData, UpdateLeagueSquadErrors, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationErrors, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantErrors, UpdateParticipantResponses, ValidateScoringConfigData, ValidateScoringConfigErrors, ValidateScoringConfigResponses } from './types.gen.js';
+import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AcceptTeamOwnerInvitationData, AcceptTeamOwnerInvitationErrors, AcceptTeamOwnerInvitationResponses, ActivateLeagueData, ActivateLeagueErrors, ActivateLeagueResponses, AddSquadOwnerData, AddSquadOwnerErrors, AddSquadOwnerResponses, AdminCleanupStaleProviderEventsData, AdminCleanupStaleProviderEventsErrors, AdminCleanupStaleProviderEventsResponses, AdminDeleteLeagueData, AdminDeleteLeagueErrors, AdminDeleteLeagueResponses, AdminDeleteUserData, AdminDeleteUserErrors, AdminDeleteUserResponses, AdminDisableUserData, AdminDisableUserErrors, AdminDisableUserResponses, AdminEnableUserData, AdminEnableUserErrors, AdminEnableUserResponses, AdminExportAuditLogData, AdminExportAuditLogErrors, AdminExportAuditLogResponses, AdminForceLogoutData, AdminForceLogoutErrors, AdminForceLogoutResponses, AdminGetAlertRulesData, AdminGetAlertRulesErrors, AdminGetAlertRulesResponses, AdminGetAuditEntryData, AdminGetAuditEntryErrors, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsErrors, AdminGetBusinessMetricsResponses, AdminGetErrorDetailData, AdminGetErrorDetailErrors, AdminGetErrorDetailResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsErrors, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardErrors, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleErrors, AdminGetIngestionScheduleResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsErrors, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailErrors, AdminGetProviderDetailResponses, AdminGetServiceHealthData, AdminGetServiceHealthErrors, AdminGetServiceHealthResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsErrors, AdminGetUnmappedParticipantsResponses, AdminGetUserDetailData, AdminGetUserDetailErrors, AdminGetUserDetailResponses, AdminInactivateLeagueData, AdminInactivateLeagueErrors, AdminInactivateLeagueResponses, AdminListAuditLogData, AdminListAuditLogErrors, AdminListAuditLogResponses, AdminListContestConfigTemplatesData, AdminListContestConfigTemplatesErrors, AdminListContestConfigTemplatesResponses, AdminListEventParticipantsData, AdminListEventParticipantsErrors, AdminListEventParticipantsResponses, AdminListEventsData, AdminListEventsErrors, AdminListEventsResponses, AdminListLeaguesData, AdminListLeaguesErrors, AdminListLeaguesResponses, AdminListProvidersData, AdminListProvidersErrors, AdminListProvidersResponses, AdminListProviderSyncRunsData, AdminListProviderSyncRunsErrors, AdminListProviderSyncRunsResponses, AdminListTeamsData, AdminListTeamsErrors, AdminListTeamsResponses, AdminListUsersData, AdminListUsersErrors, AdminListUsersResponses, AdminMapParticipantData, AdminMapParticipantErrors, AdminMapParticipantResponses, AdminMuteAlertData, AdminMuteAlertErrors, AdminMuteAlertResponses, AdminPrepareSportSyncData, AdminPrepareSportSyncErrors, AdminPrepareSportSyncResponses, AdminReIngestEventData, AdminReIngestEventErrors, AdminReIngestEventResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsErrors, AdminResetPollIntervalsResponses, AdminResetSportIngestionOverrideData, AdminResetSportIngestionOverrideErrors, AdminResetSportIngestionOverrideResponses, AdminResetUserPasswordData, AdminResetUserPasswordErrors, AdminResetUserPasswordResponses, AdminSearchErrorsData, AdminSearchErrorsErrors, AdminSearchErrorsResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideErrors, AdminSetSportIngestionOverrideResponses, AdminSetUserRootAdminData, AdminSetUserRootAdminErrors, AdminSetUserRootAdminResponses, AdminSyncProviderEventDataData, AdminSyncProviderEventDataErrors, AdminSyncProviderEventDataResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckErrors, AdminTriggerHealthCheckResponses, AdminUnmuteAlertData, AdminUnmuteAlertErrors, AdminUnmuteAlertResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleErrors, AdminUpdateAlertRuleResponses, AdminUpdateContestConfigTemplateData, AdminUpdateContestConfigTemplateErrors, AdminUpdateContestConfigTemplateResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleErrors, AdminUpdateIngestionScheduleResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsErrors, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigErrors, AdminUpdateProviderConfigResponses, ChangeAccountPasswordData, ChangeAccountPasswordErrors, ChangeAccountPasswordResponses, ChangeMemberRoleData, ChangeMemberRoleErrors, ChangeMemberRoleResponses, CloseContestData, CloseContestResponses, CopySeasonData, CopySeasonErrors, CopySeasonResponses, CreateContestData, CreateContestErrors, CreateContestResponses, CreateLeagueData, CreateLeagueErrors, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadErrors, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestErrors, CreateManagedContestResponses, CreateParticipantData, CreateParticipantResponses, CreateSquadOwnerInvitationData, CreateSquadOwnerInvitationErrors, CreateSquadOwnerInvitationResponses, DeleteAccountData, DeleteAccountErrors, DeleteAccountResponses, DeleteContestData, DeleteContestErrors, DeleteContestResponses, DeleteLeagueData, DeleteLeagueErrors, DeleteLeagueResponses, DeleteLeagueSquadData, DeleteLeagueSquadErrors, DeleteLeagueSquadResponses, DismissNotificationData, DismissNotificationResponses, EnterContestData, EnterContestErrors, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendCurrentTurnData, ExtendCurrentTurnErrors, ExtendCurrentTurnResponses, ExtendPickClockData, ExtendPickClockResponses, GenerateInviteLinkData, GenerateInviteLinkErrors, GenerateInviteLinkResponses, GetConsentHistoryData, GetConsentHistoryResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestData, GetContestEntryData, GetContestEntryErrors, GetContestEntryResponses, GetContestErrors, GetContestHistoryStandingsData, GetContestHistoryStandingsResponses, GetContestHistorySummaryData, GetContestHistorySummaryErrors, GetContestHistorySummaryResponses, GetContestPayoutsData, GetContestPayoutsResponses, GetContestResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetDraftStateData, GetDraftStateErrors, GetDraftStateResponses, GetGolfContestLeaderboardData, GetGolfContestLeaderboardErrors, GetGolfContestLeaderboardResponses, GetHealthData, GetHealthResponses, GetInvitationPreviewData, GetInvitationPreviewErrors, GetInvitationPreviewResponses, GetLeagueAuditLogData, GetLeagueAuditLogErrors, GetLeagueAuditLogResponses, GetLeagueByCodeData, GetLeagueByCodeErrors, GetLeagueByCodeResponses, GetLeagueDashboardData, GetLeagueDashboardErrors, GetLeagueDashboardResponses, GetLeagueData, GetLeagueErrors, GetLeagueResponses, GetLeagueResultsData, GetLeagueResultsResponses, GetLeagueSquadData, GetLeagueSquadErrors, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestErrors, GetManagedContestResponses, GetMemberAuditLogData, GetMemberAuditLogErrors, GetMemberAuditLogResponses, GetMemberResultsData, GetMemberResultsResponses, GetMyContestEntryData, GetMyContestEntryErrors, GetMyContestEntryResponses, GetParticipantData, GetParticipantErrors, GetParticipantResponses, GetPollIntervalsData, GetPollIntervalsResponses, GetRootVersionData, GetRootVersionResponses, GetRosterHistoryData, GetRosterHistoryErrors, GetRosterHistoryResponses, GetTeamOwnerInvitationPreviewData, GetTeamOwnerInvitationPreviewErrors, GetTeamOwnerInvitationPreviewResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountResponses, GetVersionData, GetVersionResponses, ImportMembersData, ImportMembersErrors, ImportMembersResponses, InactivateAccountData, InactivateAccountErrors, InactivateAccountResponses, InactivateLeagueData, InactivateLeagueErrors, InactivateLeagueResponses, InactivateLeagueSquadData, InactivateLeagueSquadErrors, InactivateLeagueSquadResponses, IngestClientLogsData, IngestClientLogsErrors, IngestClientLogsResponses, LeaveContestData, LeaveContestErrors, LeaveContestResponses, LeaveLeagueData, LeaveLeagueErrors, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesErrors, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventsData, ListEventsResponses, ListLeagueMembersData, ListLeagueMembersErrors, ListLeagueMembersResponses, ListLeaguesData, ListLeaguesErrors, ListLeagueSquadsData, ListLeagueSquadsErrors, ListLeagueSquadsResponses, ListLeaguesResponses, ListManagedContestTemplatesData, ListManagedContestTemplatesErrors, ListManagedContestTemplatesResponses, ListNotificationsData, ListNotificationsResponses, ListParticipantsData, ListParticipantsResponses, ListSquadOwnerInvitationsData, ListSquadOwnerInvitationsErrors, ListSquadOwnerInvitationsResponses, LoginUserData, LoginUserErrors, LoginUserResponses, LogoutUserData, LogoutUserErrors, LogoutUserResponses, MarkAllNotificationsReadData, MarkAllNotificationsReadResponses, MarkNotificationReadData, MarkNotificationReadResponses, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftErrors, PauseDraftResponses, ReactivateAccountData, ReactivateAccountErrors, ReactivateAccountResponses, RecordConsentData, RecordConsentResponses, RefreshTokenData, RefreshTokenErrors, RefreshTokenResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RemoveMemberData, RemoveMemberErrors, RemoveMemberResponses, RemoveSquadOwnerData, RemoveSquadOwnerErrors, RemoveSquadOwnerResponses, ReopenContestData, ReopenContestResponses, ReplaceSquadOwnerData, ReplaceSquadOwnerErrors, ReplaceSquadOwnerResponses, ResolveActionItemData, ResolveActionItemErrors, ResolveActionItemResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftErrors, ResumeDraftResponses, RevokeInviteLinkData, RevokeInviteLinkErrors, RevokeInviteLinkResponses, RevokeSquadOwnerInvitationData, RevokeSquadOwnerInvitationErrors, RevokeSquadOwnerInvitationResponses, SendLeagueInvitationsData, SendLeagueInvitationsErrors, SendLeagueInvitationsResponses, SkipSnakeDraftTurnData, SkipSnakeDraftTurnErrors, SkipSnakeDraftTurnResponses, StartDraftData, StartDraftErrors, StartDraftResponses, SubmitContestSelectionData, SubmitContestSelectionErrors, SubmitContestSelectionResponses, UndoContestDraftSelectionData, UndoContestDraftSelectionResponses, UndoSnakeDraftSelectionData, UndoSnakeDraftSelectionErrors, UndoSnakeDraftSelectionResponses, UpdateAccountPreferencesData, UpdateAccountPreferencesErrors, UpdateAccountPreferencesResponses, UpdateAccountProfileData, UpdateAccountProfileErrors, UpdateAccountProfileResponses, UpdateAccountUsernameData, UpdateAccountUsernameErrors, UpdateAccountUsernameResponses, UpdateContestData, UpdateContestEntryData, UpdateContestEntryErrors, UpdateContestEntryResponses, UpdateContestErrors, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateLeagueDetailsData, UpdateLeagueDetailsErrors, UpdateLeagueDetailsResponses, UpdateLeagueIconData, UpdateLeagueIconErrors, UpdateLeagueIconResponses, UpdateLeagueSquadData, UpdateLeagueSquadErrors, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationErrors, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantErrors, UpdateParticipantResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -720,7 +720,7 @@ export const listContestEntries = <ThrowOnError extends boolean = false>(options
 /**
  * Get contest entry detail
  *
- * Returns a contest entry plus its current picked participants and latest performance context for entry-detail and expanded leaderboard surfaces.
+ * Returns a contest entry plus its picked participants. Golf scoring data is exposed by the Golf leaderboard endpoint rather than copied onto picks.
  */
 export const getContestEntry = <ThrowOnError extends boolean = false>(options: Options<GetContestEntryData, ThrowOnError>) => (options.client ?? client).get<GetContestEntryResponses, GetContestEntryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -746,7 +746,7 @@ export const updateContestEntry = <ThrowOnError extends boolean = false>(options
 /**
  * Get Golf contest leaderboard
  *
- * Returns the member-facing Golf leaderboard for a contest. Entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers and ContestEntry.totalScore is not the score source.
+ * Returns the member-facing Golf leaderboard for a contest. Entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers.
  */
 export const getGolfContestLeaderboard = <ThrowOnError extends boolean = false>(options: Options<GetGolfContestLeaderboardData, ThrowOnError>) => (options.client ?? client).get<GetGolfContestLeaderboardResponses, GetGolfContestLeaderboardErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -843,32 +843,6 @@ export const extendPickClock = <ThrowOnError extends boolean = false>(options: O
         'Content-Type': 'application/json',
         ...options.headers
     }
-});
-
-/**
- * Manually adjust an entry score
- *
- * Applies a manual score adjustment to a contest entry when commissioner or admin scoring intervention is required.
- */
-export const adjustScore = <ThrowOnError extends boolean = false>(options: Options<AdjustScoreData, ThrowOnError>) => (options.client ?? client).post<AdjustScoreResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/scoring/adjust',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Recalculate standings for a contest
- *
- * Triggers a standings recalculation for the contest after score or configuration corrections.
- */
-export const recalculateStandings = <ThrowOnError extends boolean = false>(options: Options<RecalculateStandingsData, ThrowOnError>) => (options.client ?? client).post<RecalculateStandingsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/scoring/recalculate',
-    ...options
 });
 
 /**
@@ -1003,39 +977,6 @@ export const updateParticipant = <ThrowOnError extends boolean = false>(options:
         'Content-Type': 'application/json',
         ...options.headers
     }
-});
-
-/**
- * Get the full paginated leaderboard
- *
- * Returns the full contest leaderboard with pagination support for standings pages and deep leaderboard browsing.
- */
-export const getStandings = <ThrowOnError extends boolean = false>(options: Options<GetStandingsData, ThrowOnError>) => (options.client ?? client).get<GetStandingsResponses, GetStandingsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/standings/',
-    ...options
-});
-
-/**
- * Get top N standings summary for dashboard widgets
- *
- * Returns a compact top-of-leaderboard summary intended for widgets and dashboard-style standings previews.
- */
-export const getStandingsSummary = <ThrowOnError extends boolean = false>(options: Options<GetStandingsSummaryData, ThrowOnError>) => (options.client ?? client).get<GetStandingsSummaryResponses, GetStandingsSummaryErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/standings/summary',
-    ...options
-});
-
-/**
- * Get the current user's entry with rank context
- *
- * Returns the authenticated user entry plus surrounding rank context so the user can see their standing without loading the full leaderboard.
- */
-export const getMyStandingsEntry = <ThrowOnError extends boolean = false>(options: Options<GetMyStandingsEntryData, ThrowOnError>) => (options.client ?? client).get<GetMyStandingsEntryResponses, GetMyStandingsEntryErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/contests/{contestId}/standings/my-entry',
-    ...options
 });
 
 /**
@@ -1942,76 +1883,6 @@ export const undoSnakeDraftSelection = <ThrowOnError extends boolean = false>(op
 export const skipSnakeDraftTurn = <ThrowOnError extends boolean = false>(options: Options<SkipSnakeDraftTurnData, ThrowOnError>) => (options.client ?? client).post<SkipSnakeDraftTurnResponses, SkipSnakeDraftTurnErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/drafts/{contestId}/skip',
-    ...options
-});
-
-/**
- * Validate a scoring configuration
- *
- * Validates a proposed scoring configuration and returns structured feedback before commissioners save it to a contest.
- */
-export const validateScoringConfig = <ThrowOnError extends boolean = false>(options: Options<ValidateScoringConfigData, ThrowOnError>) => (options.client ?? client).post<ValidateScoringConfigResponses, ValidateScoringConfigErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/scoring/config/validate',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get contest leaderboard
- *
- * Returns the scoring leaderboard for the contest as computed by the scoring service.
- */
-export const getContestLeaderboard = <ThrowOnError extends boolean = false>(options: Options<GetContestLeaderboardData, ThrowOnError>) => (options.client ?? client).get<GetContestLeaderboardResponses, GetContestLeaderboardErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/scoring/contests/{contestId}/leaderboard',
-    ...options
-});
-
-/**
- * Get entry score breakdown
- *
- * Returns the score breakdown for a specific entry so users or commissioners can inspect how the total score was calculated.
- */
-export const getEntryScore = <ThrowOnError extends boolean = false>(options: Options<GetEntryScoreData, ThrowOnError>) => (options.client ?? client).get<GetEntryScoreResponses, GetEntryScoreErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/scoring/contests/{contestId}/entry/{entryId}',
-    ...options
-});
-
-/**
- * Get participant score history in a contest
- *
- * Returns participant-level score history for the contest so scoring and audit surfaces can inspect event-by-event contributions.
- */
-export const getParticipantScore = <ThrowOnError extends boolean = false>(options: Options<GetParticipantScoreData, ThrowOnError>) => (options.client ?? client).get<GetParticipantScoreResponses, GetParticipantScoreErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/scoring/contests/{contestId}/participant/{participantId}',
-    ...options
-});
-
-/**
- * Trigger manual standings rollup
- *
- * Triggers a manual standings rollup for the contest when scoring data needs to be recomputed on demand.
- */
-export const triggerStandingsRollup = <ThrowOnError extends boolean = false>(options: Options<TriggerStandingsRollupData, ThrowOnError>) => (options.client ?? client).post<TriggerStandingsRollupResponses, TriggerStandingsRollupErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/scoring/contests/{contestId}/rollup',
-    ...options
-});
-
-/**
- * Get scoring service health
- *
- * Returns health information for the scoring subsystem and its supporting rollup and processing concerns.
- */
-export const getScoringHealth = <ThrowOnError extends boolean = false>(options?: Options<GetScoringHealthData, ThrowOnError>) => (options?.client ?? client).get<GetScoringHealthResponses, GetScoringHealthErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/scoring/health',
     ...options
 });
 

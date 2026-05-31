@@ -682,14 +682,6 @@ export function ContestEntryPage() {
               items={[
                 { id: 'entry-status', label: 'Entry status', value: entrySummary?.status ?? 'ACTIVE' },
                 { id: 'contest-phase', label: 'Contest phase', value: getContestPhaseLabel(contest) },
-                { id: 'score', label: 'Score', value: `${entrySummary?.totalScore ?? 0} pts` },
-                {
-                  id: 'standing',
-                  label: 'Standing',
-                  value: entrySummary?.standingsPosition
-                    ? `#${entrySummary.standingsPosition}`
-                    : 'Rank pending',
-                },
                 { id: 'created', label: 'Created', value: formatDateTimeDisplay(entrySummary?.createdAt) },
                 { id: 'last-updated', label: 'Last updated', value: formatDateTimeDisplay(entrySummary?.updatedAt) },
               ]}

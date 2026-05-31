@@ -12,7 +12,6 @@ export type ParticipantScoringDefinitionId = z.infer<
 
 export const AggregationDefinitionIdSchema = z.enum([
   'SUM_ALL_ENTRIES',
-  'SUM_TOP_N_ENTRIES',
 ]);
 export type AggregationDefinitionId = z.infer<
   typeof AggregationDefinitionIdSchema

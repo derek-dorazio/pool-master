@@ -5,7 +5,6 @@
 
 import type { FastifyInstance } from 'fastify';
 import {
-  AdjustContestScoreRequestSchema,
   CloseContestRequestSchema,
   ContestAuditLogResponseSchema,
   ContestEntryDeletionResponseSchema,
@@ -13,7 +12,6 @@ import {
   ContestEntryListResponseSchema,
   ContestEntryResponseSchema,
   ContestListResponseSchema,
-  ContestRecalculationResponseSchema,
   ContestResponseSchema,
   CreateContestRequestSchema,
   ExtendContestDeadlineRequestSchema,
@@ -46,7 +44,6 @@ import {
 } from '../leagues/permissions';
 import { ContestService } from './service';
 import { OverrideService } from './override-service';
-import { ContestScoringRecalculationService } from '../contest-scoring';
 import { createContestHandlers } from './handler';
 import { createOverrideHandlers } from './override-handler';
 import { getAppPrisma } from '../../core/prisma-context';
@@ -155,8 +152,6 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
   const overrideService = new OverrideService(
     contestRepo,
     draftSessionRepo,
-    entryRepo,
-    new ContestScoringRecalculationService(prisma, fastify.log),
   );
   const handlers = createContestHandlers(contestService);
   const overrides = createOverrideHandlers(overrideService);
@@ -207,7 +202,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Get contest entry detail',
       description:
-        'Returns a contest entry plus its current picked participants and latest performance context for entry-detail and expanded leaderboard surfaces.',
+        'Returns a contest entry plus its picked participants. Golf scoring data is exposed by the Golf leaderboard endpoint rather than copied onto picks.',
       operationId: 'getContestEntry',
       response: {
         200: zodToJsonSchema(ContestEntryDetailResponseSchema),
@@ -223,7 +218,7 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
       tags: ['Contests'],
       summary: 'Get Golf contest leaderboard',
       description:
-        'Returns the member-facing Golf leaderboard for a contest. Entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers and ContestEntry.totalScore is not the score source.',
+        'Returns the member-facing Golf leaderboard for a contest. Entry totals are computed from event participant Golf standings and round rows, then joined to entry picks in memory so picks remain pointers.',
       operationId: 'getGolfContestLeaderboard',
       response: {
         200: zodToJsonSchema(GolfLeaderboardResponseSchema),
@@ -385,33 +380,6 @@ export async function contestsByIdModule(fastify: FastifyInstance): Promise<void
     },
     preHandler: requireContestCommissioner,
     handler: overrides.extendPickClock,
-  });
-
-  // --- Scoring Overrides ---
-  fastify.post('/:contestId/scoring/adjust', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Manually adjust an entry score',
-      description:
-        'Applies a manual score adjustment to a contest entry when commissioner or admin scoring intervention is required.',
-      operationId: 'adjustScore',
-      body: zodToJsonSchema(AdjustContestScoreRequestSchema),
-      response: { 200: zodToJsonSchema(SuccessSchema) },
-    },
-    preHandler: requireContestCommissioner,
-    handler: overrides.adjustScore,
-  });
-  fastify.post('/:contestId/scoring/recalculate', {
-    schema: {
-      tags: ['Contests'],
-      summary: 'Recalculate standings for a contest',
-      description:
-        'Triggers a standings recalculation for the contest after score or configuration corrections.',
-      operationId: 'recalculateStandings',
-      response: { 200: zodToJsonSchema(ContestRecalculationResponseSchema) },
-    },
-    preHandler: requireContestCommissioner,
-    handler: overrides.recalculateStandings,
   });
 
   // --- Contest Lifecycle Overrides ---

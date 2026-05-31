@@ -3,7 +3,6 @@ export * from './leagues.mapper';
 export * from './contests.mapper';
 export * from './contest-entry-picks.mapper';
 export * from './participants.mapper';
-export * from './standings.mapper';
 export * from './account-consent.mapper';
 export * from './account.mapper';
 export * from './admin-events.mapper';

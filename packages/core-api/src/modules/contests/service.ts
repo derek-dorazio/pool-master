@@ -427,7 +427,6 @@ export class ContestService {
         squad: true,
         picks: {
           include: {
-            participantScores: true,
             sportEventParticipant: {
               include: {
                 participant: true,
@@ -467,11 +466,7 @@ export class ContestService {
           participantStatus: pick.sportEventParticipant.status ?? null,
           position: pick.sportEventParticipant.participant.position ?? null,
           teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
-          contestPoints: pick.participantScores.reduce((sum, score) => sum + score.pointsEarned, 0),
           pickedAt: pick.pickedAt,
-          // latestPerformance — was sourced from dropped sportEventParticipantSourceData;
-          // rop.78.7 will rebuild via SportEventParticipantGolfRound + contribution table.
-          latestPerformance: {},
         }))
         : null,
     );
@@ -618,8 +613,6 @@ export class ContestService {
       entryNumber: nextEntryNumber,
       name: buildDefaultEntryName(squad.name, nextEntryNumber),
       status: 'ACTIVE',
-      totalScore: 0,
-      standingsPosition: undefined,
       isEliminated: false,
     });
     const dto = await this.loadEntryDtoById(created.id);
@@ -977,7 +970,6 @@ export class ContestService {
         squad: true,
       },
       orderBy: [
-        { standingsPosition: 'asc' },
         { entryNumber: 'asc' },
         { createdAt: 'asc' },
       ],
@@ -1007,7 +999,6 @@ export class ContestService {
         squad: true,
       },
       orderBy: [
-        { standingsPosition: 'asc' },
         { entryNumber: 'asc' },
         { createdAt: 'asc' },
       ],
@@ -1064,7 +1055,6 @@ export class ContestService {
     const picks = await prisma.contestEntryPick.findMany({
       where: { entryId: { in: entryIds } },
       include: {
-        participantScores: true,
         sportEventParticipant: {
           include: {
             participant: true,
@@ -1085,11 +1075,7 @@ export class ContestService {
         participantStatus: pick.sportEventParticipant.status ?? null,
         position: pick.sportEventParticipant.participant.position ?? null,
         teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
-        contestPoints: pick.participantScores.reduce((sum, score) => sum + score.pointsEarned, 0),
         pickedAt: pick.pickedAt,
-        // latestPerformance — was sourced from dropped sportEventParticipantSourceData;
-        // rop.78.7 will rebuild via SportEventParticipantGolfRound + contribution table.
-        latestPerformance: {},
       });
       grouped.set(pick.entryId, list);
     }

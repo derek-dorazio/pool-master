@@ -24,7 +24,8 @@ import { z } from 'zod';
  * GOLF — per-event per-participant golf round update.
  *
  * Adapters emit `participantExternalId` (the provider-side identifier they
- * know — e.g. `mock-contest-feed`'s contestantId or PGA Tour's player code).
+ * know — e.g. `mock-contest-feed`'s contestantId or a real golf provider's
+ * player code).
  * The bus-boundary `publishLiveScoreUpdate` resolves to the internal
  * `SportEventParticipant.id` UUID before persisting; the design plan §10.2
  * field name `sportEventParticipantId` refers to that internal column,
@@ -37,7 +38,7 @@ export const GolfRoundUpdateSchema = z.object({
   ),
   round: z.number().int().min(1).max(8),
   strokes: z.number().int().min(0).nullable().describe(
-    'Per-round strokes. Null when the provider only exposes cumulative scoreToPar without per-round detail (mock + ESPN leaderboard); rop.78.7 supplies real strokes from PGA Tour. Persistence skips rounds with null strokes until then.',
+    'Per-round strokes. Null when the provider only exposes cumulative scoreToPar without per-round detail. Persistence skips rounds with null strokes.',
   ),
   scoreToPar: z.number().int(),
   thru: z.number().int().min(0).optional().describe(

@@ -232,32 +232,6 @@ export interface ContestPrizeDefinition extends DomainEntity {
   active: boolean;
 }
 
-/** Aggregate participant score record for a contest entry. */
-export interface ContestEntryParticipantScore extends DomainEntity {
-  entryId: string;
-  pickId: string;
-  pointsEarned: number;
-}
-
-/** Fine-grained scoring-event record that explains part of a participant score. */
-export interface ContestEntryParticipantScoreEvent extends DomainEntity {
-  contestEntryParticipantScoreId: string;
-  participantContestScoringRuleId: string;
-  points: number;
-  detailsJson: Record<string, unknown>;
-}
-
-/** Prize award issued to a contest entry after calculation or settlement. */
-export interface ContestEntryPrizeAward extends DomainEntity {
-  entryId: string;
-  contestPrizeDefinitionId: string;
-  prizeDefinitionId?: string;
-  displayName: string;
-  amount?: number;
-  percentage?: number;
-  awardedAt: Date;
-}
-
 /** Condensed contest summary used by contest-management flows. */
 export interface ContestCoreSummary extends DomainEntity {
   leagueId: string;

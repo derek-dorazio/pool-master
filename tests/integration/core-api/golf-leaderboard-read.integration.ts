@@ -146,9 +146,8 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
           contestId: contest.id,
           squadId: squadOne.id,
           entryNumber: 1,
-          name: `Misleading Legacy Low ${suffix}`,
+          name: `Standing Runner-Up ${suffix}`,
           status: 'ACTIVE',
-          totalScore: -999,
         },
       }),
       prisma.contestEntry.create({
@@ -158,7 +157,6 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
           entryNumber: 1,
           name: `Standing Winner ${suffix}`,
           status: 'ACTIVE',
-          totalScore: 999,
         },
       }),
     ]);

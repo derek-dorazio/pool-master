@@ -343,37 +343,8 @@ export class SquadService {
         })
       ).map((entry) => entry.id);
 
-      const participantScoreIds = entryIds.length === 0
-        ? []
-        : (
-            await tx.contestEntryParticipantScore.findMany({
-              where: {
-                entryId: { in: entryIds },
-              },
-              select: { id: true },
-            })
-          ).map((score) => score.id);
-
-      if (participantScoreIds.length > 0) {
-        await tx.contestEntryParticipantScoreEvent.deleteMany({
-          where: {
-            contestEntryParticipantScoreId: { in: participantScoreIds },
-          },
-        });
-      }
-
       if (entryIds.length > 0) {
-        await tx.contestEntryPrizeAward.deleteMany({
-          where: {
-            entryId: { in: entryIds },
-          },
-        });
         await tx.draftPickHistory.deleteMany({
-          where: {
-            entryId: { in: entryIds },
-          },
-        });
-        await tx.contestEntryParticipantScore.deleteMany({
           where: {
             entryId: { in: entryIds },
           },

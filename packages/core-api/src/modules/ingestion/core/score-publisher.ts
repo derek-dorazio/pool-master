@@ -201,10 +201,8 @@ async function persistGolfRounds(
   }> = [];
   for (const round of rounds) {
     if (round.strokes === null) {
-      // Provider doesn't expose per-round strokes (mock-feed, ESPN
-      // leaderboard) — persistence stays a no-op until rop.78.7 supplies
-      // real strokes from PGA Tour. The DB column is NOT NULL so we
-      // cannot persist scoreToPar without strokes today.
+      // Some providers expose only cumulative score-to-par. The DB column is
+      // NOT NULL, so we skip the row rather than inventing strokes.
       deps.logger?.debug?.(
         {
           action: 'liveScore.golf.nullStrokesSkipped',

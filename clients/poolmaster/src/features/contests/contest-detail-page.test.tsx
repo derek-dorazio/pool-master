@@ -104,17 +104,13 @@ function buildEntry(overrides: Partial<{
   squadName: string;
   name: string;
   entryNumber: number;
-  totalScore: number;
-  standingsPosition: number | null;
   picksCount: number;
   participants: Array<{
     pickId: string;
     sportEventParticipantId: string;
     participantId: string;
     participantName: string;
-    contestPoints: number;
     pickedAt: string;
-    latestPerformance: Record<string, unknown>;
   }> | undefined;
 }> = {}) {
   return {
@@ -126,8 +122,6 @@ function buildEntry(overrides: Partial<{
     name: overrides.name ?? 'Birdie Hunters Entry 1',
     status: 'ACTIVE' as const,
     tiebreakerValue: null,
-    totalScore: overrides.totalScore ?? 0,
-    standingsPosition: overrides.standingsPosition ?? null,
     isEliminated: false,
     picksCount: overrides.picksCount ?? 0,
     createdAt: '2026-04-15T00:00:00.000Z',
@@ -314,9 +308,7 @@ describe('ContestDetailPage (Contest Board)', () => {
               sportEventParticipantId: 'sep-1',
               participantId: 'participant-1',
               participantName: 'Tiger Woods',
-              contestPoints: 0,
               pickedAt: '2026-04-15T00:00:00.000Z',
-              latestPerformance: {},
             },
           ],
         }),
@@ -351,9 +343,7 @@ describe('ContestDetailPage (Contest Board)', () => {
               sportEventParticipantId: 'sep-3',
               participantId: 'participant-3',
               participantName: 'Phil Mickelson',
-              contestPoints: 0,
               pickedAt: '2026-04-15T00:00:00.000Z',
-              latestPerformance: {},
             },
           ],
         }),
