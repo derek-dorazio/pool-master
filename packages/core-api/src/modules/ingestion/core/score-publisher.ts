@@ -14,7 +14,7 @@
  * untyped `ProviderStatEvent[]` payloads onto the `stat.received` event.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import { PrismaGolfLiveStatus, type PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { eventBus } from '@poolmaster/shared/events/event-bus';
 import type { LiveScorePersistedEvent } from '@poolmaster/shared/events';
@@ -169,6 +169,8 @@ async function persistGolfRounds(
   }
 
   let persisted = 0;
+  const affectedSportEventParticipantIds = new Set<string>();
+  const standingAsOf = new Date();
   for (const round of rounds) {
     if (round.strokes === null) {
       // Provider doesn't expose per-round strokes (mock-feed, ESPN
@@ -219,18 +221,99 @@ async function persistGolfRounds(
         round: round.round,
         strokes: round.strokes,
         scoreToPar: round.scoreToPar,
+        thru: round.thru ?? null,
         status: round.status,
         completedAt: round.completedAt ? new Date(round.completedAt) : null,
       },
       update: {
         strokes: round.strokes,
         scoreToPar: round.scoreToPar,
+        thru: round.thru ?? null,
         status: round.status,
         completedAt: round.completedAt ? new Date(round.completedAt) : null,
       },
     });
+    affectedSportEventParticipantIds.add(sportEventParticipantId);
     persisted += 1;
   }
 
+  await refreshGolfStandings([...affectedSportEventParticipantIds], deps, standingAsOf);
+
   return persisted;
+}
+
+async function refreshGolfStandings(
+  sportEventParticipantIds: readonly string[],
+  deps: LiveScorePublisherDeps,
+  asOf: Date,
+): Promise<void> {
+  if (sportEventParticipantIds.length === 0) return;
+
+  const rows = await deps.prisma.sportEventParticipantGolfRound.findMany({
+    where: { sportEventParticipantId: { in: [...sportEventParticipantIds] } },
+    orderBy: [{ sportEventParticipantId: 'asc' }, { round: 'asc' }],
+    select: {
+      sportEventParticipantId: true,
+      round: true,
+      strokes: true,
+      scoreToPar: true,
+      thru: true,
+      status: true,
+    },
+  });
+
+  const rowsByParticipant = new Map<string, typeof rows>();
+  for (const row of rows) {
+    const participantRows = rowsByParticipant.get(row.sportEventParticipantId) ?? [];
+    participantRows.push(row);
+    rowsByParticipant.set(row.sportEventParticipantId, participantRows);
+  }
+
+  for (const sportEventParticipantId of sportEventParticipantIds) {
+    const participantRows = rowsByParticipant.get(sportEventParticipantId) ?? [];
+    if (participantRows.length === 0) continue;
+
+    const currentRound = participantRows.reduce((latest, row) => (
+      row.round > latest.round ? row : latest
+    ));
+    const eventScoreToPar = participantRows.reduce((sum, row) => sum + row.scoreToPar, 0);
+    const eventStrokes = participantRows.reduce((sum, row) => sum + row.strokes, 0);
+    const currentRoundThru = currentRound.thru ?? (currentRound.status === 'COMPLETED' ? 18 : null);
+    const status = mapGolfLiveStatus(currentRound.status);
+
+    await deps.prisma.sportEventParticipantGolfStanding.upsert({
+      where: { sportEventParticipantId },
+      create: {
+        sportEventParticipantId,
+        eventScoreToPar,
+        eventStrokes,
+        currentRound: currentRound.round,
+        currentRoundThru,
+        status,
+        asOf,
+      },
+      update: {
+        eventScoreToPar,
+        eventStrokes,
+        currentRound: currentRound.round,
+        currentRoundThru,
+        status,
+        asOf,
+      },
+    });
+  }
+}
+
+function mapGolfLiveStatus(roundStatus: string): PrismaGolfLiveStatus {
+  switch (roundStatus) {
+    case 'IN_PROGRESS':
+      return PrismaGolfLiveStatus.IN_PROGRESS;
+    case 'COMPLETED':
+      return PrismaGolfLiveStatus.COMPLETE;
+    case 'DNF':
+    case 'DSQ':
+      return PrismaGolfLiveStatus.WITHDRAWN;
+    default:
+      return PrismaGolfLiveStatus.ACTIVE;
+  }
 }

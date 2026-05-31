@@ -13,6 +13,13 @@ afterAll(async () => {
   await prisma.ingestionJob.deleteMany({
     where: { providerId: 'TEST_PROVIDER' },
   });
+  await prisma.sportEventParticipantGolfStanding.deleteMany({
+    where: {
+      sportEventParticipant: {
+        sportEvent: { externalId: 'integration-ingestion-event' },
+      },
+    },
+  });
   await prisma.sportEventParticipant.deleteMany({
     where: {
       sportEvent: { externalId: 'integration-ingestion-event' },

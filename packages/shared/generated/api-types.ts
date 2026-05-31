@@ -14342,10 +14342,35 @@ export interface operations {
                             valuationOrderIndex?: number;
                             /** @description Number of persisted golf-round rows for this event participant. */
                             roundCount: number;
-                            /** @description Total persisted golf strokes across completed/known rounds. */
+                            /** @description Current Golf event total strokes. Prefers SportEventParticipantGolfStanding when present. */
                             totalStrokes?: number;
-                            /** @description Aggregate persisted score-to-par across completed/known rounds. */
+                            /** @description Current Golf event score-to-par. Prefers SportEventParticipantGolfStanding when present. */
                             scoreToPar?: number;
+                            /** @description Maintained current Golf event standing when live/final score data has been persisted. */
+                            golfStanding?: {
+                                /** @description Current event total score relative to par across persisted Golf rounds. */
+                                eventScoreToPar: number;
+                                /** @description Current event total strokes across persisted Golf rounds. */
+                                eventStrokes: number;
+                                /** @description Current or latest round represented in the standing. */
+                                currentRound?: number;
+                                /** @description Completed holes for the current round when known. */
+                                currentRoundThru?: number;
+                                /**
+                                 * @description Normalized current Golf live status for this event participant.
+                                 * @enum {string}
+                                 */
+                                status: "active" | "in-progress" | "complete" | "withdrawn" | "missed-cut";
+                                /** @description Numeric leaderboard position when available. */
+                                position?: number;
+                                /** @description Provider/display leaderboard position label when available. */
+                                displayPosition?: string;
+                                /**
+                                 * Format: date-time
+                                 * @description Provider or ingestion timestamp for the standing snapshot.
+                                 */
+                                asOf?: string;
+                            };
                             /** @description Current persisted golf-round detail rows. */
                             golfRounds: {
                                 /** @description Golf round number. */
@@ -14354,6 +14379,8 @@ export interface operations {
                                 strokes: number;
                                 /** @description Persisted score-to-par for this round. */
                                 scoreToPar: number;
+                                /** @description Completed holes in this round when known for an in-progress/live round. */
+                                thru?: number;
                                 /** @description Provider-normalized round status. */
                                 status: string;
                                 /**

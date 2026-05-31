@@ -1262,6 +1262,15 @@ export class ProviderService {
           },
         },
       });
+      await tx.sportEventParticipantGolfStanding.deleteMany({
+        where: {
+          sportEventParticipant: {
+            sportEventId: {
+              in: eventIds,
+            },
+          },
+        },
+      });
       await tx.sportEventParticipantValuation.deleteMany({
         where: {
           sportEventParticipant: {

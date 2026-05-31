@@ -296,6 +296,7 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
 
     expect(await prisma.sportEventParticipant.count({ where: { sportEventId: staleGolfEvent.id } })).toBe(0);
     expect(await prisma.sportEventParticipantGolfRound.count()).toBe(0);
+    expect(await prisma.sportEventParticipantGolfStanding.count()).toBe(0);
     expect(await prisma.sportEventParticipantValuation.count()).toBe(0);
     expect(await prisma.participantProviderMapping.count()).toBe(3);
     expect(await prisma.participant.count()).toBe(3);
@@ -411,6 +412,16 @@ async function attachCleanupEventParticipant(input: {
         strokes: 70,
         scoreToPar: -2,
         status: 'COMPLETED',
+      },
+    });
+    await getPrisma().sportEventParticipantGolfStanding.create({
+      data: {
+        sportEventParticipantId: eventParticipant.id,
+        eventScoreToPar: -2,
+        eventStrokes: 70,
+        currentRound: 1,
+        currentRoundThru: 18,
+        status: 'COMPLETE',
       },
     });
   }

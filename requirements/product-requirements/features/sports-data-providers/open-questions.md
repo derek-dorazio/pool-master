@@ -19,11 +19,6 @@ These question IDs are intended to stay stable as the discussion evolves.
     (contest tier derivation, not betting).
   - Owner: legal/compliance review before we depend on it.
 
-- `SDP-003` Data Golf rate-limit headroom
-  - 45 RPM ceiling — does this accommodate live-poll cadence during a
-    tournament weekend with multiple concurrent contests?
-  - Owner: Brad to model worst-case poll storm against the rate budget.
-
 - `SDP-004` API-Tennis production-readiness
   - Tennis API is currently flagged as beta on api-sports.io.
   - Confirm SLA / breaking-change posture before we depend on it for a
@@ -62,3 +57,13 @@ These question IDs are intended to stay stable as the discussion evolves.
   - Sales-gated pricing and procurement friction make them poor first-pass
     choices. Both are kept as upgrade paths and can be added behind the
     same port without product or contract changes.
+
+- `SDP-R5` Data Golf live polling rate-limit headroom `(Resolved — plan 119)`
+  - Data Golf documents a shared 45 requests/minute rate limit.
+  - PoolMaster's first production live-score cadence is 5 minutes, with QA
+    scheduled cadence at 15 minutes and manual event sync used for most
+    scenario testing.
+  - This cadence is comfortably inside the documented rate limit for the
+    first Golf implementation. If future fanout expands to many concurrent
+    provider calls, that expansion needs its own rate-budget story before
+    enabling it.

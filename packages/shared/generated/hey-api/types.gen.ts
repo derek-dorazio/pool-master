@@ -13328,13 +13328,50 @@ export type AdminListEventParticipantsResponses = {
              */
             roundCount: number;
             /**
-             * Total persisted golf strokes across completed/known rounds.
+             * Current Golf event total strokes. Prefers SportEventParticipantGolfStanding when present.
              */
             totalStrokes?: number;
             /**
-             * Aggregate persisted score-to-par across completed/known rounds.
+             * Current Golf event score-to-par. Prefers SportEventParticipantGolfStanding when present.
              */
             scoreToPar?: number;
+            /**
+             * Maintained current Golf event standing when live/final score data has been persisted.
+             */
+            golfStanding?: {
+                /**
+                 * Current event total score relative to par across persisted Golf rounds.
+                 */
+                eventScoreToPar: number;
+                /**
+                 * Current event total strokes across persisted Golf rounds.
+                 */
+                eventStrokes: number;
+                /**
+                 * Current or latest round represented in the standing.
+                 */
+                currentRound?: number;
+                /**
+                 * Completed holes for the current round when known.
+                 */
+                currentRoundThru?: number;
+                /**
+                 * Normalized current Golf live status for this event participant.
+                 */
+                status: 'active' | 'in-progress' | 'complete' | 'withdrawn' | 'missed-cut';
+                /**
+                 * Numeric leaderboard position when available.
+                 */
+                position?: number;
+                /**
+                 * Provider/display leaderboard position label when available.
+                 */
+                displayPosition?: string;
+                /**
+                 * Provider or ingestion timestamp for the standing snapshot.
+                 */
+                asOf?: string;
+            };
             /**
              * Current persisted golf-round detail rows.
              */
@@ -13351,6 +13388,10 @@ export type AdminListEventParticipantsResponses = {
                  * Persisted score-to-par for this round.
                  */
                 scoreToPar: number;
+                /**
+                 * Completed holes in this round when known for an in-progress/live round.
+                 */
+                thru?: number;
                 /**
                  * Provider-normalized round status.
                  */

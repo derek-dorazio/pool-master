@@ -59,6 +59,15 @@ async function cleanupMockProviderImportData(): Promise<void> {
       },
     },
   });
+  await prisma.sportEventParticipantGolfStanding.deleteMany({
+    where: {
+      sportEventParticipant: {
+        sportEvent: {
+          providerId,
+        },
+      },
+    },
+  });
   await prisma.sportEventParticipant.deleteMany({
     where: {
       sportEvent: {
