@@ -370,7 +370,7 @@ describe('mock contest feed provider event-first verification', () => {
         expect.objectContaining({
           participantExternalId: expect.any(String),
           round: expect.any(Number),
-          status: expect.stringMatching(/IN_PROGRESS|COMPLETED|DNF|DSQ/),
+          status: expect.stringMatching(/IN_PROGRESS|COMPLETED|DNF|DSQ|MISSED_CUT/),
         }),
       );
     }
@@ -770,6 +770,7 @@ describe('mock contest feed provider event-first verification', () => {
             round: expect.any(Number),
             strokes: expect.any(Number),
             scoreToPar: expect.any(Number),
+            status: expect.stringMatching(/IN_PROGRESS|COMPLETED|DNF|DSQ|MISSED_CUT/),
           }),
         );
       }

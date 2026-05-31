@@ -21,6 +21,10 @@ import {
   type FeedSnapshotRecord,
   type FeedUpdateRecord,
   type FieldSnapshotRecord,
+  type LiveGolfContestantRecord,
+  type LiveGolfRoundRecord,
+  type LiveGolfRoundStatusKind,
+  type LiveScoresSnapshotResponse,
   type MockEventStateKind,
   type ScenarioSummary,
   type SeasonRecord,
@@ -662,44 +666,281 @@ function scoreRelativeToPar(input: {
   return clamp(Math.round(baseline + fieldDrift + playerNoise), -20, 20);
 }
 
-function buildLiveGolfScores(
+type GolfLiveState =
+  | 'pre-live'
+  | 'r1-in-progress'
+  | 'r1-complete'
+  | 'r2-complete'
+  | 'correction'
+  | 'r4-complete-pending-final'
+  | 'playoff'
+  | 'completed'
+  | 'late-correction';
+
+interface GolfLiveBuildContext {
+  readonly event: ContestFeedEventRecord;
+  readonly contestants: readonly ContestantRecord[];
+  readonly state: GolfLiveState;
+  readonly asOf: string;
+}
+
+function resolveGolfLiveState(
+  event: ContestFeedEventRecord,
+  mockEventState: MockEventStateKind | undefined,
+): GolfLiveState {
+  switch (mockEventState) {
+    case 'open':
+    case 'locked':
+    case 'golf-pre-live':
+      return 'pre-live';
+    case 'live':
+    case 'golf-r1-in-progress':
+      return 'r1-in-progress';
+    case 'golf-r1-complete':
+      return 'r1-complete';
+    case 'golf-r2-complete':
+      return 'r2-complete';
+    case 'golf-correction':
+      return 'correction';
+    case 'golf-r4-complete-pending-final':
+      return 'r4-complete-pending-final';
+    case 'golf-playoff':
+      return 'playoff';
+    case 'completed':
+    case 'golf-completed':
+      return 'completed';
+    case 'golf-late-correction':
+      return 'late-correction';
+    case undefined:
+      if (event.status === 'completed') return 'completed';
+      if (event.status === 'in_progress') return 'r1-in-progress';
+      return 'pre-live';
+  }
+}
+
+function completedAtForRound(event: ContestFeedEventRecord, round: number): string {
+  const startsAt = Date.parse(event.schedule.startsAt);
+  const base = Number.isNaN(startsAt) ? Date.UTC(2026, 0, 1, 18) : startsAt;
+  return new Date(base + ((round - 1) * 24 * 60 * 60 * 1000) + (8 * 60 * 60 * 1000)).toISOString();
+}
+
+function golfRoundScoreToPar(event: ContestFeedEventRecord, contestant: ContestantRecord, round: number): number {
+  const seed = typeof contestant.seed === 'number' ? contestant.seed : 80;
+  const strength = clamp((81 - seed) / 80, 0, 1);
+  const eventSeed = event.metadata?.externalEventId ?? event.eventId;
+  const noise = (hashUnit(`${eventSeed}:${contestant.contestantId}:round:${round}`) - 0.5) * 8;
+  return clamp(Math.round(4 - (7 * strength) + noise), -7, 7);
+}
+
+function completedGolfRound(
+  event: ContestFeedEventRecord,
+  contestant: ContestantRecord,
+  round: number,
+  modifier = 0,
+  status: LiveGolfRoundStatusKind = 'COMPLETED',
+): LiveGolfRoundRecord {
+  const scoreToPar = clamp(golfRoundScoreToPar(event, contestant, round) + modifier, -9, 9);
+  return {
+    round,
+    strokes: 72 + scoreToPar,
+    scoreToPar,
+    thru: round > 4 ? 19 : 18,
+    status,
+    completedAt: completedAtForRound(event, round),
+  };
+}
+
+function inProgressGolfRound(event: ContestFeedEventRecord, contestant: ContestantRecord, round: number): LiveGolfRoundRecord {
+  const eventSeed = event.metadata?.externalEventId ?? event.eventId;
+  const thru = 4 + Math.floor(hashUnit(`${eventSeed}:${contestant.contestantId}:thru:${round}`) * 10);
+  const scoreToPar = clamp(golfRoundScoreToPar(event, contestant, round), -4, 4);
+  return {
+    round,
+    strokes: Math.max(0, (thru * 4) + scoreToPar),
+    scoreToPar,
+    thru,
+    status: 'IN_PROGRESS',
+  };
+}
+
+function isCutContestant(contestant: ContestantRecord, index: number): boolean {
+  return (typeof contestant.seed === 'number' && contestant.seed > 70) || index >= 70;
+}
+
+function isWithdrawnContestant(contestant: ContestantRecord): boolean {
+  return contestant.contestantId === 'golfer-06';
+}
+
+function isDisqualifiedContestant(contestant: ContestantRecord): boolean {
+  return contestant.contestantId === 'golfer-35';
+}
+
+function shouldApplyR2Correction(state: GolfLiveState, contestant: ContestantRecord, index: number): boolean {
+  return state === 'correction' && (contestant.contestantId === 'golfer-01' || index === 0);
+}
+
+function shouldApplyLateCorrection(state: GolfLiveState, contestant: ContestantRecord, index: number): boolean {
+  return state === 'late-correction' && (contestant.contestantId === 'golfer-01' || index === 0);
+}
+
+function liveRoundsForContestant(
+  context: GolfLiveBuildContext,
+  contestant: ContestantRecord,
+  index: number,
+): readonly LiveGolfRoundRecord[] {
+  const rounds: LiveGolfRoundRecord[] = [];
+  const addCompleted = (round: number, modifier = 0, status: LiveGolfRoundStatusKind = 'COMPLETED') => {
+    rounds.push(completedGolfRound(context.event, contestant, round, modifier, status));
+  };
+
+  switch (context.state) {
+    case 'pre-live':
+      return [];
+    case 'r1-in-progress':
+      return [inProgressGolfRound(context.event, contestant, 1)];
+    case 'r1-complete':
+      addCompleted(1);
+      return rounds;
+    case 'r2-complete':
+    case 'correction':
+      addCompleted(1);
+      if (isDisqualifiedContestant(contestant)) {
+        addCompleted(2, 0, 'DSQ');
+        return rounds;
+      }
+      addCompleted(2, shouldApplyR2Correction(context.state, contestant, index) ? -2 : 0, isCutContestant(contestant, index) ? 'MISSED_CUT' : 'COMPLETED');
+      return rounds;
+    case 'r4-complete-pending-final':
+    case 'playoff':
+    case 'completed':
+    case 'late-correction':
+      addCompleted(1);
+      if (isDisqualifiedContestant(contestant)) {
+        addCompleted(2, 0, 'DSQ');
+        return rounds;
+      }
+      if (isCutContestant(contestant, index)) {
+        addCompleted(2, 0, 'MISSED_CUT');
+        return rounds;
+      }
+      addCompleted(2);
+      if (isWithdrawnContestant(contestant)) {
+        addCompleted(3, 0, 'DNF');
+        return rounds;
+      }
+      addCompleted(3);
+      addCompleted(4, shouldApplyLateCorrection(context.state, contestant, index) ? -2 : 0);
+      return rounds;
+  }
+}
+
+function scoreLiveGolfContestant(contestant: LiveGolfContestantRecord): number {
+  return contestant.rounds.reduce((sum, round) => sum + round.scoreToPar, 0);
+}
+
+function withPlayoffRounds(context: GolfLiveBuildContext, contestants: readonly LiveGolfContestantRecord[]): readonly LiveGolfContestantRecord[] {
+  if (context.state !== 'playoff' && context.state !== 'completed' && context.state !== 'late-correction') {
+    return contestants;
+  }
+
+  const eligible = contestants
+    .filter((contestant) => contestant.rounds.length === 4 && contestant.rounds.every((round) => round.status === 'COMPLETED'))
+    .sort((left, right) => scoreLiveGolfContestant(left) - scoreLiveGolfContestant(right) || left.name.localeCompare(right.name))
+    .slice(0, 2);
+  const playoffParticipantIds = new Set(eligible.map((contestant) => contestant.contestantId));
+
+  return contestants.map((contestant) => {
+    if (!playoffParticipantIds.has(contestant.contestantId)) {
+      return contestant;
+    }
+
+    const playoffIndex = eligible.findIndex((eligibleContestant) => eligibleContestant.contestantId === contestant.contestantId);
+    const playoffRound =
+      context.state === 'playoff' && playoffIndex === 1
+        ? { ...completedGolfRound(context.event, contestant, 5, 1), status: 'IN_PROGRESS' as const, thru: 19, completedAt: undefined }
+        : completedGolfRound(context.event, contestant, 5, playoffIndex === 0 ? -1 : 1);
+
+    return {
+      ...contestant,
+      rounds: [...contestant.rounds, playoffRound],
+    };
+  });
+}
+
+function participantStatusForLiveRounds(
+  contestant: ContestantRecord,
+  rounds: readonly LiveGolfRoundRecord[],
+): ContestantRecord['participantStatus'] {
+  const terminalStatus = rounds.at(-1)?.status;
+  if (terminalStatus === 'MISSED_CUT') return 'cut';
+  if (terminalStatus === 'DNF') return 'withdrawn';
+  if (terminalStatus === 'DSQ') return 'eliminated';
+  return contestant.participantStatus;
+}
+
+function validateLiveGolfContestants(
+  contestants: readonly LiveGolfContestantRecord[],
+  knownContestantIds: ReadonlySet<string>,
+): void {
+  for (const contestant of contestants) {
+    if (!knownContestantIds.has(contestant.contestantId)) {
+      throw new Error(`Live golf response contains unknown contestant: ${contestant.contestantId}`);
+    }
+
+    const seenRounds = new Set<number>();
+    for (const round of contestant.rounds) {
+      if (round.round < 1 || round.round > 8) {
+        throw new Error(`Live golf response contains invalid round ${round.round} for ${contestant.contestantId}`);
+      }
+      if (seenRounds.has(round.round)) {
+        throw new Error(`Live golf response contains duplicate round ${round.round} for ${contestant.contestantId}`);
+      }
+      seenRounds.add(round.round);
+      if (round.strokes < 0) {
+        throw new Error(`Live golf response contains negative strokes for ${contestant.contestantId}`);
+      }
+      if (round.status !== 'IN_PROGRESS' && round.completedAt === undefined) {
+        throw new Error(`Live golf terminal round is missing completedAt for ${contestant.contestantId}`);
+      }
+      if (round.status === 'IN_PROGRESS' && round.completedAt !== undefined) {
+        throw new Error(`Live golf in-progress round has completedAt for ${contestant.contestantId}`);
+      }
+      if (round.thru !== undefined && round.thru < 0) {
+        throw new Error(`Live golf response contains invalid thru for ${contestant.contestantId}`);
+      }
+    }
+  }
+}
+
+function buildLiveGolfContestants(
   scenario: ContestFeedScenarioRecord,
   event: ContestFeedEventRecord,
-  tick: number,
-): readonly ContestantRecord[] {
+  state: GolfLiveState,
+  asOf: string,
+): readonly LiveGolfContestantRecord[] {
   const contestants = resolveContestantsForFeed(scenario.sport, event);
-  const oddsValues = contestants
-    .map((contestant) => contestant.odds)
-    .filter((odds): odds is number => typeof odds === 'number');
+  const context: GolfLiveBuildContext = { event, contestants, state, asOf };
+  const liveContestants = contestants.map((contestant, index) => {
+    const rounds = liveRoundsForContestant(context, contestant, index);
+    return {
+      contestantId: contestant.contestantId,
+      name: contestant.name,
+      ...(contestant.teamName ? { teamName: contestant.teamName } : {}),
+      ...(contestant.countryCode ? { countryCode: contestant.countryCode } : {}),
+      ...(typeof contestant.seed === 'number' ? { seed: contestant.seed } : {}),
+      ...(participantStatusForLiveRounds(contestant, rounds) ? { participantStatus: participantStatusForLiveRounds(contestant, rounds) } : {}),
+      rounds,
+    };
+  });
+  const withPlayoff = withPlayoffRounds(context, liveContestants);
+  validateLiveGolfContestants(withPlayoff, new Set(contestants.map((contestant) => contestant.contestantId)));
 
-  const minOdds = oddsValues.length > 0 ? Math.min(...oddsValues) : 1.01;
-  const maxOdds = oddsValues.length > 0 ? Math.max(...oddsValues) : 100;
-  const eventSeed = event.metadata?.externalEventId ?? event.eventId;
-
-  return contestants
-    .map((contestant) => {
-      const score = scoreRelativeToPar({
-        eventSeed,
-        tick,
-        participantId: contestant.contestantId,
-        decimalOdds: contestant.odds ?? maxOdds,
-        minOdds,
-        maxOdds,
-      });
-      return {
-        ...contestant,
-        strokes: strokesForGolfScore(score),
-        score,
-        result: 'pending' as const,
-      };
-    })
+  return withPlayoff
+    .filter((contestant) => contestant.rounds.length > 0)
     .sort((left, right) => {
-      const leftScore = typeof left.score === 'number' ? left.score : Number.POSITIVE_INFINITY;
-      const rightScore = typeof right.score === 'number' ? right.score : Number.POSITIVE_INFINITY;
-      if (leftScore !== rightScore) {
-        return leftScore - rightScore;
-      }
-
+      const leftScore = scoreLiveGolfContestant(left);
+      const rightScore = scoreLiveGolfContestant(right);
+      if (leftScore !== rightScore) return leftScore - rightScore;
       return left.name.localeCompare(right.name);
     });
 }
@@ -782,22 +1023,28 @@ function applyMockEventState(
     throw new Error(`Mock event state controls are only supported for GOLF scenarios: ${scenario.scenarioId}`);
   }
 
+  const liveState = resolveGolfLiveState(event, mockEventState);
   const status: ContestFeedEventRecord['status'] =
-    mockEventState === 'live'
+    liveState === 'r1-in-progress'
+      || liveState === 'r1-complete'
+      || liveState === 'r2-complete'
+      || liveState === 'correction'
+      || liveState === 'r4-complete-pending-final'
+      || liveState === 'playoff'
       ? 'in_progress'
-      : mockEventState === 'completed'
+      : liveState === 'completed' || liveState === 'late-correction'
         ? 'completed'
         : 'field_announced';
   const fieldStatus: FieldSnapshotRecord['status'] =
-    mockEventState === 'completed'
+    status === 'completed'
       ? 'final'
-      : mockEventState === 'open'
+      : liveState === 'pre-live' && mockEventState !== 'locked'
         ? 'announced'
         : 'locked';
   const asOf =
-    mockEventState === 'completed'
+    status === 'completed'
       ? event.schedule.endsAt ?? event.schedule.startsAt
-      : mockEventState === 'live'
+      : status === 'in_progress'
         ? event.schedule.startsAt
         : event.field.asOf;
   const stateEvent = {
@@ -1481,7 +1728,7 @@ export class ScenarioStore {
     eventId: string,
     explicitTick?: number,
     mockEventState?: MockEventStateKind,
-  ): ContestFeedSnapshotResponse {
+  ): LiveScoresSnapshotResponse {
     const scenario = this.getScenario(scenarioId);
     const event = this.getEvent(scenarioId, eventId, mockEventState);
     const tickKey = `${scenarioId}:${eventId}`;
@@ -1497,29 +1744,16 @@ export class ScenarioStore {
       this.liveScoreTicks.set(tickKey, tick);
     }
 
-    const explicitGolfRoundScores =
-      scenario.sport === 'GOLF'
-      && event.feeds.results.contestants.some((contestant) => typeof contestant.strokes === 'number');
-    const contestants =
-      (event.status !== 'in_progress' && event.status !== 'completed')
-        ? []
-        : scenario.sport === 'GOLF'
-          ? explicitGolfRoundScores
-            ? mergeContestants(
-              resolveContestantsForFeed(scenario.sport, event),
-              event.feeds.results.contestants,
-            )
-            : buildLiveGolfScores(scenario, event, tick)
-          : mergeContestants(
-            resolveContestantsForFeed(scenario.sport, event),
-            event.feeds.results.contestants,
-          );
-
     const asOf = isManualTestLifecycleEvent(event)
       ? now.toISOString()
       : new Date(Date.parse(event.schedule.startsAt) + tick * minuteMs).toISOString();
+    const liveState = scenario.sport === 'GOLF' ? resolveGolfLiveState(event, mockEventState) : 'pre-live';
+    const contestants =
+      scenario.sport === 'GOLF'
+        ? buildLiveGolfContestants(scenario, event, liveState, asOf)
+        : [];
 
-    const response: ContestFeedSnapshotResponse = {
+    const response: LiveScoresSnapshotResponse = {
       scenarioId,
       eventId,
       eventName: event.name,
@@ -1527,7 +1761,7 @@ export class ScenarioStore {
       asOf,
       note: isManualTestLifecycleEvent(event)
         ? `Manual test lifecycle ${manualLifecycle?.phase ?? 'unknown'} tick ${tick}`
-        : `Live scoring tick ${tick}`,
+        : `Live scoring state ${liveState} tick ${tick}`,
       contestants,
     };
     this.logger?.info(

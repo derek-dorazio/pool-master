@@ -32,9 +32,8 @@ import type {
 type ScenarioSummaryResponse = ListMockContestFeedScenariosResponse;
 type EventListResponse = ListMockContestFeedScenarioEventsResponse;
 type EventDetailResponse = GetMockContestFeedScenarioEventDetailResponse;
-type FeedSnapshotResponse =
-  | GetMockContestFeedScoresSnapshotResponse
-  | GetMockContestFeedResultsSnapshotResponse;
+type ScoresSnapshotResponse = GetMockContestFeedScoresSnapshotResponse;
+type ResultsSnapshotResponse = GetMockContestFeedResultsSnapshotResponse;
 
 type SupportedMockSport = ScenarioSummaryResponse['scenarios'][number]['sport'];
 type ContestantRecord = NonNullable<
@@ -160,12 +159,6 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     return Array.from(rankings.values()).sort((left, right) => left.rank - right.rank);
   }
 
-  /**
-   * Emits a typed `LiveScoreResult` per plans/117 §10.2 for the mock-feed
-   * scenario. The mock provider now emits round strokes for generated golf
-   * live-score snapshots so manual QA runs can persist rows and move contest
-   * scoring during explicit live-state testing.
-   */
   async getLiveScores(
     eventId: string,
     options?: ProviderEventSyncOptions,
@@ -176,7 +169,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
       return empty;
     }
 
-    const liveScores = await this.fetchJson<FeedSnapshotResponse>(
+    const liveScores = await this.fetchJson<ScoresSnapshotResponse>(
       withMockEventState(
         `/v1/scenarios/${match.scenarioId}/events/${eventId}/scores`,
         options,
@@ -184,18 +177,20 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     );
 
     const rounds: GolfRoundUpdate[] = liveScores.contestants
-      .filter((contestant) => typeof contestant.score === 'number')
-      .map((contestant) => {
-        const strokes = typeof contestant.strokes === 'number'
-          ? contestant.strokes
-          : null;
-        return {
+      .flatMap((contestant) => {
+        if (!Array.isArray(contestant.rounds)) {
+          throw new Error(`Mock live scores response missing rounds for contestant ${contestant.contestantId}`);
+        }
+
+        return contestant.rounds.map((round) => ({
           participantExternalId: contestant.contestantId,
-          round: 1,
-          strokes,
-          scoreToPar: contestant.score as number,
-          status: strokes === null ? 'IN_PROGRESS' : 'COMPLETED',
-        };
+          round: round.round,
+          strokes: round.strokes,
+          scoreToPar: round.scoreToPar,
+          ...(typeof round.thru === 'number' ? { thru: round.thru } : {}),
+          status: round.status,
+          ...(round.completedAt ? { completedAt: round.completedAt } : {}),
+        }));
       });
 
     return { category: 'GOLF', externalEventId: eventId, rounds };
@@ -216,7 +211,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
         options,
       ),
     );
-    const resultsSnapshot = await this.fetchJson<FeedSnapshotResponse>(
+    const resultsSnapshot = await this.fetchJson<ResultsSnapshotResponse>(
       withMockEventState(
         `/v1/scenarios/${match.scenarioId}/events/${eventId}/results`,
         options,

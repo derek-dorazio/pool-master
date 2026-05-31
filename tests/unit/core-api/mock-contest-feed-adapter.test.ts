@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { Sport } from '../../../packages/shared/domain';
 import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
 
@@ -123,9 +125,46 @@ describe('MockContestFeedAdapter', () => {
       if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/scores')) {
         return okJson({
           asOf: '2026-04-10T22:30:00.000Z',
+          eventId: 'golf-masters-2026',
+          eventName: 'Masters Tournament 2026',
+          feedKind: 'results',
+          scenarioId: 'golf-major-2026',
           contestants: [
-            { contestantId: 'scottie-scheffler', score: -4 },
-            { contestantId: 'rory-mcilroy', score: -5 },
+            {
+              contestantId: 'scottie-scheffler',
+              name: 'Scottie Scheffler',
+              rounds: [
+                {
+                  round: 1,
+                  strokes: 69,
+                  scoreToPar: -3,
+                  thru: 18,
+                  status: 'COMPLETED',
+                  completedAt: '2026-04-10T22:00:00.000Z',
+                },
+              ],
+            },
+            {
+              contestantId: 'rory-mcilroy',
+              name: 'Rory McIlroy',
+              rounds: [
+                {
+                  round: 1,
+                  strokes: 34,
+                  scoreToPar: -2,
+                  thru: 9,
+                  status: 'IN_PROGRESS',
+                },
+                {
+                  round: 2,
+                  strokes: 70,
+                  scoreToPar: -2,
+                  thru: 18,
+                  status: 'MISSED_CUT',
+                  completedAt: '2026-04-11T22:00:00.000Z',
+                },
+              ],
+            },
           ],
         });
       }
@@ -172,14 +211,23 @@ describe('MockContestFeedAdapter', () => {
     if (liveScores.category === 'GOLF') {
       expect(liveScores.rounds).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({
-            participantExternalId: 'rory-mcilroy',
-            scoreToPar: -5,
-            round: 1,
-            status: 'IN_PROGRESS',
-          }),
-        ]),
-      );
+        expect.objectContaining({
+          participantExternalId: 'rory-mcilroy',
+          scoreToPar: -2,
+          round: 1,
+          status: 'IN_PROGRESS',
+          thru: 9,
+          strokes: 34,
+        }),
+        expect.objectContaining({
+          participantExternalId: 'rory-mcilroy',
+          scoreToPar: -2,
+          round: 2,
+          status: 'MISSED_CUT',
+          completedAt: '2026-04-11T22:00:00.000Z',
+        }),
+      ]),
+    );
     }
 
     const results = await adapter.getEventResults('golf-masters-2026');
@@ -187,6 +235,70 @@ describe('MockContestFeedAdapter', () => {
 
     const health = await adapter.healthCheck();
     expect(health.status).toBe('HEALTHY');
+  });
+
+  it('pool-master-eux.7: fetches pre-live scores and maps provider rounds without mock-state branching', async () => {
+    const fetchSpy = jest.fn(async (input: string | URL) => {
+      const url = String(input);
+      if (url.endsWith('/v1/scenarios')) return okJson(scenarioResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events')) return okJson(eventListResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/scores?mockEventState=golf-pre-live')) {
+        return okJson({
+          asOf: '2026-04-10T22:30:00.000Z',
+          eventId: 'golf-masters-2026',
+          eventName: 'Masters Tournament 2026',
+          feedKind: 'results',
+          scenarioId: 'golf-major-2026',
+          contestants: [],
+        });
+      }
+      throw new Error(`Unhandled fetch URL: ${url}`);
+    });
+    global.fetch = fetchSpy as unknown as typeof fetch;
+
+    const adapter = new MockContestFeedAdapter('http://mock-contest-feed-provider.qa.poolmaster.internal:3105');
+    const result = await adapter.getLiveScores('golf-masters-2026', { mockEventState: 'golf-pre-live' });
+
+    expect(result).toEqual({ category: 'GOLF', externalEventId: 'golf-masters-2026', rounds: [] });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'http://mock-contest-feed-provider.qa.poolmaster.internal:3105/v1/scenarios/golf-major-2026/events/golf-masters-2026/scores?mockEventState=golf-pre-live',
+    );
+
+    const adapterSource = readFileSync(
+      resolve(process.cwd(), 'packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter.ts'),
+      'utf8',
+    );
+    const getLiveScoresSource = adapterSource.slice(
+      adapterSource.indexOf('async getLiveScores('),
+      adapterSource.indexOf('async getEventResults('),
+    );
+    expect(getLiveScoresSource).not.toMatch(/mockEventState\s*===/);
+    expect(getLiveScoresSource).not.toMatch(/case ['"](golf-|open|locked|live|completed)/);
+  });
+
+  it('pool-master-eux.7: fails malformed mock live-score payloads instead of applying field fallbacks', async () => {
+    global.fetch = jest.fn(async (input: string | URL) => {
+      const url = String(input);
+      if (url.endsWith('/v1/scenarios')) return okJson(scenarioResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events')) return okJson(eventListResponse);
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/scores')) {
+        return okJson({
+          asOf: '2026-04-10T22:30:00.000Z',
+          eventId: 'golf-masters-2026',
+          eventName: 'Masters Tournament 2026',
+          feedKind: 'results',
+          scenarioId: 'golf-major-2026',
+          contestants: [{ contestantId: 'rory-mcilroy', name: 'Rory McIlroy' }],
+        });
+      }
+      throw new Error(`Unhandled fetch URL: ${url}`);
+    }) as typeof fetch;
+
+    const adapter = new MockContestFeedAdapter('http://mock-contest-feed-provider.qa.poolmaster.internal:3105');
+
+    await expect(adapter.getLiveScores('golf-masters-2026')).rejects.toThrow(
+      'Mock live scores response missing rounds for contestant rory-mcilroy',
+    );
   });
 
   it('pool-master-s4y: resolves historical relative manual-test event details after provider list rolls forward', async () => {

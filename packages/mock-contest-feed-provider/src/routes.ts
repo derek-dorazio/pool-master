@@ -5,6 +5,7 @@ import {
   eventResponseSchema,
   eventSummarySchema,
   feedKinds,
+  liveScoresSnapshotResponseSchema,
   mockEventStateKinds,
   mockFeedProviderId,
   scenarioRecordSchema,
@@ -468,7 +469,7 @@ export async function mockContestFeedRoutes(
           },
         },
         response: {
-          200: snapshotResponseSchema,
+          200: liveScoresSnapshotResponseSchema,
         },
       },
     },

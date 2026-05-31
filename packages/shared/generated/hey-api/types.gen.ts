@@ -14601,7 +14601,7 @@ export type AdminSyncProviderEventDataData = {
         /**
          * Optional mock-provider-only event state override for manual QA event syncs.
          */
-        mockEventState?: 'open' | 'locked' | 'live' | 'completed';
+        mockEventState?: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction';
     };
     path: {
         sport: string;

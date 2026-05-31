@@ -44,7 +44,7 @@ export const GolfRoundUpdateSchema = z.object({
   thru: z.number().int().min(0).optional().describe(
     'Number of completed holes in this round when the provider reports an in-progress round; can exceed 18 for playoff/extra-hole movement.',
   ),
-  status: z.enum(['IN_PROGRESS', 'COMPLETED', 'DNF', 'DSQ']),
+  status: z.enum(['IN_PROGRESS', 'COMPLETED', 'DNF', 'DSQ', 'MISSED_CUT']),
   completedAt: z.string().datetime().optional(),
 }).describe('Golf round update emitted by golf adapters per plans/117 §6.1.');
 export type GolfRoundUpdate = z.infer<typeof GolfRoundUpdateSchema>;

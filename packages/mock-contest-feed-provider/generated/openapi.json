@@ -1533,7 +1533,16 @@
                 "open",
                 "locked",
                 "live",
-                "completed"
+                "completed",
+                "golf-pre-live",
+                "golf-r1-in-progress",
+                "golf-r1-complete",
+                "golf-r2-complete",
+                "golf-correction",
+                "golf-r4-complete-pending-final",
+                "golf-playoff",
+                "golf-completed",
+                "golf-late-correction"
               ]
             },
             "in": "query",
@@ -2207,7 +2216,16 @@
                 "open",
                 "locked",
                 "live",
-                "completed"
+                "completed",
+                "golf-pre-live",
+                "golf-r1-in-progress",
+                "golf-r1-complete",
+                "golf-r2-complete",
+                "golf-correction",
+                "golf-r4-complete-pending-final",
+                "golf-playoff",
+                "golf-completed",
+                "golf-late-correction"
               ]
             },
             "in": "query",
@@ -2362,7 +2380,16 @@
                 "open",
                 "locked",
                 "live",
-                "completed"
+                "completed",
+                "golf-pre-live",
+                "golf-r1-in-progress",
+                "golf-r1-complete",
+                "golf-r2-complete",
+                "golf-correction",
+                "golf-r4-complete-pending-final",
+                "golf-playoff",
+                "golf-completed",
+                "golf-late-correction"
               ]
             },
             "in": "query",
@@ -2517,7 +2544,16 @@
                 "open",
                 "locked",
                 "live",
-                "completed"
+                "completed",
+                "golf-pre-live",
+                "golf-r1-in-progress",
+                "golf-r1-complete",
+                "golf-r2-complete",
+                "golf-correction",
+                "golf-r4-complete-pending-final",
+                "golf-playoff",
+                "golf-completed",
+                "golf-late-correction"
               ]
             },
             "in": "query",
@@ -2672,7 +2708,16 @@
                 "open",
                 "locked",
                 "live",
-                "completed"
+                "completed",
+                "golf-pre-live",
+                "golf-r1-in-progress",
+                "golf-r1-complete",
+                "golf-r2-complete",
+                "golf-correction",
+                "golf-r4-complete-pending-final",
+                "golf-playoff",
+                "golf-completed",
+                "golf-late-correction"
               ]
             },
             "in": "query",
@@ -2836,7 +2881,16 @@
                 "open",
                 "locked",
                 "live",
-                "completed"
+                "completed",
+                "golf-pre-live",
+                "golf-r1-in-progress",
+                "golf-r1-complete",
+                "golf-r2-complete",
+                "golf-correction",
+                "golf-r4-complete-pending-final",
+                "golf-playoff",
+                "golf-completed",
+                "golf-late-correction"
               ]
             },
             "in": "query",
@@ -2889,9 +2943,6 @@
                     "feedKind": {
                       "type": "string",
                       "enum": [
-                        "field",
-                        "odds",
-                        "rankings",
                         "results"
                       ]
                     },
@@ -2909,7 +2960,8 @@
                         "additionalProperties": false,
                         "required": [
                           "contestantId",
-                          "name"
+                          "name",
+                          "rounds"
                         ],
                         "properties": {
                           "contestantId": {
@@ -2939,31 +2991,50 @@
                               "inactive"
                             ]
                           },
-                          "odds": {
-                            "type": "number"
-                          },
-                          "ranking": {
-                            "type": "number"
-                          },
-                          "strokes": {
-                            "type": "number"
-                          },
-                          "score": {
-                            "type": "number"
-                          },
-                          "result": {
-                            "type": "string",
-                            "enum": [
-                              "win",
-                              "loss",
-                              "tie",
-                              "cut",
-                              "withdrawn",
-                              "pending"
-                            ]
-                          },
-                          "note": {
-                            "type": "string"
+                          "rounds": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": [
+                                "round",
+                                "strokes",
+                                "scoreToPar",
+                                "status"
+                              ],
+                              "properties": {
+                                "round": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 8
+                                },
+                                "strokes": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "scoreToPar": {
+                                  "type": "integer"
+                                },
+                                "thru": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "IN_PROGRESS",
+                                    "COMPLETED",
+                                    "DNF",
+                                    "DSQ",
+                                    "MISSED_CUT"
+                                  ]
+                                },
+                                "completedAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                }
+                              }
+                            }
                           }
                         }
                       }
