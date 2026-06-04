@@ -446,7 +446,13 @@ async function readGolfLeaderboard(contestId: string, headers: Record<string, st
 beforeAll(async () => {
   await setupIntegrationTests();
   integrationSetupComplete = true;
-  mockProvider = await startMockContestFeedProvider();
+  mockProvider = await startMockContestFeedProvider({
+    routes: {
+      scenarioStoreOptions: {
+        now: () => syncVerificationNow,
+      },
+    },
+  });
 });
 
 afterEach(async () => {
