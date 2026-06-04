@@ -37,76 +37,118 @@ test('pool-master-33l.8.7: ScenarioStore generates rolling Thursday-Sunday golf 
   assert.deepEqual(
     scenario.events.map((event) => event.eventId),
     [
+      'golf-relative-weekend-20260423',
       'golf-relative-weekend-20260430',
-      'golf-relative-weekend-20260507',
     ],
   );
 
-  const firstWeekend = scenario.events.find((event) => event.eventId === 'golf-relative-weekend-20260430');
-  assert.equal(firstWeekend?.name, 'Rolling QA Weekend 1 Championship (2026-04-30)');
-  assert.equal(firstWeekend?.status, 'field_announced');
-  assert.equal(firstWeekend?.field.status, 'announced');
-  assert.equal(firstWeekend?.schedule.releaseAt, '2026-04-16T12:00:00.000Z');
-  assert.equal(firstWeekend?.schedule.fieldLocksAt, '2026-04-29T16:00:00.000Z');
-  assert.equal(firstWeekend?.schedule.startsAt, '2026-04-30T12:00:00.000Z');
-  assert.equal(firstWeekend?.schedule.endsAt, '2026-05-03T22:00:00.000Z');
-  assert.equal(firstWeekend?.metadata?.eventType, 'rolling-weekend-qa');
-  assert.ok(Date.parse(firstWeekend?.schedule.startsAt ?? '') > now.getTime());
-  assert.ok(Date.parse(firstWeekend?.schedule.releaseAt ?? '') < now.getTime());
-  assert.ok(Date.parse(firstWeekend?.schedule.fieldLocksAt ?? '') > now.getTime());
-  assert.equal(firstWeekend?.field.contestants.length, 80);
+  const currentWeekend = scenario.events.find((event) => event.eventId === 'golf-relative-weekend-20260423');
+  assert.equal(currentWeekend?.status, 'in_progress');
+  assert.equal(currentWeekend?.field.status, 'locked');
+  assert.equal(currentWeekend?.schedule.releaseAt, '2026-04-09T12:00:00.000Z');
+  assert.equal(currentWeekend?.schedule.fieldLocksAt, '2026-04-22T16:00:00.000Z');
+  assert.equal(currentWeekend?.schedule.startsAt, '2026-04-23T12:00:00.000Z');
+  assert.equal(currentWeekend?.schedule.endsAt, '2026-04-26T23:00:00.000Z');
+  assert.equal(currentWeekend?.metadata?.eventType, 'rolling-weekend-qa');
+  assert.ok(Date.parse(currentWeekend?.schedule.startsAt ?? '') < now.getTime());
+  assert.ok(Date.parse(currentWeekend?.schedule.endsAt ?? '') > now.getTime());
+  assert.equal(currentWeekend?.field.contestants.length, 80);
 
-  const secondWeekend = scenario.events.find((event) => event.eventId === 'golf-relative-weekend-20260507');
-  assert.equal(secondWeekend?.name, 'Rolling QA Weekend 2 Championship (2026-05-07)');
-  assert.equal(secondWeekend?.schedule.releaseAt, '2026-04-23T12:00:00.000Z');
-  assert.equal(secondWeekend?.schedule.fieldLocksAt, '2026-05-06T16:00:00.000Z');
-  assert.equal(secondWeekend?.schedule.startsAt, '2026-05-07T12:00:00.000Z');
-  assert.equal(secondWeekend?.schedule.endsAt, '2026-05-10T22:00:00.000Z');
-  assert.equal(secondWeekend?.metadata?.eventType, 'rolling-weekend-qa');
-  assert.ok(Date.parse(secondWeekend?.schedule.startsAt ?? '') > Date.parse(firstWeekend?.schedule.startsAt ?? ''));
-  assert.equal(secondWeekend?.field.contestants.length, 80);
+  const nextWeekend = scenario.events.find((event) => event.eventId === 'golf-relative-weekend-20260430');
+  assert.equal(nextWeekend?.status, 'field_announced');
+  assert.equal(nextWeekend?.field.status, 'announced');
+  assert.equal(nextWeekend?.schedule.releaseAt, '2026-04-16T12:00:00.000Z');
+  assert.equal(nextWeekend?.schedule.fieldLocksAt, '2026-04-29T16:00:00.000Z');
+  assert.equal(nextWeekend?.schedule.startsAt, '2026-04-30T12:00:00.000Z');
+  assert.equal(nextWeekend?.schedule.endsAt, '2026-05-03T23:00:00.000Z');
+  assert.equal(nextWeekend?.metadata?.eventType, 'rolling-weekend-qa');
+  assert.ok(Date.parse(nextWeekend?.schedule.startsAt ?? '') > now.getTime());
+  assert.ok(Date.parse(nextWeekend?.schedule.releaseAt ?? '') < now.getTime());
+  assert.ok(Date.parse(nextWeekend?.schedule.fieldLocksAt ?? '') > now.getTime());
+  assert.equal(nextWeekend?.field.contestants.length, 80);
+  assert.ok(Date.parse(nextWeekend?.schedule.startsAt ?? '') > Date.parse(currentWeekend?.schedule.startsAt ?? ''));
 });
 
 test('pool-master-33l.8.7: ScenarioStore chooses the next rolling Thursday tee time across UTC boundaries', () => {
-  const rollingEventIdsFor = (now: string): readonly string[] =>
+  const rollingEventsFor = (now: string) =>
     buildRelativeTodayGolfScenario(new Date(now)).events
-      .filter((event) => event.metadata?.eventType === 'rolling-weekend-qa')
-      .map((event) => event.eventId);
+      .filter((event) => event.metadata?.eventType === 'rolling-weekend-qa');
+  const rollingEventIdsFor = (now: string): readonly string[] =>
+    rollingEventsFor(now).map((event) => event.eventId);
 
   const cases = [
     {
       now: '2026-04-29T10:00:00.000Z',
-      eventIds: ['golf-relative-weekend-20260430', 'golf-relative-weekend-20260507'],
+      eventIds: ['golf-relative-weekend-20260423', 'golf-relative-weekend-20260430'],
     },
     {
       now: '2026-04-30T11:59:00.000Z',
-      eventIds: ['golf-relative-weekend-20260430', 'golf-relative-weekend-20260507'],
+      eventIds: ['golf-relative-weekend-20260423', 'golf-relative-weekend-20260430'],
+    },
+    {
+      now: '2026-04-26T21:00:00.000Z',
+      eventIds: ['golf-relative-weekend-20260423', 'golf-relative-weekend-20260430'],
+    },
+    {
+      now: '2026-04-26T23:01:00.000Z',
+      eventIds: ['golf-relative-weekend-20260423', 'golf-relative-weekend-20260430'],
     },
     {
       now: '2026-04-30T12:00:00.000Z',
-      eventIds: ['golf-relative-weekend-20260507', 'golf-relative-weekend-20260514'],
+      eventIds: ['golf-relative-weekend-20260430', 'golf-relative-weekend-20260507'],
     },
     {
       now: '2026-04-30T12:01:00.000Z',
-      eventIds: ['golf-relative-weekend-20260507', 'golf-relative-weekend-20260514'],
+      eventIds: ['golf-relative-weekend-20260430', 'golf-relative-weekend-20260507'],
     },
     {
       now: '2026-05-03T21:00:00.000Z',
-      eventIds: ['golf-relative-weekend-20260507', 'golf-relative-weekend-20260514'],
+      eventIds: ['golf-relative-weekend-20260430', 'golf-relative-weekend-20260507'],
     },
     {
       now: '2026-03-08T06:30:00.000Z',
-      eventIds: ['golf-relative-weekend-20260312', 'golf-relative-weekend-20260319'],
+      eventIds: ['golf-relative-weekend-20260305', 'golf-relative-weekend-20260312'],
     },
     {
       now: '2026-12-30T23:00:00.000Z',
-      eventIds: ['golf-relative-weekend-20261231', 'golf-relative-weekend-20270107'],
+      eventIds: ['golf-relative-weekend-20261224', 'golf-relative-weekend-20261231'],
     },
   ] as const;
 
   for (const testCase of cases) {
     assert.deepEqual(rollingEventIdsFor(testCase.now), testCase.eventIds);
   }
+
+  const liveEvent = rollingEventsFor('2026-04-30T12:01:00.000Z')[0];
+  assert.equal(liveEvent?.status, 'in_progress');
+  assert.equal(liveEvent?.field.status, 'locked');
+  assert.equal(liveEvent?.feeds.results.contestants.every((contestant) => contestant.result === 'pending'), true);
+
+  const completedEvent = rollingEventsFor('2026-05-04T00:01:00.000Z')[0];
+  assert.equal(completedEvent?.eventId, 'golf-relative-weekend-20260430');
+  assert.equal(completedEvent?.status, 'completed');
+  assert.equal(completedEvent?.field.status, 'final');
+});
+
+test('pool-master-eux.9: relative golf events derive provider lifecycle and default scores from current time', () => {
+  const currentNow = new Date('2026-04-30T12:01:00.000Z');
+  const store = new ScenarioStore(
+    scenarioDir,
+    undefined,
+    { now: () => currentNow },
+  );
+  const scenarioId = 'golf-relative-today';
+  const eventId = 'golf-relative-weekend-20260430';
+
+  const detail = store.getEventResponse(scenarioId, eventId);
+  assert.equal(detail.event.status, 'in_progress');
+  assert.equal(detail.event.field.status, 'locked');
+
+  const liveScores = store.getLiveScores(scenarioId, eventId);
+  assert.equal(liveScores.contestants.length, 80);
+  assert.equal(liveScores.contestants[0]?.rounds.length, 1);
+  assert.equal(liveScores.contestants[0]?.rounds[0]?.status, 'IN_PROGRESS');
+  assert.ok(typeof liveScores.contestants[0]?.rounds[0]?.strokes === 'number');
 });
 
 test('pool-master-xw5.5 + pool-master-33l.8.7: ScenarioStore includes generated relative today events in the scenario catalog', () => {
@@ -121,19 +163,19 @@ test('pool-master-xw5.5 + pool-master-33l.8.7: ScenarioStore includes generated 
   assert.equal(relativeScenario.events.length, 2);
 
   const events = store.listEvents('golf-relative-today');
-  assert.equal(events[0]?.eventId, 'golf-relative-weekend-20260430');
-  assert.equal(events[0]?.status, 'field_announced');
-  assert.equal(events.at(-1)?.eventId, 'golf-relative-weekend-20260507');
+  assert.equal(events[0]?.eventId, 'golf-relative-weekend-20260423');
+  assert.equal(events[0]?.status, 'in_progress');
+  assert.equal(events.at(-1)?.eventId, 'golf-relative-weekend-20260430');
 
-  const weekendDetail = store.getEventResponse('golf-relative-today', 'golf-relative-weekend-20260430');
+  const weekendDetail = store.getEventResponse('golf-relative-today', 'golf-relative-weekend-20260423');
   assert.equal(weekendDetail.event.field.contestants.length, 80);
-  assert.equal(weekendDetail.event.schedule.startsAt, '2026-04-30T12:00:00.000Z');
+  assert.equal(weekendDetail.event.schedule.startsAt, '2026-04-23T12:00:00.000Z');
 
   currentNow = new Date('2026-04-26T22:25:00.000Z');
   const nextCycleEvents = store.listEvents('golf-relative-today');
-  assert.equal(nextCycleEvents[0]?.eventId, 'golf-relative-weekend-20260430');
-  assert.equal(nextCycleEvents[0]?.status, 'field_announced');
-  assert.equal(nextCycleEvents.at(-1)?.eventId, 'golf-relative-weekend-20260507');
+  assert.equal(nextCycleEvents[0]?.eventId, 'golf-relative-weekend-20260423');
+  assert.equal(nextCycleEvents[0]?.status, 'in_progress');
+  assert.equal(nextCycleEvents.at(-1)?.eventId, 'golf-relative-weekend-20260430');
 });
 
 test('pool-master-33l.8.8: explicit mock event states control golf detail, results, and live scores', () => {

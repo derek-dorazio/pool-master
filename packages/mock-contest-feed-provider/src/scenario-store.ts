@@ -1086,13 +1086,13 @@ function startOfUtcDay(base: Date): Date {
   return new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate()));
 }
 
-function nextUtcWeekdayStartAfter(base: Date, weekday: number, hour: number): Date {
+function utcWeekdayStartOnOrBefore(base: Date, weekday: number, hour: number): Date {
   const today = startOfUtcDay(base);
-  const daysUntilWeekday = (weekday - today.getUTCDay() + 7) % 7;
-  let candidate = addHours(addDays(today, daysUntilWeekday), hour);
+  const daysSinceWeekday = (today.getUTCDay() - weekday + 7) % 7;
+  let candidate = addHours(addDays(today, -daysSinceWeekday), hour);
 
-  if (candidate.getTime() <= base.getTime()) {
-    candidate = addDays(candidate, 7);
+  if (candidate.getTime() > base.getTime()) {
+    candidate = addDays(candidate, -7);
   }
 
   return candidate;
@@ -1215,6 +1215,51 @@ function resolveManualLifecyclePhase(input: {
   return 'completed';
 }
 
+type RelativeGolfLifecyclePhase = 'open' | 'field_locked' | 'in_progress' | 'completed';
+
+function resolveRelativeGolfLifecyclePhase(input: {
+  readonly now: Date;
+  readonly fieldLocksAt: Date;
+  readonly startsAt: Date;
+  readonly endsAt: Date;
+}): RelativeGolfLifecyclePhase {
+  const time = input.now.getTime();
+  if (time < input.fieldLocksAt.getTime()) {
+    return 'open';
+  }
+  if (time < input.startsAt.getTime()) {
+    return 'field_locked';
+  }
+  if (time < input.endsAt.getTime()) {
+    return 'in_progress';
+  }
+  return 'completed';
+}
+
+function statusForRelativeGolfPhase(phase: RelativeGolfLifecyclePhase): ContestFeedEventRecord['status'] {
+  switch (phase) {
+    case 'in_progress':
+      return 'in_progress';
+    case 'completed':
+      return 'completed';
+    case 'open':
+    case 'field_locked':
+      return 'field_announced';
+  }
+}
+
+function fieldStatusForRelativeGolfPhase(phase: RelativeGolfLifecyclePhase): FieldSnapshotRecord['status'] {
+  switch (phase) {
+    case 'completed':
+      return 'final';
+    case 'field_locked':
+    case 'in_progress':
+      return 'locked';
+    case 'open':
+      return 'announced';
+  }
+}
+
 function buildManualLifecycleUpdates(input: {
   readonly eventId: string;
   readonly fieldLocksAt: Date;
@@ -1285,14 +1330,23 @@ function buildManualTestLifecycleEvent(anchor: Date, now: Date): ContestFeedEven
   });
 }
 
+function rollingWeekendEnd(startsAt: Date): Date {
+  return addHours(addDays(startsAt, 3), 11);
+}
+
+function firstRollingWeekendStart(now: Date): Date {
+  return utcWeekdayStartOnOrBefore(now, 4, 12);
+}
+
 function buildRollingWeekendGolfEvents(now: Date): readonly ContestFeedEventRecord[] {
-  const firstThursday = nextUtcWeekdayStartAfter(now, 4, 12);
+  const firstThursday = firstRollingWeekendStart(now);
 
   return [0, 1].map((weekOffset) => {
     const startsAt = addDays(firstThursday, weekOffset * 7);
-    const endsAt = addHours(addDays(startsAt, 3), 10);
+    const endsAt = rollingWeekendEnd(startsAt);
     const releaseAt = addDays(startsAt, -14);
     const fieldLocksAt = addHours(startsAt, -20);
+    const phase = resolveRelativeGolfLifecyclePhase({ now, fieldLocksAt, startsAt, endsAt });
     const dateStamp = startsAt.toISOString().slice(0, 10).replace(/-/g, '');
     const eventId = `golf-relative-weekend-${dateStamp}`;
     const name = `Rolling QA Weekend ${weekOffset + 1} Championship (${toDateStamp(startsAt)})`;
@@ -1300,14 +1354,16 @@ function buildRollingWeekendGolfEvents(now: Date): readonly ContestFeedEventReco
     return buildRelativeGolfEvent({
       eventId,
       name,
-      status: 'field_announced',
+      status: statusForRelativeGolfPhase(phase),
       startsAt,
       endsAt,
       releaseAt,
       fieldLocksAt,
+      fieldStatus: fieldStatusForRelativeGolfPhase(phase),
       eventType: 'rolling-weekend-qa',
       notes: [
         `Rolling QA Thursday-Sunday tournament ${weekOffset + 1}.`,
+        `Provider lifecycle phase: ${phase}.`,
         `Starts Thursday ${startsAt.toISOString()} and ends Sunday ${endsAt.toISOString()}.`,
         'Field is released early and locks before tournament start for contest creation testing.',
       ],
@@ -1734,20 +1790,22 @@ export class ScenarioStore {
     const tickKey = `${scenarioId}:${eventId}`;
     const now = this.currentNow();
     const manualLifecycle = summarizeManualLifecycle(event, now);
+    const liveState = scenario.sport === 'GOLF' ? resolveGolfLiveState(event, mockEventState) : 'pre-live';
     const tick = explicitTick
-      ?? (mockEventState === 'completed'
+      ?? (mockEventState === 'completed' || liveState === 'completed'
         ? 72
         : isManualTestLifecycleEvent(event)
           ? manualLiveScoreTick(event, now)
           : (this.liveScoreTicks.get(tickKey) ?? 0) + 1);
-    if (explicitTick === undefined && !isManualTestLifecycleEvent(event)) {
+    if (explicitTick === undefined && !isManualTestLifecycleEvent(event) && liveState !== 'completed') {
       this.liveScoreTicks.set(tickKey, tick);
     }
 
     const asOf = isManualTestLifecycleEvent(event)
       ? now.toISOString()
-      : new Date(Date.parse(event.schedule.startsAt) + tick * minuteMs).toISOString();
-    const liveState = scenario.sport === 'GOLF' ? resolveGolfLiveState(event, mockEventState) : 'pre-live';
+      : liveState === 'completed'
+        ? event.schedule.endsAt ?? new Date(Date.parse(event.schedule.startsAt) + tick * minuteMs).toISOString()
+        : new Date(Date.parse(event.schedule.startsAt) + tick * minuteMs).toISOString();
     const contestants =
       scenario.sport === 'GOLF'
         ? buildLiveGolfContestants(scenario, event, liveState, asOf)
