@@ -1801,11 +1801,12 @@ export class ScenarioStore {
       this.liveScoreTicks.set(tickKey, tick);
     }
 
+    const tickAsOf = new Date(Date.parse(event.schedule.startsAt) + tick * minuteMs).toISOString();
     const asOf = isManualTestLifecycleEvent(event)
       ? now.toISOString()
       : liveState === 'completed'
-        ? event.schedule.endsAt ?? new Date(Date.parse(event.schedule.startsAt) + tick * minuteMs).toISOString()
-        : new Date(Date.parse(event.schedule.startsAt) + tick * minuteMs).toISOString();
+        ? event.schedule.endsAt ?? tickAsOf
+        : tickAsOf;
     const contestants =
       scenario.sport === 'GOLF'
         ? buildLiveGolfContestants(scenario, event, liveState, asOf)
