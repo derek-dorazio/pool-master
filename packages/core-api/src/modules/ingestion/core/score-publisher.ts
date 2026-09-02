@@ -7,25 +7,26 @@
  *   2. Resolve provider-side `participantExternalId` to internal
  *      `SportEventParticipant.id` UUIDs.
  *   3. Persist the per-category detail rows (Phase 4 ships the GOLF
- *      variant; other categories throw `LiveScoreUnsupportedError`).
+ *      variant, delegated to `GolfScoreService` — plans/124 §3.1; other
+ *      categories throw `LiveScoreUnsupportedError`).
  *   4. Emit a typed `live_score.persisted` event for downstream consumers.
  *
  * This replaces the legacy `publishStatEvents` path which forwarded
  * untyped `ProviderStatEvent[]` payloads onto the `stat.received` event.
  */
 
-import { PrismaGolfLiveStatus, type PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { eventBus } from '@poolmaster/shared/events/event-bus';
 import type { LiveScorePersistedEvent } from '@poolmaster/shared/events';
 import {
   LiveScoreResultSchema,
-  type GolfRoundUpdate,
   type LiveScoreResult,
 } from '@poolmaster/shared/dto';
 import { randomUUID } from 'node:crypto';
-import type { SyncWriteDetailRow, SyncWriteDiagnostics } from './sync-write-diagnostics';
-import { emptySyncWriteDiagnostics, mergeSyncWriteDiagnostics, summarizeSyncWriteRows } from './sync-write-diagnostics';
+import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
+import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
+import { GolfScoreService } from '../../golf/golf-score-service';
 
 export class LiveScoreValidationError extends Error {
   constructor(reason: string, public readonly issues: unknown) {
@@ -113,10 +114,10 @@ export async function publishLiveScoreUpdate(
   let persistenceResult: LiveScorePersistenceResult;
   switch (validated.category) {
     case 'GOLF':
-      persistenceResult = await persistGolfRounds(
+      persistenceResult = await new GolfScoreService(deps.prisma, deps.logger).persistRoundUpdatesForSportEvent(
         sportEvent.id,
         validated.rounds,
-        deps,
+        deps.providerId,
       );
       break;
     case 'BASKETBALL':
@@ -150,325 +151,6 @@ export async function publishLiveScoreUpdate(
   return persistenceResult;
 }
 
-async function persistGolfRounds(
-  sportEventId: string,
-  rounds: readonly GolfRoundUpdate[],
-  deps: LiveScorePublisherDeps,
-): Promise<LiveScorePersistenceResult> {
-  if (rounds.length === 0) {
-    return {
-      updatesReturned: 0,
-      updatesPersisted: 0,
-      updatesSkipped: 0,
-      writeDiagnostics: emptySyncWriteDiagnostics(),
-    };
-  }
-
-  // Resolve round: number → SportEventRound.id, the same (sportEventId,
-  // roundNumber) key both the admin-facing writer and this sync-facing one
-  // use (plans/124 §4.10). Every admin-managed tournament gets its
-  // SportEventRound rows from ensureSportEventRounds at creation time — but
-  // plans/124 §4.10 assumes plans/125 has already retired EVENTSCHEDULE's
-  // provider-driven SportEvent creation, and it hasn't (separate epic, not
-  // started). Until then, a provider-synced event that never went through
-  // admin creation has zero SportEventRound rows, so resolution here
-  // auto-creates any missing one rather than silently dropping every live
-  // score for that event — a defensive fallback, not the primary path.
-  const sportEventRounds = await deps.prisma.sportEventRound.findMany({
-    where: { sportEventId },
-    select: { id: true, roundNumber: true },
-  });
-  const roundIdByNumber = new Map(sportEventRounds.map((r) => [r.roundNumber, r.id]));
-  const referencedRoundNumbers = Array.from(new Set(rounds.map((r) => r.round)));
-  const missingRoundNumbers = referencedRoundNumbers.filter((roundNumber) => !roundIdByNumber.has(roundNumber));
-  if (missingRoundNumbers.length > 0) {
-    const createdRounds = await Promise.all(
-      missingRoundNumbers.map((roundNumber) =>
-        deps.prisma.sportEventRound.upsert({
-          where: { sportEventId_roundNumber: { sportEventId, roundNumber } },
-          create: { sportEventId, roundNumber, scheduledDate: new Date() },
-          update: {},
-          select: { id: true, roundNumber: true },
-        }),
-      ),
-    );
-    for (const created of createdRounds) {
-      roundIdByNumber.set(created.roundNumber, created.id);
-    }
-    deps.logger?.warn(
-      {
-        action: 'liveScore.golf.autoCreatedRoundSchedule',
-        data: { sportEventId, roundNumbers: missingRoundNumbers },
-      },
-      'Auto-created missing SportEventRound row(s) for a provider-synced event with no admin-created round schedule',
-    );
-  }
-
-  // Resolve participantExternalId → SportEventParticipant.id via
-  // ParticipantProviderMapping → SportEventParticipant scoped to this event.
-  const externalIds = Array.from(new Set(rounds.map((r) => r.participantExternalId)));
-  const mappings = await deps.prisma.participantProviderMapping.findMany({
-    where: {
-      providerId: deps.providerId,
-      externalId: { in: externalIds },
-    },
-    select: { externalId: true, participantId: true },
-  });
-  const participantIdByExternalId = new Map(
-    mappings.map((m) => [m.externalId, m.participantId]),
-  );
-
-  const participantIds = Array.from(new Set(participantIdByExternalId.values()));
-  const seps = participantIds.length === 0
-    ? []
-    : await deps.prisma.sportEventParticipant.findMany({
-        where: { participantId: { in: participantIds }, sportEventId },
-        select: { id: true, participantId: true },
-      });
-  const sepByParticipantId = new Map<string, string>();
-  for (const sep of seps) {
-    sepByParticipantId.set(sep.participantId, sep.id);
-  }
-
-  let persisted = 0;
-  let skipped = 0;
-  const affectedSportEventParticipantIds = new Set<string>();
-  const detailRows: SyncWriteDetailRow[] = [];
-  const standingAsOf = new Date();
-  const persistableRounds: Array<{
-    round: GolfRoundUpdate & { strokes: number };
-    sportEventParticipantId: string;
-    sportEventRoundId: string;
-  }> = [];
-  for (const round of rounds) {
-    if (round.strokes === null) {
-      // Some providers expose only cumulative score-to-par. The DB column is
-      // NOT NULL, so we skip the row rather than inventing strokes.
-      deps.logger?.debug?.(
-        {
-          action: 'liveScore.golf.nullStrokesSkipped',
-          data: { providerId: deps.providerId, externalId: round.participantExternalId, round: round.round },
-        },
-        'Skipping golf round update — provider does not expose per-round strokes',
-      );
-      skipped += 1;
-      continue;
-    }
-    const participantId = participantIdByExternalId.get(round.participantExternalId);
-    if (!participantId) {
-      deps.logger?.warn(
-        {
-          action: 'liveScore.golf.unmappedExternalId',
-          data: { providerId: deps.providerId, externalId: round.participantExternalId },
-        },
-        'Skipping golf round update — provider participant has no internal mapping',
-      );
-      skipped += 1;
-      continue;
-    }
-    const sportEventParticipantId = sepByParticipantId.get(participantId);
-    if (!sportEventParticipantId) {
-      deps.logger?.warn(
-        {
-          action: 'liveScore.golf.noSportEventParticipant',
-          data: { participantId, externalId: round.participantExternalId, sportEventId },
-        },
-        'Skipping golf round update — no SportEventParticipant row for participant in this event',
-      );
-      skipped += 1;
-      continue;
-    }
-    const sportEventRoundId = roundIdByNumber.get(round.round);
-    if (!sportEventRoundId) {
-      deps.logger?.warn(
-        {
-          action: 'liveScore.golf.unresolvedRoundNumber',
-          data: { sportEventId, round: round.round, externalId: round.participantExternalId },
-        },
-        'Skipping golf round update — no SportEventRound exists for this event/roundNumber',
-      );
-      skipped += 1;
-      continue;
-    }
-
-    persistableRounds.push({ round: { ...round, strokes: round.strokes }, sportEventParticipantId, sportEventRoundId });
-  }
-
-  const existingRoundRows = persistableRounds.length === 0
-    ? []
-    : await deps.prisma.sportEventParticipantGolfRound.findMany({
-        where: {
-          OR: persistableRounds.map(({ sportEventParticipantId, sportEventRoundId }) => ({
-            sportEventParticipantId,
-            sportEventRoundId,
-          })),
-        },
-      });
-  const existingRoundByKey = new Map(
-    existingRoundRows.map((row) => [buildGolfRoundKey(row.sportEventParticipantId, row.sportEventRoundId), row]),
-  );
-
-  for (const { round, sportEventParticipantId, sportEventRoundId } of persistableRounds) {
-    const beforeRound = existingRoundByKey.get(buildGolfRoundKey(sportEventParticipantId, sportEventRoundId));
-    const before = beforeRound ? normalizeGolfRoundRow(beforeRound) : undefined;
-    const after = normalizeGolfRoundInput(sportEventParticipantId, sportEventRoundId, round);
-
-    const persistedRound = await deps.prisma.sportEventParticipantGolfRound.upsert({
-      where: {
-        sportEventParticipantId_sportEventRoundId: {
-          sportEventParticipantId,
-          sportEventRoundId,
-        },
-      },
-      create: {
-        sportEventParticipantId,
-        sportEventRoundId,
-        strokes: round.strokes,
-        scoreToPar: round.scoreToPar,
-        thru: round.thru ?? null,
-        status: round.status,
-        completedAt: round.completedAt ? new Date(round.completedAt) : null,
-      },
-      update: {
-        strokes: round.strokes,
-        scoreToPar: round.scoreToPar,
-        thru: round.thru ?? null,
-        status: round.status,
-        completedAt: round.completedAt ? new Date(round.completedAt) : null,
-      },
-    });
-    detailRows.push({
-      id: `golf-round:${sportEventParticipantId}:${sportEventRoundId}`,
-      entityType: 'SportEventParticipantGolfRound',
-      disposition: resolveDisposition(before, after),
-      participantExternalId: round.participantExternalId,
-      internalId: persistedRound.id,
-      ...(before ? { before } : {}),
-      after,
-    });
-    affectedSportEventParticipantIds.add(sportEventParticipantId);
-    persisted += 1;
-  }
-
-  const standingDiagnostics = await refreshGolfStandings([...affectedSportEventParticipantIds], deps, standingAsOf);
-
-  return {
-    updatesReturned: rounds.length,
-    updatesPersisted: persisted,
-    updatesSkipped: skipped,
-    writeDiagnostics: mergeSyncWriteDiagnostics([
-      summarizeSyncWriteRows(detailRows),
-      standingDiagnostics,
-    ]),
-  };
-}
-
-async function refreshGolfStandings(
-  sportEventParticipantIds: readonly string[],
-  deps: LiveScorePublisherDeps,
-  asOf: Date,
-): Promise<SyncWriteDiagnostics> {
-  if (sportEventParticipantIds.length === 0) return emptySyncWriteDiagnostics();
-
-  const rows = await deps.prisma.sportEventParticipantGolfRound.findMany({
-    where: { sportEventParticipantId: { in: [...sportEventParticipantIds] } },
-    orderBy: [{ sportEventParticipantId: 'asc' }, { sportEventRound: { roundNumber: 'asc' } }],
-    select: {
-      sportEventParticipantId: true,
-      strokes: true,
-      scoreToPar: true,
-      thru: true,
-      status: true,
-      sportEventRound: { select: { roundNumber: true } },
-    },
-  });
-
-  const detailRows: SyncWriteDetailRow[] = [];
-  const rowsByParticipant = new Map<string, typeof rows>();
-  for (const row of rows) {
-    const participantRows = rowsByParticipant.get(row.sportEventParticipantId) ?? [];
-    participantRows.push(row);
-    rowsByParticipant.set(row.sportEventParticipantId, participantRows);
-  }
-  const existingStandings = await deps.prisma.sportEventParticipantGolfStanding.findMany({
-    where: { sportEventParticipantId: { in: [...sportEventParticipantIds] } },
-  });
-  const existingStandingByParticipantId = new Map(
-    existingStandings.map((standing) => [standing.sportEventParticipantId, standing]),
-  );
-
-  for (const sportEventParticipantId of sportEventParticipantIds) {
-    const participantRows = rowsByParticipant.get(sportEventParticipantId) ?? [];
-    if (participantRows.length === 0) continue;
-
-    const currentRound = participantRows.reduce((latest, row) => (
-      row.sportEventRound.roundNumber > latest.sportEventRound.roundNumber ? row : latest
-    ));
-    const eventScoreToPar = participantRows.reduce((sum, row) => sum + row.scoreToPar, 0);
-    const eventStrokes = participantRows.reduce((sum, row) => sum + row.strokes, 0);
-    const currentRoundThru = currentRound.thru ?? (currentRound.status === 'COMPLETED' ? 18 : null);
-    const status = mapGolfLiveStatus(currentRound.status);
-
-    const existingStanding = existingStandingByParticipantId.get(sportEventParticipantId);
-    const before = existingStanding ? normalizeGolfStandingRow(existingStanding) : undefined;
-    const after = normalizeGolfStandingInput({
-      sportEventParticipantId,
-      eventScoreToPar,
-      eventStrokes,
-      currentRound: currentRound.sportEventRound.roundNumber,
-      currentRoundThru,
-      status,
-    });
-
-    const persistedStanding = await deps.prisma.sportEventParticipantGolfStanding.upsert({
-      where: { sportEventParticipantId },
-      create: {
-        sportEventParticipantId,
-        eventScoreToPar,
-        eventStrokes,
-        currentRound: currentRound.sportEventRound.roundNumber,
-        currentRoundThru,
-        status,
-        asOf,
-      },
-      update: {
-        eventScoreToPar,
-        eventStrokes,
-        currentRound: currentRound.sportEventRound.roundNumber,
-        currentRoundThru,
-        status,
-        asOf,
-      },
-    });
-    detailRows.push({
-      id: `golf-standing:${sportEventParticipantId}`,
-      entityType: 'SportEventParticipantGolfStanding',
-      disposition: resolveDisposition(before, after),
-      internalId: persistedStanding.id,
-      ...(before ? { before } : {}),
-      after,
-    });
-  }
-
-  return summarizeSyncWriteRows(detailRows);
-}
-
-function mapGolfLiveStatus(roundStatus: string): PrismaGolfLiveStatus {
-  switch (roundStatus) {
-    case 'IN_PROGRESS':
-      return PrismaGolfLiveStatus.IN_PROGRESS;
-    case 'COMPLETED':
-      return PrismaGolfLiveStatus.COMPLETE;
-    case 'DNF':
-    case 'DSQ':
-      return PrismaGolfLiveStatus.WITHDRAWN;
-    case 'MISSED_CUT':
-      return PrismaGolfLiveStatus.MISSED_CUT;
-    default:
-      return PrismaGolfLiveStatus.ACTIVE;
-  }
-}
-
 function countLiveScoreUpdates(result: LiveScoreResult): number {
   switch (result.category) {
     case 'GOLF':
@@ -488,110 +170,3 @@ function countLiveScoreUpdates(result: LiveScoreResult): number {
   }
 }
 
-function resolveDisposition(
-  before: Record<string, unknown> | undefined,
-  after: Record<string, unknown>,
-): SyncWriteDetailRow['disposition'] {
-  if (!before) {
-    return 'CREATED';
-  }
-
-  return stableJson(before) === stableJson(after) ? 'UNCHANGED' : 'UPDATED';
-}
-
-function normalizeGolfRoundInput(
-  sportEventParticipantId: string,
-  sportEventRoundId: string,
-  round: GolfRoundUpdate,
-): Record<string, unknown> {
-  return {
-    sportEventParticipantId,
-    sportEventRoundId,
-    strokes: round.strokes,
-    scoreToPar: round.scoreToPar,
-    thru: round.thru ?? null,
-    status: round.status,
-    completedAt: round.completedAt ?? null,
-  };
-}
-
-function normalizeGolfRoundRow(row: {
-  sportEventParticipantId: string;
-  sportEventRoundId: string;
-  strokes: number;
-  scoreToPar: number;
-  thru: number | null;
-  status: string;
-  completedAt: Date | null;
-}): Record<string, unknown> {
-  return {
-    sportEventParticipantId: row.sportEventParticipantId,
-    sportEventRoundId: row.sportEventRoundId,
-    strokes: row.strokes,
-    scoreToPar: row.scoreToPar,
-    thru: row.thru,
-    status: row.status,
-    completedAt: row.completedAt?.toISOString() ?? null,
-  };
-}
-
-function buildGolfRoundKey(sportEventParticipantId: string, sportEventRoundId: string): string {
-  return `${sportEventParticipantId}:${sportEventRoundId}`;
-}
-
-function normalizeGolfStandingInput(input: {
-  sportEventParticipantId: string;
-  eventScoreToPar: number;
-  eventStrokes: number;
-  currentRound: number | null;
-  currentRoundThru: number | null;
-  status: PrismaGolfLiveStatus;
-}): Record<string, unknown> {
-  // `asOf` is intentionally excluded from write diagnostics. It advances on
-  // every poll, but member-visible standing values are unchanged when score,
-  // round, thru, and status match the prior standing row.
-  return {
-    sportEventParticipantId: input.sportEventParticipantId,
-    eventScoreToPar: input.eventScoreToPar,
-    eventStrokes: input.eventStrokes,
-    currentRound: input.currentRound,
-    currentRoundThru: input.currentRoundThru,
-    status: input.status,
-  };
-}
-
-function normalizeGolfStandingRow(row: {
-  sportEventParticipantId: string;
-  eventScoreToPar: number;
-  eventStrokes: number;
-  currentRound: number | null;
-  currentRoundThru: number | null;
-  status: PrismaGolfLiveStatus;
-}): Record<string, unknown> {
-  return {
-    sportEventParticipantId: row.sportEventParticipantId,
-    eventScoreToPar: row.eventScoreToPar,
-    eventStrokes: row.eventStrokes,
-    currentRound: row.currentRound,
-    currentRoundThru: row.currentRoundThru,
-    status: row.status,
-  };
-}
-
-function stableJson(value: unknown): string {
-  return JSON.stringify(sortJson(value));
-}
-
-function sortJson(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(sortJson);
-  }
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([key, child]) => [key, sortJson(child)]),
-    );
-  }
-  return value;
-}
