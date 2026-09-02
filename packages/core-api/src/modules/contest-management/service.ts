@@ -14,6 +14,7 @@ import type {
   ContestManagementDetailDto,
   ContestConfigurationRequest,
   CreateContestManagementRequest,
+  GolfEffectiveTierDto,
   ListContestConfigTemplatesQuery,
   UpdateContestConfigurationRequest,
 } from '@poolmaster/shared/dto';
@@ -32,7 +33,10 @@ import {
   Sport,
   isContestFormatValidForTournamentFormat,
 } from '@poolmaster/shared/domain';
-import { mapContestConfigTemplateDto } from '../../mappers/contest-management.mapper';
+import {
+  mapContestConfigTemplateDto,
+  toGolfEffectiveTierDtoList,
+} from '../../mappers/contest-management.mapper';
 import { evaluateEventOperationalState } from '../events/operational-timing';
 
 interface CreateContestManagementContext {
@@ -160,7 +164,30 @@ export class ContestManagementService {
       templateId: resolvedConfiguration.template?.id ?? null,
     }, 'contest management create contest completed');
 
-    return buildContestManagementDetail(contest, configuration);
+    return buildContestManagementDetail(
+      contest,
+      configuration,
+      await this.resolveEffectiveTiers(contest.sportEventId),
+    );
+  }
+
+  /**
+   * Read-only echo of the tier structure the contest inherits from its
+   * linked SportEvent (plans/124 §4.6/§5.3). Tiers are event-owned — there
+   * is no per-contest override — so every ContestManagementDetailDto carries
+   * this so the commissioner UI can show what was inherited without a mode
+   * flag. Reads through the same golf-tier-service resolution the root-admin
+   * tier routes use. Returns [] when the contest has no linked event or the
+   * event has no tiers defined yet.
+   */
+  private async resolveEffectiveTiers(
+    sportEventId: string | null | undefined,
+  ): Promise<GolfEffectiveTierDto[]> {
+    if (!sportEventId) {
+      return [];
+    }
+    const tiers = await this.golfTierService.getEffectiveTiersForSportEvent(sportEventId);
+    return toGolfEffectiveTierDtoList(tiers);
   }
 
   async listTemplates(
@@ -227,7 +254,11 @@ export class ContestManagementService {
       configMode: configuration.configMode ?? null,
       templateId: configuration.templateId ?? null,
     }, 'contest management get contest completed');
-    return buildContestManagementDetail(contest, configuration);
+    return buildContestManagementDetail(
+      contest,
+      configuration,
+      await this.resolveEffectiveTiers(contest.sportEventId),
+    );
   }
 
   async updateContestConfiguration(
@@ -283,7 +314,11 @@ export class ContestManagementService {
       selectionType,
       configMode: refreshedConfiguration.configMode ?? null,
     }, 'contest management update configuration completed');
-    return buildContestManagementDetail(contest, refreshedConfiguration);
+    return buildContestManagementDetail(
+      contest,
+      refreshedConfiguration,
+      await this.resolveEffectiveTiers(contest.sportEventId),
+    );
   }
 
   private async assertSportEventContestEligible(
@@ -562,6 +597,7 @@ function buildContestManagementDetail(
     pickCount?: number;
     tierConfig?: unknown;
   },
+  effectiveTiers: GolfEffectiveTierDto[],
 ): ContestManagementDetailDto {
   const configJson = ensureTypedConfiguration(configuration);
   return {
@@ -579,6 +615,7 @@ function buildContestManagementDetail(
       contestId: configuration.contestId,
       ...configJson,
     },
+    effectiveTiers,
   };
 }
 

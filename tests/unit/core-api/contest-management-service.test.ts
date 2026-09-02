@@ -226,9 +226,14 @@ function createSportEventParticipantRepo(): SportEventParticipantRepository {
  * Defaults to reporting no tiers for the event, matching
  * assertTierConfigurationFitsTierCount's "nothing to validate against"
  * skip — the same default these fixtures relied on before tiers moved to
- * golf-tier-service (plans/124 §4.6/pool-master-piv).
+ * golf-tier-service (plans/124 §4.6/pool-master-piv). `withParticipants`
+ * populates each tier's assignment list so the effectiveTiers echo
+ * (plans/124 §5.3/pool-master-41t) can be asserted end to end.
  */
-function createGolfTierServiceStub(tierCount = 0): GolfTierService {
+function createGolfTierServiceStub(
+  tierCount = 0,
+  withParticipants = false,
+): GolfTierService {
   return {
     getEffectiveTiersForSportEvent: jest.fn().mockResolvedValue(
       Array.from({ length: tierCount }, (_, index) => ({
@@ -237,7 +242,16 @@ function createGolfTierServiceStub(tierCount = 0): GolfTierService {
         label: `Tier ${index + 1}`,
         tierNumber: index + 1,
         defaultPickCount: 1,
-        participants: [],
+        participants: withParticipants
+          ? [
+              {
+                sportEventParticipantId: `sep-${index + 1}`,
+                participantId: `golfer-${index + 1}`,
+                tierOrderIndex: index + 1,
+                price: null,
+              },
+            ]
+          : [],
       })),
     ),
   } as unknown as GolfTierService;
@@ -329,6 +343,9 @@ describe('ContestManagementService', () => {
       throw new Error('Expected golf tiered configuration');
     }
     expect(result.configuration.countedScores).toBe(4);
+    // pool-master-41t — the create response also carries the read-only
+    // effectiveTiers echo (plans/124 §5.3), empty for an event with no tiers.
+    expect(result.effectiveTiers).toEqual([]);
     // pool-master-p15 — tiers are event-owned now (plans/124 §4.6); contest
     // creation no longer computes or persists a per-contest tierConfig
     // snapshot, so the create call carries no tierConfig key at all.
@@ -716,6 +733,9 @@ describe('ContestManagementService', () => {
     }
     expect(result.configuration.rosterSize).toBe(8);
     expect(result.configuration.countedScores).toBe(5);
+    // pool-master-41t — the refreshed detail carries the read-only
+    // effectiveTiers echo (plans/124 §5.3).
+    expect(result.effectiveTiers).toEqual([]);
   });
 
   it('pool-master-piv rejects a tiered contest update whose rosterSize does not divide evenly across the event\'s tiers', async () => {
@@ -774,6 +794,62 @@ describe('ContestManagementService', () => {
       throw new Error('Expected golf tiered configuration');
     }
     expect(result.configuration.countedScores).toBe(4);
+    // pool-master-41t — the detail response always carries the read-only
+    // effectiveTiers echo (plans/124 §5.3); empty here because this event
+    // has no tiers defined.
+    expect(result.effectiveTiers).toEqual([]);
+  });
+
+  it('pool-master-41t echoes the linked event\'s effective tiers read-only on the management detail', async () => {
+    const golfTierService = createGolfTierServiceStub(2, true);
+    const service = new ContestManagementService(
+      createContestCoreRepo(),
+      createContestConfigTemplateRepo(),
+      createContestConfigurationRepo(),
+      createParticipantScoringRuleRepo(),
+      createAggregationRuleRepo(),
+      createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      golfTierService,
+      undefined,
+      createSportEventReader(),
+    );
+
+    const result = await service.getContest('contest-1');
+
+    expect(golfTierService.getEffectiveTiersForSportEvent).toHaveBeenCalledWith(
+      '11111111-1111-1111-1111-111111111111',
+    );
+    expect(result.effectiveTiers).toEqual([
+      {
+        tierKey: 'tier-1',
+        label: 'Tier 1',
+        tierNumber: 1,
+        defaultPickCount: 1,
+        assignments: [
+          {
+            sportEventParticipantId: 'sep-1',
+            participantId: 'golfer-1',
+            tierOrderIndex: 1,
+            price: null,
+          },
+        ],
+      },
+      {
+        tierKey: 'tier-2',
+        label: 'Tier 2',
+        tierNumber: 2,
+        defaultPickCount: 1,
+        assignments: [
+          {
+            sportEventParticipantId: 'sep-2',
+            participantId: 'golfer-2',
+            tierOrderIndex: 2,
+            price: null,
+          },
+        ],
+      },
+    ]);
   });
 
   it('creates a contest from a seeded template and stores template provenance', async () => {

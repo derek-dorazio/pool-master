@@ -13346,6 +13346,75 @@
                           ],
                           "description": "Current commissioner-managed contest configuration."
                         },
+                        "effectiveTiers": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "tierKey": {
+                                "type": "string",
+                                "description": "Stable per-event tier key."
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "Commissioner-facing tier label."
+                              },
+                              "tierNumber": {
+                                "type": "integer",
+                                "description": "1-based tier ordering."
+                              },
+                              "defaultPickCount": {
+                                "type": "integer",
+                                "description": "Default number of golfers picked from this tier."
+                              },
+                              "assignments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "sportEventParticipantId": {
+                                      "type": "string",
+                                      "description": "Field entry the assignment belongs to."
+                                    },
+                                    "participantId": {
+                                      "type": "string",
+                                      "description": "Global golfer identity."
+                                    },
+                                    "tierOrderIndex": {
+                                      "type": "integer",
+                                      "nullable": true,
+                                      "description": "Within-tier ordering position; null when the golfer has no explicit order."
+                                    },
+                                    "price": {
+                                      "type": "number",
+                                      "nullable": true,
+                                      "description": "Per-golfer budget price when the event defines one; null otherwise."
+                                    }
+                                  },
+                                  "required": [
+                                    "sportEventParticipantId",
+                                    "participantId",
+                                    "tierOrderIndex",
+                                    "price"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "One golfer's inherited tier placement for the contest's linked event."
+                                },
+                                "description": "Golfers assigned to this tier, ordered by tierOrderIndex ascending."
+                              }
+                            },
+                            "required": [
+                              "tierKey",
+                              "label",
+                              "tierNumber",
+                              "defaultPickCount",
+                              "assignments"
+                            ],
+                            "additionalProperties": false,
+                            "description": "One inherited event tier and its golfer assignments."
+                          },
+                          "description": "Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time",
@@ -13375,6 +13444,7 @@
                         "name",
                         "status",
                         "configuration",
+                        "effectiveTiers",
                         "createdAt",
                         "updatedAt"
                       ],
@@ -13800,6 +13870,75 @@
                           ],
                           "description": "Current commissioner-managed contest configuration."
                         },
+                        "effectiveTiers": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "tierKey": {
+                                "type": "string",
+                                "description": "Stable per-event tier key."
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "Commissioner-facing tier label."
+                              },
+                              "tierNumber": {
+                                "type": "integer",
+                                "description": "1-based tier ordering."
+                              },
+                              "defaultPickCount": {
+                                "type": "integer",
+                                "description": "Default number of golfers picked from this tier."
+                              },
+                              "assignments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "sportEventParticipantId": {
+                                      "type": "string",
+                                      "description": "Field entry the assignment belongs to."
+                                    },
+                                    "participantId": {
+                                      "type": "string",
+                                      "description": "Global golfer identity."
+                                    },
+                                    "tierOrderIndex": {
+                                      "type": "integer",
+                                      "nullable": true,
+                                      "description": "Within-tier ordering position; null when the golfer has no explicit order."
+                                    },
+                                    "price": {
+                                      "type": "number",
+                                      "nullable": true,
+                                      "description": "Per-golfer budget price when the event defines one; null otherwise."
+                                    }
+                                  },
+                                  "required": [
+                                    "sportEventParticipantId",
+                                    "participantId",
+                                    "tierOrderIndex",
+                                    "price"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "One golfer's inherited tier placement for the contest's linked event."
+                                },
+                                "description": "Golfers assigned to this tier, ordered by tierOrderIndex ascending."
+                              }
+                            },
+                            "required": [
+                              "tierKey",
+                              "label",
+                              "tierNumber",
+                              "defaultPickCount",
+                              "assignments"
+                            ],
+                            "additionalProperties": false,
+                            "description": "One inherited event tier and its golfer assignments."
+                          },
+                          "description": "Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time",
@@ -13829,6 +13968,7 @@
                         "name",
                         "status",
                         "configuration",
+                        "effectiveTiers",
                         "createdAt",
                         "updatedAt"
                       ],
@@ -14427,6 +14567,75 @@
                           ],
                           "description": "Current commissioner-managed contest configuration."
                         },
+                        "effectiveTiers": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "tierKey": {
+                                "type": "string",
+                                "description": "Stable per-event tier key."
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "Commissioner-facing tier label."
+                              },
+                              "tierNumber": {
+                                "type": "integer",
+                                "description": "1-based tier ordering."
+                              },
+                              "defaultPickCount": {
+                                "type": "integer",
+                                "description": "Default number of golfers picked from this tier."
+                              },
+                              "assignments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "sportEventParticipantId": {
+                                      "type": "string",
+                                      "description": "Field entry the assignment belongs to."
+                                    },
+                                    "participantId": {
+                                      "type": "string",
+                                      "description": "Global golfer identity."
+                                    },
+                                    "tierOrderIndex": {
+                                      "type": "integer",
+                                      "nullable": true,
+                                      "description": "Within-tier ordering position; null when the golfer has no explicit order."
+                                    },
+                                    "price": {
+                                      "type": "number",
+                                      "nullable": true,
+                                      "description": "Per-golfer budget price when the event defines one; null otherwise."
+                                    }
+                                  },
+                                  "required": [
+                                    "sportEventParticipantId",
+                                    "participantId",
+                                    "tierOrderIndex",
+                                    "price"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "One golfer's inherited tier placement for the contest's linked event."
+                                },
+                                "description": "Golfers assigned to this tier, ordered by tierOrderIndex ascending."
+                              }
+                            },
+                            "required": [
+                              "tierKey",
+                              "label",
+                              "tierNumber",
+                              "defaultPickCount",
+                              "assignments"
+                            ],
+                            "additionalProperties": false,
+                            "description": "One inherited event tier and its golfer assignments."
+                          },
+                          "description": "Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
+                        },
                         "createdAt": {
                           "type": "string",
                           "format": "date-time",
@@ -14456,6 +14665,7 @@
                         "name",
                         "status",
                         "configuration",
+                        "effectiveTiers",
                         "createdAt",
                         "updatedAt"
                       ],
