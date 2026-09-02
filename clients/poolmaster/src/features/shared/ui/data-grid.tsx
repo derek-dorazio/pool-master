@@ -23,6 +23,13 @@ type DataGridProps<TData> = {
   ) => Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">;
   rowTestId?: (row: TData, index: number) => string;
   tableTestId?: string;
+  /**
+   * Forwarded to `useReactTable({ meta })`. Lets a caller keep its column
+   * definitions referentially stable while editable cells read live draft state
+   * off `table.options.meta` (per-row draft editors — plans/124 §6.3 golf
+   * roster / field).
+   */
+  meta?: Record<string, unknown>;
 };
 
 function getSortIndicator(direction: false | "asc" | "desc") {
@@ -47,6 +54,7 @@ export function DataGrid<TData>({
   getRowLinkProps,
   rowTestId,
   tableTestId,
+  meta,
 }: DataGridProps<TData>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -54,6 +62,7 @@ export function DataGrid<TData>({
   const table = useReactTable({
     data,
     columns,
+    meta,
     state: {
       columnFilters,
       sorting,

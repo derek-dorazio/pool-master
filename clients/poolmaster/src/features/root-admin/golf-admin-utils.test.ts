@@ -8,6 +8,7 @@ import {
   sportEventStatusTone,
   isAdminManagedGolfTournament,
   localDateTimeInputToIso,
+  parseGolfRosterUpload,
   resolveGolfLifecycleStage,
   resolveGolfProviderId,
   type AdminGolfTournamentRound,
@@ -225,5 +226,46 @@ describe('pool-master-3dg golf-admin-utils: resolveGolfProviderId', () => {
     ).toBe('mock-contest-feed');
     expect(resolveGolfProviderId([])).toBeNull();
     expect(resolveGolfProviderId(undefined)).toBeNull();
+  });
+});
+
+// plans/124 §6.3 Tour Home / §6.4 — league-roster bulk-upload parser.
+describe('pool-master-qqs golf-admin-utils: parseGolfRosterUpload', () => {
+  it('pool-master-qqs parses CSV rows, coercing worldRanking to a number', () => {
+    const rows = parseGolfRosterUpload(
+      'externalId,playerName,worldRanking\ndj-1,Dustin Johnson,12\n,Rory McIlroy,3',
+      'CSV',
+    );
+    expect(rows).toEqual([
+      { externalId: 'dj-1', playerName: 'Dustin Johnson', worldRanking: 12 },
+      { playerName: 'Rory McIlroy', worldRanking: 3 },
+    ]);
+  });
+
+  it('pool-master-qqs parses a JSON array with participantId passthrough', () => {
+    const rows = parseGolfRosterUpload(
+      '[{"participantId":"p-1","worldRanking":1}]',
+      'JSON',
+    );
+    expect(rows).toEqual([{ participantId: 'p-1', worldRanking: 1 }]);
+  });
+
+  it('pool-master-qqs rejects a row with no identifier', () => {
+    expect(() =>
+      parseGolfRosterUpload('externalId,playerName,worldRanking\n,,5', 'CSV'),
+    ).toThrow(/Row 1: each row needs a participantId, externalId, or playerName/);
+  });
+
+  it('pool-master-qqs rejects a non-positive or non-integer worldRanking', () => {
+    expect(() =>
+      parseGolfRosterUpload('playerName,worldRanking\nRory McIlroy,-2', 'CSV'),
+    ).toThrow(/Row 1:/);
+    expect(() =>
+      parseGolfRosterUpload('playerName,worldRanking\nRory McIlroy,3.5', 'CSV'),
+    ).toThrow(/Row 1:/);
+  });
+
+  it('pool-master-qqs surfaces the format-level empty-input error', () => {
+    expect(() => parseGolfRosterUpload('', 'CSV')).toThrow('Paste or upload some rows first.');
   });
 });

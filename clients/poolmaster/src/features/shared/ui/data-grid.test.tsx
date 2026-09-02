@@ -80,4 +80,31 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     fireEvent.click(rowLink);
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
+
+  // plans/124 §6.3 — editable per-row cells read live draft state off table meta
+  // so the caller can keep column defs referentially stable.
+  it("exposes the caller's meta to cell renderers via table.options.meta", () => {
+    const metaColumns = [
+      columnHelper.display({
+        id: "editor",
+        header: "Editor",
+        cell: ({ row, table }) => {
+          const meta = table.options.meta as { label: string };
+          return `${meta.label}:${row.original.name}`;
+        },
+      }),
+    ];
+
+    render(
+      <DataGrid
+        columns={metaColumns}
+        data={[{ id: "row-1", lifecycle: "Active", name: "Alpha" }]}
+        emptyMessage="No rows matched."
+        getRowId={(row) => row.id}
+        meta={{ label: "draft" }}
+      />,
+    );
+
+    expect(screen.getByText("draft:Alpha")).toBeInTheDocument();
+  });
 });

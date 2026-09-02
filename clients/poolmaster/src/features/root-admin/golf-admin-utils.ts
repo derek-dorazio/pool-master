@@ -1,7 +1,13 @@
+import { z } from 'zod';
+import {
+  parseDelimitedRecords,
+  type BulkUploadFormat,
+} from '@/features/shared/ui/bulk-upload-parse';
 import type {
   AdminGetGolfTournamentResponses,
   AdminGetGolfTournamentRoundsResponses,
   AdminListGolfTournamentsResponses,
+  AdminPreviewGolfLeagueRosterUploadData,
 } from '@/lib/api';
 
 /**
@@ -277,4 +283,70 @@ export function resolveGolfProviderId(
     providers?.find((provider) => provider.sportsCovered.includes('GOLF'))
       ?.providerId ?? null
   );
+}
+
+// --- League roster bulk upload (plans/124 §6.3 Tour Home / §6.4) ---
+//
+// The Tour Home roster editor and the round-scores editor share one
+// paste/upload/preview/apply flow (BulkUploadPanel). Each screen supplies its
+// own row shape + parser config; this is the roster one — `externalId` or
+// `playerName` (or an explicit `participantId`) plus `worldRanking`.
+
+export type GolfRosterUploadRow =
+  AdminPreviewGolfLeagueRosterUploadData['body']['rows'][number];
+
+export const GOLF_ROSTER_UPLOAD_HEADERS = [
+  'externalId',
+  'playerName',
+  'worldRanking',
+] as const;
+
+const golfRosterUploadRowSchema = z
+  .object({
+    participantId: z.string().trim().min(1).optional(),
+    externalId: z.string().trim().min(1).optional(),
+    playerName: z.string().trim().min(1).optional(),
+    worldRanking: z.coerce.number().int().positive().optional(),
+  })
+  .refine(
+    (row) =>
+      Boolean(row.participantId) ||
+      Boolean(row.externalId) ||
+      Boolean(row.playerName),
+    { message: 'each row needs a participantId, externalId, or playerName' },
+  );
+
+/**
+ * Parse pasted / uploaded league-roster text into `adminPreviewGolfLeagueRosterUpload`
+ * request rows. Throws an `Error` with a user-facing message on malformed input
+ * or a row missing every identifier — the panel renders that inline.
+ */
+export function parseGolfRosterUpload(
+  text: string,
+  format: BulkUploadFormat,
+): GolfRosterUploadRow[] {
+  // parseDelimitedRecords rejects empty input / a header-only CSV; an empty
+  // JSON array (`[]`) is the only way to reach zero records here.
+  const records = parseDelimitedRecords(text, format);
+  if (records.length === 0) {
+    throw new Error('No rows found.');
+  }
+
+  return records.map((record, index) => {
+    const parsed = golfRosterUploadRowSchema.safeParse(record);
+    if (!parsed.success) {
+      const [issue] = parsed.error.issues;
+      throw new Error(
+        `Row ${index + 1}: ${issue?.message ?? 'is not a valid roster row'}.`,
+      );
+    }
+    const row: GolfRosterUploadRow = {};
+    if (parsed.data.participantId) row.participantId = parsed.data.participantId;
+    if (parsed.data.externalId) row.externalId = parsed.data.externalId;
+    if (parsed.data.playerName) row.playerName = parsed.data.playerName;
+    if (parsed.data.worldRanking !== undefined) {
+      row.worldRanking = parsed.data.worldRanking;
+    }
+    return row;
+  });
 }
