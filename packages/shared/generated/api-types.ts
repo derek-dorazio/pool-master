@@ -2615,6 +2615,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/sports/golf/seasons/{seasonId}/clone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clone a golf season's tournament calendar forward one year
+         * @description plans/124 §4.2a. Body { targetYear? } defaults to the source year + 1. Creates the target season (dates shifted to the same month/day, year + shift) then re-creates each source-season tournament as a fresh, empty, syncScope=NONE shell with dates shifted the same way — never a raw row copy of field / tier / score / provider-link data, and no roster to copy. Does not change currentSeasonId. 409 SEASON_YEAR_ALREADY_EXISTS if the target year already exists for this league.
+         */
+        post: operations["adminCloneGolfSeason"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/sports/golf/tournaments/{eventId}/rounds": {
         parameters: {
             query?: never;
@@ -18624,6 +18644,127 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminCloneGolfSeason: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                seasonId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Year for the new season; defaults to the source season's year + 1 (plans/124 §4.2a). */
+                    targetYear?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description plans/124 §4.2a — clones a season's tournament calendar one year forward. Never a raw row copy of field / tier / score / provider-link data. Does not change currentSeasonId. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The newly created target season. */
+                        season: {
+                            id: string;
+                            sportLeagueId: string;
+                            name: string;
+                            year: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            startDate: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            endDate: string;
+                            isActive: boolean;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                            /** @description Number of tournaments linked to this season. */
+                            tournamentCount: number;
+                            /** @description Whether this season is its league's currently-designated season. */
+                            isCurrent: boolean;
+                        };
+                        /** @description How many source-season tournaments were re-created as fresh shells in the new season. */
+                        tournamentsCloned: number;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

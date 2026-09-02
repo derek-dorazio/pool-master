@@ -26,6 +26,7 @@ import type {
   AdminListGolfTournamentsResponses,
 } from '@/lib/api';
 import { useManageBreadcrumbOverride } from './root-admin-manage-layout';
+import { GolfSeasonCloneAction } from './golf-season-clone-action';
 import { GolfSeasonEditModal } from './golf-season-edit-modal';
 import { GolfSeasonTournamentCalendar } from './golf-season-tournament-calendar';
 
@@ -176,6 +177,7 @@ export function RootAdminGolfSeasonHomePage() {
                 >
                   Edit season
                 </Button>
+                <GolfSeasonCloneAction season={season} />
                 <LinkButton
                   data-testid="root-admin-golf-season-home-new-tournament"
                   size="sm"

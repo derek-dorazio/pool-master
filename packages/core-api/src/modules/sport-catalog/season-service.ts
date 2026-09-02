@@ -3,9 +3,12 @@
  * Season is purely a tournament-calendar grouping now, not a roster
  * boundary — the roster lives on SportLeague (sport-league-service.ts).
  *
- * cloneSeasonTournaments (plans/124 §4.2a) is not implemented here — it
- * calls the same internal creation function adminCreateGolfTournament uses,
- * which doesn't exist until that admin-golf-routes slice ships.
+ * cloneSeasonTournaments (plans/124 §4.2a) copies a season's tournament
+ * *calendar* one year forward. It is caller-injected with the same internal
+ * creation function adminCreateGolfTournament uses, so every default that
+ * path already produces (empty field, fresh round schedule, 6 default
+ * tiers, syncScope=NONE) comes along for free — nothing about last year's
+ * field / tiers / prices / scores / provider link is ever copied.
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -31,6 +34,27 @@ export interface SeasonSummary extends SeasonRow {
 
 export interface SeasonDetail extends SeasonSummary {
   isCurrent: boolean;
+}
+
+/** The subset of a golf tournament-creation input that a clone re-supplies (plans/124 §4.2a). */
+export interface CloneTournamentInput {
+  name: string;
+  venue?: string;
+  location?: string;
+  startDate: Date;
+  endDate?: Date;
+  rounds?: number;
+  releaseAt: Date;
+  fieldLocksAt: Date;
+  seasonId: string;
+  autoLifecycleEnabled?: boolean;
+}
+
+/** Shift a date to the same month/day in `date.year + years` (leap-year safe). */
+export function shiftYears(date: Date, years: number): Date {
+  const shifted = new Date(date.getTime());
+  shifted.setUTCFullYear(shifted.getUTCFullYear() + years);
+  return shifted;
 }
 
 export class SeasonService {
@@ -135,6 +159,76 @@ export class SeasonService {
       data: { currentSeasonId: seasonId },
     });
     return { sportLeagueId: season.sportLeagueId, currentSeasonId: seasonId };
+  }
+
+  /**
+   * plans/124 §4.2a — clone a season's tournament calendar forward one year.
+   * Creates the target `Season` (dates shifted to the same month/day, year +
+   * shift — via `setUTCFullYear`, so it lands correctly across a leap year),
+   * then re-runs `createTournament` once per source-season tournament with
+   * `name`/`venue`/`location`/`rounds`/`autoLifecycleEnabled` copied and every
+   * date shifted the same way. Never a raw `SportEvent` row copy — field,
+   * tiers, prices, scores, and the provider link are specific to *that*
+   * instance and do not carry forward, by construction. `currentSeasonId` is
+   * left on the source season; the admin runs "Set as current" separately.
+   */
+  async cloneSeasonTournaments(
+    sourceSeasonId: string,
+    targetYear: number | undefined,
+    createTournament: (input: CloneTournamentInput) => Promise<unknown>,
+  ): Promise<{ season: SeasonDetail; tournamentsCloned: number }> {
+    const source = await this.prisma.season.findUnique({ where: { id: sourceSeasonId } });
+    if (!source) {
+      throw new SportCatalogError(`Season ${sourceSeasonId} was not found.`, 'SEASON_NOT_FOUND', 404);
+    }
+
+    const year = targetYear ?? source.year + 1;
+    const shift = year - source.year;
+
+    const targetName = source.name.includes(String(source.year))
+      ? source.name.replace(String(source.year), String(year))
+      : `${source.name} (${year})`;
+
+    // Reuses createSeason's `@@unique(sportLeagueId, year)` guard: a target
+    // year that already exists for this league throws 409 SEASON_YEAR_ALREADY_EXISTS.
+    const newSeason = await this.createSeason({
+      sportLeagueId: source.sportLeagueId,
+      name: targetName,
+      year,
+      startDate: shiftYears(source.startDate, shift),
+      endDate: shiftYears(source.endDate, shift),
+    });
+
+    const sourceEvents = await this.prisma.sportEvent.findMany({
+      where: { seasonId: sourceSeasonId },
+      orderBy: [{ startDate: 'asc' }],
+    });
+
+    for (const event of sourceEvents) {
+      await createTournament({
+        name: event.name,
+        venue: event.venue ?? undefined,
+        location: event.location ?? undefined,
+        startDate: shiftYears(event.startDate, shift),
+        endDate: event.endDate ? shiftYears(event.endDate, shift) : undefined,
+        rounds: event.rounds ?? undefined,
+        releaseAt: shiftYears(event.releaseAt, shift),
+        fieldLocksAt: shiftYears(event.fieldLocksAt, shift),
+        seasonId: newSeason.id,
+        autoLifecycleEnabled: event.autoLifecycleEnabled,
+      });
+    }
+
+    const detail = await this.getSeason(newSeason.id);
+    if (!detail) {
+      // Unreachable — we just created it — but keeps the return type honest.
+      throw new SportCatalogError('Cloned season disappeared after creation.', 'SEASON_NOT_FOUND', 500);
+    }
+    this.logger?.info(
+      { sourceSeasonId, targetSeasonId: newSeason.id, year, tournamentsCloned: sourceEvents.length },
+      'Cloned golf season tournament calendar',
+    );
+    return { season: detail, tournamentsCloned: sourceEvents.length };
   }
 
   /**

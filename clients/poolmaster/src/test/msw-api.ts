@@ -33,6 +33,7 @@ const operationDefinitions = {
   adminAutoAssignGolfPrices: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/prices/auto-assign' },
   adminAutoAssignGolfTiers: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/tiers/auto-assign' },
   adminBulkAddGolfFieldEntries: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments/{eventId}/field/bulk-add' },
+  adminCloneGolfSeason: { method: 'post', path: '/api/v1/admin/sports/golf/seasons/{seasonId}/clone' },
   adminCreateGolfLeague: { method: 'post', path: '/api/v1/admin/sports/golf/leagues' },
   adminCreateGolfSeason: { method: 'post', path: '/api/v1/admin/sports/golf/seasons' },
   adminCreateGolfTournament: { method: 'post', path: '/api/v1/admin/sports/golf/tournaments' },

@@ -169,3 +169,159 @@ describe('SeasonService.assertSeasonBelongsToSport', () => {
     });
   });
 });
+
+describe('SeasonService.cloneSeasonTournaments (pool-master-pcd, plans/124 §4.2a)', () => {
+  function sourceEvent(overrides: Record<string, unknown> = {}) {
+    return {
+      id: 'evt-1',
+      name: 'The Open',
+      venue: 'Royal Liverpool',
+      location: 'Hoylake',
+      startDate: new Date('2024-07-18T00:00:00.000Z'),
+      endDate: new Date('2024-07-21T00:00:00.000Z'),
+      rounds: 4,
+      releaseAt: new Date('2024-07-04T00:00:00.000Z'),
+      fieldLocksAt: new Date('2024-07-17T00:00:00.000Z'),
+      autoLifecycleEnabled: true,
+      seasonId: 'season-src',
+      ...overrides,
+    };
+  }
+
+  function buildService(opts: {
+    source: Record<string, unknown> | null;
+    events: Array<Record<string, unknown>>;
+    existingTargetYear?: boolean;
+  }) {
+    const created = {
+      ...buildSeasonRow({ id: 'season-new', name: 'PGA Tour 2025', year: 2025 }),
+    };
+    const seasonFindUnique = jest
+      .fn()
+      // 1st call: cloneSeasonTournaments' own source lookup
+      .mockResolvedValueOnce(opts.source)
+      // 2nd call: createSeason's @@unique(sportLeagueId, year) pre-check
+      .mockResolvedValueOnce(opts.existingTargetYear ? buildSeasonRow({ year: 2025 }) : null)
+      // 3rd call: getSeason(newSeason.id)
+      .mockResolvedValueOnce({
+        ...created,
+        sportLeague: { currentSeasonId: 'season-src' },
+        _count: { sportEvents: opts.events.length },
+      });
+    const seasonCreate = jest.fn().mockResolvedValue(created);
+    const sportEventFindMany = jest.fn().mockResolvedValue(opts.events);
+    const createTournament = jest.fn().mockResolvedValue({ id: 'clone' });
+
+    const service = new SeasonService({
+      season: { findUnique: seasonFindUnique, create: seasonCreate },
+      sportEvent: { findMany: sportEventFindMany },
+    } as any);
+
+    return { service, seasonCreate, sportEventFindMany, createTournament };
+  }
+
+  it('pool-master-pcd creates the target season one calendar year forward (leap-year safe) and re-runs creation per source tournament', async () => {
+    const { service, seasonCreate, createTournament } = buildService({
+      source: buildSeasonRow({
+        id: 'season-src',
+        name: 'PGA Tour 2024',
+        year: 2024,
+        startDate: new Date('2024-02-29T00:00:00.000Z'),
+        endDate: new Date('2024-11-30T00:00:00.000Z'),
+      }),
+      events: [sourceEvent(), sourceEvent({ id: 'evt-2', name: 'Masters', endDate: null })],
+    });
+
+    const result = await service.cloneSeasonTournaments('season-src', undefined, createTournament);
+
+    // Season row: year + 1, same month/day; Feb 29 -> Mar 1 in the non-leap year (JS rollover).
+    expect(seasonCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        sportLeagueId: 'league-1',
+        name: 'PGA Tour 2025',
+        year: 2025,
+        startDate: new Date('2025-03-01T00:00:00.000Z'),
+        endDate: new Date('2025-11-30T00:00:00.000Z'),
+      }),
+    });
+
+    // One createTournament call per source event, dates shifted one year, targeting the new season.
+    expect(createTournament).toHaveBeenCalledTimes(2);
+    expect(createTournament).toHaveBeenNthCalledWith(1, {
+      name: 'The Open',
+      venue: 'Royal Liverpool',
+      location: 'Hoylake',
+      startDate: new Date('2025-07-18T00:00:00.000Z'),
+      endDate: new Date('2025-07-21T00:00:00.000Z'),
+      rounds: 4,
+      releaseAt: new Date('2025-07-04T00:00:00.000Z'),
+      fieldLocksAt: new Date('2025-07-17T00:00:00.000Z'),
+      seasonId: 'season-new',
+      autoLifecycleEnabled: true,
+    });
+    // A source event with no endDate stays undefined (not shifted null).
+    expect(createTournament).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ name: 'Masters', endDate: undefined, seasonId: 'season-new' }),
+    );
+
+    expect(result).toEqual({
+      season: expect.objectContaining({ id: 'season-new', year: 2025, isCurrent: false }),
+      tournamentsCloned: 2,
+    });
+  });
+
+  it('pool-master-pcd honours an explicit targetYear', async () => {
+    const { service, seasonCreate, createTournament } = buildService({
+      source: buildSeasonRow({ id: 'season-src', name: 'PGA Tour 2024', year: 2024 }),
+      events: [sourceEvent()],
+    });
+
+    await service.cloneSeasonTournaments('season-src', 2028, createTournament);
+
+    expect(seasonCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ name: 'PGA Tour 2028', year: 2028 }),
+    });
+    expect(createTournament).toHaveBeenCalledWith(
+      expect.objectContaining({ startDate: new Date('2028-07-18T00:00:00.000Z') }),
+    );
+  });
+
+  it('pool-master-pcd does not touch currentSeasonId or copy any field/tier/score data (only createSeason + createTournament are written)', async () => {
+    const seasonUpdate = jest.fn();
+    const { service, createTournament } = buildService({
+      source: buildSeasonRow({ id: 'season-src', name: 'PGA Tour 2024', year: 2024 }),
+      events: [sourceEvent()],
+    });
+    (service as any).prisma.season.update = seasonUpdate;
+    (service as any).prisma.sportLeague = { update: jest.fn() };
+
+    await service.cloneSeasonTournaments('season-src', undefined, createTournament);
+
+    expect(seasonUpdate).not.toHaveBeenCalled();
+    expect((service as any).prisma.sportLeague.update).not.toHaveBeenCalled();
+    // No participant/tier/valuation writes exist on the mocked client — the code
+    // path only calls createSeason + createTournament, which is the point.
+  });
+
+  it('pool-master-pcd surfaces 409 SEASON_YEAR_ALREADY_EXISTS from createSeason', async () => {
+    const { service, createTournament } = buildService({
+      source: buildSeasonRow({ id: 'season-src', name: 'PGA Tour 2024', year: 2024 }),
+      events: [sourceEvent()],
+      existingTargetYear: true,
+    });
+
+    await expect(
+      service.cloneSeasonTournaments('season-src', undefined, createTournament),
+    ).rejects.toMatchObject({ code: 'SEASON_YEAR_ALREADY_EXISTS', statusCode: 409 });
+    expect(createTournament).not.toHaveBeenCalled();
+  });
+
+  it('pool-master-pcd rejects 404 SEASON_NOT_FOUND for a missing source season', async () => {
+    const { service, createTournament } = buildService({ source: null, events: [] });
+
+    await expect(
+      service.cloneSeasonTournaments('missing', undefined, createTournament),
+    ).rejects.toMatchObject({ code: 'SEASON_NOT_FOUND', statusCode: 404 });
+  });
+});
