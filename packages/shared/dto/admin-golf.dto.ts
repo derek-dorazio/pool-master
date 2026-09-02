@@ -222,6 +222,12 @@ export type AdminGolfTournamentSourceDto = z.infer<typeof AdminGolfTournamentSou
 export const AdminGolfTournamentSyncScopeDtoSchema = z.nativeEnum(SportEventSyncScope);
 export type AdminGolfTournamentSyncScopeDto = z.infer<typeof AdminGolfTournamentSyncScopeDtoSchema>;
 
+export const AdminGolfTournamentScoreSourceDtoSchema = z.object({
+  providerId: z.string(),
+  externalId: z.string(),
+}).nullable().describe('The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4).');
+export type AdminGolfTournamentScoreSourceDto = z.infer<typeof AdminGolfTournamentScoreSourceDtoSchema>;
+
 export const AdminGolfTournamentDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -238,6 +244,7 @@ export const AdminGolfTournamentDtoSchema = z.object({
   leagueEventId: z.string().nullable().describe('The recurring tournament identity this year\'s event resolves to, if any (plans/124 §4.3a).'),
   source: AdminGolfTournamentSourceDtoSchema.describe('MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.'),
   syncScope: AdminGolfTournamentSyncScopeDtoSchema,
+  scoreSource: AdminGolfTournamentScoreSourceDtoSchema,
   autoLifecycleEnabled: z.boolean(),
   fieldCount: z.number().int(),
   tierCount: z.number().int(),
@@ -298,6 +305,12 @@ export const AdminTransitionGolfTournamentRequestSchema = z.object({
   toStatus: z.nativeEnum(SportEventStatus),
 });
 export type AdminTransitionGolfTournamentRequest = z.infer<typeof AdminTransitionGolfTournamentRequestSchema>;
+
+export const AdminLinkGolfTournamentScoreSourceRequestSchema = z.object({
+  providerId: z.string().min(1),
+  externalId: z.string().min(1),
+}).describe('A row selected from adminListProviderCatalogEvents (plans/124 §4.4).');
+export type AdminLinkGolfTournamentScoreSourceRequest = z.infer<typeof AdminLinkGolfTournamentScoreSourceRequestSchema>;
 
 // --- Field (plans/124 §4.7/§5.2) ---
 

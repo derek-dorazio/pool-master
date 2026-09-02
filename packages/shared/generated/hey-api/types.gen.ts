@@ -15851,6 +15851,90 @@ export type AdminReIngestEventResponses = {
 
 export type AdminReIngestEventResponse = AdminReIngestEventResponses[keyof AdminReIngestEventResponses];
 
+export type AdminListProviderCatalogEventsData = {
+    body?: never;
+    path: {
+        providerId: string;
+    };
+    query: {
+        sport: 'GOLF' | 'NFL' | 'NBA' | 'F1' | 'NASCAR' | 'NCAA_BASKETBALL' | 'NCAA_HOCKEY' | 'NCAA_FOOTBALL' | 'TENNIS' | 'HORSE_RACING' | 'SOCCER' | 'NHL' | 'MLB' | 'UFC';
+        /**
+         * Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter.
+         */
+        sportLeagueId?: string;
+        from?: string;
+        to?: string;
+        search?: string;
+    };
+    url: '/api/v1/admin/providers/{providerId}/catalog-events';
+};
+
+export type AdminListProviderCatalogEventsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminListProviderCatalogEventsError = AdminListProviderCatalogEventsErrors[keyof AdminListProviderCatalogEventsErrors];
+
+export type AdminListProviderCatalogEventsResponses = {
+    /**
+     * Live provider catalog browse results — serves both tournament-creation browse and score-source linking.
+     */
+    200: {
+        events: Array<{
+            externalId: string;
+            name: string;
+            startDate: string;
+            endDate: string;
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        }>;
+    };
+};
+
+export type AdminListProviderCatalogEventsResponse = AdminListProviderCatalogEventsResponses[keyof AdminListProviderCatalogEventsResponses];
+
 export type AdminGetServiceHealthData = {
     body?: never;
     path?: never;
@@ -18153,6 +18237,13 @@ export type AdminListGolfTournamentsResponses = {
              */
             source: 'MANUAL' | 'PROVIDER';
             syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+            /**
+             * The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4).
+             */
+            scoreSource: {
+                providerId: string;
+                externalId: string;
+            };
             autoLifecycleEnabled: boolean;
             fieldCount: number;
             tierCount: number;
@@ -18314,6 +18405,13 @@ export type AdminCreateGolfTournamentResponses = {
              */
             source: 'MANUAL' | 'PROVIDER';
             syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+            /**
+             * The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4).
+             */
+            scoreSource: {
+                providerId: string;
+                externalId: string;
+            };
             autoLifecycleEnabled: boolean;
             fieldCount: number;
             tierCount: number;
@@ -18528,6 +18626,13 @@ export type AdminGetGolfTournamentResponses = {
              */
             source: 'MANUAL' | 'PROVIDER';
             syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+            /**
+             * The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4).
+             */
+            scoreSource: {
+                providerId: string;
+                externalId: string;
+            };
             autoLifecycleEnabled: boolean;
             fieldCount: number;
             tierCount: number;
@@ -18697,6 +18802,13 @@ export type AdminUpdateGolfTournamentResponses = {
              */
             source: 'MANUAL' | 'PROVIDER';
             syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+            /**
+             * The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4).
+             */
+            scoreSource: {
+                providerId: string;
+                externalId: string;
+            };
             autoLifecycleEnabled: boolean;
             fieldCount: number;
             tierCount: number;
@@ -18846,6 +18958,13 @@ export type AdminTransitionGolfTournamentResponses = {
              */
             source: 'MANUAL' | 'PROVIDER';
             syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+            /**
+             * The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4).
+             */
+            scoreSource: {
+                providerId: string;
+                externalId: string;
+            };
             autoLifecycleEnabled: boolean;
             fieldCount: number;
             tierCount: number;
@@ -18870,6 +18989,320 @@ export type AdminTransitionGolfTournamentResponses = {
 };
 
 export type AdminTransitionGolfTournamentResponse = AdminTransitionGolfTournamentResponses[keyof AdminTransitionGolfTournamentResponses];
+
+export type AdminUnlinkGolfTournamentScoreSourceData = {
+    body?: never;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/score-source';
+};
+
+export type AdminUnlinkGolfTournamentScoreSourceErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminUnlinkGolfTournamentScoreSourceError = AdminUnlinkGolfTournamentScoreSourceErrors[keyof AdminUnlinkGolfTournamentScoreSourceErrors];
+
+export type AdminUnlinkGolfTournamentScoreSourceResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * Canonical admin golf tournament DTO — a SportEvent plus field/tier/contest counts.
+         */
+        tournament: {
+            id: string;
+            name: string;
+            venue: string;
+            location: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            startDate: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            endDate: string;
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+            rounds: number;
+            /**
+             * ISO 8601 datetime string.
+             */
+            releaseAt: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            fieldLocksAt: string;
+            fieldLocked: boolean;
+            seasonId: string;
+            /**
+             * The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a).
+             */
+            leagueEventId: string;
+            /**
+             * MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
+             */
+            source: 'MANUAL' | 'PROVIDER';
+            syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+            /**
+             * The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4).
+             */
+            scoreSource: {
+                providerId: string;
+                externalId: string;
+            };
+            autoLifecycleEnabled: boolean;
+            fieldCount: number;
+            tierCount: number;
+            contestCount: number;
+            /**
+             * ISO 8601 datetime string.
+             */
+            createdAt: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            updatedAt: string;
+            workflow: {
+                currentStatus: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+                /**
+                 * Server-computed from the declared transition map — never re-derived client-side.
+                 */
+                allowedTransitions: Array<'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+            };
+        };
+    };
+};
+
+export type AdminUnlinkGolfTournamentScoreSourceResponse = AdminUnlinkGolfTournamentScoreSourceResponses[keyof AdminUnlinkGolfTournamentScoreSourceResponses];
+
+export type AdminLinkGolfTournamentScoreSourceData = {
+    /**
+     * A row selected from adminListProviderCatalogEvents (plans/124 §4.4).
+     */
+    body: {
+        providerId: string;
+        externalId: string;
+    };
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/score-source';
+};
+
+export type AdminLinkGolfTournamentScoreSourceErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminLinkGolfTournamentScoreSourceError = AdminLinkGolfTournamentScoreSourceErrors[keyof AdminLinkGolfTournamentScoreSourceErrors];
+
+export type AdminLinkGolfTournamentScoreSourceResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * Canonical admin golf tournament DTO — a SportEvent plus field/tier/contest counts.
+         */
+        tournament: {
+            id: string;
+            name: string;
+            venue: string;
+            location: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            startDate: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            endDate: string;
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+            rounds: number;
+            /**
+             * ISO 8601 datetime string.
+             */
+            releaseAt: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            fieldLocksAt: string;
+            fieldLocked: boolean;
+            seasonId: string;
+            /**
+             * The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a).
+             */
+            leagueEventId: string;
+            /**
+             * MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
+             */
+            source: 'MANUAL' | 'PROVIDER';
+            syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+            /**
+             * The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4).
+             */
+            scoreSource: {
+                providerId: string;
+                externalId: string;
+            };
+            autoLifecycleEnabled: boolean;
+            fieldCount: number;
+            tierCount: number;
+            contestCount: number;
+            /**
+             * ISO 8601 datetime string.
+             */
+            createdAt: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            updatedAt: string;
+            workflow: {
+                currentStatus: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+                /**
+                 * Server-computed from the declared transition map — never re-derived client-side.
+                 */
+                allowedTransitions: Array<'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+            };
+        };
+    };
+};
+
+export type AdminLinkGolfTournamentScoreSourceResponse = AdminLinkGolfTournamentScoreSourceResponses[keyof AdminLinkGolfTournamentScoreSourceResponses];
 
 export type AdminGetGolfTournamentFieldData = {
     body?: never;

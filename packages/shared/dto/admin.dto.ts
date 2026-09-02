@@ -565,6 +565,37 @@ export const ProviderListResponseSchema = z.object({
 }).describe('Provider-list response.');
 export type ProviderListResponse = z.infer<typeof ProviderListResponseSchema>;
 
+// --- Provider catalog browse (plans/124 §3.4/§4.4/§5.1) ---
+//
+// Lives in the sync lane, not the golf lane, because it's fundamentally about
+// a provider's catalog rather than golf domain state — reusable when another
+// sport needs the same tournament-creation-browse / score-source-linking
+// mechanism later. The only candidate-lookup operation: no scoring, no
+// ranking, a plain filtered list.
+
+export const AdminProviderCatalogEventDtoSchema = z.object({
+  externalId: z.string(),
+  name: z.string(),
+  startDate: z.string().datetime(),
+  endDate: z.string().datetime().nullable(),
+  status: z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'POSTPONED']),
+}).describe('One event from a provider\'s live catalog — not a persisted SportEvent row.');
+export type AdminProviderCatalogEventDto = z.infer<typeof AdminProviderCatalogEventDtoSchema>;
+
+export const AdminListProviderCatalogEventsQuerySchema = z.object({
+  sport: SportSchema,
+  sportLeagueId: z.string().optional().describe('Resolves to that league\'s matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter.'),
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+  search: z.string().optional(),
+});
+export type AdminListProviderCatalogEventsQuery = z.infer<typeof AdminListProviderCatalogEventsQuerySchema>;
+
+export const AdminListProviderCatalogEventsResponseSchema = z.object({
+  events: z.array(AdminProviderCatalogEventDtoSchema),
+}).describe('Live provider catalog browse results — serves both tournament-creation browse and score-source linking.');
+export type AdminListProviderCatalogEventsResponse = z.infer<typeof AdminListProviderCatalogEventsResponseSchema>;
+
 export const ProviderIngestionDashboardResponseSchema = z.object({
   sportProviderStatus: z.array(ProviderIngestionStatDtoSchema),
   recentErrors: z.array(ProviderIngestionErrorDtoSchema),

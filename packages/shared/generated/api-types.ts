@@ -2158,6 +2158,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/providers/{providerId}/catalog-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Browse a provider's live event catalog
+         * @description Calls provider.getUpcomingEvents live — no dependency on any persisted SportEvent row or on schedule/field sync being enabled. The only candidate-lookup operation: serves the tournament-creation browse mode and the score-source linking picker, a plain filtered list with no scoring or ranking.
+         */
+        get: operations["adminListProviderCatalogEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/health/services": {
         parameters: {
             query?: never;
@@ -2686,6 +2706,30 @@ export interface paths {
          */
         post: operations["adminTransitionGolfTournament"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/score-source": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Link a golf tournament to a provider score source
+         * @description Sets providerId/externalId/syncScope=SCORES_ONLY from a row selected via adminListProviderCatalogEvents. Does not import the provider's field or odds — a tournament that already has a field keeps it untouched. 409 EXTERNAL_EVENT_ALREADY_LINKED if another sport event already holds that identity; 409 EVENT_NOT_ADMIN_MANAGED when the event is already provider-owned (syncScope=FULL).
+         */
+        post: operations["adminLinkGolfTournamentScoreSource"];
+        /**
+         * Unlink a golf tournament's provider score source
+         * @description Reverts to the manual-admin placeholder identity and syncScope=NONE. Already-synced score rows are left as-is.
+         */
+        delete: operations["adminUnlinkGolfTournamentScoreSource"];
         options?: never;
         head?: never;
         patch?: never;
@@ -16708,6 +16752,84 @@ export interface operations {
             };
         };
     };
+    adminListProviderCatalogEvents: {
+        parameters: {
+            query: {
+                sport: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
+                /** @description Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter. */
+                sportLeagueId?: string;
+                from?: string;
+                to?: string;
+                search?: string;
+            };
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Live provider catalog browse results — serves both tournament-creation browse and score-source linking. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        events: {
+                            externalId: string;
+                            name: string;
+                            /** Format: date-time */
+                            startDate: string;
+                            /** Format: date-time */
+                            endDate: string | null;
+                            /** @enum {string} */
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
     adminGetServiceHealth: {
         parameters: {
             query?: never;
@@ -18865,6 +18987,11 @@ export interface operations {
                             source: "MANUAL" | "PROVIDER";
                             /** @enum {string} */
                             syncScope: "NONE" | "SCORES_ONLY" | "FULL";
+                            /** @description The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4). */
+                            scoreSource: {
+                                providerId: string;
+                                externalId: string;
+                            } | null;
                             autoLifecycleEnabled: boolean;
                             fieldCount: number;
                             tierCount: number;
@@ -18989,6 +19116,11 @@ export interface operations {
                             source: "MANUAL" | "PROVIDER";
                             /** @enum {string} */
                             syncScope: "NONE" | "SCORES_ONLY" | "FULL";
+                            /** @description The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4). */
+                            scoreSource: {
+                                providerId: string;
+                                externalId: string;
+                            } | null;
                             autoLifecycleEnabled: boolean;
                             fieldCount: number;
                             tierCount: number;
@@ -19127,6 +19259,11 @@ export interface operations {
                             source: "MANUAL" | "PROVIDER";
                             /** @enum {string} */
                             syncScope: "NONE" | "SCORES_ONLY" | "FULL";
+                            /** @description The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4). */
+                            scoreSource: {
+                                providerId: string;
+                                externalId: string;
+                            } | null;
                             autoLifecycleEnabled: boolean;
                             fieldCount: number;
                             tierCount: number;
@@ -19353,6 +19490,11 @@ export interface operations {
                             source: "MANUAL" | "PROVIDER";
                             /** @enum {string} */
                             syncScope: "NONE" | "SCORES_ONLY" | "FULL";
+                            /** @description The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4). */
+                            scoreSource: {
+                                providerId: string;
+                                externalId: string;
+                            } | null;
                             autoLifecycleEnabled: boolean;
                             fieldCount: number;
                             tierCount: number;
@@ -19498,6 +19640,11 @@ export interface operations {
                             source: "MANUAL" | "PROVIDER";
                             /** @enum {string} */
                             syncScope: "NONE" | "SCORES_ONLY" | "FULL";
+                            /** @description The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4). */
+                            scoreSource: {
+                                providerId: string;
+                                externalId: string;
+                            } | null;
                             autoLifecycleEnabled: boolean;
                             fieldCount: number;
                             tierCount: number;
@@ -19562,6 +19709,300 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminLinkGolfTournamentScoreSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        /** @description A row selected from adminListProviderCatalogEvents (plans/124 §4.4). */
+        requestBody: {
+            content: {
+                "application/json": {
+                    providerId: string;
+                    externalId: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Canonical admin golf tournament DTO — a SportEvent plus field/tier/contest counts. */
+                        tournament: {
+                            id: string;
+                            name: string;
+                            venue: string | null;
+                            location: string | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            startDate: string;
+                            /** @description ISO 8601 datetime string. */
+                            endDate: string | null;
+                            /** @enum {string} */
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                            rounds: number | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            releaseAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            fieldLocksAt: string;
+                            fieldLocked: boolean;
+                            seasonId: string | null;
+                            /** @description The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a). */
+                            leagueEventId: string | null;
+                            /**
+                             * @description MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
+                             * @enum {string}
+                             */
+                            source: "MANUAL" | "PROVIDER";
+                            /** @enum {string} */
+                            syncScope: "NONE" | "SCORES_ONLY" | "FULL";
+                            /** @description The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4). */
+                            scoreSource: {
+                                providerId: string;
+                                externalId: string;
+                            } | null;
+                            autoLifecycleEnabled: boolean;
+                            fieldCount: number;
+                            tierCount: number;
+                            contestCount: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                            workflow: {
+                                /** @enum {string} */
+                                currentStatus: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                                /** @description Server-computed from the declared transition map — never re-derived client-side. */
+                                allowedTransitions: ("SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminUnlinkGolfTournamentScoreSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Canonical admin golf tournament DTO — a SportEvent plus field/tier/contest counts. */
+                        tournament: {
+                            id: string;
+                            name: string;
+                            venue: string | null;
+                            location: string | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            startDate: string;
+                            /** @description ISO 8601 datetime string. */
+                            endDate: string | null;
+                            /** @enum {string} */
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                            rounds: number | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            releaseAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            fieldLocksAt: string;
+                            fieldLocked: boolean;
+                            seasonId: string | null;
+                            /** @description The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a). */
+                            leagueEventId: string | null;
+                            /**
+                             * @description MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
+                             * @enum {string}
+                             */
+                            source: "MANUAL" | "PROVIDER";
+                            /** @enum {string} */
+                            syncScope: "NONE" | "SCORES_ONLY" | "FULL";
+                            /** @description The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4). */
+                            scoreSource: {
+                                providerId: string;
+                                externalId: string;
+                            } | null;
+                            autoLifecycleEnabled: boolean;
+                            fieldCount: number;
+                            tierCount: number;
+                            contestCount: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                            workflow: {
+                                /** @enum {string} */
+                                currentStatus: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                                /** @description Server-computed from the declared transition map — never re-derived client-side. */
+                                allowedTransitions: ("SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

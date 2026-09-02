@@ -8,6 +8,7 @@ export * from './account.mapper';
 export * from './admin-events.mapper';
 export * from './admin-golf.mapper';
 export * from './admin-provider-cleanup.mapper';
+export * from './event-score-source.mapper';
 export * from './notifications.mapper';
 export * from './leagues-extra.mapper';
 export * from './events.mapper';

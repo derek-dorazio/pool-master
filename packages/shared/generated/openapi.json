@@ -27190,7 +27190,7 @@
         "operationId": "adminListProviders",
         "summary": "List sports data providers and health status",
         "tags": [
-          "Admin"
+          "Admin Sync"
         ],
         "description": "Returns provider health and provider-summary information for platform ingestion operations.",
         "responses": {
@@ -27328,7 +27328,7 @@
         "operationId": "adminListProviderSyncRuns",
         "summary": "List recent provider sync runs",
         "tags": [
-          "Admin"
+          "Admin Sync"
         ],
         "description": "Returns recent provider sync runs with thin payload-backed operational detail for root-admin visibility surfaces.",
         "parameters": [
@@ -27864,7 +27864,7 @@
         "operationId": "adminPrepareSportSync",
         "summary": "Run explicit manual sport sync feeds",
         "tags": [
-          "Admin"
+          "Admin Sync"
         ],
         "description": "Submits feed-aware manual sync for the requested sport. The workflow runs asynchronously after acceptance.",
         "requestBody": {
@@ -28514,7 +28514,7 @@
         "operationId": "adminSyncProviderEventData",
         "summary": "Run explicit manual event sync feeds",
         "tags": [
-          "Admin"
+          "Admin Sync"
         ],
         "description": "Submits feed-aware manual sync for a single event. The workflow runs asynchronously after acceptance.",
         "requestBody": {
@@ -30232,7 +30232,7 @@
         "operationId": "adminGetIngestionDashboard",
         "summary": "Get ingestion dashboard metrics",
         "tags": [
-          "Admin"
+          "Admin Sync"
         ],
         "description": "Returns ingestion dashboard metrics used by root-admin operational monitoring surfaces.",
         "responses": {
@@ -30554,7 +30554,7 @@
         "operationId": "adminGetUnmappedParticipants",
         "summary": "List unmapped participants from providers",
         "tags": [
-          "Admin"
+          "Admin Sync"
         ],
         "description": "Returns provider participant records that still need mapping to internal participants.",
         "responses": {
@@ -30660,7 +30660,7 @@
         "operationId": "adminMapParticipant",
         "summary": "Map an external participant to an internal ID",
         "tags": [
-          "Admin"
+          "Admin Sync"
         ],
         "description": "Creates or updates a provider-to-participant mapping for ingestion normalization.",
         "requestBody": {
@@ -30764,7 +30764,7 @@
         "operationId": "adminCleanupStaleProviderEvents",
         "summary": "Inventory or delete stale provider event rows",
         "tags": [
-          "Admin"
+          "Admin Sync"
         ],
         "description": "Inventories stale provider SportEvent rows and, in EXECUTE mode, deletes eligible event-scoped rows. Non-Golf events are stale because the current provider workflow is Golf-only. Golf events are stale only after their end time has passed. Contest-referenced events and picks protect an event from deletion.",
         "requestBody": {
@@ -31172,7 +31172,7 @@
         "operationId": "adminGetProviderDetail",
         "summary": "Get provider detail and configuration",
         "tags": [
-          "Admin"
+          "Admin Sync"
         ],
         "description": "Returns administrative provider detail including mutable configuration and status information.",
         "parameters": [
@@ -31621,7 +31621,7 @@
         "operationId": "adminUpdateProviderConfig",
         "summary": "Update provider configuration",
         "tags": [
-          "Admin"
+          "Admin Sync"
         ],
         "description": "Updates the configuration for a specific ingestion provider.",
         "requestBody": {
@@ -31835,7 +31835,7 @@
         "operationId": "adminTriggerHealthCheck",
         "summary": "Trigger manual health check for a provider",
         "tags": [
-          "Admin"
+          "Admin Sync"
         ],
         "description": "Triggers an on-demand provider health check through the admin operations surface.",
         "parameters": [
@@ -31985,7 +31985,7 @@
         "operationId": "adminReIngestEvent",
         "summary": "Re-ingest event data from a provider",
         "tags": [
-          "Admin"
+          "Admin Sync"
         ],
         "description": "Triggers on-demand event-data re-ingestion for a provider and event identifier.",
         "parameters": [
@@ -32165,6 +32165,224 @@
             }
           },
           "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/providers/{providerId}/catalog-events": {
+      "get": {
+        "operationId": "adminListProviderCatalogEvents",
+        "summary": "Browse a provider's live event catalog",
+        "tags": [
+          "Admin Sync"
+        ],
+        "description": "Calls provider.getUpcomingEvents live — no dependency on any persisted SportEvent row or on schedule/field sync being enabled. The only candidate-lookup operation: serves the tournament-creation browse mode and the score-source linking picker, a plain filtered list with no scoring or ranking.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GOLF",
+                "NFL",
+                "NBA",
+                "F1",
+                "NASCAR",
+                "NCAA_BASKETBALL",
+                "NCAA_HOCKEY",
+                "NCAA_FOOTBALL",
+                "TENNIS",
+                "HORSE_RACING",
+                "SOCCER",
+                "NHL",
+                "MLB",
+                "UFC"
+              ]
+            },
+            "in": "query",
+            "name": "sport",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "sportLeagueId",
+            "required": false,
+            "description": "Resolves to that league's matchKeyword and applies a plain substring filter over event names. A league with no matchKeyword contributes no filter."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "from",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "to",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "search",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "providerId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Live provider catalog browse results — serves both tournament-creation browse and score-source linking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "externalId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "startDate": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "endDate": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "SCHEDULED",
+                              "IN_PROGRESS",
+                              "COMPLETED",
+                              "CANCELLED",
+                              "POSTPONED"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "externalId",
+                          "name",
+                          "startDate",
+                          "endDate",
+                          "status"
+                        ],
+                        "additionalProperties": false,
+                        "description": "One event from a provider's live catalog — not a persisted SportEvent row."
+                      }
+                    }
+                  },
+                  "required": [
+                    "events"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Live provider catalog browse results — serves both tournament-creation browse and score-source linking."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -37082,6 +37300,24 @@
                               "FULL"
                             ]
                           },
+                          "scoreSource": {
+                            "type": "object",
+                            "properties": {
+                              "providerId": {
+                                "type": "string"
+                              },
+                              "externalId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "providerId",
+                              "externalId"
+                            ],
+                            "additionalProperties": false,
+                            "nullable": true,
+                            "description": "The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4)."
+                          },
                           "autoLifecycleEnabled": {
                             "type": "boolean"
                           },
@@ -37121,6 +37357,7 @@
                           "leagueEventId",
                           "source",
                           "syncScope",
+                          "scoreSource",
                           "autoLifecycleEnabled",
                           "fieldCount",
                           "tierCount",
@@ -37343,6 +37580,24 @@
                             "FULL"
                           ]
                         },
+                        "scoreSource": {
+                          "type": "object",
+                          "properties": {
+                            "providerId": {
+                              "type": "string"
+                            },
+                            "externalId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "providerId",
+                            "externalId"
+                          ],
+                          "additionalProperties": false,
+                          "nullable": true,
+                          "description": "The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4)."
+                        },
                         "autoLifecycleEnabled": {
                           "type": "boolean"
                         },
@@ -37416,6 +37671,7 @@
                         "leagueEventId",
                         "source",
                         "syncScope",
+                        "scoreSource",
                         "autoLifecycleEnabled",
                         "fieldCount",
                         "tierCount",
@@ -37667,6 +37923,24 @@
                             "FULL"
                           ]
                         },
+                        "scoreSource": {
+                          "type": "object",
+                          "properties": {
+                            "providerId": {
+                              "type": "string"
+                            },
+                            "externalId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "providerId",
+                            "externalId"
+                          ],
+                          "additionalProperties": false,
+                          "nullable": true,
+                          "description": "The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4)."
+                        },
                         "autoLifecycleEnabled": {
                           "type": "boolean"
                         },
@@ -37740,6 +38014,7 @@
                         "leagueEventId",
                         "source",
                         "syncScope",
+                        "scoreSource",
                         "autoLifecycleEnabled",
                         "fieldCount",
                         "tierCount",
@@ -38000,6 +38275,24 @@
                             "FULL"
                           ]
                         },
+                        "scoreSource": {
+                          "type": "object",
+                          "properties": {
+                            "providerId": {
+                              "type": "string"
+                            },
+                            "externalId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "providerId",
+                            "externalId"
+                          ],
+                          "additionalProperties": false,
+                          "nullable": true,
+                          "description": "The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4)."
+                        },
                         "autoLifecycleEnabled": {
                           "type": "boolean"
                         },
@@ -38073,6 +38366,7 @@
                         "leagueEventId",
                         "source",
                         "syncScope",
+                        "scoreSource",
                         "autoLifecycleEnabled",
                         "fieldCount",
                         "tierCount",
@@ -38490,6 +38784,24 @@
                             "FULL"
                           ]
                         },
+                        "scoreSource": {
+                          "type": "object",
+                          "properties": {
+                            "providerId": {
+                              "type": "string"
+                            },
+                            "externalId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "providerId",
+                            "externalId"
+                          ],
+                          "additionalProperties": false,
+                          "nullable": true,
+                          "description": "The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4)."
+                        },
                         "autoLifecycleEnabled": {
                           "type": "boolean"
                         },
@@ -38563,6 +38875,7 @@
                         "leagueEventId",
                         "source",
                         "syncScope",
+                        "scoreSource",
                         "autoLifecycleEnabled",
                         "fieldCount",
                         "tierCount",
@@ -38662,6 +38975,717 @@
             }
           },
           "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/score-source": {
+      "post": {
+        "operationId": "adminLinkGolfTournamentScoreSource",
+        "summary": "Link a golf tournament to a provider score source",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Sets providerId/externalId/syncScope=SCORES_ONLY from a row selected via adminListProviderCatalogEvents. Does not import the provider's field or odds — a tournament that already has a field keeps it untouched. 409 EXTERNAL_EVENT_ALREADY_LINKED if another sport event already holds that identity; 409 EVENT_NOT_ADMIN_MANAGED when the event is already provider-owned (syncScope=FULL).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "providerId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "externalId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "providerId",
+                  "externalId"
+                ],
+                "additionalProperties": false,
+                "description": "A row selected from adminListProviderCatalogEvents (plans/124 §4.4)."
+              }
+            }
+          },
+          "description": "A row selected from adminListProviderCatalogEvents (plans/124 §4.4)."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tournament": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "venue": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "location": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "startDate": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "endDate": {
+                          "allOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "description": "ISO 8601 datetime string."
+                            }
+                          ],
+                          "nullable": true,
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "SCHEDULED",
+                            "IN_PROGRESS",
+                            "COMPLETED",
+                            "CANCELLED",
+                            "POSTPONED"
+                          ]
+                        },
+                        "rounds": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "releaseAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "fieldLocksAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "fieldLocked": {
+                          "type": "boolean"
+                        },
+                        "seasonId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "leagueEventId": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a)."
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "MANUAL",
+                            "PROVIDER"
+                          ],
+                          "description": "MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise."
+                        },
+                        "syncScope": {
+                          "type": "string",
+                          "enum": [
+                            "NONE",
+                            "SCORES_ONLY",
+                            "FULL"
+                          ]
+                        },
+                        "scoreSource": {
+                          "type": "object",
+                          "properties": {
+                            "providerId": {
+                              "type": "string"
+                            },
+                            "externalId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "providerId",
+                            "externalId"
+                          ],
+                          "additionalProperties": false,
+                          "nullable": true,
+                          "description": "The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4)."
+                        },
+                        "autoLifecycleEnabled": {
+                          "type": "boolean"
+                        },
+                        "fieldCount": {
+                          "type": "integer"
+                        },
+                        "tierCount": {
+                          "type": "integer"
+                        },
+                        "contestCount": {
+                          "type": "integer"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "workflow": {
+                          "type": "object",
+                          "properties": {
+                            "currentStatus": {
+                              "type": "string",
+                              "enum": [
+                                "SCHEDULED",
+                                "IN_PROGRESS",
+                                "COMPLETED",
+                                "CANCELLED",
+                                "POSTPONED"
+                              ]
+                            },
+                            "allowedTransitions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "SCHEDULED",
+                                  "IN_PROGRESS",
+                                  "COMPLETED",
+                                  "CANCELLED",
+                                  "POSTPONED"
+                                ]
+                              },
+                              "description": "Server-computed from the declared transition map — never re-derived client-side."
+                            }
+                          },
+                          "required": [
+                            "currentStatus",
+                            "allowedTransitions"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "venue",
+                        "location",
+                        "startDate",
+                        "endDate",
+                        "status",
+                        "rounds",
+                        "releaseAt",
+                        "fieldLocksAt",
+                        "fieldLocked",
+                        "seasonId",
+                        "leagueEventId",
+                        "source",
+                        "syncScope",
+                        "scoreSource",
+                        "autoLifecycleEnabled",
+                        "fieldCount",
+                        "tierCount",
+                        "contestCount",
+                        "createdAt",
+                        "updatedAt",
+                        "workflow"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Canonical admin golf tournament DTO — a SportEvent plus field/tier/contest counts."
+                    }
+                  },
+                  "required": [
+                    "tournament"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "adminUnlinkGolfTournamentScoreSource",
+        "summary": "Unlink a golf tournament's provider score source",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Reverts to the manual-admin placeholder identity and syncScope=NONE. Already-synced score rows are left as-is.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tournament": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "venue": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "location": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "startDate": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "endDate": {
+                          "allOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "description": "ISO 8601 datetime string."
+                            }
+                          ],
+                          "nullable": true,
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "SCHEDULED",
+                            "IN_PROGRESS",
+                            "COMPLETED",
+                            "CANCELLED",
+                            "POSTPONED"
+                          ]
+                        },
+                        "rounds": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "releaseAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "fieldLocksAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "fieldLocked": {
+                          "type": "boolean"
+                        },
+                        "seasonId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "leagueEventId": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a)."
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "MANUAL",
+                            "PROVIDER"
+                          ],
+                          "description": "MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise."
+                        },
+                        "syncScope": {
+                          "type": "string",
+                          "enum": [
+                            "NONE",
+                            "SCORES_ONLY",
+                            "FULL"
+                          ]
+                        },
+                        "scoreSource": {
+                          "type": "object",
+                          "properties": {
+                            "providerId": {
+                              "type": "string"
+                            },
+                            "externalId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "providerId",
+                            "externalId"
+                          ],
+                          "additionalProperties": false,
+                          "nullable": true,
+                          "description": "The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4)."
+                        },
+                        "autoLifecycleEnabled": {
+                          "type": "boolean"
+                        },
+                        "fieldCount": {
+                          "type": "integer"
+                        },
+                        "tierCount": {
+                          "type": "integer"
+                        },
+                        "contestCount": {
+                          "type": "integer"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "workflow": {
+                          "type": "object",
+                          "properties": {
+                            "currentStatus": {
+                              "type": "string",
+                              "enum": [
+                                "SCHEDULED",
+                                "IN_PROGRESS",
+                                "COMPLETED",
+                                "CANCELLED",
+                                "POSTPONED"
+                              ]
+                            },
+                            "allowedTransitions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "SCHEDULED",
+                                  "IN_PROGRESS",
+                                  "COMPLETED",
+                                  "CANCELLED",
+                                  "POSTPONED"
+                                ]
+                              },
+                              "description": "Server-computed from the declared transition map — never re-derived client-side."
+                            }
+                          },
+                          "required": [
+                            "currentStatus",
+                            "allowedTransitions"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "venue",
+                        "location",
+                        "startDate",
+                        "endDate",
+                        "status",
+                        "rounds",
+                        "releaseAt",
+                        "fieldLocksAt",
+                        "fieldLocked",
+                        "seasonId",
+                        "leagueEventId",
+                        "source",
+                        "syncScope",
+                        "scoreSource",
+                        "autoLifecycleEnabled",
+                        "fieldCount",
+                        "tierCount",
+                        "contestCount",
+                        "createdAt",
+                        "updatedAt",
+                        "workflow"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Canonical admin golf tournament DTO — a SportEvent plus field/tier/contest counts."
+                    }
+                  },
+                  "required": [
+                    "tournament"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -50141,6 +51165,10 @@
     {
       "name": "Admin Golf",
       "description": "Golf tournament authoring — leagues, seasons, and rosters"
+    },
+    {
+      "name": "Admin Sync",
+      "description": "Provider health, sync runs, manual sync triggers, mappings, and catalog browsing"
     },
     {
       "name": "Config",

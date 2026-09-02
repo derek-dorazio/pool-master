@@ -33,6 +33,7 @@ import {
   AdminGolfTournamentParamsSchema,
   AdminGolfTournamentRoundsResponseSchema,
   AdminGolfTournamentTiersResponseSchema,
+  AdminLinkGolfTournamentScoreSourceRequestSchema,
   AdminReplaceGolfTierAssignmentsRequestSchema,
   AdminReplaceGolfTournamentTiersRequestSchema,
   AdminSeedGolfTournamentFieldResponseSchema,
@@ -61,6 +62,7 @@ import type { GolfTournamentService } from '../../golf/golf-tournament-service';
 import type { GolfFieldService } from '../../golf/golf-field-service';
 import type { GolfTierService } from '../../golf/golf-tier-service';
 import type { EventLifecycleService } from '../../events/event-lifecycle-service';
+import type { EventScoreSourceService } from '../../events/event-score-source-service';
 import { createGolfAdminHandlers } from './handler';
 
 function withGolfErrorResponses(
@@ -82,6 +84,7 @@ export interface GolfAdminRoutesOptions {
   eventLifecycleService: EventLifecycleService;
   golfFieldService: GolfFieldService;
   golfTierService: GolfTierService;
+  eventScoreSourceService: EventScoreSourceService;
 }
 
 export async function golfAdminRoutes(
@@ -96,6 +99,7 @@ export async function golfAdminRoutes(
     opts.eventLifecycleService,
     opts.golfFieldService,
     opts.golfTierService,
+    opts.eventScoreSourceService,
   );
 
   fastify.get('/leagues', {
@@ -386,6 +390,31 @@ export async function golfAdminRoutes(
       response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGolfTournamentDetailResponseSchema) }, [404, 422]),
     },
     handler: handlers.transitionTournament,
+  });
+
+  fastify.post('/tournaments/:eventId/score-source', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Link a golf tournament to a provider score source',
+      description: 'Sets providerId/externalId/syncScope=SCORES_ONLY from a row selected via adminListProviderCatalogEvents. Does not import the provider\'s field or odds — a tournament that already has a field keeps it untouched. 409 EXTERNAL_EVENT_ALREADY_LINKED if another sport event already holds that identity; 409 EVENT_NOT_ADMIN_MANAGED when the event is already provider-owned (syncScope=FULL).',
+      operationId: 'adminLinkGolfTournamentScoreSource',
+      params: zodToJsonSchema(AdminGolfTournamentParamsSchema),
+      body: zodToJsonSchema(AdminLinkGolfTournamentScoreSourceRequestSchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGolfTournamentDetailResponseSchema) }, [404, 409]),
+    },
+    handler: handlers.linkTournamentScoreSource,
+  });
+
+  fastify.delete('/tournaments/:eventId/score-source', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Unlink a golf tournament\'s provider score source',
+      description: 'Reverts to the manual-admin placeholder identity and syncScope=NONE. Already-synced score rows are left as-is.',
+      operationId: 'adminUnlinkGolfTournamentScoreSource',
+      params: zodToJsonSchema(AdminGolfTournamentParamsSchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGolfTournamentDetailResponseSchema) }, [404, 409]),
+    },
+    handler: handlers.unlinkTournamentScoreSource,
   });
 
   fastify.get('/tournaments/:eventId/field', {

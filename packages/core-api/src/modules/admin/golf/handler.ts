@@ -12,6 +12,7 @@ import type {
   AdminGolfLeagueRosterUploadRequest,
   AdminGolfSeasonListQuery,
   AdminGolfTournamentListQuery,
+  AdminLinkGolfTournamentScoreSourceRequest,
   AdminReplaceGolfTierAssignmentsRequest,
   AdminReplaceGolfTournamentTiersRequest,
   AdminTransitionGolfTournamentRequest,
@@ -53,6 +54,8 @@ import type { GolfTierService } from '../../golf/golf-tier-service';
 import { GolfTierError } from '../../golf/golf-tier-service';
 import type { EventLifecycleService } from '../../events/event-lifecycle-service';
 import { EventLifecycleError } from '../../events/event-lifecycle-service';
+import type { EventScoreSourceService } from '../../events/event-score-source-service';
+import { EventScoreSourceError } from '../../events/event-score-source-service';
 import { extractRootAdminContext } from '../request-admin-context';
 
 export function createGolfAdminHandlers(
@@ -63,6 +66,7 @@ export function createGolfAdminHandlers(
   eventLifecycleService: EventLifecycleService,
   golfFieldService: GolfFieldService,
   golfTierService: GolfTierService,
+  eventScoreSourceService: EventScoreSourceService,
 ) {
   return {
     listLeagues,
@@ -87,6 +91,8 @@ export function createGolfAdminHandlers(
     updateTournament,
     deleteTournament,
     transitionTournament,
+    linkTournamentScoreSource,
+    unlinkTournamentScoreSource,
     getTournamentField,
     seedTournamentField,
     bulkAddFieldEntries,
@@ -359,18 +365,47 @@ export function createGolfAdminHandlers(
         toStatus: request.body.toStatus,
         actor: { type: 'ROOT_ADMIN', userId: rootAdminUserId, email: rootAdminEmail },
       });
-      const tournament = await golfTournamentService.getTournament(request.params.eventId);
-      if (!tournament) {
-        return sendError(reply, 404, 'EVENT_NOT_FOUND', `Golf tournament ${request.params.eventId} was not found.`);
-      }
-      const allowedTransitions = golfTournamentService.getAllowedTransitions(tournament.status);
-      return reply.send({ tournament: toAdminGolfTournamentDetailDto(tournament, allowedTransitions) });
     } catch (err) {
       if (err instanceof EventLifecycleError) {
         return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;
     }
+    return respondWithReloadedTournament(request.params.eventId, reply);
+  }
+
+  async function linkTournamentScoreSource(
+    request: FastifyRequest<{ Params: { eventId: string }; Body: AdminLinkGolfTournamentScoreSourceRequest }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      await eventScoreSourceService.linkScoreSource(request.params.eventId, request.body);
+    } catch (err) {
+      return handleEventScoreSourceError(err, reply);
+    }
+    return respondWithReloadedTournament(request.params.eventId, reply);
+  }
+
+  async function unlinkTournamentScoreSource(
+    request: FastifyRequest<{ Params: { eventId: string } }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      await eventScoreSourceService.unlinkScoreSource(request.params.eventId);
+    } catch (err) {
+      return handleEventScoreSourceError(err, reply);
+    }
+    return respondWithReloadedTournament(request.params.eventId, reply);
+  }
+
+  /** Shared by every write that mutates a tournament in place and then re-sends the canonical detail DTO. */
+  async function respondWithReloadedTournament(eventId: string, reply: FastifyReply) {
+    const tournament = await golfTournamentService.getTournament(eventId);
+    if (!tournament) {
+      return sendError(reply, 404, 'EVENT_NOT_FOUND', `Golf tournament ${eventId} was not found.`);
+    }
+    const allowedTransitions = golfTournamentService.getAllowedTransitions(tournament.status);
+    return reply.send({ tournament: toAdminGolfTournamentDetailDto(tournament, allowedTransitions) });
   }
 
   async function getTournamentField(
@@ -519,6 +554,13 @@ function handleGolfFieldError(err: unknown, reply: FastifyReply) {
 
 function handleGolfTierError(err: unknown, reply: FastifyReply) {
   if (err instanceof GolfTierError) {
+    return sendError(reply, err.statusCode, err.code, err.message);
+  }
+  throw err;
+}
+
+function handleEventScoreSourceError(err: unknown, reply: FastifyReply) {
+  if (err instanceof EventScoreSourceError) {
     return sendError(reply, err.statusCode, err.code, err.message);
   }
   throw err;

@@ -35,6 +35,7 @@ import { GolfTierService } from '../golf/golf-tier-service';
 import { GolfTournamentService } from '../golf/golf-tournament-service';
 import { GolfFieldService } from '../golf/golf-field-service';
 import { EventLifecycleService } from '../events/event-lifecycle-service';
+import { EventScoreSourceService } from '../events/event-score-source-service';
 import {
   AdminEventListQuerySchema,
   AdminEventListResponseSchema,
@@ -62,6 +63,8 @@ import {
   ProviderListResponseSchema,
   ProviderSyncRunListResponseSchema,
   ProviderDetailResponseSchema,
+  AdminListProviderCatalogEventsQuerySchema,
+  AdminListProviderCatalogEventsResponseSchema,
   ProviderIngestionDashboardResponseSchema,
   ProviderIngestionJobDtoSchema,
   ProviderUnmappedParticipantListResponseSchema,
@@ -169,13 +172,14 @@ export async function adminModule(
   );
   const eventLifecycleService = opts.eventLifecycleService ?? new EventLifecycleService(prisma, fastify.log);
   const golfFieldService = new GolfFieldService(prisma, sportLeagueService, undefined, fastify.log);
+  const eventScoreSourceService = new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log);
 
   // --- Handlers ---
   const user = createUserHandlers(userService);
   const leagues = createLeagueAdminHandlers(adminLeagueService);
   const teams = createTeamAdminHandlers(adminTeamService);
   const health = createHealthHandlers(healthService);
-  const provider = createProviderHandlers(providerService);
+  const provider = createProviderHandlers(providerService, eventScoreSourceService);
   const contestTemplates = createContestTemplateAdminHandlers(contestTemplateAdminService);
   const eventBrowser = createEventBrowserAdminHandlers(adminEventBrowserService);
 
@@ -370,7 +374,7 @@ export async function adminModule(
 
   fastify.get('/providers/health', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Admin Sync'],
       summary: 'List sports data providers and health status',
       description: 'Returns provider health and provider-summary information for platform ingestion operations.',
       operationId: 'adminListProviders',
@@ -381,7 +385,7 @@ export async function adminModule(
 
   fastify.get('/providers/sync-runs', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Admin Sync'],
       summary: 'List recent provider sync runs',
       description: 'Returns recent provider sync runs with thin payload-backed operational detail for root-admin visibility surfaces.',
       operationId: 'adminListProviderSyncRuns',
@@ -401,7 +405,7 @@ export async function adminModule(
 
   fastify.post('/providers/sync/:sport', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Admin Sync'],
       summary: 'Run explicit manual sport sync feeds',
       description: 'Submits feed-aware manual sync for the requested sport. The workflow runs asynchronously after acceptance.',
       operationId: 'adminPrepareSportSync',
@@ -415,7 +419,7 @@ export async function adminModule(
 
   fastify.post('/providers/events/:sport/:eventId/sync', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Admin Sync'],
       summary: 'Run explicit manual event sync feeds',
       description: 'Submits feed-aware manual sync for a single event. The workflow runs asynchronously after acceptance.',
       operationId: 'adminSyncProviderEventData',
@@ -457,7 +461,7 @@ export async function adminModule(
 
   fastify.get('/providers/ingestion', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Admin Sync'],
       summary: 'Get ingestion dashboard metrics',
       description: 'Returns ingestion dashboard metrics used by root-admin operational monitoring surfaces.',
       operationId: 'adminGetIngestionDashboard',
@@ -468,7 +472,7 @@ export async function adminModule(
 
   fastify.get('/providers/unmapped-participants', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Admin Sync'],
       summary: 'List unmapped participants from providers',
       description: 'Returns provider participant records that still need mapping to internal participants.',
       operationId: 'adminGetUnmappedParticipants',
@@ -479,7 +483,7 @@ export async function adminModule(
 
   fastify.post('/providers/map-participant', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Admin Sync'],
       summary: 'Map an external participant to an internal ID',
       description: 'Creates or updates a provider-to-participant mapping for ingestion normalization.',
       operationId: 'adminMapParticipant',
@@ -499,7 +503,7 @@ export async function adminModule(
 
   fastify.post('/providers/stale-events/cleanup', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Admin Sync'],
       summary: 'Inventory or delete stale provider event rows',
       description:
         'Inventories stale provider SportEvent rows and, in EXECUTE mode, deletes eligible event-scoped rows. Non-Golf events are stale because the current provider workflow is Golf-only. Golf events are stale only after their end time has passed. Contest-referenced events and picks protect an event from deletion.',
@@ -512,7 +516,7 @@ export async function adminModule(
 
   fastify.get('/providers/:providerId', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Admin Sync'],
       summary: 'Get provider detail and configuration',
       description: 'Returns administrative provider detail including mutable configuration and status information.',
       operationId: 'adminGetProviderDetail',
@@ -523,7 +527,7 @@ export async function adminModule(
 
   fastify.put('/providers/:providerId/config', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Admin Sync'],
       summary: 'Update provider configuration',
       description: 'Updates the configuration for a specific ingestion provider.',
       operationId: 'adminUpdateProviderConfig',
@@ -549,7 +553,7 @@ export async function adminModule(
 
   fastify.post('/providers/:providerId/health-check', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Admin Sync'],
       summary: 'Trigger manual health check for a provider',
       description: 'Triggers an on-demand provider health check through the admin operations surface.',
       operationId: 'adminTriggerHealthCheck',
@@ -560,13 +564,25 @@ export async function adminModule(
 
   fastify.post('/providers/:providerId/re-ingest/:eventId', {
     schema: {
-      tags: ['Admin'],
+      tags: ['Admin Sync'],
       summary: 'Re-ingest event data from a provider',
       description: 'Triggers on-demand event-data re-ingestion for a provider and event identifier.',
       operationId: 'adminReIngestEvent',
       response: withAdminErrorResponses({ 201: zodToJsonSchema(ProviderIngestionJobDtoSchema) }, [404, 422]),
     },
     handler: provider.reIngestEvent,
+  });
+
+  fastify.get('/providers/:providerId/catalog-events', {
+    schema: {
+      tags: ['Admin Sync'],
+      summary: 'Browse a provider\'s live event catalog',
+      description: 'Calls provider.getUpcomingEvents live — no dependency on any persisted SportEvent row or on schedule/field sync being enabled. The only candidate-lookup operation: serves the tournament-creation browse mode and the score-source linking picker, a plain filtered list with no scoring or ranking.',
+      operationId: 'adminListProviderCatalogEvents',
+      querystring: zodToJsonSchema(AdminListProviderCatalogEventsQuerySchema),
+      response: withAdminErrorResponses({ 200: zodToJsonSchema(AdminListProviderCatalogEventsResponseSchema) }, [404]),
+    },
+    handler: provider.listProviderCatalogEvents,
   });
 
   // --- Health / Platform Monitoring Routes ---
@@ -715,6 +731,7 @@ export async function adminModule(
     golfFieldService,
     golfTierService,
     seasonService,
+    eventScoreSourceService,
   });
 
   registerPlatformConfigRoutes(fastify, {

@@ -131,6 +131,9 @@ export function toAdminGolfTournamentDto(row: GolfTournamentRow): AdminGolfTourn
     leagueEventId: row.leagueEventId,
     source: row.providerId === MANUAL_ADMIN_PROVIDER_ID ? 'MANUAL' : 'PROVIDER',
     syncScope: row.syncScope as AdminGolfTournamentDto['syncScope'],
+    scoreSource: row.providerId === MANUAL_ADMIN_PROVIDER_ID
+      ? null
+      : { providerId: row.providerId, externalId: row.externalId },
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     fieldCount: row.fieldCount,
     tierCount: row.tierCount,

@@ -7,6 +7,7 @@
 import { createGolfAdminHandlers } from '../../../packages/core-api/src/modules/admin/golf/handler';
 import { GolfTournamentError } from '../../../packages/core-api/src/modules/golf/golf-tournament-service';
 import { EventLifecycleError } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
+import { EventScoreSourceError } from '../../../packages/core-api/src/modules/events/event-score-source-service';
 import { SportCatalogError } from '../../../packages/core-api/src/modules/sport-catalog/errors';
 
 function buildReply() {
@@ -58,6 +59,11 @@ function buildHandlers(services: Record<string, unknown> = {}) {
     applySportEventStatusTransition: jest.fn().mockResolvedValue({}),
     ...(services.eventLifecycleService as object ?? {}),
   };
+  const eventScoreSourceService = {
+    linkScoreSource: jest.fn().mockResolvedValue(undefined),
+    unlinkScoreSource: jest.fn().mockResolvedValue(undefined),
+    ...(services.eventScoreSourceService as object ?? {}),
+  };
   const handlers = createGolfAdminHandlers(
     {} as any,
     {} as any,
@@ -66,8 +72,9 @@ function buildHandlers(services: Record<string, unknown> = {}) {
     eventLifecycleService as any,
     {} as any,
     {} as any,
+    eventScoreSourceService as any,
   );
-  return { handlers, golfTournamentService, eventLifecycleService };
+  return { handlers, golfTournamentService, eventLifecycleService, eventScoreSourceService };
 }
 
 describe('pool-master-ij2 — golf admin tournament CRUD/transition handlers', () => {
@@ -164,6 +171,41 @@ describe('pool-master-ij2 — golf admin tournament CRUD/transition handlers', (
       expect(golfTournamentService.getTournament).toHaveBeenCalledWith('event-1');
       expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
         tournament: expect.objectContaining({ id: 'event-1' }),
+      }));
+    });
+
+    it('pool-master-753 derives scoreSource=null when providerId is the manual-admin placeholder', async () => {
+      const { handlers } = buildHandlers({
+        golfTournamentService: {
+          getTournament: jest.fn().mockResolvedValue(buildTournamentRow({ providerId: 'manual-admin' })),
+        },
+      });
+      const reply = buildReply();
+
+      await handlers.getTournament({ params: { eventId: 'event-1' } } as any, reply as any);
+
+      expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+        tournament: expect.objectContaining({ source: 'MANUAL', scoreSource: null }),
+      }));
+    });
+
+    it('pool-master-753 derives scoreSource={providerId, externalId} once linked to a real provider', async () => {
+      const { handlers } = buildHandlers({
+        golfTournamentService: {
+          getTournament: jest.fn().mockResolvedValue(
+            buildTournamentRow({ providerId: 'mock-golf', externalId: 'ext-1' }),
+          ),
+        },
+      });
+      const reply = buildReply();
+
+      await handlers.getTournament({ params: { eventId: 'event-1' } } as any, reply as any);
+
+      expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+        tournament: expect.objectContaining({
+          source: 'PROVIDER',
+          scoreSource: { providerId: 'mock-golf', externalId: 'ext-1' },
+        }),
       }));
     });
 
@@ -297,6 +339,98 @@ describe('pool-master-ij2 — golf admin tournament CRUD/transition handlers', (
       await expect(
         handlers.transitionTournament(buildRequest({ rootAdminContext: undefined }) as any, reply as any),
       ).rejects.toThrow('Root admin context is required');
+    });
+  });
+
+  describe('linkTournamentScoreSource', () => {
+    it('pool-master-753 links the score source and returns the reloaded tournament with its workflow block', async () => {
+      const { handlers, eventScoreSourceService, golfTournamentService } = buildHandlers();
+      const reply = buildReply();
+
+      await handlers.linkTournamentScoreSource({
+        params: { eventId: 'event-1' },
+        body: { providerId: 'mock-golf', externalId: 'ext-1' },
+      } as any, reply as any);
+
+      expect(eventScoreSourceService.linkScoreSource).toHaveBeenCalledWith('event-1', {
+        providerId: 'mock-golf',
+        externalId: 'ext-1',
+      });
+      expect(golfTournamentService.getTournament).toHaveBeenCalledWith('event-1');
+      expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+        tournament: expect.objectContaining({ id: 'event-1' }),
+      }));
+    });
+
+    it('pool-master-753 maps 409 EXTERNAL_EVENT_ALREADY_LINKED from the service', async () => {
+      const { handlers } = buildHandlers({
+        eventScoreSourceService: {
+          linkScoreSource: jest.fn().mockRejectedValue(
+            new EventScoreSourceError('already linked', 'EXTERNAL_EVENT_ALREADY_LINKED', 409),
+          ),
+        },
+      });
+      const reply = buildReply();
+
+      await handlers.linkTournamentScoreSource({
+        params: { eventId: 'event-1' },
+        body: { providerId: 'mock-golf', externalId: 'ext-1' },
+      } as any, reply as any);
+
+      expect(reply.status).toHaveBeenCalledWith(409);
+      expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+        error: expect.objectContaining({ code: 'EXTERNAL_EVENT_ALREADY_LINKED' }),
+      }));
+    });
+
+    it('pool-master-753 404s EVENT_NOT_FOUND when the tournament disappears before the reload', async () => {
+      const { handlers } = buildHandlers({
+        golfTournamentService: { getTournament: jest.fn().mockResolvedValue(null) },
+      });
+      const reply = buildReply();
+
+      await handlers.linkTournamentScoreSource({
+        params: { eventId: 'event-1' },
+        body: { providerId: 'mock-golf', externalId: 'ext-1' },
+      } as any, reply as any);
+
+      expect(reply.status).toHaveBeenCalledWith(404);
+      expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+        error: expect.objectContaining({ code: 'EVENT_NOT_FOUND' }),
+      }));
+    });
+  });
+
+  describe('unlinkTournamentScoreSource', () => {
+    it('pool-master-753 unlinks the score source and returns the reloaded tournament', async () => {
+      const { handlers, eventScoreSourceService, golfTournamentService } = buildHandlers();
+      const reply = buildReply();
+
+      await handlers.unlinkTournamentScoreSource({ params: { eventId: 'event-1' } } as any, reply as any);
+
+      expect(eventScoreSourceService.unlinkScoreSource).toHaveBeenCalledWith('event-1');
+      expect(golfTournamentService.getTournament).toHaveBeenCalledWith('event-1');
+      expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+        tournament: expect.objectContaining({ id: 'event-1' }),
+      }));
+    });
+
+    it('pool-master-753 maps 409 EVENT_NOT_ADMIN_MANAGED from the service', async () => {
+      const { handlers } = buildHandlers({
+        eventScoreSourceService: {
+          unlinkScoreSource: jest.fn().mockRejectedValue(
+            new EventScoreSourceError('provider-owned', 'EVENT_NOT_ADMIN_MANAGED', 409),
+          ),
+        },
+      });
+      const reply = buildReply();
+
+      await handlers.unlinkTournamentScoreSource({ params: { eventId: 'event-1' } } as any, reply as any);
+
+      expect(reply.status).toHaveBeenCalledWith(409);
+      expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+        error: expect.objectContaining({ code: 'EVENT_NOT_ADMIN_MANAGED' }),
+      }));
     });
   });
 });

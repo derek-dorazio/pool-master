@@ -8,7 +8,7 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
-import type { AdminProviderEventCleanupRequest } from '@poolmaster/shared/dto';
+import type { AdminListProviderCatalogEventsQuery, AdminProviderEventCleanupRequest } from '@poolmaster/shared/dto';
 import type { ProviderService } from './provider-service';
 import type { EventSyncRequest, SportSyncRequest } from '../ingestion/core/ingestion-scheduler';
 import { SyncRequestValidationError } from '../ingestion/core/sync-orchestrator';
@@ -22,15 +22,20 @@ import {
   SportSyncNotConfiguredError,
   SportProviderNotFoundError,
 } from './provider-service';
+import type { EventScoreSourceService } from '../events/event-score-source-service';
+import { EventScoreSourceError } from '../events/event-score-source-service';
 import { sendError } from '../../core/error-handler';
 import { extractRootAdminContext } from './request-admin-context';
-import { mapProviderEventCleanupResultToDto } from '../../mappers';
+import { mapProviderEventCleanupResultToDto, toAdminProviderCatalogEventDtoList } from '../../mappers';
 
 // ---------------------------------------------------------------------------
 // Handler factory
 // ---------------------------------------------------------------------------
 
-export function createProviderHandlers(providerService: ProviderService) {
+export function createProviderHandlers(
+  providerService: ProviderService,
+  eventScoreSourceService: EventScoreSourceService,
+) {
   return {
     listProviders,
     listSyncRuns,
@@ -43,6 +48,7 @@ export function createProviderHandlers(providerService: ProviderService) {
     getIngestionDashboard,
     reIngestEvent,
     getUnmappedParticipants,
+    listProviderCatalogEvents,
     mapParticipant,
   };
 
@@ -447,5 +453,32 @@ export function createProviderHandlers(providerService: ProviderService) {
     );
     logger.info({ providerId, externalId, internalId }, 'Mapped provider participant');
     return reply.status(204).send();
+  }
+
+  // --- Provider catalog browse (plans/124 §3.4/§4.4/§5.1) ---
+
+  async function listProviderCatalogEvents(
+    request: FastifyRequest<{
+      Params: { providerId: string };
+      Querystring: AdminListProviderCatalogEventsQuery;
+    }>,
+    reply: FastifyReply,
+  ) {
+    const { providerId } = request.params;
+    const { sport, sportLeagueId, from, to, search } = request.query;
+    try {
+      const events = await eventScoreSourceService.listCandidateEvents(providerId, sport as Sport, {
+        sportLeagueId,
+        from: from ? new Date(from) : undefined,
+        to: to ? new Date(to) : undefined,
+        search,
+      });
+      return reply.send({ events: toAdminProviderCatalogEventDtoList(events) });
+    } catch (err) {
+      if (err instanceof EventScoreSourceError) {
+        return sendError(reply, err.statusCode, err.code, err.message);
+      }
+      throw err;
+    }
   }
 }

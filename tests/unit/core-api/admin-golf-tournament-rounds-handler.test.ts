@@ -32,7 +32,7 @@ describe('pool-master-k6q — golf admin round-schedule handlers', () => {
           buildRoundRow({ roundNumber: 2, scheduledDate: new Date('2026-06-02T00:00:00.000Z') }),
         ]),
       };
-      const handlers = createGolfAdminHandlers({} as any, {} as any, golfRoundScheduleService as any, {} as any, {} as any, {} as any, {} as any);
+      const handlers = createGolfAdminHandlers({} as any, {} as any, golfRoundScheduleService as any, {} as any, {} as any, {} as any, {} as any, {} as any);
       const reply = buildReply();
 
       await handlers.getTournamentRounds({ params: { eventId: 'event-1' } } as any, reply as any);
@@ -54,7 +54,7 @@ describe('pool-master-k6q — golf admin round-schedule handlers', () => {
           buildRoundRow({ roundNumber: 1, scheduledDate: new Date('2026-06-05T00:00:00.000Z'), scheduledEndAt: new Date('2026-06-05T20:00:00.000Z') }),
         ]),
       };
-      const handlers = createGolfAdminHandlers({} as any, {} as any, golfRoundScheduleService as any, {} as any, {} as any, {} as any, {} as any);
+      const handlers = createGolfAdminHandlers({} as any, {} as any, golfRoundScheduleService as any, {} as any, {} as any, {} as any, {} as any, {} as any);
       const reply = buildReply();
 
       await handlers.updateTournamentRounds({
@@ -80,7 +80,7 @@ describe('pool-master-k6q — golf admin round-schedule handlers', () => {
       const golfRoundScheduleService = {
         updateSportEventRounds: jest.fn().mockResolvedValue([buildRoundRow({ roundNumber: 1 })]),
       };
-      const handlers = createGolfAdminHandlers({} as any, {} as any, golfRoundScheduleService as any, {} as any, {} as any, {} as any, {} as any);
+      const handlers = createGolfAdminHandlers({} as any, {} as any, golfRoundScheduleService as any, {} as any, {} as any, {} as any, {} as any, {} as any);
       const reply = buildReply();
 
       await handlers.updateTournamentRounds({
@@ -105,7 +105,7 @@ describe('pool-master-k6q — golf admin round-schedule handlers', () => {
           new GolfRoundScheduleError('Sport event event-1 has no SportEventRound for round 7'),
         ),
       };
-      const handlers = createGolfAdminHandlers({} as any, {} as any, golfRoundScheduleService as any, {} as any, {} as any, {} as any, {} as any);
+      const handlers = createGolfAdminHandlers({} as any, {} as any, golfRoundScheduleService as any, {} as any, {} as any, {} as any, {} as any, {} as any);
       const reply = buildReply();
 
       await handlers.updateTournamentRounds({
@@ -123,7 +123,7 @@ describe('pool-master-k6q — golf admin round-schedule handlers', () => {
       const golfRoundScheduleService = {
         updateSportEventRounds: jest.fn().mockRejectedValue(new Error('unexpected')),
       };
-      const handlers = createGolfAdminHandlers({} as any, {} as any, golfRoundScheduleService as any, {} as any, {} as any, {} as any, {} as any);
+      const handlers = createGolfAdminHandlers({} as any, {} as any, golfRoundScheduleService as any, {} as any, {} as any, {} as any, {} as any, {} as any);
       const reply = buildReply();
 
       await expect(
