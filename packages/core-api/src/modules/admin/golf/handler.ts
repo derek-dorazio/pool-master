@@ -6,10 +6,14 @@ import type {
   AdminAutoAssignGolfTiersRequest,
   AdminBulkAddGolfFieldEntriesRequest,
   AdminCreateGolfLeagueRequest,
+  AdminCreateGolfPlayerRequest,
   AdminCreateGolfSeasonRequest,
+  AdminCreateGolfTournamentFromProviderEventRequest,
   AdminCreateGolfTournamentRequest,
   AdminGolfLeagueListQuery,
   AdminGolfLeagueRosterUploadRequest,
+  AdminGolfPlayerListQuery,
+  AdminGolfRoundScoreUploadRequest,
   AdminGolfSeasonListQuery,
   AdminGolfTournamentListQuery,
   AdminLinkGolfTournamentScoreSourceRequest,
@@ -19,6 +23,8 @@ import type {
   AdminUpdateGolfFieldEntriesRequest,
   AdminUpdateGolfLeagueRequest,
   AdminUpdateGolfLeagueRosterRequest,
+  AdminUpdateGolfPlayerRequest,
+  AdminUpdateGolfRoundScoreRequest,
   AdminUpdateGolfSeasonRequest,
   AdminUpdateGolfTournamentRequest,
   AdminUpdateGolfTournamentRoundsRequest,
@@ -30,6 +36,10 @@ import {
   toAdminGolfLeagueRosterEntryDtoList,
   toAdminGolfLeagueRosterUploadPreviewRowDtoList,
   toAdminGolfLeagueSummaryDtoList,
+  toAdminGolfPlayerDetailDto,
+  toAdminGolfPlayerDtoList,
+  toAdminGolfRoundScoreEntryDto,
+  toAdminGolfRoundScoreEntryDtoList,
   toAdminGolfSeasonDetailDto,
   toAdminGolfSeasonDto,
   toAdminGolfSeasonSummaryDtoList,
@@ -37,8 +47,10 @@ import {
   toAdminGolfTournamentDetailDto,
   toAdminGolfTournamentDtoList,
   toAdminGolfTournamentRoundDtoList,
+  toAdminPreviewGolfRoundScoresResponse,
   toGolfFieldEntriesUpdateInput,
   toGolfRoundScheduleUpdateInput,
+  toProviderManualSyncSubmissionResponse,
 } from '../../../mappers';
 import { sendError } from '../../../core/error-handler';
 import type { SportLeagueService } from '../../sport-catalog/sport-league-service';
@@ -52,10 +64,20 @@ import type { GolfFieldService } from '../../golf/golf-field-service';
 import { GolfFieldError } from '../../golf/golf-field-service';
 import type { GolfTierService } from '../../golf/golf-tier-service';
 import { GolfTierError } from '../../golf/golf-tier-service';
+import type { GolfPlayerService } from '../../golf/golf-player-service';
+import { GolfPlayerError } from '../../golf/golf-player-service';
+import type { GolfScoreService } from '../../golf/golf-score-service';
+import { GolfScoreError } from '../../golf/golf-score-service';
 import type { EventLifecycleService } from '../../events/event-lifecycle-service';
 import { EventLifecycleError } from '../../events/event-lifecycle-service';
 import type { EventScoreSourceService } from '../../events/event-score-source-service';
 import { EventScoreSourceError } from '../../events/event-score-source-service';
+import type { ProviderService } from '../provider-service';
+import {
+  SportEventSyncScopeError,
+  SportProviderNotFoundError,
+  SportSyncNotConfiguredError,
+} from '../provider-service';
 import { extractRootAdminContext } from '../request-admin-context';
 
 export function createGolfAdminHandlers(
@@ -67,6 +89,9 @@ export function createGolfAdminHandlers(
   golfFieldService: GolfFieldService,
   golfTierService: GolfTierService,
   eventScoreSourceService: EventScoreSourceService,
+  golfPlayerService: GolfPlayerService,
+  providerService: ProviderService,
+  golfScoreService: GolfScoreService,
 ) {
   return {
     listLeagues,
@@ -103,6 +128,16 @@ export function createGolfAdminHandlers(
     autoAssignTournamentTiers,
     replaceTournamentTierAssignments,
     autoAssignTournamentPrices,
+    listPlayers,
+    createPlayer,
+    getPlayer,
+    updatePlayer,
+    createTournamentFromProviderEvent,
+    refreshTournamentField,
+    getRoundScores,
+    previewRoundScores,
+    applyRoundScores,
+    updateRoundScore,
   };
 
   async function listLeagues(
@@ -526,6 +561,176 @@ export function createGolfAdminHandlers(
     const tiers = await golfTierService.getEffectiveTiersForSportEvent(request.params.eventId);
     return reply.send({ tiers: toAdminGolfTierGroupDtoList(tiers) });
   }
+
+  async function listPlayers(
+    request: FastifyRequest<{ Querystring: AdminGolfPlayerListQuery }>,
+    reply: FastifyReply,
+  ) {
+    const players = await golfPlayerService.listPlayers({
+      status: request.query.status,
+      search: request.query.search,
+    });
+    return reply.send({ players: toAdminGolfPlayerDtoList(players) });
+  }
+
+  async function createPlayer(
+    request: FastifyRequest<{ Body: AdminCreateGolfPlayerRequest }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      const player = await golfPlayerService.createPlayer(request.body);
+      return reply.status(201).send({ player: toAdminGolfPlayerDetailDto({ ...player, providerMappings: [] }) });
+    } catch (err) {
+      return handleGolfPlayerError(err, reply);
+    }
+  }
+
+  async function getPlayer(
+    request: FastifyRequest<{ Params: { participantId: string } }>,
+    reply: FastifyReply,
+  ) {
+    const player = await golfPlayerService.getPlayer(request.params.participantId);
+    if (!player) {
+      return sendError(reply, 404, 'PLAYER_NOT_FOUND', `Golf player ${request.params.participantId} was not found.`);
+    }
+    return reply.send({ player: toAdminGolfPlayerDetailDto(player) });
+  }
+
+  async function updatePlayer(
+    request: FastifyRequest<{ Params: { participantId: string }; Body: AdminUpdateGolfPlayerRequest }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      const player = await golfPlayerService.updatePlayer(request.params.participantId, request.body);
+      return reply.send({ player: toAdminGolfPlayerDetailDto(player) });
+    } catch (err) {
+      return handleGolfPlayerError(err, reply);
+    }
+  }
+
+  async function createTournamentFromProviderEvent(
+    request: FastifyRequest<{ Body: AdminCreateGolfTournamentFromProviderEventRequest }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      const providerEvent = await eventScoreSourceService.getProviderEventDetail(
+        request.body.providerId,
+        request.body.externalId,
+      );
+      const tournament = await golfTournamentService.createTournamentFromProviderEvent({
+        seasonId: request.body.seasonId,
+        providerId: request.body.providerId,
+        externalId: request.body.externalId,
+        name: providerEvent.name,
+        venue: providerEvent.venue,
+        startDate: providerEvent.startDate,
+        endDate: providerEvent.endDate,
+        rounds: request.body.rounds,
+      });
+      const allowedTransitions = golfTournamentService.getAllowedTransitions(tournament.status);
+      return reply.status(201).send({ tournament: toAdminGolfTournamentDetailDto(tournament, allowedTransitions) });
+    } catch (err) {
+      if (err instanceof EventScoreSourceError) {
+        return sendError(reply, err.statusCode, err.code, err.message);
+      }
+      return handleGolfTournamentError(err, reply);
+    }
+  }
+
+  async function refreshTournamentField(
+    request: FastifyRequest<{ Params: { eventId: string } }>,
+    reply: FastifyReply,
+  ) {
+    const tournament = await golfTournamentService.getTournament(request.params.eventId);
+    if (!tournament) {
+      return sendError(reply, 404, 'EVENT_NOT_FOUND', `Golf tournament ${request.params.eventId} was not found.`);
+    }
+    if (tournament.syncScope === 'NONE') {
+      return sendError(
+        reply,
+        409,
+        'EVENT_NOT_LINKED',
+        `Golf tournament ${request.params.eventId} is not linked to a provider score source.`,
+      );
+    }
+
+    const { rootAdminUserId, rootAdminEmail } = extractRootAdminContext(request);
+    try {
+      const result = await providerService.syncEventData(
+        { sport: Sport.GOLF, eventId: tournament.externalId, feeds: ['EVENTPARTICIPANTS'] },
+        rootAdminUserId,
+        rootAdminEmail,
+      );
+      return reply.status(202).send(toProviderManualSyncSubmissionResponse(result));
+    } catch (err) {
+      if (err instanceof SportProviderNotFoundError) {
+        return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
+      }
+      if (err instanceof SportSyncNotConfiguredError) {
+        return sendError(reply, 422, 'SPORT_SYNC_NOT_CONFIGURED', err.message);
+      }
+      if (err instanceof SportEventSyncScopeError) {
+        return sendError(reply, 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED', err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function getRoundScores(
+    request: FastifyRequest<{ Params: { eventId: string; round: number } }>,
+    reply: FastifyReply,
+  ) {
+    const rows = await golfScoreService.getRoundScores(request.params.eventId, Number(request.params.round));
+    return reply.send({ rows: toAdminGolfRoundScoreEntryDtoList(rows) });
+  }
+
+  async function previewRoundScores(
+    request: FastifyRequest<{ Params: { eventId: string; round: number }; Body: AdminGolfRoundScoreUploadRequest }>,
+    reply: FastifyReply,
+  ) {
+    const preview = await golfScoreService.previewRoundScores(
+      request.params.eventId,
+      Number(request.params.round),
+      request.body.rows,
+    );
+    return reply.send(toAdminPreviewGolfRoundScoresResponse(preview));
+  }
+
+  async function applyRoundScores(
+    request: FastifyRequest<{ Params: { eventId: string; round: number }; Body: AdminGolfRoundScoreUploadRequest }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      const rows = await golfScoreService.applyRoundScores(
+        request.params.eventId,
+        Number(request.params.round),
+        request.body.rows,
+      );
+      return reply.send({ rows: toAdminGolfRoundScoreEntryDtoList(rows) });
+    } catch (err) {
+      return handleGolfScoreError(err, reply);
+    }
+  }
+
+  async function updateRoundScore(
+    request: FastifyRequest<{
+      Params: { eventId: string; round: number; sportEventParticipantId: string };
+      Body: AdminUpdateGolfRoundScoreRequest;
+    }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      const row = await golfScoreService.updateRoundScore(
+        request.params.eventId,
+        Number(request.params.round),
+        request.params.sportEventParticipantId,
+        request.body,
+      );
+      return reply.send({ row: toAdminGolfRoundScoreEntryDto(row) });
+    } catch (err) {
+      return handleGolfScoreError(err, reply);
+    }
+  }
 }
 
 function handleSportCatalogError(err: unknown, reply: FastifyReply) {
@@ -561,6 +766,23 @@ function handleGolfTierError(err: unknown, reply: FastifyReply) {
 
 function handleEventScoreSourceError(err: unknown, reply: FastifyReply) {
   if (err instanceof EventScoreSourceError) {
+    return sendError(reply, err.statusCode, err.code, err.message);
+  }
+  throw err;
+}
+
+function handleGolfPlayerError(err: unknown, reply: FastifyReply) {
+  if (err instanceof GolfPlayerError) {
+    return sendError(reply, err.statusCode, err.code, err.message);
+  }
+  if (err instanceof SportCatalogError) {
+    return sendError(reply, err.statusCode, err.code, err.message);
+  }
+  throw err;
+}
+
+function handleGolfScoreError(err: unknown, reply: FastifyReply) {
+  if (err instanceof GolfScoreError) {
     return sendError(reply, err.statusCode, err.code, err.message);
   }
   throw err;

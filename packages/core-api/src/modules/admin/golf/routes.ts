@@ -12,7 +12,9 @@ import {
   AdminBulkAddGolfFieldEntriesRequestSchema,
   AdminBulkAddGolfFieldEntriesResponseSchema,
   AdminCreateGolfLeagueRequestSchema,
+  AdminCreateGolfPlayerRequestSchema,
   AdminCreateGolfSeasonRequestSchema,
+  AdminCreateGolfTournamentFromProviderEventRequestSchema,
   AdminCreateGolfTournamentRequestSchema,
   AdminGolfFieldEntryParamsSchema,
   AdminGolfLeagueListQuerySchema,
@@ -22,6 +24,16 @@ import {
   AdminGolfLeagueRosterResponseSchema,
   AdminGolfLeagueRosterUploadPreviewResponseSchema,
   AdminGolfLeagueRosterUploadRequestSchema,
+  AdminGetGolfRoundScoresResponseSchema,
+  AdminGolfPlayerDetailResponseSchema,
+  AdminGolfPlayerListQuerySchema,
+  AdminGolfPlayerListResponseSchema,
+  AdminGolfPlayerParamsSchema,
+  AdminGolfRoundScoreParticipantParamsSchema,
+  AdminGolfRoundScoresParamsSchema,
+  AdminGolfRoundScoreUploadRequestSchema,
+  AdminPreviewGolfRoundScoresResponseSchema,
+  AdminRefreshGolfTournamentFieldResponseSchema,
   AdminGolfSeasonListQuerySchema,
   AdminGolfSeasonListResponseSchema,
   AdminGolfSeasonParamsSchema,
@@ -42,6 +54,9 @@ import {
   AdminUpdateGolfFieldEntriesRequestSchema,
   AdminUpdateGolfLeagueRequestSchema,
   AdminUpdateGolfLeagueRosterRequestSchema,
+  AdminUpdateGolfPlayerRequestSchema,
+  AdminUpdateGolfRoundScoreRequestSchema,
+  AdminUpdateGolfRoundScoreResponseSchema,
   AdminUpdateGolfSeasonRequestSchema,
   AdminUpdateGolfTournamentRequestSchema,
   AdminUpdateGolfTournamentRoundsRequestSchema,
@@ -61,8 +76,11 @@ import type { GolfRoundScheduleService } from '../../golf/golf-round-schedule-se
 import type { GolfTournamentService } from '../../golf/golf-tournament-service';
 import type { GolfFieldService } from '../../golf/golf-field-service';
 import type { GolfTierService } from '../../golf/golf-tier-service';
+import type { GolfPlayerService } from '../../golf/golf-player-service';
+import type { GolfScoreService } from '../../golf/golf-score-service';
 import type { EventLifecycleService } from '../../events/event-lifecycle-service';
 import type { EventScoreSourceService } from '../../events/event-score-source-service';
+import type { ProviderService } from '../provider-service';
 import { createGolfAdminHandlers } from './handler';
 
 function withGolfErrorResponses(
@@ -85,6 +103,9 @@ export interface GolfAdminRoutesOptions {
   golfFieldService: GolfFieldService;
   golfTierService: GolfTierService;
   eventScoreSourceService: EventScoreSourceService;
+  golfPlayerService: GolfPlayerService;
+  providerService: ProviderService;
+  golfScoreService: GolfScoreService;
 }
 
 export async function golfAdminRoutes(
@@ -100,6 +121,9 @@ export async function golfAdminRoutes(
     opts.golfFieldService,
     opts.golfTierService,
     opts.eventScoreSourceService,
+    opts.golfPlayerService,
+    opts.providerService,
+    opts.golfScoreService,
   );
 
   fastify.get('/leagues', {
@@ -342,6 +366,30 @@ export async function golfAdminRoutes(
     handler: handlers.createTournament,
   });
 
+  fastify.post('/tournaments/from-provider-event', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Create a golf tournament from a browsed provider event',
+      description: 'Creates the tournament pre-linked (syncScope=SCORES_ONLY, real providerId/externalId) from a row selected via adminListProviderCatalogEvents — name/venue/dates come from the provider\'s own event detail. Does not touch the field; use adminRefreshGolfTournamentField afterward. 422 SEASON_SPORT_MISMATCH if seasonId resolves to a non-golf season.',
+      operationId: 'adminCreateGolfTournamentFromProviderEvent',
+      body: zodToJsonSchema(AdminCreateGolfTournamentFromProviderEventRequestSchema),
+      response: withGolfErrorResponses({ 201: zodToJsonSchema(AdminGolfTournamentDetailResponseSchema) }, [404, 409, 422]),
+    },
+    handler: handlers.createTournamentFromProviderEvent,
+  });
+
+  fastify.post('/tournaments/:eventId/field/refresh', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Load or refresh a linked golf tournament\'s field from its provider',
+      description: 'Thin wrapper over providerService.syncEventData(EVENTPARTICIPANTS) — a real, ledger-tracked manual sync, not a bespoke persistence call. Asynchronous: returns the submitted syncRuns; poll/invalidate adminGetGolfTournamentField once they complete. 409 EVENT_NOT_LINKED when the tournament has no provider score source (syncScope=NONE).',
+      operationId: 'adminRefreshGolfTournamentField',
+      params: zodToJsonSchema(AdminGolfTournamentParamsSchema),
+      response: withGolfErrorResponses({ 202: zodToJsonSchema(AdminRefreshGolfTournamentFieldResponseSchema) }, [404, 409, 422]),
+    },
+    handler: handlers.refreshTournamentField,
+  });
+
   fastify.get('/tournaments/:eventId', {
     schema: {
       tags: ['Admin Golf'],
@@ -541,5 +589,105 @@ export async function golfAdminRoutes(
       response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGolfTournamentTiersResponseSchema) }),
     },
     handler: handlers.autoAssignTournamentPrices,
+  });
+
+  fastify.get('/players', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'List golf players',
+      description: 'The master golf roster. Filters: status (defaults to ACTIVE), search. Thin wrapper over the cross-sport ParticipantService, scoped to Sport.GOLF.',
+      operationId: 'adminListGolfPlayers',
+      querystring: zodToJsonSchema(AdminGolfPlayerListQuerySchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGolfPlayerListResponseSchema) }),
+    },
+    handler: handlers.listPlayers,
+  });
+
+  fastify.post('/players', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Create a golf player',
+      description: 'Creates a Participant for Sport.GOLF. Manual mode has no sync to populate the master roster, so this is its own admin surface.',
+      operationId: 'adminCreateGolfPlayer',
+      body: zodToJsonSchema(AdminCreateGolfPlayerRequestSchema),
+      response: withGolfErrorResponses({ 201: zodToJsonSchema(AdminGolfPlayerDetailResponseSchema) }),
+    },
+    handler: handlers.createPlayer,
+  });
+
+  fastify.get('/players/:participantId', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Get a golf player',
+      description: 'Player detail plus its read-only provider-mapping list.',
+      operationId: 'adminGetGolfPlayer',
+      params: zodToJsonSchema(AdminGolfPlayerParamsSchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGolfPlayerDetailResponseSchema) }, [404]),
+    },
+    handler: handlers.getPlayer,
+  });
+
+  fastify.patch('/players/:participantId', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Update a golf player',
+      description: 'Partial update, including status. Removing a golfer from the master roster is status=INACTIVE, never a hard delete — no DELETE route exists.',
+      operationId: 'adminUpdateGolfPlayer',
+      params: zodToJsonSchema(AdminGolfPlayerParamsSchema),
+      body: zodToJsonSchema(AdminUpdateGolfPlayerRequestSchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGolfPlayerDetailResponseSchema) }, [404]),
+    },
+    handler: handlers.updatePlayer,
+  });
+
+  fastify.get('/tournaments/:eventId/rounds/:round/scores', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Get a golf tournament round\'s current scores',
+      description: 'Current round rows plus each golfer\'s overall standing, for the correction grid.',
+      operationId: 'adminGetGolfRoundScores',
+      params: zodToJsonSchema(AdminGolfRoundScoresParamsSchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGetGolfRoundScoresResponseSchema) }),
+    },
+    handler: handlers.getRoundScores,
+  });
+
+  fastify.post('/tournaments/:eventId/rounds/:round/scores/preview', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Preview a golf round score upload',
+      description: 'Dry run. Resolves every row (participantId > externalId > exact playerName) and reports the change it would make. Writes nothing.',
+      operationId: 'adminPreviewGolfRoundScores',
+      params: zodToJsonSchema(AdminGolfRoundScoresParamsSchema),
+      body: zodToJsonSchema(AdminGolfRoundScoreUploadRequestSchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminPreviewGolfRoundScoresResponseSchema) }),
+    },
+    handler: handlers.previewRoundScores,
+  });
+
+  fastify.post('/tournaments/:eventId/rounds/:round/scores', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Apply a golf round score upload',
+      description: 'All-or-nothing: 422 ROUND_SCORE_ROWS_UNRESOLVED when any row is unresolved. Refreshes standings and publishes live_score.persisted exactly as the ingestion path does.',
+      operationId: 'adminApplyGolfRoundScores',
+      params: zodToJsonSchema(AdminGolfRoundScoresParamsSchema),
+      body: zodToJsonSchema(AdminGolfRoundScoreUploadRequestSchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGetGolfRoundScoresResponseSchema) }, [422]),
+    },
+    handler: handlers.applyRoundScores,
+  });
+
+  fastify.patch('/tournaments/:eventId/rounds/:round/scores/:sportEventParticipantId', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Correct one golfer\'s round score',
+      description: 'Single-cell correction — a partial patch, for minor fixes without re-uploading the whole round.',
+      operationId: 'adminUpdateGolfRoundScore',
+      params: zodToJsonSchema(AdminGolfRoundScoreParticipantParamsSchema),
+      body: zodToJsonSchema(AdminUpdateGolfRoundScoreRequestSchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminUpdateGolfRoundScoreResponseSchema) }, [404]),
+    },
+    handler: handlers.updateRoundScore,
   });
 }

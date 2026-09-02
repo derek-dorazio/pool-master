@@ -43,6 +43,13 @@ export interface ProviderCatalogEventRow {
   status: ProviderCatalogSportEvent['status'];
 }
 
+export interface ProviderEventDetailSummary {
+  name: string;
+  venue: string | null;
+  startDate: Date;
+  endDate: Date | null;
+}
+
 const DEFAULT_LOOKBACK_DAYS = 3;
 const DEFAULT_LOOKAHEAD_DAYS = 90;
 
@@ -92,6 +99,39 @@ export class EventScoreSourceService {
         endDate: event.endDate ?? null,
         status: event.status,
       }));
+  }
+
+  /**
+   * The single place `adminCreateGolfTournamentFromProviderEvent` (plans/124
+   * §4.4a) resolves a browsed provider event's name/venue/dates to prefill a
+   * new tournament — the same provider-registry resolution
+   * `listCandidateEvents` already uses, not a direct `providerRegistry` call
+   * from `modules/golf/`.
+   */
+  async getProviderEventDetail(
+    providerId: string,
+    externalId: string,
+  ): Promise<ProviderEventDetailSummary> {
+    const provider = this.providerRegistry.getProviderById(providerId);
+    if (!provider) {
+      throw new EventScoreSourceError(`Provider ${providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
+    }
+
+    const detail = await provider.getEventDetails(externalId);
+    if (!detail) {
+      throw new EventScoreSourceError(
+        `Provider ${providerId} returned no event detail for ${externalId}.`,
+        'PROVIDER_EVENT_NOT_FOUND',
+        404,
+      );
+    }
+
+    return {
+      name: detail.name,
+      venue: detail.venue ?? null,
+      startDate: detail.startDate,
+      endDate: detail.endDate ?? null,
+    };
   }
 
   /**

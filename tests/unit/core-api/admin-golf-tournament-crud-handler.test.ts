@@ -9,6 +9,11 @@ import { GolfTournamentError } from '../../../packages/core-api/src/modules/golf
 import { EventLifecycleError } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { EventScoreSourceError } from '../../../packages/core-api/src/modules/events/event-score-source-service';
 import { SportCatalogError } from '../../../packages/core-api/src/modules/sport-catalog/errors';
+import {
+  SportEventSyncScopeError,
+  SportProviderNotFoundError,
+  SportSyncNotConfiguredError,
+} from '../../../packages/core-api/src/modules/admin/provider-service';
 
 function buildReply() {
   return {
@@ -49,6 +54,7 @@ function buildHandlers(services: Record<string, unknown> = {}) {
   const golfTournamentService = {
     listTournaments: jest.fn().mockResolvedValue([buildTournamentRow()]),
     createTournament: jest.fn().mockResolvedValue(buildTournamentRow()),
+    createTournamentFromProviderEvent: jest.fn().mockResolvedValue(buildTournamentRow({ providerId: 'mock-golf', externalId: 'ext-1', syncScope: 'SCORES_ONLY' })),
     getTournament: jest.fn().mockResolvedValue(buildTournamentRow()),
     updateTournament: jest.fn().mockResolvedValue(buildTournamentRow()),
     deleteTournament: jest.fn().mockResolvedValue(undefined),
@@ -62,7 +68,33 @@ function buildHandlers(services: Record<string, unknown> = {}) {
   const eventScoreSourceService = {
     linkScoreSource: jest.fn().mockResolvedValue(undefined),
     unlinkScoreSource: jest.fn().mockResolvedValue(undefined),
+    getProviderEventDetail: jest.fn().mockResolvedValue({
+      name: 'The Masters',
+      venue: 'Augusta National',
+      startDate: new Date('2027-04-08T00:00:00.000Z'),
+      endDate: new Date('2027-04-11T00:00:00.000Z'),
+    }),
     ...(services.eventScoreSourceService as object ?? {}),
+  };
+  const providerService = {
+    syncEventData: jest.fn().mockResolvedValue({
+      sport: 'GOLF',
+      eventId: 'ext-1',
+      requestedFeeds: ['EVENTPARTICIPANTS'],
+      submittedAt: new Date('2027-01-01T00:00:00.000Z'),
+      syncRuns: [{
+        id: 'run-1',
+        providerId: 'mock-golf',
+        sport: 'GOLF',
+        eventId: 'ext-1',
+        status: 'SUBMITTED',
+        startedAt: null,
+        completedAt: null,
+        createdAt: new Date('2027-01-01T00:00:00.000Z'),
+        payload: {},
+      }],
+    }),
+    ...(services.providerService as object ?? {}),
   };
   const handlers = createGolfAdminHandlers(
     {} as any,
@@ -73,8 +105,11 @@ function buildHandlers(services: Record<string, unknown> = {}) {
     {} as any,
     {} as any,
     eventScoreSourceService as any,
+    {} as any,
+    providerService as any,
+    {} as any,
   );
-  return { handlers, golfTournamentService, eventLifecycleService, eventScoreSourceService };
+  return { handlers, golfTournamentService, eventLifecycleService, eventScoreSourceService, providerService };
 }
 
 describe('pool-master-ij2 — golf admin tournament CRUD/transition handlers', () => {
@@ -432,5 +467,164 @@ describe('pool-master-ij2 — golf admin tournament CRUD/transition handlers', (
         error: expect.objectContaining({ code: 'EVENT_NOT_ADMIN_MANAGED' }),
       }));
     });
+  });
+});
+
+describe('pool-master-5h3 — createTournamentFromProviderEvent', () => {
+  it('resolves the provider event detail, creates the pre-linked tournament, and returns 201 with the workflow block', async () => {
+    const { handlers, golfTournamentService, eventScoreSourceService } = buildHandlers();
+    const reply = buildReply();
+
+    await handlers.createTournamentFromProviderEvent({
+      body: { seasonId: 'season-1', providerId: 'mock-golf', externalId: 'ext-1' },
+    } as any, reply as any);
+
+    expect(eventScoreSourceService.getProviderEventDetail).toHaveBeenCalledWith('mock-golf', 'ext-1');
+    expect(golfTournamentService.createTournamentFromProviderEvent).toHaveBeenCalledWith({
+      seasonId: 'season-1',
+      providerId: 'mock-golf',
+      externalId: 'ext-1',
+      name: 'The Masters',
+      venue: 'Augusta National',
+      startDate: new Date('2027-04-08T00:00:00.000Z'),
+      endDate: new Date('2027-04-11T00:00:00.000Z'),
+      rounds: undefined,
+    });
+    expect(reply.status).toHaveBeenCalledWith(201);
+    expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+      tournament: expect.objectContaining({
+        source: 'PROVIDER',
+        syncScope: 'SCORES_ONLY',
+        scoreSource: { providerId: 'mock-golf', externalId: 'ext-1' },
+      }),
+    }));
+  });
+
+  it('maps an EventScoreSourceError from getProviderEventDetail to its statusCode/code', async () => {
+    const { handlers } = buildHandlers({
+      eventScoreSourceService: {
+        getProviderEventDetail: jest.fn().mockRejectedValue(
+          new EventScoreSourceError('not found', 'PROVIDER_EVENT_NOT_FOUND', 404),
+        ),
+      },
+    });
+    const reply = buildReply();
+
+    await handlers.createTournamentFromProviderEvent({
+      body: { seasonId: 'season-1', providerId: 'mock-golf', externalId: 'missing' },
+    } as any, reply as any);
+
+    expect(reply.status).toHaveBeenCalledWith(404);
+    expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+      error: expect.objectContaining({ code: 'PROVIDER_EVENT_NOT_FOUND' }),
+    }));
+  });
+
+  it('maps a 409 EXTERNAL_EVENT_ALREADY_LINKED GolfTournamentError from the service', async () => {
+    const { handlers } = buildHandlers({
+      golfTournamentService: {
+        createTournamentFromProviderEvent: jest.fn().mockRejectedValue(
+          new GolfTournamentError('already linked', 'EXTERNAL_EVENT_ALREADY_LINKED', 409),
+        ),
+      },
+    });
+    const reply = buildReply();
+
+    await handlers.createTournamentFromProviderEvent({
+      body: { seasonId: 'season-1', providerId: 'mock-golf', externalId: 'ext-1' },
+    } as any, reply as any);
+
+    expect(reply.status).toHaveBeenCalledWith(409);
+    expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+      error: expect.objectContaining({ code: 'EXTERNAL_EVENT_ALREADY_LINKED' }),
+    }));
+  });
+});
+
+describe('pool-master-5h3 — refreshTournamentField', () => {
+  function buildRequest(overrides: Record<string, unknown> = {}) {
+    return {
+      params: { eventId: 'event-1' },
+      rootAdminContext: { rootAdminUser: { id: 'admin-1', email: 'admin@example.com' } },
+      ...overrides,
+    };
+  }
+
+  it('submits an EVENTPARTICIPANTS manual sync for a linked tournament and returns 202 with the mapped submission response', async () => {
+    const { handlers, golfTournamentService, providerService } = buildHandlers({
+      golfTournamentService: {
+        getTournament: jest.fn().mockResolvedValue(buildTournamentRow({ syncScope: 'SCORES_ONLY', externalId: 'ext-1' })),
+      },
+    });
+    const reply = buildReply();
+
+    await handlers.refreshTournamentField(buildRequest() as any, reply as any);
+
+    expect(golfTournamentService.getTournament).toHaveBeenCalledWith('event-1');
+    expect(providerService.syncEventData).toHaveBeenCalledWith(
+      { sport: 'GOLF', eventId: 'ext-1', feeds: ['EVENTPARTICIPANTS'] },
+      'admin-1',
+      'admin@example.com',
+    );
+    expect(reply.status).toHaveBeenCalledWith(202);
+    expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+      syncRuns: [expect.objectContaining({ id: 'run-1' })],
+    }));
+  });
+
+  it('404s EVENT_NOT_FOUND when the tournament does not exist', async () => {
+    const { handlers } = buildHandlers({
+      golfTournamentService: { getTournament: jest.fn().mockResolvedValue(null) },
+    });
+    const reply = buildReply();
+
+    await handlers.refreshTournamentField(buildRequest() as any, reply as any);
+
+    expect(reply.status).toHaveBeenCalledWith(404);
+    expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+      error: expect.objectContaining({ code: 'EVENT_NOT_FOUND' }),
+    }));
+  });
+
+  it('409s EVENT_NOT_LINKED when the tournament has syncScope NONE, without calling syncEventData', async () => {
+    const { handlers, providerService } = buildHandlers({
+      golfTournamentService: {
+        getTournament: jest.fn().mockResolvedValue(buildTournamentRow({ syncScope: 'NONE' })),
+      },
+    });
+    const reply = buildReply();
+
+    await handlers.refreshTournamentField(buildRequest() as any, reply as any);
+
+    expect(providerService.syncEventData).not.toHaveBeenCalled();
+    expect(reply.status).toHaveBeenCalledWith(409);
+    expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+      error: expect.objectContaining({ code: 'EVENT_NOT_LINKED' }),
+    }));
+  });
+
+  it('maps SportProviderNotFoundError/SportSyncNotConfiguredError/SportEventSyncScopeError from providerService.syncEventData', async () => {
+    const cases: Array<[unknown, number, string]> = [
+      [new SportProviderNotFoundError('GOLF' as any), 404, 'SPORT_PROVIDER_NOT_FOUND'],
+      [new SportSyncNotConfiguredError('GOLF' as any), 422, 'SPORT_SYNC_NOT_CONFIGURED'],
+      [new SportEventSyncScopeError('ext-1', 'SCORES_ONLY', ['EVENTPARTICIPANTS']), 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED'],
+    ];
+
+    for (const [error, statusCode, code] of cases) {
+      const { handlers } = buildHandlers({
+        golfTournamentService: {
+          getTournament: jest.fn().mockResolvedValue(buildTournamentRow({ syncScope: 'SCORES_ONLY', externalId: 'ext-1' })),
+        },
+        providerService: { syncEventData: jest.fn().mockRejectedValue(error) },
+      });
+      const reply = buildReply();
+
+      await handlers.refreshTournamentField(buildRequest() as any, reply as any);
+
+      expect(reply.status).toHaveBeenCalledWith(statusCode);
+      expect(reply.send).toHaveBeenCalledWith(expect.objectContaining({
+        error: expect.objectContaining({ code }),
+      }));
+    }
   });
 });

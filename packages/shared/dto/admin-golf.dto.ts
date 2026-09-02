@@ -4,8 +4,9 @@
  * sport-catalog module scoped to Sport.GOLF.
  */
 import { z } from 'zod';
-import { GolfParticipantInactiveReason, GolfTierSource, SportEventStatus, SportEventSyncScope } from '@poolmaster/shared/domain';
+import { GolfParticipantInactiveReason, GolfTierSource, ParticipantStatus, SportEventStatus, SportEventSyncScope } from '@poolmaster/shared/domain';
 import { DateTimeSchema } from './common.dto';
+import { GolfRoundUpdateSchema } from './live-score.dto';
 
 // --- Params ---
 
@@ -312,6 +313,19 @@ export const AdminLinkGolfTournamentScoreSourceRequestSchema = z.object({
 }).describe('A row selected from adminListProviderCatalogEvents (plans/124 §4.4).');
 export type AdminLinkGolfTournamentScoreSourceRequest = z.infer<typeof AdminLinkGolfTournamentScoreSourceRequestSchema>;
 
+export const AdminCreateGolfTournamentFromProviderEventRequestSchema = z.object({
+  seasonId: z.string(),
+  providerId: z.string().min(1),
+  externalId: z.string().min(1),
+  rounds: z.number().int().min(1).optional(),
+}).describe('externalId from a prior adminListProviderCatalogEvents browse (plans/124 §4.4a). Creates the tournament pre-linked (syncScope=SCORES_ONLY) — does not touch the field.');
+export type AdminCreateGolfTournamentFromProviderEventRequest = z.infer<typeof AdminCreateGolfTournamentFromProviderEventRequestSchema>;
+
+export const AdminRefreshGolfTournamentFieldResponseSchema = z.object({
+  syncRuns: z.array(z.object({ id: z.string(), status: z.string() })),
+}).describe('Asynchronous — poll/invalidate adminGetGolfTournamentField once the returned sync runs complete.');
+export type AdminRefreshGolfTournamentFieldResponse = z.infer<typeof AdminRefreshGolfTournamentFieldResponseSchema>;
+
 // --- Field (plans/124 §4.7/§5.2) ---
 
 export const AdminGolfFieldEntryDtoSchema = z.object({
@@ -437,3 +451,181 @@ export const AdminAutoAssignGolfPricesRequestSchema = z.object({
   maxPrice: z.number().min(0),
 });
 export type AdminAutoAssignGolfPricesRequest = z.infer<typeof AdminAutoAssignGolfPricesRequestSchema>;
+
+// --- Players (master roster, plans/124 §4.4a/§5.2) ---
+
+export const AdminGolfPlayerParamsSchema = z.object({ participantId: z.string() });
+export type AdminGolfPlayerParams = z.infer<typeof AdminGolfPlayerParamsSchema>;
+
+export const AdminGolfPlayerDtoSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  firstName: z.string().nullable(),
+  lastName: z.string().nullable(),
+  shortName: z.string().nullable(),
+  nationality: z.string().nullable(),
+  position: z.string().nullable(),
+  teamAffiliation: z.string().nullable(),
+  externalId: z.string().nullable(),
+  status: z.nativeEnum(ParticipantStatus),
+  providerMappingCount: z.number().int(),
+  createdAt: DateTimeSchema,
+  updatedAt: DateTimeSchema,
+});
+export type AdminGolfPlayerDto = z.infer<typeof AdminGolfPlayerDtoSchema>;
+
+export const AdminGolfPlayerProviderMappingDtoSchema = z.object({
+  providerId: z.string(),
+  externalId: z.string(),
+  confidence: z.string(),
+});
+export type AdminGolfPlayerProviderMappingDto = z.infer<typeof AdminGolfPlayerProviderMappingDtoSchema>;
+
+export const AdminGolfPlayerDetailDtoSchema = AdminGolfPlayerDtoSchema.extend({
+  providerMappings: z.array(AdminGolfPlayerProviderMappingDtoSchema),
+});
+export type AdminGolfPlayerDetailDto = z.infer<typeof AdminGolfPlayerDetailDtoSchema>;
+
+export const AdminGolfPlayerListQuerySchema = z.object({
+  status: z.nativeEnum(ParticipantStatus).optional().describe('Defaults to ACTIVE when omitted — the roster and Add golfer picker both browse active golfers by default.'),
+  search: z.string().optional(),
+});
+export type AdminGolfPlayerListQuery = z.infer<typeof AdminGolfPlayerListQuerySchema>;
+
+export const AdminGolfPlayerListResponseSchema = z.object({
+  players: z.array(AdminGolfPlayerDtoSchema),
+});
+export type AdminGolfPlayerListResponse = z.infer<typeof AdminGolfPlayerListResponseSchema>;
+
+export const AdminGolfPlayerDetailResponseSchema = z.object({
+  player: AdminGolfPlayerDetailDtoSchema,
+});
+export type AdminGolfPlayerDetailResponse = z.infer<typeof AdminGolfPlayerDetailResponseSchema>;
+
+export const AdminCreateGolfPlayerRequestSchema = z.object({
+  name: z.string().min(1),
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  shortName: z.string().min(1).optional(),
+  nationality: z.string().min(1).optional(),
+  position: z.string().min(1).optional(),
+  teamAffiliation: z.string().min(1).optional(),
+  externalId: z.string().min(1).optional(),
+});
+export type AdminCreateGolfPlayerRequest = z.infer<typeof AdminCreateGolfPlayerRequestSchema>;
+
+export const AdminUpdateGolfPlayerRequestSchema = AdminCreateGolfPlayerRequestSchema
+  .omit({ name: true })
+  .extend({
+    name: z.string().min(1).optional(),
+    status: z.nativeEnum(ParticipantStatus).optional().describe('Removing a golfer from the master roster is a status change (INACTIVE), never a hard delete — no DELETE route exists.'),
+  });
+export type AdminUpdateGolfPlayerRequest = z.infer<typeof AdminUpdateGolfPlayerRequestSchema>;
+
+// --- Scores (plans/124 §3.1/§4.10/§5.2) ---
+
+export const GolfRoundStatusDtoSchema = GolfRoundUpdateSchema.shape.status;
+export type GolfRoundStatusDto = z.infer<typeof GolfRoundStatusDtoSchema>;
+
+export const AdminGolfRoundScoresParamsSchema = z.object({
+  eventId: z.string(),
+  round: z.coerce.number().int().min(1),
+});
+export type AdminGolfRoundScoresParams = z.infer<typeof AdminGolfRoundScoresParamsSchema>;
+
+export const AdminGolfRoundScoreParticipantParamsSchema = AdminGolfRoundScoresParamsSchema.extend({
+  sportEventParticipantId: z.string(),
+});
+export type AdminGolfRoundScoreParticipantParams = z.infer<typeof AdminGolfRoundScoreParticipantParamsSchema>;
+
+export const AdminGolfRoundStandingDtoSchema = z.object({
+  eventScoreToPar: z.number().int(),
+  eventStrokes: z.number().int(),
+  currentRound: z.number().int().nullable(),
+  currentRoundThru: z.number().int().nullable(),
+  status: z.string(),
+});
+export type AdminGolfRoundStandingDto = z.infer<typeof AdminGolfRoundStandingDtoSchema>;
+
+export const AdminGolfRoundScoreEntryDtoSchema = z.object({
+  sportEventParticipantId: z.string(),
+  participantId: z.string(),
+  participantName: z.string(),
+  strokes: z.number().int().nullable(),
+  scoreToPar: z.number().int().nullable(),
+  thru: z.number().int().nullable(),
+  status: z.string().nullable().describe('Null when this round has no result recorded yet for this golfer.'),
+  completedAt: DateTimeSchema.nullable(),
+  standing: AdminGolfRoundStandingDtoSchema.nullable(),
+});
+export type AdminGolfRoundScoreEntryDto = z.infer<typeof AdminGolfRoundScoreEntryDtoSchema>;
+
+export const AdminGetGolfRoundScoresResponseSchema = z.object({
+  rows: z.array(AdminGolfRoundScoreEntryDtoSchema),
+});
+export type AdminGetGolfRoundScoresResponse = z.infer<typeof AdminGetGolfRoundScoresResponseSchema>;
+
+export const AdminGolfRoundScoreRowSchema = z.object({
+  participantId: z.string().optional(),
+  externalId: z.string().optional(),
+  playerName: z.string().optional(),
+  strokes: z.number().int().nullable().describe(
+    'Null when only cumulative scoreToPar is known; persistence skips rows with null strokes.',
+  ),
+  scoreToPar: z.number().int(),
+  thru: z.number().int().min(0).optional(),
+  status: GolfRoundStatusDtoSchema,
+  completedAt: z.string().datetime().optional(),
+}).describe('One golfer\'s result for a single round. Exactly one of participantId/externalId/playerName should be supplied.');
+export type AdminGolfRoundScoreRow = z.infer<typeof AdminGolfRoundScoreRowSchema>;
+
+export const AdminGolfRoundScoreUploadRequestSchema = z.object({
+  rows: z.array(AdminGolfRoundScoreRowSchema).min(1).max(500),
+});
+export type AdminGolfRoundScoreUploadRequest = z.infer<typeof AdminGolfRoundScoreUploadRequestSchema>;
+
+export const AdminGolfRoundScoreResolutionDtoSchema = z.enum(['MATCHED', 'UNRESOLVED', 'AMBIGUOUS']);
+export const AdminGolfRoundScoreChangeDtoSchema = z.enum(['CREATE', 'UPDATE', 'UNCHANGED']);
+
+export const AdminGolfRoundScoreValuesDtoSchema = z.object({
+  strokes: z.number().int().nullable(),
+  scoreToPar: z.number().int(),
+  thru: z.number().int().nullable(),
+  status: z.string(),
+});
+
+export const AdminGolfRoundScorePreviewRowDtoSchema = z.object({
+  row: AdminGolfRoundScoreRowSchema,
+  resolution: AdminGolfRoundScoreResolutionDtoSchema,
+  sportEventParticipantId: z.string().nullable(),
+  participantName: z.string().nullable(),
+  change: AdminGolfRoundScoreChangeDtoSchema,
+  before: AdminGolfRoundScoreValuesDtoSchema.nullable(),
+  after: AdminGolfRoundScoreValuesDtoSchema,
+});
+export type AdminGolfRoundScorePreviewRowDto = z.infer<typeof AdminGolfRoundScorePreviewRowDtoSchema>;
+
+export const AdminPreviewGolfRoundScoresResponseSchema = z.object({
+  rows: z.array(AdminGolfRoundScorePreviewRowDtoSchema),
+  rollup: z.object({
+    total: z.number().int(),
+    matched: z.number().int(),
+    unresolved: z.number().int(),
+    ambiguous: z.number().int(),
+  }),
+});
+export type AdminPreviewGolfRoundScoresResponse = z.infer<typeof AdminPreviewGolfRoundScoresResponseSchema>;
+
+export const AdminUpdateGolfRoundScoreRequestSchema = z.object({
+  strokes: z.number().int().optional(),
+  scoreToPar: z.number().int().optional(),
+  thru: z.number().int().min(0).optional(),
+  status: GolfRoundStatusDtoSchema.optional(),
+  completedAt: z.string().datetime().optional(),
+}).describe('Single-cell correction — a partial patch of one participant\'s round result.');
+export type AdminUpdateGolfRoundScoreRequest = z.infer<typeof AdminUpdateGolfRoundScoreRequestSchema>;
+
+export const AdminUpdateGolfRoundScoreResponseSchema = z.object({
+  row: AdminGolfRoundScoreEntryDtoSchema,
+});
+export type AdminUpdateGolfRoundScoreResponse = z.infer<typeof AdminUpdateGolfRoundScoreResponseSchema>;

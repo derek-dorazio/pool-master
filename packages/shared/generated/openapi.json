@@ -37812,6 +37812,627 @@
         }
       }
     },
+    "/api/v1/admin/sports/golf/tournaments/from-provider-event": {
+      "post": {
+        "operationId": "adminCreateGolfTournamentFromProviderEvent",
+        "summary": "Create a golf tournament from a browsed provider event",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Creates the tournament pre-linked (syncScope=SCORES_ONLY, real providerId/externalId) from a row selected via adminListProviderCatalogEvents — name/venue/dates come from the provider's own event detail. Does not touch the field; use adminRefreshGolfTournamentField afterward. 422 SEASON_SPORT_MISMATCH if seasonId resolves to a non-golf season.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "seasonId": {
+                    "type": "string"
+                  },
+                  "providerId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "externalId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "rounds": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "seasonId",
+                  "providerId",
+                  "externalId"
+                ],
+                "additionalProperties": false,
+                "description": "externalId from a prior adminListProviderCatalogEvents browse (plans/124 §4.4a). Creates the tournament pre-linked (syncScope=SCORES_ONLY) — does not touch the field."
+              }
+            }
+          },
+          "description": "externalId from a prior adminListProviderCatalogEvents browse (plans/124 §4.4a). Creates the tournament pre-linked (syncScope=SCORES_ONLY) — does not touch the field."
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tournament": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "venue": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "location": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "startDate": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "endDate": {
+                          "allOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "description": "ISO 8601 datetime string."
+                            }
+                          ],
+                          "nullable": true,
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "SCHEDULED",
+                            "IN_PROGRESS",
+                            "COMPLETED",
+                            "CANCELLED",
+                            "POSTPONED"
+                          ]
+                        },
+                        "rounds": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "releaseAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "fieldLocksAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "fieldLocked": {
+                          "type": "boolean"
+                        },
+                        "seasonId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "leagueEventId": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a)."
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "MANUAL",
+                            "PROVIDER"
+                          ],
+                          "description": "MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise."
+                        },
+                        "syncScope": {
+                          "type": "string",
+                          "enum": [
+                            "NONE",
+                            "SCORES_ONLY",
+                            "FULL"
+                          ]
+                        },
+                        "scoreSource": {
+                          "type": "object",
+                          "properties": {
+                            "providerId": {
+                              "type": "string"
+                            },
+                            "externalId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "providerId",
+                            "externalId"
+                          ],
+                          "additionalProperties": false,
+                          "nullable": true,
+                          "description": "The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4)."
+                        },
+                        "autoLifecycleEnabled": {
+                          "type": "boolean"
+                        },
+                        "fieldCount": {
+                          "type": "integer"
+                        },
+                        "tierCount": {
+                          "type": "integer"
+                        },
+                        "contestCount": {
+                          "type": "integer"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "workflow": {
+                          "type": "object",
+                          "properties": {
+                            "currentStatus": {
+                              "type": "string",
+                              "enum": [
+                                "SCHEDULED",
+                                "IN_PROGRESS",
+                                "COMPLETED",
+                                "CANCELLED",
+                                "POSTPONED"
+                              ]
+                            },
+                            "allowedTransitions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "SCHEDULED",
+                                  "IN_PROGRESS",
+                                  "COMPLETED",
+                                  "CANCELLED",
+                                  "POSTPONED"
+                                ]
+                              },
+                              "description": "Server-computed from the declared transition map — never re-derived client-side."
+                            }
+                          },
+                          "required": [
+                            "currentStatus",
+                            "allowedTransitions"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "venue",
+                        "location",
+                        "startDate",
+                        "endDate",
+                        "status",
+                        "rounds",
+                        "releaseAt",
+                        "fieldLocksAt",
+                        "fieldLocked",
+                        "seasonId",
+                        "leagueEventId",
+                        "source",
+                        "syncScope",
+                        "scoreSource",
+                        "autoLifecycleEnabled",
+                        "fieldCount",
+                        "tierCount",
+                        "contestCount",
+                        "createdAt",
+                        "updatedAt",
+                        "workflow"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Canonical admin golf tournament DTO — a SportEvent plus field/tier/contest counts."
+                    }
+                  },
+                  "required": [
+                    "tournament"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/field/refresh": {
+      "post": {
+        "operationId": "adminRefreshGolfTournamentField",
+        "summary": "Load or refresh a linked golf tournament's field from its provider",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Thin wrapper over providerService.syncEventData(EVENTPARTICIPANTS) — a real, ledger-tracked manual sync, not a bespoke persistence call. Asynchronous: returns the submitted syncRuns; poll/invalidate adminGetGolfTournamentField once they complete. 409 EVENT_NOT_LINKED when the tournament has no provider score source (syncScope=NONE).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Asynchronous — poll/invalidate adminGetGolfTournamentField once the returned sync runs complete.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "syncRuns": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "status"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "syncRuns"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Asynchronous — poll/invalidate adminGetGolfTournamentField once the returned sync runs complete."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/sports/golf/tournaments/{eventId}": {
       "get": {
         "operationId": "adminGetGolfTournament",
@@ -41457,6 +42078,1896 @@
             }
           },
           "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sports/golf/players": {
+      "get": {
+        "operationId": "adminListGolfPlayers",
+        "summary": "List golf players",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "The master golf roster. Filters: status (defaults to ACTIVE), search. Thin wrapper over the cross-sport ParticipantService, scoped to Sport.GOLF.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE",
+                "RETIRED",
+                "SUSPENDED"
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "description": "Defaults to ACTIVE when omitted — the roster and Add golfer picker both browse active golfers by default."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "search",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "players": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "firstName": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "lastName": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "shortName": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "nationality": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "position": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "teamAffiliation": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "externalId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "ACTIVE",
+                              "INACTIVE",
+                              "RETIRED",
+                              "SUSPENDED"
+                            ]
+                          },
+                          "providerMappingCount": {
+                            "type": "integer"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 datetime string."
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 datetime string."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "firstName",
+                          "lastName",
+                          "shortName",
+                          "nationality",
+                          "position",
+                          "teamAffiliation",
+                          "externalId",
+                          "status",
+                          "providerMappingCount",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "players"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "adminCreateGolfPlayer",
+        "summary": "Create a golf player",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Creates a Participant for Sport.GOLF. Manual mode has no sync to populate the master roster, so this is its own admin surface.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "firstName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "shortName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "nationality": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "position": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "teamAffiliation": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "externalId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "player": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "shortName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "nationality": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "position": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "teamAffiliation": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "externalId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "ACTIVE",
+                            "INACTIVE",
+                            "RETIRED",
+                            "SUSPENDED"
+                          ]
+                        },
+                        "providerMappingCount": {
+                          "type": "integer"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "providerMappings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "providerId": {
+                                "type": "string"
+                              },
+                              "externalId": {
+                                "type": "string"
+                              },
+                              "confidence": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "providerId",
+                              "externalId",
+                              "confidence"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "firstName",
+                        "lastName",
+                        "shortName",
+                        "nationality",
+                        "position",
+                        "teamAffiliation",
+                        "externalId",
+                        "status",
+                        "providerMappingCount",
+                        "createdAt",
+                        "updatedAt",
+                        "providerMappings"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "player"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sports/golf/players/{participantId}": {
+      "get": {
+        "operationId": "adminGetGolfPlayer",
+        "summary": "Get a golf player",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Player detail plus its read-only provider-mapping list.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "participantId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "player": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "shortName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "nationality": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "position": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "teamAffiliation": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "externalId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "ACTIVE",
+                            "INACTIVE",
+                            "RETIRED",
+                            "SUSPENDED"
+                          ]
+                        },
+                        "providerMappingCount": {
+                          "type": "integer"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "providerMappings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "providerId": {
+                                "type": "string"
+                              },
+                              "externalId": {
+                                "type": "string"
+                              },
+                              "confidence": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "providerId",
+                              "externalId",
+                              "confidence"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "firstName",
+                        "lastName",
+                        "shortName",
+                        "nationality",
+                        "position",
+                        "teamAffiliation",
+                        "externalId",
+                        "status",
+                        "providerMappingCount",
+                        "createdAt",
+                        "updatedAt",
+                        "providerMappings"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "player"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "adminUpdateGolfPlayer",
+        "summary": "Update a golf player",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Partial update, including status. Removing a golfer from the master roster is status=INACTIVE, never a hard delete — no DELETE route exists.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "shortName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "nationality": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "position": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "teamAffiliation": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "externalId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "ACTIVE",
+                      "INACTIVE",
+                      "RETIRED",
+                      "SUSPENDED"
+                    ],
+                    "description": "Removing a golfer from the master roster is a status change (INACTIVE), never a hard delete — no DELETE route exists."
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "participantId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "player": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "shortName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "nationality": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "position": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "teamAffiliation": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "externalId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "ACTIVE",
+                            "INACTIVE",
+                            "RETIRED",
+                            "SUSPENDED"
+                          ]
+                        },
+                        "providerMappingCount": {
+                          "type": "integer"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string."
+                        },
+                        "providerMappings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "providerId": {
+                                "type": "string"
+                              },
+                              "externalId": {
+                                "type": "string"
+                              },
+                              "confidence": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "providerId",
+                              "externalId",
+                              "confidence"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "firstName",
+                        "lastName",
+                        "shortName",
+                        "nationality",
+                        "position",
+                        "teamAffiliation",
+                        "externalId",
+                        "status",
+                        "providerMappingCount",
+                        "createdAt",
+                        "updatedAt",
+                        "providerMappings"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "player"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/rounds/{round}/scores": {
+      "get": {
+        "operationId": "adminGetGolfRoundScores",
+        "summary": "Get a golf tournament round's current scores",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Current round rows plus each golfer's overall standing, for the correction grid.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "round",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rows": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "sportEventParticipantId": {
+                            "type": "string"
+                          },
+                          "participantId": {
+                            "type": "string"
+                          },
+                          "participantName": {
+                            "type": "string"
+                          },
+                          "strokes": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "scoreToPar": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "thru": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "status": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Null when this round has no result recorded yet for this golfer."
+                          },
+                          "completedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 datetime string.",
+                            "nullable": true
+                          },
+                          "standing": {
+                            "type": "object",
+                            "properties": {
+                              "eventScoreToPar": {
+                                "type": "integer"
+                              },
+                              "eventStrokes": {
+                                "type": "integer"
+                              },
+                              "currentRound": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "currentRoundThru": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "eventScoreToPar",
+                              "eventStrokes",
+                              "currentRound",
+                              "currentRoundThru",
+                              "status"
+                            ],
+                            "additionalProperties": false,
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "sportEventParticipantId",
+                          "participantId",
+                          "participantName",
+                          "strokes",
+                          "scoreToPar",
+                          "thru",
+                          "status",
+                          "completedAt",
+                          "standing"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "rows"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "adminApplyGolfRoundScores",
+        "summary": "Apply a golf round score upload",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "All-or-nothing: 422 ROUND_SCORE_ROWS_UNRESOLVED when any row is unresolved. Refreshes standings and publishes live_score.persisted exactly as the ingestion path does.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "rows": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "participantId": {
+                          "type": "string"
+                        },
+                        "externalId": {
+                          "type": "string"
+                        },
+                        "playerName": {
+                          "type": "string"
+                        },
+                        "strokes": {
+                          "type": "integer",
+                          "nullable": true,
+                          "description": "Null when only cumulative scoreToPar is known; persistence skips rows with null strokes."
+                        },
+                        "scoreToPar": {
+                          "type": "integer"
+                        },
+                        "thru": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "IN_PROGRESS",
+                            "COMPLETED",
+                            "DNF",
+                            "DSQ",
+                            "MISSED_CUT"
+                          ]
+                        },
+                        "completedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "strokes",
+                        "scoreToPar",
+                        "status"
+                      ],
+                      "additionalProperties": false,
+                      "description": "One golfer's result for a single round. Exactly one of participantId/externalId/playerName should be supplied."
+                    },
+                    "minItems": 1,
+                    "maxItems": 500
+                  }
+                },
+                "required": [
+                  "rows"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "round",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rows": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "sportEventParticipantId": {
+                            "type": "string"
+                          },
+                          "participantId": {
+                            "type": "string"
+                          },
+                          "participantName": {
+                            "type": "string"
+                          },
+                          "strokes": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "scoreToPar": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "thru": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "status": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Null when this round has no result recorded yet for this golfer."
+                          },
+                          "completedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 datetime string.",
+                            "nullable": true
+                          },
+                          "standing": {
+                            "type": "object",
+                            "properties": {
+                              "eventScoreToPar": {
+                                "type": "integer"
+                              },
+                              "eventStrokes": {
+                                "type": "integer"
+                              },
+                              "currentRound": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "currentRoundThru": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "eventScoreToPar",
+                              "eventStrokes",
+                              "currentRound",
+                              "currentRoundThru",
+                              "status"
+                            ],
+                            "additionalProperties": false,
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "sportEventParticipantId",
+                          "participantId",
+                          "participantName",
+                          "strokes",
+                          "scoreToPar",
+                          "thru",
+                          "status",
+                          "completedAt",
+                          "standing"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "rows"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/rounds/{round}/scores/preview": {
+      "post": {
+        "operationId": "adminPreviewGolfRoundScores",
+        "summary": "Preview a golf round score upload",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Dry run. Resolves every row (participantId > externalId > exact playerName) and reports the change it would make. Writes nothing.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "rows": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "participantId": {
+                          "type": "string"
+                        },
+                        "externalId": {
+                          "type": "string"
+                        },
+                        "playerName": {
+                          "type": "string"
+                        },
+                        "strokes": {
+                          "type": "integer",
+                          "nullable": true,
+                          "description": "Null when only cumulative scoreToPar is known; persistence skips rows with null strokes."
+                        },
+                        "scoreToPar": {
+                          "type": "integer"
+                        },
+                        "thru": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "IN_PROGRESS",
+                            "COMPLETED",
+                            "DNF",
+                            "DSQ",
+                            "MISSED_CUT"
+                          ]
+                        },
+                        "completedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "strokes",
+                        "scoreToPar",
+                        "status"
+                      ],
+                      "additionalProperties": false,
+                      "description": "One golfer's result for a single round. Exactly one of participantId/externalId/playerName should be supplied."
+                    },
+                    "minItems": 1,
+                    "maxItems": 500
+                  }
+                },
+                "required": [
+                  "rows"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "round",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rows": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "row": {
+                            "type": "object",
+                            "properties": {
+                              "participantId": {
+                                "type": "string"
+                              },
+                              "externalId": {
+                                "type": "string"
+                              },
+                              "playerName": {
+                                "type": "string"
+                              },
+                              "strokes": {
+                                "type": "integer",
+                                "nullable": true,
+                                "description": "Null when only cumulative scoreToPar is known; persistence skips rows with null strokes."
+                              },
+                              "scoreToPar": {
+                                "type": "integer"
+                              },
+                              "thru": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "IN_PROGRESS",
+                                  "COMPLETED",
+                                  "DNF",
+                                  "DSQ",
+                                  "MISSED_CUT"
+                                ]
+                              },
+                              "completedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            },
+                            "required": [
+                              "strokes",
+                              "scoreToPar",
+                              "status"
+                            ],
+                            "additionalProperties": false,
+                            "description": "One golfer's result for a single round. Exactly one of participantId/externalId/playerName should be supplied."
+                          },
+                          "resolution": {
+                            "type": "string",
+                            "enum": [
+                              "MATCHED",
+                              "UNRESOLVED",
+                              "AMBIGUOUS"
+                            ]
+                          },
+                          "sportEventParticipantId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "participantName": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "change": {
+                            "type": "string",
+                            "enum": [
+                              "CREATE",
+                              "UPDATE",
+                              "UNCHANGED"
+                            ]
+                          },
+                          "before": {
+                            "type": "object",
+                            "properties": {
+                              "strokes": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "scoreToPar": {
+                                "type": "integer"
+                              },
+                              "thru": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "strokes",
+                              "scoreToPar",
+                              "thru",
+                              "status"
+                            ],
+                            "additionalProperties": false,
+                            "nullable": true
+                          },
+                          "after": {
+                            "type": "object",
+                            "properties": {
+                              "strokes": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "scoreToPar": {
+                                "type": "integer"
+                              },
+                              "thru": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "status": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "strokes",
+                              "scoreToPar",
+                              "thru",
+                              "status"
+                            ],
+                            "additionalProperties": false,
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "row",
+                          "resolution",
+                          "sportEventParticipantId",
+                          "participantName",
+                          "change",
+                          "before",
+                          "after"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "rollup": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "matched": {
+                          "type": "integer"
+                        },
+                        "unresolved": {
+                          "type": "integer"
+                        },
+                        "ambiguous": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "matched",
+                        "unresolved",
+                        "ambiguous"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "rows",
+                    "rollup"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/rounds/{round}/scores/{sportEventParticipantId}": {
+      "patch": {
+        "operationId": "adminUpdateGolfRoundScore",
+        "summary": "Correct one golfer's round score",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Single-cell correction — a partial patch, for minor fixes without re-uploading the whole round.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "strokes": {
+                    "type": "integer"
+                  },
+                  "scoreToPar": {
+                    "type": "integer"
+                  },
+                  "thru": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "IN_PROGRESS",
+                      "COMPLETED",
+                      "DNF",
+                      "DSQ",
+                      "MISSED_CUT"
+                    ]
+                  },
+                  "completedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "additionalProperties": false,
+                "description": "Single-cell correction — a partial patch of one participant's round result."
+              }
+            }
+          },
+          "description": "Single-cell correction — a partial patch of one participant's round result."
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "round",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "sportEventParticipantId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "row": {
+                      "type": "object",
+                      "properties": {
+                        "sportEventParticipantId": {
+                          "type": "string"
+                        },
+                        "participantId": {
+                          "type": "string"
+                        },
+                        "participantName": {
+                          "type": "string"
+                        },
+                        "strokes": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "scoreToPar": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "thru": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "status": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Null when this round has no result recorded yet for this golfer."
+                        },
+                        "completedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "ISO 8601 datetime string.",
+                          "nullable": true
+                        },
+                        "standing": {
+                          "type": "object",
+                          "properties": {
+                            "eventScoreToPar": {
+                              "type": "integer"
+                            },
+                            "eventStrokes": {
+                              "type": "integer"
+                            },
+                            "currentRound": {
+                              "type": "integer",
+                              "nullable": true
+                            },
+                            "currentRoundThru": {
+                              "type": "integer",
+                              "nullable": true
+                            },
+                            "status": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "eventScoreToPar",
+                            "eventStrokes",
+                            "currentRound",
+                            "currentRoundThru",
+                            "status"
+                          ],
+                          "additionalProperties": false,
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "sportEventParticipantId",
+                        "participantId",
+                        "participantName",
+                        "strokes",
+                        "scoreToPar",
+                        "thru",
+                        "status",
+                        "completedAt",
+                        "standing"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "row"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

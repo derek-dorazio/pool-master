@@ -20,7 +20,7 @@ import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-writ
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
 import {
   resolveEventTiming,
-  selectTimingPolicy,
+  resolveTimingPolicyForSport,
 } from '../../events/operational-timing';
 
 /**
@@ -215,21 +215,7 @@ export class IngestionPersistence {
     sport: Sport,
     metadata: Record<string, unknown>,
   ) {
-    const policies = await this.prisma.contestTimingPolicy.findMany({
-      where: {
-        sport,
-        active: true,
-      },
-      orderBy: [
-        { isDefault: 'desc' },
-        { createdAt: 'asc' },
-      ],
-    });
-
-    return selectTimingPolicy(
-      policies,
-      metadata,
-    );
+    return resolveTimingPolicyForSport(this.prisma, sport, metadata);
   }
 
   /**

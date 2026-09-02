@@ -34,8 +34,12 @@ import { GolfRoundScheduleService } from '../golf/golf-round-schedule-service';
 import { GolfTierService } from '../golf/golf-tier-service';
 import { GolfTournamentService } from '../golf/golf-tournament-service';
 import { GolfFieldService } from '../golf/golf-field-service';
+import { GolfPlayerService } from '../golf/golf-player-service';
+import { GolfScoreService } from '../golf/golf-score-service';
 import { EventLifecycleService } from '../events/event-lifecycle-service';
 import { EventScoreSourceService } from '../events/event-score-source-service';
+import { PrismaParticipantRepository, PrismaParticipantProviderMappingRepository } from '../../adapters';
+import { ParticipantService } from '../participants/service';
 import {
   AdminEventListQuerySchema,
   AdminEventListResponseSchema,
@@ -171,8 +175,15 @@ export async function adminModule(
     fastify.log,
   );
   const eventLifecycleService = opts.eventLifecycleService ?? new EventLifecycleService(prisma, fastify.log);
-  const golfFieldService = new GolfFieldService(prisma, sportLeagueService, undefined, fastify.log);
+  const golfFieldService = new GolfFieldService(prisma, sportLeagueService, undefined, opts.providerRegistry, fastify.log);
   const eventScoreSourceService = new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log);
+  const participantService = new ParticipantService(
+    new PrismaParticipantRepository(prisma),
+    new PrismaParticipantProviderMappingRepository(prisma),
+    fastify.log,
+  );
+  const golfPlayerService = new GolfPlayerService(prisma, participantService, fastify.log);
+  const golfScoreService = new GolfScoreService(prisma, fastify.log);
 
   // --- Handlers ---
   const user = createUserHandlers(userService);
@@ -732,6 +743,9 @@ export async function adminModule(
     golfTierService,
     seasonService,
     eventScoreSourceService,
+    golfPlayerService,
+    providerService,
+    golfScoreService,
   });
 
   registerPlatformConfigRoutes(fastify, {

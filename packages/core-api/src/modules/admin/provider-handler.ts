@@ -26,7 +26,11 @@ import type { EventScoreSourceService } from '../events/event-score-source-servi
 import { EventScoreSourceError } from '../events/event-score-source-service';
 import { sendError } from '../../core/error-handler';
 import { extractRootAdminContext } from './request-admin-context';
-import { mapProviderEventCleanupResultToDto, toAdminProviderCatalogEventDtoList } from '../../mappers';
+import {
+  mapProviderEventCleanupResultToDto,
+  toAdminProviderCatalogEventDtoList,
+  toProviderManualSyncSubmissionResponse,
+} from '../../mappers';
 
 // ---------------------------------------------------------------------------
 // Handler factory
@@ -239,23 +243,7 @@ export function createProviderHandlers(
         rootAdminUserId,
         rootAdminEmail,
       );
-      return reply.code(202).send({
-        sport: result.sport,
-        eventId: result.eventId,
-        requestedFeeds: result.requestedFeeds,
-        submittedAt: result.submittedAt.toISOString(),
-        syncRuns: result.syncRuns.map((run) => ({
-          id: run.id,
-          providerId: run.providerId,
-          sport: run.sport,
-          eventId: run.eventId,
-          status: run.status,
-          startedAt: run.startedAt?.toISOString() ?? null,
-          completedAt: run.completedAt?.toISOString() ?? null,
-          createdAt: run.createdAt.toISOString(),
-          payload: run.payload,
-        })),
-      });
+      return reply.code(202).send(toProviderManualSyncSubmissionResponse(result));
     } catch (err) {
       if (err instanceof SportProviderNotFoundError) {
         logger.warn({ sport: request.params.sport }, 'Sport sync preparation failed because no providers were registered');
@@ -300,23 +288,7 @@ export function createProviderHandlers(
         mockEventState: request.body.mockEventState,
       }, rootAdminUserId, rootAdminEmail);
 
-      return reply.code(202).send({
-        sport: result.sport,
-        eventId: result.eventId,
-        requestedFeeds: result.requestedFeeds,
-        submittedAt: result.submittedAt.toISOString(),
-        syncRuns: result.syncRuns.map((run) => ({
-          id: run.id,
-          providerId: run.providerId,
-          sport: run.sport,
-          eventId: run.eventId,
-          status: run.status,
-          startedAt: run.startedAt?.toISOString() ?? null,
-          completedAt: run.completedAt?.toISOString() ?? null,
-          createdAt: run.createdAt.toISOString(),
-          payload: run.payload,
-        })),
-      });
+      return reply.code(202).send(toProviderManualSyncSubmissionResponse(result));
     } catch (err) {
       if (err instanceof SportProviderNotFoundError) {
         logger.warn({

@@ -18437,6 +18437,304 @@ export type AdminCreateGolfTournamentResponses = {
 
 export type AdminCreateGolfTournamentResponse = AdminCreateGolfTournamentResponses[keyof AdminCreateGolfTournamentResponses];
 
+export type AdminCreateGolfTournamentFromProviderEventData = {
+    /**
+     * externalId from a prior adminListProviderCatalogEvents browse (plans/124 §4.4a). Creates the tournament pre-linked (syncScope=SCORES_ONLY) — does not touch the field.
+     */
+    body: {
+        seasonId: string;
+        providerId: string;
+        externalId: string;
+        rounds?: number;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/sports/golf/tournaments/from-provider-event';
+};
+
+export type AdminCreateGolfTournamentFromProviderEventErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminCreateGolfTournamentFromProviderEventError = AdminCreateGolfTournamentFromProviderEventErrors[keyof AdminCreateGolfTournamentFromProviderEventErrors];
+
+export type AdminCreateGolfTournamentFromProviderEventResponses = {
+    /**
+     * Default Response
+     */
+    201: {
+        /**
+         * Canonical admin golf tournament DTO — a SportEvent plus field/tier/contest counts.
+         */
+        tournament: {
+            id: string;
+            name: string;
+            venue: string;
+            location: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            startDate: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            endDate: string;
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+            rounds: number;
+            /**
+             * ISO 8601 datetime string.
+             */
+            releaseAt: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            fieldLocksAt: string;
+            fieldLocked: boolean;
+            seasonId: string;
+            /**
+             * The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a).
+             */
+            leagueEventId: string;
+            /**
+             * MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
+             */
+            source: 'MANUAL' | 'PROVIDER';
+            syncScope: 'NONE' | 'SCORES_ONLY' | 'FULL';
+            /**
+             * The linked provider score source, or null when unlinked (source=MANUAL, plans/124 §4.4).
+             */
+            scoreSource: {
+                providerId: string;
+                externalId: string;
+            };
+            autoLifecycleEnabled: boolean;
+            fieldCount: number;
+            tierCount: number;
+            contestCount: number;
+            /**
+             * ISO 8601 datetime string.
+             */
+            createdAt: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            updatedAt: string;
+            workflow: {
+                currentStatus: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+                /**
+                 * Server-computed from the declared transition map — never re-derived client-side.
+                 */
+                allowedTransitions: Array<'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+            };
+        };
+    };
+};
+
+export type AdminCreateGolfTournamentFromProviderEventResponse = AdminCreateGolfTournamentFromProviderEventResponses[keyof AdminCreateGolfTournamentFromProviderEventResponses];
+
+export type AdminRefreshGolfTournamentFieldData = {
+    body?: never;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/field/refresh';
+};
+
+export type AdminRefreshGolfTournamentFieldErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminRefreshGolfTournamentFieldError = AdminRefreshGolfTournamentFieldErrors[keyof AdminRefreshGolfTournamentFieldErrors];
+
+export type AdminRefreshGolfTournamentFieldResponses = {
+    /**
+     * Asynchronous — poll/invalidate adminGetGolfTournamentField once the returned sync runs complete.
+     */
+    202: {
+        syncRuns: Array<{
+            id: string;
+            status: string;
+        }>;
+    };
+};
+
+export type AdminRefreshGolfTournamentFieldResponse = AdminRefreshGolfTournamentFieldResponses[keyof AdminRefreshGolfTournamentFieldResponses];
+
 export type AdminDeleteGolfTournamentData = {
     body?: never;
     path: {
@@ -20106,6 +20404,736 @@ export type AdminAutoAssignGolfPricesResponses = {
 };
 
 export type AdminAutoAssignGolfPricesResponse = AdminAutoAssignGolfPricesResponses[keyof AdminAutoAssignGolfPricesResponses];
+
+export type AdminListGolfPlayersData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Defaults to ACTIVE when omitted — the roster and Add golfer picker both browse active golfers by default.
+         */
+        status?: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+        search?: string;
+    };
+    url: '/api/v1/admin/sports/golf/players';
+};
+
+export type AdminListGolfPlayersErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminListGolfPlayersError = AdminListGolfPlayersErrors[keyof AdminListGolfPlayersErrors];
+
+export type AdminListGolfPlayersResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        players: Array<{
+            id: string;
+            name: string;
+            firstName: string;
+            lastName: string;
+            shortName: string;
+            nationality: string;
+            position: string;
+            teamAffiliation: string;
+            externalId: string;
+            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+            providerMappingCount: number;
+            /**
+             * ISO 8601 datetime string.
+             */
+            createdAt: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            updatedAt: string;
+        }>;
+    };
+};
+
+export type AdminListGolfPlayersResponse = AdminListGolfPlayersResponses[keyof AdminListGolfPlayersResponses];
+
+export type AdminCreateGolfPlayerData = {
+    body: {
+        name: string;
+        firstName?: string;
+        lastName?: string;
+        shortName?: string;
+        nationality?: string;
+        position?: string;
+        teamAffiliation?: string;
+        externalId?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/sports/golf/players';
+};
+
+export type AdminCreateGolfPlayerErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminCreateGolfPlayerError = AdminCreateGolfPlayerErrors[keyof AdminCreateGolfPlayerErrors];
+
+export type AdminCreateGolfPlayerResponses = {
+    /**
+     * Default Response
+     */
+    201: {
+        player: {
+            id: string;
+            name: string;
+            firstName: string;
+            lastName: string;
+            shortName: string;
+            nationality: string;
+            position: string;
+            teamAffiliation: string;
+            externalId: string;
+            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+            providerMappingCount: number;
+            /**
+             * ISO 8601 datetime string.
+             */
+            createdAt: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            updatedAt: string;
+            providerMappings: Array<{
+                providerId: string;
+                externalId: string;
+                confidence: string;
+            }>;
+        };
+    };
+};
+
+export type AdminCreateGolfPlayerResponse = AdminCreateGolfPlayerResponses[keyof AdminCreateGolfPlayerResponses];
+
+export type AdminGetGolfPlayerData = {
+    body?: never;
+    path: {
+        participantId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/players/{participantId}';
+};
+
+export type AdminGetGolfPlayerErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetGolfPlayerError = AdminGetGolfPlayerErrors[keyof AdminGetGolfPlayerErrors];
+
+export type AdminGetGolfPlayerResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        player: {
+            id: string;
+            name: string;
+            firstName: string;
+            lastName: string;
+            shortName: string;
+            nationality: string;
+            position: string;
+            teamAffiliation: string;
+            externalId: string;
+            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+            providerMappingCount: number;
+            /**
+             * ISO 8601 datetime string.
+             */
+            createdAt: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            updatedAt: string;
+            providerMappings: Array<{
+                providerId: string;
+                externalId: string;
+                confidence: string;
+            }>;
+        };
+    };
+};
+
+export type AdminGetGolfPlayerResponse = AdminGetGolfPlayerResponses[keyof AdminGetGolfPlayerResponses];
+
+export type AdminUpdateGolfPlayerData = {
+    body: {
+        firstName?: string;
+        lastName?: string;
+        shortName?: string;
+        nationality?: string;
+        position?: string;
+        teamAffiliation?: string;
+        externalId?: string;
+        name?: string;
+        /**
+         * Removing a golfer from the master roster is a status change (INACTIVE), never a hard delete — no DELETE route exists.
+         */
+        status?: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+    };
+    path: {
+        participantId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/players/{participantId}';
+};
+
+export type AdminUpdateGolfPlayerErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminUpdateGolfPlayerError = AdminUpdateGolfPlayerErrors[keyof AdminUpdateGolfPlayerErrors];
+
+export type AdminUpdateGolfPlayerResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        player: {
+            id: string;
+            name: string;
+            firstName: string;
+            lastName: string;
+            shortName: string;
+            nationality: string;
+            position: string;
+            teamAffiliation: string;
+            externalId: string;
+            status: 'ACTIVE' | 'INACTIVE' | 'RETIRED' | 'SUSPENDED';
+            providerMappingCount: number;
+            /**
+             * ISO 8601 datetime string.
+             */
+            createdAt: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            updatedAt: string;
+            providerMappings: Array<{
+                providerId: string;
+                externalId: string;
+                confidence: string;
+            }>;
+        };
+    };
+};
+
+export type AdminUpdateGolfPlayerResponse = AdminUpdateGolfPlayerResponses[keyof AdminUpdateGolfPlayerResponses];
+
+export type AdminGetGolfRoundScoresData = {
+    body?: never;
+    path: {
+        eventId: string;
+        round: number;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/rounds/{round}/scores';
+};
+
+export type AdminGetGolfRoundScoresErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetGolfRoundScoresError = AdminGetGolfRoundScoresErrors[keyof AdminGetGolfRoundScoresErrors];
+
+export type AdminGetGolfRoundScoresResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        rows: Array<{
+            sportEventParticipantId: string;
+            participantId: string;
+            participantName: string;
+            strokes: number;
+            scoreToPar: number;
+            thru: number;
+            /**
+             * Null when this round has no result recorded yet for this golfer.
+             */
+            status: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            completedAt: string;
+            standing: {
+                eventScoreToPar: number;
+                eventStrokes: number;
+                currentRound: number;
+                currentRoundThru: number;
+                status: string;
+            };
+        }>;
+    };
+};
+
+export type AdminGetGolfRoundScoresResponse = AdminGetGolfRoundScoresResponses[keyof AdminGetGolfRoundScoresResponses];
+
+export type AdminApplyGolfRoundScoresData = {
+    body: {
+        rows: Array<{
+            participantId?: string;
+            externalId?: string;
+            playerName?: string;
+            /**
+             * Null when only cumulative scoreToPar is known; persistence skips rows with null strokes.
+             */
+            strokes: number;
+            scoreToPar: number;
+            thru?: number;
+            status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+            completedAt?: string;
+        }>;
+    };
+    path: {
+        eventId: string;
+        round: number;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/rounds/{round}/scores';
+};
+
+export type AdminApplyGolfRoundScoresErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminApplyGolfRoundScoresError = AdminApplyGolfRoundScoresErrors[keyof AdminApplyGolfRoundScoresErrors];
+
+export type AdminApplyGolfRoundScoresResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        rows: Array<{
+            sportEventParticipantId: string;
+            participantId: string;
+            participantName: string;
+            strokes: number;
+            scoreToPar: number;
+            thru: number;
+            /**
+             * Null when this round has no result recorded yet for this golfer.
+             */
+            status: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            completedAt: string;
+            standing: {
+                eventScoreToPar: number;
+                eventStrokes: number;
+                currentRound: number;
+                currentRoundThru: number;
+                status: string;
+            };
+        }>;
+    };
+};
+
+export type AdminApplyGolfRoundScoresResponse = AdminApplyGolfRoundScoresResponses[keyof AdminApplyGolfRoundScoresResponses];
+
+export type AdminPreviewGolfRoundScoresData = {
+    body: {
+        rows: Array<{
+            participantId?: string;
+            externalId?: string;
+            playerName?: string;
+            /**
+             * Null when only cumulative scoreToPar is known; persistence skips rows with null strokes.
+             */
+            strokes: number;
+            scoreToPar: number;
+            thru?: number;
+            status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+            completedAt?: string;
+        }>;
+    };
+    path: {
+        eventId: string;
+        round: number;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/rounds/{round}/scores/preview';
+};
+
+export type AdminPreviewGolfRoundScoresErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminPreviewGolfRoundScoresError = AdminPreviewGolfRoundScoresErrors[keyof AdminPreviewGolfRoundScoresErrors];
+
+export type AdminPreviewGolfRoundScoresResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        rows: Array<{
+            /**
+             * One golfer's result for a single round. Exactly one of participantId/externalId/playerName should be supplied.
+             */
+            row: {
+                participantId?: string;
+                externalId?: string;
+                playerName?: string;
+                /**
+                 * Null when only cumulative scoreToPar is known; persistence skips rows with null strokes.
+                 */
+                strokes: number;
+                scoreToPar: number;
+                thru?: number;
+                status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+                completedAt?: string;
+            };
+            resolution: 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
+            sportEventParticipantId: string;
+            participantName: string;
+            change: 'CREATE' | 'UPDATE' | 'UNCHANGED';
+            before: {
+                strokes: number;
+                scoreToPar: number;
+                thru: number;
+                status: string;
+            };
+            after: {
+                strokes: number;
+                scoreToPar: number;
+                thru: number;
+                status: string;
+            };
+        }>;
+        rollup: {
+            total: number;
+            matched: number;
+            unresolved: number;
+            ambiguous: number;
+        };
+    };
+};
+
+export type AdminPreviewGolfRoundScoresResponse = AdminPreviewGolfRoundScoresResponses[keyof AdminPreviewGolfRoundScoresResponses];
+
+export type AdminUpdateGolfRoundScoreData = {
+    /**
+     * Single-cell correction — a partial patch of one participant's round result.
+     */
+    body: {
+        strokes?: number;
+        scoreToPar?: number;
+        thru?: number;
+        status?: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+        completedAt?: string;
+    };
+    path: {
+        eventId: string;
+        round: number;
+        sportEventParticipantId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/rounds/{round}/scores/{sportEventParticipantId}';
+};
+
+export type AdminUpdateGolfRoundScoreErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminUpdateGolfRoundScoreError = AdminUpdateGolfRoundScoreErrors[keyof AdminUpdateGolfRoundScoreErrors];
+
+export type AdminUpdateGolfRoundScoreResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        row: {
+            sportEventParticipantId: string;
+            participantId: string;
+            participantName: string;
+            strokes: number;
+            scoreToPar: number;
+            thru: number;
+            /**
+             * Null when this round has no result recorded yet for this golfer.
+             */
+            status: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            completedAt: string;
+            standing: {
+                eventScoreToPar: number;
+                eventStrokes: number;
+                currentRound: number;
+                currentRoundThru: number;
+                status: string;
+            };
+        };
+    };
+};
+
+export type AdminUpdateGolfRoundScoreResponse = AdminUpdateGolfRoundScoreResponses[keyof AdminUpdateGolfRoundScoreResponses];
 
 export type AdminGetPollIntervalsData = {
     body?: never;

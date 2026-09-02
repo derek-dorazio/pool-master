@@ -1,5 +1,6 @@
 import {
   deriveGolfPrices,
+  deriveGolfTournamentRounds,
   deriveSeedNumbersAndOdds,
 } from '../../../packages/core-api/src/modules/golf/golf-seeding-algorithm';
 
@@ -107,5 +108,49 @@ describe('deriveGolfPrices', () => {
 
   it('pool-master-2re returns an empty array for an empty field', () => {
     expect(deriveGolfPrices([], 10, 100, fixedSequence([0.5]))).toEqual([]);
+  });
+});
+
+describe('deriveGolfTournamentRounds', () => {
+  const startDate = new Date('2027-04-08T00:00:00.000Z');
+
+  it('pool-master-5h3 defaults to 4 sequential-daily rounds with round 4 on endDate when supplied', () => {
+    const endDate = new Date('2027-04-12T00:00:00.000Z');
+
+    const result = deriveGolfTournamentRounds(startDate, endDate);
+
+    expect(result).toEqual([
+      { roundNumber: 1, scheduledDate: startDate, scheduledEndAt: null },
+      { roundNumber: 2, scheduledDate: new Date('2027-04-09T00:00:00.000Z'), scheduledEndAt: null },
+      { roundNumber: 3, scheduledDate: new Date('2027-04-10T00:00:00.000Z'), scheduledEndAt: null },
+      { roundNumber: 4, scheduledDate: endDate, scheduledEndAt: null },
+    ]);
+  });
+
+  it('pool-master-5h3 falls back to startDate + 3 days for round 4 when endDate is absent too', () => {
+    const result = deriveGolfTournamentRounds(startDate, null);
+
+    expect(result[3]).toEqual({
+      roundNumber: 4,
+      scheduledDate: new Date('2027-04-11T00:00:00.000Z'),
+      scheduledEndAt: null,
+    });
+  });
+
+  it('pool-master-5h3 uses an explicit provider-supplied round schedule verbatim when present', () => {
+    const providerRounds = [
+      { roundNumber: 1, scheduledDate: new Date('2027-04-08T08:00:00.000Z'), scheduledEndAt: null },
+      { roundNumber: 2, scheduledDate: new Date('2027-04-09T08:00:00.000Z'), scheduledEndAt: null },
+    ];
+
+    const result = deriveGolfTournamentRounds(startDate, null, providerRounds);
+
+    expect(result).toBe(providerRounds);
+  });
+
+  it('pool-master-5h3 ignores an empty provider-supplied round array and falls back to the default', () => {
+    const result = deriveGolfTournamentRounds(startDate, null, []);
+
+    expect(result).toHaveLength(4);
   });
 });

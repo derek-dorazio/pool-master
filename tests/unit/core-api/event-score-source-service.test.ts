@@ -147,6 +147,72 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
   });
 });
 
+describe('EventScoreSourceService.getProviderEventDetail', () => {
+  it('pool-master-5h3 404s PROVIDER_NOT_FOUND when the providerId has no registered provider', async () => {
+    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(null) };
+    const service = new EventScoreSourceService({} as any, providerRegistry as any);
+
+    await expect(service.getProviderEventDetail('unknown', 'ext-1')).rejects.toMatchObject({
+      code: 'PROVIDER_NOT_FOUND',
+      statusCode: 404,
+    });
+  });
+
+  it('pool-master-5h3 404s PROVIDER_EVENT_NOT_FOUND when the provider returns no event detail', async () => {
+    const provider = { providerId: 'mock-golf', getEventDetails: jest.fn().mockResolvedValue(null) };
+    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(provider) };
+    const service = new EventScoreSourceService({} as any, providerRegistry as any);
+
+    await expect(service.getProviderEventDetail('mock-golf', 'missing-ext')).rejects.toMatchObject({
+      code: 'PROVIDER_EVENT_NOT_FOUND',
+      statusCode: 404,
+    });
+  });
+
+  it('pool-master-5h3 returns name/venue/dates from the provider event detail', async () => {
+    const provider = {
+      providerId: 'mock-golf',
+      getEventDetails: jest.fn().mockResolvedValue({
+        name: 'The Masters',
+        venue: 'Augusta National',
+        startDate: new Date('2027-04-08T00:00:00.000Z'),
+        endDate: new Date('2027-04-11T00:00:00.000Z'),
+        participants: [],
+      }),
+    };
+    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(provider) };
+    const service = new EventScoreSourceService({} as any, providerRegistry as any);
+
+    const result = await service.getProviderEventDetail('mock-golf', 'ext-1');
+
+    expect(provider.getEventDetails).toHaveBeenCalledWith('ext-1');
+    expect(result).toEqual({
+      name: 'The Masters',
+      venue: 'Augusta National',
+      startDate: new Date('2027-04-08T00:00:00.000Z'),
+      endDate: new Date('2027-04-11T00:00:00.000Z'),
+    });
+  });
+
+  it('pool-master-5h3 defaults venue/endDate to null when the provider omits them', async () => {
+    const provider = {
+      providerId: 'mock-golf',
+      getEventDetails: jest.fn().mockResolvedValue({
+        name: 'The Masters',
+        startDate: new Date('2027-04-08T00:00:00.000Z'),
+        participants: [],
+      }),
+    };
+    const providerRegistry = { getProviderById: jest.fn().mockReturnValue(provider) };
+    const service = new EventScoreSourceService({} as any, providerRegistry as any);
+
+    const result = await service.getProviderEventDetail('mock-golf', 'ext-1');
+
+    expect(result.venue).toBeNull();
+    expect(result.endDate).toBeNull();
+  });
+});
+
 describe('EventScoreSourceService.linkScoreSource', () => {
   it('pool-master-753 404s EVENT_NOT_FOUND when the sport event does not exist', async () => {
     const prisma = { sportEvent: { findUnique: jest.fn().mockResolvedValue(null) } };

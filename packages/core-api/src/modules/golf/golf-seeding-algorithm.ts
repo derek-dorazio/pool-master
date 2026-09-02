@@ -130,3 +130,44 @@ function shuffle<T>(items: T[], random: () => number): T[] {
 function roundToCents(value: number): number {
   return Math.round(value * 100) / 100;
 }
+
+export interface DerivedGolfTournamentRound {
+  roundNumber: number;
+  scheduledDate: Date;
+  scheduledEndAt: Date | null;
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * A tournament created directly from a browsed provider event (plans/124
+ * §4.4a) derives its round schedule instead of asking the admin to type one.
+ *
+ * Defensive first check: an explicit provider-supplied round-by-round
+ * breakdown wins outright — no PoolMaster-side derivation needed when the
+ * source already has the real answer. No provider adapter supplies this
+ * today (verified against the mock's contract), so this branch is dead code
+ * against the mock specifically, by design — it exists for whichever real
+ * adapter is built next.
+ *
+ * Default, since the mock (and possibly a real provider) has nothing
+ * richer: assume 4 rounds — Round 1 on startDate, Round 2/3 the following
+ * days, and Round 4 on endDate when the provider supplies one (falling back
+ * to startDate + 3 days only when endDate is absent too).
+ */
+export function deriveGolfTournamentRounds(
+  startDate: Date,
+  endDate: Date | null,
+  providerRounds?: DerivedGolfTournamentRound[],
+): DerivedGolfTournamentRound[] {
+  if (providerRounds && providerRounds.length > 0) {
+    return providerRounds;
+  }
+
+  return [
+    { roundNumber: 1, scheduledDate: startDate, scheduledEndAt: null },
+    { roundNumber: 2, scheduledDate: new Date(startDate.getTime() + MS_PER_DAY), scheduledEndAt: null },
+    { roundNumber: 3, scheduledDate: new Date(startDate.getTime() + 2 * MS_PER_DAY), scheduledEndAt: null },
+    { roundNumber: 4, scheduledDate: endDate ?? new Date(startDate.getTime() + 3 * MS_PER_DAY), scheduledEndAt: null },
+  ];
+}

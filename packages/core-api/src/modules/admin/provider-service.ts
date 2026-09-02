@@ -479,6 +479,15 @@ export class ProviderService {
    * exists yet for (providerId, externalId) — there is no scope to violate,
    * and EVENTSCHEDULE/EVENTPARTICIPANTS syncs routinely run before any local
    * row exists.
+   *
+   * EVENTPARTICIPANTS (the field/"details" feed) is allowed for any linked
+   * event (`syncScope != 'NONE'`), not only `FULL` — plans/125 §3.2's
+   * already-decided design, which plans/124 §4.4a's admin-triggered
+   * Load/Refresh Participant Field action depends on. It is a separate
+   * concern from the scores feeds (EVENTLIVESCORES/EVENTRESULTS): a
+   * `SCORES_ONLY` tournament is still admin-managed for setup/field/tiers
+   * (§3.5), so an explicit, on-demand field refresh must not be blocked the
+   * way an automatic schedule/rankings sync correctly is.
    */
   private async assertFeedsAllowedForSyncScope(
     providerId: string,
@@ -496,7 +505,7 @@ export class ProviderService {
     const allowedFeeds: string[] = event.syncScope === 'FULL'
       ? ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS', 'EVENTLIVESCORES', 'EVENTRESULTS']
       : event.syncScope === 'SCORES_ONLY'
-      ? ['EVENTLIVESCORES', 'EVENTRESULTS']
+      ? ['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTRESULTS']
       : [];
     const disallowedFeeds = feeds.filter((feed) => !allowedFeeds.includes(feed));
     if (disallowedFeeds.length > 0) {

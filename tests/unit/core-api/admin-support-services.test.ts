@@ -644,24 +644,20 @@ describe('admin support services', () => {
         ).rejects.toBeInstanceOf(SportEventSyncScopeError);
       });
 
-      it('pool-master-cgb: rejects EVENTPARTICIPANTS but allows EVENTLIVESCORES/EVENTRESULTS when syncScope is SCORES_ONLY', async () => {
-        const rejecting = buildManualSyncService(
+      it('pool-master-5h3: allows EVENTPARTICIPANTS (not only EVENTLIVESCORES/EVENTRESULTS) when syncScope is SCORES_ONLY', async () => {
+        // EVENTPARTICIPANTS (the field/"details" feed) is a separate concern
+        // from the scores feeds and is gated by syncScope != 'NONE', not
+        // restricted to FULL (plans/125 §3.2) — plans/124 §4.4a's admin
+        // Load/Refresh Participant Field action depends on this for a
+        // SCORES_ONLY-linked tournament. Every one of the three manual-sync
+        // feeds is a valid combination for SCORES_ONLY; only NONE (covered
+        // above) rejects a manual-sync feed outright.
+        const service = buildManualSyncService(
           jest.fn().mockResolvedValue({ syncScope: 'SCORES_ONLY' }),
         );
         await expect(
-          rejecting.syncEventData(
-            { sport: Sport.GOLF, eventId: 'linked-event', feeds: ['EVENTPARTICIPANTS'] },
-            'admin-1',
-            'admin@example.com',
-          ),
-        ).rejects.toBeInstanceOf(SportEventSyncScopeError);
-
-        const allowing = buildManualSyncService(
-          jest.fn().mockResolvedValue({ syncScope: 'SCORES_ONLY' }),
-        );
-        await expect(
-          allowing.syncEventData(
-            { sport: Sport.GOLF, eventId: 'linked-event', feeds: ['EVENTLIVESCORES', 'EVENTRESULTS'] },
+          service.syncEventData(
+            { sport: Sport.GOLF, eventId: 'linked-event', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTRESULTS'] },
             'admin-1',
             'admin@example.com',
           ),

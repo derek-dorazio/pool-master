@@ -1,6 +1,6 @@
 /**
  * GolfFieldService — a golf tournament's field (SportEventParticipant rows),
- * plans/124 §4.2/§4.7/§5.2.
+ * plans/124 §4.2/§4.7/§4.4a/§5.2.
  *
  * `seedFieldFromLeagueRoster` copies the tournament's league's currently
  * active affiliated participants into the field as a one-time convenience —
@@ -9,12 +9,24 @@
  * (a LIV golfer added to a PGA event, etc.): it accepts any `Participant`,
  * with no referential check against `ParticipantLeagueAffiliation` to
  * bypass, because there was never a constraint to begin with.
+ *
+ * `seedFieldFromProvider` is the field-population path for a tournament
+ * linked to a real provider event (§4.4a) — it mirrors, but deliberately
+ * does not share code with, `IngestionPersistence.persistParticipants`: that
+ * function upserts a `Sport` row for any sport and is a general ingestion
+ * primitive, while this one is golf-scoped, fails loudly when no golf
+ * `Sport` row exists yet (plans/124 §9 open question 2 — guaranteed by
+ * migration seed), and never writes `SportEvent.status` or fires contest
+ * side effects — only field/participant matching (§4.10).
  */
 
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { GolfValuationSource, type GolfParticipantInactiveReason } from '@poolmaster/shared/domain';
+import { GolfValuationSource, ParticipantType, Sport, type GolfParticipantInactiveReason } from '@poolmaster/shared/domain';
 import type { SportLeagueService } from '../sport-catalog/sport-league-service';
+import { ProviderRegistry } from '../ingestion/core/provider-registry';
+import type { ProviderParticipant } from '../ingestion/core/provider-interface';
+import { requireSportRow } from '../sport-catalog/sport-row';
 import { deriveSeedNumbersAndOdds } from './golf-seeding-algorithm';
 
 export class GolfFieldError extends Error {
@@ -81,6 +93,7 @@ export class GolfFieldService {
     private readonly prisma: PrismaClient,
     private readonly sportLeagueService: SportLeagueService,
     private readonly random: () => number = Math.random,
+    private readonly providerRegistry: ProviderRegistry = new ProviderRegistry(),
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
@@ -177,6 +190,167 @@ export class GolfFieldService {
       seedNumbersDerived: seeded.length,
       oddsDerived: seeded.length,
     };
+  }
+
+  /**
+   * Field population for a tournament linked to a real provider event
+   * (plans/124 §4.4a). Upsert, not create-only — the same button serves
+   * "Load" (first click, empty field) and "Refresh" (later clicks) via
+   * `adminRefreshGolfTournamentField`. Per contestant:
+   *
+   *   1. Resolve or create the global Participant + ParticipantProviderMapping
+   *      by exact provider identity — never fuzzy name-matching.
+   *   2. worldRanking/oddsToWin follow a priority chain (both present → use
+   *      as-is; ranking only → derive odds from ranking-based position;
+   *      odds only → derive an implied position from odds ascending; neither
+   *      → fall back to this golfer's league-affiliation worldRanking, or no
+   *      signal at all). seedNumber always comes from position assignment,
+   *      never the provider's own `seed` field, since seed position is
+   *      PoolMaster's own draft concept.
+   *   3. `price` is never provider-sourced under any branch.
+   */
+  async seedFieldFromProvider(sportEventId: string): Promise<SeedFieldResult> {
+    const sportEvent = await this.prisma.sportEvent.findUniqueOrThrow({
+      where: { id: sportEventId },
+      select: { providerId: true, externalId: true, seasonId: true },
+    });
+
+    const provider = this.providerRegistry.getProviderById(sportEvent.providerId);
+    if (!provider) {
+      throw new GolfFieldError(`Provider ${sportEvent.providerId} is not registered.`, 'PROVIDER_NOT_FOUND', 404);
+    }
+    const detail = await provider.getEventDetails(sportEvent.externalId);
+    if (!detail) {
+      throw new GolfFieldError(
+        `Provider returned no event detail for ${sportEvent.externalId}.`,
+        'PROVIDER_EVENT_NOT_FOUND',
+        404,
+      );
+    }
+
+    const sportLeagueId = await this.resolveSportLeagueId(sportEvent.seasonId);
+    const affiliationRankings = sportLeagueId
+      ? new Map((await this.sportLeagueService.getRoster(sportLeagueId)).map((entry) => [entry.participantId, entry.worldRanking]))
+      : new Map<string, number | null>();
+
+    const resolved = await Promise.all(
+      detail.participants.map(async (participant) => ({
+        participant,
+        participantId: (await this.resolveOrCreateProviderParticipant(participant)).id,
+      })),
+    );
+
+    const candidates = resolved.map(({ participant, participantId }) => ({
+      participantId,
+      isActive: participant.active,
+      inactiveReason: participant.inactiveReason ?? null,
+      ranking: readIntegerMetadata(participant.metadata, 'ranking'),
+      odds: readNumberMetadata(participant.metadata, 'odds'),
+    }));
+
+    const rankingPoolCandidates = candidates.filter((c) => !(c.odds !== null && c.ranking === null));
+    const oddsPoolCandidates = candidates.filter((c) => c.odds !== null && c.ranking === null);
+
+    const seededByRanking = deriveSeedNumbersAndOdds(
+      rankingPoolCandidates.map((c) => ({
+        participantId: c.participantId,
+        worldRanking: c.ranking ?? affiliationRankings.get(c.participantId) ?? null,
+      })),
+      this.random,
+    );
+    const seededByRankingById = new Map(seededByRanking.map((s) => [s.participantId, s]));
+
+    const seededByOdds = [...oddsPoolCandidates].sort((left, right) => (left.odds as number) - (right.odds as number));
+    const seedNumberByOddsPoolParticipantId = new Map(seededByOdds.map((c, index) => [c.participantId, index + 1]));
+
+    const existing = await this.prisma.sportEventParticipant.findMany({
+      where: { sportEventId, participantId: { in: candidates.map((c) => c.participantId) } },
+      select: { participantId: true },
+    });
+    const existingParticipantIds = new Set(existing.map((row) => row.participantId));
+
+    await this.prisma.$transaction(
+      candidates.map((candidate) => {
+        const rankingResult = seededByRankingById.get(candidate.participantId);
+
+        const worldRanking = rankingResult ? rankingResult.worldRanking : null;
+        const oddsToWin = candidate.odds !== null
+          ? candidate.odds
+          : rankingResult?.oddsToWin ?? null;
+        const seedNumber = rankingResult
+          ? rankingResult.seedNumber
+          : (seedNumberByOddsPoolParticipantId.get(candidate.participantId) as number);
+
+        const data = {
+          isActive: candidate.isActive,
+          inactiveReason: candidate.inactiveReason,
+          worldRanking,
+          oddsToWin,
+          seedNumber,
+        };
+        return this.prisma.sportEventParticipant.upsert({
+          where: { sportEventId_participantId: { sportEventId, participantId: candidate.participantId } },
+          create: { sportEventId, participantId: candidate.participantId, ...data },
+          update: data,
+        });
+      }),
+    );
+
+    const added = candidates.filter((c) => !existingParticipantIds.has(c.participantId)).length;
+    this.logger?.info({
+      sportEventId,
+      providerId: sportEvent.providerId,
+      total: candidates.length,
+      added,
+      refreshed: candidates.length - added,
+    }, 'Seeded golf tournament field from provider event detail');
+
+    return {
+      added,
+      skipped: 0,
+      total: candidates.length,
+      seedNumbersDerived: candidates.length,
+      oddsDerived: candidates.filter((c) => c.odds === null).length,
+    };
+  }
+
+  private async resolveOrCreateProviderParticipant(participant: ProviderParticipant): Promise<{ id: string }> {
+    const mapping = await this.prisma.participantProviderMapping.findUnique({
+      where: {
+        providerId_externalId: { providerId: participant.providerId, externalId: participant.externalId },
+      },
+    });
+    if (mapping) {
+      return { id: mapping.participantId };
+    }
+
+    const sportRow = await requireSportRow(this.prisma, Sport.GOLF);
+    return this.prisma.$transaction(async (tx) => {
+      const created = await tx.participant.create({
+        data: {
+          sportId: sportRow.id,
+          name: participant.name,
+          participantType: ParticipantType.INDIVIDUAL,
+          externalId: participant.externalId,
+          firstName: participant.firstName ?? null,
+          lastName: participant.lastName ?? null,
+          nationality: participant.nationality ?? null,
+          position: participant.position ?? null,
+          teamAffiliation: participant.teamAffiliation ?? null,
+          photoUrl: participant.photoUrl ?? null,
+          status: participant.active ? 'ACTIVE' : 'INACTIVE',
+        },
+      });
+      await tx.participantProviderMapping.create({
+        data: {
+          participantId: created.id,
+          providerId: participant.providerId,
+          externalId: participant.externalId,
+          confidence: 'EXACT',
+        },
+      });
+      return { id: created.id };
+    });
   }
 
   /**
@@ -323,4 +497,14 @@ function toGolfFieldRow(row: PrismaFieldRow, rosterParticipantIds: Set<string>):
     price: row.golfValuation?.price == null ? null : Number(row.golfValuation.price),
     isLeagueRosterMember: rosterParticipantIds.has(row.participantId),
   };
+}
+
+function readNumberMetadata(metadata: Record<string, unknown>, key: string): number | null {
+  const value = metadata[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function readIntegerMetadata(metadata: Record<string, unknown>, key: string): number | null {
+  const value = readNumberMetadata(metadata, key);
+  return value === null ? null : Math.trunc(value);
 }

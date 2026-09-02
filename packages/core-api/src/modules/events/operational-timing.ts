@@ -1,4 +1,7 @@
-import type { ContestTimingPolicy, SportEventReadinessReason, SportEventReadinessStatus } from '@poolmaster/shared/domain';
+import type { PrismaClient } from '@prisma/client';
+import type { ContestTimingPolicy, Sport, SportEventReadinessReason, SportEventReadinessStatus } from '@poolmaster/shared/domain';
+
+type SelectableTimingPolicy = Pick<ContestTimingPolicy, 'eventType' | 'isDefault' | 'releaseRule' | 'fieldLockRule'>;
 
 interface EventTimingInput {
   sport: string;
@@ -94,16 +97,30 @@ export function evaluateEventOperationalState(input: {
   };
 }
 
-export function selectTimingPolicy(
-  policies: readonly Pick<
-    ContestTimingPolicy,
-    'eventType' | 'isDefault' | 'releaseRule' | 'fieldLockRule'
-  >[],
+/**
+ * Loads a sport's active timing policies and picks the one matching
+ * `metadata.eventType` (falling back to the sport's default). Shared by the
+ * ingestion path (`IngestionPersistence`) and the admin
+ * `adminCreateGolfTournamentFromProviderEvent` route (plans/124 §5.2) so
+ * there is one "which policy applies" resolution, not two independently
+ * drifting queries.
+ */
+export async function resolveTimingPolicyForSport(
+  prisma: PrismaClient,
+  sport: Sport,
   metadata: Record<string, unknown>,
-): Pick<
-  ContestTimingPolicy,
-  'eventType' | 'isDefault' | 'releaseRule' | 'fieldLockRule'
-> | null {
+): Promise<SelectableTimingPolicy | null> {
+  const policies = await prisma.contestTimingPolicy.findMany({
+    where: { sport, active: true },
+    orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
+  });
+  return selectTimingPolicy(policies, metadata);
+}
+
+export function selectTimingPolicy(
+  policies: readonly SelectableTimingPolicy[],
+  metadata: Record<string, unknown>,
+): SelectableTimingPolicy | null {
   const eventType =
     typeof metadata.eventType === 'string' && metadata.eventType.trim() !== ''
       ? metadata.eventType.trim()

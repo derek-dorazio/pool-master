@@ -23,10 +23,13 @@ import {
   SPORT_EVENT_STATUS_TRANSITIONS,
   Sport,
   SportEventStatus,
+  SportEventSyncScope,
 } from '@poolmaster/shared/domain';
 import type { SeasonService } from '../sport-catalog/season-service';
 import type { GolfRoundScheduleService } from './golf-round-schedule-service';
 import type { GolfTierService } from './golf-tier-service';
+import { deriveGolfTournamentRounds } from './golf-seeding-algorithm';
+import { resolveEventTiming, resolveTimingPolicyForSport } from '../events/operational-timing';
 
 export class GolfTournamentError extends Error {
   constructor(
@@ -177,6 +180,101 @@ export class GolfTournamentService {
       leagueEventId: leagueEvent.id,
       rounds,
     }, 'Created manual golf tournament');
+
+    return toGolfTournamentRow(created as PrismaSportEventWithCounts);
+  }
+
+  /**
+   * The second, equally first-class creation entry point (plans/124 §4.4a):
+   * a tournament created directly from a browsed provider event, pre-linked
+   * (syncScope=SCORES_ONLY) rather than starting at the manual-admin
+   * placeholder identity and requiring a separate link step. Does not touch
+   * the field — that is `adminRefreshGolfTournamentField`'s job, a
+   * separate, explicit action.
+   */
+  async createTournamentFromProviderEvent(input: {
+    seasonId: string;
+    providerId: string;
+    externalId: string;
+    name: string;
+    venue: string | null;
+    startDate: Date;
+    endDate: Date | null;
+    rounds?: number;
+  }): Promise<GolfTournamentRow> {
+    const season = await this.seasonService.assertSeasonBelongsToSport(input.seasonId, Sport.GOLF);
+
+    const conflict = await this.prisma.sportEvent.findFirst({
+      where: { providerId: input.providerId, externalId: input.externalId },
+    });
+    if (conflict) {
+      throw new GolfTournamentError(
+        `Another sport event is already linked to ${input.providerId}/${input.externalId}.`,
+        'EXTERNAL_EVENT_ALREADY_LINKED',
+        409,
+      );
+    }
+
+    const leagueEvent = await this.prisma.leagueEvent.upsert({
+      where: { sportLeagueId_name: { sportLeagueId: season.sportLeagueId, name: input.name } },
+      create: { sportLeagueId: season.sportLeagueId, name: input.name },
+      update: {},
+    });
+
+    const timingPolicy = await resolveTimingPolicyForSport(this.prisma, Sport.GOLF, {});
+    const timing = resolveEventTiming(
+      { sport: Sport.GOLF, startDate: input.startDate, metadata: {} },
+      timingPolicy,
+    );
+    // deriveGolfTournamentRounds's 4-round, endDate-aware default only
+    // applies when the admin hasn't overridden the round count — an
+    // explicit rounds count falls back to the same plain sequential-daily
+    // schedule manual creation uses, so SportEvent.rounds always matches
+    // the SportEventRound rows actually created.
+    const rounds = input.rounds ?? deriveGolfTournamentRounds(input.startDate, input.endDate).length;
+
+    const created = await this.prisma.sportEvent.create({
+      data: {
+        externalId: input.externalId,
+        providerId: input.providerId,
+        sport: Sport.GOLF,
+        name: input.name,
+        venue: input.venue,
+        location: null,
+        startDate: input.startDate,
+        endDate: input.endDate,
+        status: SportEventStatus.SCHEDULED,
+        rounds,
+        releaseAt: timing.releaseAt,
+        fieldLocksAt: timing.fieldLocksAt,
+        seasonId: season.id,
+        leagueEventId: leagueEvent.id,
+        syncScope: SportEventSyncScope.SCORES_ONLY,
+        autoLifecycleEnabled: true,
+      },
+      ...TOURNAMENT_INCLUDE,
+    });
+
+    if (input.rounds === undefined) {
+      const derivedRounds = deriveGolfTournamentRounds(input.startDate, input.endDate);
+      await this.golfRoundScheduleService.createSportEventRoundsFromSchedule(created.id, derivedRounds);
+    } else {
+      await this.golfRoundScheduleService.ensureSportEventRounds({
+        sportEventId: created.id,
+        rounds,
+        startDate: input.startDate,
+      });
+    }
+    await this.golfTierService.ensureDefaultGolfTiers(created.id);
+
+    this.logger?.info({
+      sportEventId: created.id,
+      seasonId: season.id,
+      leagueEventId: leagueEvent.id,
+      providerId: input.providerId,
+      externalId: input.externalId,
+      rounds,
+    }, 'Created golf tournament from provider event');
 
     return toGolfTournamentRow(created as PrismaSportEventWithCounts);
   }

@@ -83,6 +83,35 @@ export class GolfRoundScheduleService {
     return this.listSportEventRounds(input.sportEventId);
   }
 
+  /**
+   * Creates rows from an already-derived schedule (plans/124 §4.4a's
+   * `deriveGolfTournamentRounds`) rather than computing sequential-daily
+   * dates internally — the provider-linked creation path's round dates can
+   * come from the provider's own end date, not just `startDate + N days`.
+   */
+  async createSportEventRoundsFromSchedule(
+    sportEventId: string,
+    rounds: Array<{ roundNumber: number; scheduledDate: Date; scheduledEndAt?: Date | null }>,
+  ): Promise<SportEventRoundRow[]> {
+    await this.prisma.$transaction(
+      rounds.map((round) =>
+        this.prisma.sportEventRound.create({
+          data: {
+            sportEventId,
+            roundNumber: round.roundNumber,
+            scheduledDate: round.scheduledDate,
+            scheduledEndAt: round.scheduledEndAt ?? null,
+          },
+        }),
+      ),
+    );
+    this.logger?.info({
+      sportEventId,
+      createdRoundNumbers: rounds.map((round) => round.roundNumber),
+    }, 'Created golf round schedule rows from a derived schedule');
+    return this.listSportEventRounds(sportEventId);
+  }
+
   async listSportEventRounds(sportEventId: string): Promise<SportEventRoundRow[]> {
     return this.prisma.sportEventRound.findMany({
       where: { sportEventId },

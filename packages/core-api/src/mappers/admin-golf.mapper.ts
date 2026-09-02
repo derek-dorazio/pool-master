@@ -7,6 +7,10 @@ import type {
   AdminGolfLeagueRosterEntryDto,
   AdminGolfLeagueRosterUploadPreviewRowDto,
   AdminGolfLeagueSummaryDto,
+  AdminGolfPlayerDetailDto,
+  AdminGolfPlayerDto,
+  AdminGolfRoundScoreEntryDto,
+  AdminGolfRoundScorePreviewRowDto,
   AdminGolfSeasonDetailDto,
   AdminGolfSeasonDto,
   AdminGolfSeasonSummaryDto,
@@ -14,6 +18,7 @@ import type {
   AdminGolfTournamentDetailDto,
   AdminGolfTournamentDto,
   AdminGolfTournamentRoundDto,
+  AdminPreviewGolfRoundScoresResponse,
   AdminUpdateGolfFieldEntriesRequest,
   AdminUpdateGolfTournamentRoundsRequest,
 } from '@poolmaster/shared/dto';
@@ -24,6 +29,8 @@ import type { SportEventRoundRow } from '../modules/golf/golf-round-schedule-ser
 import type { GolfTournamentRow } from '../modules/golf/golf-tournament-service';
 import type { GolfFieldRow } from '../modules/golf/golf-field-service';
 import type { GolfTierGroup } from '../modules/golf/golf-tier-service';
+import type { GolfPlayerDetail, GolfPlayerRow } from '../modules/golf/golf-player-service';
+import type { GolfRoundScoreRow, GolfScorePreviewRow } from '../modules/golf/golf-score-service';
 
 export function toAdminGolfLeagueDto(league: SportLeagueRow): AdminGolfLeagueDto {
   return {
@@ -211,4 +218,75 @@ export function toAdminGolfTierGroupDto(tier: GolfTierGroup): AdminGolfTierGroup
 
 export function toAdminGolfTierGroupDtoList(tiers: GolfTierGroup[]): AdminGolfTierGroupDto[] {
   return tiers.map(toAdminGolfTierGroupDto);
+}
+
+export function toAdminGolfPlayerDto(player: GolfPlayerRow): AdminGolfPlayerDto {
+  return {
+    id: player.id,
+    name: player.name,
+    firstName: player.firstName,
+    lastName: player.lastName,
+    shortName: player.shortName,
+    nationality: player.nationality,
+    position: player.position,
+    teamAffiliation: player.teamAffiliation,
+    externalId: player.externalId,
+    status: player.status,
+    providerMappingCount: player.providerMappingCount,
+    createdAt: player.createdAt.toISOString(),
+    updatedAt: player.updatedAt.toISOString(),
+  };
+}
+
+export function toAdminGolfPlayerDtoList(players: GolfPlayerRow[]): AdminGolfPlayerDto[] {
+  return players.map(toAdminGolfPlayerDto);
+}
+
+export function toAdminGolfPlayerDetailDto(player: GolfPlayerDetail): AdminGolfPlayerDetailDto {
+  return {
+    ...toAdminGolfPlayerDto(player),
+    providerMappings: player.providerMappings,
+  };
+}
+
+export function toAdminGolfRoundScoreEntryDto(row: GolfRoundScoreRow): AdminGolfRoundScoreEntryDto {
+  return {
+    sportEventParticipantId: row.sportEventParticipantId,
+    participantId: row.participantId,
+    participantName: row.participantName,
+    strokes: row.strokes,
+    scoreToPar: row.scoreToPar,
+    thru: row.thru,
+    status: row.status,
+    completedAt: row.completedAt?.toISOString() ?? null,
+    standing: row.standing,
+  };
+}
+
+export function toAdminGolfRoundScoreEntryDtoList(rows: GolfRoundScoreRow[]): AdminGolfRoundScoreEntryDto[] {
+  return rows.map(toAdminGolfRoundScoreEntryDto);
+}
+
+export function toAdminGolfRoundScorePreviewRowDto(row: GolfScorePreviewRow): AdminGolfRoundScorePreviewRowDto {
+  return {
+    row: row.row,
+    resolution: row.resolution,
+    sportEventParticipantId: row.sportEventParticipantId,
+    participantName: row.participantName,
+    change: row.change,
+    before: row.before,
+    after: row.after,
+  };
+}
+
+export function toAdminPreviewGolfRoundScoresResponse(rows: GolfScorePreviewRow[]): AdminPreviewGolfRoundScoresResponse {
+  return {
+    rows: rows.map(toAdminGolfRoundScorePreviewRowDto),
+    rollup: {
+      total: rows.length,
+      matched: rows.filter((row) => row.resolution === 'MATCHED').length,
+      unresolved: rows.filter((row) => row.resolution === 'UNRESOLVED').length,
+      ambiguous: rows.filter((row) => row.resolution === 'AMBIGUOUS').length,
+    },
+  };
 }

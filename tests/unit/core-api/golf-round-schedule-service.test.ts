@@ -194,3 +194,42 @@ describe('GolfRoundScheduleService.updateSportEventRounds', () => {
     });
   });
 });
+
+describe('GolfRoundScheduleService.createSportEventRoundsFromSchedule', () => {
+  it('pool-master-5h3 creates one row per entry in an already-derived schedule verbatim', async () => {
+    const create = jest.fn().mockResolvedValue({});
+    const findMany = jest.fn().mockResolvedValue([
+      buildRoundRow({ roundNumber: 1, scheduledDate: new Date('2027-04-08T00:00:00.000Z') }),
+      buildRoundRow({ roundNumber: 4, scheduledDate: new Date('2027-04-12T00:00:00.000Z') }),
+    ]);
+    const prisma = {
+      sportEventRound: { findMany, create },
+      $transaction: jest.fn().mockImplementation((ops) => Promise.all(ops)),
+    };
+    const service = new GolfRoundScheduleService(prisma as any);
+
+    const result = await service.createSportEventRoundsFromSchedule('event-1', [
+      { roundNumber: 1, scheduledDate: new Date('2027-04-08T00:00:00.000Z') },
+      { roundNumber: 4, scheduledDate: new Date('2027-04-12T00:00:00.000Z'), scheduledEndAt: new Date('2027-04-12T20:00:00.000Z') },
+    ]);
+
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(create).toHaveBeenCalledWith({
+      data: {
+        sportEventId: 'event-1',
+        roundNumber: 1,
+        scheduledDate: new Date('2027-04-08T00:00:00.000Z'),
+        scheduledEndAt: null,
+      },
+    });
+    expect(create).toHaveBeenCalledWith({
+      data: {
+        sportEventId: 'event-1',
+        roundNumber: 4,
+        scheduledDate: new Date('2027-04-12T00:00:00.000Z'),
+        scheduledEndAt: new Date('2027-04-12T20:00:00.000Z'),
+      },
+    });
+    expect(result.map((round) => round.roundNumber)).toEqual([1, 4]);
+  });
+});

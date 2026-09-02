@@ -48,6 +48,7 @@ function buildDeps(overrides: Record<string, unknown> = {}) {
       sportEvent: {
         findMany: jest.fn().mockResolvedValue([buildSportEventRow()]),
         findUnique: jest.fn().mockResolvedValue(buildSportEventRow()),
+        findFirst: jest.fn().mockResolvedValue(null),
         create: jest.fn().mockResolvedValue(buildSportEventRow()),
         update: jest.fn().mockResolvedValue(buildSportEventRow()),
         delete: jest.fn().mockResolvedValue(undefined),
@@ -57,6 +58,9 @@ function buildDeps(overrides: Record<string, unknown> = {}) {
       },
       contest: {
         count: jest.fn().mockResolvedValue(0),
+      },
+      contestTimingPolicy: {
+        findMany: jest.fn().mockResolvedValue([]),
       },
     },
     seasonService: {
@@ -155,6 +159,157 @@ describe('GolfTournamentService.createTournament', () => {
     expect(deps.golfRoundScheduleService.ensureSportEventRounds).toHaveBeenCalledWith(
       expect.objectContaining({ rounds: 3 }),
     );
+  });
+});
+
+describe('GolfTournamentService.createTournamentFromProviderEvent', () => {
+  function buildDepsWithSchedule(overrides: Record<string, unknown> = {}) {
+    const deps = buildDeps(overrides);
+    return {
+      ...deps,
+      golfRoundScheduleService: {
+        ensureSportEventRounds: jest.fn().mockResolvedValue([]),
+        createSportEventRoundsFromSchedule: jest.fn().mockResolvedValue([]),
+        ...(overrides.golfRoundScheduleService as object ?? {}),
+      },
+    };
+  }
+
+  it('pool-master-5h3 creates the tournament pre-linked (syncScope=SCORES_ONLY) with the provider identity and seeds rounds via the derived schedule', async () => {
+    const deps = buildDepsWithSchedule();
+    const service = new GolfTournamentService(
+      deps.prisma as any,
+      deps.seasonService as any,
+      deps.golfRoundScheduleService as any,
+      deps.golfTierService as any,
+    );
+
+    const result = await service.createTournamentFromProviderEvent({
+      seasonId: 'season-1',
+      providerId: 'mock-golf',
+      externalId: 'ext-1',
+      name: 'The Masters',
+      venue: 'Augusta National',
+      startDate: new Date('2027-04-08T00:00:00.000Z'),
+      endDate: new Date('2027-04-11T00:00:00.000Z'),
+    });
+
+    expect(deps.prisma.sportEvent.findFirst).toHaveBeenCalledWith({
+      where: { providerId: 'mock-golf', externalId: 'ext-1' },
+    });
+    expect(deps.prisma.sportEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          providerId: 'mock-golf',
+          externalId: 'ext-1',
+          venue: 'Augusta National',
+          syncScope: 'SCORES_ONLY',
+          rounds: 4,
+        }),
+      }),
+    );
+    expect(deps.golfRoundScheduleService.createSportEventRoundsFromSchedule).toHaveBeenCalledWith(
+      'event-1',
+      [
+        { roundNumber: 1, scheduledDate: new Date('2027-04-08T00:00:00.000Z'), scheduledEndAt: null },
+        { roundNumber: 2, scheduledDate: new Date('2027-04-09T00:00:00.000Z'), scheduledEndAt: null },
+        { roundNumber: 3, scheduledDate: new Date('2027-04-10T00:00:00.000Z'), scheduledEndAt: null },
+        { roundNumber: 4, scheduledDate: new Date('2027-04-11T00:00:00.000Z'), scheduledEndAt: null },
+      ],
+    );
+    expect(deps.golfRoundScheduleService.ensureSportEventRounds).not.toHaveBeenCalled();
+    expect(deps.golfTierService.ensureDefaultGolfTiers).toHaveBeenCalledWith('event-1');
+    expect(result.id).toBe('event-1');
+  });
+
+  it('pool-master-5h3 uses the plain sequential-daily schedule (ensureSportEventRounds) when the admin overrides rounds', async () => {
+    const deps = buildDepsWithSchedule();
+    const service = new GolfTournamentService(
+      deps.prisma as any,
+      deps.seasonService as any,
+      deps.golfRoundScheduleService as any,
+      deps.golfTierService as any,
+    );
+
+    await service.createTournamentFromProviderEvent({
+      seasonId: 'season-1',
+      providerId: 'mock-golf',
+      externalId: 'ext-1',
+      name: 'The Masters',
+      venue: null,
+      startDate: new Date('2027-04-08T00:00:00.000Z'),
+      endDate: null,
+      rounds: 5,
+    });
+
+    expect(deps.prisma.sportEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ rounds: 5 }) }),
+    );
+    expect(deps.golfRoundScheduleService.ensureSportEventRounds).toHaveBeenCalledWith({
+      sportEventId: 'event-1',
+      rounds: 5,
+      startDate: new Date('2027-04-08T00:00:00.000Z'),
+    });
+    expect(deps.golfRoundScheduleService.createSportEventRoundsFromSchedule).not.toHaveBeenCalled();
+  });
+
+  it('pool-master-5h3 throws 409 EXTERNAL_EVENT_ALREADY_LINKED when another SportEvent already holds that provider identity', async () => {
+    const deps = buildDepsWithSchedule({
+      prisma: {
+        sportEvent: {
+          findFirst: jest.fn().mockResolvedValue(buildSportEventRow({ id: 'other-event' })),
+          create: jest.fn(),
+        },
+        leagueEvent: { upsert: jest.fn() },
+        contestTimingPolicy: { findMany: jest.fn().mockResolvedValue([]) },
+      },
+    });
+    const service = new GolfTournamentService(
+      deps.prisma as any,
+      deps.seasonService as any,
+      deps.golfRoundScheduleService as any,
+      deps.golfTierService as any,
+    );
+
+    await expect(service.createTournamentFromProviderEvent({
+      seasonId: 'season-1',
+      providerId: 'mock-golf',
+      externalId: 'ext-1',
+      name: 'The Masters',
+      venue: null,
+      startDate: new Date('2027-04-08T00:00:00.000Z'),
+      endDate: null,
+    })).rejects.toMatchObject({
+      code: 'EXTERNAL_EVENT_ALREADY_LINKED',
+      statusCode: 409,
+    });
+    expect(deps.prisma.sportEvent.create).not.toHaveBeenCalled();
+  });
+
+  it('pool-master-5h3 propagates a season-sport-mismatch failure from assertSeasonBelongsToSport', async () => {
+    const deps = buildDepsWithSchedule({
+      seasonService: {
+        assertSeasonBelongsToSport: jest.fn().mockRejectedValue(
+          new GolfTournamentError('not golf', 'SEASON_SPORT_MISMATCH', 422),
+        ),
+      },
+    });
+    const service = new GolfTournamentService(
+      deps.prisma as any,
+      deps.seasonService as any,
+      deps.golfRoundScheduleService as any,
+      deps.golfTierService as any,
+    );
+
+    await expect(service.createTournamentFromProviderEvent({
+      seasonId: 'bad-season',
+      providerId: 'mock-golf',
+      externalId: 'ext-1',
+      name: 'The Masters',
+      venue: null,
+      startDate: new Date('2027-04-08T00:00:00.000Z'),
+      endDate: null,
+    })).rejects.toMatchObject({ code: 'SEASON_SPORT_MISMATCH' });
   });
 });
 
