@@ -111,20 +111,20 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
     const row = await prisma.sportEventParticipant.findUniqueOrThrow({
       where: { id: sportEventParticipant.id },
       include: {
-        golfRounds: true,
+        golfRounds: { include: { sportEventRound: true } },
         golfStanding: true,
       },
     });
 
     expect(row.golfRounds).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        round: 1,
+        sportEventRound: expect.objectContaining({ roundNumber: 1 }),
         strokes: 68,
         scoreToPar: -4,
         thru: null,
       }),
       expect.objectContaining({
-        round: 2,
+        sportEventRound: expect.objectContaining({ roundNumber: 2 }),
         strokes: 33,
         scoreToPar: -3,
         thru: 9,

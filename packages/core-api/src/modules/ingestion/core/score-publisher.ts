@@ -166,13 +166,43 @@ async function persistGolfRounds(
 
   // Resolve round: number → SportEventRound.id, the same (sportEventId,
   // roundNumber) key both the admin-facing writer and this sync-facing one
-  // use (plans/124 §4.10) — roundNumber is the only resolution key; a round
-  // that doesn't exist for this event is skipped, not inserted unvalidated.
+  // use (plans/124 §4.10). Every admin-managed tournament gets its
+  // SportEventRound rows from ensureSportEventRounds at creation time — but
+  // plans/124 §4.10 assumes plans/125 has already retired EVENTSCHEDULE's
+  // provider-driven SportEvent creation, and it hasn't (separate epic, not
+  // started). Until then, a provider-synced event that never went through
+  // admin creation has zero SportEventRound rows, so resolution here
+  // auto-creates any missing one rather than silently dropping every live
+  // score for that event — a defensive fallback, not the primary path.
   const sportEventRounds = await deps.prisma.sportEventRound.findMany({
     where: { sportEventId },
     select: { id: true, roundNumber: true },
   });
   const roundIdByNumber = new Map(sportEventRounds.map((r) => [r.roundNumber, r.id]));
+  const referencedRoundNumbers = Array.from(new Set(rounds.map((r) => r.round)));
+  const missingRoundNumbers = referencedRoundNumbers.filter((roundNumber) => !roundIdByNumber.has(roundNumber));
+  if (missingRoundNumbers.length > 0) {
+    const createdRounds = await Promise.all(
+      missingRoundNumbers.map((roundNumber) =>
+        deps.prisma.sportEventRound.upsert({
+          where: { sportEventId_roundNumber: { sportEventId, roundNumber } },
+          create: { sportEventId, roundNumber, scheduledDate: new Date() },
+          update: {},
+          select: { id: true, roundNumber: true },
+        }),
+      ),
+    );
+    for (const created of createdRounds) {
+      roundIdByNumber.set(created.roundNumber, created.id);
+    }
+    deps.logger?.warn(
+      {
+        action: 'liveScore.golf.autoCreatedRoundSchedule',
+        data: { sportEventId, roundNumbers: missingRoundNumbers },
+      },
+      'Auto-created missing SportEventRound row(s) for a provider-synced event with no admin-created round schedule',
+    );
+  }
 
   // Resolve participantExternalId → SportEventParticipant.id via
   // ParticipantProviderMapping → SportEventParticipant scoped to this event.

@@ -105,28 +105,19 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
         },
       },
     ]);
-    const sportEventGolfTierFindMany = jest.fn().mockResolvedValue([
+    const sportEventParticipantGolfValuationFindMany = jest.fn().mockResolvedValue([
       {
-        id: 'tier-a',
-        sportEventId: eventId,
-        tierKey: 'A',
-        label: 'A',
-        tierNumber: 1,
-        defaultPickCount: 1,
-        valuations: [
-          {
-            sportEventParticipantId,
-            tierOrderIndex: 1,
-            price: 19,
-            sportEventParticipant: { participantId },
-          },
-        ],
+        sportEventParticipantId,
+        tierOrderIndex: 1,
+        price: 19,
+        sportEventParticipant: { participantId },
+        sportEventGolfTier: { id: 'tier-a', tierKey: 'A', label: 'A', tierNumber: 1 },
       },
     ]);
     const service = new AdminEventBrowserService({
       sportEvent: { findUnique },
       sportEventParticipant: { findMany },
-      sportEventGolfTier: { findMany: sportEventGolfTierFindMany },
+      sportEventParticipantGolfValuation: { findMany: sportEventParticipantGolfValuationFindMany },
     } as never);
 
     const response = await service.listEventParticipants(eventId);
@@ -206,7 +197,7 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
     const service = new AdminEventBrowserService({
       sportEvent: { findUnique },
       sportEventParticipant: { findMany },
-      sportEventGolfTier: { findMany: jest.fn().mockResolvedValue([]) },
+      sportEventParticipantGolfValuation: { findMany: jest.fn().mockResolvedValue([]) },
     } as never);
 
     const deriveSpy = jest.spyOn(SharedDomainEnums, 'deriveLegacyParticipantStatus');
@@ -269,7 +260,7 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
     const service = new AdminEventBrowserService({
       sportEvent: { findUnique },
       sportEventParticipant: { findMany },
-      sportEventGolfTier: { findMany: jest.fn().mockResolvedValue([]) },
+      sportEventParticipantGolfValuation: { findMany: jest.fn().mockResolvedValue([]) },
     } as never);
 
     const response = await service.listEventParticipants(eventId);

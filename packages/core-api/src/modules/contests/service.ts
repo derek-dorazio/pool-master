@@ -885,7 +885,9 @@ export class ContestService {
       const golfTierService = new GolfTierService(this.requirePrisma(), this.logger as FastifyBaseLogger);
       const valuations = await golfTierService.getEffectiveValuationsForSportEvent(entry.contest.sportEventId);
       for (const valuation of valuations) {
-        tierLabelBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.tierLabel);
+        if (valuation.tierLabel !== null) {
+          tierLabelBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.tierLabel);
+        }
       }
     }
     return buildEntryTierSelections(entry, tierLabelBySportEventParticipantId);

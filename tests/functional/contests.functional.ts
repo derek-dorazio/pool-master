@@ -74,6 +74,22 @@ async function cleanupContestArtifacts(): Promise<void> {
   }
 
   if (createdSportEventIds.length > 0) {
+    // SportEventGolfTier and SportEventRound both have RESTRICT FKs to
+    // SportEvent, so they must clear before the SportEvent delete below.
+    await prisma.sportEventGolfTier.deleteMany({
+      where: {
+        sportEventId: {
+          in: createdSportEventIds,
+        },
+      },
+    });
+    await prisma.sportEventRound.deleteMany({
+      where: {
+        sportEventId: {
+          in: createdSportEventIds,
+        },
+      },
+    });
     await prisma.sportEvent.deleteMany({
       where: {
         id: {
@@ -139,6 +155,20 @@ async function seedImportedGolfEvent(options: {
   });
   createdSportEventIds.push(sportEvent.id);
 
+  // Tiers are event-owned now (plans/124 §4.5/§4.6) — a GOLF_TIERED contest's
+  // draft/pick flow requires every selectable golfer to have a real tier
+  // assignment (TIER_MISSING otherwise), so this fixture needs one covering
+  // the whole field, not just the SportEventParticipant rows.
+  const tier = await prisma.sportEventGolfTier.create({
+    data: {
+      sportEventId: sportEvent.id,
+      tierKey: 'A',
+      label: 'Tier A',
+      tierNumber: 1,
+      defaultPickCount: options.participantCount,
+    },
+  });
+
   const seededParticipants: Array<{
     participantId: string;
     sportEventParticipantId: string;
@@ -166,6 +196,14 @@ async function seedImportedGolfEvent(options: {
       },
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
+    await prisma.sportEventParticipantGolfValuation.create({
+      data: {
+        sportEventParticipantId: sportEventParticipant.id,
+        sportEventGolfTierId: tier.id,
+        tierOrderIndex: index + 1,
+        tierAssignedSource: 'MANUAL',
+      },
+    });
 
     seededParticipants.push({
       participantId: participant.id,
@@ -1198,9 +1236,25 @@ describe('SDK Functional: Contests and Entries', () => {
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
 
+    // Tiers are event-owned now (plans/124 §4.5/§4.6) — the pick-submission
+    // flow requires a real tier assignment (TIER_MISSING otherwise), so this
+    // fixture needs a SportEventGolfTier alongside the legacy tierConfig
+    // JSON this test also writes below.
+    const tier = await prisma.sportEventGolfTier.create({
+      data: {
+        sportEventId: sportEvent.id,
+        tierKey: 'tier-1',
+        label: 'Tier 1',
+        tierNumber: 1,
+        defaultPickCount: 1,
+      },
+    });
     await prisma.sportEventParticipantGolfValuation.create({
       data: {
         sportEventParticipantId: sportEventParticipant.id,
+        sportEventGolfTierId: tier.id,
+        tierOrderIndex: 1,
+        tierAssignedSource: 'MANUAL',
         price: 1000,
         priceAssignedSource: 'MANUAL',
       },

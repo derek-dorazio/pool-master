@@ -1212,7 +1212,7 @@ model SportEventParticipantGolfStanding {
 model SportEventGolfTier {
   id               String   @id @default(uuid()) @db.Uuid
   sportEventId     String   @map("sport_event_id") @db.Uuid
-  tierKey          String   @db.VarChar(50)
+  tierKey          String   @map("tier_key") @db.VarChar(50)
   label            String   @db.VarChar(100)
   tierNumber       Int      @map("tier_number")
   defaultPickCount Int      @map("default_pick_count")

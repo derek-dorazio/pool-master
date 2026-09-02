@@ -6,12 +6,16 @@
  * reads that event's SportEventGolfTier + SportEventParticipantGolfValuation
  * rows — there is no second, contest-owned tier list to fall back to.
  *
- * getEffectiveTiersForContest/getEffectiveTiersForSportEvent are the one
- * shared path every reader of a golfer's tier/price now goes through —
- * drafts/routes.ts, the admin event browser, and the contest-entry email
- * summary all flatten this same tier-grouped result rather than reading
+ * getEffectiveValuationsForContest/getEffectiveValuationsForSportEvent are
+ * the one shared path every non-tier-editor reader of a golfer's tier/price
+ * now goes through — drafts/routes.ts, the admin event browser, and the
+ * contest-entry email summary — rather than reading
  * SportEventParticipant.valuations (the legacy table, dropped per plans/124
- * §4.6b) directly.
+ * §4.6b) directly. They read SportEventParticipantGolfValuation directly,
+ * not derived from the tier-grouped getEffectiveTiersFor* shape, because a
+ * valuation can exist with no tier at all (price-only, e.g. a budget-format
+ * contest) and would be invisible to any query that starts from
+ * SportEventGolfTier.
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -52,14 +56,22 @@ export interface GolfTierGroup extends GolfTierRow {
   participants: GolfTierParticipantRow[];
 }
 
-/** One golfer's effective tier/price, flattened out of a GolfTierGroup[] — the shape every non-tier-editor reader actually needs. */
+/**
+ * One golfer's effective tier/price — the shape every non-tier-editor reader
+ * actually needs. Read directly off SportEventParticipantGolfValuation, not
+ * derived from the tier-grouped shape: a valuation can exist with no tier at
+ * all (price-only, e.g. a budget-format contest), and that row would be
+ * invisible to any query that starts from SportEventGolfTier. The tier* /
+ * price fields are independently nullable — a golfer with only a price has
+ * null tier fields, and vice versa.
+ */
 export interface GolfParticipantValuationRow {
   sportEventParticipantId: string;
   participantId: string;
-  tierId: string;
-  tierKey: string;
-  tierLabel: string;
-  tierNumber: number;
+  tierId: string | null;
+  tierKey: string | null;
+  tierLabel: string | null;
+  tierNumber: number | null;
   tierOrderIndex: number | null;
   price: number | null;
 }
@@ -151,14 +163,44 @@ export class GolfTierService {
     }));
   }
 
-  /** Flattened, per-golfer view of getEffectiveTiersForContest — the shape drafts/routes.ts, the admin event browser, and email summaries actually need. */
+  /**
+   * Per-golfer tier/price view for a contest's event — the shape
+   * drafts/routes.ts, the admin event browser, and email summaries actually
+   * need. Reads SportEventParticipantGolfValuation directly (not derived
+   * from getEffectiveTiersForContest's tier-grouped shape) so a price-only
+   * valuation with no tier assignment is still included.
+   */
   async getEffectiveValuationsForContest(contestId: string): Promise<GolfParticipantValuationRow[]> {
-    return flattenTierGroups(await this.getEffectiveTiersForContest(contestId));
+    const contest = await this.prisma.contest.findUniqueOrThrow({
+      where: { id: contestId },
+      select: { sportEventId: true },
+    });
+    if (!contest.sportEventId) {
+      return [];
+    }
+    return this.getEffectiveValuationsForSportEvent(contest.sportEventId);
   }
 
-  /** Flattened, per-golfer view of getEffectiveTiersForSportEvent. */
   async getEffectiveValuationsForSportEvent(sportEventId: string): Promise<GolfParticipantValuationRow[]> {
-    return flattenTierGroups(await this.getEffectiveTiersForSportEvent(sportEventId));
+    const valuations = await this.prisma.sportEventParticipantGolfValuation.findMany({
+      where: { sportEventParticipant: { sportEventId } },
+      include: {
+        sportEventParticipant: { select: { participantId: true } },
+        sportEventGolfTier: true,
+      },
+      orderBy: [{ sportEventGolfTier: { tierNumber: 'asc' } }, { tierOrderIndex: 'asc' }],
+    });
+
+    return valuations.map((valuation) => ({
+      sportEventParticipantId: valuation.sportEventParticipantId,
+      participantId: valuation.sportEventParticipant.participantId,
+      tierId: valuation.sportEventGolfTier?.id ?? null,
+      tierKey: valuation.sportEventGolfTier?.tierKey ?? null,
+      tierLabel: valuation.sportEventGolfTier?.label ?? null,
+      tierNumber: valuation.sportEventGolfTier?.tierNumber ?? null,
+      tierOrderIndex: valuation.tierOrderIndex,
+      price: valuation.price === null ? null : Number(valuation.price),
+    }));
   }
 
   /**
@@ -439,21 +481,6 @@ export class GolfTierService {
 
     return this.getEffectiveValuationsForSportEvent(input.sportEventId);
   }
-}
-
-function flattenTierGroups(tiers: GolfTierGroup[]): GolfParticipantValuationRow[] {
-  return tiers.flatMap((tier) =>
-    tier.participants.map((participant) => ({
-      sportEventParticipantId: participant.sportEventParticipantId,
-      participantId: participant.participantId,
-      tierId: tier.id,
-      tierKey: tier.tierKey,
-      tierLabel: tier.label,
-      tierNumber: tier.tierNumber,
-      tierOrderIndex: participant.tierOrderIndex,
-      price: participant.price,
-    })),
-  );
 }
 
 function toGolfTierRow(tier: {

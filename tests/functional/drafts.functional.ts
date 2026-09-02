@@ -74,6 +74,22 @@ async function cleanupDraftArtifacts(): Promise<void> {
 
     createdSportEventParticipantIds.length = 0;
 
+    // SportEventGolfTier and SportEventRound both have RESTRICT FKs to
+    // SportEvent, so they must clear before the SportEvent delete below.
+    await prisma.sportEventGolfTier.deleteMany({
+      where: {
+        sportEventId: {
+          in: createdSportEventIds,
+        },
+      },
+    });
+    await prisma.sportEventRound.deleteMany({
+      where: {
+        sportEventId: {
+          in: createdSportEventIds,
+        },
+      },
+    });
     await prisma.sportEvent.deleteMany({
       where: {
         id: {

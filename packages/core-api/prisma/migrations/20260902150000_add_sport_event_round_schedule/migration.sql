@@ -58,6 +58,8 @@ ALTER TABLE "sport_event_participant_golf_rounds"
   ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- Seed the system actor user for scheduler-driven AdminAuditEntry rows.
+-- Not the all-zero nil UUID: several "not found" contract tests use that
+-- value as a known-nonexistent id.
 INSERT INTO "users" ("id", "email", "username", "first_name", "last_name", "is_active", "is_root_admin", "created_at", "updated_at")
-VALUES ('00000000-0000-0000-0000-000000000000', 'system@poolmaster.internal', 'system', 'PoolMaster', 'System', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+VALUES ('ffffffff-ffff-ffff-ffff-ffffffffffff', 'system@poolmaster.internal', 'system', 'PoolMaster', 'System', true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT ("id") DO NOTHING;

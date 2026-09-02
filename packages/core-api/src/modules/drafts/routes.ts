@@ -44,7 +44,7 @@ import type { SessionState } from './engine/draft-session-manager';
 import { draftStore } from './storage/draft-store';
 import { draftQueue } from './engine/draft-queue';
 import { GolfTierService } from '../golf/golf-tier-service';
-import type { GolfTierGroup } from '../golf/golf-tier-service';
+import type { GolfParticipantValuationRow, GolfTierGroup } from '../golf/golf-tier-service';
 
 type ContestConfigurationRecord = Awaited<ReturnType<PrismaClient['contestConfiguration']['findUnique']>>;
 interface ContestRecord {
@@ -263,36 +263,37 @@ function getRosterSize(
 /**
  * Tiers are event-owned data now (plans/124 §4.6/§4.6b) — this is the one
  * place a GolfTierGroup[] (already resolved via golf-tier-service) gets
- * turned into the draft room's DraftTierConfig[] shape, plus a per-golfer
- * tier/price lookup. Both the legacy tierConfig-JSON branch and the
- * valuations-fallback branch this replaced are gone; there's exactly one
- * source now.
+ * turned into the draft room's DraftTierConfig[] shape. The legacy
+ * tierConfig-JSON branch this replaced is gone; there's exactly one source
+ * now. Per-golfer tier/price is a separate lookup (buildValuationLookup,
+ * below) since a golfer can have a price with no tier at all.
  */
-function buildDraftTiersAndValuations(tierGroups: GolfTierGroup[]): {
-  tiers: DraftTierConfig[];
-  valuationBySportEventParticipantId: Map<string, { tierLabel: string; tierOrderIndex: number | null; price: number | null }>;
-} {
-  const valuationBySportEventParticipantId = new Map<string, { tierLabel: string; tierOrderIndex: number | null; price: number | null }>();
-  for (const tier of tierGroups) {
-    for (const participant of tier.participants) {
-      valuationBySportEventParticipantId.set(participant.sportEventParticipantId, {
-        tierLabel: tier.label,
-        tierOrderIndex: participant.tierOrderIndex,
-        price: participant.price,
-      });
-    }
-  }
+function buildDraftTiers(tierGroups: GolfTierGroup[]): DraftTierConfig[] {
+  return tierGroups.map((tier) => ({
+    tierId: tier.tierKey,
+    tierName: tier.label,
+    tierNumber: tier.tierNumber,
+    picksFromTier: tier.defaultPickCount,
+    participantIds: tier.participants.map((participant) => participant.participantId),
+  }));
+}
 
-  return {
-    tiers: tierGroups.map((tier) => ({
-      tierId: tier.tierKey,
-      tierName: tier.label,
-      tierNumber: tier.tierNumber,
-      picksFromTier: tier.defaultPickCount,
-      participantIds: tier.participants.map((participant) => participant.participantId),
-    })),
-    valuationBySportEventParticipantId,
-  };
+/**
+ * Per-golfer tier/price lookup, keyed by sportEventParticipantId. Sourced
+ * from golf-tier-service.getEffectiveValuationsForSportEvent, not derived
+ * from the tier-grouped shape above — a price-only valuation (e.g. a
+ * budget-format contest, no tier assignment) would be invisible to any
+ * lookup built by walking tier groups.
+ */
+function buildValuationLookup(
+  valuations: GolfParticipantValuationRow[],
+): Map<string, { tierLabel: string | null; tierOrderIndex: number | null; price: number | null }> {
+  return new Map(
+    valuations.map((valuation) => [
+      valuation.sportEventParticipantId,
+      { tierLabel: valuation.tierLabel, tierOrderIndex: valuation.tierOrderIndex, price: valuation.price },
+    ]),
+  );
 }
 
 export async function loadDraftContext(prisma: PrismaClient, contestId: string): Promise<DraftContext | null> {
@@ -316,7 +317,7 @@ export async function loadDraftContext(prisma: PrismaClient, contestId: string):
   if (!contest) return null;
 
   const golfTierService = new GolfTierService(prisma);
-  const [contestConfiguration, contestEntries, memberships, sportEventParticipants, tierGroups] = await Promise.all([
+  const [contestConfiguration, contestEntries, memberships, sportEventParticipants, tierGroups, valuations] = await Promise.all([
     prisma.contestConfiguration.findUnique({ where: { contestId } }),
     prisma.contestEntry.findMany({
       where: { contestId },
@@ -338,8 +339,12 @@ export async function loadDraftContext(prisma: PrismaClient, contestId: string):
     contest.sportEventId
       ? golfTierService.getEffectiveTiersForSportEvent(contest.sportEventId)
       : Promise.resolve([]),
+    contest.sportEventId
+      ? golfTierService.getEffectiveValuationsForSportEvent(contest.sportEventId)
+      : Promise.resolve<GolfParticipantValuationRow[]>([]),
   ]);
-  const { tiers, valuationBySportEventParticipantId } = buildDraftTiersAndValuations(tierGroups);
+  const tiers = buildDraftTiers(tierGroups);
+  const valuationBySportEventParticipantId = buildValuationLookup(valuations);
 
   const squadIds = Array.from(new Set(contestEntries.map((entry) => entry.squadId)));
   const squadMemberships = squadIds.length === 0

@@ -93,7 +93,7 @@ export interface AdminEventParticipantRow {
   /** Resolved via golf-tier-service.getEffectiveValuationsForSportEvent (plans/124 §4.6b) — undefined when the golfer has no tier/price assigned yet. */
   golfValuation?: {
     price: number | null;
-    tierLabel: string;
+    tierLabel: string | null;
     tierOrderIndex: number | null;
   };
   golfRounds: Array<{
@@ -180,7 +180,7 @@ export function mapAdminEventParticipantToDto(
     ...(row.golfValuation?.price !== null && row.golfValuation?.price !== undefined
       ? { valuationPrice: row.golfValuation.price }
       : {}),
-    ...(row.golfValuation?.tierLabel !== undefined
+    ...(row.golfValuation?.tierLabel !== undefined && row.golfValuation?.tierLabel !== null
       ? { valuationTier: row.golfValuation.tierLabel }
       : {}),
     ...(row.golfValuation?.tierOrderIndex !== null && row.golfValuation?.tierOrderIndex !== undefined

@@ -1,4 +1,4 @@
-import { SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus } from '@poolmaster/shared/domain';
+import { SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, SYSTEM_USER_ID } from '@poolmaster/shared/domain';
 import { logAdminAction } from '../../../packages/core-api/src/modules/admin/admin-audit-service';
 import {
   EventLifecycleError,
@@ -320,7 +320,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
     expect(result.toStatus).toBe(SportEventStatus.IN_PROGRESS);
     expect(logAdminAction).toHaveBeenCalledWith(expect.objectContaining({
-      actorUserId: '00000000-0000-0000-0000-000000000000',
+      actorUserId: SYSTEM_USER_ID,
       actorEmail: 'system@poolmaster.internal',
       action: 'sport_event.transition',
       resourceType: 'SPORT_EVENT',

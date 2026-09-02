@@ -237,22 +237,24 @@ describe('GolfTierService.autoAssignGolfTiers', () => {
 });
 
 describe('GolfTierService.getEffectiveValuationsForContest / getEffectiveValuationsForSportEvent', () => {
-  it('pool-master-piv flattens tier groups into one row per golfer, carrying tier + price together', async () => {
+  it('pool-master-piv reads valuations directly, carrying tier + price together for a tiered golfer', async () => {
     const prisma = {
       contest: { findUniqueOrThrow: jest.fn().mockResolvedValue({ sportEventId: 'event-1' }) },
-      sportEventGolfTier: {
+      sportEventParticipantGolfValuation: {
         findMany: jest.fn().mockResolvedValue([
           {
-            ...buildTierRow({ tierNumber: 1 }),
-            valuations: [
-              { sportEventParticipantId: 'sep-1', tierOrderIndex: 1, price: 25, sportEventParticipant: { participantId: 'p-1' } },
-            ],
+            sportEventParticipantId: 'sep-1',
+            tierOrderIndex: 1,
+            price: 25,
+            sportEventParticipant: { participantId: 'p-1' },
+            sportEventGolfTier: { id: 'tier-1', tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
           },
           {
-            ...buildTierRow({ tierNumber: 2, id: 'tier-2', tierKey: 'tier-2', label: 'Tier 2' }),
-            valuations: [
-              { sportEventParticipantId: 'sep-2', tierOrderIndex: 1, price: null, sportEventParticipant: { participantId: 'p-2' } },
-            ],
+            sportEventParticipantId: 'sep-2',
+            tierOrderIndex: 1,
+            price: null,
+            sportEventParticipant: { participantId: 'p-2' },
+            sportEventGolfTier: { id: 'tier-2', tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
           },
         ]),
       },
@@ -264,6 +266,29 @@ describe('GolfTierService.getEffectiveValuationsForContest / getEffectiveValuati
     expect(result).toEqual([
       { sportEventParticipantId: 'sep-1', participantId: 'p-1', tierId: 'tier-1', tierKey: 'tier-1', tierLabel: 'Tier 1', tierNumber: 1, tierOrderIndex: 1, price: 25 },
       { sportEventParticipantId: 'sep-2', participantId: 'p-2', tierId: 'tier-2', tierKey: 'tier-2', tierLabel: 'Tier 2', tierNumber: 2, tierOrderIndex: 1, price: null },
+    ]);
+  });
+
+  it('pool-master-753 includes a price-only valuation with no tier assignment (budget-format contest)', async () => {
+    const prisma = {
+      sportEventParticipantGolfValuation: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            sportEventParticipantId: 'sep-3',
+            tierOrderIndex: null,
+            price: 3200,
+            sportEventParticipant: { participantId: 'p-3' },
+            sportEventGolfTier: null,
+          },
+        ]),
+      },
+    };
+    const service = new GolfTierService(prisma as any);
+
+    const result = await service.getEffectiveValuationsForSportEvent('event-1');
+
+    expect(result).toEqual([
+      { sportEventParticipantId: 'sep-3', participantId: 'p-3', tierId: null, tierKey: null, tierLabel: null, tierNumber: null, tierOrderIndex: null, price: 3200 },
     ]);
   });
 });

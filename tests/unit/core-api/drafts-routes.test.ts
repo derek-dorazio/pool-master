@@ -21,6 +21,7 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
     squadMembership: { findMany: jest.fn().mockResolvedValue([]) },
     sportEventParticipant: { findMany: jest.fn().mockResolvedValue([]) },
     sportEventGolfTier: { findMany: jest.fn().mockResolvedValue([]) },
+    sportEventParticipantGolfValuation: { findMany: jest.fn().mockResolvedValue([]) },
     ...overrides,
   };
 }
@@ -98,6 +99,17 @@ describe('loadDraftContext', () => {
           },
         ]),
       },
+      sportEventParticipantGolfValuation: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            sportEventParticipantId: 'sep-1',
+            tierOrderIndex: 1,
+            price: 25,
+            sportEventParticipant: { participantId: 'participant-1' },
+            sportEventGolfTier: { id: 'tier-1', tierKey: 'tier-1', label: 'Tier 1', tierNumber: 1 },
+          },
+        ]),
+      },
       sportEventParticipant: {
         findMany: jest.fn().mockResolvedValue([
           {
@@ -123,6 +135,50 @@ describe('loadDraftContext', () => {
         tier: 'Tier 1',
         price: 25,
         orderIndex: 1,
+      }),
+    ]);
+  });
+
+  // pool-master-753 — a price-only valuation (budget-format contest, no
+  // tier assignment) is invisible to any lookup built by walking
+  // sportEventGolfTier's nested valuations; loadDraftContext must resolve
+  // price from golf-tier-service.getEffectiveValuationsForSportEvent
+  // directly instead.
+  it('pool-master-753 resolves price for a golfer with a valuation but no tier assignment', async () => {
+    const prisma = createMockPrisma({
+      sportEventParticipantGolfValuation: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            sportEventParticipantId: 'sep-1',
+            tierOrderIndex: null,
+            price: 3200,
+            sportEventParticipant: { participantId: 'participant-1' },
+            sportEventGolfTier: null,
+          },
+        ]),
+      },
+      sportEventParticipant: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'sep-1',
+            participantId: 'participant-1',
+            isActive: true,
+            inactiveReason: null,
+            worldRanking: 5,
+            participant: { name: 'Rory McIlroy', position: null, teamAffiliation: null },
+          },
+        ]),
+      },
+    });
+
+    const context = await loadDraftContext(prisma as never, 'contest-1');
+
+    expect(context?.tiers).toEqual([]);
+    expect(context?.selectionParticipants).toEqual([
+      expect.objectContaining({
+        sportEventParticipantId: 'sep-1',
+        tier: null,
+        price: 3200,
       }),
     ]);
   });
