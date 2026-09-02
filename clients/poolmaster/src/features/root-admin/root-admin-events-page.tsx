@@ -17,6 +17,10 @@ import {
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import {
+  formatSportEventStatus,
+  sportEventStatusTone,
+} from './golf-admin-utils';
 
 type AdminEvent = AdminListEventsResponses[200]['events'][number];
 type AdminEventParticipant =
@@ -29,24 +33,14 @@ function formatOptionalText(value: string | number | undefined) {
   return value === undefined || value === '' ? 'Unknown' : String(value);
 }
 
-function formatReadiness(status: AdminEvent['readinessStatus']) {
-  return status
-    .split('_')
-    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
-    .join(' ');
-}
+// Shared SCREAMING_SNAKE -> Title Case formatter, lifted to golf-admin-utils so
+// the golf-admin screens and this browser use one implementation (plans/124 §6.4).
+const formatReadiness = formatSportEventStatus;
 
 function readinessTone(status: AdminEvent['readinessStatus']) {
   if (status === 'CONTEST_ELIGIBLE') return 'success';
   if (status === 'FIELD_LOCKED') return 'locked';
   if (status === 'PENDING_FIELD') return 'warning';
-  return 'neutral';
-}
-
-function eventStatusTone(status: AdminEvent['status']) {
-  if (status === 'IN_PROGRESS') return 'live';
-  if (status === 'COMPLETED') return 'completed';
-  if (status === 'CANCELLED' || status === 'POSTPONED') return 'warning';
   return 'neutral';
 }
 
@@ -142,7 +136,7 @@ export function RootAdminEventsPage() {
       eventColumnHelper.accessor('status', {
         header: 'Status',
         cell: ({ getValue }) => (
-          <StatusBadge tone={eventStatusTone(getValue())}>{getValue()}</StatusBadge>
+          <StatusBadge tone={sportEventStatusTone(getValue())}>{getValue()}</StatusBadge>
         ),
       }),
       eventColumnHelper.accessor('readinessStatus', {
