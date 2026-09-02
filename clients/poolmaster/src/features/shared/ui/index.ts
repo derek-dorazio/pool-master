@@ -50,6 +50,11 @@ export {
 export { DefinitionList, MetricGrid, MetricTile } from "./metric-grid";
 export { SelectableDataGrid } from "./selectable-data-grid";
 export type { SelectableDataGridProps } from "./selectable-data-grid";
+export { SortableList } from "./sortable-list";
+export type {
+  SortableListProps,
+  SortableListRenderArgs,
+} from "./sortable-list";
 export { ServerErrorBar, ServerErrorPanel } from "./server-error";
 export type { ServerErrorDisplayProps } from "./server-error";
 export { PageSection, SectionActions, SectionHeader } from "./section";
