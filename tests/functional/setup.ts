@@ -307,7 +307,7 @@ async function cleanupSportEventParticipantArtifacts(
       },
     },
   });
-  await database.sportEventParticipantValuation.deleteMany({
+  await database.sportEventParticipantGolfValuation.deleteMany({
     where: {
       sportEventParticipantId: {
         in: sportEventParticipantIds,

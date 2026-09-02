@@ -115,7 +115,7 @@ describe('loadDraftContext', () => {
     const context = await loadDraftContext(prisma as never, 'contest-1');
 
     expect(context?.tiers).toEqual([
-      { tierId: 'tier-1', tierName: 'Tier 1', tierNumber: 1, picksFromTier: 2, participantIds: ['sep-1'] },
+      { tierId: 'tier-1', tierName: 'Tier 1', tierNumber: 1, picksFromTier: 2, participantIds: ['participant-1'] },
     ]);
     expect(context?.selectionParticipants).toEqual([
       expect.objectContaining({

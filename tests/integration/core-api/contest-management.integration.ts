@@ -138,8 +138,35 @@ describe('Contest management integration', () => {
       },
     });
 
-    void topEventParticipant;
-    void secondEventParticipant;
+    // Tiers/price are event-owned now (plans/124 §4.5/§4.6b) — the draft
+    // room resolves selectionGroups through golf-tier-service, not a
+    // contest-supplied tiers array, so the fixture needs a real
+    // SportEventGolfTier + valuation row per golfer.
+    const tier = await prisma.sportEventGolfTier.create({
+      data: {
+        sportEventId,
+        tierKey: 'A',
+        label: 'Tier A',
+        tierNumber: 1,
+        defaultPickCount: 6,
+      },
+    });
+    await prisma.sportEventParticipantGolfValuation.create({
+      data: {
+        sportEventParticipantId: topEventParticipant.id,
+        sportEventGolfTierId: tier.id,
+        tierOrderIndex: 1,
+        tierAssignedSource: 'MANUAL',
+      },
+    });
+    await prisma.sportEventParticipantGolfValuation.create({
+      data: {
+        sportEventParticipantId: secondEventParticipant.id,
+        sportEventGolfTierId: tier.id,
+        tierOrderIndex: 2,
+        tierAssignedSource: 'MANUAL',
+      },
+    });
   });
 
   it('pool-master-rop.68.1.3: creates, reads, and updates golf-first contest management configuration', async () => {
@@ -157,28 +184,6 @@ describe('Contest management integration', () => {
           maxEntriesPerSquad: 3,
           rosterSize: 6,
           countedScores: 4,
-          tierSource: 'ODDS',
-          tierGeneration: {
-            defaultTierSize: 10,
-          },
-          tiers: [
-            {
-              tierKey: 'A',
-              label: 'Tier A',
-              pickCount: 1,
-              startPosition: 1,
-              endPosition: 10,
-            },
-          ],
-          cutRule: {
-            type: 'FIXED_SCORE',
-            fixedScore: 80,
-          },
-          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-          displayScoring: 'TO_PAR',
-          tiebreaker: {
-            type: 'PREDICT_WINNING_SCORE',
-          },
         },
       },
     });
@@ -194,12 +199,10 @@ describe('Contest management integration', () => {
     const createdConfiguration = await getPrisma().contestConfiguration.findUniqueOrThrow({
       where: { contestId },
     });
-    expect(createdConfiguration.tierConfig).toEqual([
-      expect.objectContaining({
-        tierKey: 'A',
-        participantIds: expect.arrayContaining([topParticipantId, secondParticipantId]),
-      }),
-    ]);
+    // Tiers are event-owned now (plans/124 §4.6) — a GOLF_TIERED contest no
+    // longer persists its own tierConfig snapshot; golf-tier-service is the
+    // one path to a contest's effective tiers.
+    expect(createdConfiguration.tierConfig).toBeNull();
 
     const getRes = await getApp().inject({
       method: 'GET',
@@ -209,9 +212,8 @@ describe('Contest management integration', () => {
 
     expect(getRes.statusCode).toBe(200);
     expect(getRes.json().contest.id).toBe(contestId);
-    expect(getRes.json().contest.configuration.tiebreaker.type).toBe(
-      'PREDICT_WINNING_SCORE',
-    );
+    expect(getRes.json().contest.configuration.rosterSize).toBe(6);
+    expect(getRes.json().contest.configuration.countedScores).toBe(4);
 
     const entryRes = await getApp().inject({
       method: 'POST',

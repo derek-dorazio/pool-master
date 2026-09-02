@@ -229,18 +229,30 @@ async function createGolfLeaderboardParticipant(input: {
       isActive: true,
     },
   });
+  const [round1, round2] = await Promise.all([
+    prisma.sportEventRound.upsert({
+      where: { sportEventId_roundNumber: { sportEventId: input.sportEventId, roundNumber: 1 } },
+      create: { sportEventId: input.sportEventId, roundNumber: 1, scheduledDate: new Date('2026-04-09T12:00:00.000Z') },
+      update: {},
+    }),
+    prisma.sportEventRound.upsert({
+      where: { sportEventId_roundNumber: { sportEventId: input.sportEventId, roundNumber: 2 } },
+      create: { sportEventId: input.sportEventId, roundNumber: 2, scheduledDate: new Date('2026-04-10T12:00:00.000Z') },
+      update: {},
+    }),
+  ]);
   await prisma.sportEventParticipantGolfRound.createMany({
     data: [
       {
         sportEventParticipantId: sportEventParticipant.id,
-        round: 1,
+        sportEventRoundId: round1.id,
         strokes: input.strokes - 47,
         scoreToPar: input.scoreToPar + 2,
         status: 'COMPLETED',
       },
       {
         sportEventParticipantId: sportEventParticipant.id,
-        round: 2,
+        sportEventRoundId: round2.id,
         strokes: 47,
         scoreToPar: -2,
         thru: input.status === 'IN_PROGRESS' ? input.thru ?? null : null,

@@ -74,7 +74,7 @@ async function cleanupMockProviderImportData(): Promise<void> {
   });
   const participantIds = providerMappings.map((mapping) => mapping.participantId);
 
-  await prisma.sportEventParticipantValuation.deleteMany({
+  await prisma.sportEventParticipantGolfValuation.deleteMany({
     where: {
       sportEventParticipant: {
         sportEvent: {

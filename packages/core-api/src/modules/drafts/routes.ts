@@ -289,7 +289,7 @@ function buildDraftTiersAndValuations(tierGroups: GolfTierGroup[]): {
       tierName: tier.label,
       tierNumber: tier.tierNumber,
       picksFromTier: tier.defaultPickCount,
-      participantIds: tier.participants.map((participant) => participant.sportEventParticipantId),
+      participantIds: tier.participants.map((participant) => participant.participantId),
     })),
     valuationBySportEventParticipantId,
   };

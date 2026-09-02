@@ -106,28 +106,6 @@ describe('RosterPick CRUD integration', () => {
           maxEntriesPerSquad: 1,
           rosterSize: 1,
           countedScores: 1,
-          tierSource: 'ODDS',
-          tierGeneration: {
-            defaultTierSize: 10,
-          },
-          tiers: [
-            {
-              tierKey: 'A',
-              label: 'Tier A',
-              pickCount: 1,
-              startPosition: 1,
-              endPosition: null,
-            },
-          ],
-          cutRule: {
-            type: 'FIXED_SCORE',
-            fixedScore: 80,
-          },
-          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-          displayScoring: 'TO_PAR',
-          tiebreaker: {
-            type: 'PREDICT_WINNING_SCORE',
-          },
         },
       },
     });

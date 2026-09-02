@@ -5,16 +5,12 @@ import {
 } from '../helpers';
 import {
   PrismaSportEventParticipantRepository,
-  PrismaSportEventParticipantValuationRepository,
 } from '../../../packages/core-api/src/adapters';
 import { Sport } from '@poolmaster/shared/domain';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
   const prisma = getPrisma();
-  await prisma.sportEventParticipantValuation.deleteMany({
-    where: { valuationSource: 'integration-test' },
-  });
   await prisma.sportEventParticipantGolfStanding.deleteMany({
     where: {
       sportEventParticipant: { sportEvent: { externalId: 'integration-event-participants' } },
@@ -35,7 +31,7 @@ afterAll(async () => {
 });
 
 describe('Sport event participant repositories', () => {
-  it('pool-master-rop.68.1.3 creates and updates event participants, source data, rankings, odds, seeds, and valuations', async () => {
+  it('pool-master-rop.68.1.3 creates and updates event participants, source data, rankings, odds, and seeds', async () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { name: Sport.GOLF },
@@ -68,7 +64,6 @@ describe('Sport event participant repositories', () => {
     });
 
     const participantRepo = new PrismaSportEventParticipantRepository(prisma);
-    const valuationRepo = new PrismaSportEventParticipantValuationRepository(prisma);
 
     const sportEventParticipant = await participantRepo.create({
       sportEventId: event.id,
@@ -86,14 +81,6 @@ describe('Sport event participant repositories', () => {
     expect(sportEventParticipant.oddsToWin).toBe(24.5);
     expect(sportEventParticipant.seedNumber).toBe(3);
 
-    const valuation = await valuationRepo.create({
-      sportEventParticipantId: sportEventParticipant.id,
-      price: 9300,
-      tier: 'A',
-      orderIndex: 1,
-      valuationSource: 'integration-test',
-    });
-
     const updatedParticipant = await participantRepo.update(
       sportEventParticipant.id,
       {
@@ -104,26 +91,15 @@ describe('Sport event participant repositories', () => {
         metadata: { teeTime: '08:30', started: true },
       },
     );
-    const updatedValuation = await valuationRepo.update(valuation.id, {
-      price: 9800,
-      tier: 'S',
-    });
 
     expect(updatedParticipant.isActive).toBe(false);
     expect(updatedParticipant.inactiveReason).toBe('WITHDRAWN');
     expect(updatedParticipant.worldRanking).toBe(8);
     expect(updatedParticipant.oddsToWin).toBe(20);
-    expect(updatedValuation.price).toBe(9800);
-    expect(updatedValuation.tier).toBe('S');
 
     const participantsForEvent = await participantRepo.findBySportEvent(event.id);
-    const valuations = await valuationRepo.findBySportEventParticipant(
-      sportEventParticipant.id,
-    );
 
     expect(participantsForEvent).toHaveLength(1);
-    expect(valuations).toHaveLength(1);
-
     expect(participantsForEvent[0].worldRanking).toBe(8);
     expect(participantsForEvent[0].oddsToWin).toBe(20);
   });

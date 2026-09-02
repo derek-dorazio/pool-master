@@ -455,7 +455,7 @@ async function cleanupSportEventParticipantArtifacts(
       },
     },
   });
-  await database.sportEventParticipantValuation.deleteMany({
+  await database.sportEventParticipantGolfValuation.deleteMany({
     where: {
       sportEventParticipantId: {
         in: sportEventParticipantIds,
@@ -567,11 +567,15 @@ export async function cleanupTestData(): Promise<void> {
   // Keep standing cleanup before SportEventParticipant because the standing
   // table intentionally uses an explicit child row rather than FK cascade.
   await prisma.sportEventParticipantGolfStanding.deleteMany();
-  await prisma.sportEventParticipantValuation.deleteMany();
+  await prisma.sportEventParticipantGolfValuation.deleteMany();
   await prisma.sportEventParticipant.deleteMany();
   await prisma.participantRankingSnapshot.deleteMany();
   await prisma.participantProviderMapping.deleteMany();
   await prisma.participant.deleteMany();
+  // SportEventGolfTier and SportEventRound both have RESTRICT FKs to
+  // SportEvent, so they must clear before the SportEvent delete below.
+  await prisma.sportEventGolfTier.deleteMany();
+  await prisma.sportEventRound.deleteMany();
   await prisma.sportEvent.deleteMany();
   await prisma.sport.deleteMany();
 

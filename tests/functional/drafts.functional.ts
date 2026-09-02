@@ -56,7 +56,7 @@ async function cleanupDraftArtifacts(): Promise<void> {
           },
         },
       });
-      await prisma.sportEventParticipantValuation.deleteMany({
+      await prisma.sportEventParticipantGolfValuation.deleteMany({
         where: {
           sportEventParticipantId: {
             in: eventParticipantIds,
@@ -386,32 +386,32 @@ async function seedBudgetPickFixture() {
       sportEventId: event.id,
       participantId: firstParticipant.id,
       isActive: true,
-      valuations: {
-        create: {
-          price: 3200,
-          orderIndex: 1,
-          valuationSource: 'functional-test',
-        },
-      },
     },
   });
   createdSportEventParticipantIds.push(firstEventParticipant.id);
+  await prisma.sportEventParticipantGolfValuation.create({
+    data: {
+      sportEventParticipantId: firstEventParticipant.id,
+      price: 3200,
+      priceAssignedSource: 'MANUAL',
+    },
+  });
 
   const secondEventParticipant = await prisma.sportEventParticipant.create({
     data: {
       sportEventId: event.id,
       participantId: secondParticipant.id,
       isActive: true,
-      valuations: {
-        create: {
-          price: 5100,
-          orderIndex: 2,
-          valuationSource: 'functional-test',
-        },
-      },
     },
   });
   createdSportEventParticipantIds.push(secondEventParticipant.id);
+  await prisma.sportEventParticipantGolfValuation.create({
+    data: {
+      sportEventParticipantId: secondEventParticipant.id,
+      price: 5100,
+      priceAssignedSource: 'MANUAL',
+    },
+  });
 
   await prisma.contest.update({
     where: {
@@ -510,6 +510,20 @@ async function seedTieredDraftFixture(options: {
   });
   createdSportEventIds.push(event.id);
 
+  // Tiers are event-owned now (plans/124 §4.5/§4.6b) — the draft room
+  // resolves selectionGroups through golf-tier-service, not the legacy
+  // contestConfiguration.tierConfig JSON this fixture also sends, so a real
+  // SportEventGolfTier + valuation row is required per golfer.
+  const tier = await prisma.sportEventGolfTier.create({
+    data: {
+      sportEventId: event.id,
+      tierKey: 'tier-1',
+      label: 'Tier 1',
+      tierNumber: 1,
+      defaultPickCount: picksFromTier,
+    },
+  });
+
   const participantIds: string[] = [];
   const eventParticipantIds: string[] = [];
   for (let index = 0; index < participantCount; index += 1) {
@@ -531,18 +545,20 @@ async function seedTieredDraftFixture(options: {
         sportEventId: event.id,
         participantId: participant.id,
         isActive: true,
-        valuations: {
-          create: {
-            price: 1200 + index,
-            tier: 'tier-1',
-            orderIndex: index + 1,
-            valuationSource: 'functional-test',
-          },
-        },
       },
     });
     createdSportEventParticipantIds.push(eventParticipant.id);
     eventParticipantIds.push(eventParticipant.id);
+    await prisma.sportEventParticipantGolfValuation.create({
+      data: {
+        sportEventParticipantId: eventParticipant.id,
+        sportEventGolfTierId: tier.id,
+        tierOrderIndex: index + 1,
+        tierAssignedSource: 'MANUAL',
+        price: 1200 + index,
+        priceAssignedSource: 'MANUAL',
+      },
+    });
   }
 
   await prisma.contest.update({
