@@ -104,13 +104,6 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
       startDate: new Date('2025-07-01T12:00:00.000Z'),
       endDate: new Date('2025-07-04T22:00:00.000Z'),
     });
-    const joinedContestGolfEvent = await createCleanupSportEvent({
-      externalId: 'cleanup-golf-joined-contest',
-      sport: 'GOLF',
-      name: 'Cleanup Golf Joined Contest Event',
-      startDate: new Date('2025-08-01T12:00:00.000Z'),
-      endDate: new Date('2025-08-04T22:00:00.000Z'),
-    });
 
     const staleNonGolfParticipant = await createCleanupParticipant({
       sportId: tennisSport.id,
@@ -170,21 +163,6 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
         contestFormat: PrismaContestFormat.ROSTER,
       },
     });
-    const joinedContest = await prisma.contest.create({
-      data: {
-        leagueId: league.id,
-        name: 'Cleanup Joined Contest',
-        selectionType: 'ROSTER',
-        scoringEngine: 'GOLF_ROSTER',
-        contestFormat: PrismaContestFormat.ROSTER,
-      },
-    });
-    await prisma.contestSportEvent.create({
-      data: {
-        contestId: joinedContest.id,
-        sportEventId: joinedContestGolfEvent.id,
-      },
-    });
     const squad = await prisma.squad.create({
       data: {
         leagueId: league.id,
@@ -216,9 +194,9 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
     expect(dryRunResponse.statusCode).toBe(200);
     expect(AdminProviderEventCleanupResponseSchema.safeParse(dryRunResponse.json()).success).toBe(true);
     expect(dryRunResponse.json().summary).toMatchObject({
-      inventoriedEventCount: 6,
+      inventoriedEventCount: 5,
       deletableEventCount: 3,
-      blockedEventCount: 3,
+      blockedEventCount: 2,
       deletedEventCount: 0,
       sportEventParticipantCount: 3,
       valuationCount: 2,
@@ -251,12 +229,6 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
           blockedReasons: ['DIRECT_CONTEST_REFERENCE'],
         }),
         expect.objectContaining({
-          externalId: joinedContestGolfEvent.externalId,
-          deletable: false,
-          blockedReasons: ['CONTEST_SPORT_EVENT_REFERENCE'],
-          contestSportEventCount: 1,
-        }),
-        expect.objectContaining({
           externalId: pickedGolfEvent.externalId,
           deletable: false,
           blockedReasons: ['CONTEST_ENTRY_PICK_REFERENCE'],
@@ -279,9 +251,9 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
     expect(executeResponse.statusCode).toBe(200);
     expect(AdminProviderEventCleanupResponseSchema.safeParse(executeResponse.json()).success).toBe(true);
     expect(executeResponse.json().summary).toMatchObject({
-      inventoriedEventCount: 6,
+      inventoriedEventCount: 5,
       deletableEventCount: 3,
-      blockedEventCount: 3,
+      blockedEventCount: 2,
       deletedEventCount: 3,
     });
 
@@ -292,7 +264,6 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
     await expect(prisma.sportEvent.findUniqueOrThrow({ where: { id: inProgressGolfEvent.id } })).resolves.toBeDefined();
     await expect(prisma.sportEvent.findUniqueOrThrow({ where: { id: directContestGolfEvent.id } })).resolves.toBeDefined();
     await expect(prisma.sportEvent.findUniqueOrThrow({ where: { id: pickedGolfEvent.id } })).resolves.toBeDefined();
-    await expect(prisma.sportEvent.findUniqueOrThrow({ where: { id: joinedContestGolfEvent.id } })).resolves.toBeDefined();
 
     expect(await prisma.sportEventParticipant.count({ where: { sportEventId: staleGolfEvent.id } })).toBe(0);
     expect(await prisma.sportEventParticipantGolfRound.count()).toBe(0);
@@ -301,9 +272,6 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
     expect(await prisma.participantProviderMapping.count()).toBe(3);
     expect(await prisma.participant.count()).toBe(3);
     await expect(prisma.contest.findUniqueOrThrow({ where: { id: directContest.id } })).resolves.toBeDefined();
-    await expect(prisma.contestSportEvent.findFirstOrThrow({
-      where: { contestId: joinedContest.id, sportEventId: joinedContestGolfEvent.id },
-    })).resolves.toBeDefined();
     await expect(prisma.adminAuditEntry.findFirstOrThrow({
       where: {
         actorId: rootAdmin.user.id,
@@ -313,7 +281,7 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
       },
     })).resolves.toMatchObject({
       actorEmail: rootAdmin.user.email,
-      description: 'Deleted 3 stale provider event(s) after inventorying 6.',
+      description: 'Deleted 3 stale provider event(s) after inventorying 5.',
     });
   });
 

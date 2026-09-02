@@ -19,7 +19,7 @@ afterAll(async () => {
 });
 
 describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
-  it('pool-master-eux.6: freezes final standings, completes direct and joined contests, and is idempotent', async () => {
+  it('pool-master-eux.6: freezes final standings, completes the sport event\'s contests, and is idempotent', async () => {
     const prisma = getPrisma();
     const bus = new EventBus();
     const completedEvents: unknown[] = [];
@@ -106,16 +106,11 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
         strokes: 291,
       }),
     ]);
-    const [directContest, joinedContest, invalidContest] = await Promise.all([
+    const [directContest, invalidContest] = await Promise.all([
       createSettlementContest({
         leagueId: league.id,
         sportEventId: event.id,
         name: `Direct Settlement ${suffix}`,
-      }),
-      createSettlementContest({
-        leagueId: league.id,
-        sportEventId: null,
-        name: `Joined Settlement ${suffix}`,
       }),
       prisma.contest.create({
         data: {
@@ -129,20 +124,8 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
         },
       }),
     ]);
-    await prisma.contestSportEvent.create({
-      data: {
-        contestId: joinedContest.id,
-        sportEventId: event.id,
-      },
-    });
     const directEntries = await createSettlementEntries({
       contestId: directContest.id,
-      squadOneId: squadOne.id,
-      squadTwoId: squadTwo.id,
-      participants: participants.map((participant) => participant.id),
-    });
-    const joinedEntries = await createSettlementEntries({
-      contestId: joinedContest.id,
       squadOneId: squadOne.id,
       squadTwoId: squadTwo.id,
       participants: participants.map((participant) => participant.id),
@@ -152,20 +135,19 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
 
     expect(first).toEqual({
       sportEventId: event.id,
-      contestsSettled: 2,
-      contestsCompleted: 2,
-      standingsUpserted: 4,
+      contestsSettled: 1,
+      contestsCompleted: 1,
+      standingsUpserted: 2,
     });
     await expect(prisma.contest.findMany({
-      where: { id: { in: [directContest.id, joinedContest.id, invalidContest.id] } },
+      where: { id: { in: [directContest.id, invalidContest.id] } },
       select: { status: true, endsAt: true },
       orderBy: { id: 'asc' },
     })).resolves.toEqual(expect.arrayContaining([
       expect.objectContaining({ status: 'COMPLETED', endsAt: new Date('2026-05-31T22:00:00.000Z') }),
-      expect.objectContaining({ status: 'COMPLETED', endsAt: new Date('2026-05-31T22:00:00.000Z') }),
       expect.objectContaining({ status: 'ACTIVE', endsAt: null }),
     ]));
-    expect(completedEvents).toHaveLength(2);
+    expect(completedEvents).toHaveLength(1);
     const standings = await prisma.contestEntryGolfStanding.findMany({
       where: { contestId: directContest.id },
       orderBy: { position: 'asc' },
@@ -203,9 +185,9 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
 
     expect(second).toEqual({
       sportEventId: event.id,
-      contestsSettled: 2,
+      contestsSettled: 1,
       contestsCompleted: 0,
-      standingsUpserted: 4,
+      standingsUpserted: 2,
     });
     await expect(prisma.contestEntryGolfStanding.count({
       where: {
@@ -213,13 +195,11 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
           in: [
             directEntries.winner.id,
             directEntries.runnerUp.id,
-            joinedEntries.winner.id,
-            joinedEntries.runnerUp.id,
           ],
         },
       },
-    })).resolves.toBe(4);
-    expect(completedEvents).toHaveLength(2);
+    })).resolves.toBe(2);
+    expect(completedEvents).toHaveLength(1);
 
     const historyResponse = await getApp().inject({
       method: 'GET',

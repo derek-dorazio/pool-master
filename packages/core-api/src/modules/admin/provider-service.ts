@@ -144,7 +144,6 @@ export type ProviderEventCleanupMode = 'DRY_RUN' | 'EXECUTE';
 export type ProviderEventCleanupStaleReason = 'NON_GOLF_EVENT' | 'PAST_GOLF_EVENT';
 export type ProviderEventCleanupBlockedReason =
   | 'DIRECT_CONTEST_REFERENCE'
-  | 'CONTEST_SPORT_EVENT_REFERENCE'
   | 'CONTEST_ENTRY_PICK_REFERENCE';
 
 export interface ProviderEventCleanupRow {
@@ -161,7 +160,6 @@ export interface ProviderEventCleanupRow {
   deleted: boolean;
   blockedReasons: ProviderEventCleanupBlockedReason[];
   directContestCount: number;
-  contestSportEventCount: number;
   sportEventParticipantCount: number;
   valuationCount: number;
   golfRoundCount: number;
@@ -1232,7 +1230,6 @@ export class ProviderService {
         _count: {
           select: {
             contests: true,
-            contestSportEvents: true,
           },
         },
         sportEventParticipants: {
@@ -1278,7 +1275,6 @@ export class ProviderService {
       );
       const blockedReasons: ProviderEventCleanupBlockedReason[] = [];
       if (event._count.contests > 0) blockedReasons.push('DIRECT_CONTEST_REFERENCE');
-      if (event._count.contestSportEvents > 0) blockedReasons.push('CONTEST_SPORT_EVENT_REFERENCE');
       if (pickCount > 0) blockedReasons.push('CONTEST_ENTRY_PICK_REFERENCE');
 
       return [{
@@ -1295,7 +1291,6 @@ export class ProviderService {
         deleted: false,
         blockedReasons,
         directContestCount: event._count.contests,
-        contestSportEventCount: event._count.contestSportEvents,
         sportEventParticipantCount,
         valuationCount,
         golfRoundCount,

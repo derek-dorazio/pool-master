@@ -479,43 +479,12 @@ describe('SDK Functional: Contests and Entries', () => {
       code: 'CONTEST_CONFIGURATION_INVALID',
     });
 
-    const mismatchedOverrideResponse = await createManagedContest({
-      client: commissioner.client,
-      path: {
-        id: league.id,
-      },
-      body: {
-        name: 'Mismatch Template Contest',
-        sportEventId: importedEvent.sportEventId,
-        contestFormat: ContestFormat.ROSTER,
-        templateId: defaultTemplate?.id as string,
-        configurationOverrides: {
-          mode: 'GOLF_CATEGORY_PICKS',
-          maxEntriesPerSquad: 1,
-          categories: [
-            {
-              categoryKey: 'ROOKIE',
-              label: 'Rookie',
-              pickCount: 1,
-            },
-          ],
-          cutRule: {
-            type: 'FIXED_SCORE',
-            fixedScore: 80,
-          },
-          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-          displayScoring: 'TO_PAR',
-          tiebreaker: {
-            type: 'PREDICT_WINNING_SCORE',
-          },
-        },
-      },
-    });
-
-    expectFunctionalError(mismatchedOverrideResponse, {
-      status: 422,
-      code: 'CONTEST_CONFIGURATION_INVALID',
-    });
+    // The former second sub-case ("advanced override must match the template's
+    // configuration mode") sent a GOLF_CATEGORY_PICKS override against a
+    // GOLF_TIERED template. GOLF_TIERED is now the only managed configuration
+    // mode (plans/124 §4.11 removed the GOLF_CATEGORY_PICKS stub), so a
+    // mode-mismatched override is no longer an expressible payload and the
+    // sub-case was removed with the mode it depended on.
   });
 
   it('creates, lists, reads, updates, and deletes a contest through the generated SDK', async () => {

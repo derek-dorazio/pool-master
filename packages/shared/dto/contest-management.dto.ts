@@ -5,8 +5,6 @@ import {
   GolfCategoryKey,
   GolfContestConfigMode,
   GolfCutRuleType,
-  GolfDisplayScoring,
-  GolfPlayoffHandling,
   Sport,
 } from '@poolmaster/shared/domain';
 
@@ -75,23 +73,12 @@ export type GolfTieredContestConfigurationRequest = z.infer<
   typeof GolfTieredContestConfigurationSchema
 >;
 
-export const GolfCategoryContestConfigurationSchema = z.object({
-  mode: z.literal(GolfContestConfigMode.GOLF_CATEGORY_PICKS),
-  locksAt: z.string().datetime().nullable().optional().describe('Contest entry lock timestamp.'),
-  maxEntriesPerSquad: nullablePositiveIntSchema,
-  categories: z.array(GolfCategoryDefinitionSchema).min(1).describe('Enabled category slots for the contest.'),
-  cutRule: GolfFixedCutRuleSchema,
-  playoffHandling: z.enum([GolfPlayoffHandling.EXCLUDE_PLAYOFF_HOLES]),
-  displayScoring: z.enum([GolfDisplayScoring.TO_PAR]),
-  tiebreaker: GolfTiebreakerSchema,
-}).describe('Golf category-picks contest configuration for one-pick-per-category contests.');
-export type GolfCategoryContestConfigurationRequest = z.infer<
-  typeof GolfCategoryContestConfigurationSchema
->;
-
+// GOLF_CATEGORY_PICKS was a fully-typed stub with no backend implementation and
+// was removed (plans/124 §4.11). Only the tiered mode remains, so the request
+// payload is a single-member discriminated union keyed on `mode` — a shape that
+// stays additively extensible when plans/127 rebuilds category picks for real.
 export const ContestConfigurationRequestSchema = z.discriminatedUnion('mode', [
   GolfTieredContestConfigurationSchema,
-  GolfCategoryContestConfigurationSchema,
 ]).describe('Approved commissioner-managed contest configuration payload for golf-first contest creation.');
 export type ContestConfigurationRequest = z.infer<
   typeof ContestConfigurationRequestSchema
@@ -138,15 +125,8 @@ export const GolfTieredContestConfigurationDtoSchema =
     contestId: z.string().describe('Contest that owns the configuration.'),
   });
 
-export const GolfCategoryContestConfigurationDtoSchema =
-  GolfCategoryContestConfigurationSchema.extend({
-    id: z.string().describe('Contest-configuration identifier.'),
-    contestId: z.string().describe('Contest that owns the configuration.'),
-  });
-
 export const ContestConfigurationDtoSchema = z.discriminatedUnion('mode', [
   GolfTieredContestConfigurationDtoSchema,
-  GolfCategoryContestConfigurationDtoSchema,
 ]).describe('Persisted commissioner-managed golf contest configuration.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 
@@ -157,7 +137,6 @@ export const ContestConfigTemplateDtoSchema = z.object({
   contestFormat: z.enum(contestFormatValues).describe('Contest type that may use the template.'),
   configMode: z.enum([
     GolfContestConfigMode.GOLF_TIERED,
-    GolfContestConfigMode.GOLF_CATEGORY_PICKS,
   ]).describe('Configuration mode seeded by the template.'),
   templateKey: z.string().describe('Stable machine key for the template.'),
   name: z.string().describe('Commissioner-facing template label.'),

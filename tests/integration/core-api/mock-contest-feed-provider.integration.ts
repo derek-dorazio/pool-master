@@ -317,40 +317,18 @@ async function createGolfLiveVerificationContests(input: {
     },
   });
 
-  const [directContest, joinedContest] = await Promise.all([
-    prisma.contest.create({
-      data: {
-        leagueId: league.id,
-        sportEventId: input.sportEventId,
-        name: `Direct Golf Live E2E ${suffix}`,
-        status: 'ACTIVE',
-        contestFormat: 'ROSTER',
-        selectionType: 'TIERED',
-        scoringEngine: 'STROKE_PLAY',
-      },
-    }),
-    prisma.contest.create({
-      data: {
-        leagueId: league.id,
-        sportEventId: null,
-        name: `Joined Golf Live E2E ${suffix}`,
-        status: 'ACTIVE',
-        contestFormat: 'ROSTER',
-        selectionType: 'TIERED',
-        scoringEngine: 'STROKE_PLAY',
-      },
-    }),
-  ]);
-  await prisma.contestSportEvent.create({
+  const directContest = await prisma.contest.create({
     data: {
-      contestId: joinedContest.id,
+      leagueId: league.id,
       sportEventId: input.sportEventId,
+      name: `Direct Golf Live E2E ${suffix}`,
+      status: 'ACTIVE',
+      contestFormat: 'ROSTER',
+      selectionType: 'TIERED',
+      scoringEngine: 'STROKE_PLAY',
     },
   });
-  await Promise.all([
-    createGolfLiveContestConfiguration(directContest.id),
-    createGolfLiveContestConfiguration(joinedContest.id),
-  ]);
+  await createGolfLiveContestConfiguration(directContest.id);
   const directEntries = await createGolfLiveEntries({
     contestId: directContest.id,
     leaderSquadId: leaderSquad.id,
@@ -358,15 +336,8 @@ async function createGolfLiveVerificationContests(input: {
     leaderPicks: input.directPicks.leader,
     chaserPicks: input.directPicks.chaser,
   });
-  const joinedEntries = await createGolfLiveEntries({
-    contestId: joinedContest.id,
-    leaderSquadId: leaderSquad.id,
-    chaserSquadId: chaserSquad.id,
-    leaderPicks: input.directPicks.leader,
-    chaserPicks: input.directPicks.chaser,
-  });
 
-  return { directContest, joinedContest, directEntries, joinedEntries };
+  return { directContest, directEntries };
 }
 
 async function createGolfLiveContestConfiguration(contestId: string) {
@@ -956,7 +927,7 @@ describe('mock contest feed provider event-first verification', () => {
     const golfer04SportEventParticipantId = requiredSportEventParticipantId(selectedParticipants, 'golfer-04');
     const golfer05SportEventParticipantId = requiredSportEventParticipantId(selectedParticipants, 'golfer-05');
     const golfer06SportEventParticipantId = requiredSportEventParticipantId(selectedParticipants, 'golfer-06');
-    const { directContest, joinedContest, directEntries, joinedEntries } =
+    const { directContest, directEntries } =
       await createGolfLiveVerificationContests({
         ownerUserId: rootAdmin.user.id,
         sportEventId: event.id,
@@ -1002,15 +973,14 @@ describe('mock contest feed provider event-first verification', () => {
     )?.participant.totalScoreToPar;
     expect(golfer01AfterR2).not.toBeNull();
     await expect(prisma.contestEntryGolfStanding.count({
-      where: { contestId: { in: [directContest.id, joinedContest.id] } },
+      where: { contestId: { in: [directContest.id] } },
     })).resolves.toBe(0);
     await expect(prisma.contest.findMany({
-      where: { id: { in: [directContest.id, joinedContest.id] } },
+      where: { id: { in: [directContest.id] } },
       select: { status: true },
-    })).resolves.toEqual(expect.arrayContaining([
+    })).resolves.toEqual([
       { status: 'ACTIVE' },
-      { status: 'ACTIVE' },
-    ]));
+    ]);
 
     const corrected = await providerService.syncEventData(
       {
@@ -1045,7 +1015,7 @@ describe('mock contest feed provider event-first verification', () => {
     );
     await waitForProviderSyncRuns(finalLive.syncRuns.map((run) => run.id));
     await expect(prisma.contestEntryGolfStanding.count({
-      where: { contestId: { in: [directContest.id, joinedContest.id] } },
+      where: { contestId: { in: [directContest.id] } },
     })).resolves.toBe(0);
 
     const completedDetail = await providerService.syncEventData(
@@ -1070,11 +1040,10 @@ describe('mock contest feed provider event-first verification', () => {
       select: { status: true },
     })).resolves.toEqual({ status: 'COMPLETED' });
     await expect(prisma.contest.findMany({
-      where: { id: { in: [directContest.id, joinedContest.id] } },
+      where: { id: { in: [directContest.id] } },
       select: { id: true, status: true },
       orderBy: { id: 'asc' },
     })).resolves.toEqual([
-      expect.objectContaining({ status: 'COMPLETED' }),
       expect.objectContaining({ status: 'COMPLETED' }),
     ]);
     await expect(prisma.contestEntryGolfStanding.count({
@@ -1083,13 +1052,11 @@ describe('mock contest feed provider event-first verification', () => {
           in: [
             directEntries.leader.id,
             directEntries.chaser.id,
-            joinedEntries.leader.id,
-            joinedEntries.chaser.id,
           ],
         },
       },
-    })).resolves.toBe(4);
-    expect(contestCompletedEvents).toHaveLength(2);
+    })).resolves.toBe(2);
+    expect(contestCompletedEvents).toHaveLength(1);
 
     const completedLiveCandidates = await eventReader.listEventIdsForFeed({
       sport: Sport.GOLF,
@@ -1117,13 +1084,11 @@ describe('mock contest feed provider event-first verification', () => {
           in: [
             directEntries.leader.id,
             directEntries.chaser.id,
-            joinedEntries.leader.id,
-            joinedEntries.chaser.id,
           ],
         },
       },
-    })).resolves.toBe(4);
-    expect(contestCompletedEvents).toHaveLength(2);
+    })).resolves.toBe(2);
+    expect(contestCompletedEvents).toHaveLength(1);
   });
 
   it('keeps startup-style schedule sync shallow until manual re-ingest loads contest-ready event detail', async () => {

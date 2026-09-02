@@ -950,7 +950,6 @@ describe('ContestService', () => {
           id: 'event-1',
           sport: Sport.GOLF,
         },
-        contestSportEvents: [],
         configuration: {
           configJson: {
             mode: 'GOLF_TIERED',

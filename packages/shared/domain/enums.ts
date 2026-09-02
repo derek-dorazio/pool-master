@@ -82,8 +82,11 @@ export type PoolType = (typeof PoolType)[keyof typeof PoolType];
 /**
  * Pool format applied to a contest. Replaces the legacy
  * `ContestFormat.ROSTER` enum (a duration/scope concept that turned
- * out not to be load-bearing — duration is now expressed by the
- * ContestSportEvent M:N join). See plans/117-league-contest-substrate-redesign.md §4.2.
+ * out not to be load-bearing). Multi-event contest coverage will be
+ * re-modeled when a real multi-event contest type is built; the
+ * speculative ContestSportEvent M:N join that once anticipated it was
+ * removed as dead scaffolding (plans/124 §4.11).
+ * See plans/117-league-contest-substrate-redesign.md §4.2.
  */
 export const ContestFormat = {
   ROSTER: 'ROSTER',
@@ -323,7 +326,6 @@ export type DateFormat = (typeof DateFormat)[keyof typeof DateFormat];
 
 export const GolfContestConfigMode = {
   GOLF_TIERED: 'GOLF_TIERED',
-  GOLF_CATEGORY_PICKS: 'GOLF_CATEGORY_PICKS',
 } as const;
 export type GolfContestConfigMode =
   (typeof GolfContestConfigMode)[keyof typeof GolfContestConfigMode];
@@ -357,24 +359,6 @@ export const GolfCutRuleType = {
 } as const;
 export type GolfCutRuleType =
   (typeof GolfCutRuleType)[keyof typeof GolfCutRuleType];
-
-export const GolfPlayoffHandling = {
-  EXCLUDE_PLAYOFF_HOLES: 'EXCLUDE_PLAYOFF_HOLES',
-} as const;
-export type GolfPlayoffHandling =
-  (typeof GolfPlayoffHandling)[keyof typeof GolfPlayoffHandling];
-
-export const GolfDisplayScoring = {
-  TO_PAR: 'TO_PAR',
-} as const;
-export type GolfDisplayScoring =
-  (typeof GolfDisplayScoring)[keyof typeof GolfDisplayScoring];
-
-export const GolfTiebreakerType = {
-  PREDICT_WINNING_SCORE: 'PREDICT_WINNING_SCORE',
-} as const;
-export type GolfTiebreakerType =
-  (typeof GolfTiebreakerType)[keyof typeof GolfTiebreakerType];
 
 export const TeamIconKey = {
   CAPTAIN_SMILE_SUNSET: 'CAPTAIN_SMILE_SUNSET',

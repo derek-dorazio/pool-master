@@ -73,10 +73,7 @@ export class GolfContestSettlementService {
     const contests = await this.prisma.contest.findMany({
       where: {
         status: { not: ContestStatus.CANCELLED },
-        OR: [
-          { sportEventId },
-          { contestSportEvents: { some: { sportEventId } } },
-        ],
+        sportEventId,
       },
       include: {
         configuration: {
