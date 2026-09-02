@@ -126,6 +126,52 @@ export const QueryKeys = {
     eventSyncEvents: (sport: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'event-sync-events', sport] as const,
     events: ['poolmaster', 'root-admin', 'events'] as const,
+    golf: {
+      all: ['poolmaster', 'root-admin', 'golf'] as const,
+      tours: ['poolmaster', 'root-admin', 'golf', 'tours'] as const,
+      leagueRoster: (sportLeagueId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'golf', 'tours', sportLeagueId, 'roster'] as const,
+      seasons: (sportLeagueId?: QueryKeyId) =>
+        sportLeagueId === undefined
+          ? (['poolmaster', 'root-admin', 'golf', 'seasons'] as const)
+          : (['poolmaster', 'root-admin', 'golf', 'seasons', sportLeagueId] as const),
+      season: (seasonId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'golf', 'season', seasonId] as const,
+      tournaments: ['poolmaster', 'root-admin', 'golf', 'tournaments'] as const,
+      tournament: (eventId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'golf', 'tournament', eventId] as const,
+      rounds: (eventId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'rounds'] as const,
+      field: (eventId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'field'] as const,
+      tiers: (eventId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'tiers'] as const,
+      roundScores: (eventId: QueryKeyId, round: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'round-scores', round] as const,
+      players: ['poolmaster', 'root-admin', 'golf', 'players'] as const,
+      player: (participantId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'golf', 'player', participantId] as const,
+    },
+    // plans/124 §6.4. `dateWindow` extends the documented (providerId, sport,
+    // search) signature: both callers (create browse, Home score-source picker)
+    // go through useGolfProviderCatalog, which always passes a
+    // `${from}|${to}|${sportLeagueId}` string so the from/to/league filters are
+    // part of the cache identity, not just the search term.
+    providerCatalogEvents: (
+      providerId: QueryKeyId,
+      sport: QueryKeyId,
+      search: QueryKeyId,
+      dateWindow?: QueryKeyId,
+    ) =>
+      [
+        'poolmaster',
+        'root-admin',
+        'provider-catalog-events',
+        providerId,
+        sport,
+        search,
+        dateWindow ?? null,
+      ] as const,
     ingestionConfig: ['poolmaster', 'root-admin', 'ingestion-config'] as const,
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
     manageTeams: ['poolmaster', 'root-admin', 'manage-teams'] as const,

@@ -1,6 +1,9 @@
+export type ManageSectionGroup = 'platform' | 'sports' | 'operations';
+
 export type ManageSectionKey =
   | 'content-configuration'
   | 'events'
+  | 'golf'
   | 'leagues'
   | 'sync'
   | 'sync-config'
@@ -9,14 +12,25 @@ export type ManageSectionKey =
 
 export type ManageSectionDefinition = {
   key: ManageSectionKey;
+  group: ManageSectionGroup;
   title: string;
   description: string;
   to: string;
 };
 
+export const MANAGE_SECTION_GROUP_ORDER: ReadonlyArray<{
+  group: ManageSectionGroup;
+  title: string;
+}> = [
+  { group: 'platform', title: 'Platform' },
+  { group: 'sports', title: 'Sports' },
+  { group: 'operations', title: 'Operations' },
+];
+
 export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   {
     key: 'leagues',
+    group: 'platform',
     title: 'Leagues',
     description:
       'Search leagues and open League Home to manage league details, members, and lifecycle actions.',
@@ -24,6 +38,7 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   },
   {
     key: 'teams',
+    group: 'platform',
     title: 'Teams',
     description:
       'Search teams across leagues, then open Team Home for owner and lifecycle actions.',
@@ -31,13 +46,23 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   },
   {
     key: 'users',
+    group: 'platform',
     title: 'Users',
     description:
       'Search user accounts and open user pages for root-admin account actions.',
     to: '/manage/users',
   },
   {
+    key: 'golf',
+    group: 'sports',
+    title: 'Golf',
+    description:
+      'Create and run golf tournaments: field, tiers, workflow, and scores.',
+    to: '/manage/golf',
+  },
+  {
     key: 'content-configuration',
+    group: 'operations',
     title: 'Content Configuration',
     description:
       'Manage the persisted contest templates available to commissioner contest setup.',
@@ -45,6 +70,7 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   },
   {
     key: 'events',
+    group: 'operations',
     title: 'Events',
     description:
       'Browse current persisted event state and open read-only participant fields for sync QA.',
@@ -52,6 +78,7 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   },
   {
     key: 'sync',
+    group: 'operations',
     title: 'Sync',
     description:
       'Provider visibility, sync history, and manual run actions now live in dedicated operational pages.',
@@ -59,6 +86,7 @@ export const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   },
   {
     key: 'sync-config',
+    group: 'operations',
     title: 'Sync Configuration',
     description:
       'Poll intervals, ingestion schedule, and sport overrides now live in dedicated edit pages.',
@@ -78,29 +106,34 @@ export function getManageSectionDefinition(
   return section;
 }
 
+export function getManageSectionsByGroup(
+  group: ManageSectionGroup,
+): ManageSectionDefinition[] {
+  return MANAGE_SECTION_DEFINITIONS.filter((section) => section.group === group);
+}
+
+const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
+  manage: 'Manage',
+  'run-sport-sync': 'Run Sport Sync',
+  'run-event-sync': 'Run Event Sync',
+  'poll-intervals': 'Poll Intervals',
+  'ingestion-schedule': 'Global Ingestion Schedule',
+  'sport-overrides': 'Sport Ingestion Overrides',
+  golf: 'Golf',
+  tours: 'Tours',
+  seasons: 'Seasons',
+  tournaments: 'Tournaments',
+  players: 'Players',
+  field: 'Field',
+  tiers: 'Tiers',
+  scores: 'Scores',
+  new: 'New',
+};
+
 export function getManageBreadcrumbLabel(segment: string): string {
-  if (segment === 'manage') {
-    return 'Manage';
-  }
-
-  if (segment === 'run-sport-sync') {
-    return 'Run Sport Sync';
-  }
-
-  if (segment === 'run-event-sync') {
-    return 'Run Event Sync';
-  }
-
-  if (segment === 'poll-intervals') {
-    return 'Poll Intervals';
-  }
-
-  if (segment === 'ingestion-schedule') {
-    return 'Global Ingestion Schedule';
-  }
-
-  if (segment === 'sport-overrides') {
-    return 'Sport Ingestion Overrides';
+  const staticLabel = STATIC_BREADCRUMB_LABELS[segment];
+  if (staticLabel) {
+    return staticLabel;
   }
 
   const section = MANAGE_SECTION_DEFINITIONS.find(
