@@ -13,6 +13,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
 import { SportCatalogError } from './errors';
+import { requireSportRow } from './sport-row';
 
 export interface SportLeagueRow {
   id: string;
@@ -62,7 +63,7 @@ export class SportLeagueService {
   ) {}
 
   async listLeagues(sport: Sport, options: { isActive?: boolean } = {}): Promise<SportLeagueSummary[]> {
-    const sportRow = await this.requireSportRow(sport);
+    const sportRow = await requireSportRow(this.prisma, sport);
     const leagues = await this.prisma.sportLeague.findMany({
       where: {
         sportId: sportRow.id,
@@ -85,7 +86,7 @@ export class SportLeagueService {
     sport: Sport,
     input: { name: string; matchKeyword?: string },
   ): Promise<SportLeagueRow> {
-    const sportRow = await this.requireSportRow(sport);
+    const sportRow = await requireSportRow(this.prisma, sport);
     const existing = await this.prisma.sportLeague.findUnique({
       where: { sportId_name: { sportId: sportRow.id, name: input.name } },
     });
@@ -269,13 +270,6 @@ export class SportLeagueService {
     return { row, resolution: 'UNRESOLVED', participantId: null, participantName: null };
   }
 
-  private async requireSportRow(sport: Sport): Promise<{ id: string }> {
-    const sportRow = await this.prisma.sport.findUnique({ where: { name: sport } });
-    if (!sportRow) {
-      throw new SportCatalogError(`No Sport row exists for ${sport}.`, 'SPORT_NOT_FOUND', 404);
-    }
-    return sportRow;
-  }
 }
 
 function toSportLeagueRow(league: {
