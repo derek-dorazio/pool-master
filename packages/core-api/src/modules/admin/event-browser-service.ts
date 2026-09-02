@@ -1,5 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
+import type { SportEventStatus } from '@poolmaster/shared/domain';
 import type {
   AdminEventListQuery,
   AdminEventParticipantListResponse,
@@ -31,7 +32,7 @@ export class AdminEventBrowserService {
     const rows = await this.prisma.sportEvent.findMany({
       where: {
         ...(query.sport ? { sport: query.sport } : {}),
-        ...(query.status ? { status: query.status } : {}),
+        ...(query.status ? { status: query.status as SportEventStatus } : {}),
       },
       orderBy: [
         { startDate: 'asc' },
@@ -115,14 +116,16 @@ export class AdminEventBrowserService {
           },
         },
         golfRounds: {
-          orderBy: { round: 'asc' },
+          orderBy: { sportEventRound: { roundNumber: 'asc' } },
           select: {
-            round: true,
             strokes: true,
             scoreToPar: true,
             thru: true,
             status: true,
             completedAt: true,
+            sportEventRound: {
+              select: { roundNumber: true },
+            },
           },
         },
         golfStanding: {

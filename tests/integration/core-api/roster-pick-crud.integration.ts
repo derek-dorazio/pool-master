@@ -87,7 +87,7 @@ describe('RosterPick CRUD integration', () => {
       data: {
         sportEventId: sportEvent.id,
         participantId: participant.id,
-        status: 'ACTIVE',
+        isActive: true,
       },
     });
     sportEventParticipantId = sportEventParticipant.id;

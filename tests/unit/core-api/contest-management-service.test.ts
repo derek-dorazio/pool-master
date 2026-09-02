@@ -374,14 +374,12 @@ describe('ContestManagementService', () => {
       throw new Error('Expected golf tiered configuration');
     }
     expect(result.configuration.countedScores).toBe(4);
+    // pool-master-p15 — tiers are event-owned now (plans/124 §4.6); contest
+    // creation no longer computes or persists a per-contest tierConfig
+    // snapshot, so the create call carries no tierConfig key at all.
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        tierConfig: [
-          expect.objectContaining({
-            tierKey: 'A',
-            participantIds: ['participant-1'],
-          }),
-        ],
+      expect.not.objectContaining({
+        tierConfig: expect.anything(),
       }),
     );
     expect(participantContestScoringRuleRepo.create).toHaveBeenCalledWith({
@@ -807,20 +805,6 @@ describe('ContestManagementService', () => {
       },
       locksAt: new Date('2026-04-11T12:00:00.000Z'),
       maxEntriesPerSquad: 2,
-      tierConfig: [
-        {
-          tierId: 'A',
-          tierKey: 'A',
-          tierName: 'Tier A',
-          tierNumber: 1,
-          label: 'Tier A',
-          pickCount: 2,
-          picksFromTier: 2,
-          startPosition: 1,
-          endPosition: 8,
-          participantIds: ['participant-1'],
-        },
-      ],
       pickCount: 2,
       rosterSize: 8,
       isExclusive: false,

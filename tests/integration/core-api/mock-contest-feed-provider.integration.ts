@@ -3,6 +3,7 @@ import { Sport } from '@poolmaster/shared/domain';
 import { EventBus } from '@poolmaster/shared/events/event-bus';
 import { GolfLeaderboardResponseSchema } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
+import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { IngestionScheduler, publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core';
@@ -866,12 +867,17 @@ describe('mock contest feed provider event-first verification', () => {
       contestCompletedEvents.push(event);
     });
     const settlement = new GolfContestSettlementService(prisma, undefined, bus);
-    const persistence = new IngestionPersistence(
+    const eventLifecycleService = new EventLifecycleService(
       prisma,
       undefined,
       undefined,
       'http://localhost:5173',
       settlement,
+    );
+    const persistence = new IngestionPersistence(
+      prisma,
+      undefined,
+      eventLifecycleService,
     );
     const syncRunLedger = new ProviderSyncRunLedger(prisma);
     const eventReader = createScheduledEventReader({ prisma, registry });

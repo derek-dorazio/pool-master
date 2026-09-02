@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { Sport } from '../../../packages/shared/domain';
+import { GolfParticipantInactiveReason, Sport } from '../../../packages/shared/domain';
 import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
 
 const scenarioResponse = {
@@ -359,6 +359,72 @@ describe('MockContestFeedAdapter', () => {
 
     expect(detail?.externalId).toBe(historicalEventId);
     expect(detail?.participants).toHaveLength(2);
+  });
+
+  it('pool-master-uvc: maps all 7 raw participantStatus values to {active, inactiveReason} per plans/124 §4.1', async () => {
+    const statusDetailResponse = {
+      ...eventDetailResponse,
+      event: {
+        ...eventDetailResponse.event,
+        field: {
+          asOf: '2026-04-07T12:00:00.000Z',
+          status: 'announced',
+          contestants: [
+            { contestantId: 'p-active', name: 'Active Golfer', participantStatus: 'active' },
+            { contestantId: 'p-provisional', name: 'Provisional Golfer', participantStatus: 'provisional' },
+            { contestantId: 'p-alternate', name: 'Alternate Golfer', participantStatus: 'alternate' },
+            { contestantId: 'p-inactive', name: 'Inactive Golfer', participantStatus: 'inactive' },
+            { contestantId: 'p-withdrawn', name: 'Withdrawn Golfer', participantStatus: 'withdrawn' },
+            { contestantId: 'p-cut', name: 'Cut Golfer', participantStatus: 'cut' },
+            { contestantId: 'p-eliminated', name: 'Eliminated Golfer', participantStatus: 'eliminated' },
+            { contestantId: 'p-unset', name: 'Unset Status Golfer' },
+          ],
+        },
+        feeds: {
+          odds: { asOf: '2026-04-07T12:00:00.000Z', contestants: [] },
+          rankings: { asOf: '2026-04-07T12:00:00.000Z', contestants: [] },
+          results: { asOf: '2026-04-07T12:00:00.000Z', contestants: [] },
+        },
+      },
+    };
+
+    global.fetch = jest.fn(async (input: string | URL) => {
+      const url = String(input);
+
+      if (url.endsWith('/v1/scenarios')) {
+        return okJson(scenarioResponse);
+      }
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events')) {
+        return okJson(eventListResponse);
+      }
+      if (url.endsWith('/v1/scenarios/golf-major-2026/events/golf-masters-2026/detail')) {
+        return okJson(statusDetailResponse);
+      }
+
+      throw new Error(`Unhandled fetch URL: ${url}`);
+    }) as typeof fetch;
+
+    const adapter = new MockContestFeedAdapter('http://mock-contest-feed-provider.qa.poolmaster.internal:3105');
+    const detail = await adapter.getEventDetails('golf-masters-2026');
+    const byExternalId = new Map(detail?.participants.map((p) => [p.externalId, p]));
+
+    expect(byExternalId.get('p-active')).toMatchObject({ active: true, inactiveReason: undefined });
+    expect(byExternalId.get('p-provisional')).toMatchObject({ active: true, inactiveReason: undefined });
+    expect(byExternalId.get('p-alternate')).toMatchObject({ active: true, inactiveReason: undefined });
+    expect(byExternalId.get('p-inactive')).toMatchObject({ active: false, inactiveReason: undefined });
+    expect(byExternalId.get('p-withdrawn')).toMatchObject({
+      active: false,
+      inactiveReason: GolfParticipantInactiveReason.WITHDRAWN,
+    });
+    expect(byExternalId.get('p-cut')).toMatchObject({
+      active: false,
+      inactiveReason: GolfParticipantInactiveReason.CUT,
+    });
+    expect(byExternalId.get('p-eliminated')).toMatchObject({
+      active: false,
+      inactiveReason: GolfParticipantInactiveReason.ELIMINATED,
+    });
+    expect(byExternalId.get('p-unset')).toMatchObject({ active: true, inactiveReason: undefined });
   });
 
   it('pool-master-rop.68.1.1: filters Golf scenarios and date windows before detail hydration', async () => {

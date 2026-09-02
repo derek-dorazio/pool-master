@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AcceptTeamOwnerInvitationData, AcceptTeamOwnerInvitationErrors, AcceptTeamOwnerInvitationResponses, ActivateLeagueData, ActivateLeagueErrors, ActivateLeagueResponses, AddSquadOwnerData, AddSquadOwnerErrors, AddSquadOwnerResponses, AdminCleanupStaleProviderEventsData, AdminCleanupStaleProviderEventsErrors, AdminCleanupStaleProviderEventsResponses, AdminDeleteLeagueData, AdminDeleteLeagueErrors, AdminDeleteLeagueResponses, AdminDeleteUserData, AdminDeleteUserErrors, AdminDeleteUserResponses, AdminDisableUserData, AdminDisableUserErrors, AdminDisableUserResponses, AdminEnableUserData, AdminEnableUserErrors, AdminEnableUserResponses, AdminExportAuditLogData, AdminExportAuditLogErrors, AdminExportAuditLogResponses, AdminForceLogoutData, AdminForceLogoutErrors, AdminForceLogoutResponses, AdminGetAlertRulesData, AdminGetAlertRulesErrors, AdminGetAlertRulesResponses, AdminGetAuditEntryData, AdminGetAuditEntryErrors, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsErrors, AdminGetBusinessMetricsResponses, AdminGetErrorDetailData, AdminGetErrorDetailErrors, AdminGetErrorDetailResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsErrors, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardErrors, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleErrors, AdminGetIngestionScheduleResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsErrors, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailErrors, AdminGetProviderDetailResponses, AdminGetServiceHealthData, AdminGetServiceHealthErrors, AdminGetServiceHealthResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsErrors, AdminGetUnmappedParticipantsResponses, AdminGetUserDetailData, AdminGetUserDetailErrors, AdminGetUserDetailResponses, AdminInactivateLeagueData, AdminInactivateLeagueErrors, AdminInactivateLeagueResponses, AdminListAuditLogData, AdminListAuditLogErrors, AdminListAuditLogResponses, AdminListContestConfigTemplatesData, AdminListContestConfigTemplatesErrors, AdminListContestConfigTemplatesResponses, AdminListEventParticipantsData, AdminListEventParticipantsErrors, AdminListEventParticipantsResponses, AdminListEventsData, AdminListEventsErrors, AdminListEventsResponses, AdminListLeaguesData, AdminListLeaguesErrors, AdminListLeaguesResponses, AdminListProvidersData, AdminListProvidersErrors, AdminListProvidersResponses, AdminListProviderSyncRunsData, AdminListProviderSyncRunsErrors, AdminListProviderSyncRunsResponses, AdminListTeamsData, AdminListTeamsErrors, AdminListTeamsResponses, AdminListUsersData, AdminListUsersErrors, AdminListUsersResponses, AdminMapParticipantData, AdminMapParticipantErrors, AdminMapParticipantResponses, AdminMuteAlertData, AdminMuteAlertErrors, AdminMuteAlertResponses, AdminPrepareSportSyncData, AdminPrepareSportSyncErrors, AdminPrepareSportSyncResponses, AdminReIngestEventData, AdminReIngestEventErrors, AdminReIngestEventResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsErrors, AdminResetPollIntervalsResponses, AdminResetSportIngestionOverrideData, AdminResetSportIngestionOverrideErrors, AdminResetSportIngestionOverrideResponses, AdminResetUserPasswordData, AdminResetUserPasswordErrors, AdminResetUserPasswordResponses, AdminSearchErrorsData, AdminSearchErrorsErrors, AdminSearchErrorsResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideErrors, AdminSetSportIngestionOverrideResponses, AdminSetUserRootAdminData, AdminSetUserRootAdminErrors, AdminSetUserRootAdminResponses, AdminSyncProviderEventDataData, AdminSyncProviderEventDataErrors, AdminSyncProviderEventDataResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckErrors, AdminTriggerHealthCheckResponses, AdminUnmuteAlertData, AdminUnmuteAlertErrors, AdminUnmuteAlertResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleErrors, AdminUpdateAlertRuleResponses, AdminUpdateContestConfigTemplateData, AdminUpdateContestConfigTemplateErrors, AdminUpdateContestConfigTemplateResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleErrors, AdminUpdateIngestionScheduleResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsErrors, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigErrors, AdminUpdateProviderConfigResponses, ChangeAccountPasswordData, ChangeAccountPasswordErrors, ChangeAccountPasswordResponses, ChangeMemberRoleData, ChangeMemberRoleErrors, ChangeMemberRoleResponses, CloseContestData, CloseContestResponses, CopySeasonData, CopySeasonErrors, CopySeasonResponses, CreateContestData, CreateContestErrors, CreateContestResponses, CreateLeagueData, CreateLeagueErrors, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadErrors, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestErrors, CreateManagedContestResponses, CreateParticipantData, CreateParticipantResponses, CreateSquadOwnerInvitationData, CreateSquadOwnerInvitationErrors, CreateSquadOwnerInvitationResponses, DeleteAccountData, DeleteAccountErrors, DeleteAccountResponses, DeleteContestData, DeleteContestErrors, DeleteContestResponses, DeleteLeagueData, DeleteLeagueErrors, DeleteLeagueResponses, DeleteLeagueSquadData, DeleteLeagueSquadErrors, DeleteLeagueSquadResponses, DismissNotificationData, DismissNotificationResponses, EnterContestData, EnterContestErrors, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendCurrentTurnData, ExtendCurrentTurnErrors, ExtendCurrentTurnResponses, ExtendPickClockData, ExtendPickClockResponses, GenerateInviteLinkData, GenerateInviteLinkErrors, GenerateInviteLinkResponses, GetConsentHistoryData, GetConsentHistoryResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestData, GetContestEntryData, GetContestEntryErrors, GetContestEntryResponses, GetContestErrors, GetContestHistoryStandingsData, GetContestHistoryStandingsResponses, GetContestHistorySummaryData, GetContestHistorySummaryErrors, GetContestHistorySummaryResponses, GetContestPayoutsData, GetContestPayoutsResponses, GetContestResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetDraftStateData, GetDraftStateErrors, GetDraftStateResponses, GetGolfContestLeaderboardData, GetGolfContestLeaderboardErrors, GetGolfContestLeaderboardResponses, GetHealthData, GetHealthResponses, GetInvitationPreviewData, GetInvitationPreviewErrors, GetInvitationPreviewResponses, GetLeagueAuditLogData, GetLeagueAuditLogErrors, GetLeagueAuditLogResponses, GetLeagueByCodeData, GetLeagueByCodeErrors, GetLeagueByCodeResponses, GetLeagueDashboardData, GetLeagueDashboardErrors, GetLeagueDashboardResponses, GetLeagueData, GetLeagueErrors, GetLeagueResponses, GetLeagueResultsData, GetLeagueResultsResponses, GetLeagueSquadData, GetLeagueSquadErrors, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestErrors, GetManagedContestResponses, GetMemberAuditLogData, GetMemberAuditLogErrors, GetMemberAuditLogResponses, GetMemberResultsData, GetMemberResultsResponses, GetMyContestEntryData, GetMyContestEntryErrors, GetMyContestEntryResponses, GetParticipantData, GetParticipantErrors, GetParticipantResponses, GetPollIntervalsData, GetPollIntervalsResponses, GetRootVersionData, GetRootVersionResponses, GetRosterHistoryData, GetRosterHistoryErrors, GetRosterHistoryResponses, GetTeamOwnerInvitationPreviewData, GetTeamOwnerInvitationPreviewErrors, GetTeamOwnerInvitationPreviewResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountResponses, GetVersionData, GetVersionResponses, ImportMembersData, ImportMembersErrors, ImportMembersResponses, InactivateAccountData, InactivateAccountErrors, InactivateAccountResponses, InactivateLeagueData, InactivateLeagueErrors, InactivateLeagueResponses, InactivateLeagueSquadData, InactivateLeagueSquadErrors, InactivateLeagueSquadResponses, IngestClientLogsData, IngestClientLogsErrors, IngestClientLogsResponses, LeaveContestData, LeaveContestErrors, LeaveContestResponses, LeaveLeagueData, LeaveLeagueErrors, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesErrors, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventsData, ListEventsResponses, ListLeagueMembersData, ListLeagueMembersErrors, ListLeagueMembersResponses, ListLeaguesData, ListLeaguesErrors, ListLeagueSquadsData, ListLeagueSquadsErrors, ListLeagueSquadsResponses, ListLeaguesResponses, ListManagedContestTemplatesData, ListManagedContestTemplatesErrors, ListManagedContestTemplatesResponses, ListNotificationsData, ListNotificationsResponses, ListParticipantsData, ListParticipantsResponses, ListSquadOwnerInvitationsData, ListSquadOwnerInvitationsErrors, ListSquadOwnerInvitationsResponses, LoginUserData, LoginUserErrors, LoginUserResponses, LogoutUserData, LogoutUserErrors, LogoutUserResponses, MarkAllNotificationsReadData, MarkAllNotificationsReadResponses, MarkNotificationReadData, MarkNotificationReadResponses, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftErrors, PauseDraftResponses, ReactivateAccountData, ReactivateAccountErrors, ReactivateAccountResponses, RecordConsentData, RecordConsentResponses, RefreshTokenData, RefreshTokenErrors, RefreshTokenResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RemoveMemberData, RemoveMemberErrors, RemoveMemberResponses, RemoveSquadOwnerData, RemoveSquadOwnerErrors, RemoveSquadOwnerResponses, ReopenContestData, ReopenContestResponses, ReplaceSquadOwnerData, ReplaceSquadOwnerErrors, ReplaceSquadOwnerResponses, ResolveActionItemData, ResolveActionItemErrors, ResolveActionItemResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftErrors, ResumeDraftResponses, RevokeInviteLinkData, RevokeInviteLinkErrors, RevokeInviteLinkResponses, RevokeSquadOwnerInvitationData, RevokeSquadOwnerInvitationErrors, RevokeSquadOwnerInvitationResponses, SendLeagueInvitationsData, SendLeagueInvitationsErrors, SendLeagueInvitationsResponses, SkipSnakeDraftTurnData, SkipSnakeDraftTurnErrors, SkipSnakeDraftTurnResponses, StartDraftData, StartDraftErrors, StartDraftResponses, SubmitContestSelectionData, SubmitContestSelectionErrors, SubmitContestSelectionResponses, UndoContestDraftSelectionData, UndoContestDraftSelectionResponses, UndoSnakeDraftSelectionData, UndoSnakeDraftSelectionErrors, UndoSnakeDraftSelectionResponses, UpdateAccountPreferencesData, UpdateAccountPreferencesErrors, UpdateAccountPreferencesResponses, UpdateAccountProfileData, UpdateAccountProfileErrors, UpdateAccountProfileResponses, UpdateAccountUsernameData, UpdateAccountUsernameErrors, UpdateAccountUsernameResponses, UpdateContestData, UpdateContestEntryData, UpdateContestEntryErrors, UpdateContestEntryResponses, UpdateContestErrors, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateLeagueDetailsData, UpdateLeagueDetailsErrors, UpdateLeagueDetailsResponses, UpdateLeagueIconData, UpdateLeagueIconErrors, UpdateLeagueIconResponses, UpdateLeagueSquadData, UpdateLeagueSquadErrors, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationErrors, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantErrors, UpdateParticipantResponses } from './types.gen.js';
+import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AcceptTeamOwnerInvitationData, AcceptTeamOwnerInvitationErrors, AcceptTeamOwnerInvitationResponses, ActivateLeagueData, ActivateLeagueErrors, ActivateLeagueResponses, AddSquadOwnerData, AddSquadOwnerErrors, AddSquadOwnerResponses, AdminAddGolfLeagueRosterEntryData, AdminAddGolfLeagueRosterEntryErrors, AdminAddGolfLeagueRosterEntryResponses, AdminApplyGolfLeagueRosterUploadData, AdminApplyGolfLeagueRosterUploadErrors, AdminApplyGolfLeagueRosterUploadResponses, AdminBulkAddGolfFieldEntriesData, AdminBulkAddGolfFieldEntriesErrors, AdminBulkAddGolfFieldEntriesResponses, AdminCleanupStaleProviderEventsData, AdminCleanupStaleProviderEventsErrors, AdminCleanupStaleProviderEventsResponses, AdminCreateGolfLeagueData, AdminCreateGolfLeagueErrors, AdminCreateGolfLeagueResponses, AdminCreateGolfSeasonData, AdminCreateGolfSeasonErrors, AdminCreateGolfSeasonResponses, AdminCreateGolfTournamentData, AdminCreateGolfTournamentErrors, AdminCreateGolfTournamentResponses, AdminDeleteGolfTournamentData, AdminDeleteGolfTournamentErrors, AdminDeleteGolfTournamentResponses, AdminDeleteLeagueData, AdminDeleteLeagueErrors, AdminDeleteLeagueResponses, AdminDeleteUserData, AdminDeleteUserErrors, AdminDeleteUserResponses, AdminDisableUserData, AdminDisableUserErrors, AdminDisableUserResponses, AdminEnableUserData, AdminEnableUserErrors, AdminEnableUserResponses, AdminExportAuditLogData, AdminExportAuditLogErrors, AdminExportAuditLogResponses, AdminForceLogoutData, AdminForceLogoutErrors, AdminForceLogoutResponses, AdminGetAlertRulesData, AdminGetAlertRulesErrors, AdminGetAlertRulesResponses, AdminGetAuditEntryData, AdminGetAuditEntryErrors, AdminGetAuditEntryResponses, AdminGetBusinessMetricsData, AdminGetBusinessMetricsErrors, AdminGetBusinessMetricsResponses, AdminGetErrorDetailData, AdminGetErrorDetailErrors, AdminGetErrorDetailResponses, AdminGetGolfLeagueRosterData, AdminGetGolfLeagueRosterErrors, AdminGetGolfLeagueRosterResponses, AdminGetGolfSeasonData, AdminGetGolfSeasonErrors, AdminGetGolfSeasonResponses, AdminGetGolfTournamentData, AdminGetGolfTournamentErrors, AdminGetGolfTournamentFieldData, AdminGetGolfTournamentFieldErrors, AdminGetGolfTournamentFieldResponses, AdminGetGolfTournamentResponses, AdminGetGolfTournamentRoundsData, AdminGetGolfTournamentRoundsErrors, AdminGetGolfTournamentRoundsResponses, AdminGetInfrastructureMetricsData, AdminGetInfrastructureMetricsErrors, AdminGetInfrastructureMetricsResponses, AdminGetIngestionDashboardData, AdminGetIngestionDashboardErrors, AdminGetIngestionDashboardResponses, AdminGetIngestionScheduleData, AdminGetIngestionScheduleErrors, AdminGetIngestionScheduleResponses, AdminGetPollIntervalsData, AdminGetPollIntervalsErrors, AdminGetPollIntervalsResponses, AdminGetProviderDetailData, AdminGetProviderDetailErrors, AdminGetProviderDetailResponses, AdminGetServiceHealthData, AdminGetServiceHealthErrors, AdminGetServiceHealthResponses, AdminGetUnmappedParticipantsData, AdminGetUnmappedParticipantsErrors, AdminGetUnmappedParticipantsResponses, AdminGetUserDetailData, AdminGetUserDetailErrors, AdminGetUserDetailResponses, AdminInactivateLeagueData, AdminInactivateLeagueErrors, AdminInactivateLeagueResponses, AdminListAuditLogData, AdminListAuditLogErrors, AdminListAuditLogResponses, AdminListContestConfigTemplatesData, AdminListContestConfigTemplatesErrors, AdminListContestConfigTemplatesResponses, AdminListEventParticipantsData, AdminListEventParticipantsErrors, AdminListEventParticipantsResponses, AdminListEventsData, AdminListEventsErrors, AdminListEventsResponses, AdminListGolfLeaguesData, AdminListGolfLeaguesErrors, AdminListGolfLeaguesResponses, AdminListGolfSeasonsData, AdminListGolfSeasonsErrors, AdminListGolfSeasonsResponses, AdminListGolfTournamentsData, AdminListGolfTournamentsErrors, AdminListGolfTournamentsResponses, AdminListLeaguesData, AdminListLeaguesErrors, AdminListLeaguesResponses, AdminListProvidersData, AdminListProvidersErrors, AdminListProvidersResponses, AdminListProviderSyncRunsData, AdminListProviderSyncRunsErrors, AdminListProviderSyncRunsResponses, AdminListTeamsData, AdminListTeamsErrors, AdminListTeamsResponses, AdminListUsersData, AdminListUsersErrors, AdminListUsersResponses, AdminMapParticipantData, AdminMapParticipantErrors, AdminMapParticipantResponses, AdminMuteAlertData, AdminMuteAlertErrors, AdminMuteAlertResponses, AdminPrepareSportSyncData, AdminPrepareSportSyncErrors, AdminPrepareSportSyncResponses, AdminPreviewGolfLeagueRosterUploadData, AdminPreviewGolfLeagueRosterUploadErrors, AdminPreviewGolfLeagueRosterUploadResponses, AdminReIngestEventData, AdminReIngestEventErrors, AdminReIngestEventResponses, AdminRemoveGolfFieldEntryData, AdminRemoveGolfFieldEntryErrors, AdminRemoveGolfFieldEntryResponses, AdminRemoveGolfLeagueRosterEntryData, AdminRemoveGolfLeagueRosterEntryErrors, AdminRemoveGolfLeagueRosterEntryResponses, AdminResetIngestionScheduleData, AdminResetIngestionScheduleResponses, AdminResetPollIntervalsData, AdminResetPollIntervalsErrors, AdminResetPollIntervalsResponses, AdminResetSportIngestionOverrideData, AdminResetSportIngestionOverrideErrors, AdminResetSportIngestionOverrideResponses, AdminResetUserPasswordData, AdminResetUserPasswordErrors, AdminResetUserPasswordResponses, AdminSearchErrorsData, AdminSearchErrorsErrors, AdminSearchErrorsResponses, AdminSeedGolfTournamentFieldData, AdminSeedGolfTournamentFieldErrors, AdminSeedGolfTournamentFieldResponses, AdminSetCurrentGolfSeasonData, AdminSetCurrentGolfSeasonErrors, AdminSetCurrentGolfSeasonResponses, AdminSetSportIngestionOverrideData, AdminSetSportIngestionOverrideErrors, AdminSetSportIngestionOverrideResponses, AdminSetUserRootAdminData, AdminSetUserRootAdminErrors, AdminSetUserRootAdminResponses, AdminSyncProviderEventDataData, AdminSyncProviderEventDataErrors, AdminSyncProviderEventDataResponses, AdminTransitionGolfTournamentData, AdminTransitionGolfTournamentErrors, AdminTransitionGolfTournamentResponses, AdminTriggerHealthCheckData, AdminTriggerHealthCheckErrors, AdminTriggerHealthCheckResponses, AdminUnmuteAlertData, AdminUnmuteAlertErrors, AdminUnmuteAlertResponses, AdminUpdateAlertRuleData, AdminUpdateAlertRuleErrors, AdminUpdateAlertRuleResponses, AdminUpdateContestConfigTemplateData, AdminUpdateContestConfigTemplateErrors, AdminUpdateContestConfigTemplateResponses, AdminUpdateGolfFieldEntriesData, AdminUpdateGolfFieldEntriesErrors, AdminUpdateGolfFieldEntriesResponses, AdminUpdateGolfLeagueData, AdminUpdateGolfLeagueErrors, AdminUpdateGolfLeagueResponses, AdminUpdateGolfLeagueRosterData, AdminUpdateGolfLeagueRosterErrors, AdminUpdateGolfLeagueRosterResponses, AdminUpdateGolfSeasonData, AdminUpdateGolfSeasonErrors, AdminUpdateGolfSeasonResponses, AdminUpdateGolfTournamentData, AdminUpdateGolfTournamentErrors, AdminUpdateGolfTournamentResponses, AdminUpdateGolfTournamentRoundsData, AdminUpdateGolfTournamentRoundsErrors, AdminUpdateGolfTournamentRoundsResponses, AdminUpdateIngestionScheduleData, AdminUpdateIngestionScheduleErrors, AdminUpdateIngestionScheduleResponses, AdminUpdatePollIntervalsData, AdminUpdatePollIntervalsErrors, AdminUpdatePollIntervalsResponses, AdminUpdateProviderConfigData, AdminUpdateProviderConfigErrors, AdminUpdateProviderConfigResponses, ChangeAccountPasswordData, ChangeAccountPasswordErrors, ChangeAccountPasswordResponses, ChangeMemberRoleData, ChangeMemberRoleErrors, ChangeMemberRoleResponses, CloseContestData, CloseContestResponses, CopySeasonData, CopySeasonErrors, CopySeasonResponses, CreateContestData, CreateContestErrors, CreateContestResponses, CreateLeagueData, CreateLeagueErrors, CreateLeagueResponses, CreateLeagueSquadData, CreateLeagueSquadErrors, CreateLeagueSquadResponses, CreateManagedContestData, CreateManagedContestErrors, CreateManagedContestResponses, CreateParticipantData, CreateParticipantResponses, CreateSquadOwnerInvitationData, CreateSquadOwnerInvitationErrors, CreateSquadOwnerInvitationResponses, DeleteAccountData, DeleteAccountErrors, DeleteAccountResponses, DeleteContestData, DeleteContestErrors, DeleteContestResponses, DeleteLeagueData, DeleteLeagueErrors, DeleteLeagueResponses, DeleteLeagueSquadData, DeleteLeagueSquadErrors, DeleteLeagueSquadResponses, DismissNotificationData, DismissNotificationResponses, EnterContestData, EnterContestErrors, EnterContestResponses, ExtendContestDeadlineData, ExtendContestDeadlineResponses, ExtendCurrentTurnData, ExtendCurrentTurnErrors, ExtendCurrentTurnResponses, ExtendPickClockData, ExtendPickClockResponses, GenerateInviteLinkData, GenerateInviteLinkErrors, GenerateInviteLinkResponses, GetConsentHistoryData, GetConsentHistoryResponses, GetContestAuditLogData, GetContestAuditLogResponses, GetContestData, GetContestEntryData, GetContestEntryErrors, GetContestEntryResponses, GetContestErrors, GetContestHistoryStandingsData, GetContestHistoryStandingsResponses, GetContestHistorySummaryData, GetContestHistorySummaryErrors, GetContestHistorySummaryResponses, GetContestPayoutsData, GetContestPayoutsResponses, GetContestResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetDraftStateData, GetDraftStateErrors, GetDraftStateResponses, GetGolfContestLeaderboardData, GetGolfContestLeaderboardErrors, GetGolfContestLeaderboardResponses, GetHealthData, GetHealthResponses, GetInvitationPreviewData, GetInvitationPreviewErrors, GetInvitationPreviewResponses, GetLeagueAuditLogData, GetLeagueAuditLogErrors, GetLeagueAuditLogResponses, GetLeagueByCodeData, GetLeagueByCodeErrors, GetLeagueByCodeResponses, GetLeagueDashboardData, GetLeagueDashboardErrors, GetLeagueDashboardResponses, GetLeagueData, GetLeagueErrors, GetLeagueResponses, GetLeagueResultsData, GetLeagueResultsResponses, GetLeagueSquadData, GetLeagueSquadErrors, GetLeagueSquadResponses, GetManagedContestData, GetManagedContestErrors, GetManagedContestResponses, GetMemberAuditLogData, GetMemberAuditLogErrors, GetMemberAuditLogResponses, GetMemberResultsData, GetMemberResultsResponses, GetMyContestEntryData, GetMyContestEntryErrors, GetMyContestEntryResponses, GetParticipantData, GetParticipantErrors, GetParticipantResponses, GetPollIntervalsData, GetPollIntervalsResponses, GetRootVersionData, GetRootVersionResponses, GetRosterHistoryData, GetRosterHistoryErrors, GetRosterHistoryResponses, GetTeamOwnerInvitationPreviewData, GetTeamOwnerInvitationPreviewErrors, GetTeamOwnerInvitationPreviewResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountResponses, GetVersionData, GetVersionResponses, ImportMembersData, ImportMembersErrors, ImportMembersResponses, InactivateAccountData, InactivateAccountErrors, InactivateAccountResponses, InactivateLeagueData, InactivateLeagueErrors, InactivateLeagueResponses, InactivateLeagueSquadData, InactivateLeagueSquadErrors, InactivateLeagueSquadResponses, IngestClientLogsData, IngestClientLogsErrors, IngestClientLogsResponses, LeaveContestData, LeaveContestErrors, LeaveContestResponses, LeaveLeagueData, LeaveLeagueErrors, LeaveLeagueResponses, ListContestEntriesData, ListContestEntriesErrors, ListContestEntriesResponses, ListContestsData, ListContestsResponses, ListEventsData, ListEventsResponses, ListLeagueMembersData, ListLeagueMembersErrors, ListLeagueMembersResponses, ListLeaguesData, ListLeaguesErrors, ListLeagueSquadsData, ListLeagueSquadsErrors, ListLeagueSquadsResponses, ListLeaguesResponses, ListManagedContestTemplatesData, ListManagedContestTemplatesErrors, ListManagedContestTemplatesResponses, ListNotificationsData, ListNotificationsResponses, ListParticipantsData, ListParticipantsResponses, ListSquadOwnerInvitationsData, ListSquadOwnerInvitationsErrors, ListSquadOwnerInvitationsResponses, LoginUserData, LoginUserErrors, LoginUserResponses, LogoutUserData, LogoutUserErrors, LogoutUserResponses, MarkAllNotificationsReadData, MarkAllNotificationsReadResponses, MarkNotificationReadData, MarkNotificationReadResponses, PauseContestDraftData, PauseContestDraftResponses, PauseDraftData, PauseDraftErrors, PauseDraftResponses, ReactivateAccountData, ReactivateAccountErrors, ReactivateAccountResponses, RecordConsentData, RecordConsentResponses, RefreshTokenData, RefreshTokenErrors, RefreshTokenResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RemoveMemberData, RemoveMemberErrors, RemoveMemberResponses, RemoveSquadOwnerData, RemoveSquadOwnerErrors, RemoveSquadOwnerResponses, ReopenContestData, ReopenContestResponses, ReplaceSquadOwnerData, ReplaceSquadOwnerErrors, ReplaceSquadOwnerResponses, ResolveActionItemData, ResolveActionItemErrors, ResolveActionItemResponses, ResumeContestDraftData, ResumeContestDraftResponses, ResumeDraftData, ResumeDraftErrors, ResumeDraftResponses, RevokeInviteLinkData, RevokeInviteLinkErrors, RevokeInviteLinkResponses, RevokeSquadOwnerInvitationData, RevokeSquadOwnerInvitationErrors, RevokeSquadOwnerInvitationResponses, SendLeagueInvitationsData, SendLeagueInvitationsErrors, SendLeagueInvitationsResponses, SkipSnakeDraftTurnData, SkipSnakeDraftTurnErrors, SkipSnakeDraftTurnResponses, StartDraftData, StartDraftErrors, StartDraftResponses, SubmitContestSelectionData, SubmitContestSelectionErrors, SubmitContestSelectionResponses, UndoContestDraftSelectionData, UndoContestDraftSelectionResponses, UndoSnakeDraftSelectionData, UndoSnakeDraftSelectionErrors, UndoSnakeDraftSelectionResponses, UpdateAccountPreferencesData, UpdateAccountPreferencesErrors, UpdateAccountPreferencesResponses, UpdateAccountProfileData, UpdateAccountProfileErrors, UpdateAccountProfileResponses, UpdateAccountUsernameData, UpdateAccountUsernameErrors, UpdateAccountUsernameResponses, UpdateContestData, UpdateContestEntryData, UpdateContestEntryErrors, UpdateContestEntryResponses, UpdateContestErrors, UpdateContestLockTimeData, UpdateContestLockTimeResponses, UpdateContestResponses, UpdateLeagueDetailsData, UpdateLeagueDetailsErrors, UpdateLeagueDetailsResponses, UpdateLeagueIconData, UpdateLeagueIconErrors, UpdateLeagueIconResponses, UpdateLeagueSquadData, UpdateLeagueSquadErrors, UpdateLeagueSquadResponses, UpdateManagedContestConfigurationData, UpdateManagedContestConfigurationErrors, UpdateManagedContestConfigurationResponses, UpdateParticipantData, UpdateParticipantErrors, UpdateParticipantResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -1657,6 +1657,357 @@ export const adminListAuditLog = <ThrowOnError extends boolean = false>(options?
 export const adminGetAuditEntry = <ThrowOnError extends boolean = false>(options: Options<AdminGetAuditEntryData, ThrowOnError>) => (options.client ?? client).get<AdminGetAuditEntryResponses, AdminGetAuditEntryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/audit-log/{entryId}',
+    ...options
+});
+
+/**
+ * List golf leagues
+ *
+ * Returns golf SportLeague rows with roster size and season count — the global list by league.
+ */
+export const adminListGolfLeagues = <ThrowOnError extends boolean = false>(options?: Options<AdminListGolfLeaguesData, ThrowOnError>) => (options?.client ?? client).get<AdminListGolfLeaguesResponses, AdminListGolfLeaguesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/leagues',
+    ...options
+});
+
+/**
+ * Create a golf league
+ *
+ * Creates a new golf SportLeague (tour), e.g. adding "Champions Tour" — one call, not a migration.
+ */
+export const adminCreateGolfLeague = <ThrowOnError extends boolean = false>(options: Options<AdminCreateGolfLeagueData, ThrowOnError>) => (options.client ?? client).post<AdminCreateGolfLeagueResponses, AdminCreateGolfLeagueErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/leagues',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Update a golf league
+ *
+ * Renames a league, edits its matchKeyword, or deactivates it.
+ */
+export const adminUpdateGolfLeague = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateGolfLeagueData, ThrowOnError>) => (options.client ?? client).patch<AdminUpdateGolfLeagueResponses, AdminUpdateGolfLeagueErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/leagues/{leagueId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get a golf league's roster
+ *
+ * Returns the league's current, league-scoped (not season-scoped) roster.
+ */
+export const adminGetGolfLeagueRoster = <ThrowOnError extends boolean = false>(options: Options<AdminGetGolfLeagueRosterData, ThrowOnError>) => (options.client ?? client).get<AdminGetGolfLeagueRosterResponses, AdminGetGolfLeagueRosterErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/leagues/{leagueId}/roster',
+    ...options
+});
+
+/**
+ * Bulk-patch a golf league roster
+ *
+ * Bulk row patch (worldRanking) — same shape as the tournament field bulk-patch.
+ */
+export const adminUpdateGolfLeagueRoster = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateGolfLeagueRosterData, ThrowOnError>) => (options.client ?? client).patch<AdminUpdateGolfLeagueRosterResponses, AdminUpdateGolfLeagueRosterErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/leagues/{leagueId}/roster',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Add a golfer to a league roster
+ *
+ * Creates a ParticipantLeagueAffiliation row for one golfer.
+ */
+export const adminAddGolfLeagueRosterEntry = <ThrowOnError extends boolean = false>(options: Options<AdminAddGolfLeagueRosterEntryData, ThrowOnError>) => (options.client ?? client).post<AdminAddGolfLeagueRosterEntryResponses, AdminAddGolfLeagueRosterEntryErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/leagues/{leagueId}/roster',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove a golfer from a league roster
+ *
+ * Removes the affiliation row — a golfer leaving the tour entirely, distinct from retiring (Participant.status = INACTIVE).
+ */
+export const adminRemoveGolfLeagueRosterEntry = <ThrowOnError extends boolean = false>(options: Options<AdminRemoveGolfLeagueRosterEntryData, ThrowOnError>) => (options.client ?? client).delete<AdminRemoveGolfLeagueRosterEntryResponses, AdminRemoveGolfLeagueRosterEntryErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/leagues/{leagueId}/roster/{participantId}',
+    ...options
+});
+
+/**
+ * Preview a golf league roster upload
+ *
+ * Dry run. Resolves rows to existing Participants and reports unresolved ones — never silently creates a golfer record from an upload row.
+ */
+export const adminPreviewGolfLeagueRosterUpload = <ThrowOnError extends boolean = false>(options: Options<AdminPreviewGolfLeagueRosterUploadData, ThrowOnError>) => (options.client ?? client).post<AdminPreviewGolfLeagueRosterUploadResponses, AdminPreviewGolfLeagueRosterUploadErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/leagues/{leagueId}/roster/preview',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Apply a golf league roster upload
+ *
+ * Applies a previewed upload. 422 when any row is unresolved.
+ */
+export const adminApplyGolfLeagueRosterUpload = <ThrowOnError extends boolean = false>(options: Options<AdminApplyGolfLeagueRosterUploadData, ThrowOnError>) => (options.client ?? client).post<AdminApplyGolfLeagueRosterUploadResponses, AdminApplyGolfLeagueRosterUploadErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/leagues/{leagueId}/roster/apply',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List golf seasons
+ *
+ * Global list by league and season — pass sportLeagueId to see just one league's seasons.
+ */
+export const adminListGolfSeasons = <ThrowOnError extends boolean = false>(options?: Options<AdminListGolfSeasonsData, ThrowOnError>) => (options?.client ?? client).get<AdminListGolfSeasonsResponses, AdminListGolfSeasonsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/seasons',
+    ...options
+});
+
+/**
+ * Create a golf season
+ *
+ * Creates a season linked to a golf SportLeague. 409 SEASON_YEAR_ALREADY_EXISTS if that league already has a season for the given year.
+ */
+export const adminCreateGolfSeason = <ThrowOnError extends boolean = false>(options: Options<AdminCreateGolfSeasonData, ThrowOnError>) => (options.client ?? client).post<AdminCreateGolfSeasonResponses, AdminCreateGolfSeasonErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/seasons',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get golf season detail
+ *
+ * Season detail + tournament count + isCurrent (derived from the parent league's currentSeasonId).
+ */
+export const adminGetGolfSeason = <ThrowOnError extends boolean = false>(options: Options<AdminGetGolfSeasonData, ThrowOnError>) => (options.client ?? client).get<AdminGetGolfSeasonResponses, AdminGetGolfSeasonErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/seasons/{seasonId}',
+    ...options
+});
+
+/**
+ * Update a golf season
+ */
+export const adminUpdateGolfSeason = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateGolfSeasonData, ThrowOnError>) => (options.client ?? client).patch<AdminUpdateGolfSeasonResponses, AdminUpdateGolfSeasonErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/seasons/{seasonId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Set a season as its league's current season
+ *
+ * A single atomic write on the parent SportLeague row — no window where a league has zero or two current seasons.
+ */
+export const adminSetCurrentGolfSeason = <ThrowOnError extends boolean = false>(options: Options<AdminSetCurrentGolfSeasonData, ThrowOnError>) => (options.client ?? client).post<AdminSetCurrentGolfSeasonResponses, AdminSetCurrentGolfSeasonErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/seasons/{seasonId}/set-current',
+    ...options
+});
+
+/**
+ * Get a tournament's round schedule
+ *
+ * The SportEventRound schedule rows (plans/124 §4.10) — round number, scheduled date, scheduled end. Ordered by roundNumber ascending, not by date.
+ */
+export const adminGetGolfTournamentRounds = <ThrowOnError extends boolean = false>(options: Options<AdminGetGolfTournamentRoundsData, ThrowOnError>) => (options.client ?? client).get<AdminGetGolfTournamentRoundsResponses, AdminGetGolfTournamentRoundsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/rounds',
+    ...options
+});
+
+/**
+ * Reschedule a tournament's rounds
+ *
+ * Bulk row patch — how a rain delay or an irregular schedule gets recorded. Only reschedules existing rounds; 404 ROUND_NOT_FOUND for a roundNumber this event has no row for.
+ */
+export const adminUpdateGolfTournamentRounds = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateGolfTournamentRoundsData, ThrowOnError>) => (options.client ?? client).patch<AdminUpdateGolfTournamentRoundsResponses, AdminUpdateGolfTournamentRoundsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/rounds',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List golf tournaments
+ *
+ * Filters: status, search (case-insensitive name substring). Returns the canonical AdminGolfTournamentDto per row.
+ */
+export const adminListGolfTournaments = <ThrowOnError extends boolean = false>(options?: Options<AdminListGolfTournamentsData, ThrowOnError>) => (options?.client ?? client).get<AdminListGolfTournamentsResponses, AdminListGolfTournamentsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/tournaments',
+    ...options
+});
+
+/**
+ * Create a manual golf tournament
+ *
+ * Server assigns providerId=manual-admin, a generated externalId, status=SCHEDULED, syncScope=NONE; creates the round schedule (ensureSportEventRounds), default tiers (ensureDefaultGolfTiers), and resolves/creates the LeagueEvent identity by (sportLeagueId, name). 422 SEASON_SPORT_MISMATCH if seasonId resolves to a non-golf season.
+ */
+export const adminCreateGolfTournament = <ThrowOnError extends boolean = false>(options: Options<AdminCreateGolfTournamentData, ThrowOnError>) => (options.client ?? client).post<AdminCreateGolfTournamentResponses, AdminCreateGolfTournamentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/tournaments',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a golf tournament
+ *
+ * Hard delete. 409 EVENT_HAS_CONTESTS when any Contest references it.
+ */
+export const adminDeleteGolfTournament = <ThrowOnError extends boolean = false>(options: Options<AdminDeleteGolfTournamentData, ThrowOnError>) => (options.client ?? client).delete<AdminDeleteGolfTournamentResponses, AdminDeleteGolfTournamentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}',
+    ...options
+});
+
+/**
+ * Get a golf tournament
+ *
+ * Canonical DTO plus a workflow block: current status and the server-computed set of allowed next transitions.
+ */
+export const adminGetGolfTournament = <ThrowOnError extends boolean = false>(options: Options<AdminGetGolfTournamentData, ThrowOnError>) => (options.client ?? client).get<AdminGetGolfTournamentResponses, AdminGetGolfTournamentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}',
+    ...options
+});
+
+/**
+ * Update a golf tournament
+ *
+ * Partial update, minus seasonId (immutable after creation). 409 EVENT_NOT_ADMIN_MANAGED when the event is provider-owned (syncScope=FULL).
+ */
+export const adminUpdateGolfTournament = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateGolfTournamentData, ThrowOnError>) => (options.client ?? client).patch<AdminUpdateGolfTournamentResponses, AdminUpdateGolfTournamentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Transition a golf tournament's status
+ *
+ * Routes to EventLifecycleService.applySportEventStatusTransition with a ROOT_ADMIN actor — the same function the lifecycle scheduler calls with a SYSTEM actor. 422 SPORT_EVENT_INVALID_TRANSITION for an undeclared jump.
+ */
+export const adminTransitionGolfTournament = <ThrowOnError extends boolean = false>(options: Options<AdminTransitionGolfTournamentData, ThrowOnError>) => (options.client ?? client).post<AdminTransitionGolfTournamentResponses, AdminTransitionGolfTournamentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/transitions',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get a golf tournament's field
+ *
+ * Field rows with participant identity, isActive/inactiveReason, world rank, odds, seed, price, and isLeagueRosterMember (flags an out-of-roster invite).
+ */
+export const adminGetGolfTournamentField = <ThrowOnError extends boolean = false>(options: Options<AdminGetGolfTournamentFieldData, ThrowOnError>) => (options.client ?? client).get<AdminGetGolfTournamentFieldResponses, AdminGetGolfTournamentFieldErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/field',
+    ...options
+});
+
+/**
+ * Bulk-patch a golf tournament's field entries
+ *
+ * One request per Save on the field grid. price writes SportEventParticipantGolfValuation.price with priceAssignedSource=MANUAL. 404 FIELD_ENTRY_NOT_FOUND for a sportEventParticipantId not on this tournament.
+ */
+export const adminUpdateGolfFieldEntries = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateGolfFieldEntriesData, ThrowOnError>) => (options.client ?? client).patch<AdminUpdateGolfFieldEntriesResponses, AdminUpdateGolfFieldEntriesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/field',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Seed a golf tournament's field from its league roster
+ *
+ * Creates a SportEventParticipant per active affiliated Participant, deriving seedNumber/oddsToWin (plans/124 §4.7). Idempotent — skips any golfer already in the field. 409 TOURNAMENT_HAS_NO_SEASON if the tournament has no season to resolve a league from.
+ */
+export const adminSeedGolfTournamentField = <ThrowOnError extends boolean = false>(options: Options<AdminSeedGolfTournamentFieldData, ThrowOnError>) => (options.client ?? client).post<AdminSeedGolfTournamentFieldResponses, AdminSeedGolfTournamentFieldErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/field/seed',
+    ...options
+});
+
+/**
+ * Bulk-add golfers to a tournament's field
+ *
+ * One call for both the league-browse multi-select and free-text single-golfer search. Accepts golfers from any league's roster, or none — the deliberate path for a cross-league invite. Idempotent — skips any participantId already in the field.
+ */
+export const adminBulkAddGolfFieldEntries = <ThrowOnError extends boolean = false>(options: Options<AdminBulkAddGolfFieldEntriesData, ThrowOnError>) => (options.client ?? client).post<AdminBulkAddGolfFieldEntriesResponses, AdminBulkAddGolfFieldEntriesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/field/bulk-add',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove a golfer from a tournament's field
+ *
+ * 409 FIELD_ENTRY_HAS_PICKS when a ContestEntryPick references it — withdraw (isActive=false) instead of removing.
+ */
+export const adminRemoveGolfFieldEntry = <ThrowOnError extends boolean = false>(options: Options<AdminRemoveGolfFieldEntryData, ThrowOnError>) => (options.client ?? client).delete<AdminRemoveGolfFieldEntryResponses, AdminRemoveGolfFieldEntryErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/field/{sportEventParticipantId}',
     ...options
 });
 

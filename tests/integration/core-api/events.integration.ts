@@ -84,7 +84,7 @@ describe('events routes', () => {
       data: {
         sportEventId: eligibleEventId,
         participantId,
-        status: 'ACTIVE',
+        isActive: true,
       },
     });
 
@@ -192,7 +192,7 @@ describe('events routes', () => {
       data: {
         sportEventId: lockedEventId,
         participantId,
-        status: 'ACTIVE',
+        isActive: true,
       },
     });
 

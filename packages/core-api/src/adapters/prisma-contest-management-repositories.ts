@@ -15,6 +15,7 @@ import type {
   ContestCoreSummary,
   ContestEntryAggregationRule,
   ContestPrizeDefinition,
+  GolfParticipantInactiveReason,
   ParticipantContestScoringRule,
   SportEventParticipant,
   SportEventParticipantValuation,
@@ -106,7 +107,8 @@ export class PrismaSportEventParticipantRepository
       data: {
         sportEventId: participant.sportEventId,
         participantId: participant.participantId,
-        status: participant.status,
+        isActive: participant.isActive,
+        inactiveReason: participant.inactiveReason,
         worldRanking: participant.worldRanking,
         oddsToWin: participant.oddsToWin,
         seedNumber: participant.seedNumber,
@@ -123,7 +125,8 @@ export class PrismaSportEventParticipantRepository
     const row = await this.prisma.sportEventParticipant.update({
       where: { id },
       data: {
-        ...(updates.status !== undefined && { status: updates.status }),
+        ...(updates.isActive !== undefined && { isActive: updates.isActive }),
+        ...(updates.inactiveReason !== undefined && { inactiveReason: updates.inactiveReason }),
         ...(updates.worldRanking !== undefined && { worldRanking: updates.worldRanking }),
         ...(updates.oddsToWin !== undefined && { oddsToWin: updates.oddsToWin }),
         ...(updates.seedNumber !== undefined && { seedNumber: updates.seedNumber }),
@@ -601,7 +604,8 @@ function mapSportEventParticipant(row: {
   id: string;
   sportEventId: string;
   participantId: string;
-  status: string | null;
+  isActive: boolean;
+  inactiveReason: string | null;
   worldRanking: number | null;
   oddsToWin: { toNumber(): number } | number | null;
   seedNumber: number | null;
@@ -617,7 +621,8 @@ function mapSportEventParticipant(row: {
     id: row.id,
     sportEventId: row.sportEventId,
     participantId: row.participantId,
-    status: row.status ?? undefined,
+    isActive: row.isActive,
+    inactiveReason: (row.inactiveReason as GolfParticipantInactiveReason) ?? undefined,
     worldRanking: row.worldRanking ?? undefined,
     oddsToWin: oddsToWin ?? undefined,
     seedNumber: row.seedNumber ?? undefined,

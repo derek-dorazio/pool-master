@@ -21,7 +21,6 @@ import type {
   ContestConfigTemplate,
   ContestConfiguration,
   GolfContestConfig,
-  PersistedGolfContestTierDefinition,
   TournamentFormat,
 } from '@poolmaster/shared/domain';
 import {
@@ -147,12 +146,7 @@ export class ContestManagementService {
         resolvedConfiguration.configuration.maxEntriesPerSquad === null
           ? null
           : resolvedConfiguration.configuration.maxEntriesPerSquad,
-      ...await deriveLegacyPersistenceFields(
-        resolvedConfiguration.configuration,
-        input.sportEventId,
-        this.sportEventParticipantRepo,
-        this.sportEventParticipantValuationRepo,
-      ),
+      ...await deriveLegacyPersistenceFields(resolvedConfiguration.configuration),
     });
 
     await syncDerivedScoring(
@@ -271,12 +265,7 @@ export class ContestManagementService {
       locksAt: input.locksAt ? new Date(input.locksAt) : undefined,
       maxEntriesPerSquad:
         input.maxEntriesPerSquad === null ? null : input.maxEntriesPerSquad,
-      ...await deriveLegacyPersistenceFields(
-        input,
-        contest.sportEventId,
-        this.sportEventParticipantRepo,
-        this.sportEventParticipantValuationRepo,
-      ),
+      ...await deriveLegacyPersistenceFields(input),
     });
 
     const refreshedConfiguration =
@@ -435,20 +424,13 @@ function assertTierConfigurationFitsParticipantCount(
 
 async function deriveLegacyPersistenceFields(
   configuration: ContestConfigurationRequest,
-  sportEventId: string,
-  sportEventParticipantRepo: SportEventParticipantRepository,
-  sportEventParticipantValuationRepo: SportEventParticipantValuationRepository,
 ): Promise<Partial<ContestConfiguration>> {
+  // Tiers are event-owned, never a per-contest override (plans/124 §4.6) —
+  // golf-tier-service.getEffectiveTiersForContest is the one path to a
+  // contest's effective tiers now; this function no longer computes or
+  // persists a contest-specific tierConfig snapshot.
   if (configuration.mode === GolfContestConfigMode.GOLF_TIERED) {
-    const tierConfig = await derivePersistedTierConfig(
-      configuration,
-      sportEventId,
-      sportEventParticipantRepo,
-      sportEventParticipantValuationRepo,
-    );
-
     return {
-      tierConfig,
       pickCount: configuration.tiers.reduce(
         (total, tier) => total + tier.pickCount,
         0,
@@ -465,136 +447,6 @@ async function deriveLegacyPersistenceFields(
     ),
     isExclusive: false,
   };
-}
-
-interface TierCandidate {
-  sportEventParticipantId: string;
-  participantId: string;
-  odds?: number;
-  ranking?: number;
-}
-
-async function derivePersistedTierConfig(
-  configuration: Extract<ContestConfigurationRequest, { mode: 'GOLF_TIERED' }>,
-  sportEventId: string,
-  sportEventParticipantRepo: SportEventParticipantRepository,
-  sportEventParticipantValuationRepo: SportEventParticipantValuationRepository,
-): Promise<PersistedGolfContestTierDefinition[]> {
-  const participants = await sportEventParticipantRepo.findBySportEvent(sportEventId);
-
-  if (participants.length === 0) {
-    return configuration.tiers.map((tier) => ({
-      ...tier,
-      participantIds: [],
-    }));
-  }
-
-  const tierCandidates = await Promise.all(
-    participants.map(async (participant) => {
-      return {
-        sportEventParticipantId: participant.id,
-        participantId: participant.participantId,
-        odds: participant.oddsToWin,
-        ranking: participant.worldRanking,
-      } satisfies TierCandidate;
-    }),
-  );
-
-  const orderedCandidates = [...tierCandidates].sort((left, right) =>
-    compareTierCandidates(left, right, configuration.tierSource),
-  );
-  const persistedTiers = configuration.tiers.map((tier, index) => ({
-    ...tier,
-    tierId: tier.tierKey,
-    tierName: tier.label,
-    tierNumber: index + 1,
-    picksFromTier: tier.pickCount,
-    participantIds: [] as string[],
-  }));
-
-  for (const [index, candidate] of orderedCandidates.entries()) {
-    const orderIndex = index + 1;
-    const matchingTier = persistedTiers.find((tier) => {
-      const endPosition = tier.endPosition ?? orderedCandidates.length;
-      return orderIndex >= tier.startPosition && orderIndex <= endPosition;
-    }) ?? persistedTiers[persistedTiers.length - 1];
-
-    matchingTier?.participantIds?.push(candidate.participantId);
-
-    const valuationSource = `AUTO_${configuration.tierSource}`;
-    const existingValuations =
-      await sportEventParticipantValuationRepo.findBySportEventParticipant(
-        candidate.sportEventParticipantId,
-      );
-    const existing = existingValuations.find(
-      (valuation) => valuation.valuationSource === valuationSource,
-    );
-    const valuationPayload = {
-      orderIndex,
-      tier: matchingTier?.tierId ?? matchingTier?.tierName ?? matchingTier?.label,
-      valuationSource,
-    };
-
-    if (existing) {
-      await sportEventParticipantValuationRepo.update(existing.id, valuationPayload);
-    } else {
-      await sportEventParticipantValuationRepo.create({
-        sportEventParticipantId: candidate.sportEventParticipantId,
-        price: undefined,
-        ...valuationPayload,
-      });
-    }
-  }
-
-  return persistedTiers;
-}
-
-function compareTierCandidates(
-  left: TierCandidate,
-  right: TierCandidate,
-  tierSource: 'ODDS' | 'WORLD_RANK',
-): number {
-  if (tierSource === 'WORLD_RANK') {
-    const rankingDiff = compareNullableNumbers(left.ranking, right.ranking);
-    if (rankingDiff !== 0) {
-      return rankingDiff;
-    }
-
-    const oddsDiff = compareNullableNumbers(left.odds, right.odds);
-    if (oddsDiff !== 0) {
-      return oddsDiff;
-    }
-  } else {
-    const oddsDiff = compareNullableNumbers(left.odds, right.odds);
-    if (oddsDiff !== 0) {
-      return oddsDiff;
-    }
-
-    const rankingDiff = compareNullableNumbers(left.ranking, right.ranking);
-    if (rankingDiff !== 0) {
-      return rankingDiff;
-    }
-  }
-
-  return left.participantId.localeCompare(right.participantId, undefined, {
-    sensitivity: 'base',
-  });
-}
-
-function compareNullableNumbers(
-  left: number | undefined,
-  right: number | undefined,
-): number {
-  if (left == null && right == null) {
-    return 0;
-  }
-  if (left == null) {
-    return 1;
-  }
-  if (right == null) {
-    return -1;
-  }
-  return left - right;
 }
 
 async function syncDerivedScoring(

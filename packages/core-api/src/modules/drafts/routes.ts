@@ -9,6 +9,7 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import {
+  deriveLegacyParticipantStatus,
   DraftStatus,
   SelectionType,
   SquadMembershipStatus,
@@ -302,7 +303,7 @@ function deriveTierConfig(
     }));
 }
 
-async function loadDraftContext(prisma: PrismaClient, contestId: string): Promise<DraftContext | null> {
+export async function loadDraftContext(prisma: PrismaClient, contestId: string): Promise<DraftContext | null> {
   const contest = await prisma.contest.findUnique({
     where: { id: contestId },
     select: {
@@ -374,8 +375,8 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
     squadMemberships,
     selectionParticipants: sportEventParticipants.map((record) => {
       const valuation = record.valuations[0];
-      const normalizedStatus = record.status?.toUpperCase?.();
-      const isAvailable = !normalizedStatus || !['INACTIVE', 'REMOVED', 'WITHDRAWN'].includes(normalizedStatus);
+      const legacyStatus = deriveLegacyParticipantStatus(record.isActive, record.inactiveReason);
+      const isAvailable = record.isActive;
 
       return {
         sportEventParticipantId: record.id,
@@ -383,7 +384,7 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
         participantName: record.participant.name,
         position: record.participant.position,
         teamAffiliation: record.participant.teamAffiliation,
-        status: record.status,
+        status: legacyStatus,
         price: valuation?.price ?? undefined,
         ranking: record.worldRanking ?? undefined,
         tier: valuation?.tier ?? null,
@@ -391,7 +392,7 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
         isAvailable,
         unavailableReason: isAvailable
           ? undefined
-          : `SportEventParticipant ${record.id} is unavailable with status ${record.status ?? 'UNKNOWN'}`,
+          : `SportEventParticipant ${record.id} is unavailable with status ${legacyStatus}`,
       };
     }).sort((a, b) => {
       const orderDiff = (a.orderIndex ?? Number.MAX_SAFE_INTEGER) - (b.orderIndex ?? Number.MAX_SAFE_INTEGER);

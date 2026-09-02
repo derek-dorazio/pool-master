@@ -206,7 +206,10 @@ export class GolfContestSettlementService {
         participant: true,
         golfStanding: true,
         golfRounds: {
-          orderBy: { round: 'asc' },
+          orderBy: { sportEventRound: { roundNumber: 'asc' } },
+          include: {
+            sportEventRound: { select: { roundNumber: true } },
+          },
         },
       },
       orderBy: [{ seedNumber: 'asc' }, { createdAt: 'asc' }],
@@ -219,7 +222,8 @@ export class GolfContestSettlementService {
         participantId: row.participantId,
         name: row.participant.name,
         shortName: row.participant.shortName ?? null,
-        participantStatus: row.status ?? null,
+        isActive: row.isActive,
+        inactiveReason: row.inactiveReason,
         worldRanking: row.worldRanking ?? null,
         oddsToWin: decimalToNumber(row.oddsToWin),
         seedNumber: row.seedNumber ?? null,
@@ -231,7 +235,9 @@ export class GolfContestSettlementService {
         position: standing?.position ?? null,
         displayPosition: standing?.displayPosition ?? null,
         asOf: standing?.asOf ?? null,
-        rounds: buildGolfRoundColumns(row.golfRounds),
+        rounds: buildGolfRoundColumns(
+          row.golfRounds.map((round) => ({ ...round, round: round.sportEventRound.roundNumber })),
+        ),
       };
     });
   }

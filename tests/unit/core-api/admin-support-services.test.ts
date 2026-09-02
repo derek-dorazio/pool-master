@@ -8,7 +8,7 @@ import {
 import { HealthService } from '../../../packages/core-api/src/modules/admin/health-service';
 import { IngestionConfigService } from '../../../packages/core-api/src/modules/admin/ingestion-config-service';
 import { PollConfigService } from '../../../packages/core-api/src/modules/admin/poll-config-service';
-import { ProviderService } from '../../../packages/core-api/src/modules/admin/provider-service';
+import { ProviderService, SportEventSyncScopeError } from '../../../packages/core-api/src/modules/admin/provider-service';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import { UserNotFoundError, UserService } from '../../../packages/core-api/src/modules/admin/user-service';
 import { Sport } from '../../../packages/shared/domain';
@@ -542,6 +542,11 @@ describe('admin support services', () => {
             create: providerSyncRunCreate,
             update: providerSyncRunUpdate,
           },
+          // pool-master-cgb — no local SportEvent row exists yet for this
+          // manual sync target, so the syncScope guard is a permissive no-op.
+          sportEvent: {
+            findUnique: jest.fn().mockResolvedValue(null),
+          },
         } as any,
         registry as any,
         scheduler as any,
@@ -599,5 +604,95 @@ describe('admin support services', () => {
       }
     });
 
+    describe('pool-master-cgb: manual sync-trigger syncScope guard', () => {
+      function buildManualSyncService(sportEventFindUnique: jest.Mock) {
+        const registry = {
+          getProvider: jest.fn().mockReturnValue({
+            providerId: 'mock-contest-feed',
+            providerName: 'Mock Contest Feed Provider',
+            sportsCovered: [Sport.GOLF],
+          }),
+        };
+        const scheduler = { runEventSync: jest.fn().mockResolvedValue([]) };
+        const ingestionConfigReader = {
+          getConfig: jest.fn().mockResolvedValue({ scheduledSports: [Sport.GOLF] }),
+          getPerSportConfig: jest.fn(),
+        };
+        return new ProviderService(
+          {
+            providerSyncRun: { create: jest.fn().mockResolvedValue({}), update: jest.fn() },
+            sportEvent: { findUnique: sportEventFindUnique },
+          } as any,
+          registry as any,
+          scheduler as any,
+          createLogger() as any,
+          ingestionConfigReader as any,
+        );
+      }
+
+      it('pool-master-cgb: rejects every feed when the target event has syncScope NONE', async () => {
+        const service = buildManualSyncService(
+          jest.fn().mockResolvedValue({ syncScope: 'NONE' }),
+        );
+
+        await expect(
+          service.syncEventData(
+            { sport: Sport.GOLF, eventId: 'manual-event-1', feeds: ['EVENTLIVESCORES'] },
+            'admin-1',
+            'admin@example.com',
+          ),
+        ).rejects.toBeInstanceOf(SportEventSyncScopeError);
+      });
+
+      it('pool-master-cgb: rejects EVENTPARTICIPANTS but allows EVENTLIVESCORES/EVENTRESULTS when syncScope is SCORES_ONLY', async () => {
+        const rejecting = buildManualSyncService(
+          jest.fn().mockResolvedValue({ syncScope: 'SCORES_ONLY' }),
+        );
+        await expect(
+          rejecting.syncEventData(
+            { sport: Sport.GOLF, eventId: 'linked-event', feeds: ['EVENTPARTICIPANTS'] },
+            'admin-1',
+            'admin@example.com',
+          ),
+        ).rejects.toBeInstanceOf(SportEventSyncScopeError);
+
+        const allowing = buildManualSyncService(
+          jest.fn().mockResolvedValue({ syncScope: 'SCORES_ONLY' }),
+        );
+        await expect(
+          allowing.syncEventData(
+            { sport: Sport.GOLF, eventId: 'linked-event', feeds: ['EVENTLIVESCORES', 'EVENTRESULTS'] },
+            'admin-1',
+            'admin@example.com',
+          ),
+        ).resolves.toBeDefined();
+      });
+
+      it('pool-master-cgb: allows every feed when syncScope is FULL', async () => {
+        const service = buildManualSyncService(
+          jest.fn().mockResolvedValue({ syncScope: 'FULL' }),
+        );
+
+        await expect(
+          service.syncEventData(
+            { sport: Sport.GOLF, eventId: 'legacy-event', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
+            'admin-1',
+            'admin@example.com',
+          ),
+        ).resolves.toBeDefined();
+      });
+
+      it('pool-master-cgb: is a permissive no-op when no local SportEvent row exists yet for the target', async () => {
+        const service = buildManualSyncService(jest.fn().mockResolvedValue(null));
+
+        await expect(
+          service.syncEventData(
+            { sport: Sport.GOLF, eventId: 'not-yet-persisted', feeds: ['EVENTPARTICIPANTS'] },
+            'admin-1',
+            'admin@example.com',
+          ),
+        ).resolves.toBeDefined();
+      });
+    });
   });
 });

@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
+import { SportEventStatus, SportEventSyncScope } from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './provider-registry';
 import type { IngestionScheduledEventReader } from './ingestion-scheduler';
 
@@ -70,14 +71,15 @@ function toFeedWhere(
 ) {
   if (feed === 'EVENTRESULTS') {
     return {
-      status: { in: ['COMPLETED', 'OFFICIAL'] },
+      status: { in: [SportEventStatus.COMPLETED] },
       updatedAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
+      syncScope: { in: [SportEventSyncScope.FULL, SportEventSyncScope.SCORES_ONLY] },
     };
   }
 
   if (feed === 'EVENTPARTICIPANTS') {
     return {
-      status: 'SCHEDULED',
+      status: SportEventStatus.SCHEDULED,
       releaseAt: { lte: now },
       fieldLocked: false,
       fieldLocksAt: { gt: now },
@@ -85,11 +87,13 @@ function toFeedWhere(
         gte: from ?? now,
         ...(to ? { lte: to } : {}),
       },
+      syncScope: SportEventSyncScope.FULL,
     };
   }
 
   return {
-    status: { in: ['IN_PROGRESS'] },
+    status: { in: [SportEventStatus.IN_PROGRESS] },
     sportEventParticipants: { some: {} },
+    syncScope: { in: [SportEventSyncScope.FULL, SportEventSyncScope.SCORES_ONLY] },
   };
 }

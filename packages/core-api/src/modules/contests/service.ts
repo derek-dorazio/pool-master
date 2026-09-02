@@ -24,6 +24,7 @@ import type {
 import {
   ContestStatus,
   ContestFormat,
+  deriveLegacyParticipantStatus,
   ScoringEngine,
   SelectionType,
   Sport,
@@ -456,7 +457,10 @@ export class ContestService {
           sportEventParticipantId: pick.sportEventParticipantId,
           participantId: pick.sportEventParticipant.participantId,
           participantName: pick.sportEventParticipant.participant.name,
-          participantStatus: pick.sportEventParticipant.status ?? null,
+          participantStatus: deriveLegacyParticipantStatus(
+            pick.sportEventParticipant.isActive,
+            pick.sportEventParticipant.inactiveReason,
+          ),
           position: pick.sportEventParticipant.participant.position ?? null,
           teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
           pickedAt: pick.pickedAt,
@@ -1071,7 +1075,10 @@ export class ContestService {
         sportEventParticipantId: pick.sportEventParticipantId,
         participantId: pick.sportEventParticipant.participantId,
         participantName: pick.sportEventParticipant.participant.name,
-        participantStatus: pick.sportEventParticipant.status ?? null,
+        participantStatus: deriveLegacyParticipantStatus(
+          pick.sportEventParticipant.isActive,
+          pick.sportEventParticipant.inactiveReason,
+        ),
         position: pick.sportEventParticipant.participant.position ?? null,
         teamAffiliation: pick.sportEventParticipant.participant.teamAffiliation ?? null,
         pickedAt: pick.pickedAt,
@@ -1089,7 +1096,8 @@ export class ContestService {
       select: {
         id: true,
         participantId: true,
-        status: true,
+        isActive: true,
+        inactiveReason: true,
         worldRanking: true,
         oddsToWin: true,
         seedNumber: true,
@@ -1114,13 +1122,13 @@ export class ContestService {
         },
         golfRounds: {
           select: {
-            round: true,
             strokes: true,
             scoreToPar: true,
             thru: true,
             status: true,
+            sportEventRound: { select: { roundNumber: true } },
           },
-          orderBy: { round: 'asc' },
+          orderBy: { sportEventRound: { roundNumber: 'asc' } },
         },
       },
       orderBy: [
@@ -1139,7 +1147,8 @@ export class ContestService {
         participantId: row.participantId,
         name: row.participant.name,
         shortName: row.participant.shortName ?? null,
-        participantStatus: row.status ?? null,
+        isActive: row.isActive,
+        inactiveReason: row.inactiveReason,
         worldRanking: row.worldRanking ?? null,
         oddsToWin: decimalToNumber(row.oddsToWin),
         seedNumber: row.seedNumber ?? null,
@@ -1153,7 +1162,9 @@ export class ContestService {
         position: standing?.position ?? null,
         displayPosition: standing?.displayPosition ?? null,
         asOf: standing?.asOf ?? null,
-        rounds: buildGolfRoundColumns(row.golfRounds),
+        rounds: buildGolfRoundColumns(
+          row.golfRounds.map((round) => ({ ...round, round: round.sportEventRound.roundNumber })),
+        ),
       };
     });
   }

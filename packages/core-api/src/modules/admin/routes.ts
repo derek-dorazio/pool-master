@@ -27,6 +27,14 @@ import { createContestTemplateAdminHandlers } from './contest-template-handler';
 import { AdminEventBrowserService } from './event-browser-service';
 import { createEventBrowserAdminHandlers } from './event-browser-handler';
 import { auditRoutes } from './audit-routes';
+import { golfAdminRoutes } from './golf/routes';
+import { SportLeagueService } from '../sport-catalog/sport-league-service';
+import { SeasonService } from '../sport-catalog/season-service';
+import { GolfRoundScheduleService } from '../golf/golf-round-schedule-service';
+import { GolfTierService } from '../golf/golf-tier-service';
+import { GolfTournamentService } from '../golf/golf-tournament-service';
+import { GolfFieldService } from '../golf/golf-field-service';
+import { EventLifecycleService } from '../events/event-lifecycle-service';
 import {
   AdminEventListQuerySchema,
   AdminEventListResponseSchema,
@@ -107,6 +115,7 @@ export interface AdminModuleOptions {
   providerRegistry?: ProviderRegistry;
   ingestionConfigService?: IngestionConfigService;
   pollConfigService?: PollConfigService;
+  eventLifecycleService?: EventLifecycleService;
 }
 
 export async function adminModule(
@@ -147,6 +156,19 @@ export async function adminModule(
     fastify.log,
   );
   const adminEventBrowserService = new AdminEventBrowserService(prisma, fastify.log);
+  const sportLeagueService = new SportLeagueService(prisma, fastify.log);
+  const seasonService = new SeasonService(prisma, fastify.log);
+  const golfRoundScheduleService = new GolfRoundScheduleService(prisma, fastify.log);
+  const golfTierService = new GolfTierService(prisma, fastify.log);
+  const golfTournamentService = new GolfTournamentService(
+    prisma,
+    seasonService,
+    golfRoundScheduleService,
+    golfTierService,
+    fastify.log,
+  );
+  const eventLifecycleService = opts.eventLifecycleService ?? new EventLifecycleService(prisma, fastify.log);
+  const golfFieldService = new GolfFieldService(prisma, sportLeagueService, undefined, fastify.log);
 
   // --- Handlers ---
   const user = createUserHandlers(userService);
@@ -400,7 +422,7 @@ export async function adminModule(
       body: zodToJsonSchema(EventSyncRequestSchema),
       response: withAdminErrorResponses({
         202: zodToJsonSchema(ProviderManualSyncSubmissionResponseSchema),
-      }, [404, 422]),
+      }, [404, 409, 422]),
     },
     handler: provider.syncEventData,
   });
@@ -684,6 +706,15 @@ export async function adminModule(
   // Permission: platform.config
 
   await fastify.register(auditRoutes);
+  await fastify.register(golfAdminRoutes, {
+    prefix: '/sports/golf',
+    sportLeagueService,
+    golfRoundScheduleService,
+    golfTournamentService,
+    eventLifecycleService,
+    golfFieldService,
+    seasonService,
+  });
 
   registerPlatformConfigRoutes(fastify, {
     pollConfig: pollConfigService,

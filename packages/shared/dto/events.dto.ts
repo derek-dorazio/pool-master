@@ -1,20 +1,16 @@
 import { z } from 'zod';
 import {
+  GolfParticipantInactiveReason,
   ParticipantType,
   Sport,
   SportCategory,
+  SportEventStatus,
   TournamentFormat,
 } from '@poolmaster/shared/domain';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 
-export const EventStatusDtoSchema = z.enum([
-  'SCHEDULED',
-  'IN_PROGRESS',
-  'COMPLETED',
-  'OFFICIAL',
-  'CANCELLED',
-  'POSTPONED',
-]);
+/** Derived from the domain SportEventStatus constant (plans/124 §4.1) — `OFFICIAL` dropped. */
+export const EventStatusDtoSchema = z.nativeEnum(SportEventStatus);
 export type EventStatusDto = z.infer<typeof EventStatusDtoSchema>;
 
 export const EventReadinessStatusDtoSchema = z.enum([
@@ -151,7 +147,8 @@ export const SportEventParticipantDtoSchema = z.object({
   id: z.string().describe('Sport-event-participant identifier.'),
   sportEventId: z.string().describe('Owning sport-event identifier.'),
   participantId: z.string().describe('Canonical participant identifier (the across-events Participant row).'),
-  status: z.string().nullable().describe('Provider-emitted per-event participant status (ACTIVE, WITHDRAWN, etc.); null when unknown.'),
+  isActive: z.boolean().describe('Whether this golfer is currently eligible/available for this tournament.'),
+  inactiveReason: z.nativeEnum(GolfParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."'),
   worldRanking: z.number().int().nullable().describe('Latest provider-scoped global world-ranking snapshot copied onto this event participant; null when not available.'),
   oddsToWin: z.number().nullable().describe('Event-scoped implied odds-to-win snapshot (decimal); null when not provided.'),
   seedNumber: z.number().int().nullable().describe('Event-relative seed number (e.g., NCAA tournament seed); null when not provided.'),

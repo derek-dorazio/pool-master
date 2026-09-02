@@ -32,56 +32,6 @@ function buildInProgressEvent(): SportEvent {
   };
 }
 
-function buildStartedContestCandidate() {
-  return {
-    id: 'contest-1',
-    leagueId: 'league-1',
-    name: 'Masters Pick 6',
-    league: {
-      name: 'Mathworks',
-      leagueCode: 'MATHWORKS',
-      memberships: [
-        {
-          role: 'COMMISSIONER',
-          user: {
-            id: 'commissioner-1',
-            email: 'commissioner@example.com',
-            firstName: 'Chris',
-            lastName: 'Commissioner',
-            username: 'commissioner',
-            isActive: true,
-          },
-        },
-      ],
-    },
-    sportEvent: {
-      name: 'Manual Test Golf Tournament',
-      startDate: new Date('2026-05-02T20:00:00.000Z'),
-    },
-    entries: [
-      {
-        id: 'entry-1',
-        name: 'Entry 1',
-        squad: {
-          name: 'Derek Team',
-          memberships: [
-            {
-              user: {
-                id: 'member-1',
-                email: 'member@example.com',
-                firstName: 'Mia',
-                lastName: 'Member',
-                username: 'member',
-                isActive: true,
-              },
-            },
-          ],
-        },
-      },
-    ],
-  };
-}
-
 describe('IngestionPersistence', () => {
   it('pool-master-rop.68.1.4 reports created and updated sport event write diagnostics', async () => {
     const existingStartDate = new Date('2026-06-04T12:00:00.000Z');
@@ -198,50 +148,6 @@ describe('IngestionPersistence', () => {
           }),
         ],
       },
-    });
-  });
-
-  it('pool-master-eux.6 triggers Golf contest settlement from completed schedule events', async () => {
-    const settlement = {
-      settleCompletedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
-    };
-    const eventEndDate = new Date('2026-05-31T22:00:00.000Z');
-    const prisma = {
-      contestTimingPolicy: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
-      sportEvent: {
-        findUnique: jest.fn().mockResolvedValue(null),
-        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
-      },
-    };
-    const persistence = new IngestionPersistence(
-      prisma as any,
-      createLogger() as any,
-      undefined,
-      'http://localhost:5173',
-      settlement,
-    );
-
-    await persistence.persistEventsWithDiagnostics([
-      {
-        externalId: 'golf-completed-2026',
-        providerId: 'mock-contest-feed',
-        sport: Sport.GOLF,
-        name: 'Completed Golf Event',
-        startDate: new Date('2026-05-28T12:00:00.000Z'),
-        endDate: eventEndDate,
-        status: 'COMPLETED',
-        fieldLocked: true,
-        metadata: {
-          releaseAt: '2026-05-20T12:00:00.000Z',
-          fieldLocksAt: '2026-05-27T16:00:00.000Z',
-        },
-      },
-    ]);
-
-    expect(settlement.settleCompletedSportEvent).toHaveBeenCalledWith('sport-event-1', {
-      completedAt: eventEndDate,
     });
   });
 
@@ -490,14 +396,16 @@ describe('IngestionPersistence', () => {
       create: {
         sportEventId: 'sport-event-1',
         participantId: 'participant-1',
-        status: 'ACTIVE',
+        isActive: true,
+        inactiveReason: null,
         worldRanking: 7,
         oddsToWin: 8.5,
         seedNumber: 1,
         metadata: detail.participants[0].metadata,
       },
       update: {
-        status: 'ACTIVE',
+        isActive: true,
+        inactiveReason: null,
         worldRanking: 7,
         oddsToWin: 8.5,
         seedNumber: 1,
@@ -568,7 +476,8 @@ describe('IngestionPersistence', () => {
       sportEventParticipant: {
         findUnique: jest.fn().mockResolvedValue({
           id: 'sport-event-participant-1',
-          status: 'ACTIVE',
+          isActive: true,
+          inactiveReason: null,
           worldRanking: 12,
           oddsToWin: 11.25,
           seedNumber: 3,
@@ -676,14 +585,16 @@ describe('IngestionPersistence', () => {
       create: {
         sportEventId: 'sport-event-1',
         participantId: 'participant-1',
-        status: 'ACTIVE',
+        isActive: true,
+        inactiveReason: null,
         worldRanking: null,
         oddsToWin: null,
         seedNumber: 1,
         metadata: detail.participants[0].metadata,
       },
       update: {
-        status: 'ACTIVE',
+        isActive: true,
+        inactiveReason: null,
         worldRanking: null,
         oddsToWin: null,
         seedNumber: 1,
@@ -692,7 +603,12 @@ describe('IngestionPersistence', () => {
     });
   });
 
-  it('pool-master-9ya activates open contests and sends contest-started summary emails when an event starts', async () => {
+  // pool-master-g1z — proves persistEventsWithDiagnostics delegates the
+  // status write and its side effects to EventLifecycleService rather than
+  // performing them inline; the transition logic itself (transition-map
+  // validity, side effects, audit) is covered directly in
+  // tests/unit/core-api/event-lifecycle-service.test.ts.
+  it('pool-master-g1z calls eventLifecycleService.applySportEventStatusTransition for each persisted event', async () => {
     const prisma = {
       contestTimingPolicy: {
         findMany: jest.fn().mockResolvedValue([]),
@@ -701,87 +617,26 @@ describe('IngestionPersistence', () => {
         findUnique: jest.fn().mockResolvedValue(null),
         upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
       },
-      contest: {
-        findMany: jest.fn().mockResolvedValue([buildStartedContestCandidate()]),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-      },
     };
-    const mailDelivery = {
-      providerName: 'smtp' as const,
-      send: jest.fn().mockResolvedValue({ provider: 'smtp' as const, messageId: 'mail-1' }),
+    const eventLifecycleService = {
+      applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined),
     };
     const persistence = new IngestionPersistence(
       prisma as any,
       createLogger() as any,
-      mailDelivery,
-      'https://app.primetimecommissioner.com',
-    );
-
-    await expect(persistence.persistEvents([buildInProgressEvent()])).resolves.toBe(1);
-
-    expect(prisma.contest.updateMany).toHaveBeenCalledWith({
-      where: {
-        id: 'contest-1',
-        status: { in: ['OPEN', 'LOCKED'] },
-      },
-      data: {
-        status: 'ACTIVE',
-        startsAt: new Date('2026-05-02T20:00:00.000Z'),
-      },
-    });
-    expect(mailDelivery.send).toHaveBeenCalledTimes(2);
-    expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
-      to: 'commissioner@example.com',
-      subject: 'Masters Pick 6 has started',
-      metadata: {
-        templateKey: 'CONTEST_STARTED_SUMMARY',
-        leagueId: 'league-1',
-        contestId: 'contest-1',
-      },
-    }));
-    const memberMessage = mailDelivery.send.mock.calls.find(
-      ([message]) => message.to === 'member@example.com',
-    )?.[0];
-    expect(memberMessage?.text).toContain('Manual Test Golf Tournament');
-    expect(memberMessage?.text).toContain('Entries: 1');
-    expect(memberMessage?.text).toContain('- Entry 1: Derek Team');
-    expect(memberMessage?.text).toContain(
-      'Open contest board: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1',
-    );
-    expect(memberMessage?.html).toContain('Prime Time Commissioner');
-  });
-
-  it('pool-master-9ya does not resend contest-started email when the contest is already active', async () => {
-    const prisma = {
-      contestTimingPolicy: {
-        findMany: jest.fn().mockResolvedValue([]),
-      },
-      sportEvent: {
-        findUnique: jest.fn().mockResolvedValue(null),
-        upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
-      },
-      contest: {
-        findMany: jest.fn().mockResolvedValue([buildStartedContestCandidate()]),
-        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
-      },
-    };
-    const mailDelivery = {
-      providerName: 'smtp' as const,
-      send: jest.fn(),
-    };
-    const persistence = new IngestionPersistence(
-      prisma as any,
-      createLogger() as any,
-      mailDelivery,
+      eventLifecycleService,
     );
 
     await persistence.persistEvents([buildInProgressEvent()]);
 
-    expect(mailDelivery.send).not.toHaveBeenCalled();
+    expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledWith({
+      sportEventId: 'sport-event-1',
+      toStatus: 'IN_PROGRESS',
+      actor: { type: 'PROVIDER' },
+    });
   });
 
-  it('pool-master-9ya keeps ingestion successful when contest-started email delivery fails', async () => {
-    const logger = createLogger();
+  it('pool-master-g1z does not write SportEvent.status directly — EventLifecycleService owns that write', async () => {
     const prisma = {
       contestTimingPolicy: {
         findMany: jest.fn().mockResolvedValue([]),
@@ -790,30 +645,13 @@ describe('IngestionPersistence', () => {
         findUnique: jest.fn().mockResolvedValue(null),
         upsert: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
       },
-      contest: {
-        findMany: jest.fn().mockResolvedValue([buildStartedContestCandidate()]),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-      },
     };
-    const mailDelivery = {
-      providerName: 'ses' as const,
-      send: jest.fn().mockRejectedValue(new Error('SES rejected request')),
-    };
-    const persistence = new IngestionPersistence(
-      prisma as any,
-      logger as any,
-      mailDelivery,
-    );
+    const persistence = new IngestionPersistence(prisma as any, createLogger() as any);
 
-    await expect(persistence.persistEvents([buildInProgressEvent()])).resolves.toBe(1);
+    await persistence.persistEvents([buildInProgressEvent()]);
 
-    expect(mailDelivery.send).toHaveBeenCalledTimes(2);
-    expect(logger.error).toHaveBeenCalledWith(
-      expect.objectContaining({
-        contestId: 'contest-1',
-        templateKey: 'CONTEST_STARTED_SUMMARY',
-      }),
-      'Failed to deliver contest started summary email',
-    );
+    const [upsertArg] = (prisma.sportEvent.upsert as jest.Mock).mock.calls[0];
+    expect(upsertArg.create).not.toHaveProperty('status');
+    expect(upsertArg.update).not.toHaveProperty('status');
   });
 });

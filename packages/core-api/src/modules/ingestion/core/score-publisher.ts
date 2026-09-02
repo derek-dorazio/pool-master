@@ -164,6 +164,16 @@ async function persistGolfRounds(
     };
   }
 
+  // Resolve round: number → SportEventRound.id, the same (sportEventId,
+  // roundNumber) key both the admin-facing writer and this sync-facing one
+  // use (plans/124 §4.10) — roundNumber is the only resolution key; a round
+  // that doesn't exist for this event is skipped, not inserted unvalidated.
+  const sportEventRounds = await deps.prisma.sportEventRound.findMany({
+    where: { sportEventId },
+    select: { id: true, roundNumber: true },
+  });
+  const roundIdByNumber = new Map(sportEventRounds.map((r) => [r.roundNumber, r.id]));
+
   // Resolve participantExternalId → SportEventParticipant.id via
   // ParticipantProviderMapping → SportEventParticipant scoped to this event.
   const externalIds = Array.from(new Set(rounds.map((r) => r.participantExternalId)));
@@ -198,6 +208,7 @@ async function persistGolfRounds(
   const persistableRounds: Array<{
     round: GolfRoundUpdate & { strokes: number };
     sportEventParticipantId: string;
+    sportEventRoundId: string;
   }> = [];
   for (const round of rounds) {
     if (round.strokes === null) {
@@ -237,39 +248,51 @@ async function persistGolfRounds(
       skipped += 1;
       continue;
     }
+    const sportEventRoundId = roundIdByNumber.get(round.round);
+    if (!sportEventRoundId) {
+      deps.logger?.warn(
+        {
+          action: 'liveScore.golf.unresolvedRoundNumber',
+          data: { sportEventId, round: round.round, externalId: round.participantExternalId },
+        },
+        'Skipping golf round update — no SportEventRound exists for this event/roundNumber',
+      );
+      skipped += 1;
+      continue;
+    }
 
-    persistableRounds.push({ round: { ...round, strokes: round.strokes }, sportEventParticipantId });
+    persistableRounds.push({ round: { ...round, strokes: round.strokes }, sportEventParticipantId, sportEventRoundId });
   }
 
   const existingRoundRows = persistableRounds.length === 0
     ? []
     : await deps.prisma.sportEventParticipantGolfRound.findMany({
         where: {
-          OR: persistableRounds.map(({ round, sportEventParticipantId }) => ({
+          OR: persistableRounds.map(({ sportEventParticipantId, sportEventRoundId }) => ({
             sportEventParticipantId,
-            round: round.round,
+            sportEventRoundId,
           })),
         },
       });
   const existingRoundByKey = new Map(
-    existingRoundRows.map((row) => [buildGolfRoundKey(row.sportEventParticipantId, row.round), row]),
+    existingRoundRows.map((row) => [buildGolfRoundKey(row.sportEventParticipantId, row.sportEventRoundId), row]),
   );
 
-  for (const { round, sportEventParticipantId } of persistableRounds) {
-    const beforeRound = existingRoundByKey.get(buildGolfRoundKey(sportEventParticipantId, round.round));
+  for (const { round, sportEventParticipantId, sportEventRoundId } of persistableRounds) {
+    const beforeRound = existingRoundByKey.get(buildGolfRoundKey(sportEventParticipantId, sportEventRoundId));
     const before = beforeRound ? normalizeGolfRoundRow(beforeRound) : undefined;
-    const after = normalizeGolfRoundInput(sportEventParticipantId, round);
+    const after = normalizeGolfRoundInput(sportEventParticipantId, sportEventRoundId, round);
 
     const persistedRound = await deps.prisma.sportEventParticipantGolfRound.upsert({
       where: {
-        sportEventParticipantId_round: {
+        sportEventParticipantId_sportEventRoundId: {
           sportEventParticipantId,
-          round: round.round,
+          sportEventRoundId,
         },
       },
       create: {
         sportEventParticipantId,
-        round: round.round,
+        sportEventRoundId,
         strokes: round.strokes,
         scoreToPar: round.scoreToPar,
         thru: round.thru ?? null,
@@ -285,7 +308,7 @@ async function persistGolfRounds(
       },
     });
     detailRows.push({
-      id: `golf-round:${sportEventParticipantId}:${round.round}`,
+      id: `golf-round:${sportEventParticipantId}:${sportEventRoundId}`,
       entityType: 'SportEventParticipantGolfRound',
       disposition: resolveDisposition(before, after),
       participantExternalId: round.participantExternalId,
@@ -319,14 +342,14 @@ async function refreshGolfStandings(
 
   const rows = await deps.prisma.sportEventParticipantGolfRound.findMany({
     where: { sportEventParticipantId: { in: [...sportEventParticipantIds] } },
-    orderBy: [{ sportEventParticipantId: 'asc' }, { round: 'asc' }],
+    orderBy: [{ sportEventParticipantId: 'asc' }, { sportEventRound: { roundNumber: 'asc' } }],
     select: {
       sportEventParticipantId: true,
-      round: true,
       strokes: true,
       scoreToPar: true,
       thru: true,
       status: true,
+      sportEventRound: { select: { roundNumber: true } },
     },
   });
 
@@ -349,7 +372,7 @@ async function refreshGolfStandings(
     if (participantRows.length === 0) continue;
 
     const currentRound = participantRows.reduce((latest, row) => (
-      row.round > latest.round ? row : latest
+      row.sportEventRound.roundNumber > latest.sportEventRound.roundNumber ? row : latest
     ));
     const eventScoreToPar = participantRows.reduce((sum, row) => sum + row.scoreToPar, 0);
     const eventStrokes = participantRows.reduce((sum, row) => sum + row.strokes, 0);
@@ -362,7 +385,7 @@ async function refreshGolfStandings(
       sportEventParticipantId,
       eventScoreToPar,
       eventStrokes,
-      currentRound: currentRound.round,
+      currentRound: currentRound.sportEventRound.roundNumber,
       currentRoundThru,
       status,
     });
@@ -373,7 +396,7 @@ async function refreshGolfStandings(
         sportEventParticipantId,
         eventScoreToPar,
         eventStrokes,
-        currentRound: currentRound.round,
+        currentRound: currentRound.sportEventRound.roundNumber,
         currentRoundThru,
         status,
         asOf,
@@ -381,7 +404,7 @@ async function refreshGolfStandings(
       update: {
         eventScoreToPar,
         eventStrokes,
-        currentRound: currentRound.round,
+        currentRound: currentRound.sportEventRound.roundNumber,
         currentRoundThru,
         status,
         asOf,
@@ -448,11 +471,12 @@ function resolveDisposition(
 
 function normalizeGolfRoundInput(
   sportEventParticipantId: string,
+  sportEventRoundId: string,
   round: GolfRoundUpdate,
 ): Record<string, unknown> {
   return {
     sportEventParticipantId,
-    round: round.round,
+    sportEventRoundId,
     strokes: round.strokes,
     scoreToPar: round.scoreToPar,
     thru: round.thru ?? null,
@@ -463,7 +487,7 @@ function normalizeGolfRoundInput(
 
 function normalizeGolfRoundRow(row: {
   sportEventParticipantId: string;
-  round: number;
+  sportEventRoundId: string;
   strokes: number;
   scoreToPar: number;
   thru: number | null;
@@ -472,7 +496,7 @@ function normalizeGolfRoundRow(row: {
 }): Record<string, unknown> {
   return {
     sportEventParticipantId: row.sportEventParticipantId,
-    round: row.round,
+    sportEventRoundId: row.sportEventRoundId,
     strokes: row.strokes,
     scoreToPar: row.scoreToPar,
     thru: row.thru,
@@ -481,8 +505,8 @@ function normalizeGolfRoundRow(row: {
   };
 }
 
-function buildGolfRoundKey(sportEventParticipantId: string, round: number): string {
-  return `${sportEventParticipantId}:${round}`;
+function buildGolfRoundKey(sportEventParticipantId: string, sportEventRoundId: string): string {
+  return `${sportEventParticipantId}:${sportEventRoundId}`;
 }
 
 function normalizeGolfStandingInput(input: {

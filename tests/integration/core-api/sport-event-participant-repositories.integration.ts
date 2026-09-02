@@ -73,7 +73,7 @@ describe('Sport event participant repositories', () => {
     const sportEventParticipant = await participantRepo.create({
       sportEventId: event.id,
       participantId: participant.id,
-      status: 'ACTIVE',
+      isActive: true,
       worldRanking: 11,
       oddsToWin: 24.5,
       seedNumber: 3,
@@ -97,7 +97,8 @@ describe('Sport event participant repositories', () => {
     const updatedParticipant = await participantRepo.update(
       sportEventParticipant.id,
       {
-        status: 'IN_PROGRESS',
+        isActive: false,
+        inactiveReason: 'WITHDRAWN',
         worldRanking: 8,
         oddsToWin: 20,
         metadata: { teeTime: '08:30', started: true },
@@ -108,7 +109,8 @@ describe('Sport event participant repositories', () => {
       tier: 'S',
     });
 
-    expect(updatedParticipant.status).toBe('IN_PROGRESS');
+    expect(updatedParticipant.isActive).toBe(false);
+    expect(updatedParticipant.inactiveReason).toBe('WITHDRAWN');
     expect(updatedParticipant.worldRanking).toBe(8);
     expect(updatedParticipant.oddsToWin).toBe(20);
     expect(updatedValuation.price).toBe(9800);

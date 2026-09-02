@@ -51,7 +51,7 @@ describe('Contest management integration', () => {
         data: {
           sportEventId,
           participantId: participant.id,
-          status: 'ACTIVE',
+          isActive: true,
         },
       });
       void eventParticipant;
@@ -123,7 +123,7 @@ describe('Contest management integration', () => {
       data: {
         sportEventId,
         participantId: topParticipantId,
-        status: 'ACTIVE',
+        isActive: true,
         worldRanking: 1,
         oddsToWin: 8.5,
       },
@@ -132,7 +132,7 @@ describe('Contest management integration', () => {
       data: {
         sportEventId,
         participantId: secondParticipantId,
-        status: 'ACTIVE',
+        isActive: true,
         worldRanking: 8,
         oddsToWin: 18.5,
       },

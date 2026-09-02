@@ -5,12 +5,14 @@ import type {
   GolfContestConfigMode,
   GolfCutRuleType,
   GolfDisplayScoring,
+  GolfParticipantInactiveReason,
   GolfPlayoffHandling,
   GolfTiebreakerType,
   GolfTierSource,
   ScoringEngine,
   SelectionType,
   Sport,
+  SportEventStatus,
 } from './enums';
 import type {
   AggregationDefinitionId,
@@ -100,7 +102,7 @@ export interface SportEvent extends DomainEntity {
   location?: string;
   startDate: Date;
   endDate?: Date;
-  status: string;
+  status: SportEventStatus;
   rounds?: number;
   participantCount?: number;
   fieldLocked: boolean;
@@ -129,7 +131,10 @@ export interface ContestTimingPolicy extends DomainEntity {
 export interface SportEventParticipant extends DomainEntity {
   sportEventId: string;
   participantId: string;
-  status?: string;
+  /** Whether this golfer is currently eligible/available for this tournament. */
+  isActive: boolean;
+  /** Meaningful only when `isActive` is false; undefined covers "inactive, no more specific reason recorded." */
+  inactiveReason?: GolfParticipantInactiveReason;
   /** Latest global world-ranking snapshot copied onto this event participant. */
   worldRanking?: number;
   /** Event-scoped implied odds-to-win snapshot (decimal). */

@@ -391,7 +391,7 @@ async function attachCleanupEventParticipant(input: {
     data: {
       sportEventId: input.eventId,
       participantId: input.participantId,
-      status: 'active',
+      isActive: true,
       metadata: {},
     },
   });

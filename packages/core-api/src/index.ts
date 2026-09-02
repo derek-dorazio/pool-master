@@ -47,6 +47,8 @@ import type { IngestionCallbacks, IngestionJobRecord } from './modules/ingestion
 import type { ProviderRanking, SportEvent, SportEventDetail } from './modules/ingestion/core';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
+import { EventLifecycleService } from './modules/events/event-lifecycle-service';
+import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
@@ -72,12 +74,22 @@ export function buildApp() {
   );
   const appBaseUrl = readApplicationBaseUrl(process.env);
   const golfContestSettlement = new GolfContestSettlementService(prisma, app.log);
-  const ingestionPersistence = new IngestionPersistence(
+  const eventLifecycleService = new EventLifecycleService(
     prisma,
     app.log,
     mailDelivery,
     appBaseUrl,
     golfContestSettlement,
+  );
+  const ingestionPersistence = new IngestionPersistence(
+    prisma,
+    app.log,
+    eventLifecycleService,
+  );
+  const eventLifecycleScheduler = new EventLifecycleScheduler(
+    prisma,
+    eventLifecycleService,
+    app.log,
   );
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
   const pollConfigService = new PollConfigService(runtimeConfigRepository, app.log);
@@ -218,6 +230,7 @@ export function buildApp() {
     providerService,
     pollConfigService,
     ingestionConfigService,
+    eventLifecycleService,
   });
   app.register(configModule, { prefix: '/api/v1/config' });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
@@ -251,10 +264,17 @@ export function buildApp() {
       ingestionScheduler.start();
       app.log.info('Ingestion scheduler started');
     }
+
+    // Admin-managed event lifecycle (plans/124 §3.6) — always runs; it is
+    // platform-wide and not gated by AUTO_START_SCHEDULER, which controls
+    // only provider-sync loops.
+    eventLifecycleScheduler.start();
+    app.log.info('Event lifecycle scheduler started');
   });
 
   app.addHook('onClose', async () => {
     ingestionScheduler.stop();
+    eventLifecycleScheduler.stop();
     await prisma.$disconnect();
   });
 

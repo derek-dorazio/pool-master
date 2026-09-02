@@ -8,7 +8,11 @@ import type {
   EventReadinessStatusDto,
   EventStatusDto,
 } from '@poolmaster/shared/dto/events.dto';
-import type { Sport } from '@poolmaster/shared/domain';
+import {
+  deriveLegacyParticipantStatus,
+  type GolfParticipantInactiveReason,
+  type Sport,
+} from '@poolmaster/shared/domain';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
 
 interface DecimalLike {
@@ -75,7 +79,8 @@ export interface AdminEventParticipantRow {
   id: string;
   sportEventId: string;
   participantId: string;
-  status: string | null;
+  isActive: boolean;
+  inactiveReason: string | null;
   worldRanking: number | null;
   oddsToWin: DecimalLike | number | null;
   seedNumber: number | null;
@@ -91,7 +96,7 @@ export interface AdminEventParticipantRow {
     orderIndex: number | null;
   }>;
   golfRounds: Array<{
-    round: number;
+    sportEventRound: { roundNumber: number };
     strokes: number;
     scoreToPar: number;
     thru: number | null;
@@ -168,7 +173,7 @@ export function mapAdminEventParticipantToDto(
     participantName: row.participant.name,
     ...(row.participant.shortName !== null ? { shortName: row.participant.shortName } : {}),
     ...(row.participant.nationality !== null ? { nationality: row.participant.nationality } : {}),
-    ...(row.status !== null ? { status: row.status } : {}),
+    status: deriveLegacyParticipantStatus(row.isActive, row.inactiveReason as GolfParticipantInactiveReason | null),
     ...(row.worldRanking !== null ? { worldRanking: row.worldRanking } : {}),
     ...(oddsToWin !== null ? { oddsToWin } : {}),
     ...(row.seedNumber !== null ? { seedNumber: row.seedNumber } : {}),
@@ -199,7 +204,7 @@ export function mapAdminEventParticipantToDto(
         }
       : {}),
     golfRounds: row.golfRounds.map((round) => ({
-      round: round.round,
+      round: round.sportEventRound.roundNumber,
       strokes: round.strokes,
       scoreToPar: round.scoreToPar,
       ...(round.thru !== null ? { thru: round.thru } : {}),

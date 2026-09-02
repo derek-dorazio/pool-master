@@ -192,4 +192,17 @@ describe('provider bindings', () => {
 
     expect(registry.getSupportedSports()).toEqual([]);
   });
+
+  it('pool-master-cgb: refuses to register a provider claiming the reserved manual-admin providerId', () => {
+    const registry = new ProviderRegistry();
+
+    expect(() =>
+      registry.register(Sport.GOLF, {
+        providerId: 'manual-admin',
+        providerName: 'Should never register',
+        sportsCovered: [Sport.GOLF],
+      } as never, 'PRIMARY'),
+    ).toThrow(/reserved manual-admin providerId/);
+    expect(registry.getProvider(Sport.GOLF)).toBeNull();
+  });
 });

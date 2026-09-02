@@ -1,3 +1,4 @@
+import * as SharedDomainEnums from '@poolmaster/shared/domain/enums';
 import {
   ContestService,
   ContestNotFoundError,
@@ -262,7 +263,13 @@ function buildGolfLeaderboardParticipantRow(input: {
       displayPosition: null,
       asOf: new Date('2026-05-31T18:00:00.000Z'),
     },
-    golfRounds: input.rounds ?? [],
+    golfRounds: (input.rounds ?? []).map((round) => ({
+      strokes: round.strokes,
+      scoreToPar: round.scoreToPar,
+      thru: round.thru,
+      status: round.status,
+      sportEventRound: { roundNumber: round.round },
+    })),
   };
 }
 
@@ -1830,6 +1837,149 @@ describe('ContestService', () => {
       })).resolves.toEqual(expect.objectContaining({ id: 'entry-1' }));
       expect(entryRepo.update).toHaveBeenCalledWith('entry-1', { tiebreakerValue: -12 });
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('getEntryDetail', () => {
+    // pool-master-uvc — proves this call site delegates to the shared
+    // deriveLegacyParticipantStatus derivation rather than a second copy of the
+    // same ternary; the derivation's own branches are covered directly in
+    // tests/unit/shared/domain-models.test.ts.
+    it('derives participantStatus via the shared deriveLegacyParticipantStatus function', async () => {
+      const deriveSpy = jest.spyOn(SharedDomainEnums, 'deriveLegacyParticipantStatus');
+
+      const contestRepo = createMockContestRepo({
+        findById: jest.fn().mockResolvedValue(buildContest({ id: 'contest-1', leagueId: 'league-1' })),
+      });
+      const membershipRepo = createMockMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue(buildMembership()),
+      });
+      const squadMembershipRepo = createMockSquadMembershipRepo({
+        findByLeagueAndUser: jest.fn().mockResolvedValue({
+          id: 'squad-membership-1',
+          squadId: 'squad-1',
+          leagueId: 'league-1',
+          userId: 'user-1',
+          status: SquadMembershipStatus.ACTIVE,
+          joinedAt: new Date('2026-01-01'),
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-01'),
+        }),
+      });
+      const contestEntryFindFirst = jest.fn().mockResolvedValue({
+        id: 'entry-1',
+        contestId: 'contest-1',
+        squadId: 'squad-1',
+        entryNumber: 1,
+        name: 'Withdrawn Golfer Entry',
+        status: 'ACTIVE',
+        tiebreakerValue: null,
+        isEliminated: false,
+        createdAt: new Date('2026-01-01'),
+        updatedAt: new Date('2026-01-01'),
+        squad: { name: "Derek's Squad" },
+        picks: [
+          {
+            id: 'pick-1',
+            sportEventParticipantId: 'sep-1',
+            pickedAt: new Date('2026-05-01'),
+            sportEventParticipant: {
+              participantId: 'participant-1',
+              isActive: false,
+              inactiveReason: 'WITHDRAWN',
+              participant: { name: 'Withdrawn Golfer', position: null, teamAffiliation: null },
+            },
+          },
+        ],
+      });
+      const service = new ContestService(
+        contestRepo,
+        createMockContestConfigurationRepo(),
+        membershipRepo,
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        squadMembershipRepo,
+        createMockEntryRepo(),
+        createMockPrisma({
+          contestEntry: { findFirst: contestEntryFindFirst },
+        }) as any,
+      );
+
+      const { entry } = await service.getEntryDetail('contest-1', 'entry-1', 'user-1');
+
+      expect(deriveSpy).toHaveBeenCalledWith(false, 'WITHDRAWN');
+      deriveSpy.mockRestore();
+      expect(entry.participants).toEqual([
+        expect.objectContaining({ participantName: 'Withdrawn Golfer', participantStatus: 'WITHDRAWN' }),
+      ]);
+    });
+  });
+
+  describe('listEntries', () => {
+    // pool-master-uvc — same shared-function proof as getEntryDetail above, for
+    // the other contests/service.ts call site (loadParticipantsForEntries).
+    it('derives participantStatus via the shared deriveLegacyParticipantStatus function', async () => {
+      const deriveSpy = jest.spyOn(SharedDomainEnums, 'deriveLegacyParticipantStatus');
+
+      const contestRepo = createMockContestRepo({
+        findById: jest.fn().mockResolvedValue(
+          buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.ACTIVE }),
+        ),
+      });
+      const contestEntryFindMany = jest.fn().mockResolvedValue([
+        {
+          id: 'entry-1',
+          contestId: 'contest-1',
+          squadId: 'squad-1',
+          entryNumber: 1,
+          name: 'Cut Golfer Entry',
+          status: 'ACTIVE',
+          tiebreakerValue: null,
+          isEliminated: false,
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-01'),
+          squad: { name: "Derek's Squad" },
+        },
+      ]);
+      const contestEntryPickFindMany = jest.fn().mockResolvedValue([
+        {
+          id: 'pick-1',
+          entryId: 'entry-1',
+          sportEventParticipantId: 'sep-1',
+          pickedAt: new Date('2026-05-01'),
+          sportEventParticipant: {
+            participantId: 'participant-1',
+            isActive: false,
+            inactiveReason: 'CUT',
+            participant: { name: 'Cut Golfer', position: null, teamAffiliation: null },
+          },
+        },
+      ]);
+      const service = new ContestService(
+        contestRepo,
+        createMockContestConfigurationRepo(),
+        createMockMembershipRepo(),
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo(),
+        createMockEntryRepo(),
+        createMockPrisma({
+          contestEntry: { findMany: contestEntryFindMany },
+          contestEntryPick: {
+            count: jest.fn().mockResolvedValue(0),
+            groupBy: jest.fn().mockResolvedValue([{ entryId: 'entry-1', _count: { id: 1 } }]),
+            findMany: contestEntryPickFindMany,
+          },
+        }) as any,
+      );
+
+      const { entries } = await service.listEntries('contest-1', 'user-1');
+
+      expect(deriveSpy).toHaveBeenCalledWith(false, 'CUT');
+      deriveSpy.mockRestore();
+      expect(entries[0].participants).toEqual([
+        expect.objectContaining({ participantName: 'Cut Golfer', participantStatus: 'CUT' }),
+      ]);
     });
   });
 });

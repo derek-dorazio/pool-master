@@ -1,4 +1,4 @@
-import { Sport } from '@poolmaster/shared/domain';
+import { GolfParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult, GolfRoundUpdate } from '@poolmaster/shared/dto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type {
@@ -415,6 +415,27 @@ function toDomainSport(sport: SupportedMockSport): Sport | null {
   }
 }
 
+/**
+ * Maps the mock feed's 7 raw participantStatus values down to
+ * {isActive, inactiveReason} — see plans/124 §4.1. active/provisional/alternate
+ * and unset all mean "no reason recorded" (undefined, not just falling through
+ * to 'inactive'); only withdrawn/cut/eliminated carry an explicit reason.
+ */
+function toGolfParticipantInactiveReason(
+  participantStatus: string | undefined,
+): GolfParticipantInactiveReason | undefined {
+  switch (participantStatus) {
+    case 'withdrawn':
+      return GolfParticipantInactiveReason.WITHDRAWN;
+    case 'cut':
+      return GolfParticipantInactiveReason.CUT;
+    case 'eliminated':
+      return GolfParticipantInactiveReason.ELIMINATED;
+    default:
+      return undefined;
+  }
+}
+
 function toProviderParticipant(
   providerId: string,
   sport: SupportedMockSport,
@@ -443,6 +464,7 @@ function toProviderParticipant(
     active: !['withdrawn', 'inactive', 'eliminated', 'cut'].includes(
       contestant.participantStatus ?? '',
     ),
+    inactiveReason: toGolfParticipantInactiveReason(contestant.participantStatus),
     metadata: {
       seed: contestant.seed,
       participantStatus: contestant.participantStatus,
