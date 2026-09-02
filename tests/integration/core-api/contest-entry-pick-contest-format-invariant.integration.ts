@@ -110,7 +110,7 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
     data: {
       sportEventId: sportEvent.id,
       participantId: participant.id,
-      status: 'ACTIVE',
+      isActive: true,
     },
   });
   const contest = await prisma.contest.create({

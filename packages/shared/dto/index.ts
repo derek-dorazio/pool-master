@@ -9,6 +9,7 @@ export * from './drafts.dto';
 export * from './participants.dto';
 export * from './notifications.dto';
 export * from './admin.dto';
+export * from './admin-golf.dto';
 export * from './config.dto';
 export * from './account.dto';
 export * from './account-consent.dto';

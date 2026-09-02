@@ -4,7 +4,6 @@ import {
   ContestSetupSummary,
   ContestTemplatePicker,
   EventReadinessPanel,
-  TierSettingsEditor,
 } from "./contest-configuration-sections";
 
 describe("pool-master-pjr.8: contest configuration section components", () => {
@@ -58,36 +57,6 @@ describe("pool-master-pjr.8: contest configuration section components", () => {
     expect(screen.getByText("Contest ready")).toBeInTheDocument();
     expect(screen.getByText("Participants loaded")).toBeInTheDocument();
     expect(screen.getByText("80")).toBeInTheDocument();
-  });
-
-  it("rule: renders editable tier settings and reports updates", () => {
-    const onUpdateTier = vi.fn();
-    const onResetTiers = vi.fn();
-
-    render(
-      <TierSettingsEditor
-        isDraftEditable
-        onResetTiers={onResetTiers}
-        onUpdateTier={onUpdateTier}
-        tiers={[
-          {
-            endPosition: 10,
-            label: "Tier A",
-            pickCount: 2,
-            startPosition: 1,
-            tierKey: "A",
-          },
-        ]}
-      />,
-    );
-
-    fireEvent.change(screen.getByTestId("contest-tier-label-A"), {
-      target: { value: "Top tier" },
-    });
-    expect(onUpdateTier).toHaveBeenCalledWith(0, { label: "Top tier" });
-
-    fireEvent.click(screen.getByTestId("contest-tiered-reset-tiers"));
-    expect(onResetTiers).toHaveBeenCalledTimes(1);
   });
 
   it("rule: renders the contest setup summary choices", () => {

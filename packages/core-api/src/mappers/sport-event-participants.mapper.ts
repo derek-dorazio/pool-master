@@ -26,7 +26,8 @@ export interface SportEventParticipantRow {
   id: string;
   sportEventId: string;
   participantId: string;
-  status: string | null;
+  isActive: boolean;
+  inactiveReason: string | null;
   worldRanking: number | null;
   oddsToWin: DecimalLike | number | null;
   seedNumber: number | null;
@@ -53,7 +54,8 @@ export function mapSportEventParticipantToDto(
     id: row.id,
     sportEventId: row.sportEventId,
     participantId: row.participantId,
-    status: row.status,
+    isActive: row.isActive,
+    inactiveReason: row.inactiveReason as SportEventParticipantDto['inactiveReason'],
     worldRanking: row.worldRanking,
     oddsToWin,
     seedNumber: row.seedNumber,

@@ -6,7 +6,6 @@ export type {
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
   SportEventParticipantRepository,
-  SportEventParticipantValuationRepository,
 } from './contest-management-ports';
 export type {
   ActionItemRepository,

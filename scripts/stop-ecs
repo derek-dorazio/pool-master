@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+AWS_REGION="${AWS_REGION:-us-east-2}"
+ECS_CLUSTER="${ECS_CLUSTER:-poolmaster-qa-cluster}"
+ECS_SERVICES="${ECS_SERVICES:-poolmaster-qa-core-api poolmaster-qa-mock-contest-feed-provider}"
+
+for service in $ECS_SERVICES; do
+  aws ecs update-service \
+    --region "$AWS_REGION" \
+    --cluster "$ECS_CLUSTER" \
+    --service "$service" \
+    --desired-count 0
+done

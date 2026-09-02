@@ -45,7 +45,7 @@ function readinessTone(status: AdminEvent['readinessStatus']) {
 
 function eventStatusTone(status: AdminEvent['status']) {
   if (status === 'IN_PROGRESS') return 'live';
-  if (status === 'COMPLETED' || status === 'OFFICIAL') return 'completed';
+  if (status === 'COMPLETED') return 'completed';
   if (status === 'CANCELLED' || status === 'POSTPONED') return 'warning';
   return 'neutral';
 }

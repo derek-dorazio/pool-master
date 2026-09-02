@@ -1,5 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
+import type { SportEventStatus } from '@poolmaster/shared/domain';
 import type {
   AdminEventListQuery,
   AdminEventParticipantListResponse,
@@ -9,12 +10,17 @@ import {
   mapAdminEventParticipantToDto,
   mapAdminEventSummaryToDto,
 } from '../../mappers';
+import { GolfTierService } from '../golf/golf-tier-service';
 
 export class AdminEventBrowserService {
+  private readonly golfTierService: GolfTierService;
+
   constructor(
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
-  ) {}
+  ) {
+    this.golfTierService = new GolfTierService(prisma, logger);
+  }
 
   async listEvents(query: AdminEventListQuery): Promise<AdminEventSummaryDto[]> {
     const limit = query.limit ?? 100;
@@ -31,7 +37,7 @@ export class AdminEventBrowserService {
     const rows = await this.prisma.sportEvent.findMany({
       where: {
         ...(query.sport ? { sport: query.sport } : {}),
-        ...(query.status ? { status: query.status } : {}),
+        ...(query.status ? { status: query.status as SportEventStatus } : {}),
       },
       orderBy: [
         { startDate: 'asc' },
@@ -103,26 +109,17 @@ export class AdminEventBrowserService {
             nationality: true,
           },
         },
-        valuations: {
-          orderBy: [
-            { orderIndex: { sort: 'asc', nulls: 'last' } },
-            { tier: 'asc' },
-          ],
-          select: {
-            price: true,
-            tier: true,
-            orderIndex: true,
-          },
-        },
         golfRounds: {
-          orderBy: { round: 'asc' },
+          orderBy: { sportEventRound: { roundNumber: 'asc' } },
           select: {
-            round: true,
             strokes: true,
             scoreToPar: true,
             thru: true,
             status: true,
             completedAt: true,
+            sportEventRound: {
+              select: { roundNumber: true },
+            },
           },
         },
         golfStanding: {
@@ -140,9 +137,28 @@ export class AdminEventBrowserService {
       },
     });
 
+    const valuations = await this.golfTierService.getEffectiveValuationsForSportEvent(eventId);
+    const valuationBySportEventParticipantId = new Map(
+      valuations.map((valuation) => [valuation.sportEventParticipantId, valuation]),
+    );
+
     const response = {
       event: mapAdminEventSummaryToDto(event),
-      participants: rows.map(mapAdminEventParticipantToDto),
+      participants: rows.map((row) => {
+        const valuation = valuationBySportEventParticipantId.get(row.id);
+        return mapAdminEventParticipantToDto({
+          ...row,
+          ...(valuation
+            ? {
+                golfValuation: {
+                  price: valuation.price,
+                  tierLabel: valuation.tierLabel,
+                  tierOrderIndex: valuation.tierOrderIndex,
+                },
+              }
+            : {}),
+        });
+      }),
     };
 
     this.logger?.info({

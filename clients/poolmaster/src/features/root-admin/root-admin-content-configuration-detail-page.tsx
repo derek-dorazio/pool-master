@@ -21,8 +21,6 @@ import {
 } from '@/features/shared/ui';
 import {
   cloneContestTemplate,
-  getPicksPerTier,
-  getTierCount,
   toPositiveNumber,
   type ContestConfigTemplate,
   updateTieredTemplateConfiguration,
@@ -262,26 +260,15 @@ export function RootAdminContentConfigurationDetailPage() {
 
               {draft.configuration.mode === 'GOLF_TIERED' ? (
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <FormField label="Tier count">
+                  <FormField label="Roster size">
                     <Input
-                      data-testid="root-admin-content-config-tier-count"
+                      data-testid="root-admin-content-config-roster-size"
                       onChange={(event) => updateDraft((current) =>
                         updateTieredTemplateConfiguration(current, {
-                          tierCount: toPositiveNumber(event.target.value),
+                          rosterSize: toPositiveNumber(event.target.value),
                         }))}
                       type="number"
-                      value={getTierCount(draft)}
-                    />
-                  </FormField>
-                  <FormField label="Picks per tier">
-                    <Input
-                      data-testid="root-admin-content-config-picks-per-tier"
-                      onChange={(event) => updateDraft((current) =>
-                        updateTieredTemplateConfiguration(current, {
-                          picksPerTier: toPositiveNumber(event.target.value),
-                        }))}
-                      type="number"
-                      value={getPicksPerTier(draft)}
+                      value={draft.configuration.rosterSize}
                     />
                   </FormField>
                   <FormField label="Counted scores">
@@ -295,32 +282,10 @@ export function RootAdminContentConfigurationDetailPage() {
                       value={draft.configuration.countedScores}
                     />
                   </FormField>
-                  <FormField label="Tier size">
-                    <Input
-                      data-testid="root-admin-content-config-tier-size"
-                      onChange={(event) => updateDraft((current) =>
-                        updateTieredTemplateConfiguration(current, {
-                          tierSize: toPositiveNumber(event.target.value),
-                        }))}
-                      type="number"
-                      value={draft.configuration.tierGeneration.defaultTierSize}
-                    />
-                  </FormField>
-                  <FormField label="Cut score">
-                    <Input
-                      data-testid="root-admin-content-config-cut-score"
-                      onChange={(event) => updateDraft((current) =>
-                        updateTieredTemplateConfiguration(current, {
-                          cutScore: toPositiveNumber(event.target.value),
-                        }))}
-                      type="number"
-                      value={draft.configuration.cutRule.fixedScore}
-                    />
-                  </FormField>
-                  <div className="rounded-2xl border border-border px-4 py-3 text-sm text-muted-foreground">
-                    <div>Roster size: {draft.configuration.rosterSize}</div>
-                    <div className="mt-1">Template tiers: {draft.configuration.tiers.length}</div>
-                  </div>
+                  <p className="md:col-span-2 text-sm text-muted-foreground">
+                    Tier structure and golfer assignments are set per tournament, not per template —
+                    see the tournament&apos;s Tiers page.
+                  </p>
                 </div>
               ) : null}
           </FormEditorSection>

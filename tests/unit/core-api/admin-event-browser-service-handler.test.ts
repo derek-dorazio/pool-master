@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import * as SharedDomainEnums from '@poolmaster/shared/domain/enums';
 import { createEventBrowserAdminHandlers } from '../../../packages/core-api/src/modules/admin/event-browser-handler';
 import { AdminEventBrowserService } from '../../../packages/core-api/src/modules/admin/event-browser-service';
 
@@ -63,7 +64,8 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
         id: sportEventParticipantId,
         sportEventId: eventId,
         participantId,
-        status: 'ACTIVE',
+        isActive: true,
+        inactiveReason: null,
         worldRanking: 3,
         oddsToWin: { toNumber: () => 12.5 },
         seedNumber: null,
@@ -73,29 +75,22 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
           shortName: 'A. Driver',
           nationality: 'US',
         },
-        valuations: [
-          {
-            price: 19,
-            tier: 'A',
-            orderIndex: 1,
-          },
-        ],
         golfRounds: [
           {
-            round: 1,
             strokes: 70,
             scoreToPar: -2,
             thru: 18,
             status: 'COMPLETE',
             completedAt: new Date('2026-05-07T21:00:00.000Z'),
+            sportEventRound: { roundNumber: 1 },
           },
           {
-            round: 2,
             strokes: 71,
             scoreToPar: -1,
             thru: 9,
             status: 'COMPLETE',
             completedAt: new Date('2026-05-08T21:00:00.000Z'),
+            sportEventRound: { roundNumber: 2 },
           },
         ],
         golfStanding: {
@@ -110,9 +105,28 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
         },
       },
     ]);
+    const sportEventGolfTierFindMany = jest.fn().mockResolvedValue([
+      {
+        id: 'tier-a',
+        sportEventId: eventId,
+        tierKey: 'A',
+        label: 'A',
+        tierNumber: 1,
+        defaultPickCount: 1,
+        valuations: [
+          {
+            sportEventParticipantId,
+            tierOrderIndex: 1,
+            price: 19,
+            sportEventParticipant: { participantId },
+          },
+        ],
+      },
+    ]);
     const service = new AdminEventBrowserService({
       sportEvent: { findUnique },
       sportEventParticipant: { findMany },
+      sportEventGolfTier: { findMany: sportEventGolfTierFindMany },
     } as never);
 
     const response = await service.listEventParticipants(eventId);
@@ -127,6 +141,7 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
       expect.objectContaining({
         id: sportEventParticipantId,
         participantName: 'Avery Driver',
+        status: 'ACTIVE',
         worldRanking: 3,
         oddsToWin: 12.5,
         valuationPrice: 19,
@@ -147,6 +162,70 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
     ]);
   });
 
+  it('pool-master-uvc: derives the legacy status string from isActive/inactiveReason for a withdrawn golfer', async () => {
+    const findUnique = jest.fn().mockResolvedValue(createEventRow());
+    const findMany = jest.fn().mockResolvedValue([
+      {
+        id: sportEventParticipantId,
+        sportEventId: eventId,
+        participantId,
+        isActive: false,
+        inactiveReason: 'WITHDRAWN',
+        worldRanking: null,
+        oddsToWin: null,
+        seedNumber: null,
+        updatedAt: new Date('2026-05-01T12:00:00.000Z'),
+        participant: {
+          name: 'Withdrawn Golfer',
+          shortName: null,
+          nationality: null,
+        },
+        valuations: [],
+        golfRounds: [],
+        golfStanding: null,
+      },
+      {
+        id: randomUUID(),
+        sportEventId: eventId,
+        participantId: randomUUID(),
+        isActive: false,
+        inactiveReason: null,
+        worldRanking: null,
+        oddsToWin: null,
+        seedNumber: null,
+        updatedAt: new Date('2026-05-01T12:00:00.000Z'),
+        participant: {
+          name: 'No-Reason Inactive Golfer',
+          shortName: null,
+          nationality: null,
+        },
+        golfRounds: [],
+        golfStanding: null,
+      },
+    ]);
+    const service = new AdminEventBrowserService({
+      sportEvent: { findUnique },
+      sportEventParticipant: { findMany },
+      sportEventGolfTier: { findMany: jest.fn().mockResolvedValue([]) },
+    } as never);
+
+    const deriveSpy = jest.spyOn(SharedDomainEnums, 'deriveLegacyParticipantStatus');
+
+    const response = await service.listEventParticipants(eventId);
+
+    // Proves this mapper delegates to the shared derivation (pool-master-uvc) rather
+    // than a second, silently-diverging copy of the same ternary — the derivation's
+    // own branches are covered directly in tests/unit/shared/domain-models.test.ts.
+    expect(deriveSpy).toHaveBeenCalledWith(false, 'WITHDRAWN');
+    expect(deriveSpy).toHaveBeenCalledWith(false, null);
+    deriveSpy.mockRestore();
+
+    expect(response?.participants).toEqual([
+      expect.objectContaining({ participantName: 'Withdrawn Golfer', status: 'WITHDRAWN' }),
+      expect.objectContaining({ participantName: 'No-Reason Inactive Golfer', status: 'INACTIVE' }),
+    ]);
+  });
+
   it('pool-master-eux.2 falls back to round aggregation when no golf standing exists yet', async () => {
     const findUnique = jest.fn().mockResolvedValue(createEventRow());
     const findMany = jest.fn().mockResolvedValue([
@@ -154,7 +233,8 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
         id: sportEventParticipantId,
         sportEventId: eventId,
         participantId,
-        status: 'ACTIVE',
+        isActive: true,
+        inactiveReason: null,
         worldRanking: null,
         oddsToWin: null,
         seedNumber: null,
@@ -167,20 +247,20 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
         valuations: [],
         golfRounds: [
           {
-            round: 1,
             strokes: 69,
             scoreToPar: -3,
             thru: 18,
             status: 'COMPLETED',
             completedAt: new Date('2026-05-07T21:00:00.000Z'),
+            sportEventRound: { roundNumber: 1 },
           },
           {
-            round: 2,
             strokes: 73,
             scoreToPar: 1,
             thru: 18,
             status: 'COMPLETED',
             completedAt: new Date('2026-05-08T21:00:00.000Z'),
+            sportEventRound: { roundNumber: 2 },
           },
         ],
         golfStanding: null,
@@ -189,6 +269,7 @@ describe('pool-master-33l.12: root-admin current-state event browser', () => {
     const service = new AdminEventBrowserService({
       sportEvent: { findUnique },
       sportEventParticipant: { findMany },
+      sportEventGolfTier: { findMany: jest.fn().mockResolvedValue([]) },
     } as never);
 
     const response = await service.listEventParticipants(eventId);

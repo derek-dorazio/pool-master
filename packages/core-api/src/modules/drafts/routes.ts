@@ -9,6 +9,7 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import {
+  deriveLegacyParticipantStatus,
   DraftStatus,
   SelectionType,
   SquadMembershipStatus,
@@ -42,6 +43,8 @@ import {
 import type { SessionState } from './engine/draft-session-manager';
 import { draftStore } from './storage/draft-store';
 import { draftQueue } from './engine/draft-queue';
+import { GolfTierService } from '../golf/golf-tier-service';
+import type { GolfTierGroup } from '../golf/golf-tier-service';
 
 type ContestConfigurationRecord = Awaited<ReturnType<PrismaClient['contestConfiguration']['findUnique']>>;
 interface ContestRecord {
@@ -109,6 +112,8 @@ interface DraftContext {
   memberships: MembershipRecord[];
   squadMemberships: SquadMembershipRecord[];
   selectionParticipants: SelectionParticipantRecord[];
+  /** The contest's linked SportEvent's tiers, resolved once here (plans/124 §4.6b) — every group-by-tier call site reads this instead of re-deriving. */
+  tiers: DraftTierConfig[];
 }
 
 interface DraftTierConfig {
@@ -255,54 +260,42 @@ function getRosterSize(
   return 0;
 }
 
-function compareTierNames(a: string, b: string): number {
-  const aNum = Number.parseInt(a.replace(/\D/g, ''), 10);
-  const bNum = Number.parseInt(b.replace(/\D/g, ''), 10);
-  if (!Number.isNaN(aNum) && !Number.isNaN(bNum) && aNum !== bNum) {
-    return aNum - bNum;
+/**
+ * Tiers are event-owned data now (plans/124 §4.6/§4.6b) — this is the one
+ * place a GolfTierGroup[] (already resolved via golf-tier-service) gets
+ * turned into the draft room's DraftTierConfig[] shape, plus a per-golfer
+ * tier/price lookup. Both the legacy tierConfig-JSON branch and the
+ * valuations-fallback branch this replaced are gone; there's exactly one
+ * source now.
+ */
+function buildDraftTiersAndValuations(tierGroups: GolfTierGroup[]): {
+  tiers: DraftTierConfig[];
+  valuationBySportEventParticipantId: Map<string, { tierLabel: string; tierOrderIndex: number | null; price: number | null }>;
+} {
+  const valuationBySportEventParticipantId = new Map<string, { tierLabel: string; tierOrderIndex: number | null; price: number | null }>();
+  for (const tier of tierGroups) {
+    for (const participant of tier.participants) {
+      valuationBySportEventParticipantId.set(participant.sportEventParticipantId, {
+        tierLabel: tier.label,
+        tierOrderIndex: participant.tierOrderIndex,
+        price: participant.price,
+      });
+    }
   }
-  return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+
+  return {
+    tiers: tierGroups.map((tier) => ({
+      tierId: tier.tierKey,
+      tierName: tier.label,
+      tierNumber: tier.tierNumber,
+      picksFromTier: tier.defaultPickCount,
+      participantIds: tier.participants.map((participant) => participant.sportEventParticipantId),
+    })),
+    valuationBySportEventParticipantId,
+  };
 }
 
-function deriveTierConfig(
-  contestConfiguration: ContestConfigurationRecord,
-  selectionParticipants: SelectionParticipantRecord[],
-): DraftTierConfig[] {
-  if (Array.isArray(contestConfiguration?.tierConfig) && contestConfiguration.tierConfig.length > 0) {
-    return contestConfiguration.tierConfig.map((tier, index) => {
-      const record = tier as Record<string, unknown>;
-      return {
-        tierId: String(record.tierId ?? record.tierName ?? `tier-${index + 1}`),
-        tierName: String(record.tierName ?? record.tierId ?? `Tier ${index + 1}`),
-        tierNumber: Number(record.tierNumber ?? index + 1),
-        picksFromTier: Number(record.picksFromTier ?? 1),
-        participantIds: Array.isArray(record.participantIds)
-          ? record.participantIds.map((value) => String(value))
-          : [],
-      };
-    });
-  }
-
-  const groups = new Map<string, string[]>();
-  for (const participant of selectionParticipants) {
-    const tierName = participant.tier ?? 'Unassigned';
-    const existing = groups.get(tierName) ?? [];
-    existing.push(participant.participantId);
-    groups.set(tierName, existing);
-  }
-
-  return Array.from(groups.entries())
-    .sort(([a], [b]) => compareTierNames(a, b))
-    .map(([tierName, participantIds], index) => ({
-      tierId: tierName,
-      tierName,
-      tierNumber: index + 1,
-      picksFromTier: 1,
-      participantIds,
-    }));
-}
-
-async function loadDraftContext(prisma: PrismaClient, contestId: string): Promise<DraftContext | null> {
+export async function loadDraftContext(prisma: PrismaClient, contestId: string): Promise<DraftContext | null> {
   const contest = await prisma.contest.findUnique({
     where: { id: contestId },
     select: {
@@ -322,7 +315,8 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
   });
   if (!contest) return null;
 
-  const [contestConfiguration, contestEntries, memberships, sportEventParticipants] = await Promise.all([
+  const golfTierService = new GolfTierService(prisma);
+  const [contestConfiguration, contestEntries, memberships, sportEventParticipants, tierGroups] = await Promise.all([
     prisma.contestConfiguration.findUnique({ where: { contestId } }),
     prisma.contestEntry.findMany({
       where: { contestId },
@@ -337,14 +331,15 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
           where: { sportEventId: contest.sportEventId },
           include: {
             participant: true,
-            valuations: {
-              orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
-            },
           },
           orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
         })
       : Promise.resolve([]),
+    contest.sportEventId
+      ? golfTierService.getEffectiveTiersForSportEvent(contest.sportEventId)
+      : Promise.resolve([]),
   ]);
+  const { tiers, valuationBySportEventParticipantId } = buildDraftTiersAndValuations(tierGroups);
 
   const squadIds = Array.from(new Set(contestEntries.map((entry) => entry.squadId)));
   const squadMemberships = squadIds.length === 0
@@ -373,9 +368,9 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
     memberships,
     squadMemberships,
     selectionParticipants: sportEventParticipants.map((record) => {
-      const valuation = record.valuations[0];
-      const normalizedStatus = record.status?.toUpperCase?.();
-      const isAvailable = !normalizedStatus || !['INACTIVE', 'REMOVED', 'WITHDRAWN'].includes(normalizedStatus);
+      const valuation = valuationBySportEventParticipantId.get(record.id);
+      const legacyStatus = deriveLegacyParticipantStatus(record.isActive, record.inactiveReason);
+      const isAvailable = record.isActive;
 
       return {
         sportEventParticipantId: record.id,
@@ -383,21 +378,22 @@ async function loadDraftContext(prisma: PrismaClient, contestId: string): Promis
         participantName: record.participant.name,
         position: record.participant.position,
         teamAffiliation: record.participant.teamAffiliation,
-        status: record.status,
+        status: legacyStatus,
         price: valuation?.price ?? undefined,
         ranking: record.worldRanking ?? undefined,
-        tier: valuation?.tier ?? null,
-        orderIndex: valuation?.orderIndex ?? undefined,
+        tier: valuation?.tierLabel ?? null,
+        orderIndex: valuation?.tierOrderIndex ?? undefined,
         isAvailable,
         unavailableReason: isAvailable
           ? undefined
-          : `SportEventParticipant ${record.id} is unavailable with status ${record.status ?? 'UNKNOWN'}`,
+          : `SportEventParticipant ${record.id} is unavailable with status ${legacyStatus}`,
       };
     }).sort((a, b) => {
       const orderDiff = (a.orderIndex ?? Number.MAX_SAFE_INTEGER) - (b.orderIndex ?? Number.MAX_SAFE_INTEGER);
       if (orderDiff !== 0) return orderDiff;
       return a.participantName.localeCompare(b.participantName, undefined, { sensitivity: 'base' });
     }),
+    tiers,
   };
 }
 
@@ -493,7 +489,7 @@ async function buildSnakeDraftResponse(
     prisma,
     sportEventParticipantIds,
   );
-  const tiers = deriveTierConfig(context.contestConfiguration, context.selectionParticipants);
+  const tiers = context.tiers;
   const rosterSize = getRosterSize(context.contest.selectionType, context.contestConfiguration, tiers);
 
   const entries = state.entryIds.map((entryId) => {
@@ -573,7 +569,7 @@ async function buildRosterSelectionResponse(
   const contestEntryById = new Map(context.contestEntries.map((entry) => [entry.id, entry]));
   const entryUserIdMap = buildEntryUserIdMap(context);
   const entryIds = context.contestEntries.map((entry) => entry.id);
-  const tiers = deriveTierConfig(context.contestConfiguration, context.selectionParticipants);
+  const tiers = context.tiers;
   const rosterSize = getRosterSize(context.contest.selectionType, context.contestConfiguration, tiers);
   const tierByParticipantId = new Map<string, DraftTierConfig>();
   const priceBySportEventParticipantId = new Map(
@@ -1027,7 +1023,7 @@ export async function draftsModule(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      const tiers = deriveTierConfig(context.contestConfiguration, context.selectionParticipants);
+      const tiers = context.tiers;
       const rosterSize = getRosterSize(context.contest.selectionType, context.contestConfiguration, tiers);
       if (rosterSize <= 0) {
         return sendWithStatus(reply, 400, {

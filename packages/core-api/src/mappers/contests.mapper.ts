@@ -24,6 +24,7 @@ import type {
   ContestEntry,
   ContestStatus,
   ContestFormat,
+  GolfParticipantInactiveReason,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -86,7 +87,8 @@ export interface GolfLeaderboardParticipantRow {
   participantId: string;
   name: string;
   shortName: string | null;
-  participantStatus: string | null;
+  isActive: boolean;
+  inactiveReason: GolfParticipantInactiveReason | null;
   worldRanking: number | null;
   oddsToWin: number | null;
   seedNumber: number | null;
@@ -376,7 +378,8 @@ function toGolfLeaderboardParticipantDto(participant: GolfLeaderboardParticipant
     participantId: participant.participantId,
     name: participant.name,
     shortName: participant.shortName,
-    participantStatus: participant.participantStatus,
+    isActive: participant.isActive,
+    inactiveReason: participant.inactiveReason,
     worldRanking: participant.worldRanking,
     oddsToWin: participant.oddsToWin,
     seedNumber: participant.seedNumber,

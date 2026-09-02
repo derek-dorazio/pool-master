@@ -2398,6 +2398,467 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/sports/golf/leagues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List golf leagues
+         * @description Returns golf SportLeague rows with roster size and season count — the global list by league.
+         */
+        get: operations["adminListGolfLeagues"];
+        put?: never;
+        /**
+         * Create a golf league
+         * @description Creates a new golf SportLeague (tour), e.g. adding "Champions Tour" — one call, not a migration.
+         */
+        post: operations["adminCreateGolfLeague"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/leagues/{leagueId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update a golf league
+         * @description Renames a league, edits its matchKeyword, or deactivates it.
+         */
+        patch: operations["adminUpdateGolfLeague"];
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/leagues/{leagueId}/roster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a golf league's roster
+         * @description Returns the league's current, league-scoped (not season-scoped) roster.
+         */
+        get: operations["adminGetGolfLeagueRoster"];
+        put?: never;
+        /**
+         * Add a golfer to a league roster
+         * @description Creates a ParticipantLeagueAffiliation row for one golfer.
+         */
+        post: operations["adminAddGolfLeagueRosterEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Bulk-patch a golf league roster
+         * @description Bulk row patch (worldRanking) — same shape as the tournament field bulk-patch.
+         */
+        patch: operations["adminUpdateGolfLeagueRoster"];
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/leagues/{leagueId}/roster/{participantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a golfer from a league roster
+         * @description Removes the affiliation row — a golfer leaving the tour entirely, distinct from retiring (Participant.status = INACTIVE).
+         */
+        delete: operations["adminRemoveGolfLeagueRosterEntry"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/leagues/{leagueId}/roster/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview a golf league roster upload
+         * @description Dry run. Resolves rows to existing Participants and reports unresolved ones — never silently creates a golfer record from an upload row.
+         */
+        post: operations["adminPreviewGolfLeagueRosterUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/leagues/{leagueId}/roster/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply a golf league roster upload
+         * @description Applies a previewed upload. 422 when any row is unresolved.
+         */
+        post: operations["adminApplyGolfLeagueRosterUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/seasons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List golf seasons
+         * @description Global list by league and season — pass sportLeagueId to see just one league's seasons.
+         */
+        get: operations["adminListGolfSeasons"];
+        put?: never;
+        /**
+         * Create a golf season
+         * @description Creates a season linked to a golf SportLeague. 409 SEASON_YEAR_ALREADY_EXISTS if that league already has a season for the given year.
+         */
+        post: operations["adminCreateGolfSeason"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/seasons/{seasonId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get golf season detail
+         * @description Season detail + tournament count + isCurrent (derived from the parent league's currentSeasonId).
+         */
+        get: operations["adminGetGolfSeason"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a golf season */
+        patch: operations["adminUpdateGolfSeason"];
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/seasons/{seasonId}/set-current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set a season as its league's current season
+         * @description A single atomic write on the parent SportLeague row — no window where a league has zero or two current seasons.
+         */
+        post: operations["adminSetCurrentGolfSeason"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/rounds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a tournament's round schedule
+         * @description The SportEventRound schedule rows (plans/124 §4.10) — round number, scheduled date, scheduled end. Ordered by roundNumber ascending, not by date.
+         */
+        get: operations["adminGetGolfTournamentRounds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Reschedule a tournament's rounds
+         * @description Bulk row patch — how a rain delay or an irregular schedule gets recorded. Only reschedules existing rounds; 404 ROUND_NOT_FOUND for a roundNumber this event has no row for.
+         */
+        patch: operations["adminUpdateGolfTournamentRounds"];
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/tournaments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List golf tournaments
+         * @description Filters: status, search (case-insensitive name substring). Returns the canonical AdminGolfTournamentDto per row.
+         */
+        get: operations["adminListGolfTournaments"];
+        put?: never;
+        /**
+         * Create a manual golf tournament
+         * @description Server assigns providerId=manual-admin, a generated externalId, status=SCHEDULED, syncScope=NONE; creates the round schedule (ensureSportEventRounds), default tiers (ensureDefaultGolfTiers), and resolves/creates the LeagueEvent identity by (sportLeagueId, name). 422 SEASON_SPORT_MISMATCH if seasonId resolves to a non-golf season.
+         */
+        post: operations["adminCreateGolfTournament"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/tournaments/{eventId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a golf tournament
+         * @description Canonical DTO plus a workflow block: current status and the server-computed set of allowed next transitions.
+         */
+        get: operations["adminGetGolfTournament"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a golf tournament
+         * @description Hard delete. 409 EVENT_HAS_CONTESTS when any Contest references it.
+         */
+        delete: operations["adminDeleteGolfTournament"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a golf tournament
+         * @description Partial update, minus seasonId (immutable after creation). 409 EVENT_NOT_ADMIN_MANAGED when the event is provider-owned (syncScope=FULL).
+         */
+        patch: operations["adminUpdateGolfTournament"];
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Transition a golf tournament's status
+         * @description Routes to EventLifecycleService.applySportEventStatusTransition with a ROOT_ADMIN actor — the same function the lifecycle scheduler calls with a SYSTEM actor. 422 SPORT_EVENT_INVALID_TRANSITION for an undeclared jump.
+         */
+        post: operations["adminTransitionGolfTournament"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/field": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a golf tournament's field
+         * @description Field rows with participant identity, isActive/inactiveReason, world rank, odds, seed, price, and isLeagueRosterMember (flags an out-of-roster invite).
+         */
+        get: operations["adminGetGolfTournamentField"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Bulk-patch a golf tournament's field entries
+         * @description One request per Save on the field grid. price writes SportEventParticipantGolfValuation.price with priceAssignedSource=MANUAL. 404 FIELD_ENTRY_NOT_FOUND for a sportEventParticipantId not on this tournament.
+         */
+        patch: operations["adminUpdateGolfFieldEntries"];
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/field/seed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Seed a golf tournament's field from its league roster
+         * @description Creates a SportEventParticipant per active affiliated Participant, deriving seedNumber/oddsToWin (plans/124 §4.7). Idempotent — skips any golfer already in the field. 409 TOURNAMENT_HAS_NO_SEASON if the tournament has no season to resolve a league from.
+         */
+        post: operations["adminSeedGolfTournamentField"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/field/bulk-add": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk-add golfers to a tournament's field
+         * @description One call for both the league-browse multi-select and free-text single-golfer search. Accepts golfers from any league's roster, or none — the deliberate path for a cross-league invite. Idempotent — skips any participantId already in the field.
+         */
+        post: operations["adminBulkAddGolfFieldEntries"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/field/{sportEventParticipantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a golfer from a tournament's field
+         * @description 409 FIELD_ENTRY_HAS_PICKS when a ContestEntryPick references it — withdraw (isActive=false) instead of removing.
+         */
+        delete: operations["adminRemoveGolfFieldEntry"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/tiers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a golf tournament's tier definitions and assignments
+         * @description Tier definitions + ordered assignments. Each row includes price alongside tier — one response, both valuations.
+         */
+        get: operations["adminGetGolfTournamentTiers"];
+        /**
+         * Replace a golf tournament's tier definitions
+         * @description Full replace of tier definitions. 409 TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS when removing a tier that still has golfers assigned, unless reassignOrphansTo names a surviving tierKey.
+         */
+        put: operations["adminReplaceGolfTournamentTiers"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/tiers/auto-assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Auto-assign a golf tournament's tiers
+         * @description Partitions the active field across however many SportEventGolfTier rows currently exist, tierSize golfers per tier except the last (absorbs the remainder). Writes tierAssignedSource, leaves price untouched.
+         */
+        post: operations["adminAutoAssignGolfTiers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/tiers/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace a golf tournament's tier assignments
+         * @description The drag-and-drop save. Full desired state, applied in one transaction so a dropped request never leaves a half-moved field. tierAssignedSource = MANUAL.
+         */
+        put: operations["adminReplaceGolfTierAssignments"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/prices/auto-assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Auto-assign a golf tournament's prices
+         * @description Same tie-broken position ordering as tiers and odds, rescaled into the given price range — higher rank, higher price. Leaves tier assignments untouched.
+         */
+        post: operations["adminAutoAssignGolfPrices"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/config/poll-intervals": {
         parameters: {
             query?: never;
@@ -7980,44 +8441,6 @@ export interface operations {
                                 rosterSize: number;
                                 /** @description How many golfer scores count toward the Team total. */
                                 countedScores: number;
-                                /**
-                                 * @description Single tier source used to generate all tiers.
-                                 * @enum {string}
-                                 */
-                                tierSource: "ODDS" | "WORLD_RANK";
-                                tierGeneration: {
-                                    /** @description Basic mode tier size used to seed the tier list. */
-                                    defaultTierSize: number;
-                                };
-                                /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
-                                tiers: {
-                                    /** @description Stable tier key such as A, B, or C. */
-                                    tierKey: string;
-                                    /** @description Commissioner-facing tier label. */
-                                    label: string;
-                                    /** @description How many golfers must be picked from the tier. */
-                                    pickCount: number;
-                                    /** @description Starting resolved rank/odds position for the tier. */
-                                    startPosition: number;
-                                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                    endPosition: number | null;
-                                }[];
-                                /** @description Golf cut rule for first-pass contests. */
-                                cutRule: {
-                                    /** @enum {string} */
-                                    type: "FIXED_SCORE";
-                                    /** @description Fallback score assigned when a golfer misses the cut. */
-                                    fixedScore: number;
-                                };
-                                /** @enum {string} */
-                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                                /** @enum {string} */
-                                displayScoring: "TO_PAR";
-                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                                tiebreaker: {
-                                    /** @enum {string} */
-                                    type: "PREDICT_WINNING_SCORE";
-                                };
                             } | {
                                 /** @enum {string} */
                                 mode: "GOLF_CATEGORY_PICKS";
@@ -8157,44 +8580,6 @@ export interface operations {
                         rosterSize: number;
                         /** @description How many golfer scores count toward the Team total. */
                         countedScores: number;
-                        /**
-                         * @description Single tier source used to generate all tiers.
-                         * @enum {string}
-                         */
-                        tierSource: "ODDS" | "WORLD_RANK";
-                        tierGeneration: {
-                            /** @description Basic mode tier size used to seed the tier list. */
-                            defaultTierSize: number;
-                        };
-                        /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
-                        tiers: {
-                            /** @description Stable tier key such as A, B, or C. */
-                            tierKey: string;
-                            /** @description Commissioner-facing tier label. */
-                            label: string;
-                            /** @description How many golfers must be picked from the tier. */
-                            pickCount: number;
-                            /** @description Starting resolved rank/odds position for the tier. */
-                            startPosition: number;
-                            /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                            endPosition: number | null;
-                        }[];
-                        /** @description Golf cut rule for first-pass contests. */
-                        cutRule: {
-                            /** @enum {string} */
-                            type: "FIXED_SCORE";
-                            /** @description Fallback score assigned when a golfer misses the cut. */
-                            fixedScore: number;
-                        };
-                        /** @enum {string} */
-                        playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                        /** @enum {string} */
-                        displayScoring: "TO_PAR";
-                        /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                        tiebreaker: {
-                            /** @enum {string} */
-                            type: "PREDICT_WINNING_SCORE";
-                        };
                     } | {
                         /** @enum {string} */
                         mode: "GOLF_CATEGORY_PICKS";
@@ -8264,44 +8649,6 @@ export interface operations {
                         rosterSize: number;
                         /** @description How many golfer scores count toward the Team total. */
                         countedScores: number;
-                        /**
-                         * @description Single tier source used to generate all tiers.
-                         * @enum {string}
-                         */
-                        tierSource: "ODDS" | "WORLD_RANK";
-                        tierGeneration: {
-                            /** @description Basic mode tier size used to seed the tier list. */
-                            defaultTierSize: number;
-                        };
-                        /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
-                        tiers: {
-                            /** @description Stable tier key such as A, B, or C. */
-                            tierKey: string;
-                            /** @description Commissioner-facing tier label. */
-                            label: string;
-                            /** @description How many golfers must be picked from the tier. */
-                            pickCount: number;
-                            /** @description Starting resolved rank/odds position for the tier. */
-                            startPosition: number;
-                            /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                            endPosition: number | null;
-                        }[];
-                        /** @description Golf cut rule for first-pass contests. */
-                        cutRule: {
-                            /** @enum {string} */
-                            type: "FIXED_SCORE";
-                            /** @description Fallback score assigned when a golfer misses the cut. */
-                            fixedScore: number;
-                        };
-                        /** @enum {string} */
-                        playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                        /** @enum {string} */
-                        displayScoring: "TO_PAR";
-                        /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                        tiebreaker: {
-                            /** @enum {string} */
-                            type: "PREDICT_WINNING_SCORE";
-                        };
                     } | {
                         /** @enum {string} */
                         mode: "GOLF_CATEGORY_PICKS";
@@ -8376,44 +8723,6 @@ export interface operations {
                                 rosterSize: number;
                                 /** @description How many golfer scores count toward the Team total. */
                                 countedScores: number;
-                                /**
-                                 * @description Single tier source used to generate all tiers.
-                                 * @enum {string}
-                                 */
-                                tierSource: "ODDS" | "WORLD_RANK";
-                                tierGeneration: {
-                                    /** @description Basic mode tier size used to seed the tier list. */
-                                    defaultTierSize: number;
-                                };
-                                /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
-                                tiers: {
-                                    /** @description Stable tier key such as A, B, or C. */
-                                    tierKey: string;
-                                    /** @description Commissioner-facing tier label. */
-                                    label: string;
-                                    /** @description How many golfers must be picked from the tier. */
-                                    pickCount: number;
-                                    /** @description Starting resolved rank/odds position for the tier. */
-                                    startPosition: number;
-                                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                    endPosition: number | null;
-                                }[];
-                                /** @description Golf cut rule for first-pass contests. */
-                                cutRule: {
-                                    /** @enum {string} */
-                                    type: "FIXED_SCORE";
-                                    /** @description Fallback score assigned when a golfer misses the cut. */
-                                    fixedScore: number;
-                                };
-                                /** @enum {string} */
-                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                                /** @enum {string} */
-                                displayScoring: "TO_PAR";
-                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                                tiebreaker: {
-                                    /** @enum {string} */
-                                    type: "PREDICT_WINNING_SCORE";
-                                };
                                 /** @description Contest-configuration identifier. */
                                 id: string;
                                 /** @description Contest that owns the configuration. */
@@ -8603,44 +8912,6 @@ export interface operations {
                                 rosterSize: number;
                                 /** @description How many golfer scores count toward the Team total. */
                                 countedScores: number;
-                                /**
-                                 * @description Single tier source used to generate all tiers.
-                                 * @enum {string}
-                                 */
-                                tierSource: "ODDS" | "WORLD_RANK";
-                                tierGeneration: {
-                                    /** @description Basic mode tier size used to seed the tier list. */
-                                    defaultTierSize: number;
-                                };
-                                /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
-                                tiers: {
-                                    /** @description Stable tier key such as A, B, or C. */
-                                    tierKey: string;
-                                    /** @description Commissioner-facing tier label. */
-                                    label: string;
-                                    /** @description How many golfers must be picked from the tier. */
-                                    pickCount: number;
-                                    /** @description Starting resolved rank/odds position for the tier. */
-                                    startPosition: number;
-                                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                    endPosition: number | null;
-                                }[];
-                                /** @description Golf cut rule for first-pass contests. */
-                                cutRule: {
-                                    /** @enum {string} */
-                                    type: "FIXED_SCORE";
-                                    /** @description Fallback score assigned when a golfer misses the cut. */
-                                    fixedScore: number;
-                                };
-                                /** @enum {string} */
-                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                                /** @enum {string} */
-                                displayScoring: "TO_PAR";
-                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                                tiebreaker: {
-                                    /** @enum {string} */
-                                    type: "PREDICT_WINNING_SCORE";
-                                };
                                 /** @description Contest-configuration identifier. */
                                 id: string;
                                 /** @description Contest that owns the configuration. */
@@ -8811,44 +9082,6 @@ export interface operations {
                     rosterSize: number;
                     /** @description How many golfer scores count toward the Team total. */
                     countedScores: number;
-                    /**
-                     * @description Single tier source used to generate all tiers.
-                     * @enum {string}
-                     */
-                    tierSource: "ODDS" | "WORLD_RANK";
-                    tierGeneration: {
-                        /** @description Basic mode tier size used to seed the tier list. */
-                        defaultTierSize: number;
-                    };
-                    /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
-                    tiers: {
-                        /** @description Stable tier key such as A, B, or C. */
-                        tierKey: string;
-                        /** @description Commissioner-facing tier label. */
-                        label: string;
-                        /** @description How many golfers must be picked from the tier. */
-                        pickCount: number;
-                        /** @description Starting resolved rank/odds position for the tier. */
-                        startPosition: number;
-                        /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                        endPosition: number | null;
-                    }[];
-                    /** @description Golf cut rule for first-pass contests. */
-                    cutRule: {
-                        /** @enum {string} */
-                        type: "FIXED_SCORE";
-                        /** @description Fallback score assigned when a golfer misses the cut. */
-                        fixedScore: number;
-                    };
-                    /** @enum {string} */
-                    playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                    /** @enum {string} */
-                    displayScoring: "TO_PAR";
-                    /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                    tiebreaker: {
-                        /** @enum {string} */
-                        type: "PREDICT_WINNING_SCORE";
-                    };
                 } | {
                     /** @enum {string} */
                     mode: "GOLF_CATEGORY_PICKS";
@@ -8922,44 +9155,6 @@ export interface operations {
                                 rosterSize: number;
                                 /** @description How many golfer scores count toward the Team total. */
                                 countedScores: number;
-                                /**
-                                 * @description Single tier source used to generate all tiers.
-                                 * @enum {string}
-                                 */
-                                tierSource: "ODDS" | "WORLD_RANK";
-                                tierGeneration: {
-                                    /** @description Basic mode tier size used to seed the tier list. */
-                                    defaultTierSize: number;
-                                };
-                                /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
-                                tiers: {
-                                    /** @description Stable tier key such as A, B, or C. */
-                                    tierKey: string;
-                                    /** @description Commissioner-facing tier label. */
-                                    label: string;
-                                    /** @description How many golfers must be picked from the tier. */
-                                    pickCount: number;
-                                    /** @description Starting resolved rank/odds position for the tier. */
-                                    startPosition: number;
-                                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                    endPosition: number | null;
-                                }[];
-                                /** @description Golf cut rule for first-pass contests. */
-                                cutRule: {
-                                    /** @enum {string} */
-                                    type: "FIXED_SCORE";
-                                    /** @description Fallback score assigned when a golfer misses the cut. */
-                                    fixedScore: number;
-                                };
-                                /** @enum {string} */
-                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                                /** @enum {string} */
-                                displayScoring: "TO_PAR";
-                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                                tiebreaker: {
-                                    /** @enum {string} */
-                                    type: "PREDICT_WINNING_SCORE";
-                                };
                                 /** @description Contest-configuration identifier. */
                                 id: string;
                                 /** @description Contest that owns the configuration. */
@@ -9927,8 +10122,13 @@ export interface operations {
                             name: string;
                             /** @description Optional shorter golfer display name. */
                             shortName: string | null;
-                            /** @description Provider/player availability status on the event participant row. */
-                            participantStatus: string | null;
+                            /** @description Whether this golfer is currently eligible/available for this tournament. */
+                            isActive: boolean;
+                            /**
+                             * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+                             * @enum {string|null}
+                             */
+                            inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
                             /** @description Latest copied global world ranking on this event participant. */
                             worldRanking: number | null;
                             /** @description Event-scoped odds-to-win for this golfer. */
@@ -10109,8 +10309,13 @@ export interface operations {
                                     name: string;
                                     /** @description Optional shorter golfer display name. */
                                     shortName: string | null;
-                                    /** @description Provider/player availability status on the event participant row. */
-                                    participantStatus: string | null;
+                                    /** @description Whether this golfer is currently eligible/available for this tournament. */
+                                    isActive: boolean;
+                                    /**
+                                     * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+                                     * @enum {string|null}
+                                     */
+                                    inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
                                     /** @description Latest copied global world ranking on this event participant. */
                                     worldRanking: number | null;
                                     /** @description Event-scoped odds-to-win for this golfer. */
@@ -11434,7 +11639,7 @@ export interface operations {
                              * @description Provider-normalized event status.
                              * @enum {string}
                              */
-                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "OFFICIAL" | "CANCELLED" | "POSTPONED";
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                             /**
                              * Format: date-time
                              * @description Scheduled or actual event start time.
@@ -13892,7 +14097,7 @@ export interface operations {
                 /** @description Optional sport filter for root-admin event browsing. */
                 sport?: "GOLF" | "NFL" | "NBA" | "F1" | "NASCAR" | "NCAA_BASKETBALL" | "NCAA_HOCKEY" | "NCAA_FOOTBALL" | "TENNIS" | "HORSE_RACING" | "SOCCER" | "NHL" | "MLB" | "UFC";
                 /** @description Optional current event-status filter. */
-                status?: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "OFFICIAL" | "CANCELLED" | "POSTPONED";
+                status?: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /** @description Maximum number of current event rows to return. */
                 limit?: number;
             };
@@ -13935,7 +14140,7 @@ export interface operations {
                              * @description Current provider-normalized event status.
                              * @enum {string}
                              */
-                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "OFFICIAL" | "CANCELLED" | "POSTPONED";
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                             /**
                              * Format: date-time
                              * @description Current scheduled or actual event start time.
@@ -14051,7 +14256,7 @@ export interface operations {
                              * @description Current provider-normalized event status.
                              * @enum {string}
                              */
-                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "OFFICIAL" | "CANCELLED" | "POSTPONED";
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                             /**
                              * Format: date-time
                              * @description Current scheduled or actual event start time.
@@ -15343,6 +15548,25 @@ export interface operations {
                 };
             };
             /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -15438,44 +15662,6 @@ export interface operations {
                                 rosterSize: number;
                                 /** @description How many golfer scores count toward the Team total. */
                                 countedScores: number;
-                                /**
-                                 * @description Single tier source used to generate all tiers.
-                                 * @enum {string}
-                                 */
-                                tierSource: "ODDS" | "WORLD_RANK";
-                                tierGeneration: {
-                                    /** @description Basic mode tier size used to seed the tier list. */
-                                    defaultTierSize: number;
-                                };
-                                /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
-                                tiers: {
-                                    /** @description Stable tier key such as A, B, or C. */
-                                    tierKey: string;
-                                    /** @description Commissioner-facing tier label. */
-                                    label: string;
-                                    /** @description How many golfers must be picked from the tier. */
-                                    pickCount: number;
-                                    /** @description Starting resolved rank/odds position for the tier. */
-                                    startPosition: number;
-                                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                    endPosition: number | null;
-                                }[];
-                                /** @description Golf cut rule for first-pass contests. */
-                                cutRule: {
-                                    /** @enum {string} */
-                                    type: "FIXED_SCORE";
-                                    /** @description Fallback score assigned when a golfer misses the cut. */
-                                    fixedScore: number;
-                                };
-                                /** @enum {string} */
-                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                                /** @enum {string} */
-                                displayScoring: "TO_PAR";
-                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                                tiebreaker: {
-                                    /** @enum {string} */
-                                    type: "PREDICT_WINNING_SCORE";
-                                };
                             } | {
                                 /** @enum {string} */
                                 mode: "GOLF_CATEGORY_PICKS";
@@ -15575,44 +15761,6 @@ export interface operations {
                         rosterSize: number;
                         /** @description How many golfer scores count toward the Team total. */
                         countedScores: number;
-                        /**
-                         * @description Single tier source used to generate all tiers.
-                         * @enum {string}
-                         */
-                        tierSource: "ODDS" | "WORLD_RANK";
-                        tierGeneration: {
-                            /** @description Basic mode tier size used to seed the tier list. */
-                            defaultTierSize: number;
-                        };
-                        /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
-                        tiers: {
-                            /** @description Stable tier key such as A, B, or C. */
-                            tierKey: string;
-                            /** @description Commissioner-facing tier label. */
-                            label: string;
-                            /** @description How many golfers must be picked from the tier. */
-                            pickCount: number;
-                            /** @description Starting resolved rank/odds position for the tier. */
-                            startPosition: number;
-                            /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                            endPosition: number | null;
-                        }[];
-                        /** @description Golf cut rule for first-pass contests. */
-                        cutRule: {
-                            /** @enum {string} */
-                            type: "FIXED_SCORE";
-                            /** @description Fallback score assigned when a golfer misses the cut. */
-                            fixedScore: number;
-                        };
-                        /** @enum {string} */
-                        playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                        /** @enum {string} */
-                        displayScoring: "TO_PAR";
-                        /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                        tiebreaker: {
-                            /** @enum {string} */
-                            type: "PREDICT_WINNING_SCORE";
-                        };
                     } | {
                         /** @enum {string} */
                         mode: "GOLF_CATEGORY_PICKS";
@@ -15713,44 +15861,6 @@ export interface operations {
                                 rosterSize: number;
                                 /** @description How many golfer scores count toward the Team total. */
                                 countedScores: number;
-                                /**
-                                 * @description Single tier source used to generate all tiers.
-                                 * @enum {string}
-                                 */
-                                tierSource: "ODDS" | "WORLD_RANK";
-                                tierGeneration: {
-                                    /** @description Basic mode tier size used to seed the tier list. */
-                                    defaultTierSize: number;
-                                };
-                                /** @description Persisted tier boundaries and pick counts after seeding or advanced editing. */
-                                tiers: {
-                                    /** @description Stable tier key such as A, B, or C. */
-                                    tierKey: string;
-                                    /** @description Commissioner-facing tier label. */
-                                    label: string;
-                                    /** @description How many golfers must be picked from the tier. */
-                                    pickCount: number;
-                                    /** @description Starting resolved rank/odds position for the tier. */
-                                    startPosition: number;
-                                    /** @description Ending resolved rank/odds position for the tier. Null means remainder of field. */
-                                    endPosition: number | null;
-                                }[];
-                                /** @description Golf cut rule for first-pass contests. */
-                                cutRule: {
-                                    /** @enum {string} */
-                                    type: "FIXED_SCORE";
-                                    /** @description Fallback score assigned when a golfer misses the cut. */
-                                    fixedScore: number;
-                                };
-                                /** @enum {string} */
-                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                                /** @enum {string} */
-                                displayScoring: "TO_PAR";
-                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                                tiebreaker: {
-                                    /** @enum {string} */
-                                    type: "PREDICT_WINNING_SCORE";
-                                };
                             } | {
                                 /** @enum {string} */
                                 mode: "GOLF_CATEGORY_PICKS";
@@ -16176,7 +16286,7 @@ export interface operations {
                             contestSportEventCount: number;
                             /** @description Number of SportEventParticipant rows attached to this event. */
                             sportEventParticipantCount: number;
-                            /** @description Number of SportEventParticipantValuation rows attached through this event. */
+                            /** @description Number of participants with a SportEventParticipantGolfValuation (tier/price) row attached through this event. */
                             valuationCount: number;
                             /** @description Number of SportEventParticipantGolfRound rows attached through this event. */
                             golfRoundCount: number;
@@ -17469,6 +17579,2732 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminListGolfLeagues: {
+        parameters: {
+            query?: {
+                isActive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        leagues: {
+                            /** @description SportLeague identifier. */
+                            id: string;
+                            /** @description Owning Sport row identifier. */
+                            sportId: string;
+                            /** @description League/tour name, e.g. "PGA Tour". */
+                            name: string;
+                            /** @description Plain catalog-browse filter keyword, e.g. "PGA". */
+                            matchKeyword: string | null;
+                            /** @description The season currently designated as this league's active one, if any. */
+                            currentSeasonId: string | null;
+                            isActive: boolean;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                            /** @description Number of golfers currently affiliated with this league. */
+                            rosterSize: number;
+                            /** @description Number of seasons on record for this league. */
+                            seasonCount: number;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminCreateGolfLeague: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    matchKeyword?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Canonical SportLeague DTO. */
+                        league: {
+                            /** @description SportLeague identifier. */
+                            id: string;
+                            /** @description Owning Sport row identifier. */
+                            sportId: string;
+                            /** @description League/tour name, e.g. "PGA Tour". */
+                            name: string;
+                            /** @description Plain catalog-browse filter keyword, e.g. "PGA". */
+                            matchKeyword: string | null;
+                            /** @description The season currently designated as this league's active one, if any. */
+                            currentSeasonId: string | null;
+                            isActive: boolean;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminUpdateGolfLeague: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string;
+                    matchKeyword?: string | null;
+                    isActive?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Canonical SportLeague DTO. */
+                        league: {
+                            /** @description SportLeague identifier. */
+                            id: string;
+                            /** @description Owning Sport row identifier. */
+                            sportId: string;
+                            /** @description League/tour name, e.g. "PGA Tour". */
+                            name: string;
+                            /** @description Plain catalog-browse filter keyword, e.g. "PGA". */
+                            matchKeyword: string | null;
+                            /** @description The season currently designated as this league's active one, if any. */
+                            currentSeasonId: string | null;
+                            isActive: boolean;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminGetGolfLeagueRoster: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        entries: {
+                            participantId: string;
+                            name: string;
+                            shortName: string | null;
+                            nationality: string | null;
+                            /** @description Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer. */
+                            status: string;
+                            worldRanking: number | null;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminAddGolfLeagueRosterEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    participantId: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description One golfer's current league affiliation. */
+                        entry: {
+                            participantId: string;
+                            name: string;
+                            shortName: string | null;
+                            nationality: string | null;
+                            /** @description Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer. */
+                            status: string;
+                            worldRanking: number | null;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminUpdateGolfLeagueRoster: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    entries: {
+                        participantId: string;
+                        worldRanking: number | null;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        entries: {
+                            participantId: string;
+                            name: string;
+                            shortName: string | null;
+                            nationality: string | null;
+                            /** @description Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer. */
+                            status: string;
+                            worldRanking: number | null;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminRemoveGolfLeagueRosterEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leagueId: string;
+                participantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminPreviewGolfLeagueRosterUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    rows: {
+                        /** Format: uuid */
+                        participantId?: string;
+                        externalId?: string;
+                        playerName?: string;
+                        worldRanking?: number;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        rows: {
+                            /** @description One golfer's league roster entry. Exactly one identifier (participantId, externalId, or playerName) should be supplied; participantId takes precedence, then externalId, then an exact case-insensitive playerName match. */
+                            row: {
+                                /** Format: uuid */
+                                participantId?: string;
+                                externalId?: string;
+                                playerName?: string;
+                                worldRanking?: number;
+                            };
+                            /** @enum {string} */
+                            resolution: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
+                            participantId: string | null;
+                            participantName: string | null;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminApplyGolfLeagueRosterUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    rows: {
+                        /** Format: uuid */
+                        participantId?: string;
+                        externalId?: string;
+                        playerName?: string;
+                        worldRanking?: number;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        entries: {
+                            participantId: string;
+                            name: string;
+                            shortName: string | null;
+                            nationality: string | null;
+                            /** @description Participant.status (ACTIVE/INACTIVE/etc.) — hides a retired golfer. */
+                            status: string;
+                            worldRanking: number | null;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminListGolfSeasons: {
+        parameters: {
+            query?: {
+                isActive?: boolean;
+                sportLeagueId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        seasons: {
+                            id: string;
+                            sportLeagueId: string;
+                            name: string;
+                            year: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            startDate: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            endDate: string;
+                            isActive: boolean;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                            /** @description Number of tournaments linked to this season. */
+                            tournamentCount: number;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminCreateGolfSeason: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    sportLeagueId: string;
+                    name: string;
+                    year: number;
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    startDate: string;
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    endDate: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Canonical Season DTO. */
+                        season: {
+                            id: string;
+                            sportLeagueId: string;
+                            name: string;
+                            year: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            startDate: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            endDate: string;
+                            isActive: boolean;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminGetGolfSeason: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                seasonId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Canonical Season DTO. */
+                        season: {
+                            id: string;
+                            sportLeagueId: string;
+                            name: string;
+                            year: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            startDate: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            endDate: string;
+                            isActive: boolean;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                            /** @description Number of tournaments linked to this season. */
+                            tournamentCount: number;
+                            /** @description Whether this season is its league's currently-designated season. */
+                            isCurrent: boolean;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminUpdateGolfSeason: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                seasonId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string;
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    startDate?: string;
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    endDate?: string;
+                    isActive?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Canonical Season DTO. */
+                        season: {
+                            id: string;
+                            sportLeagueId: string;
+                            name: string;
+                            year: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            startDate: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            endDate: string;
+                            isActive: boolean;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminSetCurrentGolfSeason: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                seasonId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        sportLeagueId: string;
+                        currentSeasonId: string;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminGetGolfTournamentRounds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Ordered by roundNumber ascending, not by date. */
+                        rounds: {
+                            /** @description 1-indexed round number; the only resolution key for score writes. */
+                            roundNumber: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            scheduledDate: string;
+                            /** Format: date-time */
+                            scheduledEndAt: string | null;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminUpdateGolfTournamentRounds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description How a rain delay or an irregular schedule gets recorded. Only reschedules existing rounds; never creates one. */
+                    rounds: {
+                        roundNumber: number;
+                        /**
+                         * Format: date-time
+                         * @description ISO 8601 datetime string.
+                         */
+                        scheduledDate: string;
+                        /** Format: date-time */
+                        scheduledEndAt?: string | null;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Ordered by roundNumber ascending, not by date. */
+                        rounds: {
+                            /** @description 1-indexed round number; the only resolution key for score writes. */
+                            roundNumber: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            scheduledDate: string;
+                            /** Format: date-time */
+                            scheduledEndAt: string | null;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminListGolfTournaments: {
+        parameters: {
+            query?: {
+                status?: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        tournaments: {
+                            id: string;
+                            name: string;
+                            venue: string | null;
+                            location: string | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            startDate: string;
+                            /** @description ISO 8601 datetime string. */
+                            endDate: string | null;
+                            /** @enum {string} */
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                            rounds: number | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            releaseAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            fieldLocksAt: string;
+                            fieldLocked: boolean;
+                            seasonId: string | null;
+                            /** @description The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a). */
+                            leagueEventId: string | null;
+                            /**
+                             * @description MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
+                             * @enum {string}
+                             */
+                            source: "MANUAL" | "PROVIDER";
+                            /** @enum {string} */
+                            syncScope: "NONE" | "SCORES_ONLY" | "FULL";
+                            autoLifecycleEnabled: boolean;
+                            fieldCount: number;
+                            tierCount: number;
+                            contestCount: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminCreateGolfTournament: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    venue?: string;
+                    location?: string;
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    startDate: string;
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    endDate?: string;
+                    /** @default 4 */
+                    rounds?: number;
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    releaseAt: string;
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    fieldLocksAt: string;
+                    seasonId: string;
+                    autoLifecycleEnabled?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Canonical admin golf tournament DTO — a SportEvent plus field/tier/contest counts. */
+                        tournament: {
+                            id: string;
+                            name: string;
+                            venue: string | null;
+                            location: string | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            startDate: string;
+                            /** @description ISO 8601 datetime string. */
+                            endDate: string | null;
+                            /** @enum {string} */
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                            rounds: number | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            releaseAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            fieldLocksAt: string;
+                            fieldLocked: boolean;
+                            seasonId: string | null;
+                            /** @description The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a). */
+                            leagueEventId: string | null;
+                            /**
+                             * @description MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
+                             * @enum {string}
+                             */
+                            source: "MANUAL" | "PROVIDER";
+                            /** @enum {string} */
+                            syncScope: "NONE" | "SCORES_ONLY" | "FULL";
+                            autoLifecycleEnabled: boolean;
+                            fieldCount: number;
+                            tierCount: number;
+                            contestCount: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                            workflow: {
+                                /** @enum {string} */
+                                currentStatus: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                                /** @description Server-computed from the declared transition map — never re-derived client-side. */
+                                allowedTransitions: ("SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminGetGolfTournament: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Canonical admin golf tournament DTO — a SportEvent plus field/tier/contest counts. */
+                        tournament: {
+                            id: string;
+                            name: string;
+                            venue: string | null;
+                            location: string | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            startDate: string;
+                            /** @description ISO 8601 datetime string. */
+                            endDate: string | null;
+                            /** @enum {string} */
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                            rounds: number | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            releaseAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            fieldLocksAt: string;
+                            fieldLocked: boolean;
+                            seasonId: string | null;
+                            /** @description The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a). */
+                            leagueEventId: string | null;
+                            /**
+                             * @description MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
+                             * @enum {string}
+                             */
+                            source: "MANUAL" | "PROVIDER";
+                            /** @enum {string} */
+                            syncScope: "NONE" | "SCORES_ONLY" | "FULL";
+                            autoLifecycleEnabled: boolean;
+                            fieldCount: number;
+                            tierCount: number;
+                            contestCount: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                            workflow: {
+                                /** @enum {string} */
+                                currentStatus: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                                /** @description Server-computed from the declared transition map — never re-derived client-side. */
+                                allowedTransitions: ("SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminDeleteGolfTournament: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminUpdateGolfTournament: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string;
+                    venue?: string;
+                    location?: string;
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    startDate?: string;
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    endDate?: string;
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    releaseAt?: string;
+                    /**
+                     * Format: date-time
+                     * @description ISO 8601 datetime string.
+                     */
+                    fieldLocksAt?: string;
+                    autoLifecycleEnabled?: boolean;
+                    rounds?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Canonical admin golf tournament DTO — a SportEvent plus field/tier/contest counts. */
+                        tournament: {
+                            id: string;
+                            name: string;
+                            venue: string | null;
+                            location: string | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            startDate: string;
+                            /** @description ISO 8601 datetime string. */
+                            endDate: string | null;
+                            /** @enum {string} */
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                            rounds: number | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            releaseAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            fieldLocksAt: string;
+                            fieldLocked: boolean;
+                            seasonId: string | null;
+                            /** @description The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a). */
+                            leagueEventId: string | null;
+                            /**
+                             * @description MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
+                             * @enum {string}
+                             */
+                            source: "MANUAL" | "PROVIDER";
+                            /** @enum {string} */
+                            syncScope: "NONE" | "SCORES_ONLY" | "FULL";
+                            autoLifecycleEnabled: boolean;
+                            fieldCount: number;
+                            tierCount: number;
+                            contestCount: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                            workflow: {
+                                /** @enum {string} */
+                                currentStatus: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                                /** @description Server-computed from the declared transition map — never re-derived client-side. */
+                                allowedTransitions: ("SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminTransitionGolfTournament: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    toStatus: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Canonical admin golf tournament DTO — a SportEvent plus field/tier/contest counts. */
+                        tournament: {
+                            id: string;
+                            name: string;
+                            venue: string | null;
+                            location: string | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            startDate: string;
+                            /** @description ISO 8601 datetime string. */
+                            endDate: string | null;
+                            /** @enum {string} */
+                            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                            rounds: number | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            releaseAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            fieldLocksAt: string;
+                            fieldLocked: boolean;
+                            seasonId: string | null;
+                            /** @description The recurring tournament identity this year's event resolves to, if any (plans/124 §4.3a). */
+                            leagueEventId: string | null;
+                            /**
+                             * @description MANUAL when providerId is the reserved manual-admin identity; PROVIDER otherwise.
+                             * @enum {string}
+                             */
+                            source: "MANUAL" | "PROVIDER";
+                            /** @enum {string} */
+                            syncScope: "NONE" | "SCORES_ONLY" | "FULL";
+                            autoLifecycleEnabled: boolean;
+                            fieldCount: number;
+                            tierCount: number;
+                            contestCount: number;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            createdAt: string;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            updatedAt: string;
+                            workflow: {
+                                /** @enum {string} */
+                                currentStatus: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                                /** @description Server-computed from the declared transition map — never re-derived client-side. */
+                                allowedTransitions: ("SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminGetGolfTournamentField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        entries: {
+                            sportEventParticipantId: string;
+                            participantId: string;
+                            participantName: string;
+                            shortName: string | null;
+                            nationality: string | null;
+                            isActive: boolean;
+                            /**
+                             * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+                             * @enum {string|null}
+                             */
+                            inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                            worldRanking: number | null;
+                            oddsToWin: number | null;
+                            seedNumber: number | null;
+                            /** @description SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL. */
+                            price: number | null;
+                            /** @description Whether this golfer is currently affiliated with the tournament's linked league — flags an out-of-roster invite. */
+                            isLeagueRosterMember: boolean;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminUpdateGolfFieldEntries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    entries: {
+                        sportEventParticipantId: string;
+                        isActive?: boolean;
+                        /** @enum {string|null} */
+                        inactiveReason?: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                        worldRanking?: number | null;
+                        oddsToWin?: number | null;
+                        seedNumber?: number | null;
+                        price?: number | null;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        entries: {
+                            sportEventParticipantId: string;
+                            participantId: string;
+                            participantName: string;
+                            shortName: string | null;
+                            nationality: string | null;
+                            isActive: boolean;
+                            /**
+                             * @description Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
+                             * @enum {string|null}
+                             */
+                            inactiveReason: "WITHDRAWN" | "CUT" | "ELIMINATED" | null;
+                            worldRanking: number | null;
+                            oddsToWin: number | null;
+                            seedNumber: number | null;
+                            /** @description SportEventParticipantGolfValuation.price — set via the bulk field patch, priceAssignedSource=MANUAL. */
+                            price: number | null;
+                            /** @description Whether this golfer is currently affiliated with the tournament's linked league — flags an out-of-roster invite. */
+                            isLeagueRosterMember: boolean;
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminSeedGolfTournamentField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        added: number;
+                        skipped: number;
+                        total: number;
+                        seedNumbersDerived: number;
+                        oddsDerived: number;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminBulkAddGolfFieldEntries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    participantIds: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        added: number;
+                        skipped: number;
+                        total: number;
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminRemoveGolfFieldEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                sportEventParticipantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminGetGolfTournamentTiers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Ordered by tierNumber ascending. */
+                        tiers: {
+                            tierKey: string;
+                            label: string;
+                            tierNumber: number;
+                            defaultPickCount: number;
+                            assignments: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                tierOrderIndex: number | null;
+                                price: number | null;
+                            }[];
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminReplaceGolfTournamentTiers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    tiers: {
+                        tierKey: string;
+                        label: string;
+                        tierNumber: number;
+                        defaultPickCount: number;
+                    }[];
+                    /** @description A tierKey from this same request — required when removing a tier that still has golfers assigned to it. */
+                    reassignOrphansTo?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Ordered by tierNumber ascending. */
+                        tiers: {
+                            tierKey: string;
+                            label: string;
+                            tierNumber: number;
+                            defaultPickCount: number;
+                            assignments: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                tierOrderIndex: number | null;
+                                price: number | null;
+                            }[];
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminAutoAssignGolfTiers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    source: "ODDS" | "WORLD_RANK";
+                    tierSize?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Ordered by tierNumber ascending. */
+                        tiers: {
+                            tierKey: string;
+                            label: string;
+                            tierNumber: number;
+                            defaultPickCount: number;
+                            assignments: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                tierOrderIndex: number | null;
+                                price: number | null;
+                            }[];
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminReplaceGolfTierAssignments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Full desired state — the drag-and-drop save. Applied in one transaction so a dropped request never leaves a half-moved field. */
+                    assignments: {
+                        sportEventParticipantId: string;
+                        tierKey: string;
+                        tierOrderIndex: number;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Ordered by tierNumber ascending. */
+                        tiers: {
+                            tierKey: string;
+                            label: string;
+                            tierNumber: number;
+                            defaultPickCount: number;
+                            assignments: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                tierOrderIndex: number | null;
+                                price: number | null;
+                            }[];
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Error payload object. */
+                        error: {
+                            /** @description Stable machine-readable error code. */
+                            code: string;
+                            /** @description Human-readable error summary safe to show to clients. */
+                            message: string;
+                            /** @description Optional structured details for client-specific handling or diagnostics. */
+                            details?: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    adminAutoAssignGolfPrices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    minPrice: number;
+                    maxPrice: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Ordered by tierNumber ascending. */
+                        tiers: {
+                            tierKey: string;
+                            label: string;
+                            tierNumber: number;
+                            defaultPickCount: number;
+                            assignments: {
+                                sportEventParticipantId: string;
+                                participantId: string;
+                                tierOrderIndex: number | null;
+                                price: number | null;
+                            }[];
+                        }[];
+                    };
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

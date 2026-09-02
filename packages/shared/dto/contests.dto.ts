@@ -5,6 +5,7 @@ import { z } from 'zod';
 import {
   ContestStatus,
   ContestFormat,
+  GolfParticipantInactiveReason,
   ScoringEngine,
   SelectionType,
 } from '@poolmaster/shared/domain';
@@ -299,7 +300,8 @@ export const GolfLeaderboardParticipantDtoSchema = z.object({
   participantId: z.string().describe('Canonical participant identifier.'),
   name: z.string().describe('Golfer display name.'),
   shortName: z.string().nullable().describe('Optional shorter golfer display name.'),
-  participantStatus: z.string().nullable().describe('Provider/player availability status on the event participant row.'),
+  isActive: z.boolean().describe('Whether this golfer is currently eligible/available for this tournament.'),
+  inactiveReason: z.nativeEnum(GolfParticipantInactiveReason).nullable().describe('Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."'),
   worldRanking: z.number().int().nullable().describe('Latest copied global world ranking on this event participant.'),
   oddsToWin: z.number().nullable().describe('Event-scoped odds-to-win for this golfer.'),
   seedNumber: z.number().int().nullable().describe('Event seed/order when supplied by the provider.'),

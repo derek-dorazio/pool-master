@@ -1,6 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
-import type { Sport } from '@poolmaster/shared/domain';
+import type { Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import type { EventStatusDto } from '@poolmaster/shared/dto/events.dto';
 
 export interface EventListQueryInput {
@@ -54,7 +54,7 @@ export class EventService {
       const events = await this.eventReader.findMany({
         where: {
           ...(query.sport ? { sport: query.sport } : {}),
-          ...(query.status ? { status: query.status } : {}),
+          ...(query.status ? { status: query.status as SportEventStatus } : {}),
         },
         include: {
           _count: {

@@ -10,6 +10,8 @@ import {
   PricingMethod,
   TierAssignmentMethod,
   VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT,
+  GolfParticipantInactiveReason,
+  deriveLegacyParticipantStatus,
   getDefaultTournamentFormatForSport,
   getValidContestFormatsForTournamentFormat,
   isContestFormatValidForSport,
@@ -150,5 +152,28 @@ describe('TierAssignmentMethod enum', () => {
     expect(TierAssignmentMethod.COMMISSIONER).toBe('COMMISSIONER');
     expect(TierAssignmentMethod.CONFERENCE).toBe('CONFERENCE');
     expect(TierAssignmentMethod.BOUT_POSITION).toBe('BOUT_POSITION');
+  });
+});
+
+// pool-master-uvc — single source of truth consumed by admin-events.mapper.ts,
+// drafts/routes.ts, and contests/service.ts (x2); each call site's own test
+// asserts it's wired to this function (see mock spy assertions there) rather
+// than re-testing every branch redundantly.
+describe('deriveLegacyParticipantStatus', () => {
+  it('pool-master-uvc: returns ACTIVE when isActive is true, regardless of inactiveReason', () => {
+    expect(deriveLegacyParticipantStatus(true, null)).toBe('ACTIVE');
+    expect(deriveLegacyParticipantStatus(true, undefined)).toBe('ACTIVE');
+    expect(deriveLegacyParticipantStatus(true, GolfParticipantInactiveReason.WITHDRAWN)).toBe('ACTIVE');
+  });
+
+  it('pool-master-uvc: returns the inactiveReason when isActive is false and a reason is recorded', () => {
+    expect(deriveLegacyParticipantStatus(false, GolfParticipantInactiveReason.WITHDRAWN)).toBe('WITHDRAWN');
+    expect(deriveLegacyParticipantStatus(false, GolfParticipantInactiveReason.CUT)).toBe('CUT');
+    expect(deriveLegacyParticipantStatus(false, GolfParticipantInactiveReason.ELIMINATED)).toBe('ELIMINATED');
+  });
+
+  it('pool-master-uvc: falls back to INACTIVE when isActive is false and no reason is recorded', () => {
+    expect(deriveLegacyParticipantStatus(false, null)).toBe('INACTIVE');
+    expect(deriveLegacyParticipantStatus(false, undefined)).toBe('INACTIVE');
   });
 });

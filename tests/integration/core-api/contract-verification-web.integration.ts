@@ -284,7 +284,7 @@ describe('Contract verification (web)', () => {
       data: {
         sportEventId: eventId,
         participantId,
-        status: 'ACTIVE',
+        isActive: true,
       },
     });
 
@@ -495,7 +495,7 @@ describe('Contract verification (web)', () => {
       data: {
         sportEventId: sportEvent.id,
         participantId: participant.id,
-        status: 'ACTIVE',
+        isActive: true,
       },
     });
     // pool-master-9y6: default tiered templates require a contest-ready field.
@@ -516,7 +516,7 @@ describe('Contract verification (web)', () => {
         data: {
           sportEventId: sportEvent.id,
           participantId: fieldParticipant.id,
-          status: 'ACTIVE',
+          isActive: true,
         },
       });
     }

@@ -13,12 +13,12 @@ import type {
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
   SportEventParticipantRepository,
-  SportEventParticipantValuationRepository,
 } from '@poolmaster/shared/db';
 import {
   ContestManagementError,
   ContestManagementService,
 } from '../../../packages/core-api/src/modules/contest-management/service';
+import type { GolfTierService } from '../../../packages/core-api/src/modules/golf/golf-tier-service';
 
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
 
@@ -62,21 +62,6 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
       maxEntriesPerSquad: 1,
       rosterSize: 6,
       countedScores: 4,
-      tierSource: 'ODDS',
-      tierGeneration: { defaultTierSize: 10 },
-      tiers: [
-        {
-          tierKey: 'A',
-          label: 'Tier A',
-          pickCount: 1,
-          startPosition: 1,
-          endPosition: 10,
-        },
-      ],
-      cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
-      playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-      displayScoring: 'TO_PAR',
-      tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
     },
     locksAt: new Date('2026-04-10T12:00:00.000Z'),
     maxEntriesPerSquad: 1,
@@ -133,21 +118,6 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
       maxEntriesPerSquad: 1,
       rosterSize: 6,
       countedScores: 4,
-      tierSource: 'ODDS',
-      tierGeneration: { defaultTierSize: 10 },
-      tiers: [
-        {
-          tierKey: 'A',
-          label: 'Tier A',
-          pickCount: 1,
-          startPosition: 1,
-          endPosition: 10,
-        },
-      ],
-      cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
-      playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-      displayScoring: 'TO_PAR',
-      tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
     },
     schemaVersion: 1,
     createdAt: new Date('2026-04-07T12:00:00.000Z'),
@@ -252,18 +222,25 @@ function createSportEventParticipantRepo(): SportEventParticipantRepository {
   };
 }
 
-function createSportEventParticipantValuationRepo(): SportEventParticipantValuationRepository {
+/**
+ * Defaults to reporting no tiers for the event, matching
+ * assertTierConfigurationFitsTierCount's "nothing to validate against"
+ * skip — the same default these fixtures relied on before tiers moved to
+ * golf-tier-service (plans/124 §4.6/pool-master-piv).
+ */
+function createGolfTierServiceStub(tierCount = 0): GolfTierService {
   return {
-    findById: jest.fn(),
-    findBySportEventParticipant: jest.fn().mockResolvedValue([]),
-    create: jest.fn().mockImplementation(async (valuation) => ({
-      id: 'valuation-1',
-      ...valuation,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })),
-    update: jest.fn(),
-  };
+    getEffectiveTiersForSportEvent: jest.fn().mockResolvedValue(
+      Array.from({ length: tierCount }, (_, index) => ({
+        id: `tier-${index + 1}`,
+        tierKey: `tier-${index + 1}`,
+        label: `Tier ${index + 1}`,
+        tierNumber: index + 1,
+        defaultPickCount: 1,
+        participants: [],
+      })),
+    ),
+  } as unknown as GolfTierService;
 }
 
 function createSportEventReader(overrides?: Partial<{
@@ -317,7 +294,7 @@ describe('ContestManagementService', () => {
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
@@ -334,28 +311,6 @@ describe('ContestManagementService', () => {
           maxEntriesPerSquad: 3,
           rosterSize: 6,
           countedScores: 4,
-          tierSource: 'ODDS',
-          tierGeneration: {
-            defaultTierSize: 10,
-          },
-          tiers: [
-            {
-              tierKey: 'A',
-              label: 'Tier A',
-              pickCount: 1,
-              startPosition: 1,
-              endPosition: 10,
-            },
-          ],
-          cutRule: {
-            type: 'FIXED_SCORE',
-            fixedScore: 80,
-          },
-          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-          displayScoring: 'TO_PAR',
-          tiebreaker: {
-            type: 'PREDICT_WINNING_SCORE',
-          },
         },
       },
     );
@@ -374,26 +329,22 @@ describe('ContestManagementService', () => {
       throw new Error('Expected golf tiered configuration');
     }
     expect(result.configuration.countedScores).toBe(4);
+    // pool-master-p15 — tiers are event-owned now (plans/124 §4.6); contest
+    // creation no longer computes or persists a per-contest tierConfig
+    // snapshot, so the create call carries no tierConfig key at all.
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        tierConfig: [
-          expect.objectContaining({
-            tierKey: 'A',
-            participantIds: ['participant-1'],
-          }),
-        ],
+      expect.not.objectContaining({
+        tierConfig: expect.anything(),
       }),
     );
+    // pool-master-piv — cutRule/playoffHandling/displayScoring/tiebreaker
+    // dropped (plans/124 §4.6a): each was locked to one possible value with
+    // zero real reads downstream, so the config blob is now empty.
     expect(participantContestScoringRuleRepo.create).toHaveBeenCalledWith({
       contestConfigurationId: 'config-1',
       participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       sortOrder: 1,
-      config: {
-        cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
-        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-        displayScoring: 'TO_PAR',
-        tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
-      },
+      config: {},
       active: true,
     });
     expect(contestEntryAggregationRuleRepo.update).toHaveBeenCalledWith(
@@ -406,7 +357,7 @@ describe('ContestManagementService', () => {
     );
   });
 
-  it('pool-master-dxd.40 rejects tiered contests when tiers exceed the loaded event field', async () => {
+  it('pool-master-piv rejects a tiered contest whose rosterSize does not divide evenly across the event\'s tiers', async () => {
     const contestCoreRepo = createContestCoreRepo();
     const service = new ContestManagementService(
       contestCoreRepo,
@@ -416,7 +367,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(2),
       undefined,
       createSportEventReader({
         participantCount: 80,
@@ -435,43 +386,55 @@ describe('ContestManagementService', () => {
             mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T12:00:00.000Z',
             maxEntriesPerSquad: 3,
-            rosterSize: 4,
+            rosterSize: 5,
             countedScores: 4,
-            tierSource: 'ODDS',
-            tierGeneration: {
-              defaultTierSize: 10,
-            },
-            tiers: [
-              {
-                tierKey: 'A',
-                label: 'Tier A',
-                pickCount: 2,
-                startPosition: 1,
-                endPosition: 10,
-              },
-              {
-                tierKey: 'B',
-                label: 'Tier B',
-                pickCount: 2,
-                startPosition: 111,
-                endPosition: null,
-              },
-            ],
-            cutRule: {
-              type: 'FIXED_SCORE',
-              fixedScore: 80,
-            },
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-            displayScoring: 'TO_PAR',
-            tiebreaker: {
-              type: 'PREDICT_WINNING_SCORE',
-            },
           },
         },
       ),
     ).rejects.toMatchObject({
       code: 'CONTEST_TIER_FIELD_OUT_OF_RANGE',
-      message: 'Tier B starts at field position 111, but the selected event only has 80 participants.',
+      message: 'rosterSize (5) must divide evenly across the event\'s 2 tier(s).',
+    });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('pool-master-piv rejects a tiered contest whose countedScores exceeds rosterSize', async () => {
+    const contestCoreRepo = createContestCoreRepo();
+    const service = new ContestManagementService(
+      contestCoreRepo,
+      createContestConfigTemplateRepo(),
+      createContestConfigurationRepo(),
+      createParticipantScoringRuleRepo(),
+      createAggregationRuleRepo(),
+      createPrizeDefinitionRepo(),
+      createSportEventParticipantRepo(),
+      createGolfTierServiceStub(2),
+      undefined,
+      createSportEventReader({
+        participantCount: 80,
+        loadedParticipantCount: 80,
+      }),
+    );
+
+    await expect(
+      service.createContest(
+        { leagueId: 'league-1' },
+        {
+          name: 'Invalid counted scores',
+          sportEventId: '11111111-1111-1111-1111-111111111111',
+          contestFormat: 'ROSTER',
+          configuration: {
+            mode: 'GOLF_TIERED',
+            locksAt: '2026-04-10T12:00:00.000Z',
+            maxEntriesPerSquad: 3,
+            rosterSize: 4,
+            countedScores: 6,
+          },
+        },
+      ),
+    ).rejects.toMatchObject({
+      code: 'CONTEST_TIER_FIELD_OUT_OF_RANGE',
+      message: 'countedScores (6) cannot exceed rosterSize (4).',
     });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
@@ -486,7 +449,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(),
       undefined,
       createSportEventReader({ sport: Sport.GOLF }),
     );
@@ -546,7 +509,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(),
       undefined,
       createSportEventReader({
         sport: Sport.NCAA_BASKETBALL,
@@ -609,7 +572,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(),
       undefined,
       createSportEventReader({
         sport: Sport.NCAA_BASKETBALL,
@@ -630,28 +593,6 @@ describe('ContestManagementService', () => {
             maxEntriesPerSquad: 3,
             rosterSize: 4,
             countedScores: 4,
-            tierSource: 'ODDS',
-            tierGeneration: {
-              defaultTierSize: 10,
-            },
-            tiers: [
-              {
-                tierKey: 'A',
-                label: 'Tier A',
-                pickCount: 4,
-                startPosition: 1,
-                endPosition: 10,
-              },
-            ],
-            cutRule: {
-              type: 'FIXED_SCORE',
-              fixedScore: 80,
-            },
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-            displayScoring: 'TO_PAR',
-            tiebreaker: {
-              type: 'PREDICT_WINNING_SCORE',
-            },
           },
         },
       ),
@@ -674,7 +615,7 @@ describe('ContestManagementService', () => {
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
@@ -738,7 +679,7 @@ describe('ContestManagementService', () => {
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
@@ -749,28 +690,6 @@ describe('ContestManagementService', () => {
       maxEntriesPerSquad: 2,
       rosterSize: 8,
       countedScores: 5,
-      tierSource: 'WORLD_RANK',
-      tierGeneration: {
-        defaultTierSize: 10,
-      },
-      tiers: [
-        {
-          tierKey: 'A',
-          label: 'Tier A',
-          pickCount: 2,
-          startPosition: 1,
-          endPosition: 8,
-        },
-      ],
-      cutRule: {
-        type: 'FIXED_SCORE',
-        fixedScore: 82,
-      },
-      playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-      displayScoring: 'TO_PAR',
-      tiebreaker: {
-        type: 'PREDICT_WINNING_SCORE',
-      },
     });
 
     expect(contestConfigurationRepo.update).toHaveBeenCalledWith('config-1', {
@@ -782,46 +701,10 @@ describe('ContestManagementService', () => {
         locksAt: '2026-04-11T12:00:00.000Z',
         maxEntriesPerSquad: 2,
         rosterSize: 8,
-        tierSource: 'WORLD_RANK',
-        tierGeneration: {
-          defaultTierSize: 10,
-        },
-        tiers: [
-          {
-            tierKey: 'A',
-            label: 'Tier A',
-            pickCount: 2,
-            startPosition: 1,
-            endPosition: 8,
-          },
-        ],
-        cutRule: {
-          type: 'FIXED_SCORE',
-          fixedScore: 82,
-        },
-        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-        displayScoring: 'TO_PAR',
-        tiebreaker: {
-          type: 'PREDICT_WINNING_SCORE',
-        },
       },
       locksAt: new Date('2026-04-11T12:00:00.000Z'),
       maxEntriesPerSquad: 2,
-      tierConfig: [
-        {
-          tierId: 'A',
-          tierKey: 'A',
-          tierName: 'Tier A',
-          tierNumber: 1,
-          label: 'Tier A',
-          pickCount: 2,
-          picksFromTier: 2,
-          startPosition: 1,
-          endPosition: 8,
-          participantIds: ['participant-1'],
-        },
-      ],
-      pickCount: 2,
+      pickCount: 8,
       rosterSize: 8,
       isExclusive: false,
     });
@@ -832,10 +715,10 @@ describe('ContestManagementService', () => {
       throw new Error('Expected golf tiered configuration');
     }
     expect(result.configuration.rosterSize).toBe(8);
-    expect(result.configuration.cutRule.fixedScore).toBe(82);
+    expect(result.configuration.countedScores).toBe(5);
   });
 
-  it('pool-master-dxd.40 rejects tiered contest updates when tiers exceed the loaded event field', async () => {
+  it('pool-master-piv rejects a tiered contest update whose rosterSize does not divide evenly across the event\'s tiers', async () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const service = new ContestManagementService(
       createContestCoreRepo(),
@@ -845,7 +728,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(2),
       undefined,
       createSportEventReader({
         participantCount: 80,
@@ -858,41 +741,12 @@ describe('ContestManagementService', () => {
         mode: 'GOLF_TIERED',
         locksAt: '2026-04-11T12:00:00.000Z',
         maxEntriesPerSquad: 2,
-        rosterSize: 4,
+        rosterSize: 5,
         countedScores: 4,
-        tierSource: 'WORLD_RANK',
-        tierGeneration: {
-          defaultTierSize: 10,
-        },
-        tiers: [
-          {
-            tierKey: 'A',
-            label: 'Tier A',
-            pickCount: 2,
-            startPosition: 1,
-            endPosition: 10,
-          },
-          {
-            tierKey: 'B',
-            label: 'Tier B',
-            pickCount: 2,
-            startPosition: 111,
-            endPosition: null,
-          },
-        ],
-        cutRule: {
-          type: 'FIXED_SCORE',
-          fixedScore: 82,
-        },
-        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-        displayScoring: 'TO_PAR',
-        tiebreaker: {
-          type: 'PREDICT_WINNING_SCORE',
-        },
       }),
     ).rejects.toMatchObject({
       code: 'CONTEST_TIER_FIELD_OUT_OF_RANGE',
-      message: 'Tier B starts at field position 111, but the selected event only has 80 participants.',
+      message: 'rosterSize (5) must divide evenly across the event\'s 2 tier(s).',
     });
     expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
   });
@@ -906,7 +760,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
@@ -916,7 +770,10 @@ describe('ContestManagementService', () => {
     expect(result.id).toBe('contest-1');
     expect(result.configuration.id).toBe('config-1');
     expect(result.configuration.mode).toBe('GOLF_TIERED');
-    expect(result.configuration.tiebreaker.type).toBe('PREDICT_WINNING_SCORE');
+    if (result.configuration.mode !== 'GOLF_TIERED') {
+      throw new Error('Expected golf tiered configuration');
+    }
+    expect(result.configuration.countedScores).toBe(4);
   });
 
   it('creates a contest from a seeded template and stores template provenance', async () => {
@@ -934,7 +791,7 @@ describe('ContestManagementService', () => {
       contestEntryAggregationRuleRepo,
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
@@ -975,7 +832,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
@@ -1011,7 +868,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(),
       undefined,
       createSportEventReader(),
     );
@@ -1037,7 +894,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(),
       undefined,
       createSportEventReader({
         participantCount: 72,
@@ -1057,28 +914,6 @@ describe('ContestManagementService', () => {
           maxEntriesPerSquad: 3,
           rosterSize: 6,
           countedScores: 4,
-          tierSource: 'ODDS',
-          tierGeneration: {
-            defaultTierSize: 10,
-          },
-          tiers: [
-            {
-              tierKey: 'A',
-              label: 'Tier A',
-              pickCount: 1,
-              startPosition: 1,
-              endPosition: 10,
-            },
-          ],
-          cutRule: {
-            type: 'FIXED_SCORE',
-            fixedScore: 80,
-          },
-          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-          displayScoring: 'TO_PAR',
-          tiebreaker: {
-            type: 'PREDICT_WINNING_SCORE',
-          },
         },
       },
     )).rejects.toMatchObject({
@@ -1098,7 +933,7 @@ describe('ContestManagementService', () => {
       createAggregationRuleRepo(),
       createPrizeDefinitionRepo(),
       createSportEventParticipantRepo(),
-      createSportEventParticipantValuationRepo(),
+      createGolfTierServiceStub(),
       undefined,
       createSportEventReader({
         releaseAt: new Date('2026-05-10T12:00:00.000Z'),
@@ -1118,28 +953,6 @@ describe('ContestManagementService', () => {
           maxEntriesPerSquad: 3,
           rosterSize: 6,
           countedScores: 4,
-          tierSource: 'ODDS',
-          tierGeneration: {
-            defaultTierSize: 10,
-          },
-          tiers: [
-            {
-              tierKey: 'A',
-              label: 'Tier A',
-              pickCount: 1,
-              startPosition: 1,
-              endPosition: 10,
-            },
-          ],
-          cutRule: {
-            type: 'FIXED_SCORE',
-            fixedScore: 80,
-          },
-          playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-          displayScoring: 'TO_PAR',
-          tiebreaker: {
-            type: 'PREDICT_WINNING_SCORE',
-          },
         },
       },
     )).rejects.toMatchObject({

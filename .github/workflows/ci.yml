@@ -784,6 +784,23 @@ jobs:
         run: |
           TASK_ARN="${{ steps.run-migration.outputs.task_arn }}"
           CLUSTER="poolmaster-qa-cluster"
+          TASK_ID="${TASK_ARN##*/}"
+          TASK_DEFINITION_ARN=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
+            --query 'tasks[0].taskDefinitionArn' --output text 2>/dev/null || echo "")
+          LOG_GROUP=""
+          LOG_PREFIX=""
+          CONTAINER_NAME="migrate"
+
+          if [ -n "$TASK_DEFINITION_ARN" ] && [ "$TASK_DEFINITION_ARN" != "None" ]; then
+            LOG_GROUP=$(aws ecs describe-task-definition \
+              --task-definition "$TASK_DEFINITION_ARN" \
+              --query 'taskDefinition.containerDefinitions[?name==`migrate`][0].logConfiguration.options."awslogs-group"' \
+              --output text 2>/dev/null || echo "")
+            LOG_PREFIX=$(aws ecs describe-task-definition \
+              --task-definition "$TASK_DEFINITION_ARN" \
+              --query 'taskDefinition.containerDefinitions[?name==`migrate`][0].logConfiguration.options."awslogs-stream-prefix"' \
+              --output text 2>/dev/null || echo "")
+          fi
 
           echo "Waiting for migration task to complete..."
           for i in $(seq 1 40); do
@@ -796,6 +813,20 @@ jobs:
                 --query 'tasks[0].containers[0].exitCode' --output text)
               REASON=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
                 --query 'tasks[0].containers[0].reason' --output text 2>/dev/null || echo "")
+              STOP_REASON=$(aws ecs describe-tasks --cluster $CLUSTER --tasks $TASK_ARN \
+                --query 'tasks[0].stoppedReason' --output text 2>/dev/null || echo "")
+              LOG_STREAM=""
+
+              if [ -n "$LOG_GROUP" ] && [ "$LOG_GROUP" != "None" ] && [ -n "$LOG_PREFIX" ] && [ "$LOG_PREFIX" != "None" ]; then
+                LOG_STREAM=$(aws logs describe-log-streams \
+                  --log-group-name "$LOG_GROUP" \
+                  --log-stream-name-prefix "${LOG_PREFIX}/${CONTAINER_NAME}/${TASK_ID}" \
+                  --order-by LastEventTime \
+                  --descending \
+                  --max-items 1 \
+                  --query 'logStreams[0].logStreamName' \
+                  --output text 2>/dev/null || echo "")
+              fi
 
               if [ "$EXIT_CODE" = "0" ]; then
                 echo "✅ Migration completed successfully"
@@ -803,13 +834,31 @@ jobs:
               else
                 echo "❌ Migration failed with exit code: $EXIT_CODE"
                 [ -n "$REASON" ] && [ "$REASON" != "None" ] && echo "  Reason: $REASON"
-                # Fetch logs for debugging
-                TASK_ID=$(echo $TASK_ARN | awk -F'/' '{print $NF}')
+                [ -n "$STOP_REASON" ] && [ "$STOP_REASON" != "None" ] && echo "  Stopped reason: $STOP_REASON"
                 echo "--- Migration Logs ---"
-                aws logs get-log-events \
-                  --log-group-name /ecs/poolmaster-qa/migrate \
-                  --log-stream-name "ecs/migrate/${TASK_ID}" \
-                  --query 'events[].message' --output text 2>/dev/null || echo "(no logs available)"
+                if [ -n "$LOG_STREAM" ] && [ "$LOG_STREAM" != "None" ]; then
+                  echo "  Log stream: $LOG_STREAM"
+                  aws logs get-log-events \
+                    --log-group-name "$LOG_GROUP" \
+                    --log-stream-name "$LOG_STREAM" \
+                    --query 'events[].message' --output text 2>/dev/null || echo "(log stream found, but events were not readable)"
+                else
+                  echo "  Task definition: ${TASK_DEFINITION_ARN:-unknown}"
+                  echo "  Log group: ${LOG_GROUP:-unknown}"
+                  echo "  Log prefix: ${LOG_PREFIX:-unknown}"
+                  if [ -n "$LOG_GROUP" ] && [ "$LOG_GROUP" != "None" ]; then
+                    echo "--- Recent CloudWatch Log Streams (${LOG_GROUP}) ---"
+                    aws logs describe-log-streams \
+                      --log-group-name "$LOG_GROUP" \
+                      --order-by LastEventTime \
+                      --descending \
+                      --max-items 10 \
+                      --query 'logStreams[*].{logStreamName:logStreamName,lastEventTimestamp:lastEventTimestamp,lastIngestionTime:lastIngestionTime}' \
+                      --output table 2>/dev/null || echo "(recent log streams unavailable)"
+                  else
+                    echo "(log configuration was unavailable for task $TASK_ID)"
+                  fi
+                fi
                 exit 1
               fi
             fi

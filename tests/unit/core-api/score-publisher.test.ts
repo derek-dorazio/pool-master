@@ -69,6 +69,9 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
     it('upserts SportEventParticipantGolfRound rows scoped to the resolved sportEventId and emits live_score.persisted', async () => {
       const prisma = {
         sportEvent: buildSportEventStub('evt-internal-1'),
+        sportEventRound: {
+          findMany: jest.fn().mockResolvedValue([{ id: 'ser-1', roundNumber: 1 }]),
+        },
         participantProviderMapping: {
           findMany: jest.fn().mockResolvedValue([
             { externalId: 'rory', participantId: 'pp-rory' },
@@ -86,8 +89,8 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           findMany: jest.fn()
             .mockResolvedValueOnce([])
             .mockResolvedValueOnce([
-              { sportEventParticipantId: 'sep-rory', round: 1, strokes: 70, scoreToPar: -2, thru: null, status: 'COMPLETED' },
-              { sportEventParticipantId: 'sep-tiger', round: 1, strokes: 73, scoreToPar: 1, thru: 9, status: 'IN_PROGRESS' },
+              { sportEventParticipantId: 'sep-rory', strokes: 70, scoreToPar: -2, thru: null, status: 'COMPLETED', sportEventRound: { roundNumber: 1 } },
+              { sportEventParticipantId: 'sep-tiger', strokes: 73, scoreToPar: 1, thru: 9, status: 'IN_PROGRESS', sportEventRound: { roundNumber: 1 } },
             ]),
         },
         sportEventParticipantGolfStanding: {
@@ -152,7 +155,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       expect(prisma.sportEventParticipantGolfRound.upsert).toHaveBeenCalledTimes(2);
       expect(prisma.sportEventParticipantGolfRound.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { sportEventParticipantId_round: { sportEventParticipantId: 'sep-rory', round: 1 } },
+          where: { sportEventParticipantId_sportEventRoundId: { sportEventParticipantId: 'sep-rory', sportEventRoundId: 'ser-1' } },
           create: expect.objectContaining({ strokes: 70, scoreToPar: -2, thru: null, status: 'COMPLETED' }),
         }),
       );
@@ -195,6 +198,12 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
     it('pool-master-eux.2 maps non-finishers and pending standings without contest fanout', async () => {
       const prisma = {
         sportEvent: buildSportEventStub('evt-internal-1'),
+        sportEventRound: {
+          findMany: jest.fn().mockResolvedValue([
+            { id: 'ser-1', roundNumber: 1 },
+            { id: 'ser-2', roundNumber: 2 },
+          ]),
+        },
         participantProviderMapping: {
           findMany: jest.fn().mockResolvedValue([
             { externalId: 'dnf-golfer', participantId: 'pp-dnf' },
@@ -214,9 +223,9 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           findMany: jest.fn()
             .mockResolvedValueOnce([])
             .mockResolvedValueOnce([
-              { sportEventParticipantId: 'sep-dnf', round: 1, strokes: 75, scoreToPar: 3, thru: null, status: 'DNF' },
-              { sportEventParticipantId: 'sep-dsq', round: 1, strokes: 75, scoreToPar: 3, thru: null, status: 'DSQ' },
-              { sportEventParticipantId: 'sep-pending', round: 2, strokes: 0, scoreToPar: 0, thru: null, status: 'PENDING' },
+              { sportEventParticipantId: 'sep-dnf', strokes: 75, scoreToPar: 3, thru: null, status: 'DNF', sportEventRound: { roundNumber: 1 } },
+              { sportEventParticipantId: 'sep-dsq', strokes: 75, scoreToPar: 3, thru: null, status: 'DSQ', sportEventRound: { roundNumber: 1 } },
+              { sportEventParticipantId: 'sep-pending', strokes: 0, scoreToPar: 0, thru: null, status: 'PENDING', sportEventRound: { roundNumber: 2 } },
             ]),
         },
         sportEventParticipantGolfStanding: {
@@ -270,12 +279,20 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       const existingRound = {
         id: 'round-rory-1',
         sportEventParticipantId: 'sep-rory',
-        round: 1,
+        sportEventRoundId: 'ser-1',
         strokes: 70,
         scoreToPar: -2,
         thru: 9,
         status: 'IN_PROGRESS',
         completedAt: null,
+      };
+      const existingRoundForStandingRefresh = {
+        sportEventParticipantId: 'sep-rory',
+        strokes: 70,
+        scoreToPar: -2,
+        thru: 9,
+        status: 'IN_PROGRESS',
+        sportEventRound: { roundNumber: 1 },
       };
       const existingStanding = {
         id: 'standing-rory',
@@ -289,6 +306,9 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       };
       const prisma = {
         sportEvent: buildSportEventStub('evt-internal-1'),
+        sportEventRound: {
+          findMany: jest.fn().mockResolvedValue([{ id: 'ser-1', roundNumber: 1 }]),
+        },
         participantProviderMapping: {
           findMany: jest.fn().mockResolvedValue([
             { externalId: 'rory', participantId: 'pp-rory' },
@@ -303,7 +323,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           upsert: jest.fn().mockResolvedValue(existingRound),
           findMany: jest.fn()
             .mockResolvedValueOnce([existingRound])
-            .mockResolvedValueOnce([existingRound]),
+            .mockResolvedValueOnce([existingRoundForStandingRefresh]),
         },
         sportEventParticipantGolfStanding: {
           findMany: jest.fn().mockResolvedValue([existingStanding]),
@@ -365,6 +385,9 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       };
       const prisma = {
         sportEvent: buildSportEventStub('evt-internal-1'),
+        sportEventRound: {
+          findMany: jest.fn().mockResolvedValue([{ id: 'ser-1', roundNumber: 1 }]),
+        },
         participantProviderMapping: {
           findMany: jest.fn().mockResolvedValue([
             { externalId: 'rory', participantId: 'pp-rory' },
@@ -380,7 +403,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           findMany: jest.fn()
             .mockResolvedValueOnce([])
             .mockResolvedValueOnce([
-              { sportEventParticipantId: 'sep-rory', round: 1, strokes: 70, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' },
+              { sportEventParticipantId: 'sep-rory', strokes: 70, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS', sportEventRound: { roundNumber: 1 } },
             ]),
         },
         sportEventParticipantGolfStanding: {
@@ -410,6 +433,9 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
     it('pool-master-rop.68.2.7 propagates live_score.persisted publish failures after persistence', async () => {
       const prisma = {
         sportEvent: buildSportEventStub('evt-internal-1'),
+        sportEventRound: {
+          findMany: jest.fn().mockResolvedValue([{ id: 'ser-1', roundNumber: 1 }]),
+        },
         participantProviderMapping: {
           findMany: jest.fn().mockResolvedValue([
             { externalId: 'rory', participantId: 'pp-rory' },
@@ -425,7 +451,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           findMany: jest.fn()
             .mockResolvedValueOnce([])
             .mockResolvedValueOnce([
-              { sportEventParticipantId: 'sep-rory', round: 1, strokes: 70, scoreToPar: -2, thru: null, status: 'IN_PROGRESS' },
+              { sportEventParticipantId: 'sep-rory', strokes: 70, scoreToPar: -2, thru: null, status: 'IN_PROGRESS', sportEventRound: { roundNumber: 1 } },
             ]),
         },
         sportEventParticipantGolfStanding: {
@@ -463,6 +489,9 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
     it('skips unmapped external ids without throwing and persists only the mapped rows', async () => {
       const prisma = {
         sportEvent: buildSportEventStub(),
+        sportEventRound: {
+          findMany: jest.fn().mockResolvedValue([{ id: 'ser-1', roundNumber: 1 }]),
+        },
         participantProviderMapping: {
           findMany: jest.fn().mockResolvedValue([
             { externalId: 'rory', participantId: 'pp-rory' },
@@ -479,7 +508,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           findMany: jest.fn()
             .mockResolvedValueOnce([])
             .mockResolvedValueOnce([
-              { sportEventParticipantId: 'sep-rory', round: 1, strokes: 70, scoreToPar: -2, thru: null, status: 'COMPLETED' },
+              { sportEventParticipantId: 'sep-rory', strokes: 70, scoreToPar: -2, thru: null, status: 'COMPLETED', sportEventRound: { roundNumber: 1 } },
             ]),
         },
         sportEventParticipantGolfStanding: {
@@ -530,6 +559,9 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
     it('skips rounds with null strokes (mock + ESPN providers) so synthetic data is never persisted', async () => {
       const prisma = {
         sportEvent: buildSportEventStub(),
+        sportEventRound: {
+          findMany: jest.fn().mockResolvedValue([{ id: 'ser-1', roundNumber: 1 }]),
+        },
         participantProviderMapping: {
           findMany: jest.fn().mockResolvedValue([
             { externalId: 'rory', participantId: 'pp-rory' },

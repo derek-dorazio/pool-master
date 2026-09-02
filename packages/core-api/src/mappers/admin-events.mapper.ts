@@ -8,7 +8,11 @@ import type {
   EventReadinessStatusDto,
   EventStatusDto,
 } from '@poolmaster/shared/dto/events.dto';
-import type { Sport } from '@poolmaster/shared/domain';
+import {
+  deriveLegacyParticipantStatus,
+  type GolfParticipantInactiveReason,
+  type Sport,
+} from '@poolmaster/shared/domain';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
 
 interface DecimalLike {
@@ -75,7 +79,8 @@ export interface AdminEventParticipantRow {
   id: string;
   sportEventId: string;
   participantId: string;
-  status: string | null;
+  isActive: boolean;
+  inactiveReason: string | null;
   worldRanking: number | null;
   oddsToWin: DecimalLike | number | null;
   seedNumber: number | null;
@@ -85,13 +90,14 @@ export interface AdminEventParticipantRow {
     shortName: string | null;
     nationality: string | null;
   };
-  valuations: Array<{
+  /** Resolved via golf-tier-service.getEffectiveValuationsForSportEvent (plans/124 §4.6b) — undefined when the golfer has no tier/price assigned yet. */
+  golfValuation?: {
     price: number | null;
-    tier: string | null;
-    orderIndex: number | null;
-  }>;
+    tierLabel: string;
+    tierOrderIndex: number | null;
+  };
   golfRounds: Array<{
-    round: number;
+    sportEventRound: { roundNumber: number };
     strokes: number;
     scoreToPar: number;
     thru: number | null;
@@ -148,7 +154,6 @@ export function mapAdminEventSummaryToDto(
 export function mapAdminEventParticipantToDto(
   row: AdminEventParticipantRow,
 ): AdminEventParticipantDto {
-  const primaryValuation = row.valuations[0];
   const oddsToWin = toNumberOrNull(row.oddsToWin);
   const scoreToPar = row.golfStanding
     ? row.golfStanding.eventScoreToPar
@@ -168,18 +173,18 @@ export function mapAdminEventParticipantToDto(
     participantName: row.participant.name,
     ...(row.participant.shortName !== null ? { shortName: row.participant.shortName } : {}),
     ...(row.participant.nationality !== null ? { nationality: row.participant.nationality } : {}),
-    ...(row.status !== null ? { status: row.status } : {}),
+    status: deriveLegacyParticipantStatus(row.isActive, row.inactiveReason as GolfParticipantInactiveReason | null),
     ...(row.worldRanking !== null ? { worldRanking: row.worldRanking } : {}),
     ...(oddsToWin !== null ? { oddsToWin } : {}),
     ...(row.seedNumber !== null ? { seedNumber: row.seedNumber } : {}),
-    ...(primaryValuation?.price !== null && primaryValuation?.price !== undefined
-      ? { valuationPrice: primaryValuation.price }
+    ...(row.golfValuation?.price !== null && row.golfValuation?.price !== undefined
+      ? { valuationPrice: row.golfValuation.price }
       : {}),
-    ...(primaryValuation?.tier !== null && primaryValuation?.tier !== undefined
-      ? { valuationTier: primaryValuation.tier }
+    ...(row.golfValuation?.tierLabel !== undefined
+      ? { valuationTier: row.golfValuation.tierLabel }
       : {}),
-    ...(primaryValuation?.orderIndex !== null && primaryValuation?.orderIndex !== undefined
-      ? { valuationOrderIndex: primaryValuation.orderIndex }
+    ...(row.golfValuation?.tierOrderIndex !== null && row.golfValuation?.tierOrderIndex !== undefined
+      ? { valuationOrderIndex: row.golfValuation.tierOrderIndex }
       : {}),
     roundCount: row.golfRounds.length,
     ...(totalStrokes !== null ? { totalStrokes } : {}),
@@ -199,7 +204,7 @@ export function mapAdminEventParticipantToDto(
         }
       : {}),
     golfRounds: row.golfRounds.map((round) => ({
-      round: round.round,
+      round: round.sportEventRound.roundNumber,
       strokes: round.strokes,
       scoreToPar: round.scoreToPar,
       ...(round.thru !== null ? { thru: round.thru } : {}),

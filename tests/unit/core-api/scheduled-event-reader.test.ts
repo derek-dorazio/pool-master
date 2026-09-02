@@ -33,6 +33,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
         externalId: { not: '' },
         status: { in: ['IN_PROGRESS'] },
         sportEventParticipants: { some: {} },
+        syncScope: { in: ['FULL', 'SCORES_ONLY'] },
       },
       orderBy: undefined,
       take: undefined,
@@ -102,8 +103,9 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
         sport: 'GOLF',
         providerId: 'mock-contest-feed',
         externalId: { not: '' },
-        status: { in: ['COMPLETED', 'OFFICIAL'] },
+        status: { in: ['COMPLETED'] },
         updatedAt: { gte: new Date('2026-04-25T22:30:00.000Z') },
+        syncScope: { in: ['FULL', 'SCORES_ONLY'] },
       },
       orderBy: undefined,
       take: undefined,
@@ -141,6 +143,7 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
           gte: new Date('2026-04-26T22:30:00.000Z'),
           lte: new Date('2026-05-03T22:30:00.000Z'),
         },
+        syncScope: 'FULL',
       },
       orderBy: [
         { startDate: 'asc' },
@@ -266,4 +269,61 @@ describe('pool-master-jh8: Scheduled event reader provider scoping', () => {
 
     expect(eventIds).toEqual(['released-field-event', 'second-released-field-event']);
   });
+});
+
+describe('pool-master-cgb: syncScope gating', () => {
+  // A minimal in-memory Prisma standing in for the real query planner —
+  // applies the actual where.syncScope clause toFeedWhere produces, rather
+  // than trusting a mock to have been called with the "right" object.
+  function createPrismaWithSyncScopeAwareFilter(rows: Array<{ externalId: string; syncScope: string }>) {
+    return {
+      sportEvent: {
+        findMany: jest.fn(async ({ where }: { where: Record<string, unknown> }) => rows
+          .filter((row) => {
+            const clause = where.syncScope as { in?: string[] } | string;
+            return typeof clause === 'string'
+              ? row.syncScope === clause
+              : (clause?.in ?? []).includes(row.syncScope);
+          })
+          .map((row) => ({ externalId: row.externalId }))),
+      },
+    };
+  }
+
+  const rowsByScope = [
+    { externalId: 'none-event', syncScope: 'NONE' },
+    { externalId: 'scores-only-event', syncScope: 'SCORES_ONLY' },
+    { externalId: 'full-event', syncScope: 'FULL' },
+  ];
+
+  it('pool-master-cgb: EVENTPARTICIPANTS never returns a NONE or SCORES_ONLY event — FULL only', async () => {
+    const prisma = createPrismaWithSyncScopeAwareFilter(rowsByScope);
+    const registry = { getProvider: jest.fn().mockReturnValue({ providerId: 'mock-contest-feed' }) };
+    const reader = createScheduledEventReader({ prisma: prisma as never, registry: registry as never });
+
+    const eventIds = await reader.listEventIdsForFeed({
+      sport: 'GOLF' as Sport,
+      feed: 'EVENTPARTICIPANTS',
+      now: new Date('2026-04-26T22:30:00.000Z'),
+    });
+
+    expect(eventIds).toEqual(['full-event']);
+  });
+
+  it.each(['EVENTLIVESCORES', 'EVENTRESULTS'] as const)(
+    'pool-master-cgb: %s never returns a NONE event, but does return SCORES_ONLY and FULL',
+    async (feed) => {
+      const prisma = createPrismaWithSyncScopeAwareFilter(rowsByScope);
+      const registry = { getProvider: jest.fn().mockReturnValue({ providerId: 'mock-contest-feed' }) };
+      const reader = createScheduledEventReader({ prisma: prisma as never, registry: registry as never });
+
+      const eventIds = await reader.listEventIdsForFeed({
+        sport: 'GOLF' as Sport,
+        feed,
+        now: new Date('2026-04-26T22:30:00.000Z'),
+      });
+
+      expect(eventIds.sort()).toEqual(['full-event', 'scores-only-event']);
+    },
+  );
 });

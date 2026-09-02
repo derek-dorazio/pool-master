@@ -7,8 +7,8 @@ import type {
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
   SportEventParticipantRepository,
-  SportEventParticipantValuationRepository,
 } from '@poolmaster/shared/db';
+import type { GolfTierService } from '../golf/golf-tier-service';
 import type {
   ContestConfigTemplateDto,
   ContestManagementDetailDto,
@@ -21,7 +21,6 @@ import type {
   ContestConfigTemplate,
   ContestConfiguration,
   GolfContestConfig,
-  PersistedGolfContestTierDefinition,
   TournamentFormat,
 } from '@poolmaster/shared/domain';
 import {
@@ -79,7 +78,7 @@ export class ContestManagementService {
     private readonly contestEntryAggregationRuleRepo: ContestEntryAggregationRuleRepository,
     private readonly _contestPrizeDefinitionRepo: ContestPrizeDefinitionRepository,
     private readonly sportEventParticipantRepo: SportEventParticipantRepository,
-    private readonly sportEventParticipantValuationRepo: SportEventParticipantValuationRepository,
+    private readonly golfTierService: GolfTierService,
     private readonly logger: LifecycleLogger = createNoopLogger(),
     private readonly sportEventReader?: ContestCreateSportEventReader,
   ) {}
@@ -118,10 +117,7 @@ export class ContestManagementService {
       );
     }
     this.assertContestCreationSupported(sportEvent, input.contestFormat);
-    assertTierConfigurationFitsParticipantCount(
-      resolvedConfiguration.configuration,
-      sportEvent?.loadedParticipantCount,
-    );
+    await this.assertTierConfigurationFitsTierCount(input.sportEventId, resolvedConfiguration.configuration);
     const selectionType = mapSelectionType(resolvedConfiguration.configuration);
     const contest = await this.contestCoreRepo.create({
       leagueId: context.leagueId,
@@ -147,12 +143,7 @@ export class ContestManagementService {
         resolvedConfiguration.configuration.maxEntriesPerSquad === null
           ? null
           : resolvedConfiguration.configuration.maxEntriesPerSquad,
-      ...await deriveLegacyPersistenceFields(
-        resolvedConfiguration.configuration,
-        input.sportEventId,
-        this.sportEventParticipantRepo,
-        this.sportEventParticipantValuationRepo,
-      ),
+      ...await deriveLegacyPersistenceFields(resolvedConfiguration.configuration),
     });
 
     await syncDerivedScoring(
@@ -271,12 +262,7 @@ export class ContestManagementService {
       locksAt: input.locksAt ? new Date(input.locksAt) : undefined,
       maxEntriesPerSquad:
         input.maxEntriesPerSquad === null ? null : input.maxEntriesPerSquad,
-      ...await deriveLegacyPersistenceFields(
-        input,
-        contest.sportEventId,
-        this.sportEventParticipantRepo,
-        this.sportEventParticipantValuationRepo,
-      ),
+      ...await deriveLegacyPersistenceFields(input),
     });
 
     const refreshedConfiguration =
@@ -380,10 +366,28 @@ export class ContestManagementService {
       );
     }
 
-    assertTierConfigurationFitsParticipantCount(
-      configuration,
-      sportEvent.loadedParticipantCount,
-    );
+    await this.assertTierConfigurationFitsTierCount(sportEventId, configuration);
+  }
+
+  /**
+   * Tiers are event-owned data now (plans/124 §4.6) — there's no per-contest
+   * custom list to validate a rosterSize against, only the event's own tier
+   * count. Skips validation when the event has no tiers yet (e.g. a legacy
+   * event never run through admin tier setup) — same "nothing to validate
+   * against" behavior the old participantCount-based check had.
+   */
+  private async assertTierConfigurationFitsTierCount(
+    sportEventId: string | null | undefined,
+    configuration: ContestConfigurationRequest,
+  ): Promise<void> {
+    if (configuration.mode !== GolfContestConfigMode.GOLF_TIERED || !sportEventId) {
+      return;
+    }
+    const tiers = await this.golfTierService.getEffectiveTiersForSportEvent(sportEventId);
+    if (tiers.length === 0) {
+      return;
+    }
+    assertRosterSizeFitsTierCount(configuration, tiers.length);
   }
 }
 
@@ -406,53 +410,45 @@ function mapSelectionType(
     : SelectionType.OPEN_SELECTION;
 }
 
-function assertTierConfigurationFitsParticipantCount(
+/**
+ * Tiers are event-owned (plans/124 §4.6) — the contest only ever supplies
+ * rosterSize/countedScores, so the only thing left to validate against the
+ * event's tier structure is that rosterSize divides evenly across however
+ * many tiers the event has (one or more picks per tier, never a partial
+ * one) and that countedScores doesn't exceed rosterSize.
+ */
+function assertRosterSizeFitsTierCount(
   configuration: ContestConfigurationRequest,
-  participantCount?: number | null,
+  tierCount: number,
 ): void {
-  if (configuration.mode !== GolfContestConfigMode.GOLF_TIERED || participantCount == null) {
+  if (configuration.mode !== GolfContestConfigMode.GOLF_TIERED || tierCount === 0) {
     return;
   }
 
-  for (const tier of configuration.tiers) {
-    if (tier.startPosition > participantCount) {
-      throw new ContestManagementError(
-        `${tier.label} starts at field position ${tier.startPosition}, but the selected event only has ${participantCount} participants.`,
-        'CONTEST_TIER_FIELD_OUT_OF_RANGE',
-      );
-    }
-
-    const endPosition = Math.min(tier.endPosition ?? participantCount, participantCount);
-    const availableParticipants = endPosition - tier.startPosition + 1;
-    if (availableParticipants < tier.pickCount) {
-      throw new ContestManagementError(
-        `${tier.label} does not contain enough participants for ${tier.pickCount} picks.`,
-        'CONTEST_TIER_FIELD_OUT_OF_RANGE',
-      );
-    }
+  if (configuration.rosterSize % tierCount !== 0) {
+    throw new ContestManagementError(
+      `rosterSize (${configuration.rosterSize}) must divide evenly across the event's ${tierCount} tier(s).`,
+      'CONTEST_TIER_FIELD_OUT_OF_RANGE',
+    );
+  }
+  if (configuration.countedScores > configuration.rosterSize) {
+    throw new ContestManagementError(
+      `countedScores (${configuration.countedScores}) cannot exceed rosterSize (${configuration.rosterSize}).`,
+      'CONTEST_TIER_FIELD_OUT_OF_RANGE',
+    );
   }
 }
 
 async function deriveLegacyPersistenceFields(
   configuration: ContestConfigurationRequest,
-  sportEventId: string,
-  sportEventParticipantRepo: SportEventParticipantRepository,
-  sportEventParticipantValuationRepo: SportEventParticipantValuationRepository,
 ): Promise<Partial<ContestConfiguration>> {
+  // Tiers are event-owned, never a per-contest override (plans/124 §4.6) —
+  // golf-tier-service.getEffectiveTiersForContest is the one path to a
+  // contest's effective tiers now; this function no longer computes or
+  // persists a contest-specific tierConfig snapshot.
   if (configuration.mode === GolfContestConfigMode.GOLF_TIERED) {
-    const tierConfig = await derivePersistedTierConfig(
-      configuration,
-      sportEventId,
-      sportEventParticipantRepo,
-      sportEventParticipantValuationRepo,
-    );
-
     return {
-      tierConfig,
-      pickCount: configuration.tiers.reduce(
-        (total, tier) => total + tier.pickCount,
-        0,
-      ),
+      pickCount: configuration.rosterSize,
       rosterSize: configuration.rosterSize,
       isExclusive: false,
     };
@@ -465,136 +461,6 @@ async function deriveLegacyPersistenceFields(
     ),
     isExclusive: false,
   };
-}
-
-interface TierCandidate {
-  sportEventParticipantId: string;
-  participantId: string;
-  odds?: number;
-  ranking?: number;
-}
-
-async function derivePersistedTierConfig(
-  configuration: Extract<ContestConfigurationRequest, { mode: 'GOLF_TIERED' }>,
-  sportEventId: string,
-  sportEventParticipantRepo: SportEventParticipantRepository,
-  sportEventParticipantValuationRepo: SportEventParticipantValuationRepository,
-): Promise<PersistedGolfContestTierDefinition[]> {
-  const participants = await sportEventParticipantRepo.findBySportEvent(sportEventId);
-
-  if (participants.length === 0) {
-    return configuration.tiers.map((tier) => ({
-      ...tier,
-      participantIds: [],
-    }));
-  }
-
-  const tierCandidates = await Promise.all(
-    participants.map(async (participant) => {
-      return {
-        sportEventParticipantId: participant.id,
-        participantId: participant.participantId,
-        odds: participant.oddsToWin,
-        ranking: participant.worldRanking,
-      } satisfies TierCandidate;
-    }),
-  );
-
-  const orderedCandidates = [...tierCandidates].sort((left, right) =>
-    compareTierCandidates(left, right, configuration.tierSource),
-  );
-  const persistedTiers = configuration.tiers.map((tier, index) => ({
-    ...tier,
-    tierId: tier.tierKey,
-    tierName: tier.label,
-    tierNumber: index + 1,
-    picksFromTier: tier.pickCount,
-    participantIds: [] as string[],
-  }));
-
-  for (const [index, candidate] of orderedCandidates.entries()) {
-    const orderIndex = index + 1;
-    const matchingTier = persistedTiers.find((tier) => {
-      const endPosition = tier.endPosition ?? orderedCandidates.length;
-      return orderIndex >= tier.startPosition && orderIndex <= endPosition;
-    }) ?? persistedTiers[persistedTiers.length - 1];
-
-    matchingTier?.participantIds?.push(candidate.participantId);
-
-    const valuationSource = `AUTO_${configuration.tierSource}`;
-    const existingValuations =
-      await sportEventParticipantValuationRepo.findBySportEventParticipant(
-        candidate.sportEventParticipantId,
-      );
-    const existing = existingValuations.find(
-      (valuation) => valuation.valuationSource === valuationSource,
-    );
-    const valuationPayload = {
-      orderIndex,
-      tier: matchingTier?.tierId ?? matchingTier?.tierName ?? matchingTier?.label,
-      valuationSource,
-    };
-
-    if (existing) {
-      await sportEventParticipantValuationRepo.update(existing.id, valuationPayload);
-    } else {
-      await sportEventParticipantValuationRepo.create({
-        sportEventParticipantId: candidate.sportEventParticipantId,
-        price: undefined,
-        ...valuationPayload,
-      });
-    }
-  }
-
-  return persistedTiers;
-}
-
-function compareTierCandidates(
-  left: TierCandidate,
-  right: TierCandidate,
-  tierSource: 'ODDS' | 'WORLD_RANK',
-): number {
-  if (tierSource === 'WORLD_RANK') {
-    const rankingDiff = compareNullableNumbers(left.ranking, right.ranking);
-    if (rankingDiff !== 0) {
-      return rankingDiff;
-    }
-
-    const oddsDiff = compareNullableNumbers(left.odds, right.odds);
-    if (oddsDiff !== 0) {
-      return oddsDiff;
-    }
-  } else {
-    const oddsDiff = compareNullableNumbers(left.odds, right.odds);
-    if (oddsDiff !== 0) {
-      return oddsDiff;
-    }
-
-    const rankingDiff = compareNullableNumbers(left.ranking, right.ranking);
-    if (rankingDiff !== 0) {
-      return rankingDiff;
-    }
-  }
-
-  return left.participantId.localeCompare(right.participantId, undefined, {
-    sensitivity: 'base',
-  });
-}
-
-function compareNullableNumbers(
-  left: number | undefined,
-  right: number | undefined,
-): number {
-  if (left == null && right == null) {
-    return 0;
-  }
-  if (left == null) {
-    return 1;
-  }
-  if (right == null) {
-    return -1;
-  }
-  return left - right;
 }
 
 async function syncDerivedScoring(
@@ -634,15 +500,18 @@ async function syncDerivedScoring(
   }
 }
 
+/**
+ * cutRule/playoffHandling/displayScoring/tiebreaker dropped (plans/124
+ * §4.6a) — each was locked to exactly one possible value and had zero real
+ * reads downstream (verified: nothing in golf-contest-settlement-service.ts
+ * or golf-leaderboard-calculator.ts reads this config blob). The
+ * participantScoringRule row is still created — syncDerivedScoring's
+ * caller relies on the row existing — it just carries no config now.
+ */
 function buildParticipantScoringConfig(
-  configuration: GolfContestConfig,
+  _configuration: GolfContestConfig,
 ): Record<string, unknown> {
-  return {
-    cutRule: configuration.cutRule,
-    playoffHandling: configuration.playoffHandling,
-    displayScoring: configuration.displayScoring,
-    tiebreaker: configuration.tiebreaker,
-  };
+  return {};
 }
 
 function buildAggregationRule(configuration: GolfContestConfig): {
@@ -735,25 +604,11 @@ function ensureTypedConfiguration(configuration: {
   }
 
   if (configuration.selectionType === SelectionType.TIERED) {
-    const tiers = Array.isArray(configuration.tierConfig)
-      ? configuration.tierConfig.map((tier, index) => {
-          const record = tier as Record<string, unknown>;
-          return {
-            tierKey: String(record.tierKey ?? record.tierId ?? `T${index + 1}`),
-            label: String(
-              record.label ??
-                record.tierName ??
-                record.tierId ??
-                `Tier ${index + 1}`,
-            ),
-            pickCount: Number(record.pickCount ?? record.picksFromTier ?? 1),
-            startPosition: Number(record.startPosition ?? index * 10 + 1),
-            endPosition:
-              record.endPosition == null ? null : Number(record.endPosition),
-          };
-        })
-      : [];
-
+    // Tier definitions themselves are event-owned now (plans/124 §4.6) —
+    // golf-tier-service.getEffectiveTiersForContest is the one path to
+    // them; this fallback (for a contest with no typed configJson, e.g. one
+    // created through the legacy tierConfig-based create path) only needs
+    // to synthesize the trimmed { mode, rosterSize, countedScores } shape.
     return {
       mode: GolfContestConfigMode.GOLF_TIERED,
       locksAt: configuration.locksAt?.toISOString() ?? null,
@@ -763,20 +618,6 @@ function ensureTypedConfiguration(configuration: {
         configuration.rosterSize ?? configuration.pickCount ?? 4,
         4,
       ),
-      tierSource: 'ODDS',
-      tierGeneration: {
-        defaultTierSize: 10,
-      },
-      tiers,
-      cutRule: {
-        type: 'FIXED_SCORE',
-        fixedScore: 80,
-      },
-      playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-      displayScoring: 'TO_PAR',
-      tiebreaker: {
-        type: 'PREDICT_WINNING_SCORE',
-      },
     };
   }
 

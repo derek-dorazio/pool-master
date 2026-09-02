@@ -297,7 +297,7 @@ describe('pool-master-rop.68.1.6: stale provider event cleanup', () => {
     expect(await prisma.sportEventParticipant.count({ where: { sportEventId: staleGolfEvent.id } })).toBe(0);
     expect(await prisma.sportEventParticipantGolfRound.count()).toBe(0);
     expect(await prisma.sportEventParticipantGolfStanding.count()).toBe(0);
-    expect(await prisma.sportEventParticipantValuation.count()).toBe(0);
+    expect(await prisma.sportEventParticipantGolfValuation.count()).toBe(0);
     expect(await prisma.participantProviderMapping.count()).toBe(3);
     expect(await prisma.participant.count()).toBe(3);
     await expect(prisma.contest.findUniqueOrThrow({ where: { id: directContest.id } })).resolves.toBeDefined();
@@ -391,24 +391,39 @@ async function attachCleanupEventParticipant(input: {
     data: {
       sportEventId: input.eventId,
       participantId: input.participantId,
-      status: 'active',
+      isActive: true,
       metadata: {},
     },
   });
   if (input.includeChildren) {
-    await getPrisma().sportEventParticipantValuation.create({
+    const tier = await getPrisma().sportEventGolfTier.create({
+      data: {
+        sportEventId: input.eventId,
+        tierKey: `cleanup-tier-${eventParticipant.id}`,
+        label: 'A',
+        tierNumber: 1,
+        defaultPickCount: 1,
+      },
+    });
+    await getPrisma().sportEventParticipantGolfValuation.create({
       data: {
         sportEventParticipantId: eventParticipant.id,
-        valuationSource: 'cleanup-test',
+        sportEventGolfTierId: tier.id,
         price: 10,
-        tier: 'A',
-        orderIndex: 1,
+        tierOrderIndex: 1,
+      },
+    });
+    const round = await getPrisma().sportEventRound.create({
+      data: {
+        sportEventId: input.eventId,
+        roundNumber: 1,
+        scheduledDate: new Date('2026-01-01T00:00:00.000Z'),
       },
     });
     await getPrisma().sportEventParticipantGolfRound.create({
       data: {
         sportEventParticipantId: eventParticipant.id,
-        round: 1,
+        sportEventRoundId: round.id,
         strokes: 70,
         scoreToPar: -2,
         status: 'COMPLETED',

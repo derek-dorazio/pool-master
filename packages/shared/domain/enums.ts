@@ -190,6 +190,65 @@ export const DraftStatus = {
 } as const;
 export type DraftStatus = (typeof DraftStatus)[keyof typeof DraftStatus];
 
+// --- Sport Event Lifecycle ---
+
+/** SportEvent lifecycle status. `OFFICIAL` intentionally dropped — see plans/124 §4.1. */
+export const SportEventStatus = {
+  SCHEDULED: 'SCHEDULED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  POSTPONED: 'POSTPONED',
+} as const;
+export type SportEventStatus = (typeof SportEventStatus)[keyof typeof SportEventStatus];
+
+/**
+ * Which scheduled sync feeds may touch a SportEvent — separate from
+ * providerId/externalId identity (plans/124 §3.5/§4.4). `@default(FULL)`
+ * on the column means every ingestion-created row keeps today's behavior
+ * unchanged; only admin-authored tournaments start at NONE.
+ */
+export const SportEventSyncScope = {
+  NONE: 'NONE',
+  SCORES_ONLY: 'SCORES_ONLY',
+  FULL: 'FULL',
+} as const;
+export type SportEventSyncScope = (typeof SportEventSyncScope)[keyof typeof SportEventSyncScope];
+
+/**
+ * Why a SportEventParticipant is inactive for a golf tournament. Meaningful only
+ * when `SportEventParticipant.isActive` is false; null covers "inactive, no more
+ * specific reason recorded." See plans/124 §4.1.
+ */
+export const GolfParticipantInactiveReason = {
+  WITHDRAWN: 'WITHDRAWN',
+  CUT: 'CUT',
+  ELIMINATED: 'ELIMINATED',
+} as const;
+export type GolfParticipantInactiveReason =
+  (typeof GolfParticipantInactiveReason)[keyof typeof GolfParticipantInactiveReason];
+
+export type LegacyGolfParticipantStatus = 'ACTIVE' | 'INACTIVE' | GolfParticipantInactiveReason;
+
+/**
+ * Derives the pre-`isActive`/`inactiveReason` legacy participant-status string
+ * (`'ACTIVE'` / `'INACTIVE'` / a `GolfParticipantInactiveReason`) some response
+ * shapes still expose on the wire (`ContestEntryParticipantDetailDto`,
+ * `AdminEventParticipantDto`, the draft-room selection-participant status).
+ * New endpoints should read `isActive`/`inactiveReason` directly instead of this
+ * string — see plans/124 §4.1. Single source of truth so every call site derives
+ * the same value the same way rather than re-implementing the ternary.
+ */
+export function deriveLegacyParticipantStatus(
+  isActive: boolean,
+  inactiveReason: GolfParticipantInactiveReason | null | undefined,
+): LegacyGolfParticipantStatus {
+  if (isActive) {
+    return 'ACTIVE';
+  }
+  return inactiveReason ?? 'INACTIVE';
+}
+
 // --- Contest Lifecycle ---
 
 export const ContestStatus = {
@@ -274,6 +333,14 @@ export const GolfTierSource = {
   WORLD_RANK: 'WORLD_RANK',
 } as const;
 export type GolfTierSource = (typeof GolfTierSource)[keyof typeof GolfTierSource];
+
+/** How a SportEventParticipantGolfValuation's tier/price was set. See plans/124 §4.5. */
+export const GolfValuationSource = {
+  AUTO_ODDS: 'AUTO_ODDS',
+  AUTO_WORLD_RANK: 'AUTO_WORLD_RANK',
+  MANUAL: 'MANUAL',
+} as const;
+export type GolfValuationSource = (typeof GolfValuationSource)[keyof typeof GolfValuationSource];
 
 export const GolfCategoryKey = {
   SENIOR: 'SENIOR',

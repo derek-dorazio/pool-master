@@ -18,6 +18,7 @@ import type {
 import { supportsMockEventStateControls } from '../ingestion/core/provider-interface';
 import { IngestionPersistence } from '../ingestion/persistence/ingestion-persistence';
 import { GolfContestSettlementService } from '../contests/golf-contest-settlement-service';
+import { EventLifecycleService } from '../events/event-lifecycle-service';
 import type {
   EventSyncRequest,
   IngestionFeedType,
@@ -249,6 +250,20 @@ export class MockEventStateUnsupportedError extends Error {
   }
 }
 
+/**
+ * A one-off manual sync can't bypass SportEvent.syncScope any more than the
+ * scheduled feeds can (plans/124 §4.4) — thrown when any requested feed
+ * isn't allowed for the target event's current scope.
+ */
+export class SportEventSyncScopeError extends Error {
+  constructor(eventId: string, syncScope: string, disallowedFeeds: string[]) {
+    super(
+      `Event ${eventId} has syncScope ${syncScope}, which does not allow: ${disallowedFeeds.join(', ')}`,
+    );
+    this.name = 'SportEventSyncScopeError';
+  }
+}
+
 export class ProviderEventParticipantsMissingError extends Error {
   constructor(providerId: string, eventId: string) {
     super(`Event ${eventId} returned zero participants from provider ${providerId}`);
@@ -350,12 +365,17 @@ export class ProviderService {
   ) {
     this.syncOrchestrator = syncOrchestrator ?? new SyncOrchestrator();
     this.syncRunLedger = syncRunLedger ?? new ProviderSyncRunLedger(prisma, logger);
-    this.ingestionPersistence = new IngestionPersistence(
+    const eventLifecycleService = new EventLifecycleService(
       prisma,
       logger,
       mailDelivery ?? createMailDeliveryProvider(readMailDeliveryConfig(process.env), logger),
       appBaseUrl ?? readApplicationBaseUrl(process.env),
       new GolfContestSettlementService(prisma, logger),
+    );
+    this.ingestionPersistence = new IngestionPersistence(
+      prisma,
+      logger,
+      eventLifecycleService,
     );
   }
 
@@ -450,6 +470,44 @@ export class ProviderService {
         scheduledSports: config.scheduledSports,
       }, 'Sync requested for sport that is not enabled in ingestion config');
       throw new SportSyncNotConfiguredError(sport);
+    }
+  }
+
+  /**
+   * A one-off manual sync can't bypass SportEvent.syncScope any more than the
+   * scheduled feeds can (plans/124 §4.4). No-op when no local SportEvent row
+   * exists yet for (providerId, externalId) — there is no scope to violate,
+   * and EVENTSCHEDULE/EVENTPARTICIPANTS syncs routinely run before any local
+   * row exists.
+   */
+  private async assertFeedsAllowedForSyncScope(
+    providerId: string,
+    eventId: string,
+    feeds: string[],
+  ): Promise<void> {
+    const event = await this.prisma.sportEvent.findUnique({
+      where: { providerId_externalId: { providerId, externalId: eventId } },
+      select: { syncScope: true },
+    });
+    if (!event) {
+      return;
+    }
+
+    const allowedFeeds: string[] = event.syncScope === 'FULL'
+      ? ['EVENTSCHEDULE', 'EVENTPARTICIPANTS', 'PARTICIPANTRANKINGS', 'EVENTLIVESCORES', 'EVENTRESULTS']
+      : event.syncScope === 'SCORES_ONLY'
+      ? ['EVENTLIVESCORES', 'EVENTRESULTS']
+      : [];
+    const disallowedFeeds = feeds.filter((feed) => !allowedFeeds.includes(feed));
+    if (disallowedFeeds.length > 0) {
+      this.logger?.warn({
+        providerId,
+        eventId,
+        syncScope: event.syncScope,
+        requestedFeeds: feeds,
+        disallowedFeeds,
+      }, 'Manual event sync rejected — requested feed(s) not allowed for this event\'s syncScope');
+      throw new SportEventSyncScopeError(eventId, event.syncScope, disallowedFeeds);
     }
   }
 
@@ -880,6 +938,11 @@ export class ProviderService {
       throw new Error('Manual event sync normalization returned a sport scope.');
     }
     const normalizedScope = normalizedRequest.scope;
+    await this.assertFeedsAllowedForSyncScope(
+      provider.providerId,
+      normalizedScope.eventId,
+      normalizedScope.feeds,
+    );
 
     const submittedAt = new Date();
     this.logger?.info({
@@ -1165,9 +1228,9 @@ export class ProviderService {
         },
         sportEventParticipants: {
           select: {
+            golfValuation: { select: { id: true } },
             _count: {
               select: {
-                valuations: true,
                 picks: true,
                 golfRounds: true,
               },
@@ -1190,10 +1253,12 @@ export class ProviderService {
       }
 
       const sportEventParticipantCount = event.sportEventParticipants.length;
-      const valuationCount = event.sportEventParticipants.reduce(
-        (sum, participant) => sum + participant._count.valuations,
-        0,
-      );
+      // golfValuation is 1:1 now (SportEventParticipantGolfValuation, plans/124
+      // §4.5/§4.6b replaces the legacy 1:many SportEventParticipantValuation) —
+      // count of participants that have one, not a row count.
+      const valuationCount = event.sportEventParticipants.filter(
+        (participant) => participant.golfValuation !== null,
+      ).length;
       const golfRoundCount = event.sportEventParticipants.reduce(
         (sum, participant) => sum + participant._count.golfRounds,
         0,
@@ -1273,7 +1338,7 @@ export class ProviderService {
           },
         },
       });
-      await tx.sportEventParticipantValuation.deleteMany({
+      await tx.sportEventParticipantGolfValuation.deleteMany({
         where: {
           sportEventParticipant: {
             sportEventId: {
@@ -1281,6 +1346,16 @@ export class ProviderService {
             },
           },
         },
+      });
+      // SportEventGolfTier and SportEventRound are event-level (plans/124
+      // §4.5/§4.10), not participant-level — both FK to SportEvent with
+      // ON DELETE RESTRICT, so they must be cleared before the SportEvent
+      // rows below, same as the participant-level child tables above.
+      await tx.sportEventGolfTier.deleteMany({
+        where: { sportEventId: { in: eventIds } },
+      });
+      await tx.sportEventRound.deleteMany({
+        where: { sportEventId: { in: eventIds } },
       });
       await tx.sportEventParticipant.deleteMany({
         where: {

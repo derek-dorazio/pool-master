@@ -7,7 +7,6 @@ import {
   GolfCutRuleType,
   GolfDisplayScoring,
   GolfPlayoffHandling,
-  GolfTierSource,
   Sport,
 } from '@poolmaster/shared/domain';
 
@@ -58,21 +57,19 @@ export const GolfCategoryDefinitionSchema = z.object({
 }).describe('Category slot definition for a golf category-picks contest.');
 export type GolfCategoryDefinitionDto = z.infer<typeof GolfCategoryDefinitionSchema>;
 
+/**
+ * Shrunk per plans/124 §4.6/§4.6a: tiers/price are event-owned data resolved
+ * via golf-tier-service.getEffectiveTiersForContest, never a per-contest
+ * override, so tierSource/tierGeneration/tiers drop; cutRule/playoffHandling/
+ * displayScoring/tiebreaker each locked to exactly one possible value with
+ * zero real reads downstream, dropped as dead configuration.
+ */
 export const GolfTieredContestConfigurationSchema = z.object({
   mode: z.literal(GolfContestConfigMode.GOLF_TIERED),
   locksAt: z.string().datetime().nullable().optional().describe('Contest entry lock timestamp.'),
   maxEntriesPerSquad: nullablePositiveIntSchema,
   rosterSize: z.number().int().min(1).describe('How many golfers each Team entry must pick.'),
   countedScores: z.number().int().min(1).describe('How many golfer scores count toward the Team total.'),
-  tierSource: z.enum([GolfTierSource.ODDS, GolfTierSource.WORLD_RANK]).describe('Single tier source used to generate all tiers.'),
-  tierGeneration: z.object({
-    defaultTierSize: z.number().int().min(1).describe('Basic mode tier size used to seed the tier list.'),
-  }),
-  tiers: z.array(GolfContestTierSchema).min(1).describe('Persisted tier boundaries and pick counts after seeding or advanced editing.'),
-  cutRule: GolfFixedCutRuleSchema,
-  playoffHandling: z.enum([GolfPlayoffHandling.EXCLUDE_PLAYOFF_HOLES]),
-  displayScoring: z.enum([GolfDisplayScoring.TO_PAR]),
-  tiebreaker: GolfTiebreakerSchema,
 }).describe('Golf tiered contest configuration for pick-X, count-best-Y roster contests.');
 export type GolfTieredContestConfigurationRequest = z.infer<
   typeof GolfTieredContestConfigurationSchema

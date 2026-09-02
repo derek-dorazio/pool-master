@@ -168,20 +168,6 @@ function primeCommonMocks() {
             maxEntriesPerSquad: 1,
             rosterSize: 6,
             countedScores: 4,
-            tierSource: 'ODDS',
-            tierGeneration: { defaultTierSize: 10 },
-            tiers: [
-              { tierKey: 'A', label: 'Tier A', pickCount: 1, startPosition: 1, endPosition: 10 },
-              { tierKey: 'B', label: 'Tier B', pickCount: 1, startPosition: 11, endPosition: 20 },
-              { tierKey: 'C', label: 'Tier C', pickCount: 1, startPosition: 21, endPosition: 30 },
-              { tierKey: 'D', label: 'Tier D', pickCount: 1, startPosition: 31, endPosition: 40 },
-              { tierKey: 'E', label: 'Tier E', pickCount: 1, startPosition: 41, endPosition: 50 },
-              { tierKey: 'F', label: 'Tier F', pickCount: 1, startPosition: 51, endPosition: null },
-            ],
-            cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-            displayScoring: 'TO_PAR',
-            tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
           },
         },
         {
@@ -201,46 +187,6 @@ function primeCommonMocks() {
             maxEntriesPerSquad: 1,
             rosterSize: 12,
             countedScores: 8,
-            tierSource: 'ODDS',
-            tierGeneration: { defaultTierSize: 10 },
-            tiers: [
-              { tierKey: 'A', label: 'Tier A', pickCount: 2, startPosition: 1, endPosition: 10 },
-              { tierKey: 'B', label: 'Tier B', pickCount: 2, startPosition: 11, endPosition: 20 },
-              { tierKey: 'C', label: 'Tier C', pickCount: 2, startPosition: 21, endPosition: 30 },
-              { tierKey: 'D', label: 'Tier D', pickCount: 2, startPosition: 31, endPosition: 40 },
-              { tierKey: 'E', label: 'Tier E', pickCount: 2, startPosition: 41, endPosition: 50 },
-              { tierKey: 'F', label: 'Tier F', pickCount: 2, startPosition: 51, endPosition: null },
-            ],
-            cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-            displayScoring: 'TO_PAR',
-            tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
-          },
-        },
-        {
-          id: '44444444-4444-4444-8444-444444444444',
-          sport: 'GOLF',
-          contestFormat: 'ROSTER',
-          configMode: 'GOLF_CATEGORY_PICKS',
-          templateKey: 'golf-category-picks',
-          name: 'Category picks',
-          description: 'Pick one golfer from each category.',
-          sortOrder: 2,
-          isDefault: false,
-          active: true,
-          schemaVersion: 1,
-          configuration: {
-            mode: 'GOLF_CATEGORY_PICKS',
-            maxEntriesPerSquad: 1,
-            categories: [
-              { categoryKey: 'SENIOR', label: 'Senior', pickCount: 1 },
-              { categoryKey: 'ROOKIE', label: 'Rookie', pickCount: 1 },
-              { categoryKey: 'PREVIOUS_WINNER', label: 'Previous Winner', pickCount: 1 },
-            ],
-            cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-            displayScoring: 'TO_PAR',
-            tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
           },
         },
       ],
@@ -301,24 +247,6 @@ describe('CreateContestPage', () => {
             locksAt: '2026-04-10T11:55:00.000Z',
             rosterSize: 6,
             countedScores: 4,
-            tierSource: 'ODDS',
-            tierGeneration: { defaultTierSize: 10 },
-            cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
-            tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
-            tiers: expect.arrayContaining([
-              expect.objectContaining({
-                tierKey: 'A',
-                pickCount: 1,
-                startPosition: 1,
-                endPosition: 10,
-              }),
-              expect.objectContaining({
-                tierKey: 'F',
-                pickCount: 1,
-                startPosition: 51,
-                endPosition: null,
-              }),
-            ]),
           }),
         }),
       }),
@@ -348,8 +276,8 @@ describe('CreateContestPage', () => {
     expect(createManagedContestMock).not.toHaveBeenCalled();
   });
 
-  // pool-master-dxd.39 — pick-12 templates preserve six two-pick tiers.
-  it('keeps the configured tier shape when selecting a two-picks-per-tier template', async () => {
+  // pool-master-dxd.39 — pick-12 templates seed the wider roster shape.
+  it('applies the pick-12 template roster size and counted scores', async () => {
     primeCommonMocks();
     createManagedContestMock.mockResolvedValue({
       data: {
@@ -364,9 +292,8 @@ describe('CreateContestPage', () => {
     await screen.findByTestId('contest-name');
     fireEvent.click(screen.getByTestId('contest-template-golf-tiered-pick-12'));
 
-    expect(screen.getByTestId('contest-tier-pick-count-A')).toHaveValue(2);
-    expect(screen.getByTestId('contest-tier-pick-count-F')).toHaveValue(2);
-    expect(screen.queryByTestId('contest-tier-G')).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-tiered-roster-size')).toHaveValue(12);
+    expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(8);
 
     fireEvent.change(screen.getByTestId('contest-name'), {
       target: { value: 'Masters Pick 12' },
@@ -381,93 +308,10 @@ describe('CreateContestPage', () => {
           configurationOverrides: expect.objectContaining({
             rosterSize: 12,
             countedScores: 8,
-            tiers: [
-              expect.objectContaining({ tierKey: 'A', pickCount: 2 }),
-              expect.objectContaining({ tierKey: 'B', pickCount: 2 }),
-              expect.objectContaining({ tierKey: 'C', pickCount: 2 }),
-              expect.objectContaining({ tierKey: 'D', pickCount: 2 }),
-              expect.objectContaining({ tierKey: 'E', pickCount: 2 }),
-              expect.objectContaining({ tierKey: 'F', pickCount: 2 }),
-            ],
           }),
         }),
       }),
     );
-  });
-
-  // pool-master-dxd.40 — tier ranges must fit the selected event field.
-  it('blocks saving tiers that start beyond the selected event participant count', async () => {
-    primeCommonMocks();
-    listEventsMock.mockResolvedValue({
-      data: {
-        events: [
-          {
-            id: 'event-1',
-            sport: 'GOLF',
-            name: 'Masters Tournament',
-            status: 'SCHEDULED',
-            startDate: '2026-04-10T12:00:00.000Z',
-            releaseAt: '2026-04-06T12:00:00.000Z',
-            fieldLocksAt: '2026-04-10T11:00:00.000Z',
-            participantCount: 80,
-            fieldLocked: false,
-            readinessStatus: 'CONTEST_ELIGIBLE',
-            readinessReasons: [],
-            contestEligible: true,
-          },
-        ],
-      },
-    });
-
-    renderCreateContestPage();
-
-    await screen.findByTestId('contest-name');
-    fireEvent.click(screen.getByTestId('contest-template-golf-tiered-pick-12'));
-    fireEvent.change(screen.getByTestId('contest-name'), {
-      target: { value: 'Bad Masters Pick 12' },
-    });
-    fireEvent.change(screen.getByTestId('contest-tier-start-F'), {
-      target: { value: '111' },
-    });
-    fireEvent.click(screen.getByTestId('create-contest-submit'));
-
-    expect(await screen.findByTestId('create-contest-error')).toHaveTextContent(
-      'Tier F starts at field position 111, but the selected event has only 80 participants.',
-    );
-    expect(createManagedContestMock).not.toHaveBeenCalled();
-  });
-
-  // pool-master-dxd.41/pool-master-dxd.42 — tier rows are directly editable and reset to template shape.
-  it('allows direct tier edits and resets back to the selected template shape', async () => {
-    primeCommonMocks();
-
-    renderCreateContestPage();
-
-    await screen.findByTestId('contest-name');
-    fireEvent.click(screen.getByTestId('contest-template-golf-tiered-pick-12'));
-
-    expect(screen.getByTestId('contest-tier-label-A')).not.toBeDisabled();
-    fireEvent.change(screen.getByTestId('contest-tier-pick-count-A'), {
-      target: { value: '1' },
-    });
-    expect(screen.getByTestId('contest-tier-pick-count-A')).toHaveValue(1);
-
-    fireEvent.click(screen.getByTestId('contest-tiered-reset-tiers'));
-
-    expect(screen.getByTestId('contest-tier-pick-count-A')).toHaveValue(2);
-    expect(screen.getByTestId('contest-tier-end-F')).toHaveValue(null);
-    expect(screen.queryByTestId('contest-tier-G')).not.toBeInTheDocument();
-  });
-
-  it('keeps category picks unavailable in the new-contest create flow', async () => {
-    primeCommonMocks();
-
-    renderCreateContestPage();
-
-    expect(await screen.findByTestId('contest-mode-category')).toBeDisabled();
-    expect(screen.queryByTestId('contest-template-golf-category-picks')).not.toBeInTheDocument();
-    expect(screen.getByText(/new contests currently use tiered entry/i)).toBeInTheDocument();
-    expect(createManagedContestMock).not.toHaveBeenCalled();
   });
 
   it('shows the rejection message when contest creation is rejected with an expected payload', async () => {
@@ -495,41 +339,6 @@ describe('CreateContestPage', () => {
     );
   });
 
-  it('still allows category-picks configuration to be viewed from the manage flow', async () => {
-    primeCommonMocks();
-    getManagedContestMock.mockResolvedValue({
-      data: {
-        contest: {
-          id: 'contest-78',
-          leagueId: 'league-1',
-          sportEventId: 'event-1',
-          name: 'Category Contest',
-          status: 'DRAFT',
-          createdAt: '2026-04-15T00:00:00.000Z',
-          updatedAt: '2026-04-15T00:00:00.000Z',
-          configuration: {
-            id: 'config-78',
-            contestId: 'contest-78',
-            mode: 'GOLF_CATEGORY_PICKS',
-            locksAt: '2026-04-10T11:55:00.000Z',
-            maxEntriesPerSquad: 1,
-            categories: [{ categoryKey: 'SENIOR', label: 'Senior', pickCount: 1 }],
-            cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-            displayScoring: 'TO_PAR',
-            tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
-          },
-        },
-      },
-    });
-
-    renderContestPage('/league/BIGDAWGS/contests/contest-78/manage');
-
-    expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-mode-category')).not.toBeDisabled();
-    expect(screen.getByTestId('contest-category-toggle-SENIOR')).toBeChecked();
-  });
-
   it('deletes a draft contest from the manage page', async () => {
     primeCommonMocks();
     getManagedContestMock.mockResolvedValue({
@@ -545,14 +354,11 @@ describe('CreateContestPage', () => {
           configuration: {
             id: 'config-78',
             contestId: 'contest-78',
-            mode: 'GOLF_CATEGORY_PICKS',
+            mode: 'GOLF_TIERED',
             locksAt: '2026-04-10T11:55:00.000Z',
             maxEntriesPerSquad: 1,
-            categories: [{ categoryKey: 'SENIOR', label: 'Senior', pickCount: 1 }],
-            cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-            displayScoring: 'TO_PAR',
-            tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
+            rosterSize: 6,
+            countedScores: 4,
           },
         },
       },
@@ -622,20 +428,6 @@ describe('CreateContestPage', () => {
             maxEntriesPerSquad: 2,
             rosterSize: 6,
             countedScores: 4,
-            tierSource: 'ODDS',
-            tierGeneration: { defaultTierSize: 10 },
-            tiers: [
-              { tierKey: 'A', label: 'Tier A', pickCount: 1, startPosition: 1, endPosition: 10 },
-              { tierKey: 'B', label: 'Tier B', pickCount: 1, startPosition: 11, endPosition: 20 },
-              { tierKey: 'C', label: 'Tier C', pickCount: 1, startPosition: 21, endPosition: 30 },
-              { tierKey: 'D', label: 'Tier D', pickCount: 1, startPosition: 31, endPosition: 40 },
-              { tierKey: 'E', label: 'Tier E', pickCount: 1, startPosition: 41, endPosition: 50 },
-              { tierKey: 'F', label: 'Tier F', pickCount: 1, startPosition: 51, endPosition: null },
-            ],
-            cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-            displayScoring: 'TO_PAR',
-            tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
           },
         },
       },
@@ -658,9 +450,8 @@ describe('CreateContestPage', () => {
     fireEvent.change(screen.getByTestId('contest-name'), {
       target: { value: 'Masters Pick 6 Updated' },
     });
-    fireEvent.click(screen.getByTestId('contest-toggle-advanced'));
-    fireEvent.change(screen.getByTestId('contest-tiered-fallback-score'), {
-      target: { value: '82' },
+    fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), {
+      target: { value: '3' },
     });
     fireEvent.click(screen.getByTestId('create-contest-submit'));
 
@@ -679,7 +470,8 @@ describe('CreateContestPage', () => {
         path: { id: 'league-1', contestId: 'contest-77' },
         body: expect.objectContaining({
           mode: 'GOLF_TIERED',
-          cutRule: { type: 'FIXED_SCORE', fixedScore: 82 },
+          rosterSize: 6,
+          countedScores: 3,
         }),
       }),
     );

@@ -18,6 +18,7 @@ import {
   MockEventStateUnsupportedError,
   ProviderNotFoundError,
   ProviderSportCoverageError,
+  SportEventSyncScopeError,
   SportSyncNotConfiguredError,
   SportProviderNotFoundError,
 } from './provider-service';
@@ -332,6 +333,13 @@ export function createProviderHandlers(providerService: ProviderService) {
           mockEventState: request.body.mockEventState ?? null,
         }, 'Manual event sync failed because provider does not support mock event state controls');
         return sendError(reply, 422, 'MOCK_EVENT_STATE_UNSUPPORTED', err.message);
+      }
+      if (err instanceof SportEventSyncScopeError) {
+        logger.warn({
+          sport: request.params.sport,
+          eventId: request.params.eventId,
+        }, 'Manual event sync failed because a requested feed is not allowed for this event\'s syncScope');
+        return sendError(reply, 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED', err.message);
       }
       if (err instanceof SyncRequestValidationError) {
         logger.warn({

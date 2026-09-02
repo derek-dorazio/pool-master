@@ -46,16 +46,16 @@ function getValidEventStatusesForPreset(
   hasMockEventStateOverride: boolean,
 ): EventSyncEvent['status'][] {
   if (hasMockEventStateOverride) {
-    return ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'OFFICIAL'];
+    return ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'];
   }
 
   switch (presetId) {
     case 'EVENTLIVESCORES':
       return ['IN_PROGRESS'];
     case 'EVENTRESULTS':
-      return ['COMPLETED', 'OFFICIAL'];
+      return ['COMPLETED'];
     case 'EVENTPARTICIPANTS':
-      return ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'OFFICIAL'];
+      return ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'];
   }
 }
 

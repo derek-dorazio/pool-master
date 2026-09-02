@@ -5,12 +5,13 @@ import type {
   GolfContestConfigMode,
   GolfCutRuleType,
   GolfDisplayScoring,
+  GolfParticipantInactiveReason,
   GolfPlayoffHandling,
   GolfTiebreakerType,
-  GolfTierSource,
   ScoringEngine,
   SelectionType,
   Sport,
+  SportEventStatus,
 } from './enums';
 import type {
   AggregationDefinitionId,
@@ -25,10 +26,6 @@ export interface GolfFixedCutRule {
 
 export interface GolfTiebreakerRule {
   type: GolfTiebreakerType;
-}
-
-export interface GolfTierGeneration {
-  defaultTierSize: number;
 }
 
 export interface GolfContestTierDefinition {
@@ -53,17 +50,21 @@ export interface GolfCategoryDefinition {
   pickCount: number;
 }
 
+/**
+ * Shrunk per plans/124 §4.6/§4.6a: tiers and price are event-owned data
+ * (SportEventGolfTier/SportEventParticipantGolfValuation via
+ * golf-tier-service.getEffectiveTiersForContest), never a per-contest
+ * override, so tierSource/tierGeneration/tiers all drop. cutRule/
+ * playoffHandling/displayScoring/tiebreaker each had exactly one possible
+ * value and zero real reads downstream — dropped as dead configuration, not
+ * simplified. rosterSize/countedScores are the one thing that's genuinely a
+ * per-pool rule (two commissioners on the same tournament can legitimately
+ * pick different roster sizes).
+ */
 export interface GolfTieredContestConfig {
   mode: 'GOLF_TIERED';
   rosterSize: number;
   countedScores: number;
-  tierSource: GolfTierSource;
-  tierGeneration: GolfTierGeneration;
-  tiers: GolfContestTierDefinition[];
-  cutRule: GolfFixedCutRule;
-  playoffHandling: GolfPlayoffHandling;
-  displayScoring: GolfDisplayScoring;
-  tiebreaker: GolfTiebreakerRule;
 }
 
 export interface GolfCategoryContestConfig {
@@ -100,7 +101,7 @@ export interface SportEvent extends DomainEntity {
   location?: string;
   startDate: Date;
   endDate?: Date;
-  status: string;
+  status: SportEventStatus;
   rounds?: number;
   participantCount?: number;
   fieldLocked: boolean;
@@ -129,7 +130,10 @@ export interface ContestTimingPolicy extends DomainEntity {
 export interface SportEventParticipant extends DomainEntity {
   sportEventId: string;
   participantId: string;
-  status?: string;
+  /** Whether this golfer is currently eligible/available for this tournament. */
+  isActive: boolean;
+  /** Meaningful only when `isActive` is false; undefined covers "inactive, no more specific reason recorded." */
+  inactiveReason?: GolfParticipantInactiveReason;
   /** Latest global world-ranking snapshot copied onto this event participant. */
   worldRanking?: number;
   /** Event-scoped implied odds-to-win snapshot (decimal). */
@@ -147,15 +151,6 @@ export interface SportEventParticipantSourceData extends DomainEntity {
   rawPayload: Record<string, unknown>;
   normalizedData: Record<string, unknown>;
   receivedAt: Date;
-}
-
-/** Derived valuation metadata used by pricing and ordering logic. */
-export interface SportEventParticipantValuation extends DomainEntity {
-  sportEventParticipantId: string;
-  price?: number;
-  tier?: string;
-  orderIndex?: number;
-  valuationSource: string;
 }
 
 /** Commissioner-managed contest configuration persisted alongside the contest. */

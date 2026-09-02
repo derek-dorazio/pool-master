@@ -4,10 +4,7 @@ import type {
 } from "@/lib/api";
 import {
   Alert,
-  Button,
   DefinitionList,
-  FormField,
-  Input,
   ListCard,
   ListStack,
   ResponsiveGridLayout,
@@ -19,16 +16,6 @@ import {
 type SportEventSummary = ListEventsResponses[200]["events"][number];
 type ManagedContestTemplate =
   ListManagedContestTemplatesResponses[200]["templates"][number];
-
-export type TierDefinition = {
-  tierKey: string;
-  label: string;
-  pickCount: number;
-  startPosition: number;
-  endPosition: number | null;
-};
-
-export type TierDefinitionUpdate = Partial<TierDefinition>;
 
 type ContestTemplatePickerProps = {
   isEditMode: boolean;
@@ -73,8 +60,7 @@ export function ContestTemplatePicker({
         ))}
       </ListStack>
       <Alert>
-        New contests currently use tiered entry. Existing category-picks contests can
-        still be edited here.
+        New contests currently use tiered entry.
       </Alert>
     </Tile>
   );
@@ -114,107 +100,6 @@ export function EventReadinessPanel({
           { id: "event-status", label: "Event status", value: event.status },
         ]}
       />
-    </Tile>
-  );
-}
-
-type TierSettingsEditorProps = {
-  isDraftEditable: boolean;
-  onResetTiers: () => void;
-  onUpdateTier: (index: number, updates: TierDefinitionUpdate) => void;
-  tiers: TierDefinition[];
-};
-
-export function TierSettingsEditor({
-  isDraftEditable,
-  onResetTiers,
-  onUpdateTier,
-  tiers,
-}: TierSettingsEditorProps) {
-  return (
-    <Tile padding="sm" radius="lg" variant="subtle">
-      <SectionHeader
-        actions={(
-          <Button
-            data-testid="contest-tiered-reset-tiers"
-            onClick={onResetTiers}
-            size="sm"
-            variant="secondary"
-          >
-            Reset tiers
-          </Button>
-        )}
-        description={
-          <>
-            Adjust the participant rank ranges and picks for this contest.
-          </>
-        }
-        title="Tier settings"
-      />
-      <div className="mt-4 space-y-3">
-        {tiers.map((tier, index) => (
-          <Tile
-            className="grid gap-3 md:grid-cols-[0.8fr_1fr_1fr_0.8fr]"
-            data-testid={`contest-tier-${tier.tierKey}`}
-            key={tier.tierKey}
-            padding="sm"
-            radius="lg"
-            variant="default"
-          >
-            <FormField label="Tier">
-              <Input
-                data-testid={`contest-tier-label-${tier.tierKey}`}
-                disabled={!isDraftEditable}
-                onChange={(event) => onUpdateTier(index, { label: event.target.value })}
-                type="text"
-                value={tier.label}
-              />
-            </FormField>
-            <FormField label="Start">
-              <Input
-                data-testid={`contest-tier-start-${tier.tierKey}`}
-                disabled={!isDraftEditable}
-                min={1}
-                onChange={(event) =>
-                  onUpdateTier(index, {
-                    startPosition: Math.max(1, Number(event.target.value) || 1),
-                  })}
-                type="number"
-                value={tier.startPosition}
-              />
-            </FormField>
-            <FormField label="End">
-              <Input
-                data-testid={`contest-tier-end-${tier.tierKey}`}
-                disabled={!isDraftEditable}
-                min={tier.startPosition}
-                onChange={(event) =>
-                  onUpdateTier(index, {
-                    endPosition: event.target.value
-                      ? Math.max(tier.startPosition, Number(event.target.value) || tier.startPosition)
-                      : null,
-                  })}
-                placeholder={index === tiers.length - 1 ? "Remainder" : undefined}
-                type="number"
-                value={tier.endPosition ?? ""}
-              />
-            </FormField>
-            <FormField label="Picks">
-              <Input
-                data-testid={`contest-tier-pick-count-${tier.tierKey}`}
-                disabled={!isDraftEditable}
-                min={1}
-                onChange={(event) =>
-                  onUpdateTier(index, {
-                    pickCount: Math.max(1, Number(event.target.value) || 1),
-                  })}
-                type="number"
-                value={tier.pickCount}
-              />
-            </FormField>
-          </Tile>
-        ))}
-      </div>
     </Tile>
   );
 }

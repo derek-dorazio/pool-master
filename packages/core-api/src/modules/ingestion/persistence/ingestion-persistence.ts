@@ -7,7 +7,7 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { ContestStatus, type Sport } from '@poolmaster/shared/domain';
+import { type Sport, type SportEventStatus } from '@poolmaster/shared/domain';
 import type {
   ProviderRanking,
   SportEvent,
@@ -22,54 +22,18 @@ import {
   resolveEventTiming,
   selectTimingPolicy,
 } from '../../events/operational-timing';
-import {
-  renderSystemEmailTemplate,
-  type ContestStartedEntrySummary,
-  type MailDeliveryProvider,
-} from '../../email';
 
-interface CompletedSportEventSettlement {
-  settleCompletedSportEvent(
-    sportEventId: string,
-    input?: { completedAt?: Date },
-  ): Promise<unknown>;
-}
-
-interface ContestStartedEmailUser {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  username: string;
-  isActive: boolean;
-}
-
-interface ContestStartedCandidate {
-  id: string;
-  leagueId: string;
-  name: string;
-  league: {
-    name: string;
-    leagueCode: string;
-    memberships: Array<{
-      role: string;
-      user: ContestStartedEmailUser;
-    }>;
-  };
-  sportEvent: {
-    name: string;
-    startDate: Date;
-  } | null;
-  entries: Array<{
-    id: string;
-    name: string;
-    squad: {
-      name: string;
-      memberships: Array<{
-        user: ContestStartedEmailUser;
-      }>;
-    };
-  }>;
+/**
+ * Narrow interface onto EventLifecycleService.applySportEventStatusTransition
+ * (plans/124 §3.3) — keeps this module decoupled from the full service/actor
+ * union, matching the CompletedSportEventSettlement pattern this replaces.
+ */
+interface SportEventLifecycleApplier {
+  applySportEventStatusTransition(input: {
+    sportEventId: string;
+    toStatus: SportEventStatus;
+    actor: { type: 'PROVIDER' };
+  }): Promise<unknown>;
 }
 
 interface PersistenceDiagnosticsResult<T> {
@@ -82,9 +46,7 @@ export class IngestionPersistence {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
-    private readonly mailDelivery?: MailDeliveryProvider,
-    private readonly appBaseUrl = 'http://localhost:5173',
-    private readonly golfContestSettlement?: CompletedSportEventSettlement,
+    private readonly eventLifecycleService?: SportEventLifecycleApplier,
   ) {}
 
   /**
@@ -148,7 +110,9 @@ export class IngestionPersistence {
           location: event.location ?? null,
           startDate: event.startDate,
           endDate: event.endDate ?? null,
-          status: event.status,
+          // status intentionally omitted — takes the SCHEDULED column default here,
+          // then applySportEventStatusTransition below is the one place that ever
+          // writes SportEvent.status (plans/124 §3.3).
           rounds: event.rounds ?? null,
           participantCount: event.participantCount ?? null,
           releaseAt: resolvedTiming.releaseAt,
@@ -162,7 +126,7 @@ export class IngestionPersistence {
           location: event.location ?? null,
           startDate: event.startDate,
           endDate: event.endDate ?? null,
-          status: event.status,
+          // status intentionally omitted — see the create branch above.
           rounds: event.rounds ?? null,
           participantCount: event.participantCount ?? null,
           releaseAt: resolvedTiming.releaseAt,
@@ -182,8 +146,11 @@ export class IngestionPersistence {
         ...(before ? { before } : {}),
         after,
       });
-      await this.activateContestsForStartedEvent(persistedEvent.id, event);
-      await this.settleContestsForCompletedEvent(persistedEvent.id, event);
+      await this.eventLifecycleService?.applySportEventStatusTransition({
+        sportEventId: persistedEvent.id,
+        toStatus: event.status,
+        actor: { type: 'PROVIDER' },
+      });
       count++;
       this.logger?.debug({
         providerId: event.providerId,
@@ -204,190 +171,6 @@ export class IngestionPersistence {
     };
   }
 
-  private async settleContestsForCompletedEvent(
-    sportEventId: string,
-    event: SportEvent,
-  ): Promise<void> {
-    if (event.status !== 'COMPLETED' || !this.golfContestSettlement) {
-      return;
-    }
-
-    await this.golfContestSettlement.settleCompletedSportEvent(sportEventId, {
-      completedAt: event.endDate ?? event.startDate,
-    });
-  }
-
-  private async activateContestsForStartedEvent(
-    sportEventId: string,
-    event: SportEvent,
-  ): Promise<void> {
-    if (event.status !== 'IN_PROGRESS') {
-      return;
-    }
-
-    const candidates = await this.prisma.contest.findMany({
-      where: {
-        sportEventId,
-        status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED] },
-      },
-      select: {
-        id: true,
-        leagueId: true,
-        name: true,
-        league: {
-          select: {
-            name: true,
-            leagueCode: true,
-            memberships: {
-              where: { status: 'ACTIVE', role: 'COMMISSIONER' },
-              select: {
-                role: true,
-                user: {
-                  select: {
-                    id: true,
-                    email: true,
-                    firstName: true,
-                    lastName: true,
-                    username: true,
-                    isActive: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        sportEvent: {
-          select: {
-            name: true,
-            startDate: true,
-          },
-        },
-        entries: {
-          where: { status: 'ACTIVE' },
-          orderBy: [{ entryNumber: 'asc' }, { name: 'asc' }],
-          select: {
-            id: true,
-            name: true,
-            squad: {
-              select: {
-                name: true,
-                memberships: {
-                  where: { status: 'ACTIVE' },
-                  select: {
-                    user: {
-                      select: {
-                        id: true,
-                        email: true,
-                        firstName: true,
-                        lastName: true,
-                        username: true,
-                        isActive: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    }) as ContestStartedCandidate[];
-
-    for (const contest of candidates) {
-      const update = await this.prisma.contest.updateMany({
-        where: {
-          id: contest.id,
-          status: { in: [ContestStatus.OPEN, ContestStatus.LOCKED] },
-        },
-        data: {
-          status: ContestStatus.ACTIVE,
-          startsAt: event.startDate,
-        },
-      });
-
-      if (update.count === 0) {
-        this.logger?.debug({
-          contestId: contest.id,
-          sportEventId,
-          providerId: event.providerId,
-          eventExternalId: event.externalId,
-        }, 'Skipped contest started email because contest was already active');
-        continue;
-      }
-
-      this.logger?.info({
-        contestId: contest.id,
-        sportEventId,
-        providerId: event.providerId,
-        eventExternalId: event.externalId,
-      }, 'Activated contest from in-progress sport event');
-      await this.deliverContestStartedSummaryEmails(contest, event);
-    }
-  }
-
-  private async deliverContestStartedSummaryEmails(
-    contest: ContestStartedCandidate,
-    event: SportEvent,
-  ): Promise<void> {
-    if (!this.mailDelivery) {
-      this.logger?.debug({
-        contestId: contest.id,
-        leagueId: contest.leagueId,
-      }, 'Skipped contest started summary email because mail delivery is unavailable');
-      return;
-    }
-
-    const recipients = collectContestStartedRecipients(contest);
-    const entries = buildContestStartedEntrySummary(contest);
-    const eventName = contest.sportEvent?.name ?? event.name;
-    const startedAt = contest.sportEvent?.startDate ?? event.startDate;
-    const contestUrl = buildContestUrl(
-      this.appBaseUrl,
-      contest.league.leagueCode,
-      contest.id,
-    );
-
-    for (const user of recipients) {
-      const message = renderSystemEmailTemplate('CONTEST_STARTED_SUMMARY', {
-        userName: formatUserName(user),
-        leagueName: contest.league.name,
-        contestName: contest.name,
-        eventName,
-        contestUrl,
-        startedAt,
-        entryCount: contest.entries.length,
-        entries,
-      });
-
-      try {
-        await this.mailDelivery.send({
-          to: user.email,
-          subject: message.subject,
-          text: message.text,
-          html: message.html,
-          metadata: {
-            templateKey: message.templateKey,
-            leagueId: contest.leagueId,
-            contestId: contest.id,
-          },
-        });
-        this.logger?.info({
-          contestId: contest.id,
-          leagueId: contest.leagueId,
-          userId: user.id,
-          templateKey: message.templateKey,
-        }, 'Delivered contest started summary email');
-      } catch (err) {
-        this.logger?.error({
-          contestId: contest.id,
-          leagueId: contest.leagueId,
-          userId: user.id,
-          templateKey: message.templateKey,
-          error: err instanceof Error ? err.message : String(err),
-        }, 'Failed to deliver contest started summary email');
-      }
-    }
-  }
 
   async persistIngestionJob(job: IngestionJobRecord): Promise<void> {
     this.logger?.debug({
@@ -624,7 +407,8 @@ export class IngestionPersistence {
         ? normalizeSportEventParticipantRow(existingEventParticipant)
         : undefined;
       const after = normalizeSportEventParticipantInput({
-        status: participant.active ? 'ACTIVE' : 'INACTIVE',
+        isActive: participant.active,
+        inactiveReason: participant.inactiveReason ?? null,
         worldRanking,
         oddsToWin,
         seedNumber,
@@ -641,14 +425,16 @@ export class IngestionPersistence {
         create: {
           sportEventId: persistedEvent.id,
           participantId: mapping.participantId,
-          status: participant.active ? 'ACTIVE' : 'INACTIVE',
+          isActive: participant.active,
+          inactiveReason: participant.inactiveReason ?? null,
           worldRanking,
           oddsToWin,
           seedNumber,
           metadata: toPrismaJson(participant.metadata),
         },
         update: {
-          status: participant.active ? 'ACTIVE' : 'INACTIVE',
+          isActive: participant.active,
+          inactiveReason: participant.inactiveReason ?? null,
           worldRanking,
           oddsToWin,
           seedNumber,
@@ -895,14 +681,16 @@ function normalizeSportEventRow(row: {
 }
 
 function normalizeSportEventParticipantInput(input: {
-  status: string;
+  isActive: boolean;
+  inactiveReason: string | null;
   worldRanking: number | null;
   oddsToWin: number | null;
   seedNumber: number | null;
   metadata: Record<string, unknown>;
 }): Record<string, unknown> {
   return {
-    status: input.status,
+    isActive: input.isActive,
+    inactiveReason: input.inactiveReason,
     worldRanking: input.worldRanking,
     oddsToWin: input.oddsToWin,
     seedNumber: input.seedNumber,
@@ -911,14 +699,16 @@ function normalizeSportEventParticipantInput(input: {
 }
 
 function normalizeSportEventParticipantRow(row: {
-  status: string | null;
+  isActive: boolean;
+  inactiveReason: string | null;
   worldRanking: number | null;
   oddsToWin: Prisma.Decimal | number | null;
   seedNumber: number | null;
   metadata: Prisma.JsonValue;
 }): Record<string, unknown> {
   return {
-    status: row.status,
+    isActive: row.isActive,
+    inactiveReason: row.inactiveReason,
     worldRanking: row.worldRanking,
     oddsToWin: decimalToNumber(row.oddsToWin),
     seedNumber: row.seedNumber,
@@ -1008,48 +798,3 @@ function toPrismaJson(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
-function collectContestStartedRecipients(
-  contest: ContestStartedCandidate,
-): ContestStartedEmailUser[] {
-  const recipients = new Map<string, ContestStartedEmailUser>();
-  const addUser = (user: ContestStartedEmailUser) => {
-    if (!user.isActive) return;
-    recipients.set(user.id, user);
-  };
-
-  for (const membership of contest.league.memberships) {
-    addUser(membership.user);
-  }
-  for (const entry of contest.entries) {
-    for (const membership of entry.squad.memberships) {
-      addUser(membership.user);
-    }
-  }
-
-  return Array.from(recipients.values());
-}
-
-function buildContestStartedEntrySummary(
-  contest: ContestStartedCandidate,
-): ContestStartedEntrySummary[] {
-  return contest.entries.map((entry) => ({
-    entryName: entry.name,
-    teamName: entry.squad.name,
-  }));
-}
-
-function formatUserName(user: ContestStartedEmailUser): string {
-  const fullName = [user.firstName, user.lastName]
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .join(' ');
-  return fullName || user.username || user.email;
-}
-
-function buildContestUrl(
-  appBaseUrl: string,
-  leagueCode: string,
-  contestId: string,
-): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}/contests/${encodeURIComponent(contestId)}`;
-}

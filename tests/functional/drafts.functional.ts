@@ -229,7 +229,7 @@ async function seedSnakeDraftFixture() {
         data: {
           sportEventId: event.id,
           participantId: participant.id,
-          status: 'ACTIVE',
+          isActive: true,
         },
       }),
     ),
@@ -385,7 +385,7 @@ async function seedBudgetPickFixture() {
     data: {
       sportEventId: event.id,
       participantId: firstParticipant.id,
-      status: 'ACTIVE',
+      isActive: true,
       valuations: {
         create: {
           price: 3200,
@@ -401,7 +401,7 @@ async function seedBudgetPickFixture() {
     data: {
       sportEventId: event.id,
       participantId: secondParticipant.id,
-      status: 'ACTIVE',
+      isActive: true,
       valuations: {
         create: {
           price: 5100,
@@ -530,7 +530,7 @@ async function seedTieredDraftFixture(options: {
       data: {
         sportEventId: event.id,
         participantId: participant.id,
-        status: 'ACTIVE',
+        isActive: true,
         valuations: {
           create: {
             price: 1200 + index,
