@@ -248,23 +248,6 @@ enum PrismaGolfLiveStatus {
   MISSED_CUT  @map("missed-cut")
 }
 
-enum PrismaSport {
-  GOLF
-  NFL
-  NBA
-  F1
-  NASCAR
-  NCAA_BASKETBALL
-  NCAA_HOCKEY
-  NCAA_FOOTBALL
-  TENNIS
-  HORSE_RACING
-  SOCCER
-  NHL
-  MLB
-  UFC
-}
-
 // =============================================================================
 // Substrate redesign — pool-master-rop.78 / Phase 4 (rop.78.4)
 // =============================================================================
@@ -298,13 +281,13 @@ enum PrismaTournamentFormat {
   MATCH_PLAY
 }
 
-/// Contest format — the pool format applied to a SportEvent (or set of
-/// events via ContestSportEvent). Validity vs. tournamentFormat is
-/// enforced by the const map in packages/shared/domain (see plans/117 §9).
-/// Replaces the legacy `ContestType.SINGLE_EVENT` enum which was a
-/// duration/scope concept that turned out not to be load-bearing —
-/// duration is now expressed by the ContestSportEvent M:N join (a
-/// contest covers 1 or N events).
+/// Contest format — the pool format applied to a SportEvent. Validity vs.
+/// tournamentFormat is enforced by the const map in packages/shared/domain
+/// (see plans/117 §9). Replaces the legacy `ContestType.SINGLE_EVENT` enum
+/// which was a duration/scope concept that turned out not to be load-bearing.
+/// Multi-event contest coverage will be re-modeled when a real multi-event
+/// contest type is built (the speculative ContestSportEvent M:N join that
+/// once anticipated it was removed as dead scaffolding — plans/124 §4.11).
 enum PrismaContestFormat {
   ROSTER
   BRACKET
@@ -755,40 +738,17 @@ model Contest {
   createdAt                 DateTime            @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                 DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
-  league             League                     @relation(fields: [leagueId], references: [id])
-  sportEvent         SportEvent?                @relation(fields: [sportEventId], references: [id])
-  configuration      ContestConfiguration?
-  entries            ContestEntry[]
-  golfStandings      ContestEntryGolfStanding[]
-  draftSession       DraftSession?
-  contestSportEvents ContestSportEvent[]
+  league        League                     @relation(fields: [leagueId], references: [id])
+  sportEvent    SportEvent?                @relation(fields: [sportEventId], references: [id])
+  configuration ContestConfiguration?
+  entries       ContestEntry[]
+  golfStandings ContestEntryGolfStanding[]
+  draftSession  DraftSession?
 
   @@index([leagueId])
   @@index([sportEventId])
   @@index([status])
   @@map("contests")
-}
-
-/// M:N join between Contest and SportEvent. Golf-tournament and bracket
-/// contests have one row (Contest:Event = 1:1; equivalent to the legacy
-/// Contest.sportEventId column which stays for backward read paths).
-/// NFL weekly pick'em contests have N rows (one per week's games);
-/// season-long racing contests have ~22 rows (one per race). See
-/// plans/117 §4.2.
-model ContestSportEvent {
-  id           String   @id @default(uuid()) @db.Uuid
-  contestId    String   @map("contest_id") @db.Uuid
-  sportEventId String   @map("sport_event_id") @db.Uuid
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  contest    Contest    @relation(fields: [contestId], references: [id])
-  sportEvent SportEvent @relation(fields: [sportEventId], references: [id])
-
-  @@unique([contestId, sportEventId])
-  @@index([contestId])
-  @@index([sportEventId])
-  @@map("contest_sport_events")
 }
 
 model ContestConfiguration {
@@ -1078,7 +1038,6 @@ model SportEvent {
 
   contests               Contest[]
   sportEventParticipants SportEventParticipant[]
-  contestSportEvents     ContestSportEvent[]
   golfTiers              SportEventGolfTier[]
   roundSchedule          SportEventRound[]
   season                 Season?                 @relation(fields: [seasonId], references: [id])

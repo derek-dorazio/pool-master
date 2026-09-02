@@ -492,17 +492,6 @@ export class ContestService {
             sport: true,
           },
         },
-        contestSportEvents: {
-          select: {
-            sportEvent: {
-              select: {
-                id: true,
-                sport: true,
-              },
-            },
-          },
-          orderBy: { createdAt: 'asc' },
-        },
         configuration: {
           select: {
             configJson: true,
@@ -514,7 +503,7 @@ export class ContestService {
       },
     });
 
-    const sportEvent = contest?.sportEvent ?? contest?.contestSportEvents[0]?.sportEvent ?? null;
+    const sportEvent = contest?.sportEvent ?? null;
     if (!contest || !sportEvent) {
       throw new ContestOperationError(
         'Golf leaderboard requires a contest sport event.',

@@ -44,31 +44,6 @@ describe('provider bindings', () => {
     expect(registry.getProvider(Sport.NFL)).toBeNull();
   });
 
-  it('pool-master-rop.5: registers configured real sport-data adapters instead of limiting registry to mock-contest-feed', () => {
-    const openF1Registry = new ProviderRegistry();
-    const espnRegistry = new ProviderRegistry();
-
-    registerConfiguredProviders(openF1Registry, {
-      SPORT_DATA_DEFAULT_PROVIDER: 'openf1',
-      SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
-        providers: {
-          openf1: {},
-        },
-      }),
-    });
-    registerConfiguredProviders(espnRegistry, {
-      SPORT_DATA_DEFAULT_PROVIDER: 'espn',
-      SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
-        providers: {
-          espn: {},
-        },
-      }),
-    });
-
-    expect(openF1Registry.getProvider(Sport.F1)?.providerId).toBe('openf1');
-    expect(espnRegistry.getProvider(Sport.NFL)?.providerId).toBe('espn');
-  });
-
   it('pool-master-rop.5: rejects mock providers in production-like runtimes without an explicit override', () => {
     const registry = new ProviderRegistry();
 
@@ -183,6 +158,22 @@ describe('provider bindings', () => {
         }),
       }),
     ).toThrow('Unsupported sport data provider "the-odds-api" configured for this service runtime.');
+
+    // pool-master-w3x: the speculative espn/openf1 adapters were never configured,
+    // tested, or backed by a real subscription — removed as dead code. Their
+    // provider ids must now be rejected like any other unregistered adapter.
+    for (const removedProviderId of ['espn', 'openf1']) {
+      expect(() =>
+        registerConfiguredProviders(new ProviderRegistry(), {
+          SPORT_DATA_DEFAULT_PROVIDER: removedProviderId,
+          SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
+            providers: {
+              [removedProviderId]: {},
+            },
+          }),
+        }),
+      ).toThrow(`Unsupported sport data provider "${removedProviderId}" configured for this service runtime.`);
+    }
   });
 
   it('does not silently register hidden providers when the environment is unconfigured', () => {

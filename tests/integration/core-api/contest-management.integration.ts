@@ -242,43 +242,28 @@ describe('Contest management integration', () => {
       }),
     ]);
 
+    // GOLF_TIERED is the only managed configuration mode (plans/124 §4.11
+    // removed the GOLF_CATEGORY_PICKS stub); the update path is exercised by
+    // re-submitting the tiered shape with changed roster values.
     const updateRes = await getApp().inject({
       method: 'PUT',
       url: API_ROUTES.contestManagement.configuration(leagueId, contestId),
       headers: ownerHeaders,
       payload: {
-        mode: 'GOLF_CATEGORY_PICKS',
+        mode: 'GOLF_TIERED',
         locksAt: entryLocksAt,
         maxEntriesPerSquad: null,
-        categories: [
-          {
-            categoryKey: 'ROOKIE',
-            label: 'Rookie',
-            pickCount: 1,
-          },
-          {
-            categoryKey: 'US_PLAYER',
-            label: 'US Player',
-            pickCount: 1,
-          },
-        ],
-        cutRule: {
-          type: 'FIXED_SCORE',
-          fixedScore: 82,
-        },
-        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-        displayScoring: 'TO_PAR',
-        tiebreaker: {
-          type: 'PREDICT_WINNING_SCORE',
-        },
+        rosterSize: 6,
+        countedScores: 5,
       },
     });
 
     expect(updateRes.statusCode).toBe(200);
     const updatedContest = updateRes.json().contest;
-    expect(updatedContest.configuration.mode).toBe('GOLF_CATEGORY_PICKS');
-    expect(updatedContest.configuration.categories).toHaveLength(2);
-    expect(updatedContest.configuration.cutRule.fixedScore).toBe(82);
+    expect(updatedContest.configuration.mode).toBe('GOLF_TIERED');
+    expect(updatedContest.configuration.rosterSize).toBe(6);
+    expect(updatedContest.configuration.countedScores).toBe(5);
+    expect(updatedContest.configuration.maxEntriesPerSquad).toBeNull();
 
     const configuration = await getPrisma().contestConfiguration.findUniqueOrThrow({
       where: { contestId },
@@ -288,7 +273,7 @@ describe('Contest management integration', () => {
       },
     });
 
-    expect(configuration.configMode).toBe('GOLF_CATEGORY_PICKS');
+    expect(configuration.configMode).toBe('GOLF_TIERED');
     expect(configuration.entryAggregationRule?.aggregationDefinitionId).toBe(
       'SUM_ALL_ENTRIES',
     );

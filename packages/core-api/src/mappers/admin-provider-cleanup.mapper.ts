@@ -53,7 +53,6 @@ function mapCleanupRowToDto(row: ProviderEventCleanupRow): AdminProviderEventCle
     deleted: row.deleted,
     blockedReasons: row.blockedReasons,
     directContestCount: row.directContestCount,
-    contestSportEventCount: row.contestSportEventCount,
     sportEventParticipantCount: row.sportEventParticipantCount,
     valuationCount: row.valuationCount,
     golfRoundCount: row.golfRoundCount,

@@ -399,13 +399,6 @@ async function cleanupContestArtifacts(
       },
     },
   });
-  await database.contestSportEvent.deleteMany({
-    where: {
-      contestId: {
-        in: contestIds,
-      },
-    },
-  });
   await database.contest.deleteMany({
     where: {
       id: {

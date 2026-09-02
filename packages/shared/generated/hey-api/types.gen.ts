@@ -5950,7 +5950,7 @@ export type ListManagedContestTemplatesResponses = {
             /**
              * Configuration mode seeded by the template.
              */
-            configMode: 'GOLF_TIERED' | 'GOLF_CATEGORY_PICKS';
+            configMode: 'GOLF_TIERED';
             /**
              * Stable machine key for the template.
              */
@@ -5980,7 +5980,7 @@ export type ListManagedContestTemplatesResponses = {
              */
             schemaVersion: number;
             /**
-             * Seeded configuration payload copied into a contest instance when the template is chosen.
+             * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
              */
             configuration: {
                 mode: 'GOLF_TIERED';
@@ -6000,48 +6000,6 @@ export type ListManagedContestTemplatesResponses = {
                  * How many golfer scores count toward the Team total.
                  */
                 countedScores: number;
-            } | {
-                mode: 'GOLF_CATEGORY_PICKS';
-                /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string;
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number;
-                /**
-                 * Enabled category slots for the contest.
-                 */
-                categories: Array<{
-                    categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
-                    /**
-                     * Commissioner-facing category label.
-                     */
-                    label: string;
-                    /**
-                     * How many golfers must be picked for the category.
-                     */
-                    pickCount: number;
-                }>;
-                /**
-                 * Golf cut rule for first-pass contests.
-                 */
-                cutRule: {
-                    type: 'FIXED_SCORE';
-                    /**
-                     * Fallback score assigned when a golfer misses the cut.
-                     */
-                    fixedScore: number;
-                };
-                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-                displayScoring: 'TO_PAR';
-                /**
-                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
-                 */
-                tiebreaker: {
-                    type: 'PREDICT_WINNING_SCORE';
-                };
             };
         }>;
     };
@@ -6067,7 +6025,7 @@ export type CreateManagedContestData = {
          */
         contestFormat: 'ROSTER';
         /**
-         * Approved commissioner-managed contest configuration payload for golf-first contest creation.
+         * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
          */
         configuration: {
             mode: 'GOLF_TIERED';
@@ -6087,48 +6045,6 @@ export type CreateManagedContestData = {
              * How many golfer scores count toward the Team total.
              */
             countedScores: number;
-        } | {
-            mode: 'GOLF_CATEGORY_PICKS';
-            /**
-             * Contest entry lock timestamp.
-             */
-            locksAt?: string;
-            /**
-             * Maximum entries a Team may create. Null means unlimited.
-             */
-            maxEntriesPerSquad?: number;
-            /**
-             * Enabled category slots for the contest.
-             */
-            categories: Array<{
-                categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
-                /**
-                 * Commissioner-facing category label.
-                 */
-                label: string;
-                /**
-                 * How many golfers must be picked for the category.
-                 */
-                pickCount: number;
-            }>;
-            /**
-             * Golf cut rule for first-pass contests.
-             */
-            cutRule: {
-                type: 'FIXED_SCORE';
-                /**
-                 * Fallback score assigned when a golfer misses the cut.
-                 */
-                fixedScore: number;
-            };
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-            displayScoring: 'TO_PAR';
-            /**
-             * Golf tiebreaker configuration. Teams predict the winning to-par score.
-             */
-            tiebreaker: {
-                type: 'PREDICT_WINNING_SCORE';
-            };
         };
     } | {
         /**
@@ -6148,7 +6064,7 @@ export type CreateManagedContestData = {
          */
         templateId: string;
         /**
-         * Approved commissioner-managed contest configuration payload for golf-first contest creation.
+         * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
          */
         configurationOverrides?: {
             mode: 'GOLF_TIERED';
@@ -6168,48 +6084,6 @@ export type CreateManagedContestData = {
              * How many golfer scores count toward the Team total.
              */
             countedScores: number;
-        } | {
-            mode: 'GOLF_CATEGORY_PICKS';
-            /**
-             * Contest entry lock timestamp.
-             */
-            locksAt?: string;
-            /**
-             * Maximum entries a Team may create. Null means unlimited.
-             */
-            maxEntriesPerSquad?: number;
-            /**
-             * Enabled category slots for the contest.
-             */
-            categories: Array<{
-                categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
-                /**
-                 * Commissioner-facing category label.
-                 */
-                label: string;
-                /**
-                 * How many golfers must be picked for the category.
-                 */
-                pickCount: number;
-            }>;
-            /**
-             * Golf cut rule for first-pass contests.
-             */
-            cutRule: {
-                type: 'FIXED_SCORE';
-                /**
-                 * Fallback score assigned when a golfer misses the cut.
-                 */
-                fixedScore: number;
-            };
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-            displayScoring: 'TO_PAR';
-            /**
-             * Golf tiebreaker configuration. Teams predict the winning to-par score.
-             */
-            tiebreaker: {
-                type: 'PREDICT_WINNING_SCORE';
-            };
         };
     };
     path: {
@@ -6339,7 +6213,7 @@ export type CreateManagedContestResponses = {
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
             /**
-             * Current commissioner-managed contest configuration.
+             * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
              */
             configuration: {
                 mode: 'GOLF_TIERED';
@@ -6359,56 +6233,6 @@ export type CreateManagedContestResponses = {
                  * How many golfer scores count toward the Team total.
                  */
                 countedScores: number;
-                /**
-                 * Contest-configuration identifier.
-                 */
-                id: string;
-                /**
-                 * Contest that owns the configuration.
-                 */
-                contestId: string;
-            } | {
-                mode: 'GOLF_CATEGORY_PICKS';
-                /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string;
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number;
-                /**
-                 * Enabled category slots for the contest.
-                 */
-                categories: Array<{
-                    categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
-                    /**
-                     * Commissioner-facing category label.
-                     */
-                    label: string;
-                    /**
-                     * How many golfers must be picked for the category.
-                     */
-                    pickCount: number;
-                }>;
-                /**
-                 * Golf cut rule for first-pass contests.
-                 */
-                cutRule: {
-                    type: 'FIXED_SCORE';
-                    /**
-                     * Fallback score assigned when a golfer misses the cut.
-                     */
-                    fixedScore: number;
-                };
-                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-                displayScoring: 'TO_PAR';
-                /**
-                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
-                 */
-                tiebreaker: {
-                    type: 'PREDICT_WINNING_SCORE';
-                };
                 /**
                  * Contest-configuration identifier.
                  */
@@ -6570,7 +6394,7 @@ export type GetManagedContestResponses = {
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
             /**
-             * Current commissioner-managed contest configuration.
+             * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
              */
             configuration: {
                 mode: 'GOLF_TIERED';
@@ -6590,56 +6414,6 @@ export type GetManagedContestResponses = {
                  * How many golfer scores count toward the Team total.
                  */
                 countedScores: number;
-                /**
-                 * Contest-configuration identifier.
-                 */
-                id: string;
-                /**
-                 * Contest that owns the configuration.
-                 */
-                contestId: string;
-            } | {
-                mode: 'GOLF_CATEGORY_PICKS';
-                /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string;
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number;
-                /**
-                 * Enabled category slots for the contest.
-                 */
-                categories: Array<{
-                    categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
-                    /**
-                     * Commissioner-facing category label.
-                     */
-                    label: string;
-                    /**
-                     * How many golfers must be picked for the category.
-                     */
-                    pickCount: number;
-                }>;
-                /**
-                 * Golf cut rule for first-pass contests.
-                 */
-                cutRule: {
-                    type: 'FIXED_SCORE';
-                    /**
-                     * Fallback score assigned when a golfer misses the cut.
-                     */
-                    fixedScore: number;
-                };
-                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-                displayScoring: 'TO_PAR';
-                /**
-                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
-                 */
-                tiebreaker: {
-                    type: 'PREDICT_WINNING_SCORE';
-                };
                 /**
                  * Contest-configuration identifier.
                  */
@@ -6673,7 +6447,7 @@ export type GetManagedContestResponse = GetManagedContestResponses[keyof GetMana
 
 export type UpdateManagedContestConfigurationData = {
     /**
-     * Approved commissioner-managed contest configuration payload for golf-first contest creation.
+     * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
      */
     body: {
         mode: 'GOLF_TIERED';
@@ -6693,48 +6467,6 @@ export type UpdateManagedContestConfigurationData = {
          * How many golfer scores count toward the Team total.
          */
         countedScores: number;
-    } | {
-        mode: 'GOLF_CATEGORY_PICKS';
-        /**
-         * Contest entry lock timestamp.
-         */
-        locksAt?: string;
-        /**
-         * Maximum entries a Team may create. Null means unlimited.
-         */
-        maxEntriesPerSquad?: number;
-        /**
-         * Enabled category slots for the contest.
-         */
-        categories: Array<{
-            categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
-            /**
-             * Commissioner-facing category label.
-             */
-            label: string;
-            /**
-             * How many golfers must be picked for the category.
-             */
-            pickCount: number;
-        }>;
-        /**
-         * Golf cut rule for first-pass contests.
-         */
-        cutRule: {
-            type: 'FIXED_SCORE';
-            /**
-             * Fallback score assigned when a golfer misses the cut.
-             */
-            fixedScore: number;
-        };
-        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-        displayScoring: 'TO_PAR';
-        /**
-         * Golf tiebreaker configuration. Teams predict the winning to-par score.
-         */
-        tiebreaker: {
-            type: 'PREDICT_WINNING_SCORE';
-        };
     };
     path: {
         id: string;
@@ -6886,7 +6618,7 @@ export type UpdateManagedContestConfigurationResponses = {
             name: string;
             status: 'DRAFT' | 'OPEN' | 'DRAFTING' | 'LOCKED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
             /**
-             * Current commissioner-managed contest configuration.
+             * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
              */
             configuration: {
                 mode: 'GOLF_TIERED';
@@ -6906,56 +6638,6 @@ export type UpdateManagedContestConfigurationResponses = {
                  * How many golfer scores count toward the Team total.
                  */
                 countedScores: number;
-                /**
-                 * Contest-configuration identifier.
-                 */
-                id: string;
-                /**
-                 * Contest that owns the configuration.
-                 */
-                contestId: string;
-            } | {
-                mode: 'GOLF_CATEGORY_PICKS';
-                /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string;
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number;
-                /**
-                 * Enabled category slots for the contest.
-                 */
-                categories: Array<{
-                    categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
-                    /**
-                     * Commissioner-facing category label.
-                     */
-                    label: string;
-                    /**
-                     * How many golfers must be picked for the category.
-                     */
-                    pickCount: number;
-                }>;
-                /**
-                 * Golf cut rule for first-pass contests.
-                 */
-                cutRule: {
-                    type: 'FIXED_SCORE';
-                    /**
-                     * Fallback score assigned when a golfer misses the cut.
-                     */
-                    fixedScore: number;
-                };
-                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-                displayScoring: 'TO_PAR';
-                /**
-                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
-                 */
-                tiebreaker: {
-                    type: 'PREDICT_WINNING_SCORE';
-                };
                 /**
                  * Contest-configuration identifier.
                  */
@@ -14630,7 +14312,7 @@ export type AdminListContestConfigTemplatesResponses = {
             /**
              * Configuration mode seeded by the template.
              */
-            configMode: 'GOLF_TIERED' | 'GOLF_CATEGORY_PICKS';
+            configMode: 'GOLF_TIERED';
             /**
              * Stable machine key for the template.
              */
@@ -14660,7 +14342,7 @@ export type AdminListContestConfigTemplatesResponses = {
              */
             schemaVersion: number;
             /**
-             * Seeded configuration payload copied into a contest instance when the template is chosen.
+             * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
              */
             configuration: {
                 mode: 'GOLF_TIERED';
@@ -14680,48 +14362,6 @@ export type AdminListContestConfigTemplatesResponses = {
                  * How many golfer scores count toward the Team total.
                  */
                 countedScores: number;
-            } | {
-                mode: 'GOLF_CATEGORY_PICKS';
-                /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string;
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number;
-                /**
-                 * Enabled category slots for the contest.
-                 */
-                categories: Array<{
-                    categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
-                    /**
-                     * Commissioner-facing category label.
-                     */
-                    label: string;
-                    /**
-                     * How many golfers must be picked for the category.
-                     */
-                    pickCount: number;
-                }>;
-                /**
-                 * Golf cut rule for first-pass contests.
-                 */
-                cutRule: {
-                    type: 'FIXED_SCORE';
-                    /**
-                     * Fallback score assigned when a golfer misses the cut.
-                     */
-                    fixedScore: number;
-                };
-                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-                displayScoring: 'TO_PAR';
-                /**
-                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
-                 */
-                tiebreaker: {
-                    type: 'PREDICT_WINNING_SCORE';
-                };
             };
         }>;
     };
@@ -14755,7 +14395,7 @@ export type AdminUpdateContestConfigTemplateData = {
          */
         active?: boolean;
         /**
-         * Updated persisted configuration payload copied into future contests when this template is selected.
+         * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
          */
         configuration?: {
             mode: 'GOLF_TIERED';
@@ -14775,48 +14415,6 @@ export type AdminUpdateContestConfigTemplateData = {
              * How many golfer scores count toward the Team total.
              */
             countedScores: number;
-        } | {
-            mode: 'GOLF_CATEGORY_PICKS';
-            /**
-             * Contest entry lock timestamp.
-             */
-            locksAt?: string;
-            /**
-             * Maximum entries a Team may create. Null means unlimited.
-             */
-            maxEntriesPerSquad?: number;
-            /**
-             * Enabled category slots for the contest.
-             */
-            categories: Array<{
-                categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
-                /**
-                 * Commissioner-facing category label.
-                 */
-                label: string;
-                /**
-                 * How many golfers must be picked for the category.
-                 */
-                pickCount: number;
-            }>;
-            /**
-             * Golf cut rule for first-pass contests.
-             */
-            cutRule: {
-                type: 'FIXED_SCORE';
-                /**
-                 * Fallback score assigned when a golfer misses the cut.
-                 */
-                fixedScore: number;
-            };
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-            displayScoring: 'TO_PAR';
-            /**
-             * Golf tiebreaker configuration. Teams predict the winning to-par score.
-             */
-            tiebreaker: {
-                type: 'PREDICT_WINNING_SCORE';
-            };
         };
     };
     path: {
@@ -14925,7 +14523,7 @@ export type AdminUpdateContestConfigTemplateResponses = {
             /**
              * Configuration mode seeded by the template.
              */
-            configMode: 'GOLF_TIERED' | 'GOLF_CATEGORY_PICKS';
+            configMode: 'GOLF_TIERED';
             /**
              * Stable machine key for the template.
              */
@@ -14955,7 +14553,7 @@ export type AdminUpdateContestConfigTemplateResponses = {
              */
             schemaVersion: number;
             /**
-             * Seeded configuration payload copied into a contest instance when the template is chosen.
+             * Golf tiered contest configuration for pick-X, count-best-Y roster contests.
              */
             configuration: {
                 mode: 'GOLF_TIERED';
@@ -14975,48 +14573,6 @@ export type AdminUpdateContestConfigTemplateResponses = {
                  * How many golfer scores count toward the Team total.
                  */
                 countedScores: number;
-            } | {
-                mode: 'GOLF_CATEGORY_PICKS';
-                /**
-                 * Contest entry lock timestamp.
-                 */
-                locksAt?: string;
-                /**
-                 * Maximum entries a Team may create. Null means unlimited.
-                 */
-                maxEntriesPerSquad?: number;
-                /**
-                 * Enabled category slots for the contest.
-                 */
-                categories: Array<{
-                    categoryKey: 'SENIOR' | 'ROOKIE' | 'PREVIOUS_WINNER' | 'US_PLAYER' | 'INTERNATIONAL_PLAYER';
-                    /**
-                     * Commissioner-facing category label.
-                     */
-                    label: string;
-                    /**
-                     * How many golfers must be picked for the category.
-                     */
-                    pickCount: number;
-                }>;
-                /**
-                 * Golf cut rule for first-pass contests.
-                 */
-                cutRule: {
-                    type: 'FIXED_SCORE';
-                    /**
-                     * Fallback score assigned when a golfer misses the cut.
-                     */
-                    fixedScore: number;
-                };
-                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-                displayScoring: 'TO_PAR';
-                /**
-                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
-                 */
-                tiebreaker: {
-                    type: 'PREDICT_WINNING_SCORE';
-                };
             };
         };
     };
@@ -15419,15 +14975,11 @@ export type AdminCleanupStaleProviderEventsResponses = {
             /**
              * Contest-related references that protect this event from deletion.
              */
-            blockedReasons: Array<'DIRECT_CONTEST_REFERENCE' | 'CONTEST_SPORT_EVENT_REFERENCE' | 'CONTEST_ENTRY_PICK_REFERENCE'>;
+            blockedReasons: Array<'DIRECT_CONTEST_REFERENCE' | 'CONTEST_ENTRY_PICK_REFERENCE'>;
             /**
              * Number of Contest rows directly pointing at this event.
              */
             directContestCount: number;
-            /**
-             * Number of ContestSportEvent join rows pointing at this event.
-             */
-            contestSportEventCount: number;
             /**
              * Number of SportEventParticipant rows attached to this event.
              */

@@ -2,11 +2,7 @@ import { Sport } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportDataProvider } from './provider-interface';
 import type { ProviderRegistry } from './provider-registry';
-import {
-  EspnAdapter,
-  MockContestFeedAdapter,
-  OpenF1Adapter,
-} from '../adapters';
+import { MockContestFeedAdapter } from '../adapters';
 
 export interface ProviderBinding {
   readonly baseUrl?: string;
@@ -30,8 +26,6 @@ const providerFactories: Readonly<Record<string, ProviderFactory>> = {
     }
     return new MockContestFeedAdapter(binding.baseUrl);
   },
-  espn: () => new EspnAdapter(),
-  openf1: () => new OpenF1Adapter(),
 };
 
 function getRuntimeEnvironment(env: NodeJS.ProcessEnv): string {

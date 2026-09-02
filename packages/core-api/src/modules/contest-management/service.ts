@@ -403,11 +403,11 @@ export class ContestManagementError extends Error {
 }
 
 function mapSelectionType(
-  configuration: ContestConfigurationRequest,
+  _configuration: ContestConfigurationRequest,
 ): SelectionType {
-  return configuration.mode === GolfContestConfigMode.GOLF_TIERED
-    ? SelectionType.TIERED
-    : SelectionType.OPEN_SELECTION;
+  // GOLF_TIERED is the only managed configuration mode (plans/124 §4.11 removed
+  // the GOLF_CATEGORY_PICKS stub); every managed contest is tier-selected.
+  return SelectionType.TIERED;
 }
 
 /**
@@ -445,20 +445,11 @@ async function deriveLegacyPersistenceFields(
   // Tiers are event-owned, never a per-contest override (plans/124 §4.6) —
   // golf-tier-service.getEffectiveTiersForContest is the one path to a
   // contest's effective tiers now; this function no longer computes or
-  // persists a contest-specific tierConfig snapshot.
-  if (configuration.mode === GolfContestConfigMode.GOLF_TIERED) {
-    return {
-      pickCount: configuration.rosterSize,
-      rosterSize: configuration.rosterSize,
-      isExclusive: false,
-    };
-  }
-
+  // persists a contest-specific tierConfig snapshot. GOLF_TIERED is the only
+  // managed configuration mode (plans/124 §4.11 removed GOLF_CATEGORY_PICKS).
   return {
-    pickCount: configuration.categories.reduce(
-      (total, category) => total + category.pickCount,
-      0,
-    ),
+    pickCount: configuration.rosterSize,
+    rosterSize: configuration.rosterSize,
     isExclusive: false,
   };
 }
@@ -514,21 +505,14 @@ function buildParticipantScoringConfig(
   return {};
 }
 
-function buildAggregationRule(configuration: GolfContestConfig): {
+function buildAggregationRule(_configuration: GolfContestConfig): {
   aggregationDefinitionId: 'SUM_ALL_ENTRIES';
   config: Record<string, unknown>;
   active: boolean;
 } {
-  if (configuration.mode === GolfContestConfigMode.GOLF_TIERED) {
-    return {
-      aggregationDefinitionId: 'SUM_ALL_ENTRIES',
-      config: {
-        lowerIsBetter: true,
-      },
-      active: true,
-    };
-  }
-
+  // GOLF_TIERED is the only managed configuration mode (plans/124 §4.11 removed
+  // the GOLF_CATEGORY_PICKS stub); every managed contest sums entry totals with
+  // lower-is-better golf scoring.
   return {
     aggregationDefinitionId: 'SUM_ALL_ENTRIES',
     config: {

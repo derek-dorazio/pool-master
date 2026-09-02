@@ -1,13 +1,8 @@
 import type {
   ContestStatus,
   ContestFormat,
-  GolfCategoryKey,
   GolfContestConfigMode,
-  GolfCutRuleType,
-  GolfDisplayScoring,
   GolfParticipantInactiveReason,
-  GolfPlayoffHandling,
-  GolfTiebreakerType,
   ScoringEngine,
   SelectionType,
   Sport,
@@ -18,15 +13,6 @@ import type {
   ParticipantScoringDefinitionId,
 } from './contest-scoring';
 import type { DomainEntity } from './types';
-
-export interface GolfFixedCutRule {
-  type: GolfCutRuleType;
-  fixedScore: number;
-}
-
-export interface GolfTiebreakerRule {
-  type: GolfTiebreakerType;
-}
 
 export interface GolfContestTierDefinition {
   tierKey: string;
@@ -42,12 +28,6 @@ export interface PersistedGolfContestTierDefinition extends GolfContestTierDefin
   tierNumber?: number;
   picksFromTier?: number;
   participantIds?: string[];
-}
-
-export interface GolfCategoryDefinition {
-  categoryKey: GolfCategoryKey;
-  label: string;
-  pickCount: number;
 }
 
 /**
@@ -67,18 +47,13 @@ export interface GolfTieredContestConfig {
   countedScores: number;
 }
 
-export interface GolfCategoryContestConfig {
-  mode: 'GOLF_CATEGORY_PICKS';
-  categories: GolfCategoryDefinition[];
-  cutRule: GolfFixedCutRule;
-  playoffHandling: GolfPlayoffHandling;
-  displayScoring: GolfDisplayScoring;
-  tiebreaker: GolfTiebreakerRule;
-}
-
-export type GolfContestConfig =
-  | GolfTieredContestConfig
-  | GolfCategoryContestConfig;
+/**
+ * Golf-first managed contest configuration. Only the tiered mode is
+ * implemented today; `GOLF_CATEGORY_PICKS` was a fully-typed stub with no
+ * backend and was removed (plans/124 §4.11). `plans/127-golf-category-drafts.md`
+ * rebuilds category picks on a clean slate, not by resurrecting the stub.
+ */
+export type GolfContestConfig = GolfTieredContestConfig;
 
 export type SportEventReadinessStatus =
   | 'NOT_RELEASED'

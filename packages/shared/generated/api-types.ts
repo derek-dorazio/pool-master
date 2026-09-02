@@ -8607,7 +8607,7 @@ export interface operations {
                              * @description Configuration mode seeded by the template.
                              * @enum {string}
                              */
-                            configMode: "GOLF_TIERED" | "GOLF_CATEGORY_PICKS";
+                            configMode: "GOLF_TIERED";
                             /** @description Stable machine key for the template. */
                             templateKey: string;
                             /** @description Commissioner-facing template label. */
@@ -8637,41 +8637,6 @@ export interface operations {
                                 rosterSize: number;
                                 /** @description How many golfer scores count toward the Team total. */
                                 countedScores: number;
-                            } | {
-                                /** @enum {string} */
-                                mode: "GOLF_CATEGORY_PICKS";
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
-                                /** @description Maximum entries a Team may create. Null means unlimited. */
-                                maxEntriesPerSquad?: number | null;
-                                /** @description Enabled category slots for the contest. */
-                                categories: {
-                                    /** @enum {string} */
-                                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                    /** @description Commissioner-facing category label. */
-                                    label: string;
-                                    /** @description How many golfers must be picked for the category. */
-                                    pickCount: number;
-                                }[];
-                                /** @description Golf cut rule for first-pass contests. */
-                                cutRule: {
-                                    /** @enum {string} */
-                                    type: "FIXED_SCORE";
-                                    /** @description Fallback score assigned when a golfer misses the cut. */
-                                    fixedScore: number;
-                                };
-                                /** @enum {string} */
-                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                                /** @enum {string} */
-                                displayScoring: "TO_PAR";
-                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                                tiebreaker: {
-                                    /** @enum {string} */
-                                    type: "PREDICT_WINNING_SCORE";
-                                };
                             };
                         }[];
                     };
@@ -8776,41 +8741,6 @@ export interface operations {
                         rosterSize: number;
                         /** @description How many golfer scores count toward the Team total. */
                         countedScores: number;
-                    } | {
-                        /** @enum {string} */
-                        mode: "GOLF_CATEGORY_PICKS";
-                        /**
-                         * Format: date-time
-                         * @description Contest entry lock timestamp.
-                         */
-                        locksAt?: string | null;
-                        /** @description Maximum entries a Team may create. Null means unlimited. */
-                        maxEntriesPerSquad?: number | null;
-                        /** @description Enabled category slots for the contest. */
-                        categories: {
-                            /** @enum {string} */
-                            categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                            /** @description Commissioner-facing category label. */
-                            label: string;
-                            /** @description How many golfers must be picked for the category. */
-                            pickCount: number;
-                        }[];
-                        /** @description Golf cut rule for first-pass contests. */
-                        cutRule: {
-                            /** @enum {string} */
-                            type: "FIXED_SCORE";
-                            /** @description Fallback score assigned when a golfer misses the cut. */
-                            fixedScore: number;
-                        };
-                        /** @enum {string} */
-                        playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                        /** @enum {string} */
-                        displayScoring: "TO_PAR";
-                        /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                        tiebreaker: {
-                            /** @enum {string} */
-                            type: "PREDICT_WINNING_SCORE";
-                        };
                     };
                 } | {
                     /** @description Contest name shown to commissioners and members. */
@@ -8845,41 +8775,6 @@ export interface operations {
                         rosterSize: number;
                         /** @description How many golfer scores count toward the Team total. */
                         countedScores: number;
-                    } | {
-                        /** @enum {string} */
-                        mode: "GOLF_CATEGORY_PICKS";
-                        /**
-                         * Format: date-time
-                         * @description Contest entry lock timestamp.
-                         */
-                        locksAt?: string | null;
-                        /** @description Maximum entries a Team may create. Null means unlimited. */
-                        maxEntriesPerSquad?: number | null;
-                        /** @description Enabled category slots for the contest. */
-                        categories: {
-                            /** @enum {string} */
-                            categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                            /** @description Commissioner-facing category label. */
-                            label: string;
-                            /** @description How many golfers must be picked for the category. */
-                            pickCount: number;
-                        }[];
-                        /** @description Golf cut rule for first-pass contests. */
-                        cutRule: {
-                            /** @enum {string} */
-                            type: "FIXED_SCORE";
-                            /** @description Fallback score assigned when a golfer misses the cut. */
-                            fixedScore: number;
-                        };
-                        /** @enum {string} */
-                        playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                        /** @enum {string} */
-                        displayScoring: "TO_PAR";
-                        /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                        tiebreaker: {
-                            /** @enum {string} */
-                            type: "PREDICT_WINNING_SCORE";
-                        };
                     };
                 };
             };
@@ -8919,45 +8814,6 @@ export interface operations {
                                 rosterSize: number;
                                 /** @description How many golfer scores count toward the Team total. */
                                 countedScores: number;
-                                /** @description Contest-configuration identifier. */
-                                id: string;
-                                /** @description Contest that owns the configuration. */
-                                contestId: string;
-                            } | {
-                                /** @enum {string} */
-                                mode: "GOLF_CATEGORY_PICKS";
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
-                                /** @description Maximum entries a Team may create. Null means unlimited. */
-                                maxEntriesPerSquad?: number | null;
-                                /** @description Enabled category slots for the contest. */
-                                categories: {
-                                    /** @enum {string} */
-                                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                    /** @description Commissioner-facing category label. */
-                                    label: string;
-                                    /** @description How many golfers must be picked for the category. */
-                                    pickCount: number;
-                                }[];
-                                /** @description Golf cut rule for first-pass contests. */
-                                cutRule: {
-                                    /** @enum {string} */
-                                    type: "FIXED_SCORE";
-                                    /** @description Fallback score assigned when a golfer misses the cut. */
-                                    fixedScore: number;
-                                };
-                                /** @enum {string} */
-                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                                /** @enum {string} */
-                                displayScoring: "TO_PAR";
-                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                                tiebreaker: {
-                                    /** @enum {string} */
-                                    type: "PREDICT_WINNING_SCORE";
-                                };
                                 /** @description Contest-configuration identifier. */
                                 id: string;
                                 /** @description Contest that owns the configuration. */
@@ -9112,45 +8968,6 @@ export interface operations {
                                 id: string;
                                 /** @description Contest that owns the configuration. */
                                 contestId: string;
-                            } | {
-                                /** @enum {string} */
-                                mode: "GOLF_CATEGORY_PICKS";
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
-                                /** @description Maximum entries a Team may create. Null means unlimited. */
-                                maxEntriesPerSquad?: number | null;
-                                /** @description Enabled category slots for the contest. */
-                                categories: {
-                                    /** @enum {string} */
-                                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                    /** @description Commissioner-facing category label. */
-                                    label: string;
-                                    /** @description How many golfers must be picked for the category. */
-                                    pickCount: number;
-                                }[];
-                                /** @description Golf cut rule for first-pass contests. */
-                                cutRule: {
-                                    /** @enum {string} */
-                                    type: "FIXED_SCORE";
-                                    /** @description Fallback score assigned when a golfer misses the cut. */
-                                    fixedScore: number;
-                                };
-                                /** @enum {string} */
-                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                                /** @enum {string} */
-                                displayScoring: "TO_PAR";
-                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                                tiebreaker: {
-                                    /** @enum {string} */
-                                    type: "PREDICT_WINNING_SCORE";
-                                };
-                                /** @description Contest-configuration identifier. */
-                                id: string;
-                                /** @description Contest that owns the configuration. */
-                                contestId: string;
                             };
                             /**
                              * Format: date-time
@@ -9278,41 +9095,6 @@ export interface operations {
                     rosterSize: number;
                     /** @description How many golfer scores count toward the Team total. */
                     countedScores: number;
-                } | {
-                    /** @enum {string} */
-                    mode: "GOLF_CATEGORY_PICKS";
-                    /**
-                     * Format: date-time
-                     * @description Contest entry lock timestamp.
-                     */
-                    locksAt?: string | null;
-                    /** @description Maximum entries a Team may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description Enabled category slots for the contest. */
-                    categories: {
-                        /** @enum {string} */
-                        categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                        /** @description Commissioner-facing category label. */
-                        label: string;
-                        /** @description How many golfers must be picked for the category. */
-                        pickCount: number;
-                    }[];
-                    /** @description Golf cut rule for first-pass contests. */
-                    cutRule: {
-                        /** @enum {string} */
-                        type: "FIXED_SCORE";
-                        /** @description Fallback score assigned when a golfer misses the cut. */
-                        fixedScore: number;
-                    };
-                    /** @enum {string} */
-                    playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                    /** @enum {string} */
-                    displayScoring: "TO_PAR";
-                    /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                    tiebreaker: {
-                        /** @enum {string} */
-                        type: "PREDICT_WINNING_SCORE";
-                    };
                 };
             };
         };
@@ -9351,45 +9133,6 @@ export interface operations {
                                 rosterSize: number;
                                 /** @description How many golfer scores count toward the Team total. */
                                 countedScores: number;
-                                /** @description Contest-configuration identifier. */
-                                id: string;
-                                /** @description Contest that owns the configuration. */
-                                contestId: string;
-                            } | {
-                                /** @enum {string} */
-                                mode: "GOLF_CATEGORY_PICKS";
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
-                                /** @description Maximum entries a Team may create. Null means unlimited. */
-                                maxEntriesPerSquad?: number | null;
-                                /** @description Enabled category slots for the contest. */
-                                categories: {
-                                    /** @enum {string} */
-                                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                    /** @description Commissioner-facing category label. */
-                                    label: string;
-                                    /** @description How many golfers must be picked for the category. */
-                                    pickCount: number;
-                                }[];
-                                /** @description Golf cut rule for first-pass contests. */
-                                cutRule: {
-                                    /** @enum {string} */
-                                    type: "FIXED_SCORE";
-                                    /** @description Fallback score assigned when a golfer misses the cut. */
-                                    fixedScore: number;
-                                };
-                                /** @enum {string} */
-                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                                /** @enum {string} */
-                                displayScoring: "TO_PAR";
-                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                                tiebreaker: {
-                                    /** @enum {string} */
-                                    type: "PREDICT_WINNING_SCORE";
-                                };
                                 /** @description Contest-configuration identifier. */
                                 id: string;
                                 /** @description Contest that owns the configuration. */
@@ -15828,7 +15571,7 @@ export interface operations {
                              * @description Configuration mode seeded by the template.
                              * @enum {string}
                              */
-                            configMode: "GOLF_TIERED" | "GOLF_CATEGORY_PICKS";
+                            configMode: "GOLF_TIERED";
                             /** @description Stable machine key for the template. */
                             templateKey: string;
                             /** @description Commissioner-facing template label. */
@@ -15858,41 +15601,6 @@ export interface operations {
                                 rosterSize: number;
                                 /** @description How many golfer scores count toward the Team total. */
                                 countedScores: number;
-                            } | {
-                                /** @enum {string} */
-                                mode: "GOLF_CATEGORY_PICKS";
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
-                                /** @description Maximum entries a Team may create. Null means unlimited. */
-                                maxEntriesPerSquad?: number | null;
-                                /** @description Enabled category slots for the contest. */
-                                categories: {
-                                    /** @enum {string} */
-                                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                    /** @description Commissioner-facing category label. */
-                                    label: string;
-                                    /** @description How many golfers must be picked for the category. */
-                                    pickCount: number;
-                                }[];
-                                /** @description Golf cut rule for first-pass contests. */
-                                cutRule: {
-                                    /** @enum {string} */
-                                    type: "FIXED_SCORE";
-                                    /** @description Fallback score assigned when a golfer misses the cut. */
-                                    fixedScore: number;
-                                };
-                                /** @enum {string} */
-                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                                /** @enum {string} */
-                                displayScoring: "TO_PAR";
-                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                                tiebreaker: {
-                                    /** @enum {string} */
-                                    type: "PREDICT_WINNING_SCORE";
-                                };
                             };
                         }[];
                     };
@@ -15957,41 +15665,6 @@ export interface operations {
                         rosterSize: number;
                         /** @description How many golfer scores count toward the Team total. */
                         countedScores: number;
-                    } | {
-                        /** @enum {string} */
-                        mode: "GOLF_CATEGORY_PICKS";
-                        /**
-                         * Format: date-time
-                         * @description Contest entry lock timestamp.
-                         */
-                        locksAt?: string | null;
-                        /** @description Maximum entries a Team may create. Null means unlimited. */
-                        maxEntriesPerSquad?: number | null;
-                        /** @description Enabled category slots for the contest. */
-                        categories: {
-                            /** @enum {string} */
-                            categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                            /** @description Commissioner-facing category label. */
-                            label: string;
-                            /** @description How many golfers must be picked for the category. */
-                            pickCount: number;
-                        }[];
-                        /** @description Golf cut rule for first-pass contests. */
-                        cutRule: {
-                            /** @enum {string} */
-                            type: "FIXED_SCORE";
-                            /** @description Fallback score assigned when a golfer misses the cut. */
-                            fixedScore: number;
-                        };
-                        /** @enum {string} */
-                        playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                        /** @enum {string} */
-                        displayScoring: "TO_PAR";
-                        /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                        tiebreaker: {
-                            /** @enum {string} */
-                            type: "PREDICT_WINNING_SCORE";
-                        };
                     };
                 };
             };
@@ -16027,7 +15700,7 @@ export interface operations {
                              * @description Configuration mode seeded by the template.
                              * @enum {string}
                              */
-                            configMode: "GOLF_TIERED" | "GOLF_CATEGORY_PICKS";
+                            configMode: "GOLF_TIERED";
                             /** @description Stable machine key for the template. */
                             templateKey: string;
                             /** @description Commissioner-facing template label. */
@@ -16057,41 +15730,6 @@ export interface operations {
                                 rosterSize: number;
                                 /** @description How many golfer scores count toward the Team total. */
                                 countedScores: number;
-                            } | {
-                                /** @enum {string} */
-                                mode: "GOLF_CATEGORY_PICKS";
-                                /**
-                                 * Format: date-time
-                                 * @description Contest entry lock timestamp.
-                                 */
-                                locksAt?: string | null;
-                                /** @description Maximum entries a Team may create. Null means unlimited. */
-                                maxEntriesPerSquad?: number | null;
-                                /** @description Enabled category slots for the contest. */
-                                categories: {
-                                    /** @enum {string} */
-                                    categoryKey: "SENIOR" | "ROOKIE" | "PREVIOUS_WINNER" | "US_PLAYER" | "INTERNATIONAL_PLAYER";
-                                    /** @description Commissioner-facing category label. */
-                                    label: string;
-                                    /** @description How many golfers must be picked for the category. */
-                                    pickCount: number;
-                                }[];
-                                /** @description Golf cut rule for first-pass contests. */
-                                cutRule: {
-                                    /** @enum {string} */
-                                    type: "FIXED_SCORE";
-                                    /** @description Fallback score assigned when a golfer misses the cut. */
-                                    fixedScore: number;
-                                };
-                                /** @enum {string} */
-                                playoffHandling: "EXCLUDE_PLAYOFF_HOLES";
-                                /** @enum {string} */
-                                displayScoring: "TO_PAR";
-                                /** @description Golf tiebreaker configuration. Teams predict the winning to-par score. */
-                                tiebreaker: {
-                                    /** @enum {string} */
-                                    type: "PREDICT_WINNING_SCORE";
-                                };
                             };
                         };
                     };
@@ -16475,11 +16113,9 @@ export interface operations {
                             /** @description Whether this request deleted this event. Always false for dry runs. */
                             deleted: boolean;
                             /** @description Contest-related references that protect this event from deletion. */
-                            blockedReasons: ("DIRECT_CONTEST_REFERENCE" | "CONTEST_SPORT_EVENT_REFERENCE" | "CONTEST_ENTRY_PICK_REFERENCE")[];
+                            blockedReasons: ("DIRECT_CONTEST_REFERENCE" | "CONTEST_ENTRY_PICK_REFERENCE")[];
                             /** @description Number of Contest rows directly pointing at this event. */
                             directContestCount: number;
-                            /** @description Number of ContestSportEvent join rows pointing at this event. */
-                            contestSportEventCount: number;
                             /** @description Number of SportEventParticipant rows attached to this event. */
                             sportEventParticipantCount: number;
                             /** @description Number of participants with a SportEventParticipantGolfValuation (tier/price) row attached through this event. */
