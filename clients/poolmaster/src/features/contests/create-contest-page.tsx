@@ -60,9 +60,6 @@ import {
   ContestTemplatePicker,
   EventReadinessPanel,
   NoEligibleEventsAlert,
-  TierSettingsEditor,
-  type TierDefinition,
-  type TierDefinitionUpdate,
 } from './contest-configuration-sections';
 import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -72,34 +69,9 @@ type LeagueDetail = GetLeagueByCodeResponses[200]['league'];
 type SportEventSummary = ListEventsResponses[200]['events'][number];
 type ManagedContest = GetManagedContestResponses[200]['contest'];
 type ManagedContestTemplate = ListManagedContestTemplatesResponses[200]['templates'][number];
-type ContestMode = 'GOLF_TIERED' | 'GOLF_CATEGORY_PICKS';
-type TierSource = 'ODDS' | 'WORLD_RANK';
 type LockPreset = 'FIVE_MINUTES' | 'ONE_HOUR' | 'CUSTOM';
-type CategoryKey =
-  | 'SENIOR'
-  | 'ROOKIE'
-  | 'PREVIOUS_WINNER'
-  | 'US_PLAYER'
-  | 'INTERNATIONAL_PLAYER';
-
-type CategoryOption = {
-  key: CategoryKey;
-  label: string;
-};
-
-const CATEGORY_OPTIONS: CategoryOption[] = [
-  { key: 'SENIOR', label: 'Senior' },
-  { key: 'ROOKIE', label: 'Rookie' },
-  { key: 'PREVIOUS_WINNER', label: 'Previous Winner' },
-  { key: 'US_PLAYER', label: 'US Player' },
-  { key: 'INTERNATIONAL_PLAYER', label: 'International Player' },
-];
-
-const SUPPORTED_CREATE_MODES: ContestMode[] = ['GOLF_TIERED'];
-const DEFAULT_CREATE_SPORT = Sport.GOLF;
 
 const contestSetupFormSchema = z.object({
-  mode: z.enum(['GOLF_TIERED', 'GOLF_CATEGORY_PICKS']),
   contestName: z.string().trim().min(1, 'Contest name is required.'),
   sportEventId: z.string().trim().min(1, 'Select an event before creating the contest.'),
   selectedTemplateId: z.string(),
@@ -110,10 +82,6 @@ const contestSetupFormSchema = z.object({
   maxEntriesPerTeam: z.string(),
   rosterSize: z.string(),
   countedScores: z.string(),
-  tierSource: z.enum(['ODDS', 'WORLD_RANK']),
-  defaultTierSize: z.string(),
-  tieredFallbackScore: z.string(),
-  categoryFallbackScore: z.string(),
 });
 
 type ContestSetupFormValues = z.infer<typeof contestSetupFormSchema>;
@@ -136,55 +104,6 @@ const LOCK_PRESET_OPTIONS: Array<{
   { value: 'ONE_HOUR', label: '1 hour before start', minutes: 60 },
   { value: 'CUSTOM', label: 'Custom', minutes: null },
 ];
-
-function buildTierKey(index: number) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  return alphabet[index] ?? `T${index + 1}`;
-}
-
-function buildSeededTiers(tierCount: number, defaultTierSize: number, pickCount = 1): TierDefinition[] {
-  return Array.from({ length: tierCount }, (_, index) => ({
-    tierKey: buildTierKey(index),
-    label: `Tier ${buildTierKey(index)}`,
-    pickCount,
-    startPosition: index * defaultTierSize + 1,
-    endPosition: index === tierCount - 1 ? null : (index + 1) * defaultTierSize,
-  }));
-}
-
-function getTierShape(tiers: TierDefinition[], fallbackRosterSize: number) {
-  const tierCount = Math.max(1, tiers.length || 1);
-  const fallbackPicksPerTier = Math.max(1, Math.ceil(fallbackRosterSize / tierCount));
-
-  return {
-    tierCount,
-    picksPerTier: Math.max(1, tiers[0]?.pickCount ?? fallbackPicksPerTier),
-  };
-}
-
-function getTierFieldValidationMessage(
-  tiers: TierDefinition[],
-  participantCount: number | null | undefined,
-) {
-  if (participantCount == null || participantCount < 1) {
-    return null;
-  }
-
-  const invalidStartTier = tiers.find((tier) => tier.startPosition > participantCount);
-  if (invalidStartTier) {
-    return `${invalidStartTier.label} starts at field position ${invalidStartTier.startPosition}, but the selected event has only ${participantCount} participants.`;
-  }
-
-  const undersizedTier = tiers.find((tier) => {
-    const endPosition = Math.min(tier.endPosition ?? participantCount, participantCount);
-    return endPosition - tier.startPosition + 1 < tier.pickCount;
-  });
-  if (undersizedTier) {
-    return `${undersizedTier.label} does not contain enough participants for ${undersizedTier.pickCount} picks.`;
-  }
-
-  return null;
-}
 
 function formatDateTimeDisplay(isoString: string | null) {
   if (!isoString) {
@@ -304,19 +223,6 @@ function sortEventsForPicker(events: SportEventSummary[]) {
   });
 }
 
-function buildCategoryDefinitions(
-  selectedCategories: CategoryKey[],
-  categoryPickCounts: Record<CategoryKey, string>,
-) {
-  return selectedCategories.map((categoryKey) => ({
-    categoryKey,
-    label:
-      CATEGORY_OPTIONS.find((category) => category.key === categoryKey)?.label
-      ?? categoryKey,
-    pickCount: Number(categoryPickCounts[categoryKey] || '1'),
-  }));
-}
-
 export function CreateContestPage() {
   const logger = getLogger().child({
     feature: 'create-contest-page',
@@ -326,11 +232,9 @@ export function CreateContestPage() {
   const navigate = useNavigate();
   const isEditMode = Boolean(contestId);
 
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const contestForm = useForm<ContestSetupFormValues>({
     resolver: zodResolver(contestSetupFormSchema),
     defaultValues: {
-      mode: 'GOLF_TIERED',
       contestName: '',
       sportEventId: '',
       selectedTemplateId: '',
@@ -341,14 +245,9 @@ export function CreateContestPage() {
       maxEntriesPerTeam: '1',
       rosterSize: '6',
       countedScores: '4',
-      tierSource: 'ODDS',
-      defaultTierSize: '10',
-      tieredFallbackScore: '80',
-      categoryFallbackScore: '80',
     },
   });
   const {
-    mode,
     contestName,
     sportEventId,
     selectedTemplateId,
@@ -359,26 +258,7 @@ export function CreateContestPage() {
     maxEntriesPerTeam,
     rosterSize,
     countedScores,
-    tierSource,
-    defaultTierSize,
-    tieredFallbackScore,
-    categoryFallbackScore,
   } = contestForm.watch();
-  const [tiers, setTiers] = useState<TierDefinition[]>(buildSeededTiers(6, 10));
-  const [selectedCategories, setSelectedCategories] = useState<CategoryKey[]>([
-    'SENIOR',
-    'ROOKIE',
-    'PREVIOUS_WINNER',
-    'US_PLAYER',
-    'INTERNATIONAL_PLAYER',
-  ]);
-  const [categoryPickCounts, setCategoryPickCounts] = useState<Record<CategoryKey, string>>({
-    SENIOR: '1',
-    ROOKIE: '1',
-    PREVIOUS_WINNER: '1',
-    US_PLAYER: '1',
-    INTERNATIONAL_PLAYER: '1',
-  });
   const [formError, setFormError] = useState<string | null>(null);
   const [isHydratedFromManagedContest, setIsHydratedFromManagedContest] = useState(false);
 
@@ -408,11 +288,11 @@ export function CreateContestPage() {
   });
 
   const eventsQuery = useQuery({
-    queryKey: QueryKeys.sportEvents.list({ sport: DEFAULT_CREATE_SPORT }),
+    queryKey: QueryKeys.sportEvents.list({ sport: Sport.GOLF }),
     queryFn: async (): Promise<SportEventSummary[]> => {
       const response = await listEvents({
         query: {
-          sport: DEFAULT_CREATE_SPORT,
+          sport: Sport.GOLF,
           limit: 100,
         },
       });
@@ -430,7 +310,7 @@ export function CreateContestPage() {
   const selectedEventSport = useMemo(() => {
     const eventSport = eventsQuery.data?.find((event) => event.id === sportEventId)
       ?.sport as Sport | undefined;
-    return eventSport ?? DEFAULT_CREATE_SPORT;
+    return eventSport ?? Sport.GOLF;
   }, [eventsQuery.data, sportEventId]);
   const selectedContestFormats = useMemo(
     () =>
@@ -498,19 +378,9 @@ export function CreateContestPage() {
     () => eventsQuery.data?.filter((event) => !event.contestEligible) ?? [],
     [eventsQuery.data],
   );
-  const selectedTemplate = useMemo(
-    () =>
-      templatesQuery.data?.find((template) => template.id === selectedTemplateId) ?? null,
-    [selectedTemplateId, templatesQuery.data],
-  );
   const visibleTemplates = useMemo(
-    () =>
-      isEditMode
-        ? (templatesQuery.data ?? [])
-        : (templatesQuery.data ?? []).filter((template) =>
-            SUPPORTED_CREATE_MODES.includes(template.configMode),
-          ),
-    [isEditMode, templatesQuery.data],
+    () => (templatesQuery.data ?? []).filter((template) => template.configMode === 'GOLF_TIERED'),
+    [templatesQuery.data],
   );
   const derivedLockAt = useMemo(
     () =>
@@ -526,7 +396,10 @@ export function CreateContestPage() {
   function applyTemplateConfiguration(
     configuration: ManagedContestTemplate['configuration'],
   ) {
-    setContestFormValue('mode', configuration.mode);
+    if (configuration.mode !== 'GOLF_TIERED') {
+      return;
+    }
+
     setContestFormValue('unlimitedEntries', configuration.maxEntriesPerSquad == null);
     setContestFormValue(
       'maxEntriesPerTeam',
@@ -534,38 +407,8 @@ export function CreateContestPage() {
         ? '1'
         : String(configuration.maxEntriesPerSquad),
     );
-
-    if (configuration.mode === 'GOLF_TIERED') {
-      setContestFormValue('rosterSize', String(configuration.rosterSize));
-      setContestFormValue('countedScores', String(configuration.countedScores));
-      setContestFormValue('tierSource', configuration.tierSource);
-      setContestFormValue('defaultTierSize', String(configuration.tierGeneration.defaultTierSize));
-      setTiers(configuration.tiers);
-      setContestFormValue('tieredFallbackScore', String(configuration.cutRule.fixedScore));
-      return;
-    }
-
-    setSelectedCategories(
-      configuration.categories.map((category) => category.categoryKey as CategoryKey),
-    );
-    setCategoryPickCounts(
-      configuration.categories.reduce<Record<CategoryKey, string>>(
-        (accumulator, category) => {
-          accumulator[category.categoryKey as CategoryKey] = String(
-            category.pickCount,
-          );
-          return accumulator;
-        },
-        {
-          SENIOR: '1',
-          ROOKIE: '1',
-          PREVIOUS_WINNER: '1',
-          US_PLAYER: '1',
-          INTERNATIONAL_PLAYER: '1',
-        },
-      ),
-    );
-    setContestFormValue('categoryFallbackScore', String(configuration.cutRule.fixedScore));
+    setContestFormValue('rosterSize', String(configuration.rosterSize));
+    setContestFormValue('countedScores', String(configuration.countedScores));
   }
 
   function selectTemplate(templateId: string) {
@@ -574,23 +417,6 @@ export function CreateContestPage() {
     if (template) {
       applyTemplateConfiguration(template.configuration);
     }
-  }
-
-  function selectDefaultTemplateForMode(nextMode: ContestMode) {
-    if (!isEditMode && !SUPPORTED_CREATE_MODES.includes(nextMode)) {
-      return;
-    }
-
-    const template = templatesQuery.data?.find(
-      (entry) => entry.configMode === nextMode && entry.isDefault,
-    ) ?? templatesQuery.data?.find((entry) => entry.configMode === nextMode);
-
-    if (template) {
-      selectTemplate(template.id);
-      return;
-    }
-
-    setContestFormValue('mode', nextMode);
   }
 
   useEffect(() => {
@@ -611,32 +437,10 @@ export function CreateContestPage() {
         ? '1'
         : String(configuration.maxEntriesPerSquad),
     );
-    setContestFormValue('mode', configuration.mode);
 
     if (configuration.mode === 'GOLF_TIERED') {
       setContestFormValue('rosterSize', String(configuration.rosterSize));
       setContestFormValue('countedScores', String(configuration.countedScores));
-      setContestFormValue('tierSource', configuration.tierSource);
-      setContestFormValue('defaultTierSize', String(configuration.tierGeneration.defaultTierSize));
-      setTiers(configuration.tiers);
-      setContestFormValue('tieredFallbackScore', String(configuration.cutRule.fixedScore));
-    } else {
-      setSelectedCategories(
-        configuration.categories.map((category) => category.categoryKey),
-      );
-      setCategoryPickCounts(
-        configuration.categories.reduce<Record<CategoryKey, string>>((accumulator, category) => {
-          accumulator[category.categoryKey] = String(category.pickCount);
-          return accumulator;
-        }, {
-          SENIOR: '1',
-          ROOKIE: '1',
-          PREVIOUS_WINNER: '1',
-          US_PLAYER: '1',
-          INTERNATIONAL_PLAYER: '1',
-        }),
-      );
-      setContestFormValue('categoryFallbackScore', String(configuration.cutRule.fixedScore));
     }
 
     const eventStart = eventsQuery.data?.find((event) => event.id === contest.sportEventId)?.startDate;
@@ -683,12 +487,6 @@ export function CreateContestPage() {
       selectTemplate(defaultTemplate.id);
     }
   }, [isEditMode, selectedTemplateId, visibleTemplates]);
-
-  useEffect(() => {
-    if (mode === 'GOLF_CATEGORY_PICKS') {
-      setShowAdvanced(false);
-    }
-  }, [mode]);
 
   useEffect(() => {
     if (leagueQuery.isError) {
@@ -828,114 +626,30 @@ export function CreateContestPage() {
         throw new Error('Max entries per team must be a positive whole number.');
       }
 
-      const commonConfiguration = {
+      const parsedRosterSize = Number(values.rosterSize);
+      const parsedCountedScores = Number(values.countedScores);
+
+      if (!Number.isInteger(parsedRosterSize) || parsedRosterSize < 1) {
+        throw new Error('Golfers picked must be a positive whole number.');
+      }
+
+      if (
+        !Number.isInteger(parsedCountedScores)
+        || parsedCountedScores < 1
+        || parsedCountedScores > parsedRosterSize
+      ) {
+        throw new Error('Counted golfer scores must be between 1 and golfers picked.');
+      }
+
+      const configuration = {
+        mode: 'GOLF_TIERED' as const,
+        rosterSize: parsedRosterSize,
+        countedScores: parsedCountedScores,
         locksAt: parsedLockAt,
         ...(parsedMaxEntries !== undefined
           ? { maxEntriesPerSquad: parsedMaxEntries }
           : {}),
-        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES' as const,
-        displayScoring: 'TO_PAR' as const,
-        tiebreaker: {
-          type: 'PREDICT_WINNING_SCORE' as const,
-        },
       };
-
-      const configuration =
-        values.mode === 'GOLF_TIERED'
-          ? (() => {
-              const parsedRosterSize = Number(values.rosterSize);
-              const parsedCountedScores = Number(values.countedScores);
-              const parsedFallback = Number(values.tieredFallbackScore);
-              const totalTierPickCount = tiers.reduce(
-                (total, tier) => total + tier.pickCount,
-                0,
-              );
-
-              if (!Number.isInteger(parsedRosterSize) || parsedRosterSize < 1) {
-                throw new Error('Golfers picked must be a positive whole number.');
-              }
-
-              if (
-                !Number.isInteger(parsedCountedScores)
-                || parsedCountedScores < 1
-                || parsedCountedScores > parsedRosterSize
-              ) {
-                throw new Error('Counted golfer scores must be between 1 and golfers picked.');
-              }
-
-              if (!Number.isInteger(parsedFallback) || parsedFallback < 0) {
-                throw new Error('Missed-cut fallback score must be zero or greater.');
-              }
-
-              if (totalTierPickCount !== parsedRosterSize) {
-                throw new Error('The sum of picks across all tiers must match golfers picked.');
-              }
-
-              const tierFieldValidationMessage = getTierFieldValidationMessage(
-                tiers,
-                selectedEventForSubmission.participantCount,
-              );
-              if (tierFieldValidationMessage) {
-                throw new Error(tierFieldValidationMessage);
-              }
-
-              if (
-                tiers.some(
-                  (tier) =>
-                    tier.startPosition < 1
-                    || (tier.endPosition !== null && tier.endPosition < tier.startPosition),
-                )
-              ) {
-                throw new Error('Every tier must use valid start and end positions.');
-              }
-
-              return {
-                mode: 'GOLF_TIERED' as const,
-                rosterSize: parsedRosterSize,
-                countedScores: parsedCountedScores,
-                tierSource: values.tierSource,
-                tierGeneration: {
-                  defaultTierSize: Math.max(1, Number(values.defaultTierSize) || 1),
-                },
-                tiers,
-                cutRule: {
-                  type: 'FIXED_SCORE' as const,
-                  fixedScore: parsedFallback,
-                },
-                ...commonConfiguration,
-              };
-            })()
-          : (() => {
-              const parsedFallback = Number(values.categoryFallbackScore);
-              const categories = buildCategoryDefinitions(selectedCategories, categoryPickCounts);
-
-              if (!categories.length) {
-                throw new Error('Select at least one category for a category-picks contest.');
-              }
-
-              if (
-                categories.some(
-                  (category) =>
-                    !Number.isInteger(category.pickCount) || category.pickCount < 1,
-                )
-              ) {
-                throw new Error('Every enabled category must require at least one pick.');
-              }
-
-              if (!Number.isInteger(parsedFallback) || parsedFallback < 0) {
-                throw new Error('Missed-cut fallback score must be zero or greater.');
-              }
-
-              return {
-                mode: 'GOLF_CATEGORY_PICKS' as const,
-                categories,
-                cutRule: {
-                  type: 'FIXED_SCORE' as const,
-                  fixedScore: parsedFallback,
-                },
-                ...commonConfiguration,
-              };
-            })();
 
       if (!isEditMode) {
         if (!values.selectedTemplateId || !selectedTemplateForSubmission) {
@@ -994,7 +708,6 @@ export function CreateContestPage() {
             leagueCode,
             contestId: contestId ?? null,
             sportEventId: values.sportEventId,
-            mode: values.mode,
           },
         },
         isEditMode ? 'Starting contest update flow' : 'Starting contest create flow',
@@ -1008,7 +721,6 @@ export function CreateContestPage() {
             leagueCode,
             contestId: savedContestId,
             sportEventId,
-            mode,
           },
         },
         isEditMode ? 'Saved contest successfully' : 'Created contest successfully',
@@ -1029,7 +741,6 @@ export function CreateContestPage() {
           leagueCode,
           contestId: contestId ?? null,
           sportEventId,
-          mode,
         },
         err: error,
       };
@@ -1101,45 +812,6 @@ export function CreateContestPage() {
       setFormError(extractErrorMessage(error, { fallback: 'We could not create that contest. Please try again.' }));
     },
   });
-
-  function resetTiersFromDefaults() {
-    const templateTiers =
-      selectedTemplate?.configuration.mode === 'GOLF_TIERED'
-        ? selectedTemplate.configuration.tiers
-        : [];
-    const sourceTiers = templateTiers.length ? templateTiers : tiers;
-    const parsedRosterSize = Math.max(1, Number(rosterSize) || 1);
-    const { tierCount, picksPerTier } = getTierShape(sourceTiers, parsedRosterSize);
-
-    setTiers(
-      buildSeededTiers(
-        tierCount,
-        Math.max(1, Number(defaultTierSize) || 1),
-        picksPerTier,
-      ),
-    );
-  }
-
-  function updateTier(index: number, updates: TierDefinitionUpdate) {
-    setTiers((current) =>
-      current.map((tier, tierIndex) =>
-        tierIndex === index
-          ? {
-              ...tier,
-              ...updates,
-            }
-          : tier,
-      ),
-    );
-  }
-
-  function toggleCategory(categoryKey: CategoryKey) {
-    setSelectedCategories((current) =>
-      current.includes(categoryKey)
-        ? current.filter((key) => key !== categoryKey)
-        : [...current, categoryKey],
-    );
-  }
 
   const isCommissioner =
     Boolean(leagueQuery.data?.leagueRelationship.commissioner) || Boolean(leagueQuery.data?.isRootAdmin);
@@ -1236,36 +908,6 @@ export function CreateContestPage() {
       <SplitContentLayout
         main={(
           <Tile>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              data-testid="contest-mode-tiered"
-              onClick={() => selectDefaultTemplateForMode('GOLF_TIERED')}
-              variant={mode === 'GOLF_TIERED' ? 'primary' : 'secondary'}
-            >
-              Tiered contest
-            </Button>
-            <Button
-              data-testid="contest-mode-category"
-              disabled={!isEditMode}
-              onClick={() => selectDefaultTemplateForMode('GOLF_CATEGORY_PICKS')}
-              title={
-                isEditMode
-                  ? undefined
-                  : 'Category picks are available when editing a category-picks contest.'
-              }
-              variant={mode === 'GOLF_CATEGORY_PICKS' ? 'primary' : 'secondary'}
-            >
-              Category picks
-            </Button>
-            <Button
-              data-testid="contest-toggle-advanced"
-              onClick={() => setShowAdvanced((current) => !current)}
-              variant="secondary"
-            >
-              {showAdvanced ? 'Hide advanced' : 'Show advanced'}
-            </Button>
-          </div>
-
           <div className="mt-6 space-y-5">
             {isEditMode && !isDraftEditable ? (
               <Alert data-testid="contest-manage-readonly-note">
@@ -1394,129 +1036,31 @@ export function CreateContestPage() {
               ) : null}
             </div>
 
-            {mode === 'GOLF_TIERED' ? (
-              <>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField label="Golfers picked">
-                    <Input
-                      data-testid="contest-tiered-roster-size"
-                      min={1}
-                      onChange={(event) => setContestFormValue('rosterSize', event.target.value)}
-                      type="number"
-                      value={rosterSize}
-                    />
-                  </FormField>
-                  <FormField label="Count best">
-                    <Input
-                      data-testid="contest-tiered-counted-scores"
-                      min={1}
-                      onChange={(event) => setContestFormValue('countedScores', event.target.value)}
-                      type="number"
-                      value={countedScores}
-                    />
-                  </FormField>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField label="Tier source">
-                    <Select
-                      data-testid="contest-tiered-source"
-                      onChange={(event) => setContestFormValue('tierSource', event.target.value as TierSource)}
-                      value={tierSource}
-                    >
-                      <option value="ODDS">Odds</option>
-                      <option value="WORLD_RANK">World rank</option>
-                    </Select>
-                  </FormField>
-                  <FormField label="Default tier size">
-                    <Input
-                      data-testid="contest-tiered-default-tier-size"
-                      min={1}
-                      onChange={(event) => setContestFormValue('defaultTierSize', event.target.value)}
-                      type="number"
-                      value={defaultTierSize}
-                    />
-                  </FormField>
-                </div>
-
-                <TierSettingsEditor
-                  isDraftEditable={isDraftEditable}
-                  onResetTiers={resetTiersFromDefaults}
-                  onUpdateTier={updateTier}
-                  tiers={tiers}
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField label="Golfers picked">
+                <Input
+                  data-testid="contest-tiered-roster-size"
+                  min={1}
+                  onChange={(event) => setContestFormValue('rosterSize', event.target.value)}
+                  type="number"
+                  value={rosterSize}
                 />
+              </FormField>
+              <FormField label="Count best">
+                <Input
+                  data-testid="contest-tiered-counted-scores"
+                  min={1}
+                  onChange={(event) => setContestFormValue('countedScores', event.target.value)}
+                  type="number"
+                  value={countedScores}
+                />
+              </FormField>
+            </div>
 
-                {showAdvanced ? (
-                  <FormField label="Missed-cut fallback score">
-                    <Input
-                      data-testid="contest-tiered-fallback-score"
-                      min={0}
-                      onChange={(event) => setContestFormValue('tieredFallbackScore', event.target.value)}
-                      type="number"
-                      value={tieredFallbackScore}
-                    />
-                  </FormField>
-                ) : null}
-              </>
-            ) : (
-              <>
-                <Tile padding="sm" radius="lg" variant="subtle">
-                  <h3 className="font-medium">Enabled categories</h3>
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    {CATEGORY_OPTIONS.map((category) => {
-                      const isSelected = selectedCategories.includes(category.key);
-                      return (
-                        <Tile key={category.key} padding="sm" radius="lg" variant="default">
-                          <label className="flex items-center gap-3 text-sm">
-                            <Checkbox
-                              checked={isSelected}
-                              data-testid={`contest-category-toggle-${category.key}`}
-                              onChange={() => toggleCategory(category.key)}
-                            />
-                            <span>{category.label}</span>
-                          </label>
-                        </Tile>
-                      );
-                    })}
-                  </div>
-                </Tile>
-
-                {showAdvanced ? (
-                  <Tile className="space-y-4" padding="sm" radius="lg" variant="subtle">
-                    <h3 className="font-medium">Advanced category settings</h3>
-                    <div className="space-y-3">
-                      {selectedCategories.map((categoryKey) => {
-                        const categoryLabel = CATEGORY_OPTIONS.find((category) => category.key === categoryKey)?.label;
-                        return (
-                          <FormField key={categoryKey} label={`${categoryLabel ?? categoryKey} pick count`}>
-                            <Input
-                              data-testid={`contest-category-pick-count-${categoryKey}`}
-                              min={1}
-                              onChange={(event) =>
-                                setCategoryPickCounts((current) => ({
-                                  ...current,
-                                  [categoryKey]: event.target.value,
-                                }))}
-                              type="number"
-                              value={categoryPickCounts[categoryKey] ?? '1'}
-                            />
-                          </FormField>
-                        );
-                      })}
-                    </div>
-                    <FormField label="Missed-cut fallback score">
-                      <Input
-                        data-testid="contest-category-fallback-score"
-                        min={0}
-                        onChange={(event) => setContestFormValue('categoryFallbackScore', event.target.value)}
-                        type="number"
-                        value={categoryFallbackScore}
-                      />
-                    </FormField>
-                  </Tile>
-                ) : null}
-              </>
-            )}
+            <Alert>
+              Tier structure and golfer assignments are set on the tournament, not the contest —
+              this contest inherits whatever tiers the tournament defines.
+            </Alert>
             </fieldset>
 
             {formError ? (
@@ -1579,7 +1123,7 @@ export function CreateContestPage() {
           <ContestSetupSummary
             items={[
               { id: 'league', label: 'League', value: leagueQuery.data.name },
-              { id: 'mode', label: 'Mode', value: mode === 'GOLF_TIERED' ? 'Golf tiered contest' : 'Golf category picks' },
+              { id: 'mode', label: 'Mode', value: 'Golf tiered contest' },
               { id: 'event', label: 'Event', value: selectedEvent ? selectedEvent.name : 'Choose a golf event' },
               {
                 id: 'event-starts',
@@ -1588,15 +1132,8 @@ export function CreateContestPage() {
               },
               { id: 'locks', label: 'Locks', value: derivedLockAt ? formatDateTimeDisplay(derivedLockAt) : 'Choose a golf event' },
               { id: 'entries-per-team', label: 'Entries per team', value: unlimitedEntries ? 'Unlimited' : maxEntriesPerTeam || '1' },
-              ...(mode === 'GOLF_TIERED'
-                ? [
-                    { id: 'golfers-picked', label: 'Golfers picked', value: rosterSize },
-                    { id: 'count-best', label: 'Count best', value: countedScores },
-                    { id: 'tier-source', label: 'Tier source', value: tierSource === 'ODDS' ? 'Odds' : 'World rank' },
-                  ]
-                : [
-                    { id: 'enabled-categories', label: 'Enabled categories', value: selectedCategories.length },
-                  ]),
+              { id: 'golfers-picked', label: 'Golfers picked', value: rosterSize },
+              { id: 'count-best', label: 'Count best', value: countedScores },
             ]}
           />
 

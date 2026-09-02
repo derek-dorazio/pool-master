@@ -47,6 +47,7 @@ function buildHandlers(golfFieldServiceOverrides: Record<string, unknown> = {}) 
     {} as any,
     {} as any,
     golfFieldService as any,
+    {} as any,
   );
   return { handlers, golfFieldService };
 }

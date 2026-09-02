@@ -10,6 +10,7 @@ import type {
   AdminGolfSeasonDetailDto,
   AdminGolfSeasonDto,
   AdminGolfSeasonSummaryDto,
+  AdminGolfTierGroupDto,
   AdminGolfTournamentDetailDto,
   AdminGolfTournamentDto,
   AdminGolfTournamentRoundDto,
@@ -22,6 +23,7 @@ import type { SeasonDetail, SeasonRow, SeasonSummary } from '../modules/sport-ca
 import type { SportEventRoundRow } from '../modules/golf/golf-round-schedule-service';
 import type { GolfTournamentRow } from '../modules/golf/golf-tournament-service';
 import type { GolfFieldRow } from '../modules/golf/golf-field-service';
+import type { GolfTierGroup } from '../modules/golf/golf-tier-service';
 
 export function toAdminGolfLeagueDto(league: SportLeagueRow): AdminGolfLeagueDto {
   return {
@@ -187,4 +189,23 @@ export function toGolfFieldEntriesUpdateInput(
   price?: number | null;
 }> {
   return entries.map((entry) => ({ ...entry }));
+}
+
+export function toAdminGolfTierGroupDto(tier: GolfTierGroup): AdminGolfTierGroupDto {
+  return {
+    tierKey: tier.tierKey,
+    label: tier.label,
+    tierNumber: tier.tierNumber,
+    defaultPickCount: tier.defaultPickCount,
+    assignments: tier.participants.map((participant) => ({
+      sportEventParticipantId: participant.sportEventParticipantId,
+      participantId: participant.participantId,
+      tierOrderIndex: participant.tierOrderIndex,
+      price: participant.price,
+    })),
+  };
+}
+
+export function toAdminGolfTierGroupDtoList(tiers: GolfTierGroup[]): AdminGolfTierGroupDto[] {
+  return tiers.map(toAdminGolfTierGroupDto);
 }

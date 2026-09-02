@@ -24,7 +24,6 @@ export type {
   GolfContestTierDefinition,
   GolfFixedCutRule,
   GolfTieredContestConfig,
-  GolfTierGeneration,
   GolfTiebreakerRule,
   PersistedGolfContestTierDefinition,
   ParticipantContestScoringRule,
@@ -32,7 +31,6 @@ export type {
   SportEventReadinessReason,
   SportEventReadinessStatus,
   SportEventParticipant,
-  SportEventParticipantValuation,
 } from './contest-management-types';
 export {
   BonusRuleSchema,

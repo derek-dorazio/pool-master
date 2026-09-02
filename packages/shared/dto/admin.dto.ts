@@ -403,7 +403,7 @@ export const AdminProviderEventCleanupRowDtoSchema = z.object({
   directContestCount: z.number().int().min(0).describe('Number of Contest rows directly pointing at this event.'),
   contestSportEventCount: z.number().int().min(0).describe('Number of ContestSportEvent join rows pointing at this event.'),
   sportEventParticipantCount: z.number().int().min(0).describe('Number of SportEventParticipant rows attached to this event.'),
-  valuationCount: z.number().int().min(0).describe('Number of SportEventParticipantValuation rows attached through this event.'),
+  valuationCount: z.number().int().min(0).describe('Number of participants with a SportEventParticipantGolfValuation (tier/price) row attached through this event.'),
   golfRoundCount: z.number().int().min(0).describe('Number of SportEventParticipantGolfRound rows attached through this event.'),
   pickCount: z.number().int().min(0).describe('Number of ContestEntryPick rows referencing participants in this event.'),
 }).describe('Single stale provider event cleanup inventory row.');

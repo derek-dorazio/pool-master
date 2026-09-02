@@ -1228,9 +1228,9 @@ export class ProviderService {
         },
         sportEventParticipants: {
           select: {
+            golfValuation: { select: { id: true } },
             _count: {
               select: {
-                valuations: true,
                 picks: true,
                 golfRounds: true,
               },
@@ -1253,10 +1253,12 @@ export class ProviderService {
       }
 
       const sportEventParticipantCount = event.sportEventParticipants.length;
-      const valuationCount = event.sportEventParticipants.reduce(
-        (sum, participant) => sum + participant._count.valuations,
-        0,
-      );
+      // golfValuation is 1:1 now (SportEventParticipantGolfValuation, plans/124
+      // §4.5/§4.6b replaces the legacy 1:many SportEventParticipantValuation) —
+      // count of participants that have one, not a row count.
+      const valuationCount = event.sportEventParticipants.filter(
+        (participant) => participant.golfValuation !== null,
+      ).length;
       const golfRoundCount = event.sportEventParticipants.reduce(
         (sum, participant) => sum + participant._count.golfRounds,
         0,
@@ -1336,7 +1338,7 @@ export class ProviderService {
           },
         },
       });
-      await tx.sportEventParticipantValuation.deleteMany({
+      await tx.sportEventParticipantGolfValuation.deleteMany({
         where: {
           sportEventParticipant: {
             sportEventId: {
@@ -1344,6 +1346,16 @@ export class ProviderService {
             },
           },
         },
+      });
+      // SportEventGolfTier and SportEventRound are event-level (plans/124
+      // §4.5/§4.10), not participant-level — both FK to SportEvent with
+      // ON DELETE RESTRICT, so they must be cleared before the SportEvent
+      // rows below, same as the participant-level child tables above.
+      await tx.sportEventGolfTier.deleteMany({
+        where: { sportEventId: { in: eventIds } },
+      });
+      await tx.sportEventRound.deleteMany({
+        where: { sportEventId: { in: eventIds } },
       });
       await tx.sportEventParticipant.deleteMany({
         where: {

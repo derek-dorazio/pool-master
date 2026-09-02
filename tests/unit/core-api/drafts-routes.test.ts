@@ -20,6 +20,7 @@ function createMockPrisma(overrides: Record<string, unknown> = {}) {
     leagueMembership: { findMany: jest.fn().mockResolvedValue([]) },
     squadMembership: { findMany: jest.fn().mockResolvedValue([]) },
     sportEventParticipant: { findMany: jest.fn().mockResolvedValue([]) },
+    sportEventGolfTier: { findMany: jest.fn().mockResolvedValue([]) },
     ...overrides,
   };
 }
@@ -68,6 +69,60 @@ describe('loadDraftContext', () => {
         status: 'ELIMINATED',
         isAvailable: false,
         unavailableReason: 'SportEventParticipant sep-1 is unavailable with status ELIMINATED',
+      }),
+    ]);
+  });
+
+  // pool-master-piv — proves loadDraftContext resolves tier/price through
+  // golf-tier-service.getEffectiveTiersForSportEvent (plans/124 §4.6b)
+  // rather than the dropped legacy SportEventParticipant.valuations table.
+  it('pool-master-piv resolves selectionParticipants[].tier/price/orderIndex and context.tiers from golf-tier-service', async () => {
+    const prisma = createMockPrisma({
+      sportEventGolfTier: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'tier-1',
+            sportEventId: 'event-1',
+            tierKey: 'tier-1',
+            label: 'Tier 1',
+            tierNumber: 1,
+            defaultPickCount: 2,
+            valuations: [
+              {
+                sportEventParticipantId: 'sep-1',
+                tierOrderIndex: 1,
+                price: 25,
+                sportEventParticipant: { participantId: 'participant-1' },
+              },
+            ],
+          },
+        ]),
+      },
+      sportEventParticipant: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'sep-1',
+            participantId: 'participant-1',
+            isActive: true,
+            inactiveReason: null,
+            worldRanking: 5,
+            participant: { name: 'Rory McIlroy', position: null, teamAffiliation: null },
+          },
+        ]),
+      },
+    });
+
+    const context = await loadDraftContext(prisma as never, 'contest-1');
+
+    expect(context?.tiers).toEqual([
+      { tierId: 'tier-1', tierName: 'Tier 1', tierNumber: 1, picksFromTier: 2, participantIds: ['sep-1'] },
+    ]);
+    expect(context?.selectionParticipants).toEqual([
+      expect.objectContaining({
+        sportEventParticipantId: 'sep-1',
+        tier: 'Tier 1',
+        price: 25,
+        orderIndex: 1,
       }),
     ]);
   });

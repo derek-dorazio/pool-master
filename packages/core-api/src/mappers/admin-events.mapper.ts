@@ -90,11 +90,12 @@ export interface AdminEventParticipantRow {
     shortName: string | null;
     nationality: string | null;
   };
-  valuations: Array<{
+  /** Resolved via golf-tier-service.getEffectiveValuationsForSportEvent (plans/124 §4.6b) — undefined when the golfer has no tier/price assigned yet. */
+  golfValuation?: {
     price: number | null;
-    tier: string | null;
-    orderIndex: number | null;
-  }>;
+    tierLabel: string;
+    tierOrderIndex: number | null;
+  };
   golfRounds: Array<{
     sportEventRound: { roundNumber: number };
     strokes: number;
@@ -153,7 +154,6 @@ export function mapAdminEventSummaryToDto(
 export function mapAdminEventParticipantToDto(
   row: AdminEventParticipantRow,
 ): AdminEventParticipantDto {
-  const primaryValuation = row.valuations[0];
   const oddsToWin = toNumberOrNull(row.oddsToWin);
   const scoreToPar = row.golfStanding
     ? row.golfStanding.eventScoreToPar
@@ -177,14 +177,14 @@ export function mapAdminEventParticipantToDto(
     ...(row.worldRanking !== null ? { worldRanking: row.worldRanking } : {}),
     ...(oddsToWin !== null ? { oddsToWin } : {}),
     ...(row.seedNumber !== null ? { seedNumber: row.seedNumber } : {}),
-    ...(primaryValuation?.price !== null && primaryValuation?.price !== undefined
-      ? { valuationPrice: primaryValuation.price }
+    ...(row.golfValuation?.price !== null && row.golfValuation?.price !== undefined
+      ? { valuationPrice: row.golfValuation.price }
       : {}),
-    ...(primaryValuation?.tier !== null && primaryValuation?.tier !== undefined
-      ? { valuationTier: primaryValuation.tier }
+    ...(row.golfValuation?.tierLabel !== undefined
+      ? { valuationTier: row.golfValuation.tierLabel }
       : {}),
-    ...(primaryValuation?.orderIndex !== null && primaryValuation?.orderIndex !== undefined
-      ? { valuationOrderIndex: primaryValuation.orderIndex }
+    ...(row.golfValuation?.tierOrderIndex !== null && row.golfValuation?.tierOrderIndex !== undefined
+      ? { valuationOrderIndex: row.golfValuation.tierOrderIndex }
       : {}),
     roundCount: row.golfRounds.length,
     ...(totalStrokes !== null ? { totalStrokes } : {}),

@@ -12412,136 +12412,12 @@
                                     "type": "integer",
                                     "minimum": 1,
                                     "description": "How many golfer scores count toward the Team total."
-                                  },
-                                  "tierSource": {
-                                    "type": "string",
-                                    "enum": [
-                                      "ODDS",
-                                      "WORLD_RANK"
-                                    ],
-                                    "description": "Single tier source used to generate all tiers."
-                                  },
-                                  "tierGeneration": {
-                                    "type": "object",
-                                    "properties": {
-                                      "defaultTierSize": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "description": "Basic mode tier size used to seed the tier list."
-                                      }
-                                    },
-                                    "required": [
-                                      "defaultTierSize"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  "tiers": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "object",
-                                      "properties": {
-                                        "tierKey": {
-                                          "type": "string",
-                                          "minLength": 1,
-                                          "description": "Stable tier key such as A, B, or C."
-                                        },
-                                        "label": {
-                                          "type": "string",
-                                          "minLength": 1,
-                                          "description": "Commissioner-facing tier label."
-                                        },
-                                        "pickCount": {
-                                          "type": "integer",
-                                          "minimum": 1,
-                                          "description": "How many golfers must be picked from the tier."
-                                        },
-                                        "startPosition": {
-                                          "type": "integer",
-                                          "minimum": 1,
-                                          "description": "Starting resolved rank/odds position for the tier."
-                                        },
-                                        "endPosition": {
-                                          "type": "integer",
-                                          "minimum": 1,
-                                          "nullable": true,
-                                          "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
-                                        }
-                                      },
-                                      "required": [
-                                        "tierKey",
-                                        "label",
-                                        "pickCount",
-                                        "startPosition",
-                                        "endPosition"
-                                      ],
-                                      "additionalProperties": false,
-                                      "description": "Tier definition for a golf tiered contest."
-                                    },
-                                    "minItems": 1,
-                                    "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
-                                  },
-                                  "cutRule": {
-                                    "type": "object",
-                                    "properties": {
-                                      "type": {
-                                        "type": "string",
-                                        "enum": [
-                                          "FIXED_SCORE"
-                                        ]
-                                      },
-                                      "fixedScore": {
-                                        "type": "integer",
-                                        "minimum": 0,
-                                        "description": "Fallback score assigned when a golfer misses the cut."
-                                      }
-                                    },
-                                    "required": [
-                                      "type",
-                                      "fixedScore"
-                                    ],
-                                    "additionalProperties": false,
-                                    "description": "Golf cut rule for first-pass contests."
-                                  },
-                                  "playoffHandling": {
-                                    "type": "string",
-                                    "enum": [
-                                      "EXCLUDE_PLAYOFF_HOLES"
-                                    ]
-                                  },
-                                  "displayScoring": {
-                                    "type": "string",
-                                    "enum": [
-                                      "TO_PAR"
-                                    ]
-                                  },
-                                  "tiebreaker": {
-                                    "type": "object",
-                                    "properties": {
-                                      "type": {
-                                        "type": "string",
-                                        "enum": [
-                                          "PREDICT_WINNING_SCORE"
-                                        ]
-                                      }
-                                    },
-                                    "required": [
-                                      "type"
-                                    ],
-                                    "additionalProperties": false,
-                                    "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
                                   }
                                 },
                                 "required": [
                                   "mode",
                                   "rosterSize",
-                                  "countedScores",
-                                  "tierSource",
-                                  "tierGeneration",
-                                  "tiers",
-                                  "cutRule",
-                                  "playoffHandling",
-                                  "displayScoring",
-                                  "tiebreaker"
+                                  "countedScores"
                                 ],
                                 "additionalProperties": false,
                                 "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
@@ -12885,136 +12761,12 @@
                                 "type": "integer",
                                 "minimum": 1,
                                 "description": "How many golfer scores count toward the Team total."
-                              },
-                              "tierSource": {
-                                "type": "string",
-                                "enum": [
-                                  "ODDS",
-                                  "WORLD_RANK"
-                                ],
-                                "description": "Single tier source used to generate all tiers."
-                              },
-                              "tierGeneration": {
-                                "type": "object",
-                                "properties": {
-                                  "defaultTierSize": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "description": "Basic mode tier size used to seed the tier list."
-                                  }
-                                },
-                                "required": [
-                                  "defaultTierSize"
-                                ],
-                                "additionalProperties": false
-                              },
-                              "tiers": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "tierKey": {
-                                      "type": "string",
-                                      "minLength": 1,
-                                      "description": "Stable tier key such as A, B, or C."
-                                    },
-                                    "label": {
-                                      "type": "string",
-                                      "minLength": 1,
-                                      "description": "Commissioner-facing tier label."
-                                    },
-                                    "pickCount": {
-                                      "type": "integer",
-                                      "minimum": 1,
-                                      "description": "How many golfers must be picked from the tier."
-                                    },
-                                    "startPosition": {
-                                      "type": "integer",
-                                      "minimum": 1,
-                                      "description": "Starting resolved rank/odds position for the tier."
-                                    },
-                                    "endPosition": {
-                                      "type": "integer",
-                                      "minimum": 1,
-                                      "nullable": true,
-                                      "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
-                                    }
-                                  },
-                                  "required": [
-                                    "tierKey",
-                                    "label",
-                                    "pickCount",
-                                    "startPosition",
-                                    "endPosition"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "Tier definition for a golf tiered contest."
-                                },
-                                "minItems": 1,
-                                "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
-                              },
-                              "cutRule": {
-                                "type": "object",
-                                "properties": {
-                                  "type": {
-                                    "type": "string",
-                                    "enum": [
-                                      "FIXED_SCORE"
-                                    ]
-                                  },
-                                  "fixedScore": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "description": "Fallback score assigned when a golfer misses the cut."
-                                  }
-                                },
-                                "required": [
-                                  "type",
-                                  "fixedScore"
-                                ],
-                                "additionalProperties": false,
-                                "description": "Golf cut rule for first-pass contests."
-                              },
-                              "playoffHandling": {
-                                "type": "string",
-                                "enum": [
-                                  "EXCLUDE_PLAYOFF_HOLES"
-                                ]
-                              },
-                              "displayScoring": {
-                                "type": "string",
-                                "enum": [
-                                  "TO_PAR"
-                                ]
-                              },
-                              "tiebreaker": {
-                                "type": "object",
-                                "properties": {
-                                  "type": {
-                                    "type": "string",
-                                    "enum": [
-                                      "PREDICT_WINNING_SCORE"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "type"
-                                ],
-                                "additionalProperties": false,
-                                "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
                               }
                             },
                             "required": [
                               "mode",
                               "rosterSize",
-                              "countedScores",
-                              "tierSource",
-                              "tierGeneration",
-                              "tiers",
-                              "cutRule",
-                              "playoffHandling",
-                              "displayScoring",
-                              "tiebreaker"
+                              "countedScores"
                             ],
                             "additionalProperties": false,
                             "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
@@ -13210,136 +12962,12 @@
                                 "type": "integer",
                                 "minimum": 1,
                                 "description": "How many golfer scores count toward the Team total."
-                              },
-                              "tierSource": {
-                                "type": "string",
-                                "enum": [
-                                  "ODDS",
-                                  "WORLD_RANK"
-                                ],
-                                "description": "Single tier source used to generate all tiers."
-                              },
-                              "tierGeneration": {
-                                "type": "object",
-                                "properties": {
-                                  "defaultTierSize": {
-                                    "type": "integer",
-                                    "minimum": 1,
-                                    "description": "Basic mode tier size used to seed the tier list."
-                                  }
-                                },
-                                "required": [
-                                  "defaultTierSize"
-                                ],
-                                "additionalProperties": false
-                              },
-                              "tiers": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "tierKey": {
-                                      "type": "string",
-                                      "minLength": 1,
-                                      "description": "Stable tier key such as A, B, or C."
-                                    },
-                                    "label": {
-                                      "type": "string",
-                                      "minLength": 1,
-                                      "description": "Commissioner-facing tier label."
-                                    },
-                                    "pickCount": {
-                                      "type": "integer",
-                                      "minimum": 1,
-                                      "description": "How many golfers must be picked from the tier."
-                                    },
-                                    "startPosition": {
-                                      "type": "integer",
-                                      "minimum": 1,
-                                      "description": "Starting resolved rank/odds position for the tier."
-                                    },
-                                    "endPosition": {
-                                      "type": "integer",
-                                      "minimum": 1,
-                                      "nullable": true,
-                                      "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
-                                    }
-                                  },
-                                  "required": [
-                                    "tierKey",
-                                    "label",
-                                    "pickCount",
-                                    "startPosition",
-                                    "endPosition"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "Tier definition for a golf tiered contest."
-                                },
-                                "minItems": 1,
-                                "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
-                              },
-                              "cutRule": {
-                                "type": "object",
-                                "properties": {
-                                  "type": {
-                                    "type": "string",
-                                    "enum": [
-                                      "FIXED_SCORE"
-                                    ]
-                                  },
-                                  "fixedScore": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "description": "Fallback score assigned when a golfer misses the cut."
-                                  }
-                                },
-                                "required": [
-                                  "type",
-                                  "fixedScore"
-                                ],
-                                "additionalProperties": false,
-                                "description": "Golf cut rule for first-pass contests."
-                              },
-                              "playoffHandling": {
-                                "type": "string",
-                                "enum": [
-                                  "EXCLUDE_PLAYOFF_HOLES"
-                                ]
-                              },
-                              "displayScoring": {
-                                "type": "string",
-                                "enum": [
-                                  "TO_PAR"
-                                ]
-                              },
-                              "tiebreaker": {
-                                "type": "object",
-                                "properties": {
-                                  "type": {
-                                    "type": "string",
-                                    "enum": [
-                                      "PREDICT_WINNING_SCORE"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "type"
-                                ],
-                                "additionalProperties": false,
-                                "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
                               }
                             },
                             "required": [
                               "mode",
                               "rosterSize",
-                              "countedScores",
-                              "tierSource",
-                              "tierGeneration",
-                              "tiers",
-                              "cutRule",
-                              "playoffHandling",
-                              "displayScoring",
-                              "tiebreaker"
+                              "countedScores"
                             ],
                             "additionalProperties": false,
                             "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
@@ -13566,123 +13194,6 @@
                                   "minimum": 1,
                                   "description": "How many golfer scores count toward the Team total."
                                 },
-                                "tierSource": {
-                                  "type": "string",
-                                  "enum": [
-                                    "ODDS",
-                                    "WORLD_RANK"
-                                  ],
-                                  "description": "Single tier source used to generate all tiers."
-                                },
-                                "tierGeneration": {
-                                  "type": "object",
-                                  "properties": {
-                                    "defaultTierSize": {
-                                      "type": "integer",
-                                      "minimum": 1,
-                                      "description": "Basic mode tier size used to seed the tier list."
-                                    }
-                                  },
-                                  "required": [
-                                    "defaultTierSize"
-                                  ],
-                                  "additionalProperties": false
-                                },
-                                "tiers": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "tierKey": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "description": "Stable tier key such as A, B, or C."
-                                      },
-                                      "label": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "description": "Commissioner-facing tier label."
-                                      },
-                                      "pickCount": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "description": "How many golfers must be picked from the tier."
-                                      },
-                                      "startPosition": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "description": "Starting resolved rank/odds position for the tier."
-                                      },
-                                      "endPosition": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "nullable": true,
-                                        "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
-                                      }
-                                    },
-                                    "required": [
-                                      "tierKey",
-                                      "label",
-                                      "pickCount",
-                                      "startPosition",
-                                      "endPosition"
-                                    ],
-                                    "additionalProperties": false,
-                                    "description": "Tier definition for a golf tiered contest."
-                                  },
-                                  "minItems": 1,
-                                  "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
-                                },
-                                "cutRule": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "FIXED_SCORE"
-                                      ]
-                                    },
-                                    "fixedScore": {
-                                      "type": "integer",
-                                      "minimum": 0,
-                                      "description": "Fallback score assigned when a golfer misses the cut."
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "fixedScore"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "Golf cut rule for first-pass contests."
-                                },
-                                "playoffHandling": {
-                                  "type": "string",
-                                  "enum": [
-                                    "EXCLUDE_PLAYOFF_HOLES"
-                                  ]
-                                },
-                                "displayScoring": {
-                                  "type": "string",
-                                  "enum": [
-                                    "TO_PAR"
-                                  ]
-                                },
-                                "tiebreaker": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "PREDICT_WINNING_SCORE"
-                                      ]
-                                    }
-                                  },
-                                  "required": [
-                                    "type"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
-                                },
                                 "id": {
                                   "type": "string",
                                   "description": "Contest-configuration identifier."
@@ -13696,13 +13207,6 @@
                                 "mode",
                                 "rosterSize",
                                 "countedScores",
-                                "tierSource",
-                                "tierGeneration",
-                                "tiers",
-                                "cutRule",
-                                "playoffHandling",
-                                "displayScoring",
-                                "tiebreaker",
                                 "id",
                                 "contestId"
                               ],
@@ -14144,123 +13648,6 @@
                                   "minimum": 1,
                                   "description": "How many golfer scores count toward the Team total."
                                 },
-                                "tierSource": {
-                                  "type": "string",
-                                  "enum": [
-                                    "ODDS",
-                                    "WORLD_RANK"
-                                  ],
-                                  "description": "Single tier source used to generate all tiers."
-                                },
-                                "tierGeneration": {
-                                  "type": "object",
-                                  "properties": {
-                                    "defaultTierSize": {
-                                      "type": "integer",
-                                      "minimum": 1,
-                                      "description": "Basic mode tier size used to seed the tier list."
-                                    }
-                                  },
-                                  "required": [
-                                    "defaultTierSize"
-                                  ],
-                                  "additionalProperties": false
-                                },
-                                "tiers": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "tierKey": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "description": "Stable tier key such as A, B, or C."
-                                      },
-                                      "label": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "description": "Commissioner-facing tier label."
-                                      },
-                                      "pickCount": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "description": "How many golfers must be picked from the tier."
-                                      },
-                                      "startPosition": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "description": "Starting resolved rank/odds position for the tier."
-                                      },
-                                      "endPosition": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "nullable": true,
-                                        "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
-                                      }
-                                    },
-                                    "required": [
-                                      "tierKey",
-                                      "label",
-                                      "pickCount",
-                                      "startPosition",
-                                      "endPosition"
-                                    ],
-                                    "additionalProperties": false,
-                                    "description": "Tier definition for a golf tiered contest."
-                                  },
-                                  "minItems": 1,
-                                  "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
-                                },
-                                "cutRule": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "FIXED_SCORE"
-                                      ]
-                                    },
-                                    "fixedScore": {
-                                      "type": "integer",
-                                      "minimum": 0,
-                                      "description": "Fallback score assigned when a golfer misses the cut."
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "fixedScore"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "Golf cut rule for first-pass contests."
-                                },
-                                "playoffHandling": {
-                                  "type": "string",
-                                  "enum": [
-                                    "EXCLUDE_PLAYOFF_HOLES"
-                                  ]
-                                },
-                                "displayScoring": {
-                                  "type": "string",
-                                  "enum": [
-                                    "TO_PAR"
-                                  ]
-                                },
-                                "tiebreaker": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "PREDICT_WINNING_SCORE"
-                                      ]
-                                    }
-                                  },
-                                  "required": [
-                                    "type"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
-                                },
                                 "id": {
                                   "type": "string",
                                   "description": "Contest-configuration identifier."
@@ -14274,13 +13661,6 @@
                                 "mode",
                                 "rosterSize",
                                 "countedScores",
-                                "tierSource",
-                                "tierGeneration",
-                                "tiers",
-                                "cutRule",
-                                "playoffHandling",
-                                "displayScoring",
-                                "tiebreaker",
                                 "id",
                                 "contestId"
                               ],
@@ -14668,136 +14048,12 @@
                         "type": "integer",
                         "minimum": 1,
                         "description": "How many golfer scores count toward the Team total."
-                      },
-                      "tierSource": {
-                        "type": "string",
-                        "enum": [
-                          "ODDS",
-                          "WORLD_RANK"
-                        ],
-                        "description": "Single tier source used to generate all tiers."
-                      },
-                      "tierGeneration": {
-                        "type": "object",
-                        "properties": {
-                          "defaultTierSize": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "description": "Basic mode tier size used to seed the tier list."
-                          }
-                        },
-                        "required": [
-                          "defaultTierSize"
-                        ],
-                        "additionalProperties": false
-                      },
-                      "tiers": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "tierKey": {
-                              "type": "string",
-                              "minLength": 1,
-                              "description": "Stable tier key such as A, B, or C."
-                            },
-                            "label": {
-                              "type": "string",
-                              "minLength": 1,
-                              "description": "Commissioner-facing tier label."
-                            },
-                            "pickCount": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "description": "How many golfers must be picked from the tier."
-                            },
-                            "startPosition": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "description": "Starting resolved rank/odds position for the tier."
-                            },
-                            "endPosition": {
-                              "type": "integer",
-                              "minimum": 1,
-                              "nullable": true,
-                              "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
-                            }
-                          },
-                          "required": [
-                            "tierKey",
-                            "label",
-                            "pickCount",
-                            "startPosition",
-                            "endPosition"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Tier definition for a golf tiered contest."
-                        },
-                        "minItems": 1,
-                        "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
-                      },
-                      "cutRule": {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "FIXED_SCORE"
-                            ]
-                          },
-                          "fixedScore": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "description": "Fallback score assigned when a golfer misses the cut."
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "fixedScore"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Golf cut rule for first-pass contests."
-                      },
-                      "playoffHandling": {
-                        "type": "string",
-                        "enum": [
-                          "EXCLUDE_PLAYOFF_HOLES"
-                        ]
-                      },
-                      "displayScoring": {
-                        "type": "string",
-                        "enum": [
-                          "TO_PAR"
-                        ]
-                      },
-                      "tiebreaker": {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "PREDICT_WINNING_SCORE"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
                       }
                     },
                     "required": [
                       "mode",
                       "rosterSize",
-                      "countedScores",
-                      "tierSource",
-                      "tierGeneration",
-                      "tiers",
-                      "cutRule",
-                      "playoffHandling",
-                      "displayScoring",
-                      "tiebreaker"
+                      "countedScores"
                     ],
                     "additionalProperties": false,
                     "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
@@ -15019,123 +14275,6 @@
                                   "minimum": 1,
                                   "description": "How many golfer scores count toward the Team total."
                                 },
-                                "tierSource": {
-                                  "type": "string",
-                                  "enum": [
-                                    "ODDS",
-                                    "WORLD_RANK"
-                                  ],
-                                  "description": "Single tier source used to generate all tiers."
-                                },
-                                "tierGeneration": {
-                                  "type": "object",
-                                  "properties": {
-                                    "defaultTierSize": {
-                                      "type": "integer",
-                                      "minimum": 1,
-                                      "description": "Basic mode tier size used to seed the tier list."
-                                    }
-                                  },
-                                  "required": [
-                                    "defaultTierSize"
-                                  ],
-                                  "additionalProperties": false
-                                },
-                                "tiers": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "tierKey": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "description": "Stable tier key such as A, B, or C."
-                                      },
-                                      "label": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "description": "Commissioner-facing tier label."
-                                      },
-                                      "pickCount": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "description": "How many golfers must be picked from the tier."
-                                      },
-                                      "startPosition": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "description": "Starting resolved rank/odds position for the tier."
-                                      },
-                                      "endPosition": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "nullable": true,
-                                        "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
-                                      }
-                                    },
-                                    "required": [
-                                      "tierKey",
-                                      "label",
-                                      "pickCount",
-                                      "startPosition",
-                                      "endPosition"
-                                    ],
-                                    "additionalProperties": false,
-                                    "description": "Tier definition for a golf tiered contest."
-                                  },
-                                  "minItems": 1,
-                                  "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
-                                },
-                                "cutRule": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "FIXED_SCORE"
-                                      ]
-                                    },
-                                    "fixedScore": {
-                                      "type": "integer",
-                                      "minimum": 0,
-                                      "description": "Fallback score assigned when a golfer misses the cut."
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "fixedScore"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "Golf cut rule for first-pass contests."
-                                },
-                                "playoffHandling": {
-                                  "type": "string",
-                                  "enum": [
-                                    "EXCLUDE_PLAYOFF_HOLES"
-                                  ]
-                                },
-                                "displayScoring": {
-                                  "type": "string",
-                                  "enum": [
-                                    "TO_PAR"
-                                  ]
-                                },
-                                "tiebreaker": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "PREDICT_WINNING_SCORE"
-                                      ]
-                                    }
-                                  },
-                                  "required": [
-                                    "type"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
-                                },
                                 "id": {
                                   "type": "string",
                                   "description": "Contest-configuration identifier."
@@ -15149,13 +14288,6 @@
                                 "mode",
                                 "rosterSize",
                                 "countedScores",
-                                "tierSource",
-                                "tierGeneration",
-                                "tiers",
-                                "cutRule",
-                                "playoffHandling",
-                                "displayScoring",
-                                "tiebreaker",
                                 "id",
                                 "contestId"
                               ],
@@ -30266,136 +29398,12 @@
                                     "type": "integer",
                                     "minimum": 1,
                                     "description": "How many golfer scores count toward the Team total."
-                                  },
-                                  "tierSource": {
-                                    "type": "string",
-                                    "enum": [
-                                      "ODDS",
-                                      "WORLD_RANK"
-                                    ],
-                                    "description": "Single tier source used to generate all tiers."
-                                  },
-                                  "tierGeneration": {
-                                    "type": "object",
-                                    "properties": {
-                                      "defaultTierSize": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "description": "Basic mode tier size used to seed the tier list."
-                                      }
-                                    },
-                                    "required": [
-                                      "defaultTierSize"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  "tiers": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "object",
-                                      "properties": {
-                                        "tierKey": {
-                                          "type": "string",
-                                          "minLength": 1,
-                                          "description": "Stable tier key such as A, B, or C."
-                                        },
-                                        "label": {
-                                          "type": "string",
-                                          "minLength": 1,
-                                          "description": "Commissioner-facing tier label."
-                                        },
-                                        "pickCount": {
-                                          "type": "integer",
-                                          "minimum": 1,
-                                          "description": "How many golfers must be picked from the tier."
-                                        },
-                                        "startPosition": {
-                                          "type": "integer",
-                                          "minimum": 1,
-                                          "description": "Starting resolved rank/odds position for the tier."
-                                        },
-                                        "endPosition": {
-                                          "type": "integer",
-                                          "minimum": 1,
-                                          "nullable": true,
-                                          "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
-                                        }
-                                      },
-                                      "required": [
-                                        "tierKey",
-                                        "label",
-                                        "pickCount",
-                                        "startPosition",
-                                        "endPosition"
-                                      ],
-                                      "additionalProperties": false,
-                                      "description": "Tier definition for a golf tiered contest."
-                                    },
-                                    "minItems": 1,
-                                    "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
-                                  },
-                                  "cutRule": {
-                                    "type": "object",
-                                    "properties": {
-                                      "type": {
-                                        "type": "string",
-                                        "enum": [
-                                          "FIXED_SCORE"
-                                        ]
-                                      },
-                                      "fixedScore": {
-                                        "type": "integer",
-                                        "minimum": 0,
-                                        "description": "Fallback score assigned when a golfer misses the cut."
-                                      }
-                                    },
-                                    "required": [
-                                      "type",
-                                      "fixedScore"
-                                    ],
-                                    "additionalProperties": false,
-                                    "description": "Golf cut rule for first-pass contests."
-                                  },
-                                  "playoffHandling": {
-                                    "type": "string",
-                                    "enum": [
-                                      "EXCLUDE_PLAYOFF_HOLES"
-                                    ]
-                                  },
-                                  "displayScoring": {
-                                    "type": "string",
-                                    "enum": [
-                                      "TO_PAR"
-                                    ]
-                                  },
-                                  "tiebreaker": {
-                                    "type": "object",
-                                    "properties": {
-                                      "type": {
-                                        "type": "string",
-                                        "enum": [
-                                          "PREDICT_WINNING_SCORE"
-                                        ]
-                                      }
-                                    },
-                                    "required": [
-                                      "type"
-                                    ],
-                                    "additionalProperties": false,
-                                    "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
                                   }
                                 },
                                 "required": [
                                   "mode",
                                   "rosterSize",
-                                  "countedScores",
-                                  "tierSource",
-                                  "tierGeneration",
-                                  "tiers",
-                                  "cutRule",
-                                  "playoffHandling",
-                                  "displayScoring",
-                                  "tiebreaker"
+                                  "countedScores"
                                 ],
                                 "additionalProperties": false,
                                 "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
@@ -30667,136 +29675,12 @@
                             "type": "integer",
                             "minimum": 1,
                             "description": "How many golfer scores count toward the Team total."
-                          },
-                          "tierSource": {
-                            "type": "string",
-                            "enum": [
-                              "ODDS",
-                              "WORLD_RANK"
-                            ],
-                            "description": "Single tier source used to generate all tiers."
-                          },
-                          "tierGeneration": {
-                            "type": "object",
-                            "properties": {
-                              "defaultTierSize": {
-                                "type": "integer",
-                                "minimum": 1,
-                                "description": "Basic mode tier size used to seed the tier list."
-                              }
-                            },
-                            "required": [
-                              "defaultTierSize"
-                            ],
-                            "additionalProperties": false
-                          },
-                          "tiers": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "tierKey": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "description": "Stable tier key such as A, B, or C."
-                                },
-                                "label": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "description": "Commissioner-facing tier label."
-                                },
-                                "pickCount": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "description": "How many golfers must be picked from the tier."
-                                },
-                                "startPosition": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "description": "Starting resolved rank/odds position for the tier."
-                                },
-                                "endPosition": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "nullable": true,
-                                  "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
-                                }
-                              },
-                              "required": [
-                                "tierKey",
-                                "label",
-                                "pickCount",
-                                "startPosition",
-                                "endPosition"
-                              ],
-                              "additionalProperties": false,
-                              "description": "Tier definition for a golf tiered contest."
-                            },
-                            "minItems": 1,
-                            "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
-                          },
-                          "cutRule": {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "FIXED_SCORE"
-                                ]
-                              },
-                              "fixedScore": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "description": "Fallback score assigned when a golfer misses the cut."
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "fixedScore"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Golf cut rule for first-pass contests."
-                          },
-                          "playoffHandling": {
-                            "type": "string",
-                            "enum": [
-                              "EXCLUDE_PLAYOFF_HOLES"
-                            ]
-                          },
-                          "displayScoring": {
-                            "type": "string",
-                            "enum": [
-                              "TO_PAR"
-                            ]
-                          },
-                          "tiebreaker": {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "PREDICT_WINNING_SCORE"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "type"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
                           }
                         },
                         "required": [
                           "mode",
                           "rosterSize",
-                          "countedScores",
-                          "tierSource",
-                          "tierGeneration",
-                          "tiers",
-                          "cutRule",
-                          "playoffHandling",
-                          "displayScoring",
-                          "tiebreaker"
+                          "countedScores"
                         ],
                         "additionalProperties": false,
                         "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
@@ -31062,136 +29946,12 @@
                                   "type": "integer",
                                   "minimum": 1,
                                   "description": "How many golfer scores count toward the Team total."
-                                },
-                                "tierSource": {
-                                  "type": "string",
-                                  "enum": [
-                                    "ODDS",
-                                    "WORLD_RANK"
-                                  ],
-                                  "description": "Single tier source used to generate all tiers."
-                                },
-                                "tierGeneration": {
-                                  "type": "object",
-                                  "properties": {
-                                    "defaultTierSize": {
-                                      "type": "integer",
-                                      "minimum": 1,
-                                      "description": "Basic mode tier size used to seed the tier list."
-                                    }
-                                  },
-                                  "required": [
-                                    "defaultTierSize"
-                                  ],
-                                  "additionalProperties": false
-                                },
-                                "tiers": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "tierKey": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "description": "Stable tier key such as A, B, or C."
-                                      },
-                                      "label": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "description": "Commissioner-facing tier label."
-                                      },
-                                      "pickCount": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "description": "How many golfers must be picked from the tier."
-                                      },
-                                      "startPosition": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "description": "Starting resolved rank/odds position for the tier."
-                                      },
-                                      "endPosition": {
-                                        "type": "integer",
-                                        "minimum": 1,
-                                        "nullable": true,
-                                        "description": "Ending resolved rank/odds position for the tier. Null means remainder of field."
-                                      }
-                                    },
-                                    "required": [
-                                      "tierKey",
-                                      "label",
-                                      "pickCount",
-                                      "startPosition",
-                                      "endPosition"
-                                    ],
-                                    "additionalProperties": false,
-                                    "description": "Tier definition for a golf tiered contest."
-                                  },
-                                  "minItems": 1,
-                                  "description": "Persisted tier boundaries and pick counts after seeding or advanced editing."
-                                },
-                                "cutRule": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "FIXED_SCORE"
-                                      ]
-                                    },
-                                    "fixedScore": {
-                                      "type": "integer",
-                                      "minimum": 0,
-                                      "description": "Fallback score assigned when a golfer misses the cut."
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "fixedScore"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "Golf cut rule for first-pass contests."
-                                },
-                                "playoffHandling": {
-                                  "type": "string",
-                                  "enum": [
-                                    "EXCLUDE_PLAYOFF_HOLES"
-                                  ]
-                                },
-                                "displayScoring": {
-                                  "type": "string",
-                                  "enum": [
-                                    "TO_PAR"
-                                  ]
-                                },
-                                "tiebreaker": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "PREDICT_WINNING_SCORE"
-                                      ]
-                                    }
-                                  },
-                                  "required": [
-                                    "type"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "Golf tiebreaker configuration. Teams predict the winning to-par score."
                                 }
                               },
                               "required": [
                                 "mode",
                                 "rosterSize",
-                                "countedScores",
-                                "tierSource",
-                                "tierGeneration",
-                                "tiers",
-                                "cutRule",
-                                "playoffHandling",
-                                "displayScoring",
-                                "tiebreaker"
+                                "countedScores"
                               ],
                               "additionalProperties": false,
                               "description": "Golf tiered contest configuration for pick-X, count-best-Y roster contests."
@@ -32310,7 +31070,7 @@
                           "valuationCount": {
                             "type": "integer",
                             "minimum": 0,
-                            "description": "Number of SportEventParticipantValuation rows attached through this event."
+                            "description": "Number of participants with a SportEventParticipantGolfValuation (tier/price) row attached through this event."
                           },
                           "golfRoundCount": {
                             "type": "integer",
@@ -40699,6 +39459,980 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/tiers": {
+      "get": {
+        "operationId": "adminGetGolfTournamentTiers",
+        "summary": "Get a golf tournament's tier definitions and assignments",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Tier definitions + ordered assignments. Each row includes price alongside tier — one response, both valuations.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tiers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "tierKey": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "tierNumber": {
+                            "type": "integer"
+                          },
+                          "defaultPickCount": {
+                            "type": "integer"
+                          },
+                          "assignments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "tierOrderIndex": {
+                                  "type": "integer",
+                                  "nullable": true
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "nullable": true
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "tierOrderIndex",
+                                "price"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "tierKey",
+                          "label",
+                          "tierNumber",
+                          "defaultPickCount",
+                          "assignments"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Ordered by tierNumber ascending."
+                    }
+                  },
+                  "required": [
+                    "tiers"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "adminReplaceGolfTournamentTiers",
+        "summary": "Replace a golf tournament's tier definitions",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Full replace of tier definitions. 409 TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS when removing a tier that still has golfers assigned, unless reassignOrphansTo names a surviving tierKey.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tiers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "tierKey": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "tierNumber": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "defaultPickCount": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": [
+                        "tierKey",
+                        "label",
+                        "tierNumber",
+                        "defaultPickCount"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1
+                  },
+                  "reassignOrphansTo": {
+                    "type": "string",
+                    "description": "A tierKey from this same request — required when removing a tier that still has golfers assigned to it."
+                  }
+                },
+                "required": [
+                  "tiers"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tiers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "tierKey": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "tierNumber": {
+                            "type": "integer"
+                          },
+                          "defaultPickCount": {
+                            "type": "integer"
+                          },
+                          "assignments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "tierOrderIndex": {
+                                  "type": "integer",
+                                  "nullable": true
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "nullable": true
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "tierOrderIndex",
+                                "price"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "tierKey",
+                          "label",
+                          "tierNumber",
+                          "defaultPickCount",
+                          "assignments"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Ordered by tierNumber ascending."
+                    }
+                  },
+                  "required": [
+                    "tiers"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/tiers/auto-assign": {
+      "post": {
+        "operationId": "adminAutoAssignGolfTiers",
+        "summary": "Auto-assign a golf tournament's tiers",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Partitions the active field across however many SportEventGolfTier rows currently exist, tierSize golfers per tier except the last (absorbs the remainder). Writes tierAssignedSource, leaves price untouched.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "ODDS",
+                      "WORLD_RANK"
+                    ]
+                  },
+                  "tierSize": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "source"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tiers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "tierKey": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "tierNumber": {
+                            "type": "integer"
+                          },
+                          "defaultPickCount": {
+                            "type": "integer"
+                          },
+                          "assignments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "tierOrderIndex": {
+                                  "type": "integer",
+                                  "nullable": true
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "nullable": true
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "tierOrderIndex",
+                                "price"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "tierKey",
+                          "label",
+                          "tierNumber",
+                          "defaultPickCount",
+                          "assignments"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Ordered by tierNumber ascending."
+                    }
+                  },
+                  "required": [
+                    "tiers"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/tiers/assignments": {
+      "put": {
+        "operationId": "adminReplaceGolfTierAssignments",
+        "summary": "Replace a golf tournament's tier assignments",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "The drag-and-drop save. Full desired state, applied in one transaction so a dropped request never leaves a half-moved field. tierAssignedSource = MANUAL.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "assignments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "sportEventParticipantId": {
+                          "type": "string"
+                        },
+                        "tierKey": {
+                          "type": "string"
+                        },
+                        "tierOrderIndex": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "sportEventParticipantId",
+                        "tierKey",
+                        "tierOrderIndex"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "description": "Full desired state — the drag-and-drop save. Applied in one transaction so a dropped request never leaves a half-moved field."
+                  }
+                },
+                "required": [
+                  "assignments"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tiers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "tierKey": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "tierNumber": {
+                            "type": "integer"
+                          },
+                          "defaultPickCount": {
+                            "type": "integer"
+                          },
+                          "assignments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "tierOrderIndex": {
+                                  "type": "integer",
+                                  "nullable": true
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "nullable": true
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "tierOrderIndex",
+                                "price"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "tierKey",
+                          "label",
+                          "tierNumber",
+                          "defaultPickCount",
+                          "assignments"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Ordered by tierNumber ascending."
+                    }
+                  },
+                  "required": [
+                    "tiers"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "Stable machine-readable error code."
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error summary safe to show to clients."
+                        },
+                        "details": {
+                          "description": "Optional structured details for client-specific handling or diagnostics."
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Error payload object."
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Standard API error envelope."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/sports/golf/tournaments/{eventId}/prices/auto-assign": {
+      "post": {
+        "operationId": "adminAutoAssignGolfPrices",
+        "summary": "Auto-assign a golf tournament's prices",
+        "tags": [
+          "Admin Golf"
+        ],
+        "description": "Same tie-broken position ordering as tiers and odds, rescaled into the given price range — higher rank, higher price. Leaves tier assignments untouched.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "minPrice": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "maxPrice": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "minPrice",
+                  "maxPrice"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tiers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "tierKey": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "tierNumber": {
+                            "type": "integer"
+                          },
+                          "defaultPickCount": {
+                            "type": "integer"
+                          },
+                          "assignments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sportEventParticipantId": {
+                                  "type": "string"
+                                },
+                                "participantId": {
+                                  "type": "string"
+                                },
+                                "tierOrderIndex": {
+                                  "type": "integer",
+                                  "nullable": true
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "nullable": true
+                                }
+                              },
+                              "required": [
+                                "sportEventParticipantId",
+                                "participantId",
+                                "tierOrderIndex",
+                                "price"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "tierKey",
+                          "label",
+                          "tierNumber",
+                          "defaultPickCount",
+                          "assignments"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Ordered by tierNumber ascending."
+                    }
+                  },
+                  "required": [
+                    "tiers"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

@@ -6,17 +6,32 @@
  * reads that event's SportEventGolfTier + SportEventParticipantGolfValuation
  * rows — there is no second, contest-owned tier list to fall back to.
  *
- * Not yet wired to any route or the live draft room. drafts/routes.ts still
- * reads the legacy SportEventParticipantValuation table (plans/124 §4.5/§4.6b)
- * until that rewiring lands in a later slice.
+ * getEffectiveTiersForContest/getEffectiveTiersForSportEvent are the one
+ * shared path every reader of a golfer's tier/price now goes through —
+ * drafts/routes.ts, the admin event browser, and the contest-entry email
+ * summary all flatten this same tier-grouped result rather than reading
+ * SportEventParticipant.valuations (the legacy table, dropped per plans/124
+ * §4.6b) directly.
  */
 
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { GolfTierSource, GolfValuationSource } from '@poolmaster/shared/domain';
+import { deriveGolfPrices } from './golf-seeding-algorithm';
 
 export const DEFAULT_TIER_COUNT = 6;
 export const DEFAULT_TIER_SIZE = 10;
+
+export class GolfTierError extends Error {
+  constructor(
+    message: string,
+    readonly code: string,
+    readonly statusCode: number,
+  ) {
+    super(message);
+    this.name = 'GolfTierError';
+  }
+}
 
 export interface GolfTierRow {
   id: string;
@@ -30,10 +45,23 @@ export interface GolfTierParticipantRow {
   sportEventParticipantId: string;
   participantId: string;
   tierOrderIndex: number | null;
+  price: number | null;
 }
 
 export interface GolfTierGroup extends GolfTierRow {
   participants: GolfTierParticipantRow[];
+}
+
+/** One golfer's effective tier/price, flattened out of a GolfTierGroup[] — the shape every non-tier-editor reader actually needs. */
+export interface GolfParticipantValuationRow {
+  sportEventParticipantId: string;
+  participantId: string;
+  tierId: string;
+  tierKey: string;
+  tierLabel: string;
+  tierNumber: number;
+  tierOrderIndex: number | null;
+  price: number | null;
 }
 
 interface TierCandidate {
@@ -118,8 +146,19 @@ export class GolfTierService {
         sportEventParticipantId: valuation.sportEventParticipantId,
         participantId: valuation.sportEventParticipant.participantId,
         tierOrderIndex: valuation.tierOrderIndex,
+        price: valuation.price === null ? null : Number(valuation.price),
       })),
     }));
+  }
+
+  /** Flattened, per-golfer view of getEffectiveTiersForContest — the shape drafts/routes.ts, the admin event browser, and email summaries actually need. */
+  async getEffectiveValuationsForContest(contestId: string): Promise<GolfParticipantValuationRow[]> {
+    return flattenTierGroups(await this.getEffectiveTiersForContest(contestId));
+  }
+
+  /** Flattened, per-golfer view of getEffectiveTiersForSportEvent. */
+  async getEffectiveValuationsForSportEvent(sportEventId: string): Promise<GolfParticipantValuationRow[]> {
+    return flattenTierGroups(await this.getEffectiveTiersForSportEvent(sportEventId));
   }
 
   /**
@@ -195,6 +234,226 @@ export class GolfTierService {
 
     return this.getEffectiveTiersForSportEvent(input.sportEventId);
   }
+
+  /**
+   * Full replace of tier definitions. Rejects a change that would orphan
+   * assignments (a removed tierKey with valuation rows still pointing at it)
+   * unless `reassignOrphansTo` names a tierKey present in the new list.
+   */
+  async replaceGolfTournamentTiers(input: {
+    sportEventId: string;
+    tiers: Array<{ tierKey: string; label: string; tierNumber: number; defaultPickCount: number }>;
+    reassignOrphansTo?: string;
+  }): Promise<GolfTierGroup[]> {
+    const existing = await this.prisma.sportEventGolfTier.findMany({
+      where: { sportEventId: input.sportEventId },
+      include: { valuations: { select: { id: true } } },
+    });
+    const newTierKeys = new Set(input.tiers.map((tier) => tier.tierKey));
+    if (input.reassignOrphansTo && !newTierKeys.has(input.reassignOrphansTo)) {
+      throw new GolfTierError(
+        `reassignOrphansTo tier "${input.reassignOrphansTo}" is not present in the new tier list.`,
+        'REASSIGN_TARGET_TIER_NOT_FOUND',
+        422,
+      );
+    }
+    const removedTiers = existing.filter((tier) => !newTierKeys.has(tier.tierKey));
+    const orphanedCount = removedTiers.reduce((sum, tier) => sum + tier.valuations.length, 0);
+    if (orphanedCount > 0 && !input.reassignOrphansTo) {
+      throw new GolfTierError(
+        `Removing tier(s) ${removedTiers.map((tier) => tier.tierKey).join(', ')} would orphan ${orphanedCount} assignment(s). Supply reassignOrphansTo to reassign them first.`,
+        'TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS',
+        409,
+      );
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      // Phase 1: move every currently-existing tier's tierNumber out of the
+      // way so the (sportEventId, tierNumber) unique index never collides
+      // while final numbers are written in phase 2 (two tiers swapping order).
+      for (const tier of existing) {
+        await tx.sportEventGolfTier.update({
+          where: { id: tier.id },
+          data: { tierNumber: -(tier.tierNumber + 1) },
+        });
+      }
+      // Phase 2: upsert every tier in the new list to its final shape —
+      // every survivor and every brand-new tierKey now has a real row before
+      // phase 3 needs to reassign orphaned valuations onto one of them.
+      for (const tierInput of input.tiers) {
+        await tx.sportEventGolfTier.upsert({
+          where: { sportEventId_tierKey: { sportEventId: input.sportEventId, tierKey: tierInput.tierKey } },
+          create: { sportEventId: input.sportEventId, ...tierInput },
+          update: {
+            label: tierInput.label,
+            tierNumber: tierInput.tierNumber,
+            defaultPickCount: tierInput.defaultPickCount,
+          },
+        });
+      }
+      // Phase 3: reassign valuations off any tier being removed, onto the
+      // requested target, before that tier is deleted.
+      if (removedTiers.length > 0 && input.reassignOrphansTo) {
+        const target = await tx.sportEventGolfTier.findUniqueOrThrow({
+          where: { sportEventId_tierKey: { sportEventId: input.sportEventId, tierKey: input.reassignOrphansTo } },
+        });
+        await tx.sportEventParticipantGolfValuation.updateMany({
+          where: { sportEventGolfTierId: { in: removedTiers.map((tier) => tier.id) } },
+          data: { sportEventGolfTierId: target.id, tierOrderIndex: null },
+        });
+      }
+      // Phase 4: delete tiers no longer in the new set (ON DELETE SET NULL
+      // safety-nets any valuation phase 3 didn't reach).
+      if (removedTiers.length > 0) {
+        await tx.sportEventGolfTier.deleteMany({
+          where: { id: { in: removedTiers.map((tier) => tier.id) } },
+        });
+      }
+    });
+
+    this.logger?.info({
+      sportEventId: input.sportEventId,
+      tierCount: input.tiers.length,
+      removedTierCount: removedTiers.length,
+      reassignedCount: orphanedCount,
+    }, 'Replaced golf tournament tier definitions');
+
+    return this.getEffectiveTiersForSportEvent(input.sportEventId);
+  }
+
+  /**
+   * The drag-and-drop save: full desired state, applied in one transaction
+   * so a dropped request never leaves a half-moved field. tierAssignedSource
+   * is always MANUAL here — auto-assignment is autoAssignGolfTiers' job.
+   */
+  async replaceGolfTierAssignments(input: {
+    sportEventId: string;
+    assignments: Array<{ sportEventParticipantId: string; tierKey: string; tierOrderIndex: number }>;
+  }): Promise<GolfTierGroup[]> {
+    const tiers = await this.prisma.sportEventGolfTier.findMany({
+      where: { sportEventId: input.sportEventId },
+      select: { id: true, tierKey: true },
+    });
+    const tierIdByKey = new Map(tiers.map((tier) => [tier.tierKey, tier.id]));
+    const unknownTierKeys = Array.from(new Set(
+      input.assignments.map((assignment) => assignment.tierKey).filter((tierKey) => !tierIdByKey.has(tierKey)),
+    ));
+    if (unknownTierKeys.length > 0) {
+      throw new GolfTierError(`Unknown tier key(s): ${unknownTierKeys.join(', ')}.`, 'UNKNOWN_TIER_KEY', 422);
+    }
+
+    const participantIds = input.assignments.map((assignment) => assignment.sportEventParticipantId);
+    const owned = await this.prisma.sportEventParticipant.findMany({
+      where: { id: { in: participantIds }, sportEventId: input.sportEventId },
+      select: { id: true },
+    });
+    const ownedIds = new Set(owned.map((participant) => participant.id));
+    const unowned = participantIds.filter((id) => !ownedIds.has(id));
+    if (unowned.length > 0) {
+      throw new GolfTierError(
+        `Field entr${unowned.length === 1 ? 'y' : 'ies'} not found on sport event ${input.sportEventId}: ${unowned.join(', ')}.`,
+        'FIELD_ENTRY_NOT_FOUND',
+        404,
+      );
+    }
+
+    await this.prisma.$transaction(
+      input.assignments.map((assignment) => {
+        const tierId = tierIdByKey.get(assignment.tierKey) as string;
+        return this.prisma.sportEventParticipantGolfValuation.upsert({
+          where: { sportEventParticipantId: assignment.sportEventParticipantId },
+          create: {
+            sportEventParticipantId: assignment.sportEventParticipantId,
+            sportEventGolfTierId: tierId,
+            tierOrderIndex: assignment.tierOrderIndex,
+            tierAssignedSource: GolfValuationSource.MANUAL,
+          },
+          update: {
+            sportEventGolfTierId: tierId,
+            tierOrderIndex: assignment.tierOrderIndex,
+            tierAssignedSource: GolfValuationSource.MANUAL,
+          },
+        });
+      }),
+    );
+
+    this.logger?.info({
+      sportEventId: input.sportEventId,
+      assignedCount: input.assignments.length,
+    }, 'Replaced golf tier assignments via manual drag-and-drop save');
+
+    return this.getEffectiveTiersForSportEvent(input.sportEventId);
+  }
+
+  /**
+   * A separate, later action from field-seeding (plans/124 §4.7a) — uses the
+   * field's already-assigned seedNumber as position, not a fresh sort, so
+   * price ordering follows the same tie-break that already happened once at
+   * seed time. Leaves tier assignments untouched.
+   */
+  async autoAssignGolfPrices(input: {
+    sportEventId: string;
+    minPrice: number;
+    maxPrice: number;
+    random?: () => number;
+  }): Promise<GolfParticipantValuationRow[]> {
+    const field = await this.prisma.sportEventParticipant.findMany({
+      where: { sportEventId: input.sportEventId, isActive: true, seedNumber: { not: null } },
+      select: { id: true, seedNumber: true },
+    });
+    if (field.length === 0) {
+      this.logger?.warn({ sportEventId: input.sportEventId }, 'Cannot auto-assign golf prices — no seeded field participants');
+      return [];
+    }
+
+    const priced = deriveGolfPrices(
+      field.map((participant) => ({ participantId: participant.id, seedNumber: participant.seedNumber as number })),
+      input.minPrice,
+      input.maxPrice,
+      input.random,
+    );
+
+    await this.prisma.$transaction(
+      priced.map((entry) =>
+        this.prisma.sportEventParticipantGolfValuation.upsert({
+          where: { sportEventParticipantId: entry.participantId },
+          create: {
+            sportEventParticipantId: entry.participantId,
+            price: entry.price,
+            priceAssignedSource: GolfValuationSource.AUTO_ODDS,
+          },
+          update: {
+            price: entry.price,
+            priceAssignedSource: GolfValuationSource.AUTO_ODDS,
+          },
+        }),
+      ),
+    );
+
+    this.logger?.info({
+      sportEventId: input.sportEventId,
+      minPrice: input.minPrice,
+      maxPrice: input.maxPrice,
+      pricedCount: priced.length,
+    }, 'Auto-assigned golf prices');
+
+    return this.getEffectiveValuationsForSportEvent(input.sportEventId);
+  }
+}
+
+function flattenTierGroups(tiers: GolfTierGroup[]): GolfParticipantValuationRow[] {
+  return tiers.flatMap((tier) =>
+    tier.participants.map((participant) => ({
+      sportEventParticipantId: participant.sportEventParticipantId,
+      participantId: participant.participantId,
+      tierId: tier.id,
+      tierKey: tier.tierKey,
+      tierLabel: tier.label,
+      tierNumber: tier.tierNumber,
+      tierOrderIndex: participant.tierOrderIndex,
+      price: participant.price,
+    })),
+  );
 }
 
 function toGolfTierRow(tier: {

@@ -7,6 +7,8 @@
 import type { FastifyInstance } from 'fastify';
 import {
   AdminAddGolfLeagueRosterEntryRequestSchema,
+  AdminAutoAssignGolfPricesRequestSchema,
+  AdminAutoAssignGolfTiersRequestSchema,
   AdminBulkAddGolfFieldEntriesRequestSchema,
   AdminBulkAddGolfFieldEntriesResponseSchema,
   AdminCreateGolfLeagueRequestSchema,
@@ -30,6 +32,9 @@ import {
   AdminGolfTournamentListResponseSchema,
   AdminGolfTournamentParamsSchema,
   AdminGolfTournamentRoundsResponseSchema,
+  AdminGolfTournamentTiersResponseSchema,
+  AdminReplaceGolfTierAssignmentsRequestSchema,
+  AdminReplaceGolfTournamentTiersRequestSchema,
   AdminSeedGolfTournamentFieldResponseSchema,
   AdminSetCurrentGolfSeasonResponseSchema,
   AdminTransitionGolfTournamentRequestSchema,
@@ -54,6 +59,7 @@ import type { SeasonService } from '../../sport-catalog/season-service';
 import type { GolfRoundScheduleService } from '../../golf/golf-round-schedule-service';
 import type { GolfTournamentService } from '../../golf/golf-tournament-service';
 import type { GolfFieldService } from '../../golf/golf-field-service';
+import type { GolfTierService } from '../../golf/golf-tier-service';
 import type { EventLifecycleService } from '../../events/event-lifecycle-service';
 import { createGolfAdminHandlers } from './handler';
 
@@ -75,6 +81,7 @@ export interface GolfAdminRoutesOptions {
   golfTournamentService: GolfTournamentService;
   eventLifecycleService: EventLifecycleService;
   golfFieldService: GolfFieldService;
+  golfTierService: GolfTierService;
 }
 
 export async function golfAdminRoutes(
@@ -88,6 +95,7 @@ export async function golfAdminRoutes(
     opts.golfTournamentService,
     opts.eventLifecycleService,
     opts.golfFieldService,
+    opts.golfTierService,
   );
 
   fastify.get('/leagues', {
@@ -440,5 +448,69 @@ export async function golfAdminRoutes(
       response: withGolfErrorResponses({ 204: { type: 'null' } }, [404, 409]),
     },
     handler: handlers.removeFieldEntry,
+  });
+
+  fastify.get('/tournaments/:eventId/tiers', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Get a golf tournament\'s tier definitions and assignments',
+      description: 'Tier definitions + ordered assignments. Each row includes price alongside tier — one response, both valuations.',
+      operationId: 'adminGetGolfTournamentTiers',
+      params: zodToJsonSchema(AdminGolfTournamentFieldParamsSchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGolfTournamentTiersResponseSchema) }),
+    },
+    handler: handlers.getTournamentTiers,
+  });
+
+  fastify.put('/tournaments/:eventId/tiers', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Replace a golf tournament\'s tier definitions',
+      description: 'Full replace of tier definitions. 409 TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS when removing a tier that still has golfers assigned, unless reassignOrphansTo names a surviving tierKey.',
+      operationId: 'adminReplaceGolfTournamentTiers',
+      params: zodToJsonSchema(AdminGolfTournamentFieldParamsSchema),
+      body: zodToJsonSchema(AdminReplaceGolfTournamentTiersRequestSchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGolfTournamentTiersResponseSchema) }, [409, 422]),
+    },
+    handler: handlers.replaceTournamentTiers,
+  });
+
+  fastify.post('/tournaments/:eventId/tiers/auto-assign', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Auto-assign a golf tournament\'s tiers',
+      description: 'Partitions the active field across however many SportEventGolfTier rows currently exist, tierSize golfers per tier except the last (absorbs the remainder). Writes tierAssignedSource, leaves price untouched.',
+      operationId: 'adminAutoAssignGolfTiers',
+      params: zodToJsonSchema(AdminGolfTournamentFieldParamsSchema),
+      body: zodToJsonSchema(AdminAutoAssignGolfTiersRequestSchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGolfTournamentTiersResponseSchema) }),
+    },
+    handler: handlers.autoAssignTournamentTiers,
+  });
+
+  fastify.put('/tournaments/:eventId/tiers/assignments', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Replace a golf tournament\'s tier assignments',
+      description: 'The drag-and-drop save. Full desired state, applied in one transaction so a dropped request never leaves a half-moved field. tierAssignedSource = MANUAL.',
+      operationId: 'adminReplaceGolfTierAssignments',
+      params: zodToJsonSchema(AdminGolfTournamentFieldParamsSchema),
+      body: zodToJsonSchema(AdminReplaceGolfTierAssignmentsRequestSchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGolfTournamentTiersResponseSchema) }, [404, 422]),
+    },
+    handler: handlers.replaceTournamentTierAssignments,
+  });
+
+  fastify.post('/tournaments/:eventId/prices/auto-assign', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Auto-assign a golf tournament\'s prices',
+      description: 'Same tie-broken position ordering as tiers and odds, rescaled into the given price range — higher rank, higher price. Leaves tier assignments untouched.',
+      operationId: 'adminAutoAssignGolfPrices',
+      params: zodToJsonSchema(AdminGolfTournamentFieldParamsSchema),
+      body: zodToJsonSchema(AdminAutoAssignGolfPricesRequestSchema),
+      response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminGolfTournamentTiersResponseSchema) }),
+    },
+    handler: handlers.autoAssignTournamentPrices,
   });
 }

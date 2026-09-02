@@ -1605,6 +1605,179 @@ describe('ContestService', () => {
       expect(sentMessage.html).toContain('Prime Time Commissioner');
     });
 
+    it('pool-master-piv falls back to golf-tier-service for the email tier grouping when the contest has no typed tierConfig', async () => {
+      const contest = buildContest({
+        id: 'contest-1',
+        leagueId: 'league-1',
+        status: ContestStatus.OPEN,
+      });
+      const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
+      const entryRepo = createMockEntryRepo({
+        findBySquad: jest.fn().mockResolvedValue([
+          {
+            id: 'entry-1',
+            contestId: 'contest-1',
+            squadId: 'squad-1',
+            entryNumber: 1,
+            name: "Derek's Squad Entry 1",
+            status: 'ACTIVE',
+            tiebreakerValue: null,
+            isEliminated: false,
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          },
+        ]),
+      });
+      const contestEntryFindUnique = jest.fn()
+        .mockResolvedValueOnce({
+          id: 'entry-1',
+          contestId: 'contest-1',
+          squadId: 'squad-1',
+          entryNumber: 1,
+          name: "Derek's Squad Entry 1",
+          status: 'ACTIVE',
+          tiebreakerValue: 271,
+          isEliminated: false,
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-02'),
+          squad: { id: 'squad-1', name: "Derek's Squad" },
+        })
+        .mockResolvedValueOnce({
+          id: 'entry-1',
+          contestId: 'contest-1',
+          squadId: 'squad-1',
+          entryNumber: 1,
+          name: "Derek's Squad Entry 1",
+          status: 'ACTIVE',
+          tiebreakerValue: 271,
+          updatedAt: new Date('2026-01-02T12:00:00.000Z'),
+          squad: { name: "Derek's Squad" },
+          contest: {
+            id: 'contest-1',
+            leagueId: 'league-1',
+            name: 'Masters Pick 2',
+            sportEventId: 'event-1',
+            configuration: {
+              tierConfig: null,
+              rosterSize: 2,
+              pickCount: null,
+              rounds: null,
+            },
+            league: {
+              name: 'Mathworks',
+              leagueCode: 'MATHWORKS',
+            },
+          },
+          picks: [
+            {
+              pickedAt: new Date('2026-01-01T12:00:00.000Z'),
+              sportEventParticipant: {
+                id: 'sport-event-participant-1',
+                participant: { id: 'participant-1', name: 'Rory McIlroy' },
+              },
+            },
+            {
+              pickedAt: new Date('2026-01-01T12:01:00.000Z'),
+              sportEventParticipant: {
+                id: 'sport-event-participant-2',
+                participant: { id: 'participant-2', name: 'Tommy Fleetwood' },
+              },
+            },
+          ],
+        });
+      const prisma = createMockPrisma({
+        contestEntry: {
+          findMany: jest.fn().mockResolvedValue([]),
+          findUnique: contestEntryFindUnique,
+        },
+        contestEntryPick: {
+          count: jest.fn().mockResolvedValue(2),
+          groupBy: jest.fn().mockResolvedValue([]),
+          findMany: jest.fn().mockResolvedValue([]),
+        },
+        sportEventGolfTier: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              id: 'tier-a',
+              sportEventId: 'event-1',
+              tierKey: 'A',
+              label: 'Tier A',
+              tierNumber: 1,
+              defaultPickCount: 1,
+              valuations: [
+                {
+                  sportEventParticipantId: 'sport-event-participant-1',
+                  tierOrderIndex: 1,
+                  price: null,
+                  sportEventParticipant: { participantId: 'participant-1' },
+                },
+              ],
+            },
+            {
+              id: 'tier-b',
+              sportEventId: 'event-1',
+              tierKey: 'B',
+              label: 'Tier B',
+              tierNumber: 2,
+              defaultPickCount: 1,
+              valuations: [
+                {
+                  sportEventParticipantId: 'sport-event-participant-2',
+                  tierOrderIndex: 1,
+                  price: null,
+                  sportEventParticipant: { participantId: 'participant-2' },
+                },
+              ],
+            },
+          ]),
+        },
+        user: {
+          findUnique: jest.fn().mockResolvedValue({
+            email: 'derek@example.com',
+            firstName: 'Derek',
+            lastName: 'Dorazio',
+            username: 'derek',
+          }),
+        },
+      });
+      const mailDelivery = {
+        providerName: 'smtp' as const,
+        send: jest.fn().mockResolvedValue({ provider: 'smtp' as const, messageId: 'mail-1' }),
+      };
+      const service = new ContestService(
+        createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
+        createMockContestConfigurationRepo(),
+        createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
+        createMockLeagueRepo(),
+        createMockSquadRepo(),
+        createMockSquadMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue({
+            id: 'squad-membership-1',
+            squadId: 'squad-1',
+            leagueId: 'league-1',
+            userId: 'user-1',
+            status: SquadMembershipStatus.ACTIVE,
+            joinedAt: new Date('2026-01-01'),
+            createdAt: new Date('2026-01-01'),
+            updatedAt: new Date('2026-01-01'),
+          }),
+        }),
+        entryRepo,
+        prisma as any,
+        undefined,
+        mailDelivery,
+        'https://app.primetimecommissioner.com',
+      );
+
+      await service.updateEntry('contest-1', 'entry-1', 'user-1', {
+        tiebreakerValue: 271,
+      });
+
+      const sentMessage = mailDelivery.send.mock.calls[0][0];
+      expect(sentMessage.text).toContain('Tier A: Rory McIlroy');
+      expect(sentMessage.text).toContain('Tier B: Tommy Fleetwood');
+    });
+
     it('pool-master-95b skips confirmation email until roster and tiebreaker are complete', async () => {
       const contest = buildContest({
         id: 'contest-1',

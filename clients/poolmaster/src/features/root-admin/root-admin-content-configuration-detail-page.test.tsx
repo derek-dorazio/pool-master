@@ -57,16 +57,6 @@ function buildTemplate() {
       mode: 'GOLF_TIERED',
       rosterSize: 6,
       countedScores: 4,
-      tierSource: 'ODDS',
-      tierGeneration: { defaultTierSize: 10 },
-      tiers: [
-        { tierKey: 'A', label: 'Tier A', pickCount: 1, startPosition: 1, endPosition: 10 },
-        { tierKey: 'B', label: 'Tier B', pickCount: 1, startPosition: 11, endPosition: 20 },
-      ],
-      cutRule: { type: 'FIXED_SCORE', fixedScore: 80 },
-      playoffHandling: 'EXCLUDE_PLAYOFF_HOLES',
-      displayScoring: 'TO_PAR',
-      tiebreaker: { type: 'PREDICT_WINNING_SCORE' },
     },
   };
 }
@@ -112,8 +102,9 @@ describe('RootAdminContentConfigurationDetailPage', () => {
     mockLogger.info.mockReset();
   });
 
-  // pool-master-dxd.43 — tier template edits derive roster size from tier count and picks per tier.
-  it('loads a template and submits generic tier updates from the dedicated page', async () => {
+  // pool-master-piv — tier structure/price are event-owned now; the template only edits
+  // rosterSize/countedScores.
+  it('loads a template and submits roster size / counted scores updates from the dedicated page', async () => {
     seedTemplates();
 
     renderPage();
@@ -125,11 +116,11 @@ describe('RootAdminContentConfigurationDetailPage', () => {
     fireEvent.change(screen.getByTestId('root-admin-content-config-name'), {
       target: { value: 'Updated template name' },
     });
-    fireEvent.change(screen.getByTestId('root-admin-content-config-tier-count'), {
-      target: { value: '3' },
+    fireEvent.change(screen.getByTestId('root-admin-content-config-roster-size'), {
+      target: { value: '12' },
     });
-    fireEvent.change(screen.getByTestId('root-admin-content-config-picks-per-tier'), {
-      target: { value: '2' },
+    fireEvent.change(screen.getByTestId('root-admin-content-config-counted-scores'), {
+      target: { value: '8' },
     });
 
     fireEvent.click(screen.getByTestId('root-admin-content-config-save'));
@@ -142,12 +133,8 @@ describe('RootAdminContentConfigurationDetailPage', () => {
         body: expect.objectContaining({
           name: 'Updated template name',
           configuration: expect.objectContaining({
-            rosterSize: 6,
-            tiers: expect.arrayContaining([
-              expect.objectContaining({ tierKey: 'A', pickCount: 2, endPosition: 10 }),
-              expect.objectContaining({ tierKey: 'B', pickCount: 2, endPosition: 20 }),
-              expect.objectContaining({ tierKey: 'C', pickCount: 2, endPosition: 30 }),
-            ]),
+            rosterSize: 12,
+            countedScores: 8,
           }),
         }),
       });

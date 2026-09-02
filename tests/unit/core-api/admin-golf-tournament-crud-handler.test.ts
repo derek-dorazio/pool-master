@@ -65,6 +65,7 @@ function buildHandlers(services: Record<string, unknown> = {}) {
     golfTournamentService as any,
     eventLifecycleService as any,
     {} as any,
+    {} as any,
   );
   return { handlers, golfTournamentService, eventLifecycleService };
 }

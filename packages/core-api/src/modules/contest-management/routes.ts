@@ -19,18 +19,19 @@ import {
   PrismaLeagueMembershipRepository,
   PrismaParticipantContestScoringRuleRepository,
   PrismaSportEventParticipantRepository,
-  PrismaSportEventParticipantValuationRepository,
 } from '../../adapters';
 import { requireCommissioner } from '../leagues/permissions';
 import { createContestManagementHandlers } from './handler';
 import { ContestManagementService } from './service';
 import { getAppPrisma } from '../../core/prisma-context';
+import { GolfTierService } from '../golf/golf-tier-service';
 
 export async function contestManagementModule(
   fastify: FastifyInstance,
 ): Promise<void> {
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
+  const golfTierService = new GolfTierService(prisma, fastify.log);
   const contestManagementService = new ContestManagementService(
     new PrismaContestCoreRepository(prisma),
     new PrismaContestConfigTemplateRepository(prisma),
@@ -39,7 +40,7 @@ export async function contestManagementModule(
     new PrismaContestEntryAggregationRuleRepository(prisma),
     new PrismaContestPrizeDefinitionRepository(prisma),
     new PrismaSportEventParticipantRepository(prisma),
-    new PrismaSportEventParticipantValuationRepository(prisma),
+    golfTierService,
     fastify.log,
     {
       findById: async (sportEventId) => {

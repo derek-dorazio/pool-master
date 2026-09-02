@@ -54,6 +54,7 @@ import {
   type ContestEntryCompletedTierSelection,
   type MailDeliveryProvider,
 } from '../email';
+import { GolfTierService } from '../golf/golf-tier-service';
 export interface CreateContestInput {
   leagueId: string;
   createdBy: string;
@@ -91,6 +92,7 @@ interface ContestEntryReceiptData {
     id: string;
     leagueId: string;
     name: string;
+    sportEventId: string | null;
     configuration: {
       tierConfig: unknown;
       rosterSize: number | null;
@@ -110,10 +112,6 @@ interface ContestEntryReceiptData {
         id: string;
         name: string;
       };
-      valuations: Array<{
-        tier: string | null;
-        orderIndex: number | null;
-      }>;
     };
   }>;
 }
@@ -835,7 +833,7 @@ export class ContestService {
       ),
       submittedAt: entry.updatedAt,
       tiebreaker: formatRelativeToPar(entry.tiebreakerValue),
-      tiers: buildEntryTierSelections(entry),
+      tiers: await this.buildEntryTierSelectionsForEmail(entry),
     });
 
     try {
@@ -870,6 +868,27 @@ export class ContestService {
         },
       }, 'Failed to deliver contest entry confirmation email');
     }
+  }
+
+  /**
+   * Resolves each pick's tier label through golf-tier-service (plans/124
+   * §4.6b) rather than the dropped legacy SportEventParticipant.valuations
+   * table — the one remaining fallback path for entries whose contest has
+   * no typed tierConfig (only the legacy contests/routes.ts create path
+   * ever populates tierConfig).
+   */
+  private async buildEntryTierSelectionsForEmail(
+    entry: ContestEntryReceiptData,
+  ): Promise<ContestEntryCompletedTierSelection[]> {
+    const tierLabelBySportEventParticipantId = new Map<string, string>();
+    if (entry.contest.sportEventId) {
+      const golfTierService = new GolfTierService(this.requirePrisma(), this.logger as FastifyBaseLogger);
+      const valuations = await golfTierService.getEffectiveValuationsForSportEvent(entry.contest.sportEventId);
+      for (const valuation of valuations) {
+        tierLabelBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.tierLabel);
+      }
+    }
+    return buildEntryTierSelections(entry, tierLabelBySportEventParticipantId);
   }
 
   private async loadContestEntryReceiptData(
@@ -907,14 +926,6 @@ export class ContestService {
                   select: {
                     id: true,
                     name: true,
-                  },
-                },
-                valuations: {
-                  orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-                  take: 1,
-                  select: {
-                    tier: true,
-                    orderIndex: true,
                   },
                 },
               },
@@ -1404,6 +1415,7 @@ function getRequiredSelectionCount(
 
 function buildEntryTierSelections(
   entry: ContestEntryReceiptData,
+  tierLabelBySportEventParticipantId: Map<string, string>,
 ): ContestEntryCompletedTierSelection[] {
   const tierDefinitions = readEmailTierDefinitions(entry.contest.configuration?.tierConfig);
   if (tierDefinitions.length > 0) {
@@ -1449,7 +1461,7 @@ function buildEntryTierSelections(
 
   const groups = new Map<string, string[]>();
   for (const pick of entry.picks) {
-    const tierName = pick.sportEventParticipant.valuations[0]?.tier ?? 'Selections';
+    const tierName = tierLabelBySportEventParticipantId.get(pick.sportEventParticipant.id) ?? 'Selections';
     const participants = groups.get(tierName) ?? [];
     participants.push(pick.sportEventParticipant.participant.name);
     groups.set(tierName, participants);

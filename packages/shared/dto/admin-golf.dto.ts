@@ -4,7 +4,7 @@
  * sport-catalog module scoped to Sport.GOLF.
  */
 import { z } from 'zod';
-import { GolfParticipantInactiveReason, SportEventStatus, SportEventSyncScope } from '@poolmaster/shared/domain';
+import { GolfParticipantInactiveReason, GolfTierSource, SportEventStatus, SportEventSyncScope } from '@poolmaster/shared/domain';
 import { DateTimeSchema } from './common.dto';
 
 // --- Params ---
@@ -364,3 +364,63 @@ export const AdminGolfFieldEntryParamsSchema = z.object({
   sportEventParticipantId: z.string(),
 });
 export type AdminGolfFieldEntryParams = z.infer<typeof AdminGolfFieldEntryParamsSchema>;
+
+// --- Tiers and price (plans/124 §4.5/§4.7a/§5.2) ---
+
+export const AdminGolfTierDtoSchema = z.object({
+  tierKey: z.string(),
+  label: z.string(),
+  tierNumber: z.number().int(),
+  defaultPickCount: z.number().int(),
+});
+export type AdminGolfTierDto = z.infer<typeof AdminGolfTierDtoSchema>;
+
+export const AdminGolfTierAssignmentDtoSchema = z.object({
+  sportEventParticipantId: z.string(),
+  participantId: z.string(),
+  tierOrderIndex: z.number().int().nullable(),
+  price: z.number().nullable(),
+});
+export type AdminGolfTierAssignmentDto = z.infer<typeof AdminGolfTierAssignmentDtoSchema>;
+
+export const AdminGolfTierGroupDtoSchema = AdminGolfTierDtoSchema.extend({
+  assignments: z.array(AdminGolfTierAssignmentDtoSchema),
+});
+export type AdminGolfTierGroupDto = z.infer<typeof AdminGolfTierGroupDtoSchema>;
+
+export const AdminGolfTournamentTiersResponseSchema = z.object({
+  tiers: z.array(AdminGolfTierGroupDtoSchema).describe('Ordered by tierNumber ascending.'),
+});
+export type AdminGolfTournamentTiersResponse = z.infer<typeof AdminGolfTournamentTiersResponseSchema>;
+
+export const AdminReplaceGolfTournamentTiersRequestSchema = z.object({
+  tiers: z.array(z.object({
+    tierKey: z.string().min(1),
+    label: z.string().min(1),
+    tierNumber: z.number().int().min(1),
+    defaultPickCount: z.number().int().min(1),
+  })).min(1),
+  reassignOrphansTo: z.string().optional().describe('A tierKey from this same request — required when removing a tier that still has golfers assigned to it.'),
+});
+export type AdminReplaceGolfTournamentTiersRequest = z.infer<typeof AdminReplaceGolfTournamentTiersRequestSchema>;
+
+export const AdminAutoAssignGolfTiersRequestSchema = z.object({
+  source: z.nativeEnum(GolfTierSource),
+  tierSize: z.number().int().min(1).optional(),
+});
+export type AdminAutoAssignGolfTiersRequest = z.infer<typeof AdminAutoAssignGolfTiersRequestSchema>;
+
+export const AdminReplaceGolfTierAssignmentsRequestSchema = z.object({
+  assignments: z.array(z.object({
+    sportEventParticipantId: z.string(),
+    tierKey: z.string(),
+    tierOrderIndex: z.number().int(),
+  })).min(1).describe('Full desired state — the drag-and-drop save. Applied in one transaction so a dropped request never leaves a half-moved field.'),
+});
+export type AdminReplaceGolfTierAssignmentsRequest = z.infer<typeof AdminReplaceGolfTierAssignmentsRequestSchema>;
+
+export const AdminAutoAssignGolfPricesRequestSchema = z.object({
+  minPrice: z.number().min(0),
+  maxPrice: z.number().min(0),
+});
+export type AdminAutoAssignGolfPricesRequest = z.infer<typeof AdminAutoAssignGolfPricesRequestSchema>;

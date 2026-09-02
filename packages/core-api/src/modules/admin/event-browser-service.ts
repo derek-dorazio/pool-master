@@ -10,12 +10,17 @@ import {
   mapAdminEventParticipantToDto,
   mapAdminEventSummaryToDto,
 } from '../../mappers';
+import { GolfTierService } from '../golf/golf-tier-service';
 
 export class AdminEventBrowserService {
+  private readonly golfTierService: GolfTierService;
+
   constructor(
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
-  ) {}
+  ) {
+    this.golfTierService = new GolfTierService(prisma, logger);
+  }
 
   async listEvents(query: AdminEventListQuery): Promise<AdminEventSummaryDto[]> {
     const limit = query.limit ?? 100;
@@ -104,17 +109,6 @@ export class AdminEventBrowserService {
             nationality: true,
           },
         },
-        valuations: {
-          orderBy: [
-            { orderIndex: { sort: 'asc', nulls: 'last' } },
-            { tier: 'asc' },
-          ],
-          select: {
-            price: true,
-            tier: true,
-            orderIndex: true,
-          },
-        },
         golfRounds: {
           orderBy: { sportEventRound: { roundNumber: 'asc' } },
           select: {
@@ -143,9 +137,28 @@ export class AdminEventBrowserService {
       },
     });
 
+    const valuations = await this.golfTierService.getEffectiveValuationsForSportEvent(eventId);
+    const valuationBySportEventParticipantId = new Map(
+      valuations.map((valuation) => [valuation.sportEventParticipantId, valuation]),
+    );
+
     const response = {
       event: mapAdminEventSummaryToDto(event),
-      participants: rows.map(mapAdminEventParticipantToDto),
+      participants: rows.map((row) => {
+        const valuation = valuationBySportEventParticipantId.get(row.id);
+        return mapAdminEventParticipantToDto({
+          ...row,
+          ...(valuation
+            ? {
+                golfValuation: {
+                  price: valuation.price,
+                  tierLabel: valuation.tierLabel,
+                  tierOrderIndex: valuation.tierOrderIndex,
+                },
+              }
+            : {}),
+        });
+      }),
     };
 
     this.logger?.info({

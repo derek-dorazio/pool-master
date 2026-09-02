@@ -7,7 +7,6 @@ import type {
   ContestPrizeDefinitionRepository,
   ParticipantContestScoringRuleRepository,
   SportEventParticipantRepository,
-  SportEventParticipantValuationRepository,
 } from '@poolmaster/shared/db';
 import type {
   ContestConfigTemplate,
@@ -18,7 +17,6 @@ import type {
   GolfParticipantInactiveReason,
   ParticipantContestScoringRule,
   SportEventParticipant,
-  SportEventParticipantValuation,
 } from '@poolmaster/shared/domain';
 
 export class PrismaContestCoreRepository implements ContestCoreRepository {
@@ -137,64 +135,6 @@ export class PrismaSportEventParticipantRepository
   }
 }
 
-export class PrismaSportEventParticipantValuationRepository
-  implements SportEventParticipantValuationRepository
-{
-  constructor(private readonly prisma: PrismaClient) {}
-
-  async findById(id: string): Promise<SportEventParticipantValuation | null> {
-    const row = await this.prisma.sportEventParticipantValuation.findUnique({
-      where: { id },
-    });
-    return row ? mapSportEventParticipantValuation(row) : null;
-  }
-
-  async findBySportEventParticipant(
-    sportEventParticipantId: string,
-  ): Promise<SportEventParticipantValuation[]> {
-    const rows = await this.prisma.sportEventParticipantValuation.findMany({
-      where: { sportEventParticipantId },
-      orderBy: { valuationSource: 'asc' },
-    });
-    return rows.map(mapSportEventParticipantValuation);
-  }
-
-  async create(
-    valuation: Omit<
-      SportEventParticipantValuation,
-      'id' | 'createdAt' | 'updatedAt'
-    >,
-  ): Promise<SportEventParticipantValuation> {
-    const row = await this.prisma.sportEventParticipantValuation.create({
-      data: {
-        sportEventParticipantId: valuation.sportEventParticipantId,
-        price: valuation.price,
-        tier: valuation.tier,
-        orderIndex: valuation.orderIndex,
-        valuationSource: valuation.valuationSource,
-      },
-    });
-    return mapSportEventParticipantValuation(row);
-  }
-
-  async update(
-    id: string,
-    updates: Partial<SportEventParticipantValuation>,
-  ): Promise<SportEventParticipantValuation> {
-    const row = await this.prisma.sportEventParticipantValuation.update({
-      where: { id },
-      data: {
-        ...(updates.price !== undefined && { price: updates.price }),
-        ...(updates.tier !== undefined && { tier: updates.tier }),
-        ...(updates.orderIndex !== undefined && { orderIndex: updates.orderIndex }),
-        ...(updates.valuationSource !== undefined && {
-          valuationSource: updates.valuationSource,
-        }),
-      },
-    });
-    return mapSportEventParticipantValuation(row);
-  }
-}
 
 export class PrismaContestConfigurationRepository
   implements ContestConfigurationRepository
@@ -627,28 +567,6 @@ function mapSportEventParticipant(row: {
     oddsToWin: oddsToWin ?? undefined,
     seedNumber: row.seedNumber ?? undefined,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function mapSportEventParticipantValuation(row: {
-  id: string;
-  sportEventParticipantId: string;
-  price: number | null;
-  tier: string | null;
-  orderIndex: number | null;
-  valuationSource: string;
-  createdAt: Date;
-  updatedAt: Date;
-}): SportEventParticipantValuation {
-  return {
-    id: row.id,
-    sportEventParticipantId: row.sportEventParticipantId,
-    price: row.price ?? undefined,
-    tier: row.tier ?? undefined,
-    orderIndex: row.orderIndex ?? undefined,
-    valuationSource: row.valuationSource,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

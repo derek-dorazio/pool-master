@@ -2,6 +2,8 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { Sport } from '@poolmaster/shared/domain';
 import type {
   AdminAddGolfLeagueRosterEntryRequest,
+  AdminAutoAssignGolfPricesRequest,
+  AdminAutoAssignGolfTiersRequest,
   AdminBulkAddGolfFieldEntriesRequest,
   AdminCreateGolfLeagueRequest,
   AdminCreateGolfSeasonRequest,
@@ -10,6 +12,8 @@ import type {
   AdminGolfLeagueRosterUploadRequest,
   AdminGolfSeasonListQuery,
   AdminGolfTournamentListQuery,
+  AdminReplaceGolfTierAssignmentsRequest,
+  AdminReplaceGolfTournamentTiersRequest,
   AdminTransitionGolfTournamentRequest,
   AdminUpdateGolfFieldEntriesRequest,
   AdminUpdateGolfLeagueRequest,
@@ -28,6 +32,7 @@ import {
   toAdminGolfSeasonDetailDto,
   toAdminGolfSeasonDto,
   toAdminGolfSeasonSummaryDtoList,
+  toAdminGolfTierGroupDtoList,
   toAdminGolfTournamentDetailDto,
   toAdminGolfTournamentDtoList,
   toAdminGolfTournamentRoundDtoList,
@@ -44,6 +49,8 @@ import type { GolfTournamentService } from '../../golf/golf-tournament-service';
 import { GolfTournamentError } from '../../golf/golf-tournament-service';
 import type { GolfFieldService } from '../../golf/golf-field-service';
 import { GolfFieldError } from '../../golf/golf-field-service';
+import type { GolfTierService } from '../../golf/golf-tier-service';
+import { GolfTierError } from '../../golf/golf-tier-service';
 import type { EventLifecycleService } from '../../events/event-lifecycle-service';
 import { EventLifecycleError } from '../../events/event-lifecycle-service';
 import { extractRootAdminContext } from '../request-admin-context';
@@ -55,6 +62,7 @@ export function createGolfAdminHandlers(
   golfTournamentService: GolfTournamentService,
   eventLifecycleService: EventLifecycleService,
   golfFieldService: GolfFieldService,
+  golfTierService: GolfTierService,
 ) {
   return {
     listLeagues,
@@ -84,6 +92,11 @@ export function createGolfAdminHandlers(
     bulkAddFieldEntries,
     updateFieldEntries,
     removeFieldEntry,
+    getTournamentTiers,
+    replaceTournamentTiers,
+    autoAssignTournamentTiers,
+    replaceTournamentTierAssignments,
+    autoAssignTournamentPrices,
   };
 
   async function listLeagues(
@@ -414,6 +427,70 @@ export function createGolfAdminHandlers(
       return handleGolfFieldError(err, reply);
     }
   }
+
+  async function getTournamentTiers(
+    request: FastifyRequest<{ Params: { eventId: string } }>,
+    reply: FastifyReply,
+  ) {
+    const tiers = await golfTierService.getEffectiveTiersForSportEvent(request.params.eventId);
+    return reply.send({ tiers: toAdminGolfTierGroupDtoList(tiers) });
+  }
+
+  async function replaceTournamentTiers(
+    request: FastifyRequest<{ Params: { eventId: string }; Body: AdminReplaceGolfTournamentTiersRequest }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      const tiers = await golfTierService.replaceGolfTournamentTiers({
+        sportEventId: request.params.eventId,
+        tiers: request.body.tiers,
+        reassignOrphansTo: request.body.reassignOrphansTo,
+      });
+      return reply.send({ tiers: toAdminGolfTierGroupDtoList(tiers) });
+    } catch (err) {
+      return handleGolfTierError(err, reply);
+    }
+  }
+
+  async function autoAssignTournamentTiers(
+    request: FastifyRequest<{ Params: { eventId: string }; Body: AdminAutoAssignGolfTiersRequest }>,
+    reply: FastifyReply,
+  ) {
+    const tiers = await golfTierService.autoAssignGolfTiers({
+      sportEventId: request.params.eventId,
+      source: request.body.source,
+      tierSize: request.body.tierSize,
+    });
+    return reply.send({ tiers: toAdminGolfTierGroupDtoList(tiers) });
+  }
+
+  async function replaceTournamentTierAssignments(
+    request: FastifyRequest<{ Params: { eventId: string }; Body: AdminReplaceGolfTierAssignmentsRequest }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      const tiers = await golfTierService.replaceGolfTierAssignments({
+        sportEventId: request.params.eventId,
+        assignments: request.body.assignments,
+      });
+      return reply.send({ tiers: toAdminGolfTierGroupDtoList(tiers) });
+    } catch (err) {
+      return handleGolfTierError(err, reply);
+    }
+  }
+
+  async function autoAssignTournamentPrices(
+    request: FastifyRequest<{ Params: { eventId: string }; Body: AdminAutoAssignGolfPricesRequest }>,
+    reply: FastifyReply,
+  ) {
+    await golfTierService.autoAssignGolfPrices({
+      sportEventId: request.params.eventId,
+      minPrice: request.body.minPrice,
+      maxPrice: request.body.maxPrice,
+    });
+    const tiers = await golfTierService.getEffectiveTiersForSportEvent(request.params.eventId);
+    return reply.send({ tiers: toAdminGolfTierGroupDtoList(tiers) });
+  }
 }
 
 function handleSportCatalogError(err: unknown, reply: FastifyReply) {
@@ -435,6 +512,13 @@ function handleGolfTournamentError(err: unknown, reply: FastifyReply) {
 
 function handleGolfFieldError(err: unknown, reply: FastifyReply) {
   if (err instanceof GolfFieldError) {
+    return sendError(reply, err.statusCode, err.code, err.message);
+  }
+  throw err;
+}
+
+function handleGolfTierError(err: unknown, reply: FastifyReply) {
+  if (err instanceof GolfTierError) {
     return sendError(reply, err.statusCode, err.code, err.message);
   }
   throw err;

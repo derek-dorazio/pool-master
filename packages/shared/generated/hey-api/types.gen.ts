@@ -6000,59 +6000,6 @@ export type ListManagedContestTemplatesResponses = {
                  * How many golfer scores count toward the Team total.
                  */
                 countedScores: number;
-                /**
-                 * Single tier source used to generate all tiers.
-                 */
-                tierSource: 'ODDS' | 'WORLD_RANK';
-                tierGeneration: {
-                    /**
-                     * Basic mode tier size used to seed the tier list.
-                     */
-                    defaultTierSize: number;
-                };
-                /**
-                 * Persisted tier boundaries and pick counts after seeding or advanced editing.
-                 */
-                tiers: Array<{
-                    /**
-                     * Stable tier key such as A, B, or C.
-                     */
-                    tierKey: string;
-                    /**
-                     * Commissioner-facing tier label.
-                     */
-                    label: string;
-                    /**
-                     * How many golfers must be picked from the tier.
-                     */
-                    pickCount: number;
-                    /**
-                     * Starting resolved rank/odds position for the tier.
-                     */
-                    startPosition: number;
-                    /**
-                     * Ending resolved rank/odds position for the tier. Null means remainder of field.
-                     */
-                    endPosition: number;
-                }>;
-                /**
-                 * Golf cut rule for first-pass contests.
-                 */
-                cutRule: {
-                    type: 'FIXED_SCORE';
-                    /**
-                     * Fallback score assigned when a golfer misses the cut.
-                     */
-                    fixedScore: number;
-                };
-                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-                displayScoring: 'TO_PAR';
-                /**
-                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
-                 */
-                tiebreaker: {
-                    type: 'PREDICT_WINNING_SCORE';
-                };
             } | {
                 mode: 'GOLF_CATEGORY_PICKS';
                 /**
@@ -6140,59 +6087,6 @@ export type CreateManagedContestData = {
              * How many golfer scores count toward the Team total.
              */
             countedScores: number;
-            /**
-             * Single tier source used to generate all tiers.
-             */
-            tierSource: 'ODDS' | 'WORLD_RANK';
-            tierGeneration: {
-                /**
-                 * Basic mode tier size used to seed the tier list.
-                 */
-                defaultTierSize: number;
-            };
-            /**
-             * Persisted tier boundaries and pick counts after seeding or advanced editing.
-             */
-            tiers: Array<{
-                /**
-                 * Stable tier key such as A, B, or C.
-                 */
-                tierKey: string;
-                /**
-                 * Commissioner-facing tier label.
-                 */
-                label: string;
-                /**
-                 * How many golfers must be picked from the tier.
-                 */
-                pickCount: number;
-                /**
-                 * Starting resolved rank/odds position for the tier.
-                 */
-                startPosition: number;
-                /**
-                 * Ending resolved rank/odds position for the tier. Null means remainder of field.
-                 */
-                endPosition: number;
-            }>;
-            /**
-             * Golf cut rule for first-pass contests.
-             */
-            cutRule: {
-                type: 'FIXED_SCORE';
-                /**
-                 * Fallback score assigned when a golfer misses the cut.
-                 */
-                fixedScore: number;
-            };
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-            displayScoring: 'TO_PAR';
-            /**
-             * Golf tiebreaker configuration. Teams predict the winning to-par score.
-             */
-            tiebreaker: {
-                type: 'PREDICT_WINNING_SCORE';
-            };
         } | {
             mode: 'GOLF_CATEGORY_PICKS';
             /**
@@ -6274,59 +6168,6 @@ export type CreateManagedContestData = {
              * How many golfer scores count toward the Team total.
              */
             countedScores: number;
-            /**
-             * Single tier source used to generate all tiers.
-             */
-            tierSource: 'ODDS' | 'WORLD_RANK';
-            tierGeneration: {
-                /**
-                 * Basic mode tier size used to seed the tier list.
-                 */
-                defaultTierSize: number;
-            };
-            /**
-             * Persisted tier boundaries and pick counts after seeding or advanced editing.
-             */
-            tiers: Array<{
-                /**
-                 * Stable tier key such as A, B, or C.
-                 */
-                tierKey: string;
-                /**
-                 * Commissioner-facing tier label.
-                 */
-                label: string;
-                /**
-                 * How many golfers must be picked from the tier.
-                 */
-                pickCount: number;
-                /**
-                 * Starting resolved rank/odds position for the tier.
-                 */
-                startPosition: number;
-                /**
-                 * Ending resolved rank/odds position for the tier. Null means remainder of field.
-                 */
-                endPosition: number;
-            }>;
-            /**
-             * Golf cut rule for first-pass contests.
-             */
-            cutRule: {
-                type: 'FIXED_SCORE';
-                /**
-                 * Fallback score assigned when a golfer misses the cut.
-                 */
-                fixedScore: number;
-            };
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-            displayScoring: 'TO_PAR';
-            /**
-             * Golf tiebreaker configuration. Teams predict the winning to-par score.
-             */
-            tiebreaker: {
-                type: 'PREDICT_WINNING_SCORE';
-            };
         } | {
             mode: 'GOLF_CATEGORY_PICKS';
             /**
@@ -6518,59 +6359,6 @@ export type CreateManagedContestResponses = {
                  * How many golfer scores count toward the Team total.
                  */
                 countedScores: number;
-                /**
-                 * Single tier source used to generate all tiers.
-                 */
-                tierSource: 'ODDS' | 'WORLD_RANK';
-                tierGeneration: {
-                    /**
-                     * Basic mode tier size used to seed the tier list.
-                     */
-                    defaultTierSize: number;
-                };
-                /**
-                 * Persisted tier boundaries and pick counts after seeding or advanced editing.
-                 */
-                tiers: Array<{
-                    /**
-                     * Stable tier key such as A, B, or C.
-                     */
-                    tierKey: string;
-                    /**
-                     * Commissioner-facing tier label.
-                     */
-                    label: string;
-                    /**
-                     * How many golfers must be picked from the tier.
-                     */
-                    pickCount: number;
-                    /**
-                     * Starting resolved rank/odds position for the tier.
-                     */
-                    startPosition: number;
-                    /**
-                     * Ending resolved rank/odds position for the tier. Null means remainder of field.
-                     */
-                    endPosition: number;
-                }>;
-                /**
-                 * Golf cut rule for first-pass contests.
-                 */
-                cutRule: {
-                    type: 'FIXED_SCORE';
-                    /**
-                     * Fallback score assigned when a golfer misses the cut.
-                     */
-                    fixedScore: number;
-                };
-                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-                displayScoring: 'TO_PAR';
-                /**
-                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
-                 */
-                tiebreaker: {
-                    type: 'PREDICT_WINNING_SCORE';
-                };
                 /**
                  * Contest-configuration identifier.
                  */
@@ -6803,59 +6591,6 @@ export type GetManagedContestResponses = {
                  */
                 countedScores: number;
                 /**
-                 * Single tier source used to generate all tiers.
-                 */
-                tierSource: 'ODDS' | 'WORLD_RANK';
-                tierGeneration: {
-                    /**
-                     * Basic mode tier size used to seed the tier list.
-                     */
-                    defaultTierSize: number;
-                };
-                /**
-                 * Persisted tier boundaries and pick counts after seeding or advanced editing.
-                 */
-                tiers: Array<{
-                    /**
-                     * Stable tier key such as A, B, or C.
-                     */
-                    tierKey: string;
-                    /**
-                     * Commissioner-facing tier label.
-                     */
-                    label: string;
-                    /**
-                     * How many golfers must be picked from the tier.
-                     */
-                    pickCount: number;
-                    /**
-                     * Starting resolved rank/odds position for the tier.
-                     */
-                    startPosition: number;
-                    /**
-                     * Ending resolved rank/odds position for the tier. Null means remainder of field.
-                     */
-                    endPosition: number;
-                }>;
-                /**
-                 * Golf cut rule for first-pass contests.
-                 */
-                cutRule: {
-                    type: 'FIXED_SCORE';
-                    /**
-                     * Fallback score assigned when a golfer misses the cut.
-                     */
-                    fixedScore: number;
-                };
-                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-                displayScoring: 'TO_PAR';
-                /**
-                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
-                 */
-                tiebreaker: {
-                    type: 'PREDICT_WINNING_SCORE';
-                };
-                /**
                  * Contest-configuration identifier.
                  */
                 id: string;
@@ -6958,59 +6693,6 @@ export type UpdateManagedContestConfigurationData = {
          * How many golfer scores count toward the Team total.
          */
         countedScores: number;
-        /**
-         * Single tier source used to generate all tiers.
-         */
-        tierSource: 'ODDS' | 'WORLD_RANK';
-        tierGeneration: {
-            /**
-             * Basic mode tier size used to seed the tier list.
-             */
-            defaultTierSize: number;
-        };
-        /**
-         * Persisted tier boundaries and pick counts after seeding or advanced editing.
-         */
-        tiers: Array<{
-            /**
-             * Stable tier key such as A, B, or C.
-             */
-            tierKey: string;
-            /**
-             * Commissioner-facing tier label.
-             */
-            label: string;
-            /**
-             * How many golfers must be picked from the tier.
-             */
-            pickCount: number;
-            /**
-             * Starting resolved rank/odds position for the tier.
-             */
-            startPosition: number;
-            /**
-             * Ending resolved rank/odds position for the tier. Null means remainder of field.
-             */
-            endPosition: number;
-        }>;
-        /**
-         * Golf cut rule for first-pass contests.
-         */
-        cutRule: {
-            type: 'FIXED_SCORE';
-            /**
-             * Fallback score assigned when a golfer misses the cut.
-             */
-            fixedScore: number;
-        };
-        playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-        displayScoring: 'TO_PAR';
-        /**
-         * Golf tiebreaker configuration. Teams predict the winning to-par score.
-         */
-        tiebreaker: {
-            type: 'PREDICT_WINNING_SCORE';
-        };
     } | {
         mode: 'GOLF_CATEGORY_PICKS';
         /**
@@ -7224,59 +6906,6 @@ export type UpdateManagedContestConfigurationResponses = {
                  * How many golfer scores count toward the Team total.
                  */
                 countedScores: number;
-                /**
-                 * Single tier source used to generate all tiers.
-                 */
-                tierSource: 'ODDS' | 'WORLD_RANK';
-                tierGeneration: {
-                    /**
-                     * Basic mode tier size used to seed the tier list.
-                     */
-                    defaultTierSize: number;
-                };
-                /**
-                 * Persisted tier boundaries and pick counts after seeding or advanced editing.
-                 */
-                tiers: Array<{
-                    /**
-                     * Stable tier key such as A, B, or C.
-                     */
-                    tierKey: string;
-                    /**
-                     * Commissioner-facing tier label.
-                     */
-                    label: string;
-                    /**
-                     * How many golfers must be picked from the tier.
-                     */
-                    pickCount: number;
-                    /**
-                     * Starting resolved rank/odds position for the tier.
-                     */
-                    startPosition: number;
-                    /**
-                     * Ending resolved rank/odds position for the tier. Null means remainder of field.
-                     */
-                    endPosition: number;
-                }>;
-                /**
-                 * Golf cut rule for first-pass contests.
-                 */
-                cutRule: {
-                    type: 'FIXED_SCORE';
-                    /**
-                     * Fallback score assigned when a golfer misses the cut.
-                     */
-                    fixedScore: number;
-                };
-                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-                displayScoring: 'TO_PAR';
-                /**
-                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
-                 */
-                tiebreaker: {
-                    type: 'PREDICT_WINNING_SCORE';
-                };
                 /**
                  * Contest-configuration identifier.
                  */
@@ -15051,59 +14680,6 @@ export type AdminListContestConfigTemplatesResponses = {
                  * How many golfer scores count toward the Team total.
                  */
                 countedScores: number;
-                /**
-                 * Single tier source used to generate all tiers.
-                 */
-                tierSource: 'ODDS' | 'WORLD_RANK';
-                tierGeneration: {
-                    /**
-                     * Basic mode tier size used to seed the tier list.
-                     */
-                    defaultTierSize: number;
-                };
-                /**
-                 * Persisted tier boundaries and pick counts after seeding or advanced editing.
-                 */
-                tiers: Array<{
-                    /**
-                     * Stable tier key such as A, B, or C.
-                     */
-                    tierKey: string;
-                    /**
-                     * Commissioner-facing tier label.
-                     */
-                    label: string;
-                    /**
-                     * How many golfers must be picked from the tier.
-                     */
-                    pickCount: number;
-                    /**
-                     * Starting resolved rank/odds position for the tier.
-                     */
-                    startPosition: number;
-                    /**
-                     * Ending resolved rank/odds position for the tier. Null means remainder of field.
-                     */
-                    endPosition: number;
-                }>;
-                /**
-                 * Golf cut rule for first-pass contests.
-                 */
-                cutRule: {
-                    type: 'FIXED_SCORE';
-                    /**
-                     * Fallback score assigned when a golfer misses the cut.
-                     */
-                    fixedScore: number;
-                };
-                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-                displayScoring: 'TO_PAR';
-                /**
-                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
-                 */
-                tiebreaker: {
-                    type: 'PREDICT_WINNING_SCORE';
-                };
             } | {
                 mode: 'GOLF_CATEGORY_PICKS';
                 /**
@@ -15199,59 +14775,6 @@ export type AdminUpdateContestConfigTemplateData = {
              * How many golfer scores count toward the Team total.
              */
             countedScores: number;
-            /**
-             * Single tier source used to generate all tiers.
-             */
-            tierSource: 'ODDS' | 'WORLD_RANK';
-            tierGeneration: {
-                /**
-                 * Basic mode tier size used to seed the tier list.
-                 */
-                defaultTierSize: number;
-            };
-            /**
-             * Persisted tier boundaries and pick counts after seeding or advanced editing.
-             */
-            tiers: Array<{
-                /**
-                 * Stable tier key such as A, B, or C.
-                 */
-                tierKey: string;
-                /**
-                 * Commissioner-facing tier label.
-                 */
-                label: string;
-                /**
-                 * How many golfers must be picked from the tier.
-                 */
-                pickCount: number;
-                /**
-                 * Starting resolved rank/odds position for the tier.
-                 */
-                startPosition: number;
-                /**
-                 * Ending resolved rank/odds position for the tier. Null means remainder of field.
-                 */
-                endPosition: number;
-            }>;
-            /**
-             * Golf cut rule for first-pass contests.
-             */
-            cutRule: {
-                type: 'FIXED_SCORE';
-                /**
-                 * Fallback score assigned when a golfer misses the cut.
-                 */
-                fixedScore: number;
-            };
-            playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-            displayScoring: 'TO_PAR';
-            /**
-             * Golf tiebreaker configuration. Teams predict the winning to-par score.
-             */
-            tiebreaker: {
-                type: 'PREDICT_WINNING_SCORE';
-            };
         } | {
             mode: 'GOLF_CATEGORY_PICKS';
             /**
@@ -15452,59 +14975,6 @@ export type AdminUpdateContestConfigTemplateResponses = {
                  * How many golfer scores count toward the Team total.
                  */
                 countedScores: number;
-                /**
-                 * Single tier source used to generate all tiers.
-                 */
-                tierSource: 'ODDS' | 'WORLD_RANK';
-                tierGeneration: {
-                    /**
-                     * Basic mode tier size used to seed the tier list.
-                     */
-                    defaultTierSize: number;
-                };
-                /**
-                 * Persisted tier boundaries and pick counts after seeding or advanced editing.
-                 */
-                tiers: Array<{
-                    /**
-                     * Stable tier key such as A, B, or C.
-                     */
-                    tierKey: string;
-                    /**
-                     * Commissioner-facing tier label.
-                     */
-                    label: string;
-                    /**
-                     * How many golfers must be picked from the tier.
-                     */
-                    pickCount: number;
-                    /**
-                     * Starting resolved rank/odds position for the tier.
-                     */
-                    startPosition: number;
-                    /**
-                     * Ending resolved rank/odds position for the tier. Null means remainder of field.
-                     */
-                    endPosition: number;
-                }>;
-                /**
-                 * Golf cut rule for first-pass contests.
-                 */
-                cutRule: {
-                    type: 'FIXED_SCORE';
-                    /**
-                     * Fallback score assigned when a golfer misses the cut.
-                     */
-                    fixedScore: number;
-                };
-                playoffHandling: 'EXCLUDE_PLAYOFF_HOLES';
-                displayScoring: 'TO_PAR';
-                /**
-                 * Golf tiebreaker configuration. Teams predict the winning to-par score.
-                 */
-                tiebreaker: {
-                    type: 'PREDICT_WINNING_SCORE';
-                };
             } | {
                 mode: 'GOLF_CATEGORY_PICKS';
                 /**
@@ -15963,7 +15433,7 @@ export type AdminCleanupStaleProviderEventsResponses = {
              */
             sportEventParticipantCount: number;
             /**
-             * Number of SportEventParticipantValuation rows attached through this event.
+             * Number of participants with a SportEventParticipantGolfValuation (tier/price) row attached through this event.
              */
             valuationCount: number;
             /**
@@ -19784,6 +19254,425 @@ export type AdminRemoveGolfFieldEntryResponses = {
 };
 
 export type AdminRemoveGolfFieldEntryResponse = AdminRemoveGolfFieldEntryResponses[keyof AdminRemoveGolfFieldEntryResponses];
+
+export type AdminGetGolfTournamentTiersData = {
+    body?: never;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/tiers';
+};
+
+export type AdminGetGolfTournamentTiersErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminGetGolfTournamentTiersError = AdminGetGolfTournamentTiersErrors[keyof AdminGetGolfTournamentTiersErrors];
+
+export type AdminGetGolfTournamentTiersResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * Ordered by tierNumber ascending.
+         */
+        tiers: Array<{
+            tierKey: string;
+            label: string;
+            tierNumber: number;
+            defaultPickCount: number;
+            assignments: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                tierOrderIndex: number;
+                price: number;
+            }>;
+        }>;
+    };
+};
+
+export type AdminGetGolfTournamentTiersResponse = AdminGetGolfTournamentTiersResponses[keyof AdminGetGolfTournamentTiersResponses];
+
+export type AdminReplaceGolfTournamentTiersData = {
+    body: {
+        tiers: Array<{
+            tierKey: string;
+            label: string;
+            tierNumber: number;
+            defaultPickCount: number;
+        }>;
+        /**
+         * A tierKey from this same request — required when removing a tier that still has golfers assigned to it.
+         */
+        reassignOrphansTo?: string;
+    };
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/tiers';
+};
+
+export type AdminReplaceGolfTournamentTiersErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminReplaceGolfTournamentTiersError = AdminReplaceGolfTournamentTiersErrors[keyof AdminReplaceGolfTournamentTiersErrors];
+
+export type AdminReplaceGolfTournamentTiersResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * Ordered by tierNumber ascending.
+         */
+        tiers: Array<{
+            tierKey: string;
+            label: string;
+            tierNumber: number;
+            defaultPickCount: number;
+            assignments: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                tierOrderIndex: number;
+                price: number;
+            }>;
+        }>;
+    };
+};
+
+export type AdminReplaceGolfTournamentTiersResponse = AdminReplaceGolfTournamentTiersResponses[keyof AdminReplaceGolfTournamentTiersResponses];
+
+export type AdminAutoAssignGolfTiersData = {
+    body: {
+        source: 'ODDS' | 'WORLD_RANK';
+        tierSize?: number;
+    };
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/tiers/auto-assign';
+};
+
+export type AdminAutoAssignGolfTiersErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminAutoAssignGolfTiersError = AdminAutoAssignGolfTiersErrors[keyof AdminAutoAssignGolfTiersErrors];
+
+export type AdminAutoAssignGolfTiersResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * Ordered by tierNumber ascending.
+         */
+        tiers: Array<{
+            tierKey: string;
+            label: string;
+            tierNumber: number;
+            defaultPickCount: number;
+            assignments: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                tierOrderIndex: number;
+                price: number;
+            }>;
+        }>;
+    };
+};
+
+export type AdminAutoAssignGolfTiersResponse = AdminAutoAssignGolfTiersResponses[keyof AdminAutoAssignGolfTiersResponses];
+
+export type AdminReplaceGolfTierAssignmentsData = {
+    body: {
+        /**
+         * Full desired state — the drag-and-drop save. Applied in one transaction so a dropped request never leaves a half-moved field.
+         */
+        assignments: Array<{
+            sportEventParticipantId: string;
+            tierKey: string;
+            tierOrderIndex: number;
+        }>;
+    };
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/tiers/assignments';
+};
+
+export type AdminReplaceGolfTierAssignmentsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    422: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminReplaceGolfTierAssignmentsError = AdminReplaceGolfTierAssignmentsErrors[keyof AdminReplaceGolfTierAssignmentsErrors];
+
+export type AdminReplaceGolfTierAssignmentsResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * Ordered by tierNumber ascending.
+         */
+        tiers: Array<{
+            tierKey: string;
+            label: string;
+            tierNumber: number;
+            defaultPickCount: number;
+            assignments: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                tierOrderIndex: number;
+                price: number;
+            }>;
+        }>;
+    };
+};
+
+export type AdminReplaceGolfTierAssignmentsResponse = AdminReplaceGolfTierAssignmentsResponses[keyof AdminReplaceGolfTierAssignmentsResponses];
+
+export type AdminAutoAssignGolfPricesData = {
+    body: {
+        minPrice: number;
+        maxPrice: number;
+    };
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/tournaments/{eventId}/prices/auto-assign';
+};
+
+export type AdminAutoAssignGolfPricesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminAutoAssignGolfPricesError = AdminAutoAssignGolfPricesErrors[keyof AdminAutoAssignGolfPricesErrors];
+
+export type AdminAutoAssignGolfPricesResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * Ordered by tierNumber ascending.
+         */
+        tiers: Array<{
+            tierKey: string;
+            label: string;
+            tierNumber: number;
+            defaultPickCount: number;
+            assignments: Array<{
+                sportEventParticipantId: string;
+                participantId: string;
+                tierOrderIndex: number;
+                price: number;
+            }>;
+        }>;
+    };
+};
+
+export type AdminAutoAssignGolfPricesResponse = AdminAutoAssignGolfPricesResponses[keyof AdminAutoAssignGolfPricesResponses];
 
 export type AdminGetPollIntervalsData = {
     body?: never;

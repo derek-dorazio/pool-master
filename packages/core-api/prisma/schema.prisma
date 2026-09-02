@@ -1122,7 +1122,6 @@ model SportEventParticipant {
 
   sportEvent    SportEvent                          @relation(fields: [sportEventId], references: [id])
   participant   Participant                         @relation(fields: [participantId], references: [id])
-  valuations    SportEventParticipantValuation[]
   golfValuation SportEventParticipantGolfValuation?
   picks         ContestEntryPick[]
   golfRounds    SportEventParticipantGolfRound[]
@@ -1205,23 +1204,6 @@ model SportEventParticipantGolfStanding {
   @@index([status])
   @@index([position])
   @@map("sport_event_participant_golf_standings")
-}
-
-model SportEventParticipantValuation {
-  id                      String   @id @default(uuid()) @db.Uuid
-  sportEventParticipantId String   @map("sport_event_participant_id") @db.Uuid
-  price                   Float?
-  tier                    String?  @db.VarChar(50)
-  orderIndex              Int?     @map("order_index")
-  valuationSource         String   @map("valuation_source") @db.VarChar(100)
-  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
-
-  @@unique([sportEventParticipantId, valuationSource])
-  @@index([sportEventParticipantId])
-  @@map("sport_event_participant_valuations")
 }
 
 /// Per-tournament tier definition. Event-level only — no contest override

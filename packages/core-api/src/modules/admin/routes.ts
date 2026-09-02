@@ -713,6 +713,7 @@ export async function adminModule(
     golfTournamentService,
     eventLifecycleService,
     golfFieldService,
+    golfTierService,
     seasonService,
   });
 
