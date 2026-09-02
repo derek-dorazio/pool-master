@@ -63,6 +63,15 @@ export function isAdminManagedGolfTournament(scope: GolfSyncScope): boolean {
   return scope !== 'FULL';
 }
 
+/**
+ * Whether this tournament pulls anything from a provider — gates the Field
+ * editor's "Load / Refresh Participant Field" action and the Score-source block
+ * (§4.4a). `NONE` is a purely manual tournament.
+ */
+export function golfTournamentHasScoreSync(scope: GolfSyncScope): boolean {
+  return scope !== 'NONE';
+}
+
 // --- Status (SportEventStatus) ---
 
 export function formatSportEventStatus(status: string): string {
@@ -283,6 +292,21 @@ export function resolveGolfProviderId(
     providers?.find((provider) => provider.sportsCovered.includes('GOLF'))
       ?.providerId ?? null
   );
+}
+
+// --- Field editor (plans/124 §6.3 / §4.4a) ---
+
+/**
+ * The "Load Participant Field" / "Refresh Participant Field" header action is one
+ * endpoint (`adminRefreshGolfTournamentField`) with a client-computed label:
+ * "Load" while the field is still empty, "Refresh" once it has entries (§4.4a).
+ */
+export function golfParticipantFieldActionLabel(
+  fieldCount: number,
+): 'Load Participant Field' | 'Refresh Participant Field' {
+  return fieldCount === 0
+    ? 'Load Participant Field'
+    : 'Refresh Participant Field';
 }
 
 // --- League roster bulk upload (plans/124 §6.3 Tour Home / §6.4) ---

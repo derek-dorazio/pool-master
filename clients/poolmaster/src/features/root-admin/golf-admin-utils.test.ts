@@ -6,6 +6,7 @@ import {
   golfSyncScopeLabel,
   golfSyncScopeTone,
   sportEventStatusTone,
+  golfParticipantFieldActionLabel,
   isAdminManagedGolfTournament,
   localDateTimeInputToIso,
   parseGolfRosterUpload,
@@ -226,6 +227,15 @@ describe('pool-master-3dg golf-admin-utils: resolveGolfProviderId', () => {
     ).toBe('mock-contest-feed');
     expect(resolveGolfProviderId([])).toBeNull();
     expect(resolveGolfProviderId(undefined)).toBeNull();
+  });
+});
+
+// plans/124 §6.3 / §4.4a — Field editor Load/Refresh label derivation.
+describe('pool-master-za4 golf-admin-utils: golfParticipantFieldActionLabel', () => {
+  it('pool-master-za4 says "Load" for an empty field and "Refresh" once it has entries', () => {
+    expect(golfParticipantFieldActionLabel(0)).toBe('Load Participant Field');
+    expect(golfParticipantFieldActionLabel(1)).toBe('Refresh Participant Field');
+    expect(golfParticipantFieldActionLabel(156)).toBe('Refresh Participant Field');
   });
 });
 

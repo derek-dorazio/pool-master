@@ -48,6 +48,8 @@ export {
   SummaryMediaLayout,
 } from "./layout-presets";
 export { DefinitionList, MetricGrid, MetricTile } from "./metric-grid";
+export { SelectableDataGrid } from "./selectable-data-grid";
+export type { SelectableDataGridProps } from "./selectable-data-grid";
 export { ServerErrorBar, ServerErrorPanel } from "./server-error";
 export type { ServerErrorDisplayProps } from "./server-error";
 export { PageSection, SectionActions, SectionHeader } from "./section";

@@ -2,7 +2,9 @@ import {
   cloneElement,
   forwardRef,
   isValidElement,
+  useEffect,
   useId,
+  useRef,
   type InputHTMLAttributes,
   type ReactElement,
   type ReactNode,
@@ -93,17 +95,35 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 export type CheckboxProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
   "type"
->;
+> & {
+  /** Tri-state visual: overrides `checked` styling when a subset is selected. */
+  indeterminate?: boolean;
+};
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
-  function Checkbox({ className, ...props }, ref) {
+  function Checkbox({ className, indeterminate = false, ...props }, ref) {
+    const innerRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+      if (innerRef.current) {
+        innerRef.current.indeterminate = indeterminate;
+      }
+    }, [indeterminate]);
+
     return (
       <input
         className={cn(
           "h-4 w-4 shrink-0 rounded border border-border bg-background accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-70",
           className,
         )}
-        ref={ref}
+        ref={(node) => {
+          innerRef.current = node;
+          if (typeof ref === "function") {
+            ref(node);
+          } else if (ref) {
+            ref.current = node;
+          }
+        }}
         type="checkbox"
         {...props}
       />
