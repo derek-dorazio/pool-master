@@ -149,7 +149,7 @@ export const QueryKeys = {
         ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'field'] as const,
       tiers: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'tiers'] as const,
-      roundScores: (eventId: QueryKeyId, round: QueryKeyId) =>
+      roundScores: (eventId: QueryKeyId, round: QueryKeyId | number) =>
         ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'round-scores', round] as const,
       players: ['poolmaster', 'root-admin', 'golf', 'players'] as const,
       playerSearch: (search: string) =>

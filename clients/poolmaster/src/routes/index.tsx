@@ -26,6 +26,7 @@ import { RootAdminGolfTournamentFieldPage } from '@/features/root-admin/root-adm
 import { RootAdminGolfTournamentHomePage } from '@/features/root-admin/root-admin-golf-tournament-home-page';
 import { RootAdminGolfTournamentTiersPage } from '@/features/root-admin/root-admin-golf-tournament-tiers-page';
 import { RootAdminGolfTournamentListPage } from '@/features/root-admin/root-admin-golf-tournament-list-page';
+import { RootAdminGolfTournamentScoresPage } from '@/features/root-admin/root-admin-golf-tournament-scores-page';
 import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin-ingestion-schedule-page';
 import { RootAdminManageHubPage } from '@/features/root-admin/root-admin-manage-hub-page';
 import { RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
@@ -229,6 +230,10 @@ export const router = createBrowserRouter([
               {
                 path: 'golf/tournaments/:eventId/tiers',
                 element: <RootAdminGolfTournamentTiersPage />,
+              },
+              {
+                path: 'golf/tournaments/:eventId/scores',
+                element: <RootAdminGolfTournamentScoresPage />,
               },
               {
                 path: 'leagues',

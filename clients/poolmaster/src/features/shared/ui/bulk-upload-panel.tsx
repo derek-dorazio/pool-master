@@ -17,6 +17,12 @@ export type BulkUploadPanelProps<TRow, TPreviewRow> = {
   templateFilename: string;
   /** Optional example data row rendered under the header line in the template. */
   templateSampleRow?: readonly (string | number)[];
+  /**
+   * Optional set of pre-filled data rows for the template (e.g. one row per
+   * field golfer with blank score cells). Takes precedence over
+   * `templateSampleRow`.
+   */
+  templateRows?: readonly (readonly (string | number)[])[];
   /** Extra guidance rendered beneath the paste box (column meanings, etc.). */
   formatNote?: ReactNode;
   /**
@@ -46,10 +52,12 @@ export type BulkUploadPanelProps<TRow, TPreviewRow> = {
 function buildTemplateCsv(
   headers: readonly string[],
   sampleRow: readonly (string | number)[] | undefined,
+  rows: readonly (readonly (string | number)[])[] | undefined,
 ): string {
   const lines = [headers.join(",")];
-  if (sampleRow && sampleRow.length > 0) {
-    lines.push(sampleRow.map((cell) => String(cell)).join(","));
+  const dataRows = rows && rows.length > 0 ? rows : sampleRow ? [sampleRow] : [];
+  for (const row of dataRows) {
+    lines.push(row.map((cell) => String(cell)).join(","));
   }
   return `${lines.join("\n")}\n`;
 }
@@ -67,6 +75,7 @@ export function BulkUploadPanel<TRow, TPreviewRow>({
   templateHeaders,
   templateFilename,
   templateSampleRow,
+  templateRows,
   formatNote,
   parse,
   preview,
@@ -137,9 +146,9 @@ export function BulkUploadPanel<TRow, TPreviewRow>({
   const templateHref = useMemo(
     () =>
       `data:text/csv;charset=utf-8,${encodeURIComponent(
-        buildTemplateCsv(templateHeaders, templateSampleRow),
+        buildTemplateCsv(templateHeaders, templateSampleRow, templateRows),
       )}`,
-    [templateHeaders, templateSampleRow],
+    [templateHeaders, templateRows, templateSampleRow],
   );
 
   const unresolved = previewRows ? unresolvedCount(previewRows) : 0;
