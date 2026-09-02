@@ -152,6 +152,8 @@ export const QueryKeys = {
       roundScores: (eventId: QueryKeyId, round: QueryKeyId | number) =>
         ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'round-scores', round] as const,
       players: ['poolmaster', 'root-admin', 'golf', 'players'] as const,
+      playerList: (status?: string) =>
+        ['poolmaster', 'root-admin', 'golf', 'players', 'list', status ?? 'ACTIVE'] as const,
       playerSearch: (search: string) =>
         ['poolmaster', 'root-admin', 'golf', 'players', 'search', search] as const,
       player: (participantId: QueryKeyId) =>

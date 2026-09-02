@@ -7,6 +7,7 @@ import type {
   AdminApplyGolfRoundScoresData,
   AdminGetGolfTournamentResponses,
   AdminGetGolfTournamentRoundsResponses,
+  AdminListGolfPlayersResponses,
   AdminListGolfTournamentsResponses,
   AdminPreviewGolfLeagueRosterUploadData,
 } from '@/lib/api';
@@ -293,6 +294,36 @@ export function resolveGolfProviderId(
     providers?.find((provider) => provider.sportsCovered.includes('GOLF'))
       ?.providerId ?? null
   );
+}
+
+// --- Player status (Participant.status) ---
+
+type BadgeToneLite = 'active' | 'inactive' | 'warning';
+export type GolfPlayerStatus =
+  AdminListGolfPlayersResponses[200]['players'][number]['status'];
+
+export const GOLF_PLAYER_STATUSES = [
+  'ACTIVE',
+  'INACTIVE',
+  'RETIRED',
+  'SUSPENDED',
+] as const satisfies readonly GolfPlayerStatus[];
+
+// Compile-time exhaustiveness: a new value in the generated status union that is
+// not listed here (or vice versa) breaks typecheck.
+type _GolfPlayerStatusExhaustive =
+  Exclude<GolfPlayerStatus, (typeof GOLF_PLAYER_STATUSES)[number]> extends never
+    ? (typeof GOLF_PLAYER_STATUSES)[number] extends GolfPlayerStatus
+      ? true
+      : ['unknown golf player status listed', (typeof GOLF_PLAYER_STATUSES)[number]]
+    : ['golf player status missing from GOLF_PLAYER_STATUSES', GolfPlayerStatus];
+const _golfPlayerStatusExhaustive: _GolfPlayerStatusExhaustive = true;
+void _golfPlayerStatusExhaustive;
+
+export function golfPlayerStatusTone(status: string): BadgeToneLite {
+  if (status === 'ACTIVE') return 'active';
+  if (status === 'SUSPENDED') return 'warning';
+  return 'inactive';
 }
 
 // --- Field editor (plans/124 §6.3 / §4.4a) ---
