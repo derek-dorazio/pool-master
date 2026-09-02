@@ -8963,6 +8963,28 @@ export interface operations {
                                 /** @description Contest that owns the configuration. */
                                 contestId: string;
                             };
+                            /** @description Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+                            effectiveTiers: {
+                                /** @description Stable per-event tier key. */
+                                tierKey: string;
+                                /** @description Commissioner-facing tier label. */
+                                label: string;
+                                /** @description 1-based tier ordering. */
+                                tierNumber: number;
+                                /** @description Default number of golfers picked from this tier. */
+                                defaultPickCount: number;
+                                /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
+                                assignments: {
+                                    /** @description Field entry the assignment belongs to. */
+                                    sportEventParticipantId: string;
+                                    /** @description Global golfer identity. */
+                                    participantId: string;
+                                    /** @description Within-tier ordering position; null when the golfer has no explicit order. */
+                                    tierOrderIndex: number | null;
+                                    /** @description Per-golfer budget price when the event defines one; null otherwise. */
+                                    price: number | null;
+                                }[];
+                            }[];
                             /**
                              * Format: date-time
                              * @description When the contest was created.
@@ -9152,6 +9174,28 @@ export interface operations {
                                 /** @description Contest that owns the configuration. */
                                 contestId: string;
                             };
+                            /** @description Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+                            effectiveTiers: {
+                                /** @description Stable per-event tier key. */
+                                tierKey: string;
+                                /** @description Commissioner-facing tier label. */
+                                label: string;
+                                /** @description 1-based tier ordering. */
+                                tierNumber: number;
+                                /** @description Default number of golfers picked from this tier. */
+                                defaultPickCount: number;
+                                /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
+                                assignments: {
+                                    /** @description Field entry the assignment belongs to. */
+                                    sportEventParticipantId: string;
+                                    /** @description Global golfer identity. */
+                                    participantId: string;
+                                    /** @description Within-tier ordering position; null when the golfer has no explicit order. */
+                                    tierOrderIndex: number | null;
+                                    /** @description Per-golfer budget price when the event defines one; null otherwise. */
+                                    price: number | null;
+                                }[];
+                            }[];
                             /**
                              * Format: date-time
                              * @description When the contest was created.
@@ -9395,6 +9439,28 @@ export interface operations {
                                 /** @description Contest that owns the configuration. */
                                 contestId: string;
                             };
+                            /** @description Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+                            effectiveTiers: {
+                                /** @description Stable per-event tier key. */
+                                tierKey: string;
+                                /** @description Commissioner-facing tier label. */
+                                label: string;
+                                /** @description 1-based tier ordering. */
+                                tierNumber: number;
+                                /** @description Default number of golfers picked from this tier. */
+                                defaultPickCount: number;
+                                /** @description Golfers assigned to this tier, ordered by tierOrderIndex ascending. */
+                                assignments: {
+                                    /** @description Field entry the assignment belongs to. */
+                                    sportEventParticipantId: string;
+                                    /** @description Global golfer identity. */
+                                    participantId: string;
+                                    /** @description Within-tier ordering position; null when the golfer has no explicit order. */
+                                    tierOrderIndex: number | null;
+                                    /** @description Per-golfer budget price when the event defines one; null otherwise. */
+                                    price: number | null;
+                                }[];
+                            }[];
                             /**
                              * Format: date-time
                              * @description When the contest was created.

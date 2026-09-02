@@ -59,6 +59,7 @@ import {
   ContestSetupSummary,
   ContestTemplatePicker,
   EventReadinessPanel,
+  InheritedTiersPanel,
   NoEligibleEventsAlert,
 } from './contest-configuration-sections';
 import { extractErrorMessage } from '@/lib/errors';
@@ -1057,10 +1058,16 @@ export function CreateContestPage() {
               </FormField>
             </div>
 
-            <Alert>
-              Tier structure and golfer assignments are set on the tournament, not the contest —
-              this contest inherits whatever tiers the tournament defines.
-            </Alert>
+            {isEditMode && managedContestQuery.data ? (
+              // effectiveTiers is a required array in the generated contract;
+              // the ?? [] only guards a transient client/API deploy skew.
+              <InheritedTiersPanel tiers={managedContestQuery.data.effectiveTiers ?? []} />
+            ) : (
+              <Alert>
+                Tier structure and golfer assignments are set on the tournament, not the contest —
+                this contest inherits whatever tiers the tournament defines.
+              </Alert>
+            )}
             </fieldset>
 
             {formError ? (

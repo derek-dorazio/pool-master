@@ -216,6 +216,31 @@ export type AdminContestConfigTemplateResponse = z.infer<
   typeof AdminContestConfigTemplateResponseSchema
 >;
 
+/**
+ * Read-only echo of the tier structure a contest inherits from its linked
+ * SportEvent (plans/124 §4.6/§5.3). Tiers are event-owned — never
+ * contest-configured — so this is display-only: the commissioner UI shows
+ * what the contest inherited without a mode flag to branch on. Resolved
+ * through golf-tier-service.getEffectiveTiersForSportEvent, the same
+ * resolution the root-admin golf tier routes read.
+ */
+export const GolfEffectiveTierAssignmentDtoSchema = z.object({
+  sportEventParticipantId: z.string().describe('Field entry the assignment belongs to.'),
+  participantId: z.string().describe('Global golfer identity.'),
+  tierOrderIndex: z.number().int().nullable().describe('Within-tier ordering position; null when the golfer has no explicit order.'),
+  price: z.number().nullable().describe('Per-golfer budget price when the event defines one; null otherwise.'),
+}).describe("One golfer's inherited tier placement for the contest's linked event.");
+export type GolfEffectiveTierAssignmentDto = z.infer<typeof GolfEffectiveTierAssignmentDtoSchema>;
+
+export const GolfEffectiveTierDtoSchema = z.object({
+  tierKey: z.string().describe('Stable per-event tier key.'),
+  label: z.string().describe('Commissioner-facing tier label.'),
+  tierNumber: z.number().int().describe('1-based tier ordering.'),
+  defaultPickCount: z.number().int().describe('Default number of golfers picked from this tier.'),
+  assignments: z.array(GolfEffectiveTierAssignmentDtoSchema).describe('Golfers assigned to this tier, ordered by tierOrderIndex ascending.'),
+}).describe('One inherited event tier and its golfer assignments.');
+export type GolfEffectiveTierDto = z.infer<typeof GolfEffectiveTierDtoSchema>;
+
 export const ContestManagementDetailDtoSchema = z.object({
   id: z.string().describe('Contest identifier.'),
   leagueId: z.string().describe('League that owns the contest.'),
@@ -231,6 +256,9 @@ export const ContestManagementDetailDtoSchema = z.object({
     ContestStatus.CANCELLED,
   ]),
   configuration: ContestConfigurationDtoSchema.describe('Current commissioner-managed contest configuration.'),
+  effectiveTiers: z.array(GolfEffectiveTierDtoSchema).describe(
+    "Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.",
+  ),
   createdAt: z.string().datetime().describe('When the contest was created.'),
   updatedAt: z.string().datetime().describe('When the contest was last updated.'),
   templateId: z.string().uuid().nullable().optional().describe('Seeded template chosen when the contest was created, if any.'),

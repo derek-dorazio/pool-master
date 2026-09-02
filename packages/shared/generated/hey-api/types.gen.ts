@@ -6419,6 +6419,48 @@ export type CreateManagedContestResponses = {
                 contestId: string;
             };
             /**
+             * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+             */
+            effectiveTiers: Array<{
+                /**
+                 * Stable per-event tier key.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * 1-based tier ordering.
+                 */
+                tierNumber: number;
+                /**
+                 * Default number of golfers picked from this tier.
+                 */
+                defaultPickCount: number;
+                /**
+                 * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
+                 */
+                assignments: Array<{
+                    /**
+                     * Field entry the assignment belongs to.
+                     */
+                    sportEventParticipantId: string;
+                    /**
+                     * Global golfer identity.
+                     */
+                    participantId: string;
+                    /**
+                     * Within-tier ordering position; null when the golfer has no explicit order.
+                     */
+                    tierOrderIndex: number;
+                    /**
+                     * Per-golfer budget price when the event defines one; null otherwise.
+                     */
+                    price: number;
+                }>;
+            }>;
+            /**
              * When the contest was created.
              */
             createdAt: string;
@@ -6649,6 +6691,48 @@ export type GetManagedContestResponses = {
                  */
                 contestId: string;
             };
+            /**
+             * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+             */
+            effectiveTiers: Array<{
+                /**
+                 * Stable per-event tier key.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * 1-based tier ordering.
+                 */
+                tierNumber: number;
+                /**
+                 * Default number of golfers picked from this tier.
+                 */
+                defaultPickCount: number;
+                /**
+                 * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
+                 */
+                assignments: Array<{
+                    /**
+                     * Field entry the assignment belongs to.
+                     */
+                    sportEventParticipantId: string;
+                    /**
+                     * Global golfer identity.
+                     */
+                    participantId: string;
+                    /**
+                     * Within-tier ordering position; null when the golfer has no explicit order.
+                     */
+                    tierOrderIndex: number;
+                    /**
+                     * Per-golfer budget price when the event defines one; null otherwise.
+                     */
+                    price: number;
+                }>;
+            }>;
             /**
              * When the contest was created.
              */
@@ -6965,6 +7049,48 @@ export type UpdateManagedContestConfigurationResponses = {
                  */
                 contestId: string;
             };
+            /**
+             * Read-only tier structure the contest inherits from its linked SportEvent (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+             */
+            effectiveTiers: Array<{
+                /**
+                 * Stable per-event tier key.
+                 */
+                tierKey: string;
+                /**
+                 * Commissioner-facing tier label.
+                 */
+                label: string;
+                /**
+                 * 1-based tier ordering.
+                 */
+                tierNumber: number;
+                /**
+                 * Default number of golfers picked from this tier.
+                 */
+                defaultPickCount: number;
+                /**
+                 * Golfers assigned to this tier, ordered by tierOrderIndex ascending.
+                 */
+                assignments: Array<{
+                    /**
+                     * Field entry the assignment belongs to.
+                     */
+                    sportEventParticipantId: string;
+                    /**
+                     * Global golfer identity.
+                     */
+                    participantId: string;
+                    /**
+                     * Within-tier ordering position; null when the golfer has no explicit order.
+                     */
+                    tierOrderIndex: number;
+                    /**
+                     * Per-golfer budget price when the event defines one; null otherwise.
+                     */
+                    price: number;
+                }>;
+            }>;
             /**
              * When the contest was created.
              */

@@ -360,6 +360,7 @@ describe('CreateContestPage', () => {
             rosterSize: 6,
             countedScores: 4,
           },
+          effectiveTiers: [],
         },
       },
     });
@@ -429,6 +430,18 @@ describe('CreateContestPage', () => {
             rosterSize: 6,
             countedScores: 4,
           },
+          effectiveTiers: [
+            {
+              tierKey: 'tier-1',
+              label: 'Tier 1',
+              tierNumber: 1,
+              defaultPickCount: 1,
+              assignments: [
+                { sportEventParticipantId: 'sep-1', participantId: 'g-1', tierOrderIndex: 1, price: null },
+                { sportEventParticipantId: 'sep-2', participantId: 'g-2', tierOrderIndex: 2, price: null },
+              ],
+            },
+          ],
         },
       },
     });
@@ -446,6 +459,13 @@ describe('CreateContestPage', () => {
     expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
     expect(screen.getByTestId('contest-name')).toHaveValue('Masters Pick 6');
     expect(screen.getByTestId('contest-lock-preset')).toHaveValue('FIVE_MINUTES');
+
+    // pool-master-41t — manage mode shows the read-only inherited tiers echoed
+    // by the managed-contest response (plans/124 §4.6/§5.3).
+    expect(screen.getByTestId('inherited-tiers-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('inherited-tier-tier-1')).toHaveTextContent(
+      '2 golfers · 1 pick by default',
+    );
 
     fireEvent.change(screen.getByTestId('contest-name'), {
       target: { value: 'Masters Pick 6 Updated' },
@@ -475,6 +495,37 @@ describe('CreateContestPage', () => {
         }),
       }),
     );
+  });
+
+  // pool-master-41t — in create mode there is no contest yet, so there are no
+  // inherited tiers to echo; the page keeps the plain explanatory note and
+  // never renders the read-only tier panel (plans/124 §4.6/§5.3).
+  it('does not render the inherited tiers panel in create mode', async () => {
+    primeCommonMocks();
+
+    renderCreateContestPage();
+
+    await screen.findByTestId('contest-name');
+    expect(screen.queryByTestId('inherited-tiers-panel')).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Tier structure and golfer assignments are set on the tournament/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  // pool-master-41t — a failed managed-contest load surfaces the page-level
+  // error state rather than a half-rendered manage form.
+  it('shows the error state when the managed contest fails to load', async () => {
+    primeCommonMocks();
+    getManagedContestMock.mockResolvedValue({
+      error: { message: 'Managed contest lookup failed.' },
+    });
+
+    renderContestPage('/league/BIGDAWGS/contests/contest-err/manage');
+
+    expect(await screen.findByTestId('create-contest-page-error')).toBeInTheDocument();
+    expect(screen.queryByTestId('inherited-tiers-panel')).not.toBeInTheDocument();
   });
 
 });
