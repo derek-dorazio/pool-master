@@ -181,7 +181,10 @@ export class GolfTournamentService {
       rounds,
     }, 'Created manual golf tournament');
 
-    return toGolfTournamentRow(created as PrismaSportEventWithCounts);
+    // Re-read after the default rounds + tiers were seeded above so the
+    // response's `_count` reflects those rows rather than the zero-count
+    // snapshot taken by the initial `sportEvent.create` (pool-master-54u).
+    return this.reloadTournamentRow(created.id);
   }
 
   /**
@@ -276,7 +279,9 @@ export class GolfTournamentService {
       rounds,
     }, 'Created golf tournament from provider event');
 
-    return toGolfTournamentRow(created as PrismaSportEventWithCounts);
+    // See pool-master-54u — re-read so `_count` includes the rounds + tiers
+    // seeded after the initial `sportEvent.create`.
+    return this.reloadTournamentRow(created.id);
   }
 
   async getTournament(eventId: string): Promise<GolfTournamentRow | null> {
@@ -285,6 +290,23 @@ export class GolfTournamentService {
       ...TOURNAMENT_INCLUDE,
     });
     return row ? toGolfTournamentRow(row as PrismaSportEventWithCounts) : null;
+  }
+
+  /**
+   * Re-read a just-created tournament so its `_count` reflects rows added
+   * after `sportEvent.create` (default rounds + tiers). The row is
+   * guaranteed to exist here; the guard only covers an impossible race.
+   */
+  private async reloadTournamentRow(eventId: string): Promise<GolfTournamentRow> {
+    const row = await this.getTournament(eventId);
+    if (!row) {
+      throw new GolfTournamentError(
+        `Golf tournament ${eventId} could not be re-read immediately after creation.`,
+        'EVENT_NOT_FOUND',
+        500,
+      );
+    }
+    return row;
   }
 
   async updateTournament(

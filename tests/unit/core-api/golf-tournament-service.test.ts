@@ -6,7 +6,8 @@
  *     SeasonService.assertSeasonBelongsToSport, assigns providerId=manual-admin
  *     + a generated externalId + status=SCHEDULED + syncScope=NONE, resolves/
  *     creates the LeagueEvent by (sportLeagueId, name), and calls
- *     ensureSportEventRounds + ensureDefaultGolfTiers.
+ *     ensureSportEventRounds + ensureDefaultGolfTiers, then re-reads the row so
+ *     the create response's `_count` reflects those seeded rows (pool-master-54u).
  *   - listTournaments/getTournament project field/tier/contest counts.
  *   - updateTournament rejects a provider-owned (syncScope=FULL) event with
  *     409 EVENT_NOT_ADMIN_MANAGED, and 404s a missing one.
@@ -135,6 +136,70 @@ describe('GolfTournamentService.createTournament', () => {
     expect(result.contestCount).toBe(0);
   });
 
+  it('pool-master-54u re-reads the tournament so the create response reflects the tiers/rounds seeded after sportEvent.create', async () => {
+    const deps = buildDeps();
+    // The `sportEvent.create` snapshot is taken before the default tiers/rounds
+    // exist, so its `_count` is all-zero; the re-read after
+    // ensureDefaultGolfTiers/ensureSportEventRounds sees the 6 default tiers.
+    deps.prisma.sportEvent.create.mockResolvedValue(
+      buildSportEventRow({ _count: { sportEventParticipants: 0, golfTiers: 0, contests: 0 } }),
+    );
+    deps.prisma.sportEvent.findUnique.mockResolvedValue(
+      buildSportEventRow({ _count: { sportEventParticipants: 0, golfTiers: 6, contests: 0 } }),
+    );
+    const service = new GolfTournamentService(
+      deps.prisma as any,
+      deps.seasonService as any,
+      deps.golfRoundScheduleService as any,
+      deps.golfTierService as any,
+    );
+
+    const result = await service.createTournament({
+      name: 'The Masters',
+      startDate: new Date('2027-04-08T00:00:00.000Z'),
+      releaseAt: new Date('2027-04-01T00:00:00.000Z'),
+      fieldLocksAt: new Date('2027-04-08T00:00:00.000Z'),
+      seasonId: 'season-1',
+    });
+
+    // The re-read is keyed on the freshly-created id and happens AFTER seeding.
+    expect(deps.prisma.sportEvent.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'event-1' } }),
+    );
+    const seedOrder = deps.golfTierService.ensureDefaultGolfTiers.mock.invocationCallOrder[0];
+    const reReadOrder = deps.prisma.sportEvent.findUnique.mock.invocationCallOrder.at(-1)!;
+    expect(reReadOrder).toBeGreaterThan(seedOrder);
+
+    // The create response now carries the post-seed counts — the same shape a
+    // subsequent GET returns (pool-master-54u). fieldCount stays 0: creation
+    // never seeds a participant field.
+    expect(result.tierCount).toBe(6);
+    expect(result.fieldCount).toBe(0);
+    expect(result.contestCount).toBe(0);
+    expect(result).toEqual(await service.getTournament('event-1'));
+  });
+
+  it('pool-master-54u surfaces a 500 GolfTournamentError if the just-created tournament cannot be re-read', async () => {
+    const deps = buildDeps();
+    deps.prisma.sportEvent.findUnique.mockResolvedValue(null);
+    const service = new GolfTournamentService(
+      deps.prisma as any,
+      deps.seasonService as any,
+      deps.golfRoundScheduleService as any,
+      deps.golfTierService as any,
+    );
+
+    await expect(
+      service.createTournament({
+        name: 'The Masters',
+        startDate: new Date('2027-04-08T00:00:00.000Z'),
+        releaseAt: new Date('2027-04-01T00:00:00.000Z'),
+        fieldLocksAt: new Date('2027-04-08T00:00:00.000Z'),
+        seasonId: 'season-1',
+      }),
+    ).rejects.toMatchObject({ name: 'GolfTournamentError', code: 'EVENT_NOT_FOUND', statusCode: 500 });
+  });
+
   it('pool-master-ij2 defaults rounds to 4 when not supplied, and passes through an explicit rounds count', async () => {
     const deps = buildDeps();
     const service = new GolfTournamentService(
@@ -220,6 +285,11 @@ describe('GolfTournamentService.createTournamentFromProviderEvent', () => {
     expect(deps.golfRoundScheduleService.ensureSportEventRounds).not.toHaveBeenCalled();
     expect(deps.golfTierService.ensureDefaultGolfTiers).toHaveBeenCalledWith('event-1');
     expect(result.id).toBe('event-1');
+    // pool-master-54u — the response is re-read after the tiers/rounds seeding
+    // so `_count` isn't the zero snapshot from `sportEvent.create`.
+    const seedOrder = deps.golfTierService.ensureDefaultGolfTiers.mock.invocationCallOrder[0];
+    const reReadOrder = deps.prisma.sportEvent.findUnique.mock.invocationCallOrder.at(-1)!;
+    expect(reReadOrder).toBeGreaterThan(seedOrder);
   });
 
   it('pool-master-5h3 uses the plain sequential-daily schedule (ensureSportEventRounds) when the admin overrides rounds', async () => {

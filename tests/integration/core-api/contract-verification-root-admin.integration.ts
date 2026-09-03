@@ -1212,6 +1212,24 @@ describe('Contract verification (root admin)', () => {
       const eventId = tournamentRes.json().tournament.id as string;
       created.eventIds.push(eventId);
 
+      // pool-master-54u — the create response's counts must reflect the default
+      // tiers/rounds seeded in the same request (not the pre-seed zero snapshot)
+      // and must match what a subsequent GET returns.
+      expect(tournamentRes.json().tournament.tierCount).toBe(6);
+      expect(tournamentRes.json().tournament.fieldCount).toBe(0);
+      const tournamentGetRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/admin/sports/golf/tournaments/${eventId}`,
+        headers: rootAdmin.headers,
+      });
+      expect(tournamentGetRes.statusCode).toBe(200);
+      expect(tournamentGetRes.json().tournament.tierCount).toBe(
+        tournamentRes.json().tournament.tierCount,
+      );
+      expect(tournamentGetRes.json().tournament.fieldCount).toBe(
+        tournamentRes.json().tournament.fieldCount,
+      );
+
       // --- adminListGolfTournaments (200) -------------------------
       const tournamentListRes = await getApp().inject({
         method: 'GET',
