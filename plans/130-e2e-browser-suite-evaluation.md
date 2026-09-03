@@ -1,14 +1,28 @@
-# Browser E2E Suite — Evaluation & Redesign Options
+# Browser E2E Suite — Evaluation, Reset, and Rebuild
 
-**Beads epic:** not yet opened — this plan presents an evaluation and a
-recommendation; opening the epic/slices waits on which direction you pick
-(see "Decision needed" at the end).
+**Beads epic:** `pool-master-303`
 
-## Purpose
+## Decision made
 
-You asked whether `clients/poolmaster/e2e/` earns its keep — it feels fragile
-and low-value. This is an evidence-based evaluation (real CI history, not just
-a read of the code) plus concrete redesign options, not just an opinion.
+The existing suite depends on pre-existing, shared, mutated-in-place QA
+data (a fixed league code, fixed fixture users) — that dependency is the
+thing to eliminate, not patch around. Two phases:
+
+- **Phase 1 (this plan implements it):** delete everything currently in
+  `clients/poolmaster/e2e/` and replace it with the smallest possible test
+  that reliably completes every run — no login, no seeded league, no shared
+  mutable state of any kind.
+- **Phase 2 (deferred, not designed here):** design a real e2e suite
+  together later, once there's a clear view of what a real-browser test
+  should uniquely cover that the rest of this repo's test layers don't
+  already. This plan does not pre-decide that design — it's a placeholder
+  slice/note, intentionally left thin.
+
+## Purpose of the evaluation below
+
+Before deleting anything, here's the evidence for *why* — real CI history,
+not just a read of the code — so the reasoning survives after the old
+suite is gone and isn't only "Derek's gut feeling was right."
 
 ## What the suite actually contains
 
@@ -103,70 +117,93 @@ no spec checks a value came back correctly, no spec drives a multi-step flow
 to a verifiable outcome. It pays the full fragility cost of "real
 everything" for the assurance depth of a build smoke test.
 
-## Recommendation
+## Phase 1 — delete everything, replace with a minimal ping
 
-Two honest options, not one foregone conclusion — this is a resourcing/risk
-call as much as a technical one:
+### Delete (all git-tracked, no `.auth/*.json` to worry about — those are
+local Playwright storage-state artifacts, never committed)
 
-**Option A — Shrink to a true smoke test, cut the rest.** Given how deep the
-FAPI + RTL coverage already is, keep exactly one thing this suite is uniquely
-positioned to prove: *the deployed app boots and each role can authenticate
-for real*. Delete the navigation-smoke specs (their assertions are strictly
-subsumed by existing RTL component tests already run in CI as part of
-`poolmaster-unit-tests`, per page, against every one of those same routes).
-Keep `auth.setup.ts`'s 3 role logins as the entire suite. Lowest fragility
-surface, lowest maintenance, honest about what a real-browser test is for.
+```
+clients/poolmaster/e2e/auth-state.ts
+clients/poolmaster/e2e/auth.setup.ts
+clients/poolmaster/e2e/authenticated-landing.e2e.ts
+clients/poolmaster/e2e/commissioner-league-setup.e2e.ts
+clients/poolmaster/e2e/fixture-state.ts
+clients/poolmaster/e2e/fixtures.ts
+clients/poolmaster/e2e/league-navigation-smoke.e2e.ts
+clients/poolmaster/e2e/member-league-invite-acceptance.e2e.ts
+clients/poolmaster/e2e/poolmaster-e2e-helpers.ts
+clients/poolmaster/e2e/qa-users.ts
+clients/poolmaster/e2e/root-admin-navigation-smoke.e2e.ts
+```
 
-**Option B — Fix the fragility, keep the coverage.** If you want to keep
-real-browser navigation coverage (e.g., because it's caught something RTL
-tests structurally can't, like a routing/bundling regression that only shows
-up in the built artifact):
-1. Replace the shared, mutated-in-place QA league/user fixtures with
-   per-run, uniquely-named ones — `buildE2EUser`/`buildLeagueSeed` already
-   exist in `poolmaster-e2e-helpers.ts` for exactly this and are already
-   used nowhere. This deletes essentially all of `fixture-state.ts`'s repair
-   logic, removes the `workers: 1`/serialization requirement, and removes
-   the race/eventual-consistency exposure entirely — each run gets a clean
-   slate instead of inheriting the last run's state.
-2. Enable `fullyParallel: true` once fixtures are isolated.
-3. Add `retries: 1` (CI-only, matching Playwright's own default guidance for
-   networked e2e).
-4. Decouple the deploy-readiness poll from the test run itself — make it a
-   separate, clearly-labeled step/job so a slow CDN propagation reads as
-   "deploy verification timed out," not "e2e failed."
-5. Reconsider the `needs: migrate-qa` edge — the UI-smoke job doesn't need
-   a successful schema migration to prove routes render; depend on
-   `publish-images` directly (or whatever `migrate-qa` itself depends on)
-   with its own "is the app actually reachable" check, so a migration issue
-   and a UI issue produce distinguishable signals instead of one skipping
-   silently for the other's reason.
-6. Delete `createLeague`/`openCreateContestFlow` or wire them into an actual
-   spec — dead helper code either way right now.
-7. Give `member-league-invite-acceptance.e2e.ts` (or a new spec) an actual,
-   independently-failing assertion of invite acceptance, rather than relying
-   on it succeeding silently inside shared fixture setup.
+This removes every dependency on pre-existing data: no fixed league code,
+no fixture users, no shared mutable state, no repair-on-detect logic.
 
-My own lean is **Option A**. The fragility here isn't incidental — it's the
-direct, structural cost of design choices (shared mutable remote state, no
-retries, deploy-timing coupling) made to support test *depth* the suite
-doesn't actually have. Option B is a real, well-scoped fix if the "real
-browser, real deploy" assurance is worth preserving, but it's meaningfully
-more work than Option A for coverage this repo's other test layers already
-make mostly redundant.
+### Add — one spec, zero data dependency
 
-## Decision needed before I open an epic
+`clients/poolmaster/e2e/ping.e2e.ts`: navigate to `/` and assert the
+unauthenticated landing shell renders — the login form's identifier field
+(`auth-login-identifier`, the same testid the old `auth.setup.ts` already
+proved reliable) is visible. No login, no registration, no league, nothing
+seeded. If the deployed bundle boots and routes to the sign-in screen, this
+passes; if it doesn't, this is the one thing worth knowing.
 
-1. **Option A (shrink to auth-only smoke) or Option B (fix and keep
-   navigation coverage)?**
-2. If B: is per-run isolated fixtures (item 1) actually acceptable, given it
-   means losing the "one fast, always-warm shared league" convenience for a
-   slower-but-correct per-run setup?
-3. Either way: should `poolmaster-browser-e2e`'s outcome ever gate anything
-   downstream? I didn't find anything in `ci.yml` that currently depends on
-   it — if nothing does, it may be worth treating explicitly as signal/
-   telemetry rather than a merge gate, which changes how much retry/fragility
-   engineering is actually worth doing here at all.
+### Update `playwright.config.ts`
 
-Once you pick a direction, I'll open the Beads epic with concrete slices —
-this doc intentionally stops short of that so the epic reflects a decision
-you've actually made, not one I assumed.
+- Remove the `auth setup` project entirely (`testMatch: /.*\.setup\.ts/`) —
+  there's no setup file left.
+- Remove `dependencies: ['auth setup']` from the `chromium` project — nothing
+  to depend on anymore.
+- `fullyParallel: true` — no shared state left to race over. Harmless with
+  one test today, correct going into phase 2.
+- `retries: 1` (CI only, matching Playwright's own guidance for real-network
+  e2e) — directly serves "reliably complete each time": a transient blip on
+  one attempt no longer fails the whole job.
+
+### Update `.github/workflows/ci.yml`
+
+- The `poolmaster-browser-e2e` job's summary step currently says "Journeys:
+  stable role auth setup, reusable QA league repair, commissioner/member/
+  root-admin route smoke" — update to something honest about the new scope
+  (e.g. "Journeys: minimal deploy-reachability ping").
+- Change `needs: migrate-qa` to `needs: publish-images` (the same thing
+  `migrate-qa` itself depends on). The ping test doesn't touch the database
+  at all — there's no reason an unrelated schema-migration failure should
+  prevent "does the app boot" from ever getting a chance to run. This is a
+  direct fix to the exact problem this evaluation found (all 8 of today's
+  runs skipped the job for this reason) and belongs in phase 1, not deferred.
+- The deploy-verification curl-polling step (waits up to 120s for the CDN to
+  reflect the new release) stays as-is — it's a real, separate concern
+  (confirming the *new* build is what's being tested) and isn't part of what
+  lives in `e2e/`, so it's out of this phase's scope.
+
+### Verification for phase 1
+
+- `cd clients/poolmaster && npx playwright test` locally against a real
+  running dev server (or QA) — confirm the single ping test passes.
+- Confirm `npm run test:poolmaster:browser-e2e` / `:list` (root `package.json`
+  aliases) still resolve correctly with only one spec file present.
+- Push and watch the actual `poolmaster-browser-e2e` CI job run to
+  completion (not skipped) at least once — this is the real proof, given
+  the job hasn't gotten a chance to prove anything for a while.
+
+## Phase 2 — design a real suite together (not designed here)
+
+Deliberately thin. Once phase 1 is live and QA is in a saner state (plan
+`pool-master-bwl`'s reset lands), come back and decide together, informed by
+actually watching the ping test run cleanly for a while:
+
+- What does a real browser/deployed-build test need to uniquely prove that
+  the existing RTL component suite and FAPI functional suite structurally
+  can't?
+- If it needs real data (a league, a contest, a draft), how does it get that
+  data without reintroducing shared mutable fixtures — per-run creation via
+  the app's own real APIs (registration, league creation) is the leading
+  candidate, informed by this evaluation's finding that `buildE2EUser`/
+  `buildLeagueSeed`-style per-run fixtures were already half-built and never
+  wired up.
+- Scope: one critical golden-path journey per role, or broader coverage?
+
+No slices are cut for this yet — the Beads epic gets a single placeholder
+child for phase 2 so the intent isn't lost, with no acceptance criteria
+until that design conversation happens.
