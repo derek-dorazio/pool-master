@@ -233,38 +233,15 @@ class EmptyDiagnosticsProvider extends OperationalContractProvider implements Pr
   }
 }
 
-async function buildOperationalAdminApp(): Promise<FastifyInstance> {
-  const app = Fastify({ logger: false });
-  const registry = new ProviderRegistry();
-  registry.register('GOLF', new OperationalContractProvider(), 'PRIMARY');
-  const scheduler = new IngestionScheduler(registry, {
-    onEvents: async () => undefined,
-    onEventDetail: async () => undefined,
-    onRankings: async () => undefined,
-    onLiveScores: async () => emptyLiveScorePersistenceResult(),
-    onJobComplete: async () => undefined,
-  }, undefined, {
-    now: () => new Date('2026-04-05T12:00:00.000Z'),
-  });
-  const providerService = new ProviderService(getPrisma(), registry, scheduler);
-
-  app.decorate('prisma', getPrisma());
-  app.setErrorHandler(globalErrorHandler);
-  await app.register(adminModule, {
-    prefix: '/api/v1/admin',
-    providerService,
-  });
-  await app.ready();
-
-  return app;
-}
-
 /**
- * Like buildOperationalAdminApp but also hands the admin module the provider
- * registry, so the golf score-source lane's EventScoreSourceService can resolve
- * the registered provider for adminListProviderCatalogEvents (pool-master-cs8).
+ * `exposeRegistry` also hands the admin module the provider registry, so the
+ * golf score-source lane's EventScoreSourceService can resolve the registered
+ * provider for adminListProviderCatalogEvents (pool-master-cs8). Off by default
+ * — the operational-sync cases only exercise providerService.
  */
-async function buildScoreSourceContractApp(): Promise<FastifyInstance> {
+async function buildOperationalAdminApp(
+  { exposeRegistry = false }: { exposeRegistry?: boolean } = {},
+): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
   const registry = new ProviderRegistry();
   registry.register('GOLF', new OperationalContractProvider(), 'PRIMARY');
@@ -284,7 +261,7 @@ async function buildScoreSourceContractApp(): Promise<FastifyInstance> {
   await app.register(adminModule, {
     prefix: '/api/v1/admin',
     providerService,
-    providerRegistry: registry,
+    ...(exposeRegistry ? { providerRegistry: registry } : {}),
   });
   await app.ready();
 
@@ -1403,7 +1380,7 @@ describe('Contract verification (root admin)', () => {
     // dedicated admin app with a registered provider and safeParses every
     // response against its published schema. Golf admin rows are not covered by
     // cleanupTestData(), so this test tears down child-first in a finally block.
-    const app = await buildScoreSourceContractApp();
+    const app = await buildOperationalAdminApp({ exposeRegistry: true });
     const rootAdmin = await createTestUser({
       displayName: 'Root Admin Golf Score Source Contract User',
       isRootAdmin: true,
@@ -1486,6 +1463,9 @@ describe('Contract verification (root admin)', () => {
       expect(tournamentRes.json().tournament.syncScope).toBe('NONE');
 
       // --- adminLinkGolfTournamentScoreSource (200) --------------------
+      // A shape test: linkScoreSource only guards against an externalId already
+      // held by another SportEvent (409 EXTERNAL_EVENT_ALREADY_LINKED), not
+      // against provider-event existence — so a synthetic externalId links fine.
       const linkRes = await app.inject({
         method: 'POST',
         url: `/api/v1/admin/sports/golf/tournaments/${eventId}/score-source`,

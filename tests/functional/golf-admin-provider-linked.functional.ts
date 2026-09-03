@@ -53,10 +53,13 @@ import {
 // SCORES_ONLY event" assertion the epic narrative mentions is a
 // scheduled-event-reader concern, not reachable through the SDK — the manual
 // event-sync endpoint deliberately *permits* EVENTPARTICIPANTS for SCORES_ONLY
-// (plans/125 §3.2; unit: admin-support-services.test.ts "pool-master-5h3").
-// The scheduled per-feed syncScope gate is covered by
-// scheduled-event-reader.test.ts "pool-master-cgb" and by
-// mock-contest-feed-provider.integration.ts "pool-master-rop.68.1.7".
+// (plans/125 §3.2). Existing coverage for the real behaviour:
+//   - admin-support-services.test.ts "pool-master-5h3" — the manual event-sync
+//     guard permits EVENTPARTICIPANTS for SCORES_ONLY (rejects only NONE).
+//   - scheduled-event-reader.test.ts "pool-master-cgb" — the *scheduled* per-feed
+//     syncScope gate: EVENTPARTICIPANTS never returns a NONE/SCORES_ONLY event.
+//   - mock-contest-feed-provider.integration.ts "pool-master-rop.68.1.7" — the
+//     same gate end to end through listEventIdsForFeed.
 
 const MOCK_PROVIDER_ID = 'mock-contest-feed';
 // A fixed, dateable event from the static golf-major-2026 scenario — never the
@@ -123,6 +126,13 @@ async function waitForSyncRuns(ids: string[]): Promise<void> {
 async function cleanup(): Promise<void> {
   const db = getFunctionalPrisma();
 
+  // ASSUMPTION: functional tests run maxWorkers: 1 (tests/functional/jest.config.js)
+  // and this is the only provider-linked functional suite, so the deletes below
+  // that key off MOCK_PROVIDER_ID / MOCK_EVENT_EXTERNAL_ID rather than this run's
+  // RUN stamp (the ingestionJob sweep, and the sport_events match on the fixed
+  // golf-us-open-2026 externalId) cannot race a sibling suite. A second
+  // provider-linked functional suite must scope its own mock rows by RUN (or a
+  // per-suite externalId) and this sweep must be tightened alongside it.
   const byName = await db.sportEvent.findMany({
     where: { OR: [{ name: { contains: RUN } }, { externalId: MOCK_EVENT_EXTERNAL_ID, providerId: MOCK_PROVIDER_ID }] },
     select: { id: true },
@@ -482,6 +492,19 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     expect(fieldAfterSync.data!.entries.every((e) => e.isActive)).toBe(true);
 
     // --- 5b. Drive to the finish, then COMPLETED -> settlement fires ---
+    // The tournament was authored with 4 rounds and the details sync (§3a) left
+    // that untouched. The 'golf-completed' mock state, however, synthesizes a
+    // 2-player playoff as round 5, and golf-score-service.persistRoundUpdates
+    // auto-creates a SportEventRound for any incoming round number it can't
+    // resolve — so the score sync DOES add one round row beyond the authored
+    // schedule. That auto-create is a pre-existing golf-score-service behaviour
+    // (logged liveScore.golf.autoCreatedRoundSchedule) and the same
+    // "provider payload bleeds past a SCORES_ONLY link" class as the schedule
+    // overwrite tracked in pool-master-ce4 — asserted explicitly here so a
+    // future reader isn't surprised by the 4 -> 5 drift.
+    const roundsBeforeFinalSync = await db.sportEventRound.count({ where: { sportEventId: eventId } });
+    expect(roundsBeforeFinalSync).toBe(4);
+
     const finalSync = await adminSyncProviderEventData({
       client: admin,
       path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
@@ -489,6 +512,9 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     });
     expect(finalSync.response?.status).toBe(202);
     await waitForSyncRuns(finalSync.data!.syncRuns.map((r) => r.id));
+
+    const roundsAfterFinalSync = await db.sportEventRound.count({ where: { sportEventId: eventId } });
+    expect(roundsAfterFinalSync).toBe(5); // +1: the auto-created playoff round
 
     const toDone = await adminTransitionGolfTournament({
       client: admin,
