@@ -121,4 +121,32 @@ describe('pool-master-dyb golf-tier-board-utils', () => {
     expect(next[1]).toBe(board[1]);
     expect(next[2]).toBe(board[2]);
   });
+
+  it('pool-master-z3l keeps a null price as null (not coerced) for an unpriced golfer', () => {
+    // A golfer added before auto-assign prices — or one bulk-added with no
+    // seedNumber — has price null at runtime (the generated type says `number`,
+    // but the server DTO is `.nullable()` and really sends null — see the price
+    // cell coalesce in golf-tier-board.tsx). It must round-trip as null so the
+    // board's price input renders empty rather than the literal string "null".
+    const nullPrice = null as unknown as number;
+    const unpricedField = [
+      fieldEntry({ sportEventParticipantId: 'sep-9', participantId: 'p-9', participantName: 'Guest', price: nullPrice }),
+    ];
+    const unpricedTiers = [
+      tier({
+        tierKey: 'tier-1',
+        tierNumber: 1,
+        assignments: [
+          { sportEventParticipantId: 'sep-9', participantId: 'p-9', tierOrderIndex: 0, price: nullPrice },
+        ],
+      }),
+    ];
+
+    const assigned = buildTierBoard(unpricedTiers, unpricedField);
+    expect(assigned[0].cards[0].price).toBeNull();
+
+    // Same when the golfer is still in the Unassigned catch-all.
+    const unassigned = buildTierBoard([tier({ assignments: [] })], unpricedField);
+    expect(unassigned[1].cards[0].price).toBeNull();
+  });
 });

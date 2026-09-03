@@ -210,7 +210,9 @@ export function GolfTierBoard({
   const editable = !readOnly;
 
   function renderCard(column: TierColumn, card: TierCard, index: number) {
-    const priceRaw = priceDraft[card.sportEventParticipantId] ?? String(card.price);
+    const priceRaw =
+      priceDraft[card.sportEventParticipantId] ??
+      (card.price == null ? '' : String(card.price));
     const priceBad = priceRaw.trim() !== '' && !isValidPrice(priceRaw);
     return (
       <div

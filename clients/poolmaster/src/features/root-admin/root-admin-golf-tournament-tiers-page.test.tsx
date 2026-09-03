@@ -89,7 +89,7 @@ function tournament(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function fieldEntry(sep: string, name: string, price = 9000) {
+function fieldEntry(sep: string, name: string, price: number | null = 9000) {
   return {
     sportEventParticipantId: sep,
     participantId: `p-${sep}`,
@@ -247,6 +247,36 @@ describe('pool-master-dyb RootAdminGolfTournamentTiersPage', () => {
         }),
       ),
     );
+  });
+
+  it('pool-master-z3l renders an empty price input (not "null") for an unpriced golfer', async () => {
+    adminGetGolfTournamentFieldMock.mockResolvedValue({
+      data: { entries: [fieldEntry('sep-1', 'Rory', null), fieldEntry('sep-2', 'Scottie', null)] },
+    });
+    adminGetGolfTournamentTiersMock.mockResolvedValue({
+      data: {
+        tiers: [
+          {
+            tierKey: 'tier-1',
+            label: 'Tier 1',
+            tierNumber: 1,
+            defaultPickCount: 1,
+            assignments: [
+              { sportEventParticipantId: 'sep-1', participantId: 'p-sep-1', tierOrderIndex: 0, price: null },
+            ],
+          },
+          { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2, defaultPickCount: 1, assignments: [] },
+        ],
+      },
+    });
+    renderPage();
+
+    const priceInput = await screen.findByTestId('root-admin-golf-tier-price-sep-1');
+    expect(priceInput).toHaveValue('');
+    // The unassigned golfer's cell is empty too.
+    expect(await screen.findByTestId('root-admin-golf-tier-price-sep-2')).toHaveValue('');
+    // A price left untouched contributes no bulk-patch entry.
+    expect(screen.queryByTestId('root-admin-golf-tier-board-dirty-bar')).not.toBeInTheDocument();
   });
 
   it('pool-master-dyb auto-assigns tiers from world rank behind a confirmation', async () => {

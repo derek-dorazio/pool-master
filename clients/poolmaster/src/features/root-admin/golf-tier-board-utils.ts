@@ -18,7 +18,8 @@ export type TierCard = {
   name: string;
   worldRanking: number;
   oddsToWin: number;
-  price: number;
+  /** Null until a price is assigned (auto-assign prices, or a manual edit). */
+  price: number | null;
 };
 
 export type TierColumn = {
@@ -44,7 +45,7 @@ export function buildTierBoard(
   );
   const assigned = new Set<string>();
 
-  const cardFor = (sepId: string, price: number): TierCard | null => {
+  const cardFor = (sepId: string, price: number | null): TierCard | null => {
     const entry = byParticipant.get(sepId);
     if (!entry) {
       return null;

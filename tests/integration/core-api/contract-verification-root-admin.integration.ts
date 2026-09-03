@@ -7,6 +7,19 @@ import {
   ContestConfigTemplateListResponseSchema,
   IngestionScheduleConfigSchema,
   AdminTeamListResponseSchema,
+  AdminCloneGolfSeasonResponseSchema,
+  AdminGolfLeagueDtoSchema,
+  AdminGolfLeagueListResponseSchema,
+  AdminGolfPlayerDetailResponseSchema,
+  AdminGolfPlayerListResponseSchema,
+  AdminGolfSeasonDtoSchema,
+  AdminGolfSeasonListResponseSchema,
+  AdminGolfTournamentDetailResponseSchema,
+  AdminGolfTournamentFieldResponseSchema,
+  AdminGolfTournamentListResponseSchema,
+  AdminGolfTournamentRoundsResponseSchema,
+  AdminGolfTournamentTiersResponseSchema,
+  AdminSetCurrentGolfSeasonResponseSchema,
   LeagueListResponseSchema,
   LeagueResponseSchema,
   PollIntervalConfigSchema,
@@ -1052,6 +1065,282 @@ describe('Contract verification (root admin)', () => {
       expect(response.json().error.code).toBe('PROVIDER_SPORT_COVERAGE_REQUIRED');
     } finally {
       await app.close();
+    }
+  });
+
+  it('pool-master-z3l: root-admin golf tournament-admin routes match their DTOs on happy paths', async () => {
+    // plans/124 §8 — a happy-path contract case per operation this epic adds to
+    // the golf admin module. Drives one coherent authoring flow (tour -> season
+    // -> players -> tournament -> field/tiers/rounds reads -> set-current ->
+    // clone) through getApp().inject() and safeParses every response against its
+    // published schema. Golf admin rows are not covered by cleanupTestData(), so
+    // this test tears down everything it creates child-first in a finally block.
+    const rootAdmin = await createTestUser({
+      displayName: 'Root Admin Golf Contract User',
+      isRootAdmin: true,
+    });
+    const stamp = Date.now().toString().slice(-8);
+
+    await getPrisma().sport.upsert({
+      where: { name: 'GOLF' },
+      create: {
+        name: 'GOLF',
+        participantType: 'INDIVIDUAL',
+        category: 'GOLF',
+        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
+      },
+      update: {},
+    });
+
+    const created = {
+      sportLeagueId: '',
+      seasonIds: [] as string[],
+      eventIds: [] as string[],
+      participantIds: [] as string[],
+    };
+
+    try {
+      // --- adminCreateGolfLeague (201: { league }) --------------------------
+      const leagueRes = await getApp().inject({
+        method: 'POST',
+        url: '/api/v1/admin/sports/golf/leagues',
+        headers: rootAdmin.headers,
+        payload: { name: `Z3L Contract Tour ${stamp}`, matchKeyword: `Z3L${stamp}` },
+      });
+      expect(leagueRes.statusCode).toBe(201);
+      expect(AdminGolfLeagueDtoSchema.safeParse(leagueRes.json().league).success).toBe(true);
+      const leagueId = leagueRes.json().league.id as string;
+      created.sportLeagueId = leagueId;
+
+      // --- adminListGolfLeagues (200) -------------------------------------
+      const leagueListRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/admin/sports/golf/leagues?search=Z3L+Contract+Tour+${stamp}`,
+        headers: rootAdmin.headers,
+      });
+      expect(leagueListRes.statusCode).toBe(200);
+      expect(AdminGolfLeagueListResponseSchema.safeParse(leagueListRes.json()).success).toBe(true);
+      expect(
+        leagueListRes.json().leagues.some((l: { id: string }) => l.id === leagueId),
+      ).toBe(true);
+
+      // --- adminCreateGolfSeason (201: { season }) ------------------------
+      const seasonRes = await getApp().inject({
+        method: 'POST',
+        url: '/api/v1/admin/sports/golf/seasons',
+        headers: rootAdmin.headers,
+        payload: {
+          sportLeagueId: leagueId,
+          name: `Z3L Contract Season ${stamp} 2081`,
+          year: 2081,
+          startDate: '2081-01-05T00:00:00.000Z',
+          endDate: '2081-11-30T00:00:00.000Z',
+        },
+      });
+      expect(seasonRes.statusCode).toBe(201);
+      expect(AdminGolfSeasonDtoSchema.safeParse(seasonRes.json().season).success).toBe(true);
+      const seasonId = seasonRes.json().season.id as string;
+      created.seasonIds.push(seasonId);
+
+      // --- adminListGolfSeasons (200) -----------------------------------
+      const seasonListRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/admin/sports/golf/seasons?sportLeagueId=${leagueId}`,
+        headers: rootAdmin.headers,
+      });
+      expect(seasonListRes.statusCode).toBe(200);
+      expect(AdminGolfSeasonListResponseSchema.safeParse(seasonListRes.json()).success).toBe(true);
+
+      // --- adminGetGolfSeason (200: { season }) ------------------------
+      const seasonDetailRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/admin/sports/golf/seasons/${seasonId}`,
+        headers: rootAdmin.headers,
+      });
+      expect(seasonDetailRes.statusCode).toBe(200);
+      expect(seasonDetailRes.json().season.isCurrent).toBe(false);
+
+      // --- adminCreateGolfPlayer (201) x3 -----------------------------
+      for (let i = 0; i < 3; i += 1) {
+        const playerRes = await getApp().inject({
+          method: 'POST',
+          url: '/api/v1/admin/sports/golf/players',
+          headers: rootAdmin.headers,
+          payload: {
+            name: `Z3L Contract Golfer ${stamp}-${i}`,
+            shortName: `Z${stamp}${i}`,
+            nationality: 'USA',
+            externalId: `z3l-contract-${stamp}-p${i}`,
+          },
+        });
+        expect(playerRes.statusCode).toBe(201);
+        if (i === 0) {
+          expect(AdminGolfPlayerDetailResponseSchema.safeParse(playerRes.json()).success).toBe(true);
+        }
+        created.participantIds.push(playerRes.json().player.id as string);
+      }
+
+      // --- adminListGolfPlayers (200) --------------------------------
+      const playerListRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/admin/sports/golf/players?search=Z3L+Contract+Golfer+${stamp}`,
+        headers: rootAdmin.headers,
+      });
+      expect(playerListRes.statusCode).toBe(200);
+      expect(AdminGolfPlayerListResponseSchema.safeParse(playerListRes.json()).success).toBe(true);
+
+      // --- adminCreateGolfTournament (201: detail) ------------------
+      const tournamentRes = await getApp().inject({
+        method: 'POST',
+        url: '/api/v1/admin/sports/golf/tournaments',
+        headers: rootAdmin.headers,
+        payload: {
+          name: `Z3L Contract Open ${stamp}`,
+          venue: 'Contract Links',
+          location: 'Testshire',
+          startDate: '2081-07-16T08:00:00.000Z',
+          endDate: '2081-07-19T20:00:00.000Z',
+          rounds: 4,
+          releaseAt: '2081-07-01T00:00:00.000Z',
+          fieldLocksAt: '2081-07-15T00:00:00.000Z',
+          seasonId,
+          autoLifecycleEnabled: false,
+        },
+      });
+      expect(tournamentRes.statusCode).toBe(201);
+      expect(AdminGolfTournamentDetailResponseSchema.safeParse(tournamentRes.json()).success).toBe(true);
+      const eventId = tournamentRes.json().tournament.id as string;
+      created.eventIds.push(eventId);
+
+      // --- adminListGolfTournaments (200) -------------------------
+      const tournamentListRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/admin/sports/golf/tournaments?seasonId=${seasonId}`,
+        headers: rootAdmin.headers,
+      });
+      expect(tournamentListRes.statusCode).toBe(200);
+      expect(AdminGolfTournamentListResponseSchema.safeParse(tournamentListRes.json()).success).toBe(true);
+
+      // --- adminGetGolfTournamentField / Tiers / Rounds (200) ----
+      const fieldRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/admin/sports/golf/tournaments/${eventId}/field`,
+        headers: rootAdmin.headers,
+      });
+      expect(fieldRes.statusCode).toBe(200);
+      expect(AdminGolfTournamentFieldResponseSchema.safeParse(fieldRes.json()).success).toBe(true);
+
+      const tiersRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/admin/sports/golf/tournaments/${eventId}/tiers`,
+        headers: rootAdmin.headers,
+      });
+      expect(tiersRes.statusCode).toBe(200);
+      expect(AdminGolfTournamentTiersResponseSchema.safeParse(tiersRes.json()).success).toBe(true);
+      expect(tiersRes.json().tiers).toHaveLength(6);
+
+      const roundsRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/admin/sports/golf/tournaments/${eventId}/rounds`,
+        headers: rootAdmin.headers,
+      });
+      expect(roundsRes.statusCode).toBe(200);
+      expect(AdminGolfTournamentRoundsResponseSchema.safeParse(roundsRes.json()).success).toBe(true);
+      expect(roundsRes.json().rounds).toHaveLength(4);
+
+      // --- adminSetCurrentGolfSeason (200) ---------------------
+      const setCurrentRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/admin/sports/golf/seasons/${seasonId}/set-current`,
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(setCurrentRes.statusCode).toBe(200);
+      expect(AdminSetCurrentGolfSeasonResponseSchema.safeParse(setCurrentRes.json()).success).toBe(true);
+
+      // --- adminCloneGolfSeason (201) — the operation this branch adds ---
+      const cloneRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/admin/sports/golf/seasons/${seasonId}/clone`,
+        headers: rootAdmin.headers,
+        payload: {},
+      });
+      expect(cloneRes.statusCode).toBe(201);
+      expect(AdminCloneGolfSeasonResponseSchema.safeParse(cloneRes.json()).success).toBe(true);
+      expect(cloneRes.json().tournamentsCloned).toBe(1);
+      expect(cloneRes.json().season.year).toBe(2082);
+      expect(cloneRes.json().season.isCurrent).toBe(false);
+      const clonedSeasonId = cloneRes.json().season.id as string;
+      created.seasonIds.push(clonedSeasonId);
+
+      // Source season's current flag is unchanged by the clone (§4.2a).
+      const sourceAfterRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/admin/sports/golf/seasons/${seasonId}`,
+        headers: rootAdmin.headers,
+      });
+      expect(sourceAfterRes.json().season.isCurrent).toBe(true);
+
+      // Capture the cloned tournament id for teardown.
+      const clonedListRes = await getApp().inject({
+        method: 'GET',
+        url: `/api/v1/admin/sports/golf/tournaments?seasonId=${clonedSeasonId}`,
+        headers: rootAdmin.headers,
+      });
+      for (const t of clonedListRes.json().tournaments as Array<{ id: string }>) {
+        created.eventIds.push(t.id);
+      }
+    } finally {
+      const prisma = getPrisma();
+      if (created.eventIds.length) {
+        const seps = await prisma.sportEventParticipant.findMany({
+          where: { sportEventId: { in: created.eventIds } },
+          select: { id: true },
+        });
+        const sepIds = seps.map((s) => s.id);
+        if (sepIds.length) {
+          await prisma.contestEntryPick.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+          await prisma.sportEventParticipantGolfRound.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+          await prisma.sportEventParticipantGolfStanding.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+          await prisma.sportEventParticipantGolfValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+          await prisma.sportEventParticipant.deleteMany({ where: { id: { in: sepIds } } });
+        }
+        await prisma.sportEventGolfTier.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
+        await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
+        await prisma.sportEvent.deleteMany({ where: { id: { in: created.eventIds } } });
+      }
+      if (created.sportLeagueId) {
+        await prisma.sportLeague.updateMany({
+          where: { id: created.sportLeagueId },
+          data: { currentSeasonId: null },
+        });
+      }
+      if (created.participantIds.length) {
+        await prisma.participantLeagueAffiliation.deleteMany({
+          where: { participantId: { in: created.participantIds } },
+        });
+        await prisma.participantProviderMapping.deleteMany({
+          where: { participantId: { in: created.participantIds } },
+        });
+      }
+      if (created.seasonIds.length || created.sportLeagueId) {
+        await prisma.leagueEvent.deleteMany({
+          where: { sportLeagueId: created.sportLeagueId || undefined },
+        });
+        await prisma.season.deleteMany({
+          where: {
+            OR: [
+              { id: { in: created.seasonIds } },
+              created.sportLeagueId ? { sportLeagueId: created.sportLeagueId } : { id: { in: created.seasonIds } },
+            ],
+          },
+        });
+      }
+      if (created.participantIds.length) {
+        await prisma.participant.deleteMany({ where: { id: { in: created.participantIds } } });
+      }
+      if (created.sportLeagueId) {
+        await prisma.sportLeague.deleteMany({ where: { id: created.sportLeagueId } });
+      }
     }
   });
 });
