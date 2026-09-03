@@ -1,6 +1,11 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+// Canonical helper lives in core-api's src so it is unit-tested; this build
+// script reuses it so the mock provider's spec gets the same 3.0->3.1
+// nullability encoding. See plans/131-hey-api-nullable-generation-fix.md.
+import { rewriteNullableToOpenApi31 } from '../../core-api/src/openapi/nullable-to-3-1';
+
 async function main(): Promise<void> {
   const { buildApp } = await import('../src/app');
   const app = buildApp();
@@ -16,6 +21,8 @@ async function main(): Promise<void> {
     console.error('swagger() not available — is @fastify/swagger registered?');
     process.exit(1);
   }
+
+  rewriteNullableToOpenApi31(spec);
 
   const generatedDir = resolve(process.cwd(), 'generated');
   mkdirSync(generatedDir, { recursive: true });

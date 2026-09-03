@@ -5017,8 +5017,11 @@ export interface operations {
                              * @description When the invite stops being valid, if it expires.
                              */
                             expiresAt?: string | null;
-                            /** @description When the invitation was accepted, if applicable. */
-                            acceptedAt?: (string | null) | null;
+                            /**
+                             * Format: date-time
+                             * @description When the invitation was accepted, if applicable.
+                             */
+                            acceptedAt?: string | null;
                             /** @description User ID that accepted the invite, when known. */
                             acceptedBy?: string | null;
                             /**
@@ -5138,8 +5141,11 @@ export interface operations {
                              * @description When the invite stops being valid, if it expires.
                              */
                             expiresAt?: string | null;
-                            /** @description When the invitation was accepted, if applicable. */
-                            acceptedAt?: (string | null) | null;
+                            /**
+                             * Format: date-time
+                             * @description When the invitation was accepted, if applicable.
+                             */
+                            acceptedAt?: string | null;
                             /** @description User ID that accepted the invite, when known. */
                             acceptedBy?: string | null;
                             /**
@@ -7377,8 +7383,11 @@ export interface operations {
                              * @description ISO 8601 datetime string.
                              */
                             acceptedAt?: string | null;
-                            /** @description ISO 8601 datetime string. */
-                            expiresAt?: (string | null) | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            expiresAt?: string | null;
                             /** Format: uuid */
                             replacementForUserId?: string | null;
                             /**
@@ -7513,8 +7522,11 @@ export interface operations {
                              * @description ISO 8601 datetime string.
                              */
                             acceptedAt?: string | null;
-                            /** @description ISO 8601 datetime string. */
-                            expiresAt?: (string | null) | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            expiresAt?: string | null;
                             /** Format: uuid */
                             replacementForUserId?: string | null;
                             /**
@@ -7650,8 +7662,11 @@ export interface operations {
                              * @description ISO 8601 datetime string.
                              */
                             acceptedAt?: string | null;
-                            /** @description ISO 8601 datetime string. */
-                            expiresAt?: (string | null) | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            expiresAt?: string | null;
                             /** Format: uuid */
                             replacementForUserId?: string | null;
                             /**
@@ -7775,8 +7790,11 @@ export interface operations {
                              * @description ISO 8601 datetime string.
                              */
                             acceptedAt?: string | null;
-                            /** @description ISO 8601 datetime string. */
-                            expiresAt?: (string | null) | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            expiresAt?: string | null;
                             /** Format: uuid */
                             replacementForUserId?: string | null;
                             /**
@@ -8189,8 +8207,11 @@ export interface operations {
                              * @description ISO 8601 datetime string.
                              */
                             acceptedAt?: string | null;
-                            /** @description ISO 8601 datetime string. */
-                            expiresAt?: (string | null) | null;
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
+                            expiresAt?: string | null;
                             /** Format: uuid */
                             replacementForUserId?: string | null;
                             /**
@@ -10208,7 +10229,7 @@ export interface operations {
                                     displayValue: string | null;
                                 } | null;
                                 /** @description Round 2 leaderboard column. */
-                                r2: ({
+                                r2: {
                                     /** @description Golf round number represented by this leaderboard column. */
                                     round: number;
                                     /**
@@ -10229,9 +10250,9 @@ export interface operations {
                                     displayType: "EMPTY" | "TO_PAR" | "STROKES";
                                     /** @description Preformatted member-facing value for this round column using Golf display rules. */
                                     displayValue: string | null;
-                                } | null) | null;
+                                } | null;
                                 /** @description Round 3 leaderboard column. */
-                                r3: ({
+                                r3: {
                                     /** @description Golf round number represented by this leaderboard column. */
                                     round: number;
                                     /**
@@ -10252,9 +10273,9 @@ export interface operations {
                                     displayType: "EMPTY" | "TO_PAR" | "STROKES";
                                     /** @description Preformatted member-facing value for this round column using Golf display rules. */
                                     displayValue: string | null;
-                                } | null) | null;
+                                } | null;
                                 /** @description Round 4 leaderboard column. */
-                                r4: ({
+                                r4: {
                                     /** @description Golf round number represented by this leaderboard column. */
                                     round: number;
                                     /**
@@ -10275,7 +10296,7 @@ export interface operations {
                                     displayType: "EMPTY" | "TO_PAR" | "STROKES";
                                     /** @description Preformatted member-facing value for this round column using Golf display rules. */
                                     displayValue: string | null;
-                                } | null) | null;
+                                } | null;
                             };
                         }[];
                         /** @description Contest entries ordered by computed Golf total. */
@@ -10395,7 +10416,7 @@ export interface operations {
                                             displayValue: string | null;
                                         } | null;
                                         /** @description Round 2 leaderboard column. */
-                                        r2: ({
+                                        r2: {
                                             /** @description Golf round number represented by this leaderboard column. */
                                             round: number;
                                             /**
@@ -10416,9 +10437,9 @@ export interface operations {
                                             displayType: "EMPTY" | "TO_PAR" | "STROKES";
                                             /** @description Preformatted member-facing value for this round column using Golf display rules. */
                                             displayValue: string | null;
-                                        } | null) | null;
+                                        } | null;
                                         /** @description Round 3 leaderboard column. */
-                                        r3: ({
+                                        r3: {
                                             /** @description Golf round number represented by this leaderboard column. */
                                             round: number;
                                             /**
@@ -10439,9 +10460,9 @@ export interface operations {
                                             displayType: "EMPTY" | "TO_PAR" | "STROKES";
                                             /** @description Preformatted member-facing value for this round column using Golf display rules. */
                                             displayValue: string | null;
-                                        } | null) | null;
+                                        } | null;
                                         /** @description Round 4 leaderboard column. */
-                                        r4: ({
+                                        r4: {
                                             /** @description Golf round number represented by this leaderboard column. */
                                             round: number;
                                             /**
@@ -10462,7 +10483,7 @@ export interface operations {
                                             displayType: "EMPTY" | "TO_PAR" | "STROKES";
                                             /** @description Preformatted member-facing value for this round column using Golf display rules. */
                                             displayValue: string | null;
-                                        } | null) | null;
+                                        } | null;
                                     };
                                 };
                             }[];
@@ -18956,7 +18977,10 @@ export interface operations {
                              * @description ISO 8601 datetime string.
                              */
                             startDate: string;
-                            /** @description ISO 8601 datetime string. */
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
                             endDate: string | null;
                             /** @enum {string} */
                             status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
@@ -19085,7 +19109,10 @@ export interface operations {
                              * @description ISO 8601 datetime string.
                              */
                             startDate: string;
-                            /** @description ISO 8601 datetime string. */
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
                             endDate: string | null;
                             /** @enum {string} */
                             status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
@@ -19236,7 +19263,10 @@ export interface operations {
                              * @description ISO 8601 datetime string.
                              */
                             startDate: string;
-                            /** @description ISO 8601 datetime string. */
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
                             endDate: string | null;
                             /** @enum {string} */
                             status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
@@ -19501,7 +19531,10 @@ export interface operations {
                              * @description ISO 8601 datetime string.
                              */
                             startDate: string;
-                            /** @description ISO 8601 datetime string. */
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
                             endDate: string | null;
                             /** @enum {string} */
                             status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
@@ -19732,7 +19765,10 @@ export interface operations {
                              * @description ISO 8601 datetime string.
                              */
                             startDate: string;
-                            /** @description ISO 8601 datetime string. */
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
                             endDate: string | null;
                             /** @enum {string} */
                             status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
@@ -19882,7 +19918,10 @@ export interface operations {
                              * @description ISO 8601 datetime string.
                              */
                             startDate: string;
-                            /** @description ISO 8601 datetime string. */
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
                             endDate: string | null;
                             /** @enum {string} */
                             status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
@@ -20033,7 +20072,10 @@ export interface operations {
                              * @description ISO 8601 datetime string.
                              */
                             startDate: string;
-                            /** @description ISO 8601 datetime string. */
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
                             endDate: string | null;
                             /** @enum {string} */
                             status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
@@ -20176,7 +20218,10 @@ export interface operations {
                              * @description ISO 8601 datetime string.
                              */
                             startDate: string;
-                            /** @description ISO 8601 datetime string. */
+                            /**
+                             * Format: date-time
+                             * @description ISO 8601 datetime string.
+                             */
                             endDate: string | null;
                             /** @enum {string} */
                             status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
@@ -23258,11 +23303,11 @@ export interface operations {
                                 seed: number | null;
                             } | null;
                             /** @description Minimal team identity used in bracket pick-em draft payloads. */
-                            bottomTeam: ({
+                            bottomTeam: {
                                 id: string;
                                 name: string;
                                 seed: number | null;
-                            } | null) | null;
+                            } | null;
                             /** @description Winning team identifier when the matchup has been decided. */
                             winnerId: string | null;
                         }[];
@@ -23479,11 +23524,11 @@ export interface operations {
                                 seed: number | null;
                             } | null;
                             /** @description Minimal team identity used in bracket pick-em draft payloads. */
-                            bottomTeam: ({
+                            bottomTeam: {
                                 id: string;
                                 name: string;
                                 seed: number | null;
-                            } | null) | null;
+                            } | null;
                             /** @description Winning team identifier when the matchup has been decided. */
                             winnerId: string | null;
                         }[];
@@ -23691,11 +23736,11 @@ export interface operations {
                                 seed: number | null;
                             } | null;
                             /** @description Minimal team identity used in bracket pick-em draft payloads. */
-                            bottomTeam: ({
+                            bottomTeam: {
                                 id: string;
                                 name: string;
                                 seed: number | null;
-                            } | null) | null;
+                            } | null;
                             /** @description Winning team identifier when the matchup has been decided. */
                             winnerId: string | null;
                         }[];
@@ -23950,11 +23995,11 @@ export interface operations {
                                 seed: number | null;
                             } | null;
                             /** @description Minimal team identity used in bracket pick-em draft payloads. */
-                            bottomTeam: ({
+                            bottomTeam: {
                                 id: string;
                                 name: string;
                                 seed: number | null;
-                            } | null) | null;
+                            } | null;
                             /** @description Winning team identifier when the matchup has been decided. */
                             winnerId: string | null;
                         }[];
@@ -24190,11 +24235,11 @@ export interface operations {
                                 seed: number | null;
                             } | null;
                             /** @description Minimal team identity used in bracket pick-em draft payloads. */
-                            bottomTeam: ({
+                            bottomTeam: {
                                 id: string;
                                 name: string;
                                 seed: number | null;
-                            } | null) | null;
+                            } | null;
                             /** @description Winning team identifier when the matchup has been decided. */
                             winnerId: string | null;
                         }[];
@@ -24438,11 +24483,11 @@ export interface operations {
                                 seed: number | null;
                             } | null;
                             /** @description Minimal team identity used in bracket pick-em draft payloads. */
-                            bottomTeam: ({
+                            bottomTeam: {
                                 id: string;
                                 name: string;
                                 seed: number | null;
-                            } | null) | null;
+                            } | null;
                             /** @description Winning team identifier when the matchup has been decided. */
                             winnerId: string | null;
                         }[];
@@ -24678,11 +24723,11 @@ export interface operations {
                                 seed: number | null;
                             } | null;
                             /** @description Minimal team identity used in bracket pick-em draft payloads. */
-                            bottomTeam: ({
+                            bottomTeam: {
                                 id: string;
                                 name: string;
                                 seed: number | null;
-                            } | null) | null;
+                            } | null;
                             /** @description Winning team identifier when the matchup has been decided. */
                             winnerId: string | null;
                         }[];
@@ -24918,11 +24963,11 @@ export interface operations {
                                 seed: number | null;
                             } | null;
                             /** @description Minimal team identity used in bracket pick-em draft payloads. */
-                            bottomTeam: ({
+                            bottomTeam: {
                                 id: string;
                                 name: string;
                                 seed: number | null;
-                            } | null) | null;
+                            } | null;
                             /** @description Winning team identifier when the matchup has been decided. */
                             winnerId: string | null;
                         }[];

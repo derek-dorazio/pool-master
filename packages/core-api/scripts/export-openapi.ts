@@ -21,6 +21,8 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'openapi-export-placeholder-n
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
+import { rewriteNullableToOpenApi31 } from '../src/openapi/nullable-to-3-1';
+
 async function main() {
   // Dynamic import after env vars are set
   const { buildApp } = await import('../src/index');
@@ -88,6 +90,12 @@ async function main() {
       }
     }
   }
+
+  // @fastify/swagger + zod-to-json-schema emit 3.0-style `nullable: true`, but
+  // the document declares `openapi: 3.1.0` (below / in plugins/swagger.ts). 3.1
+  // removed `nullable`, so @hey-api/openapi-ts drops every `| null` union unless
+  // nullability is encoded the 3.1 way. See plans/131-hey-api-nullable-generation-fix.md.
+  rewriteNullableToOpenApi31(spec);
 
   const outPath = process.env.OPENAPI_OUTPUT_PATH
     ? resolve(process.cwd(), process.env.OPENAPI_OUTPUT_PATH)

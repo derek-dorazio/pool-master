@@ -221,7 +221,7 @@ export function GolfTierBoard({
       >
         <p className="truncate font-medium text-foreground">{card.name}</p>
         <p className="text-xs text-muted-foreground">
-          Rank {card.worldRanking} · Odds {card.oddsToWin}
+          Rank {card.worldRanking ?? '—'} · Odds {card.oddsToWin ?? '—'}
         </p>
         <div className="mt-2 flex items-center gap-2">
           <label

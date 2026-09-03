@@ -52,7 +52,7 @@ export function GolfLeagueDetailsCard({ league }: { league: GolfLeague }) {
 
   const form = useForm<EditValues>({
     resolver: zodResolver(editSchema),
-    defaultValues: { name: league.name, matchKeyword: league.matchKeyword },
+    defaultValues: { name: league.name, matchKeyword: league.matchKeyword ?? undefined },
     mode: 'onChange',
   });
 
@@ -100,7 +100,7 @@ export function GolfLeagueDetailsCard({ league }: { league: GolfLeague }) {
           <Button
             data-testid="root-admin-golf-league-home-edit"
             onClick={() => {
-              form.reset({ name: league.name, matchKeyword: league.matchKeyword });
+              form.reset({ name: league.name, matchKeyword: league.matchKeyword ?? undefined });
               setEditOpen(true);
             }}
             size="sm"
