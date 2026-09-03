@@ -17685,6 +17685,139 @@ export type AdminSetCurrentGolfSeasonResponses = {
 
 export type AdminSetCurrentGolfSeasonResponse = AdminSetCurrentGolfSeasonResponses[keyof AdminSetCurrentGolfSeasonResponses];
 
+export type AdminCloneGolfSeasonData = {
+    body: {
+        /**
+         * Year for the new season; defaults to the source season's year + 1 (plans/124 §4.2a).
+         */
+        targetYear?: number;
+    };
+    path: {
+        seasonId: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/sports/golf/seasons/{seasonId}/clone';
+};
+
+export type AdminCloneGolfSeasonErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    404: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+    /**
+     * Standard API error envelope.
+     */
+    409: {
+        /**
+         * Error payload object.
+         */
+        error: {
+            /**
+             * Stable machine-readable error code.
+             */
+            code: string;
+            /**
+             * Human-readable error summary safe to show to clients.
+             */
+            message: string;
+            /**
+             * Optional structured details for client-specific handling or diagnostics.
+             */
+            details?: unknown;
+        };
+    };
+};
+
+export type AdminCloneGolfSeasonError = AdminCloneGolfSeasonErrors[keyof AdminCloneGolfSeasonErrors];
+
+export type AdminCloneGolfSeasonResponses = {
+    /**
+     * plans/124 §4.2a — clones a season's tournament calendar one year forward. Never a raw row copy of field / tier / score / provider-link data. Does not change currentSeasonId.
+     */
+    201: {
+        /**
+         * The newly created target season.
+         */
+        season: {
+            id: string;
+            sportLeagueId: string;
+            name: string;
+            year: number;
+            /**
+             * ISO 8601 datetime string.
+             */
+            startDate: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            endDate: string;
+            isActive: boolean;
+            /**
+             * ISO 8601 datetime string.
+             */
+            createdAt: string;
+            /**
+             * ISO 8601 datetime string.
+             */
+            updatedAt: string;
+            /**
+             * Number of tournaments linked to this season.
+             */
+            tournamentCount: number;
+            /**
+             * Whether this season is its league's currently-designated season.
+             */
+            isCurrent: boolean;
+        };
+        /**
+         * How many source-season tournaments were re-created as fresh shells in the new season.
+         */
+        tournamentsCloned: number;
+    };
+};
+
+export type AdminCloneGolfSeasonResponse = AdminCloneGolfSeasonResponses[keyof AdminCloneGolfSeasonResponses];
+
 export type AdminGetGolfTournamentRoundsData = {
     body?: never;
     path: {

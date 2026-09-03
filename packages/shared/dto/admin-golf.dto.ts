@@ -182,6 +182,24 @@ export const AdminSetCurrentGolfSeasonResponseSchema = z.object({
 });
 export type AdminSetCurrentGolfSeasonResponse = z.infer<typeof AdminSetCurrentGolfSeasonResponseSchema>;
 
+export const AdminCloneGolfSeasonRequestSchema = z.object({
+  targetYear: z
+    .number()
+    .int()
+    .optional()
+    .describe('Year for the new season; defaults to the source season\'s year + 1 (plans/124 §4.2a).'),
+});
+export type AdminCloneGolfSeasonRequest = z.infer<typeof AdminCloneGolfSeasonRequestSchema>;
+
+export const AdminCloneGolfSeasonResponseSchema = z.object({
+  season: AdminGolfSeasonDetailDtoSchema.describe('The newly created target season.'),
+  tournamentsCloned: z
+    .number()
+    .int()
+    .describe('How many source-season tournaments were re-created as fresh shells in the new season.'),
+}).describe('plans/124 §4.2a — clones a season\'s tournament calendar one year forward. Never a raw row copy of field / tier / score / provider-link data. Does not change currentSeasonId.');
+export type AdminCloneGolfSeasonResponse = z.infer<typeof AdminCloneGolfSeasonResponseSchema>;
+
 // --- Tournament round schedule (plans/124 §4.10) ---
 
 export const AdminGolfTournamentParamsSchema = z.object({ eventId: z.string() });

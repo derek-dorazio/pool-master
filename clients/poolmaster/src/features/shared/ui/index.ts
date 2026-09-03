@@ -2,6 +2,9 @@ export { ActionList, ActionTile } from "./action-list";
 export { Alert, Callout } from "./alert";
 export { AppIconActionButton, AppNavigationMenu } from "./app-navigation";
 export type { AppNavigationItem } from "./app-navigation";
+export { BulkUploadPanel } from "./bulk-upload-panel";
+export type { BulkUploadFormat, BulkUploadPanelProps } from "./bulk-upload-panel";
+export { parseDelimitedRecords } from "./bulk-upload-parse";
 export { Button, LinkButton } from "./button";
 export type { ButtonProps, LinkButtonProps } from "./button";
 export { BreadcrumbHeader, PageHeader } from "./page-header";
@@ -33,6 +36,8 @@ export type {
   SelectProps,
   TextareaProps,
 } from "./form-field";
+export { FileInput } from "./file-input";
+export type { FileInputProps } from "./file-input";
 export { IconAvatar, IconBadge } from "./icon-avatar";
 export { IconPickerModal } from "./icon-picker-modal";
 export type { IconPickerOption } from "./icon-picker-modal";
@@ -43,6 +48,13 @@ export {
   SummaryMediaLayout,
 } from "./layout-presets";
 export { DefinitionList, MetricGrid, MetricTile } from "./metric-grid";
+export { SelectableDataGrid } from "./selectable-data-grid";
+export type { SelectableDataGridProps } from "./selectable-data-grid";
+export { SortableList } from "./sortable-list";
+export type {
+  SortableListProps,
+  SortableListRenderArgs,
+} from "./sortable-list";
 export { ServerErrorBar, ServerErrorPanel } from "./server-error";
 export type { ServerErrorDisplayProps } from "./server-error";
 export { PageSection, SectionActions, SectionHeader } from "./section";

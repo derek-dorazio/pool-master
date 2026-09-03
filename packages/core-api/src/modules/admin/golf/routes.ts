@@ -11,6 +11,8 @@ import {
   AdminAutoAssignGolfTiersRequestSchema,
   AdminBulkAddGolfFieldEntriesRequestSchema,
   AdminBulkAddGolfFieldEntriesResponseSchema,
+  AdminCloneGolfSeasonRequestSchema,
+  AdminCloneGolfSeasonResponseSchema,
   AdminCreateGolfLeagueRequestSchema,
   AdminCreateGolfPlayerRequestSchema,
   AdminCreateGolfSeasonRequestSchema,
@@ -315,6 +317,23 @@ export async function golfAdminRoutes(
       response: withGolfErrorResponses({ 200: zodToJsonSchema(AdminSetCurrentGolfSeasonResponseSchema) }, [404]),
     },
     handler: handlers.setCurrentSeason,
+  });
+
+  fastify.post('/seasons/:seasonId/clone', {
+    schema: {
+      tags: ['Admin Golf'],
+      summary: 'Clone a golf season\'s tournament calendar forward one year',
+      description:
+        'plans/124 §4.2a. Body { targetYear? } defaults to the source year + 1. Creates the target season (dates shifted to the same month/day, year + shift) then re-creates each source-season tournament as a fresh, empty, syncScope=NONE shell with dates shifted the same way — never a raw row copy of field / tier / score / provider-link data, and no roster to copy. Does not change currentSeasonId. 409 SEASON_YEAR_ALREADY_EXISTS if the target year already exists for this league.',
+      operationId: 'adminCloneGolfSeason',
+      params: zodToJsonSchema(AdminGolfSeasonParamsSchema),
+      body: zodToJsonSchema(AdminCloneGolfSeasonRequestSchema),
+      response: withGolfErrorResponses(
+        { 201: zodToJsonSchema(AdminCloneGolfSeasonResponseSchema) },
+        [404, 409],
+      ),
+    },
+    handler: handlers.cloneSeason,
   });
 
   fastify.get('/tournaments/:eventId/rounds', {

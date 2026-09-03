@@ -129,8 +129,11 @@ export const QueryKeys = {
     golf: {
       all: ['poolmaster', 'root-admin', 'golf'] as const,
       tours: ['poolmaster', 'root-admin', 'golf', 'tours'] as const,
+      // Deliberately NOT nested under the `tours` prefix: invalidating the
+      // `tours` list (a tour rename / active toggle) must not also wipe every
+      // tour's roster cache, since TanStack invalidation is prefix-match.
       leagueRoster: (sportLeagueId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'golf', 'tours', sportLeagueId, 'roster'] as const,
+        ['poolmaster', 'root-admin', 'golf', 'league-roster', sportLeagueId] as const,
       seasons: (sportLeagueId?: QueryKeyId) =>
         sportLeagueId === undefined
           ? (['poolmaster', 'root-admin', 'golf', 'seasons'] as const)
@@ -146,9 +149,13 @@ export const QueryKeys = {
         ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'field'] as const,
       tiers: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'tiers'] as const,
-      roundScores: (eventId: QueryKeyId, round: QueryKeyId) =>
+      roundScores: (eventId: QueryKeyId, round: QueryKeyId | number) =>
         ['poolmaster', 'root-admin', 'golf', 'tournament', eventId, 'round-scores', round] as const,
       players: ['poolmaster', 'root-admin', 'golf', 'players'] as const,
+      playerList: (status?: string) =>
+        ['poolmaster', 'root-admin', 'golf', 'players', 'list', status ?? 'ACTIVE'] as const,
+      playerSearch: (search: string) =>
+        ['poolmaster', 'root-admin', 'golf', 'players', 'search', search] as const,
       player: (participantId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'golf', 'player', participantId] as const,
     },

@@ -5,6 +5,7 @@ import type {
   AdminAutoAssignGolfPricesRequest,
   AdminAutoAssignGolfTiersRequest,
   AdminBulkAddGolfFieldEntriesRequest,
+  AdminCloneGolfSeasonRequest,
   AdminCreateGolfLeagueRequest,
   AdminCreateGolfPlayerRequest,
   AdminCreateGolfSeasonRequest,
@@ -108,6 +109,7 @@ export function createGolfAdminHandlers(
     getSeason,
     updateSeason,
     setCurrentSeason,
+    cloneSeason,
     getTournamentRounds,
     updateTournamentRounds,
     listTournaments,
@@ -288,6 +290,24 @@ export function createGolfAdminHandlers(
   ) {
     const result = await seasonService.setCurrentSeason(request.params.seasonId);
     return reply.send(result);
+  }
+
+  async function cloneSeason(
+    request: FastifyRequest<{ Params: { seasonId: string }; Body: AdminCloneGolfSeasonRequest }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      const { season, tournamentsCloned } = await seasonService.cloneSeasonTournaments(
+        request.params.seasonId,
+        request.body.targetYear,
+        (input) => golfTournamentService.createTournament(input),
+      );
+      return reply
+        .status(201)
+        .send({ season: toAdminGolfSeasonDetailDto(season), tournamentsCloned });
+    } catch (err) {
+      return handleGolfTournamentError(err, reply);
+    }
   }
 
   async function getTournamentRounds(

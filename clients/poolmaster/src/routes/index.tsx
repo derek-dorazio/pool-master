@@ -17,9 +17,18 @@ import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/r
 import { RootAdminContentConfigurationListPage } from '@/features/root-admin/root-admin-content-configuration-list-page';
 import { RootAdminEventsPage } from '@/features/root-admin/root-admin-events-page';
 import { RootAdminGolfHubPage } from '@/features/root-admin/root-admin-golf-hub-page';
+import { RootAdminGolfLeagueHomePage } from '@/features/root-admin/root-admin-golf-league-home-page';
+import { RootAdminGolfPlayerHomePage } from '@/features/root-admin/root-admin-golf-player-home-page';
+import { RootAdminGolfPlayerListPage } from '@/features/root-admin/root-admin-golf-player-list-page';
+import { RootAdminGolfLeagueListPage } from '@/features/root-admin/root-admin-golf-league-list-page';
+import { RootAdminGolfSeasonHomePage } from '@/features/root-admin/root-admin-golf-season-home-page';
+import { RootAdminGolfSeasonListPage } from '@/features/root-admin/root-admin-golf-season-list-page';
 import { RootAdminGolfTournamentCreatePage } from '@/features/root-admin/root-admin-golf-tournament-create-page';
+import { RootAdminGolfTournamentFieldPage } from '@/features/root-admin/root-admin-golf-tournament-field-page';
 import { RootAdminGolfTournamentHomePage } from '@/features/root-admin/root-admin-golf-tournament-home-page';
+import { RootAdminGolfTournamentTiersPage } from '@/features/root-admin/root-admin-golf-tournament-tiers-page';
 import { RootAdminGolfTournamentListPage } from '@/features/root-admin/root-admin-golf-tournament-list-page';
+import { RootAdminGolfTournamentScoresPage } from '@/features/root-admin/root-admin-golf-tournament-scores-page';
 import { RootAdminIngestionSchedulePage } from '@/features/root-admin/root-admin-ingestion-schedule-page';
 import { RootAdminManageHubPage } from '@/features/root-admin/root-admin-manage-hub-page';
 import { RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
@@ -189,6 +198,22 @@ export const router = createBrowserRouter([
                 element: <RootAdminGolfHubPage />,
               },
               {
+                path: 'golf/leagues',
+                element: <RootAdminGolfLeagueListPage />,
+              },
+              {
+                path: 'golf/leagues/:leagueId',
+                element: <RootAdminGolfLeagueHomePage />,
+              },
+              {
+                path: 'golf/seasons',
+                element: <RootAdminGolfSeasonListPage />,
+              },
+              {
+                path: 'golf/seasons/:seasonId',
+                element: <RootAdminGolfSeasonHomePage />,
+              },
+              {
                 path: 'golf/tournaments',
                 element: <RootAdminGolfTournamentListPage />,
               },
@@ -199,6 +224,26 @@ export const router = createBrowserRouter([
               {
                 path: 'golf/tournaments/:eventId',
                 element: <RootAdminGolfTournamentHomePage />,
+              },
+              {
+                path: 'golf/tournaments/:eventId/field',
+                element: <RootAdminGolfTournamentFieldPage />,
+              },
+              {
+                path: 'golf/tournaments/:eventId/tiers',
+                element: <RootAdminGolfTournamentTiersPage />,
+              },
+              {
+                path: 'golf/tournaments/:eventId/scores',
+                element: <RootAdminGolfTournamentScoresPage />,
+              },
+              {
+                path: 'golf/players',
+                element: <RootAdminGolfPlayerListPage />,
+              },
+              {
+                path: 'golf/players/:participantId',
+                element: <RootAdminGolfPlayerHomePage />,
               },
               {
                 path: 'leagues',

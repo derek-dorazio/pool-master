@@ -1,7 +1,15 @@
+import { z } from 'zod';
+import {
+  parseDelimitedRecords,
+  type BulkUploadFormat,
+} from '@/features/shared/ui/bulk-upload-parse';
 import type {
+  AdminApplyGolfRoundScoresData,
   AdminGetGolfTournamentResponses,
   AdminGetGolfTournamentRoundsResponses,
+  AdminListGolfPlayersResponses,
   AdminListGolfTournamentsResponses,
+  AdminPreviewGolfLeagueRosterUploadData,
 } from '@/lib/api';
 
 /**
@@ -55,6 +63,15 @@ export function golfSyncScopeTone(scope: GolfSyncScope): BadgeTone {
 /** A `FULL` tournament is fully provider-owned — read-only in the admin UI (§3.5). */
 export function isAdminManagedGolfTournament(scope: GolfSyncScope): boolean {
   return scope !== 'FULL';
+}
+
+/**
+ * Whether this tournament pulls anything from a provider — gates the Field
+ * editor's "Load / Refresh Participant Field" action and the Score-source block
+ * (§4.4a). `NONE` is a purely manual tournament.
+ */
+export function golfTournamentHasScoreSync(scope: GolfSyncScope): boolean {
+  return scope !== 'NONE';
 }
 
 // --- Status (SportEventStatus) ---
@@ -277,4 +294,245 @@ export function resolveGolfProviderId(
     providers?.find((provider) => provider.sportsCovered.includes('GOLF'))
       ?.providerId ?? null
   );
+}
+
+// --- Player status (Participant.status) ---
+
+type BadgeToneLite = 'active' | 'inactive' | 'warning';
+export type GolfPlayerStatus =
+  AdminListGolfPlayersResponses[200]['players'][number]['status'];
+
+export const GOLF_PLAYER_STATUSES = [
+  'ACTIVE',
+  'INACTIVE',
+  'RETIRED',
+  'SUSPENDED',
+] as const satisfies readonly GolfPlayerStatus[];
+
+// Compile-time exhaustiveness: a new value in the generated status union that is
+// not listed here (or vice versa) breaks typecheck.
+type _GolfPlayerStatusExhaustive =
+  Exclude<GolfPlayerStatus, (typeof GOLF_PLAYER_STATUSES)[number]> extends never
+    ? (typeof GOLF_PLAYER_STATUSES)[number] extends GolfPlayerStatus
+      ? true
+      : ['unknown golf player status listed', (typeof GOLF_PLAYER_STATUSES)[number]]
+    : ['golf player status missing from GOLF_PLAYER_STATUSES', GolfPlayerStatus];
+const _golfPlayerStatusExhaustive: _GolfPlayerStatusExhaustive = true;
+void _golfPlayerStatusExhaustive;
+
+export function golfPlayerStatusTone(status: string): BadgeToneLite {
+  if (status === 'ACTIVE') return 'active';
+  if (status === 'SUSPENDED') return 'warning';
+  return 'inactive';
+}
+
+// --- Field editor (plans/124 §6.3 / §4.4a) ---
+
+/**
+ * The "Load Participant Field" / "Refresh Participant Field" header action is one
+ * endpoint (`adminRefreshGolfTournamentField`) with a client-computed label:
+ * "Load" while the field is still empty, "Refresh" once it has entries (§4.4a).
+ */
+export function golfParticipantFieldActionLabel(
+  fieldCount: number,
+): 'Load Participant Field' | 'Refresh Participant Field' {
+  return fieldCount === 0
+    ? 'Load Participant Field'
+    : 'Refresh Participant Field';
+}
+
+// --- League roster bulk upload (plans/124 §6.3 Tour Home / §6.4) ---
+//
+// The Tour Home roster editor and the round-scores editor share one
+// paste/upload/preview/apply flow (BulkUploadPanel). Each screen supplies its
+// own row shape + parser config; this is the roster one — `externalId` or
+// `playerName` (or an explicit `participantId`) plus `worldRanking`.
+
+export type GolfRosterUploadRow =
+  AdminPreviewGolfLeagueRosterUploadData['body']['rows'][number];
+
+export const GOLF_ROSTER_UPLOAD_HEADERS = [
+  'externalId',
+  'playerName',
+  'worldRanking',
+] as const;
+
+const golfRosterUploadRowSchema = z
+  .object({
+    participantId: z.string().trim().min(1).optional(),
+    externalId: z.string().trim().min(1).optional(),
+    playerName: z.string().trim().min(1).optional(),
+    worldRanking: z.coerce.number().int().positive().optional(),
+  })
+  .refine(
+    (row) =>
+      Boolean(row.participantId) ||
+      Boolean(row.externalId) ||
+      Boolean(row.playerName),
+    { message: 'each row needs a participantId, externalId, or playerName' },
+  );
+
+/**
+ * Parse pasted / uploaded league-roster text into `adminPreviewGolfLeagueRosterUpload`
+ * request rows. Throws an `Error` with a user-facing message on malformed input
+ * or a row missing every identifier — the panel renders that inline.
+ */
+export function parseGolfRosterUpload(
+  text: string,
+  format: BulkUploadFormat,
+): GolfRosterUploadRow[] {
+  // parseDelimitedRecords rejects empty input / a header-only CSV; an empty
+  // JSON array (`[]`) is the only way to reach zero records here.
+  const records = parseDelimitedRecords(text, format);
+  if (records.length === 0) {
+    throw new Error('No rows found.');
+  }
+
+  return records.map((record, index) => {
+    const parsed = golfRosterUploadRowSchema.safeParse(record);
+    if (!parsed.success) {
+      const [issue] = parsed.error.issues;
+      throw new Error(
+        `Row ${index + 1}: ${issue?.message ?? 'is not a valid roster row'}.`,
+      );
+    }
+    const row: GolfRosterUploadRow = {};
+    if (parsed.data.participantId) row.participantId = parsed.data.participantId;
+    if (parsed.data.externalId) row.externalId = parsed.data.externalId;
+    if (parsed.data.playerName) row.playerName = parsed.data.playerName;
+    if (parsed.data.worldRanking !== undefined) {
+      row.worldRanking = parsed.data.worldRanking;
+    }
+    return row;
+  });
+}
+
+// --- Round-score bulk upload (plans/124 §6.3 Round scores / §6.4) ---
+//
+// plans/124 §6.3 documents the CSV header as `externalId,playerName,strokes,thru,status`,
+// but the generated `adminApplyGolfRoundScores` request row also requires `scoreToPar`
+// (not optional) and `status` is a fixed 5-value enum. The template + parser therefore
+// carry `scoreToPar` too; the discrepancy is flagged in the pool-master-r11 close note.
+
+export type GolfRoundScoreUploadRow =
+  AdminApplyGolfRoundScoresData['body']['rows'][number];
+export type GolfRoundScoreStatus = GolfRoundScoreUploadRow['status'];
+
+export const GOLF_ROUND_SCORE_STATUSES = [
+  'IN_PROGRESS',
+  'COMPLETED',
+  'DNF',
+  'DSQ',
+  'MISSED_CUT',
+] as const satisfies readonly GolfRoundScoreStatus[];
+
+// Compile-time exhaustiveness: adding a value to the generated `status` union
+// without listing it here (or vice versa) breaks typecheck.
+type _GolfRoundScoreStatusExhaustive =
+  Exclude<GolfRoundScoreStatus, (typeof GOLF_ROUND_SCORE_STATUSES)[number]> extends never
+    ? (typeof GOLF_ROUND_SCORE_STATUSES)[number] extends GolfRoundScoreStatus
+      ? true
+      : ['unknown golf round status listed', (typeof GOLF_ROUND_SCORE_STATUSES)[number]]
+    : ['golf round status missing from GOLF_ROUND_SCORE_STATUSES', GolfRoundScoreStatus];
+const _golfRoundScoreStatusExhaustive: _GolfRoundScoreStatusExhaustive = true;
+void _golfRoundScoreStatusExhaustive;
+
+const GOLF_ROUND_STATUS_LABEL: Record<GolfRoundScoreStatus, string> = {
+  IN_PROGRESS: 'In progress',
+  COMPLETED: 'Completed',
+  DNF: 'Did not finish',
+  DSQ: 'Disqualified',
+  MISSED_CUT: 'Missed cut',
+};
+
+/** Human-readable label for a golf round-result status enum value. */
+export function formatGolfRoundStatus(status: string): string {
+  return (
+    GOLF_ROUND_STATUS_LABEL[status as GolfRoundScoreStatus] ??
+    status
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/^\w/, (c) => c.toUpperCase())
+  );
+}
+
+export const GOLF_ROUND_SCORE_UPLOAD_HEADERS = [
+  'externalId',
+  'playerName',
+  'strokes',
+  'scoreToPar',
+  'thru',
+  'status',
+] as const;
+
+const golfRoundScoreUploadRowSchema = z
+  .object({
+    participantId: z.string().trim().min(1).optional(),
+    externalId: z.string().trim().min(1).optional(),
+    playerName: z.string().trim().min(1).optional(),
+    strokes: z.coerce.number().int().nonnegative(),
+    scoreToPar: z.coerce.number().int(),
+    thru: z.coerce.number().int().min(0).max(18).optional(),
+    status: z
+      .string()
+      .trim()
+      .transform((value) => value.toUpperCase())
+      .pipe(z.enum(GOLF_ROUND_SCORE_STATUSES)),
+  })
+  .refine(
+    (row) =>
+      Boolean(row.participantId) ||
+      Boolean(row.externalId) ||
+      Boolean(row.playerName),
+    { message: 'each row needs a participantId, externalId, or playerName' },
+  );
+
+/**
+ * Parse pasted / uploaded round-score text into `adminApplyGolfRoundScores`
+ * request rows. Throws an `Error` with a user-facing message on malformed input.
+ */
+function hasNoScoreData(record: Record<string, unknown>): boolean {
+  return ['strokes', 'scoreToPar', 'thru', 'status'].every((key) => {
+    const value = record[key];
+    return value === undefined || String(value).trim() === '';
+  });
+}
+
+export function parseGolfRoundScoreUpload(
+  text: string,
+  format: BulkUploadFormat,
+): GolfRoundScoreUploadRow[] {
+  const records = parseDelimitedRecords(text, format);
+  if (records.length === 0) {
+    throw new Error('No rows found.');
+  }
+
+  // The downloadable template pre-fills one row per field golfer with blank
+  // score cells; a still-blank row means "no result for this golfer" and is
+  // dropped rather than rejected.
+  const scored = records.filter((record) => !hasNoScoreData(record));
+  if (scored.length === 0) {
+    throw new Error('No scores were entered on any row.');
+  }
+
+  return scored.map((record, index) => {
+    const parsed = golfRoundScoreUploadRowSchema.safeParse(record);
+    if (!parsed.success) {
+      const [issue] = parsed.error.issues;
+      const field = issue?.path?.[0];
+      throw new Error(
+        `Row ${index + 1}${field ? ` (${String(field)})` : ''}: ${
+          issue?.message ?? 'is not a valid score row'
+        }.`,
+      );
+    }
+    const { participantId, externalId, playerName, strokes, scoreToPar, thru, status } =
+      parsed.data;
+    const row: GolfRoundScoreUploadRow = { strokes, scoreToPar, status };
+    if (participantId) row.participantId = participantId;
+    if (externalId) row.externalId = externalId;
+    if (playerName) row.playerName = playerName;
+    if (thru !== undefined) row.thru = thru;
+    return row;
+  });
 }

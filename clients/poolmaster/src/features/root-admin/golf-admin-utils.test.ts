@@ -6,8 +6,11 @@ import {
   golfSyncScopeLabel,
   golfSyncScopeTone,
   sportEventStatusTone,
+  golfParticipantFieldActionLabel,
   isAdminManagedGolfTournament,
   localDateTimeInputToIso,
+  parseGolfRosterUpload,
+  parseGolfRoundScoreUpload,
   resolveGolfLifecycleStage,
   resolveGolfProviderId,
   type AdminGolfTournamentRound,
@@ -225,5 +228,126 @@ describe('pool-master-3dg golf-admin-utils: resolveGolfProviderId', () => {
     ).toBe('mock-contest-feed');
     expect(resolveGolfProviderId([])).toBeNull();
     expect(resolveGolfProviderId(undefined)).toBeNull();
+  });
+});
+
+// plans/124 §6.3 / §4.4a — Field editor Load/Refresh label derivation.
+describe('pool-master-za4 golf-admin-utils: golfParticipantFieldActionLabel', () => {
+  it('pool-master-za4 says "Load" for an empty field and "Refresh" once it has entries', () => {
+    expect(golfParticipantFieldActionLabel(0)).toBe('Load Participant Field');
+    expect(golfParticipantFieldActionLabel(1)).toBe('Refresh Participant Field');
+    expect(golfParticipantFieldActionLabel(156)).toBe('Refresh Participant Field');
+  });
+});
+
+// plans/124 §6.3 Tour Home / §6.4 — league-roster bulk-upload parser.
+describe('pool-master-qqs golf-admin-utils: parseGolfRosterUpload', () => {
+  it('pool-master-qqs parses CSV rows, coercing worldRanking to a number', () => {
+    const rows = parseGolfRosterUpload(
+      'externalId,playerName,worldRanking\ndj-1,Dustin Johnson,12\n,Rory McIlroy,3',
+      'CSV',
+    );
+    expect(rows).toEqual([
+      { externalId: 'dj-1', playerName: 'Dustin Johnson', worldRanking: 12 },
+      { playerName: 'Rory McIlroy', worldRanking: 3 },
+    ]);
+  });
+
+  it('pool-master-qqs parses a JSON array with participantId passthrough', () => {
+    const rows = parseGolfRosterUpload(
+      '[{"participantId":"p-1","worldRanking":1}]',
+      'JSON',
+    );
+    expect(rows).toEqual([{ participantId: 'p-1', worldRanking: 1 }]);
+  });
+
+  it('pool-master-qqs rejects a row with no identifier', () => {
+    expect(() =>
+      parseGolfRosterUpload('externalId,playerName,worldRanking\n,,5', 'CSV'),
+    ).toThrow(/Row 1: each row needs a participantId, externalId, or playerName/);
+  });
+
+  it('pool-master-qqs rejects a non-positive or non-integer worldRanking', () => {
+    expect(() =>
+      parseGolfRosterUpload('playerName,worldRanking\nRory McIlroy,-2', 'CSV'),
+    ).toThrow(/Row 1:/);
+    expect(() =>
+      parseGolfRosterUpload('playerName,worldRanking\nRory McIlroy,3.5', 'CSV'),
+    ).toThrow(/Row 1:/);
+  });
+
+  it('pool-master-qqs surfaces the format-level empty-input error', () => {
+    expect(() => parseGolfRosterUpload('', 'CSV')).toThrow('Paste or upload some rows first.');
+  });
+});
+
+// plans/124 §6.3 Round scores / §6.4 — round-score bulk-upload parser.
+describe('pool-master-r11 golf-admin-utils: parseGolfRoundScoreUpload', () => {
+  it('pool-master-r11 parses CSV rows and upper-cases the status enum', () => {
+    const rows = parseGolfRoundScoreUpload(
+      'externalId,playerName,strokes,scoreToPar,thru,status\next-1,Rory McIlroy,70,-2,18,completed\n,Scottie Scheffler,68,-4,18,COMPLETED',
+      'CSV',
+    );
+    expect(rows).toEqual([
+      { externalId: 'ext-1', playerName: 'Rory McIlroy', strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' },
+      { playerName: 'Scottie Scheffler', strokes: 68, scoreToPar: -4, thru: 18, status: 'COMPLETED' },
+    ]);
+  });
+
+  it('pool-master-r11 parses a JSON array with participantId and omitted thru', () => {
+    expect(
+      parseGolfRoundScoreUpload(
+        '[{"participantId":"p-1","strokes":71,"scoreToPar":-1,"status":"IN_PROGRESS"}]',
+        'JSON',
+      ),
+    ).toEqual([
+      { participantId: 'p-1', strokes: 71, scoreToPar: -1, status: 'IN_PROGRESS' },
+    ]);
+  });
+
+  it('pool-master-r11 rejects an unknown status', () => {
+    expect(() =>
+      parseGolfRoundScoreUpload(
+        'playerName,strokes,scoreToPar,status\nRory McIlroy,70,-2,FINISHED',
+        'CSV',
+      ),
+    ).toThrow(/Row 1 \(status\)/);
+  });
+
+  it('pool-master-r11 rejects a row with no identifier and a non-integer strokes', () => {
+    expect(() =>
+      parseGolfRoundScoreUpload(
+        'externalId,playerName,strokes,scoreToPar,status\n,,70.5,-2,COMPLETED',
+        'CSV',
+      ),
+    ).toThrow(/Row 1/);
+  });
+
+  it('pool-master-r11 rejects a thru outside 0-18', () => {
+    expect(() =>
+      parseGolfRoundScoreUpload(
+        'playerName,strokes,scoreToPar,thru,status\nRory McIlroy,70,-2,25,COMPLETED',
+        'CSV',
+      ),
+    ).toThrow(/Row 1 \(thru\)/);
+  });
+
+  it('pool-master-r11 skips template rows left with no score, keeping only the scored ones', () => {
+    const rows = parseGolfRoundScoreUpload(
+      'externalId,playerName,strokes,scoreToPar,thru,status\n,Rory McIlroy,,,,\n,Scottie Scheffler,68,-4,18,COMPLETED\n,Jon Rahm,,,,',
+      'CSV',
+    );
+    expect(rows).toEqual([
+      { playerName: 'Scottie Scheffler', strokes: 68, scoreToPar: -4, thru: 18, status: 'COMPLETED' },
+    ]);
+  });
+
+  it('pool-master-r11 throws when every row is left blank', () => {
+    expect(() =>
+      parseGolfRoundScoreUpload(
+        'externalId,playerName,strokes,scoreToPar,thru,status\n,Rory McIlroy,,,,\n,Jon Rahm,,,,',
+        'CSV',
+      ),
+    ).toThrow('No scores were entered on any row.');
   });
 });
