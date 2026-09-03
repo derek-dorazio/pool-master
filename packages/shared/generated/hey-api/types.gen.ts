@@ -768,7 +768,7 @@ export type ListLeaguesResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -912,7 +912,7 @@ export type CreateLeagueResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -1104,7 +1104,7 @@ export type GetLeagueResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -1216,7 +1216,7 @@ export type GetLeagueByCodeResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -1362,7 +1362,7 @@ export type UpdateLeagueDetailsResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -1504,7 +1504,7 @@ export type UpdateLeagueIconResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -1638,7 +1638,7 @@ export type InactivateLeagueResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -1772,7 +1772,7 @@ export type ActivateLeagueResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -2670,7 +2670,7 @@ export type GetLeagueDashboardResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -7822,7 +7822,7 @@ export type GetGolfContestLeaderboardResponses = {
             /**
              * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
              */
-            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED';
+            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
             /**
              * Latest copied global world ranking on this event participant.
              */
@@ -8112,7 +8112,7 @@ export type GetGolfContestLeaderboardResponses = {
                     /**
                      * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
                      */
-                    inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED';
+                    inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
                     /**
                      * Latest copied global world ranking on this event participant.
                      */
@@ -10989,11 +10989,11 @@ export type UpdateAccountPreferencesData = {
         /**
          * Preferred clock display format, or null to clear it.
          */
-        timeFormat?: '12H' | '24H';
+        timeFormat?: '12H' | '24H' | null;
         /**
          * Preferred date display format, or null to clear it.
          */
-        dateFormat?: 'MDY' | 'DMY' | 'YMD';
+        dateFormat?: 'MDY' | 'DMY' | 'YMD' | null;
     };
     path?: never;
     query?: never;
@@ -13022,7 +13022,7 @@ export type AdminListLeaguesResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -13281,7 +13281,7 @@ export type AdminInactivateLeagueResponses = {
             /**
              * Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks.
              */
-            memberType: 'COMMISSIONER' | 'MEMBER';
+            memberType: 'COMMISSIONER' | 'MEMBER' | null;
             /**
              * Requester-scoped relationship to the target league. This is relationship context, not a generic permission matrix.
              */
@@ -19464,7 +19464,7 @@ export type AdminGetGolfTournamentFieldResponses = {
             /**
              * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
              */
-            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED';
+            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
             worldRanking: number | null;
             oddsToWin: number | null;
             seedNumber: number | null;
@@ -19487,7 +19487,7 @@ export type AdminUpdateGolfFieldEntriesData = {
         entries: Array<{
             sportEventParticipantId: string;
             isActive?: boolean;
-            inactiveReason?: 'WITHDRAWN' | 'CUT' | 'ELIMINATED';
+            inactiveReason?: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
             worldRanking?: number | null;
             oddsToWin?: number | null;
             seedNumber?: number | null;
@@ -19565,7 +19565,7 @@ export type AdminUpdateGolfFieldEntriesResponses = {
             /**
              * Meaningful only when isActive is false; null covers "inactive, no more specific reason recorded."
              */
-            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED';
+            inactiveReason: 'WITHDRAWN' | 'CUT' | 'ELIMINATED' | null;
             worldRanking: number | null;
             oddsToWin: number | null;
             seedNumber: number | null;

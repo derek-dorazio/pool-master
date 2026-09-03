@@ -7,16 +7,25 @@ per user go-ahead in the research review session. §4/§5 kept as written for th
 
 ### Implementation summary (Fix 2)
 
-- `packages/core-api/src/openapi/nullable-to-3-1.ts` — new `rewriteNullableToOpenApi31`
-  helper (recursive `nullable: true` → 3.1 type-array / `anyOf` null-branch).
+- `packages/shared/openapi/nullable-to-3-1.ts` (+ `openapi/index.ts`, exported as
+  `@poolmaster/shared/openapi`) — `rewriteNullableToOpenApi31` helper: recursive
+  `nullable: true` → 3.1 type-array / `anyOf` null-branch, **and adds `null` to any
+  `enum` array** (under 2020-12 `enum` is validated independently of `type`, so
+  `{ type: [T,"null"], enum: [...] }` alone still forbids null and hey-api drops the union).
 - `packages/core-api/scripts/export-openapi.ts` + `packages/mock-contest-feed-provider/scripts/export-openapi.ts`
-  call it before writing the spec. Doc stays `openapi: 3.1.0`.
-- `tests/unit/core-api/openapi-nullable-3-1.test.ts` — unit-tests the helper on all
-  shapes **and** asserts the committed `openapi.json` has zero `"nullable"` (regression guard).
+  import it from `@poolmaster/shared/openapi` and call it before writing the spec. Doc stays
+  `openapi: 3.1.0`. `@poolmaster/shared` added to the mock provider's deps.
+- `tests/unit/shared/openapi-nullable-3-1.test.ts` — unit-tests the helper on every shape
+  (incl. nullable enums and allOf-wrapped enums) **and** asserts on the committed artifacts:
+  `openapi.json` has zero `"nullable"`; no `type:[T,"null"]`+`enum` node omits `null`;
+  `hey-api/types.gen.ts`'s `| null` line count ≥ `api-types.ts`'s; `matchKeyword` / `price` /
+  `memberType` carry `| null` in the SDK.
 - `npm run api:refresh` regenerated: `openapi.json` (798 `nullable: true` → 3.1 encoding,
-  large textual diff), `hey-api/types.gen.ts` (+759 `| null`; 8 stale JSDoc comments fixed;
-  no double-`| null` artifacts), `api-types.ts` (145 lines — `(T | null) | null` collapsed to
-  `T | null`, recovered `Format: date-time` JSDoc; `| null` count unchanged at 777).
+  large textual diff), `hey-api/types.gen.ts` (**+777 `| null`**, incl. the 18 nullable-enum
+  slots — `memberType`, `inactiveReason`, account `timeFormat`/`dateFormat`, …; 8 stale JSDoc
+  comments fixed; no double-`| null` artifacts), `api-types.ts` (`(T | null) | null` collapsed
+  to `T | null`, recovered `Format: date-time` JSDoc; `| null` line count 777, now matched by
+  the SDK). No new frontend/test typecheck fallout from the enum slots.
 - Test harness (not in the §2.3 frontend-only count — that scan was `clients/poolmaster/src`
   only): `tests/functional/builders.ts` (hand-rolled league shape → `description?: string | null`)
   and `tests/functional/golf-admin-tournament.functional.ts` (6 null-guards for
@@ -30,10 +39,29 @@ per user go-ahead in the research review session. §4/§5 kept as written for th
   `syncScope` check — keeps behaviour and the existing test fixtures),
   `golf-league-details-card.tsx` (`matchKeyword ?? undefined` at two form sites),
   `golf-tier-board-utils.test.ts` (`(e.price ?? 0) + 1`).
-- Verified green — full pre-commit gate set: `turbo typecheck --force` (6/6);
-  `eslint … --max-warnings 0`; `jest` unit (828/828); `test:service:functional-api` (60/60,
-  with `DATABASE_URL` set); `test:poolmaster:unit` (491/491). Plus `api:check` fresh,
-  `rules:check` (no new findings), mock-provider regen (zero diff — no nullable fields).
+- Verified green — full pre-commit gate set (re-run after the enum fix-forward):
+  `turbo typecheck --force` (6/6); `eslint … --max-warnings 0`; `jest` unit (834/834);
+  `test:service:functional-api` (60/60, with `DATABASE_URL` set); `test:poolmaster:unit`
+  (491/491). Plus `api:check` fresh, `rules:check` (no new findings), mock-provider regen
+  (zero diff — no nullable fields).
+
+### Review fix-forward (Riley Pass, REQUEST CHANGES → addressed)
+
+- **HIGH / CONTRACT** — nullable *enum* fields (`z.enum(...).nullable()` /
+  `z.nativeEnum(...).nullable()`, 18 slots incl. `LeagueDto.memberType`) still generated
+  without `| null`: `{ type: [T,"null"], enum: [...] }` doesn't permit null under 2020-12.
+  Fixed by also pushing `null` into the `enum` array; SDK `| null` line count now equals
+  api-types.ts (777). Verified with a scratch hey-api run (`enum: [...,null]` → `… | null`).
+- **MEDIUM / TEST** — regression guard only checked "no `nullable` keyword". Added the
+  enum-node assertion and the `hey-api ≥ api-types` `| null` line-count assertion (would have
+  caught the enum gap), plus representative-field checks.
+- **MEDIUM / ARCH** — helper moved from `packages/core-api/src/openapi/` to
+  `packages/shared/openapi/` (exported as `@poolmaster/shared/openapi`); both export scripts
+  import the package path, no `scripts/` → other-package-`src/` hop. Test moved to
+  `tests/unit/shared/`.
+- **LOW** — `wrapWithNullBranch` / multi-member composition branches remain synthetic-only
+  (the real spec produces no `anyOf`); kept as defensive, unit-tested, noted in the helper's
+  doc comment.
 
 ### Follow-ups surfaced during implementation
 

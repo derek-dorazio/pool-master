@@ -1199,7 +1199,8 @@
                             ],
                             "enum": [
                               "COMMISSIONER",
-                              "MEMBER"
+                              "MEMBER",
+                              null
                             ],
                             "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
                           },
@@ -1416,7 +1417,8 @@
                           ],
                           "enum": [
                             "COMMISSIONER",
-                            "MEMBER"
+                            "MEMBER",
+                            null
                           ],
                           "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
                         },
@@ -1658,7 +1660,8 @@
                           ],
                           "enum": [
                             "COMMISSIONER",
-                            "MEMBER"
+                            "MEMBER",
+                            null
                           ],
                           "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
                         },
@@ -2006,7 +2009,8 @@
                           ],
                           "enum": [
                             "COMMISSIONER",
-                            "MEMBER"
+                            "MEMBER",
+                            null
                           ],
                           "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
                         },
@@ -2238,7 +2242,8 @@
                           ],
                           "enum": [
                             "COMMISSIONER",
-                            "MEMBER"
+                            "MEMBER",
+                            null
                           ],
                           "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
                         },
@@ -2524,7 +2529,8 @@
                           ],
                           "enum": [
                             "COMMISSIONER",
-                            "MEMBER"
+                            "MEMBER",
+                            null
                           ],
                           "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
                         },
@@ -2766,7 +2772,8 @@
                           ],
                           "enum": [
                             "COMMISSIONER",
-                            "MEMBER"
+                            "MEMBER",
+                            null
                           ],
                           "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
                         },
@@ -3008,7 +3015,8 @@
                           ],
                           "enum": [
                             "COMMISSIONER",
-                            "MEMBER"
+                            "MEMBER",
+                            null
                           ],
                           "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
                         },
@@ -4611,7 +4619,8 @@
                           ],
                           "enum": [
                             "COMMISSIONER",
-                            "MEMBER"
+                            "MEMBER",
+                            null
                           ],
                           "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
                         },
@@ -16259,7 +16268,8 @@
                             "enum": [
                               "WITHDRAWN",
                               "CUT",
-                              "ELIMINATED"
+                              "ELIMINATED",
+                              null
                             ],
                             "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                           },
@@ -16827,7 +16837,8 @@
                                       "enum": [
                                         "WITHDRAWN",
                                         "CUT",
-                                        "ELIMINATED"
+                                        "ELIMINATED",
+                                        null
                                       ],
                                       "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                                     },
@@ -22733,7 +22744,8 @@
                     ],
                     "enum": [
                       "12H",
-                      "24H"
+                      "24H",
+                      null
                     ],
                     "description": "Preferred clock display format, or null to clear it."
                   },
@@ -22745,7 +22757,8 @@
                     "enum": [
                       "MDY",
                       "DMY",
-                      "YMD"
+                      "YMD",
+                      null
                     ],
                     "description": "Preferred date display format, or null to clear it."
                   }
@@ -26170,7 +26183,8 @@
                             ],
                             "enum": [
                               "COMMISSIONER",
-                              "MEMBER"
+                              "MEMBER",
+                              null
                             ],
                             "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
                           },
@@ -26656,7 +26670,8 @@
                           ],
                           "enum": [
                             "COMMISSIONER",
-                            "MEMBER"
+                            "MEMBER",
+                            null
                           ],
                           "description": "Describes the current requester’s actual league membership type when they are an active member. This field is descriptive only and must not be used for authorization checks."
                         },
@@ -40332,7 +40347,8 @@
                             "enum": [
                               "WITHDRAWN",
                               "CUT",
-                              "ELIMINATED"
+                              "ELIMINATED",
+                              null
                             ],
                             "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                           },
@@ -40467,7 +40483,8 @@
                           "enum": [
                             "WITHDRAWN",
                             "CUT",
-                            "ELIMINATED"
+                            "ELIMINATED",
+                            null
                           ]
                         },
                         "worldRanking": {
@@ -40566,7 +40583,8 @@
                             "enum": [
                               "WITHDRAWN",
                               "CUT",
-                              "ELIMINATED"
+                              "ELIMINATED",
+                              null
                             ],
                             "description": "Meaningful only when isActive is false; null covers \"inactive, no more specific reason recorded.\""
                           },

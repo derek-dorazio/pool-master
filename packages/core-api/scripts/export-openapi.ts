@@ -21,7 +21,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'openapi-export-placeholder-n
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
-import { rewriteNullableToOpenApi31 } from '../src/openapi/nullable-to-3-1';
+import { rewriteNullableToOpenApi31 } from '@poolmaster/shared/openapi';
 
 async function main() {
   // Dynamic import after env vars are set

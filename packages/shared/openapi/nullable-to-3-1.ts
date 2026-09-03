@@ -2,19 +2,24 @@
  * Rewrite OpenAPI 3.0-style nullability (`{ "type": "string", "nullable": true }`)
  * into OpenAPI 3.1 / JSON-Schema-2020-12 style (`{ "type": ["string", "null"] }`).
  *
- * WHY: `zod-to-json-schema` (target `openApi3`) and `@fastify/swagger` both emit
- * 3.0-style `nullable: true`, but our exported spec declares `openapi: 3.1.0`.
+ * WHY: `zod-to-json-schema` (target `openApi3`, see `dto/json-schema.ts`) and
+ * `@fastify/swagger` both emit 3.0-style `nullable: true`, but our exported spec
+ * declares `openapi: 3.1.0`. 3.1 *removed* the `nullable` keyword, so
  * `@hey-api/openapi-ts` trusts that version string, runs its 3.1 schema parser,
- * and 3.1 *removed* the `nullable` keyword — so every `| null` union is silently
- * dropped from `packages/shared/generated/hey-api/types.gen.ts`. Translating the
- * nullability encoding to match the declared version fixes generation without a
- * downgrade or a package bump. See plans/131-hey-api-nullable-generation-fix.md.
+ * and silently drops every `| null` union from
+ * `packages/shared/generated/hey-api/types.gen.ts`. Translating the nullability
+ * encoding to match the declared version fixes generation without a downgrade or
+ * a package bump. See plans/131-hey-api-nullable-generation-fix.md.
  *
- * The spec only ever contains a handful of nullable shapes (an explicit string
- * `type` plus siblings like `format`/`enum`/`minimum`, `object` schemas, and
- * single-member `allOf` wrappers around a `$ref`-like base). All are handled here.
- * `nullable` on a bare `$ref`, or alongside `oneOf`/multi-member `allOf`, falls
- * back to an `anyOf: [ <original>, { type: "null" } ]` wrap.
+ * Shapes seen in the exported spec: an explicit string `type` plus siblings
+ * (`format` / `enum` / `minimum` / `properties` / …), and single-member `allOf`
+ * wrappers around a base schema. `nullable` on a bare `$ref`, or alongside
+ * `oneOf` / a multi-member `allOf`, falls back to
+ * `anyOf: [ <original>, { type: "null" } ]`.
+ *
+ * NOTE on enums: under JSON-Schema-2020-12 `enum` is validated independently of
+ * `type`, so `{ type: ["string","null"], enum: ["A","B"] }` still forbids null.
+ * Whenever a node is made nullable, `null` is also added to any `enum` array.
  */
 
 type JsonRecord = Record<string, unknown>;
@@ -24,6 +29,27 @@ function isRecord(value: unknown): value is JsonRecord {
 }
 
 const STRUCTURAL_KEYS = ['allOf', 'oneOf', 'anyOf', '$ref'] as const;
+
+/** Append `"null"` to a string / string[] `type`, in place. No-op if already present. */
+function addNullToType(node: JsonRecord): void {
+  const type = node.type;
+  if (typeof type === 'string') {
+    if (type !== 'null') node.type = [type, 'null'];
+  } else if (Array.isArray(type)) {
+    if (!type.includes('null')) type.push('null');
+  }
+}
+
+/**
+ * If the node constrains values with `enum`, make sure `null` is a permitted
+ * member — otherwise a nullable type union is defeated by the enum check and
+ * @hey-api/openapi-ts emits the non-nullable union.
+ */
+function addNullToEnum(node: JsonRecord): void {
+  if (Array.isArray(node.enum) && !node.enum.includes(null)) {
+    node.enum.push(null);
+  }
+}
 
 /**
  * Recursively convert `nullable: true` nodes in an OpenAPI document tree to 3.1
@@ -45,13 +71,9 @@ export function rewriteNullableToOpenApi31(node: unknown): void {
 
   const type = node.type;
 
-  if (typeof type === 'string') {
-    node.type = type === 'null' ? type : [type, 'null'];
-    return;
-  }
-
-  if (Array.isArray(type)) {
-    if (!type.includes('null')) type.push('null');
+  if (typeof type === 'string' || Array.isArray(type)) {
+    addNullToType(node);
+    addNullToEnum(node);
     return;
   }
 
@@ -75,16 +97,13 @@ export function rewriteNullableToOpenApi31(node: unknown): void {
     Object.assign(node, base);
     if (typeof outerDescription === 'string') node.description = outerDescription;
 
-    const baseType = node.type;
-    if (typeof baseType === 'string') {
-      node.type = baseType === 'null' ? baseType : [baseType, 'null'];
-    } else if (Array.isArray(baseType)) {
-      if (!baseType.includes('null')) baseType.push('null');
+    if (node.type === undefined && !('anyOf' in node)) {
+      // base was itself a wrapper — re-run, then fall back to an anyOf null branch
+      rewriteNullableToOpenApi31(node);
+      if (node.type === undefined && !('anyOf' in node)) wrapWithNullBranch(node);
     } else {
-      rewriteNullableToOpenApi31(node); // base was itself a wrapper — re-run
-      if (node.type === undefined && !('anyOf' in node)) {
-        wrapWithNullBranch(node);
-      }
+      addNullToType(node);
+      addNullToEnum(node);
     }
     return;
   }
@@ -96,10 +115,7 @@ export function rewriteNullableToOpenApi31(node: unknown): void {
 
   // `nullable: true` with neither `type` nor a composition — e.g. a lone object
   // schema described only by `properties`. Give it an explicit nullable type.
-  node.type = ['null'];
-  if (isRecord(node.properties) || node.properties !== undefined) {
-    node.type = ['object', 'null'];
-  }
+  node.type = node.properties !== undefined ? ['object', 'null'] : ['null'];
 }
 
 /**
