@@ -1080,7 +1080,11 @@ jobs:
   poolmaster-browser-e2e:
     name: poolmaster-browser-e2e
     runs-on: ubuntu-latest
-    needs: migrate-qa
+    # pool-master-303: the ping test never touches the database, so it
+    # shouldn't depend on migrate-qa succeeding — depend on the same thing
+    # migrate-qa itself depends on instead. An unrelated migration failure
+    # was silently skipping this job on every recent main run.
+    needs: publish-images
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       POOLMASTER_E2E_BASE_URL: https://qa.ultimateofficepoolmanager.com
@@ -1129,4 +1133,4 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Base URL: \`$POOLMASTER_E2E_BASE_URL\`" >> $GITHUB_STEP_SUMMARY
           echo "- Expected release prefix: \`releases/${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Journeys: stable role auth setup, reusable QA league repair, commissioner/member/root-admin route smoke" >> $GITHUB_STEP_SUMMARY
+          echo "- Journeys: minimal deploy-reachability ping (pool-master-303 phase 1 — no data dependency; a real suite is phase 2, see plans/130)" >> $GITHUB_STEP_SUMMARY

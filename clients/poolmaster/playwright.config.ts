@@ -4,10 +4,14 @@ const browserChannel = process.env.POOLMASTER_E2E_BROWSER_CHANNEL;
 
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: false,
-  workers: 1,
+  // pool-master-303: no shared mutable fixtures left to race over (phase 1
+  // of plans/130 deleted them) — safe to parallelize.
+  fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
-  retries: 0,
+  // Real-network/real-browser e2e gets one retry in CI, matching
+  // Playwright's own guidance — a transient blip no longer fails the whole
+  // job outright.
+  retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI
     ? [['list'], ['html', { open: 'never' }]]
     : [['list']],
@@ -19,12 +23,7 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'auth setup',
-      testMatch: /.*\.setup\.ts/,
-    },
-    {
       name: 'chromium',
-      dependencies: ['auth setup'],
       testMatch: /.*\.e2e\.ts/,
       use: {
         ...devices['Desktop Chrome'],
